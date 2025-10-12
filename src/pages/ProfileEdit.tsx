@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save, Upload, X, Camera } from "lucide-react";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
@@ -25,6 +26,7 @@ interface Profile {
   photos: string[] | null;
   looking_for: string[] | null;
   sexual_orientation: string | null;
+  relationship_type: string | null;
 }
 
 const ProfileEdit = () => {
@@ -214,6 +216,7 @@ const ProfileEdit = () => {
           avatar_url: avatarPath,
           photos: photosPaths.length > 0 ? photosPaths : null,
           looking_for: lookingFor.length > 0 ? lookingFor : null,
+          relationship_type: profile.relationship_type,
         })
         .eq("id", profile.id);
 
@@ -425,9 +428,27 @@ const ProfileEdit = () => {
                 />
               </div>
 
+              {/* Relationship Type */}
+              <div className="space-y-2">
+                <Label htmlFor="relationship-type">Cosa stai cercando?</Label>
+                <Select
+                  value={profile.relationship_type || ""}
+                  onValueChange={(value) => setProfile({ ...profile, relationship_type: value })}
+                >
+                  <SelectTrigger id="relationship-type">
+                    <SelectValue placeholder="Seleziona il tipo di relazione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="serious">Relazione seria</SelectItem>
+                    <SelectItem value="casual">Relazione occasionale</SelectItem>
+                    <SelectItem value="friendship">Amicizia</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Looking For */}
               <div className="space-y-4">
-                <Label>{t('profile.lookingFor')}</Label>
+                <Label>Genere che cerchi</Label>
                 <div className="space-y-3">
                   {['male', 'female', 'non-binary', 'trans', 'all'].map((gender) => (
                     <div key={gender} className="flex items-center space-x-2">

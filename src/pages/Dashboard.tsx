@@ -4,10 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, LogOut, UserCircle, Users, Sparkles } from "lucide-react";
+import { Heart, LogOut, Users, Sparkles, Search } from "lucide-react";
+import { UserProfileCard } from "@/components/UserProfileCard";
+import { RecentMessages } from "@/components/RecentMessages";
 
 interface Profile {
   id: string;
@@ -162,7 +162,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900">
-      <div className="container mx-auto p-4 max-w-6xl">
+      <div className="container mx-auto p-4 max-w-7xl">
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-2">
             <Heart className="h-8 w-8 text-pink-500" />
@@ -174,103 +174,81 @@ const Dashboard = () => {
           </Button>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Il Mio Profilo</CardTitle>
-                {userRole && (
-                  <Badge variant={userRole === "creator" ? "default" : "secondary"}>
-                    {userRole === "creator" ? "Creator" : "Utente"}
-                  </Badge>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-4 mb-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={profile?.avatar_url || undefined} />
-                  <AvatarFallback>
-                    {profile?.full_name?.charAt(0) || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-semibold">{profile?.full_name}</p>
-                  <p className="text-sm text-muted-foreground">{user?.email}</p>
-                </div>
-              </div>
-              <Button 
-                className="w-full" 
-                variant="outline"
-                onClick={() => navigate("/profile/edit")}
-              >
-                <UserCircle className="h-4 w-4 mr-2" />
-                Modifica Profilo
-              </Button>
-            </CardContent>
-          </Card>
+        <div className="grid gap-6 lg:grid-cols-3 mb-8">
+          {/* User Profile - Larger card on the left */}
+          <div className="lg:col-span-1">
+            {user && <UserProfileCard userId={user.id} />}
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Heart className="h-5 w-5 text-pink-500" />
-                Match
-              </CardTitle>
-              <CardDescription>Le tue connessioni</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold text-pink-500 mb-4">
-                {matches.length}
-              </div>
-              <Button 
-                className="w-full"
-                onClick={() => navigate("/matches")}
-              >
-                Visualizza Match
-              </Button>
-            </CardContent>
-          </Card>
+          {/* Stats and Messages - Right side */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Stats Cards */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card className="bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-950 dark:to-pink-900 border-pink-200 dark:border-pink-800">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-pink-700 dark:text-pink-300">
+                    <Heart className="h-5 w-5" />
+                    Match
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-5xl font-bold text-pink-600 dark:text-pink-400 mb-4">
+                    {matches.length}
+                  </div>
+                  <Button 
+                    className="w-full bg-pink-600 hover:bg-pink-700"
+                    onClick={() => navigate("/matches")}
+                  >
+                    Visualizza Match
+                  </Button>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-purple-500" />
-                Like Ricevuti
-              </CardTitle>
-              <CardDescription>Persone interessate a te</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold text-purple-500 mb-4">
-                {likesReceived.length}
-              </div>
-              <Button 
-                className="w-full"
-                variant="secondary"
-                onClick={() => navigate("/likes")}
-              >
-                Vedi Chi Ti Piace
-              </Button>
-            </CardContent>
-          </Card>
+              <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 border-purple-200 dark:border-purple-800">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
+                    <Sparkles className="h-5 w-5" />
+                    Like Ricevuti
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-5xl font-bold text-purple-600 dark:text-purple-400 mb-4">
+                    {likesReceived.length}
+                  </div>
+                  <Button 
+                    className="w-full bg-purple-600 hover:bg-purple-700"
+                    onClick={() => navigate("/likes")}
+                  >
+                    Vedi Chi Ti Piace
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Recent Messages */}
+            {user && <RecentMessages currentUserId={user.id} />}
+          </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
+        {/* Discover Section */}
+        <Card className="overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-pink-100 via-purple-100 to-indigo-100 dark:from-pink-950 dark:via-purple-950 dark:to-indigo-950">
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Search className="h-6 w-6" />
               Scopri Nuove Persone
             </CardTitle>
             <CardDescription>
-              Esplora i profili e trova la tua anima gemella
+              Esplora i profili con filtri personalizzati e trova la tua anima gemella
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <Button 
               className="w-full" 
               size="lg"
               onClick={() => navigate("/explore")}
             >
-              Inizia a Esplorare
+              <Search className="h-5 w-5 mr-2" />
+              Inizia a Esplorare con Filtri
             </Button>
           </CardContent>
         </Card>
