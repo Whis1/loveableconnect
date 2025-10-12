@@ -6,14 +6,19 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send, ImagePlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { EmojiPicker } from "@/components/chat/EmojiPicker";
+import { GifPicker } from "@/components/chat/GifPicker";
+import { MessageBubble } from "@/components/chat/MessageBubble";
 
 interface Message {
   id: string;
   sender_id: string;
   receiver_id: string;
   content: string;
+  message_type: 'text' | 'image' | 'emoji' | 'gif';
+  media_url: string | null;
   created_at: string;
   read: boolean;
 }
@@ -33,7 +38,9 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const initChat = async () => {
@@ -110,27 +117,29 @@ const Chat = () => {
 
       setLoading(false);
 
-      // Subscribe to new messages
+      // Subscribe to new messages with realtime
       const channel = supabase
         .channel(`messages-${matchId}`)
         .on(
           "postgres_changes",
           {
-            event: "INSERT",
+            event: "*",
             schema: "public",
             table: "messages",
             filter: `match_id=eq.${matchId}`,
           },
           (payload) => {
-            const newMsg = payload.new as Message;
-            setMessages((prev) => [...prev, newMsg]);
-            
-            // Mark as read if received
-            if (newMsg.receiver_id === session.user.id) {
-              supabase
-                .from("messages")
-                .update({ read: true })
-                .eq("id", newMsg.id);
+            if (payload.eventType === 'INSERT') {
+              const newMsg = payload.new as Message;
+              setMessages((prev) => [...prev, newMsg]);
+              
+              // Mark as read if received
+              if (newMsg.receiver_id === session.user.id) {
+                supabase
+                  .from("messages")
+                  .update({ read: true })
+                  .eq("id", newMsg.id);
+              }
             }
           }
         )
@@ -151,10 +160,16 @@ const Chat = () => {
     }
   }, [messages]);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSendMessage = async (
+    e?: React.FormEvent, 
+    messageType: 'text' | 'emoji' | 'gif' = 'text',
+    mediaUrl: string | null = null,
+    content?: string
+  ) => {
+    if (e) e.preventDefault();
     
-    if (!newMessage.trim() || !currentUser || !otherUser || !matchId) return;
+    const messageContent = content || newMessage.trim();
+    if (!messageContent || !currentUser || !otherUser || !matchId) return;
 
     try {
       const { error } = await supabase
@@ -163,7 +178,9 @@ const Chat = () => {
           match_id: matchId,
           sender_id: currentUser,
           receiver_id: otherUser.id,
-          content: newMessage.trim(),
+          content: messageContent,
+          message_type: messageType,
+          media_url: mediaUrl,
         });
 
       if (error) throw error;
@@ -175,6 +192,51 @@ const Chat = () => {
         description: "Impossibile inviare il messaggio",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleEmojiSelect = (emoji: string) => {
+    handleSendMessage(undefined, 'emoji', null, emoji);
+  };
+
+  const handleGifSelect = (gifUrl: string) => {
+    handleSendMessage(undefined, 'gif', gifUrl, 'GIF');
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentUser) return;
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${currentUser}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('chat-images')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('chat-images')
+        .getPublicUrl(fileName);
+
+      await handleSendMessage(undefined, 'image', data.publicUrl, 'Immagine');
+      
+      toast({
+        title: "Successo",
+        description: "Immagine inviata",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Errore",
+        description: "Impossibile caricare l'immagine",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -211,30 +273,14 @@ const Chat = () => {
                 {messages.map((message) => {
                   const isOwn = message.sender_id === currentUser;
                   return (
-                    <div
+                    <MessageBubble
                       key={message.id}
-                      className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
-                    >
-                      <div
-                        className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                          isOwn
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted"
-                        }`}
-                      >
-                        <p className="break-words">{message.content}</p>
-                        <p
-                          className={`text-xs mt-1 ${
-                            isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
-                          }`}
-                        >
-                          {new Date(message.created_at).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </p>
-                      </div>
-                    </div>
+                      content={message.content}
+                      messageType={message.message_type}
+                      mediaUrl={message.media_url}
+                      isOwn={isOwn}
+                      timestamp={message.created_at}
+                    />
                   );
                 })}
                 <div ref={scrollRef} />
@@ -243,16 +289,36 @@ const Chat = () => {
           </CardContent>
 
           <div className="border-t p-4">
-            <form onSubmit={handleSendMessage} className="flex gap-2">
-              <Input
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Scrivi un messaggio..."
-                className="flex-1"
-              />
-              <Button type="submit" disabled={!newMessage.trim()}>
-                <Send className="h-4 w-4" />
-              </Button>
+            <form onSubmit={(e) => handleSendMessage(e)} className="space-y-2">
+              <div className="flex gap-2 items-center">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                />
+                <Button 
+                  type="button"
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  <ImagePlus className="h-5 w-5" />
+                </Button>
+                <EmojiPicker onEmojiSelect={handleEmojiSelect} />
+                <GifPicker onGifSelect={handleGifSelect} />
+                <Input
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Scrivi un messaggio..."
+                  className="flex-1"
+                />
+                <Button type="submit" disabled={!newMessage.trim() || uploading}>
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
             </form>
           </div>
         </Card>
