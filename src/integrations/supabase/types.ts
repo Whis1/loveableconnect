@@ -35,6 +35,30 @@ export type Database = {
         }
         Relationships: []
       }
+      likes_unlocked: {
+        Row: {
+          expires_at: string | null
+          id: string
+          stripe_payment_id: string | null
+          unlocked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          expires_at?: string | null
+          id?: string
+          stripe_payment_id?: string | null
+          unlocked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          expires_at?: string | null
+          id?: string
+          stripe_payment_id?: string | null
+          unlocked_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       matches: {
         Row: {
           created_at: string
@@ -62,6 +86,8 @@ export type Database = {
           created_at: string
           id: string
           match_id: string
+          media_url: string | null
+          message_type: string | null
           read: boolean
           receiver_id: string
           sender_id: string
@@ -71,6 +97,8 @@ export type Database = {
           created_at?: string
           id?: string
           match_id: string
+          media_url?: string | null
+          message_type?: string | null
           read?: boolean
           receiver_id: string
           sender_id: string
@@ -80,6 +108,8 @@ export type Database = {
           created_at?: string
           id?: string
           match_id?: string
+          media_url?: string | null
+          message_type?: string | null
           read?: boolean
           receiver_id?: string
           sender_id?: string
