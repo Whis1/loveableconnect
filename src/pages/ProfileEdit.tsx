@@ -158,6 +158,14 @@ const ProfileEdit = () => {
   };
 
   const handleAddInterest = (interest: string) => {
+    if (interests.length >= 8) {
+      toast({
+        title: "Limite raggiunto",
+        description: "Puoi aggiungere massimo 8 interessi",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!interests.includes(interest) && interest.trim()) {
       setInterests([...interests, interest.trim()]);
       setInterestsInput("");
@@ -417,17 +425,16 @@ const ProfileEdit = () => {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
 
-              {/* Location */}
-              <div className="space-y-2">
-                <Label htmlFor="city">{t('profile.location')}</Label>
-                <PlacesAutocomplete
-                  value={profile.city || ""}
-                  onChange={(value) => setProfile({ ...profile, city: value })}
-                  placeholder={t('profile.locationPlaceholder')}
-                  id="city"
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="city">{t('profile.location')}</Label>
+                  <PlacesAutocomplete
+                    value={profile.city || ""}
+                    onChange={(value) => setProfile({ ...profile, city: value })}
+                    placeholder={t('profile.locationPlaceholder')}
+                    id="city"
+                  />
+                </div>
               </div>
 
               {/* Sexual Orientation */}
@@ -470,10 +477,11 @@ const ProfileEdit = () => {
                     <SelectValue placeholder="Seleziona genere" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="male">Uomini</SelectItem>
-                    <SelectItem value="female">Donne</SelectItem>
-                    <SelectItem value="non-binary">Non Binari</SelectItem>
-                    <SelectItem value="all">Tutti</SelectItem>
+                    <SelectItem value="male">{t('profile.male')}</SelectItem>
+                    <SelectItem value="female">{t('profile.female')}</SelectItem>
+                    <SelectItem value="non-binary">{t('profile.nonBinary')}</SelectItem>
+                    <SelectItem value="trans">{t('profile.trans')}</SelectItem>
+                    <SelectItem value="all">{t('profile.allGenders')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -492,7 +500,7 @@ const ProfileEdit = () => {
 
               {/* Interests */}
               <div className="space-y-2">
-                <Label htmlFor="interests">{t('profile.interests')}</Label>
+                <Label htmlFor="interests">{t('profile.interests')} ({interests.length}/8)</Label>
                 
                 {/* Selected Interests Tags */}
                 {interests.length > 0 && (
@@ -516,31 +524,33 @@ const ProfileEdit = () => {
                 )}
 
                 {/* Input with Suggestions */}
-                <div className="relative">
-                  <Input
-                    id="interests"
-                    value={interestsInput}
-                    onChange={(e) => setInterestsInput(e.target.value)}
-                    onKeyDown={handleInterestInputKeyDown}
-                    placeholder="Scrivi un interesse e premi Invio..."
-                  />
+                {interests.length < 8 && (
+                  <div className="relative">
+                    <Input
+                      id="interests"
+                      value={interestsInput}
+                      onChange={(e) => setInterestsInput(e.target.value)}
+                      onKeyDown={handleInterestInputKeyDown}
+                      placeholder="Scrivi un interesse e premi Invio..."
+                    />
                   
-                  {/* Suggestions Dropdown */}
-                  {interestsInput && filteredSuggestions.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
-                      {filteredSuggestions.slice(0, 8).map((suggestion) => (
-                        <button
-                          key={suggestion}
-                          type="button"
-                          onClick={() => handleAddInterest(suggestion)}
-                          className="w-full text-left px-4 py-2 hover:bg-accent hover:text-accent-foreground transition-colors"
-                        >
-                          {suggestion}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                    {/* Suggestions Dropdown */}
+                    {interestsInput && filteredSuggestions.length > 0 && (
+                      <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                        {filteredSuggestions.slice(0, 8).map((suggestion) => (
+                          <button
+                            key={suggestion}
+                            type="button"
+                            onClick={() => handleAddInterest(suggestion)}
+                            className="w-full text-left px-4 py-2 hover:bg-accent hover:text-accent-foreground transition-colors"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <Button type="submit" className="w-full" disabled={saving}>
