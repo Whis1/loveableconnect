@@ -1,1 +1,4 @@
 project_id = "tcmhvrlsaggyuukdscue"
+
+[functions.create-unlock-payment]
+verify_jwt = true

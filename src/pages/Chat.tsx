@@ -105,7 +105,7 @@ const Chat = () => {
         .eq("match_id", matchId)
         .order("created_at", { ascending: true });
 
-      setMessages(messagesData || []);
+      setMessages((messagesData || []) as Message[]);
 
       // Mark messages as read
       await supabase
@@ -162,7 +162,7 @@ const Chat = () => {
 
   const handleSendMessage = async (
     e?: React.FormEvent, 
-    messageType: 'text' | 'emoji' | 'gif' = 'text',
+    messageType: 'text' | 'emoji' | 'gif' | 'image' = 'text',
     mediaUrl: string | null = null,
     content?: string
   ) => {

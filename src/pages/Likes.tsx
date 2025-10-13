@@ -5,19 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Heart, MapPin } from "lucide-react";
+import { ArrowLeft, Heart, Lock, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface LikeWithProfile {
   id: string;
+  from_user_id: string;
   created_at: string;
-  from_user: {
+  profile: {
     id: string;
     full_name: string;
+    nickname: string;
     avatar_url: string | null;
     bio: string | null;
     age: number | null;
-    city: string | null;
     interests: string[] | null;
   };
 }
@@ -27,9 +28,12 @@ const Likes = () => {
   const { toast } = useToast();
   const [likes, setLikes] = useState<LikeWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasUnlocked, setHasUnlocked] = useState(false);
+  const [checkingUnlock, setCheckingUnlock] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchLikes = async () => {
+    const fetchData = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -37,23 +41,22 @@ const Likes = () => {
         return;
       }
 
-      // Fetch likes received with profile data
+      setCurrentUserId(session.user.id);
+
+      // Check if user has unlocked likes
+      const { data: unlockData } = await supabase
+        .from("likes_unlocked")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+
+      setHasUnlocked(!!unlockData);
+      setCheckingUnlock(false);
+
+      // Fetch likes
       const { data: likesData, error } = await supabase
         .from("likes")
-        .select(`
-          id,
-          created_at,
-          from_user_id,
-          from_profile:profiles!likes_from_user_id_fkey(
-            id,
-            full_name,
-            avatar_url,
-            bio,
-            age,
-            city,
-            interests
-          )
-        `)
+        .select("id, from_user_id, created_at")
         .eq("to_user_id", session.user.id)
         .order("created_at", { ascending: false });
 
@@ -68,58 +71,92 @@ const Likes = () => {
         return;
       }
 
-      const formattedLikes = (likesData || []).map((like: any) => ({
-        id: like.id,
-        created_at: like.created_at,
-        from_user: like.from_profile || {
-          id: like.from_user_id,
-          full_name: "Utente sconosciuto",
-          avatar_url: null,
-          bio: null,
-          age: null,
-          city: null,
-          interests: null,
-        },
-      }));
+      // Fetch profiles for each like
+      const likesWithProfiles = await Promise.all(
+        (likesData || []).map(async (like) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("id, full_name, nickname, avatar_url, bio, age, interests")
+            .eq("id", like.from_user_id)
+            .single();
 
-      setLikes(formattedLikes);
+          return {
+            id: like.id,
+            from_user_id: like.from_user_id,
+            created_at: like.created_at,
+            profile: profile || {
+              id: like.from_user_id,
+              full_name: "Utente sconosciuto",
+              nickname: "Utente",
+              avatar_url: null,
+              bio: null,
+              age: null,
+              interests: null,
+            },
+          };
+        })
+      );
+
+      setLikes(likesWithProfiles);
       setLoading(false);
     };
 
-    fetchLikes();
+    fetchData();
   }, [navigate, toast]);
 
-  const handleLikeBack = async (userId: string) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+  const handleUnlockLikes = async () => {
+    if (!currentUserId) return;
 
     try {
-      const { error } = await supabase
-        .from("likes")
-        .insert({
-          from_user_id: session.user.id,
-          to_user_id: userId,
-        });
-
+      const { data, error } = await supabase.functions.invoke('create-unlock-payment');
+      
       if (error) throw error;
-
-      toast({
-        title: "🎉 È un Match!",
-        description: "Ora potete chattare insieme!",
-      });
-
-      // Remove from likes list
-      setLikes(likes.filter(like => like.from_user.id !== userId));
+      
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+      
     } catch (error: any) {
       toast({
         title: "Errore",
-        description: error.message,
+        description: "Impossibile avviare il pagamento",
         variant: "destructive",
       });
     }
   };
 
-  if (loading) {
+  // Check URL params for success/cancel
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const unlockStatus = params.get('unlock');
+    
+    if (unlockStatus === 'success') {
+      // Record unlock in database
+      if (currentUserId) {
+        supabase
+          .from('likes_unlocked')
+          .insert({ user_id: currentUserId })
+          .then(() => {
+            toast({
+              title: "Pagamento completato!",
+              description: "Ora puoi vedere chi ti ha messo like",
+            });
+            // Remove query params and reload
+            window.history.replaceState({}, '', '/likes');
+            setHasUnlocked(true);
+          });
+      }
+    } else if (unlockStatus === 'cancel') {
+      toast({
+        title: "Pagamento annullato",
+        description: "Puoi sbloccare i like in qualsiasi momento",
+        variant: "destructive",
+      });
+      window.history.replaceState({}, '', '/likes');
+    }
+  }, [toast, currentUserId]);
+
+  if (loading || checkingUnlock) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <p className="text-muted-foreground">Caricamento...</p>
@@ -139,70 +176,95 @@ const Likes = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Like Ricevuti</CardTitle>
+            <CardTitle className="text-2xl flex items-center gap-2">
+              <Sparkles className="h-6 w-6 text-purple-500" />
+              Like Ricevuti
+            </CardTitle>
           </CardHeader>
           <CardContent>
+            {!hasUnlocked && likes.length > 0 && (
+              <div className="mb-6 p-6 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-950 dark:to-pink-950 rounded-lg text-center">
+                <Lock className="h-12 w-12 mx-auto mb-4 text-purple-600" />
+                <h3 className="text-xl font-bold mb-2">Sblocca i tuoi Like</h3>
+                <p className="text-muted-foreground mb-4">
+                  Hai {likes.length} {likes.length === 1 ? 'persona' : 'persone'} interessata a te!
+                  Sblocca per vedere chi ti ha messo like.
+                </p>
+                <Button 
+                  size="lg"
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                  onClick={handleUnlockLikes}
+                >
+                  <Sparkles className="h-5 w-5 mr-2" />
+                  Sblocca Ora - €2.99
+                </Button>
+              </div>
+            )}
+
             {likes.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-muted-foreground">
-                  Non hai ancora ricevuto like. Continua a migliorare il tuo profilo!
+                <Heart className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground mb-4">
+                  Non hai ancora ricevuto like. Continua a esplorare!
                 </p>
+                <Button onClick={() => navigate("/explore")}>
+                  Esplora Profili
+                </Button>
               </div>
             ) : (
               <div className="space-y-4">
                 {likes.map((like) => (
-                  <Card key={like.id} className="overflow-hidden">
-                    <CardContent className="p-6">
-                      <div className="flex gap-4">
-                        <Avatar className="h-20 w-20">
-                          <AvatarImage src={like.from_user.avatar_url || undefined} />
-                          <AvatarFallback className="text-2xl">
-                            {like.from_user.full_name.charAt(0)}
+                  <Card 
+                    key={like.id} 
+                    className={`overflow-hidden ${!hasUnlocked ? 'relative' : ''}`}
+                  >
+                    {!hasUnlocked && (
+                      <div className="absolute inset-0 backdrop-blur-lg bg-white/30 dark:bg-black/30 z-10 flex items-center justify-center">
+                        <Lock className="h-12 w-12 text-purple-600" />
+                      </div>
+                    )}
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-16 w-16">
+                          <AvatarImage 
+                            src={hasUnlocked && like.profile.avatar_url ? like.profile.avatar_url : undefined} 
+                          />
+                          <AvatarFallback>
+                            {like.profile.nickname?.charAt(0) || like.profile.full_name.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-semibold text-xl">
-                              {like.from_user.full_name}
-                            </h3>
-                            {like.from_user.age && (
-                              <span className="text-muted-foreground">
-                                {like.from_user.age}
-                              </span>
-                            )}
-                          </div>
-                          
-                          {like.from_user.city && (
-                            <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                              <MapPin className="h-4 w-4" />
-                              <span>{like.from_user.city}</span>
-                            </div>
-                          )}
-
-                          {like.from_user.bio && (
-                            <p className="text-muted-foreground mb-3">
-                              {like.from_user.bio}
+                          <h3 className="font-semibold text-lg">
+                            {hasUnlocked ? like.profile.nickname : '???'}
+                          </h3>
+                          {hasUnlocked && like.profile.age && (
+                            <p className="text-sm text-muted-foreground">
+                              {like.profile.age} anni
                             </p>
                           )}
-
-                          {like.from_user.interests && like.from_user.interests.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mb-4">
-                              {like.from_user.interests.map((interest, index) => (
-                                <Badge key={index} variant="secondary">
+                          {hasUnlocked && like.profile.bio && (
+                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                              {like.profile.bio}
+                            </p>
+                          )}
+                          {hasUnlocked && like.profile.interests && like.profile.interests.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {like.profile.interests.slice(0, 3).map((interest, index) => (
+                                <Badge key={index} variant="secondary" className="text-xs">
                                   {interest}
                                 </Badge>
                               ))}
                             </div>
                           )}
-
-                          <Button
-                            onClick={() => handleLikeBack(like.from_user.id)}
-                            className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
-                          >
-                            <Heart className="h-4 w-4 mr-2" />
-                            Ricambia il Like
-                          </Button>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Like ricevuto {new Date(like.created_at).toLocaleDateString()}
+                          </p>
                         </div>
+                        {hasUnlocked && (
+                          <Button onClick={() => navigate(`/explore`)}>
+                            Esplora
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
