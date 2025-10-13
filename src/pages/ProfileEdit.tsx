@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save, Upload, X, Camera } from "lucide-react";
@@ -37,11 +36,19 @@ const ProfileEdit = () => {
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [interestsInput, setInterestsInput] = useState("");
+  const [interests, setInterests] = useState<string[]>([]);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [lookingFor, setLookingFor] = useState<string[]>([]);
+
+  const suggestedInterests = [
+    "Trekking", "Gaming", "Anime", "Viaggi", "Musica", "Cinema", 
+    "Netflix", "Sport", "Cucina", "Lettura", "Fotografia", "Arte",
+    "Yoga", "Fitness", "Danza", "Teatro", "Moda", "Tecnologia",
+    "Serie TV", "Concerti", "Escursioni", "Bicicletta", "Nuoto", "Calcio"
+  ];
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -60,7 +67,8 @@ const ProfileEdit = () => {
 
       if (profileData) {
         setProfile(profileData);
-        setInterestsInput(profileData.interests?.join(", ") || "");
+        setInterests(profileData.interests || []);
+        setInterestsInput("");
         setLookingFor(profileData.looking_for || []);
         
         // Load avatar preview
@@ -149,13 +157,27 @@ const ProfileEdit = () => {
     setPhotoPreviews(newPreviews);
   };
 
-  const handleLookingForChange = (value: string) => {
-    setLookingFor(prev => 
-      prev.includes(value) 
-        ? prev.filter(v => v !== value)
-        : [...prev, value]
-    );
+  const handleAddInterest = (interest: string) => {
+    if (!interests.includes(interest) && interest.trim()) {
+      setInterests([...interests, interest.trim()]);
+      setInterestsInput("");
+    }
   };
+
+  const handleRemoveInterest = (interest: string) => {
+    setInterests(interests.filter(i => i !== interest));
+  };
+
+  const handleInterestInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && interestsInput.trim()) {
+      e.preventDefault();
+      handleAddInterest(interestsInput);
+    }
+  };
+
+  const filteredSuggestions = suggestedInterests.filter(
+    s => s.toLowerCase().includes(interestsInput.toLowerCase()) && !interests.includes(s)
+  );
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -197,15 +219,9 @@ const ProfileEdit = () => {
         }
       }
 
-      const interests = interestsInput
-        .split(",")
-        .map(i => i.trim())
-        .filter(i => i.length > 0);
-
       const { error } = await supabase
         .from("profiles")
         .update({
-          full_name: profile.full_name,
           nickname: profile.nickname,
           bio: profile.bio,
           age: profile.age,
@@ -366,16 +382,6 @@ const ProfileEdit = () => {
               {/* Basic Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="full_name">Nome completo</Label>
-                  <Input
-                    id="full_name"
-                    value={profile.full_name}
-                    onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
                   <Label htmlFor="nickname">{t('profile.nickname')}</Label>
                   <Input
                     id="nickname"
@@ -397,12 +403,19 @@ const ProfileEdit = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="gender">{t('profile.gender')}</Label>
-                  <Input
-                    id="gender"
+                  <Select
                     value={profile.gender || ""}
-                    onChange={(e) => setProfile({ ...profile, gender: e.target.value })}
-                    placeholder={`${t('profile.male')}, ${t('profile.female')}, ${t('profile.nonBinary')}`}
-                  />
+                    onValueChange={(value) => setProfile({ ...profile, gender: value })}
+                  >
+                    <SelectTrigger id="gender">
+                      <SelectValue placeholder="Seleziona il tuo genere" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Uomo</SelectItem>
+                      <SelectItem value="female">Donna</SelectItem>
+                      <SelectItem value="non-binary">Non Binario</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -447,29 +460,22 @@ const ProfileEdit = () => {
               </div>
 
               {/* Looking For */}
-              <div className="space-y-4">
-                <Label>Genere che cerchi</Label>
-                <div className="space-y-3">
-                  {['male', 'female', 'non-binary', 'trans', 'all'].map((gender) => (
-                    <div key={gender} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`looking-${gender}`}
-                        checked={lookingFor.includes(gender)}
-                        onCheckedChange={() => handleLookingForChange(gender)}
-                      />
-                      <Label
-                        htmlFor={`looking-${gender}`}
-                        className="cursor-pointer font-normal"
-                      >
-                        {gender === 'male' && t('profile.male')}
-                        {gender === 'female' && t('profile.female')}
-                        {gender === 'non-binary' && t('profile.nonBinary')}
-                        {gender === 'trans' && t('profile.trans')}
-                        {gender === 'all' && t('profile.allGenders')}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="looking-for">Genere che cerchi</Label>
+                <Select
+                  value={lookingFor[0] || ""}
+                  onValueChange={(value) => setLookingFor([value])}
+                >
+                  <SelectTrigger id="looking-for">
+                    <SelectValue placeholder="Seleziona genere" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Uomini</SelectItem>
+                    <SelectItem value="female">Donne</SelectItem>
+                    <SelectItem value="non-binary">Non Binari</SelectItem>
+                    <SelectItem value="all">Tutti</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Bio */}
@@ -487,12 +493,54 @@ const ProfileEdit = () => {
               {/* Interests */}
               <div className="space-y-2">
                 <Label htmlFor="interests">{t('profile.interests')}</Label>
-                <Input
-                  id="interests"
-                  value={interestsInput}
-                  onChange={(e) => setInterestsInput(e.target.value)}
-                  placeholder={t('profile.interestsPlaceholder')}
-                />
+                
+                {/* Selected Interests Tags */}
+                {interests.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {interests.map((interest) => (
+                      <div
+                        key={interest}
+                        className="inline-flex items-center gap-1 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm"
+                      >
+                        <span>{interest}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveInterest(interest)}
+                          className="hover:bg-primary-foreground/20 rounded-full p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Input with Suggestions */}
+                <div className="relative">
+                  <Input
+                    id="interests"
+                    value={interestsInput}
+                    onChange={(e) => setInterestsInput(e.target.value)}
+                    onKeyDown={handleInterestInputKeyDown}
+                    placeholder="Scrivi un interesse e premi Invio..."
+                  />
+                  
+                  {/* Suggestions Dropdown */}
+                  {interestsInput && filteredSuggestions.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                      {filteredSuggestions.slice(0, 8).map((suggestion) => (
+                        <button
+                          key={suggestion}
+                          type="button"
+                          onClick={() => handleAddInterest(suggestion)}
+                          className="w-full text-left px-4 py-2 hover:bg-accent hover:text-accent-foreground transition-colors"
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <Button type="submit" className="w-full" disabled={saving}>
