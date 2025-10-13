@@ -36,6 +36,7 @@ const Explore = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     gender: "",
     minAge: "",
@@ -161,6 +162,19 @@ const Explore = () => {
     setCurrentIndex(0);
   };
 
+  const currentProfile = profiles[currentIndex];
+
+  useEffect(() => {
+    if (currentProfile?.avatar_url) {
+      const { data } = supabase.storage
+        .from('profile-images')
+        .getPublicUrl(currentProfile.avatar_url);
+      setAvatarUrl(data.publicUrl);
+    } else {
+      setAvatarUrl(null);
+    }
+  }, [currentProfile]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -186,20 +200,6 @@ const Explore = () => {
       </div>
     );
   }
-
-  const currentProfile = profiles[currentIndex];
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (currentProfile?.avatar_url) {
-      const { data } = supabase.storage
-        .from('profile-images')
-        .getPublicUrl(currentProfile.avatar_url);
-      setAvatarUrl(data.publicUrl);
-    } else {
-      setAvatarUrl(null);
-    }
-  }, [currentProfile]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-4">
