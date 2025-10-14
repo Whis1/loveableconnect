@@ -386,6 +386,14 @@ const Auth = () => {
               </form>
             </TabsContent>
           </Tabs>
+          <div className="text-center text-sm text-muted-foreground mt-4">
+            <button
+              onClick={() => navigate("/terms")}
+              className="hover:underline"
+            >
+              Privacy - Termini e condizioni - Cookie
+            </button>
+          </div>
         </CardContent>
       </Card>
     </div>
