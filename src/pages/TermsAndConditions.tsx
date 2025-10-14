@@ -157,11 +157,139 @@ const TermsAndConditions = () => {
                 </div>
               </TabsContent>
 
-              <TabsContent value="terms" className="space-y-4 mt-6">
-                <h2 className="text-xl font-semibold">Termini e Condizioni di Servizio</h2>
-                <p className="text-muted-foreground">
-                  Contenuto dei termini e condizioni di servizio sarà inserito qui.
-                </p>
+              <TabsContent value="terms" className="space-y-6 mt-6 text-sm max-h-[600px] overflow-y-auto">
+                <div className="space-y-4">
+                  <h2 className="text-2xl font-bold">Termini e Condizioni di Servizio</h2>
+                  
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">1. OGGETTO e DEFINIZIONI</h3>
+                    <p>
+                      <strong>1.1</strong> Le presenti condizioni generali di contratto (di seguito, le "CONDIZIONI GENERALI") contengono i termini e le condizioni che regolano la fornitura del Servizio LovableConnect (di seguito anche solo il "Servizio") disponibile sul sito https://lovableconneect.lovable.app e sull'applicazione "LovableConnect" (di seguito, il "Sito/App"). Le CONDIZIONI GENERALI sono stipulate tra Lei, quale Utente finale dei servizi (di seguito, "Lei" o l'"Utente") Le presenti CONDIZIONI GENERALI disciplinano e regolano il Servizio fornito dalla Società all'Utente per mezzo del Sito/App, annullano qualsiasi disposizione precedente tra le Parti non espressamente citata o allegata e costituiscono l'insieme dei diritti e degli obblighi tra la Società e l'Utente. Il Sito/App si propone di facilitare la comunicazione tra gli Utenti al fine di agevolare la nascita di nuove amicizie.
+                    </p>
+                    <p><strong>1.2</strong> In aggiunta ai termini ed alle parole definiti altrove nelle CONDIZIONI GENERALI, ai fini delle medesime si definiscono:</p>
+                    <ul className="list-disc list-inside space-y-2 pl-4">
+                      <li><strong>"Abbonamento"</strong> il periodo di sottoscrizione dei Servizi a pagamento;</li>
+                      <li><strong>"Applicazione"</strong> l'applicazione LovableConnect, disponibile sulle piattaforme App Store di Apple e Play Store di Google scaricabile gratuitamente.</li>
+                      <li><strong>"Canoni"</strong> le tipologie di pacchetti e/o abbonamenti disponibili sul Sito/App, con le modalità descritte nell'articolo 3.2 e seguenti;</li>
+                      <li><strong>"Cause di Forza Maggiore"</strong> a titolo esemplificativo e senza alcun intento limitativo, si considerano cause di forza maggiore ai sensi e per gli effetti delle CONDIZIONI GENERALI: serrate, scioperi, mancanza assoluta di mezzi di trasporto, guerra, rivolta o altre azioni militari, inondazioni, incendi, fulmini, esplosioni, incidenti, interruzioni dell'energia elettrica, interruzioni, malfunzionamenti o sovraccarichi delle linee telefoniche o telematiche, ritardi o inadempimenti da parte dei terzi fornitori di LovableConnect o qualsiasi altro evento che esuli dalla ragionevole sfera di controllo di LovableConnect e che impedisca il pieno e corretto adempimento delle obbligazioni previste dalle CONDIZIONI GENERALI in capo alla stessa;</li>
+                      <li><strong>"Contenuti"</strong> ogni informazione, dato, video, immagine, foto, testo, descrizione, indicazione, dettaglio personale, interesse, hobby, presentazione forniti dall'Utente e caricati sul Sito/App;</li>
+                      <li><strong>"Data di Efficacia"</strong> si considera la data di accettazione delle presenti CONDIZIONI GENERALI da parte dell'Utente</li>
+                      <li><strong>"Durata del Contratto"</strong> la durata delle presenti CONDIZIONI GENERALI, come indicata al successivo articolo 8;</li>
+                      <li><strong>"Profilo"</strong> pagina web personale e privata dell'Utente sul Sito/App, collegata all'account creato in fase di iscrizione al Sito/App;</li>
+                      <li><strong>"Servizi"</strong> i servizi a disposizione dell'Utente presenti sul Sito/App, come specificato al seguente articolo 3 delle presenti CONDIZIONI GENERALI;</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">2. CONCLUSIONE DEL CONTRATTO</h3>
+                    <p>
+                      La informiamo che premendo il pulsante "Iscriviti" in fase di registrazione del Sito/App o, comunque, utilizzando il Servizio, Lei dichiara di aver letto ed espressamente accetta le presenti CONDIZIONI GENERALI. La registrazione a LovableConnect e l'utilizzo del Servizio (fatto salvo che per i servizi disponibili esclusivamente a pagamento, i quali richiedono la sottoscrizione di un Abbonamento o un pagamento On-Demand) sono completamente gratuiti (salvi i costi per le apparecchiature – computer, applicazioni e mezzi di telecomunicazione – e i costi di connessione alla rete Internet, che sono a carico dell'Utente sulla base delle condizioni economiche stabilite dal proprio operatore).
+                    </p>
+                    <p>
+                      Qualora non intenda accettare anche uno soltanto dei termini e delle condizioni delle presenti CONDIZIONI GENERALI, La invitiamo cortesemente a non utilizzare il Servizio e ad abbandonare il Sito/App. Lei prende atto ed accetta che i Servizi di cui Lei fruisce sul Sito/App sono per mettere in contatto gli Utenti e che LovableConnect fornisce una mera piattaforma di contatto. La Società, pertanto, non è e non sarà parte ovvero responsabile dei singoli contatti tra Utenti, nonché dei relativi contenuti.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">3. I SERVIZI DI LOVABLECONNECT</h3>
+                    <p>
+                      <strong>3.1</strong> L'Utente nel completare il Profilo in fase di registrazione, inserisce il Territorio, il genere (Maschile/Femmine/altro) di Utenti che sta cercando, il nickname con cui apparirà sul Sito/App, indica la propria età e poi convalida il proprio Profilo tramite la ricezione di una e-mail e relativa conferma.
+                    </p>
+                    <p>
+                      L'Utente per usufruire dei Servizi deve disporre di applicazioni e aver effettuato impostazioni necessarie al corretto funzionamento del Servizio, quali a titolo di esempio e non esaustivo:
+                    </p>
+                    <ul className="list-disc list-inside pl-4">
+                      <li>browser IE10 o superiore</li>
+                      <li>attivazione delle funzioni JavaScript</li>
+                      <li>ricevimento dei cookie di sessione e accettazione della visualizzazione delle finestre a comparsa</li>
+                      <li>per fruizione da App su iPhone versione iOS11 o superiore, su Android versione 5.0 o superiore</li>
+                    </ul>
+                    
+                    <p className="font-semibold mt-4">
+                      LovableConnect è una piattaforma di intrattenimento sociale che offre esperienze interattive e conversazioni virtuali.
+                      Gli utenti possono interagire con profili e personaggi progettati per offrire un'esperienza piacevole, stimolante e di svago.
+                      Il servizio è pensato per momenti di divertimento e compagnia, non come mezzo per garantire incontri reali.
+                    </p>
+                    <p className="italic">
+                      L'utente riconosce che alcune interazioni, messaggi o profili presenti su LovableConnect possono essere gestiti da operatori, moderatori o sistemi automatizzati per finalità di intrattenimento. LovableConnect non assicura che ogni profilo rappresenti una persona reale, né che le interazioni conducano a relazioni o incontri fuori dalla piattaforma. L'uso del servizio implica l'accettazione di tale modalità di funzionamento.
+                    </p>
+
+                    <h4 className="font-semibold mt-4">3.8 Diritto di recesso</h4>
+                    <p>
+                      Ai sensi del Codice del Consumo, l'Utente dichiara espressamente ed accetta di non poter usufruire del diritto di recesso in ottemperanza a quanto previsto all'art. 59 che recita: "Il diritto di recesso di cui agli articoli da 52 a 58 per i contratti a distanza e i contratti negoziati fuori dei locali commerciali è escluso relativamente a [...] o) la fornitura di contenuto digitale mediante un supporto non materiale se l'esecuzione è iniziata con l'accordo espresso del consumatore e con la sua accettazione del fatto che in tal caso avrebbe perso il diritto di recesso".
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">4. DICHIARAZIONI E GARANZIE DELL'UTENTE</h3>
+                    <p>L'Utente dichiara e garantisce:</p>
+                    <ul className="list-disc list-inside space-y-2 pl-4">
+                      <li>di aver letto e compreso le CONDIZIONI GENERALI;</li>
+                      <li>di essere maggiorenne, di avere la capacità di agire e sottoscrivere contratti legalmente vincolanti;</li>
+                      <li>di aver, in fase di iscrizione, scelto una password sicura e complessa;</li>
+                      <li>che caricherà sul proprio Profilo solo informazioni e Contenuti che ha il diritto di condividere e che il Profilo sarà veritiero;</li>
+                      <li>che non caricherà sul Sito/App alcuna informazione personale che possa consentire ad altri Utenti di contattarlo con altri mezzi diversi dai Servizi;</li>
+                      <li>che non pubblicherà o utilizzerà dati falsi, o volti all'incitazione all'odio, di stampo omofobico, violenti nei confronti di qualsiasi minoranza;</li>
+                      <li>che si asterrà dall'immettere nel Sito/App qualsiasi contenuto osceno, offensivo, violento, diffamatorio, lesivo della dignità personale;</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">5. RESPONSABILITÀ</h3>
+                    <p><strong>5.1</strong> L'Utente riconosce ed espressamente accetta che:</p>
+                    <ul className="list-disc list-inside space-y-2 pl-4">
+                      <li>il Sito/App mette in contatto gli Utenti e permette loro di conoscersi e la Società non agisce in alcun modo in relazione ai Servizi a disposizione sul Sito/App;</li>
+                      <li>gli Utenti riconoscono espressamente ed accettano che la Società possa avvalersi di soggetti e assistenti di profilo con i quali non è possibile effettuare incontri reali, affinché seguano e intrattengano gli Utenti in modo da garantire un'esperienza utente ottimale;</li>
+                      <li>la Società non conduce alcun tipo di controllo o verifica dei precedenti penali dei propri Utenti;</li>
+                      <li>gli Utenti sono le uniche parti in relazione ai Servizi e la Società è totalmente estranea ai singoli rapporti tra gli Utenti;</li>
+                    </ul>
+                    
+                    <p className="mt-4">
+                      <strong>5.2</strong> Fatto salvo il caso di dolo o colpa grave, nella massima misura consentita dalla legge, l'Utente riconosce ed accetta che la Società non sarà in alcun modo responsabile verso l'Utente per eventuali danni, perdite, costi, oneri e spese, diretti o indiretti, subiti e/o sopportati dall'Utente in connessione con il Servizio.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">6. PRIVACY</h3>
+                    <p>
+                      La Società rispetta e tutela la privacy dei propri Utenti. La Società tratta i dati personali dell'Utente esclusivamente con le modalità e per le finalità indicate nell'Informativa Privacy. In particolare, la Società non tratterà i dati dell'Utente con finalità di marketing e/o invio di comunicazioni commerciali e/o vendita diretta senza avere ottenuto il suo previo espresso consenso.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">7. CESSIONE</h3>
+                    <p>
+                      L'Utente non potrà cedere né in tutto né in parte le presenti CONDIZIONI GENERALI a terzi. La Società potrà in qualsiasi momento cedere in tutto in parte le presenti CONDIZIONI GENERALI a terzi.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">8. DURATA e SOPRAVVIVENZA DI CLAUSOLE</h3>
+                    <p>
+                      <strong>8.1</strong> Le presenti CONDIZIONI GENERALI hanno efficacia a partire dalla Data di Efficacia, rimarranno in vigore per il periodo di 1 (uno) anno da tale data e saranno automaticamente rinnovate per periodi successivi di un anno ciascuno, salvo che una Parte comunichi all'altra Parte a mezzo di raccomandata a/r la sua intenzione di non rinnovare le CONDIZIONI GENERALI almeno 30 (trenta) giorni dalla scadenza di ciascun rinnovo.
+                    </p>
+                    <p>
+                      <strong>8.2</strong> Le seguenti clausole delle CONDIZIONI GENERALI resteranno valide ed efficaci anche dopo la conclusione delle presenti CONDIZIONI GENERALI: art. 4 (Dichiarazioni e Garanzie dell'Utente); art. 5 (Responsabilità); art. 11 (Legge Applicabile e Foro Competente); art. 13 (Clausole Generali).
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">9. RECESSO</h3>
+                    <p>
+                      Fatto salvo quanto previsto all'articolo 3.8, ciascuna Parte potrà recedere dalle presenti CONDIZIONI GENERALI in qualsiasi momento, tramite semplice comunicazione scritta all'altra Parte con preavviso di almeno 5 (cinque) giorni. Resta inteso che, anche in caso di recesso, La Società si riserva il diritto di cancellare o sospendere il Profilo dell'Utente.
+                    </p>
+                    <p>
+                      In caso di recesso da parte dell'Utente nessun rimborso potrà essere chiesto per le somme già corrisposte.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">10. RISOLUZIONE</h3>
+                    <p>
+                      Le parti potranno risolvere il contratto secondo quanto previsto dalla normativa applicabile.
+                    </p>
+                  </div>
+                </div>
               </TabsContent>
 
               <TabsContent value="cookies" className="space-y-4 mt-6">
