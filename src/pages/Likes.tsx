@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Heart, Lock, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface LikeWithProfile {
   id: string;
@@ -26,6 +27,7 @@ interface LikeWithProfile {
 const Likes = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [likes, setLikes] = useState<LikeWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasUnlocked, setHasUnlocked] = useState(false);
@@ -63,8 +65,8 @@ const Likes = () => {
       if (error) {
         console.error("Error fetching likes:", error);
         toast({
-          title: "Errore",
-          description: "Impossibile caricare i like",
+          title: t("likes.error"),
+          description: t("likes.errorLoadingLikes"),
           variant: "destructive",
         });
         setLoading(false);
@@ -86,8 +88,8 @@ const Likes = () => {
             created_at: like.created_at,
             profile: profile || {
               id: like.from_user_id,
-              full_name: "Utente sconosciuto",
-              nickname: "Utente",
+              full_name: t("likes.unknownUser"),
+              nickname: t("likes.unknownUser"),
               avatar_url: null,
               bio: null,
               age: null,
@@ -118,8 +120,8 @@ const Likes = () => {
       
     } catch (error: any) {
       toast({
-        title: "Errore",
-        description: "Impossibile avviare il pagamento",
+        title: t("likes.error"),
+        description: t("likes.errorStartingPayment"),
         variant: "destructive",
       });
     }
@@ -138,8 +140,8 @@ const Likes = () => {
           .insert({ user_id: currentUserId })
           .then(() => {
             toast({
-              title: "Pagamento completato!",
-              description: "Ora puoi vedere chi ti ha messo like",
+              title: t("likes.paymentCompleted"),
+              description: t("likes.paymentCompletedDescription"),
             });
             // Remove query params and reload
             window.history.replaceState({}, '', '/likes');
@@ -148,18 +150,18 @@ const Likes = () => {
       }
     } else if (unlockStatus === 'cancel') {
       toast({
-        title: "Pagamento annullato",
-        description: "Puoi sbloccare i like in qualsiasi momento",
+        title: t("likes.paymentCancelled"),
+        description: t("likes.paymentCancelledDescription"),
         variant: "destructive",
       });
       window.history.replaceState({}, '', '/likes');
     }
-  }, [toast, currentUserId]);
+  }, [toast, currentUserId, t]);
 
   if (loading || checkingUnlock) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">Caricamento...</p>
+        <p className="text-muted-foreground">{t("likes.loading")}</p>
       </div>
     );
   }
@@ -170,7 +172,7 @@ const Likes = () => {
         <div className="mb-4">
           <Button variant="ghost" onClick={() => navigate("/")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Indietro
+            {t("likes.back")}
           </Button>
         </div>
 
@@ -178,17 +180,19 @@ const Likes = () => {
           <CardHeader>
             <CardTitle className="text-2xl flex items-center gap-2">
               <Sparkles className="h-6 w-6 text-purple-500" />
-              Like Ricevuti
+              {t("likes.title")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {!hasUnlocked && likes.length > 0 && (
               <div className="mb-6 p-6 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-950 dark:to-pink-950 rounded-lg text-center">
                 <Lock className="h-12 w-12 mx-auto mb-4 text-purple-600" />
-                <h3 className="text-xl font-bold mb-2">Sblocca i tuoi Like</h3>
+                <h3 className="text-xl font-bold mb-2">{t("likes.unlockTitle")}</h3>
                 <p className="text-muted-foreground mb-4">
-                  Hai {likes.length} {likes.length === 1 ? 'persona' : 'persone'} interessata a te!
-                  Sblocca per vedere chi ti ha messo like.
+                  {t("likes.unlockDescription", { 
+                    count: likes.length, 
+                    personText: likes.length === 1 ? t("likes.person") : t("likes.people") 
+                  })}
                 </p>
                 <Button 
                   size="lg"
@@ -196,7 +200,7 @@ const Likes = () => {
                   onClick={handleUnlockLikes}
                 >
                   <Sparkles className="h-5 w-5 mr-2" />
-                  Sblocca Ora - €2.99
+                  {t("likes.unlockNow")}
                 </Button>
               </div>
             )}
@@ -205,10 +209,10 @@ const Likes = () => {
               <div className="text-center py-12">
                 <Heart className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-muted-foreground mb-4">
-                  Non hai ancora ricevuto like. Continua a esplorare!
+                  {t("likes.noLikes")}
                 </p>
                 <Button onClick={() => navigate("/explore")}>
-                  Esplora Profili
+                  {t("likes.exploreProfiles")}
                 </Button>
               </div>
             ) : (
@@ -239,7 +243,7 @@ const Likes = () => {
                           </h3>
                           {hasUnlocked && like.profile.age && (
                             <p className="text-sm text-muted-foreground">
-                              {like.profile.age} anni
+                              {like.profile.age} {t("likes.years")}
                             </p>
                           )}
                           {hasUnlocked && like.profile.bio && (
@@ -257,12 +261,12 @@ const Likes = () => {
                             </div>
                           )}
                           <p className="text-xs text-muted-foreground mt-2">
-                            Like ricevuto {new Date(like.created_at).toLocaleDateString()}
+                            {t("likes.likeReceived")} {new Date(like.created_at).toLocaleDateString()}
                           </p>
                         </div>
                         {hasUnlocked && (
                           <Button onClick={() => navigate(`/explore`)}>
-                            Esplora
+                            {t("likes.explore")}
                           </Button>
                         )}
                       </div>

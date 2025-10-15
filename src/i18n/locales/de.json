@@ -274,5 +274,15 @@
     "imageSent": "Bild gesendet",
     "success": "Erfolg",
     "errorUploadingImage": "Bild konnte nicht hochgeladen werden"
+  },
+  "messages": {
+    "back": "Zurück",
+    "loading": "Lädt...",
+    "title": "Nachrichten",
+    "noMessages": "Du hast noch keine Nachrichten. Starte einen Chat mit deinen Matches!",
+    "viewMatches": "Matches ansehen",
+    "error": "Fehler",
+    "errorLoadingMessages": "Nachrichten konnten nicht geladen werden",
+    "unknownUser": "Unbekannter Benutzer"
   }
 }

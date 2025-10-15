@@ -228,6 +228,16 @@
     "success": "Éxito",
     "errorUploadingImage": "No se pudo cargar la imagen"
   },
+  "messages": {
+    "back": "Atrás",
+    "loading": "Cargando...",
+    "title": "Mensajes",
+    "noMessages": "Aún no tienes mensajes. ¡Empieza a chatear con tus matches!",
+    "viewMatches": "Ver Matches",
+    "error": "Error",
+    "errorLoadingMessages": "No se pudieron cargar los mensajes",
+    "unknownUser": "Usuario desconocido"
+  },
   "search": {
     "title": "Búsqueda Avanzada",
     "back": "Atrás",

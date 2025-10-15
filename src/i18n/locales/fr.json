@@ -274,5 +274,15 @@
     "imageSent": "Image envoyée",
     "success": "Succès",
     "errorUploadingImage": "Impossible de télécharger l'image"
+  },
+  "messages": {
+    "back": "Retour",
+    "loading": "Chargement...",
+    "title": "Messages",
+    "noMessages": "Vous n'avez pas encore de messages. Commencez à discuter avec vos matchs !",
+    "viewMatches": "Voir les Matchs",
+    "error": "Erreur",
+    "errorLoadingMessages": "Impossible de charger les messages",
+    "unknownUser": "Utilisateur inconnu"
   }
 }

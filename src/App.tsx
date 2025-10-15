@@ -12,6 +12,7 @@ import ProfileEdit from "./pages/ProfileEdit";
 import Matches from "./pages/Matches";
 import Likes from "./pages/Likes";
 import Chat from "./pages/Chat";
+import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
 import TermsAndConditions from "./pages/TermsAndConditions";
 
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/profile/edit" element={<ProfileEdit />} />
           <Route path="/matches" element={<Matches />} />
           <Route path="/likes" element={<Likes />} />
+          <Route path="/messages" element={<Messages />} />
           <Route path="/chat/:matchId" element={<Chat />} />
           <Route path="/terms" element={<TermsAndConditions />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

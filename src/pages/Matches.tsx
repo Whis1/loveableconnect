@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface MatchWithProfile {
   id: string;
@@ -22,6 +23,7 @@ interface MatchWithProfile {
 const Matches = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [matches, setMatches] = useState<MatchWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -54,8 +56,8 @@ const Matches = () => {
       if (error) {
         console.error("Error fetching matches:", error);
         toast({
-          title: "Errore",
-          description: "Impossibile caricare i match",
+          title: t("matches.error"),
+          description: t("matches.errorLoadingMatches"),
           variant: "destructive",
         });
         setLoading(false);
@@ -80,7 +82,7 @@ const Matches = () => {
             created_at: match.created_at,
             otherUser: profile || {
               id: otherUserId,
-              full_name: "Utente sconosciuto",
+              full_name: t("matches.unknownUser"),
               avatar_url: null,
               bio: null,
               city: null,
@@ -125,7 +127,7 @@ const Matches = () => {
               created_at: newMatch.created_at,
               otherUser: profile || {
                 id: otherUserId,
-                full_name: "Utente sconosciuto",
+                full_name: t("matches.unknownUser"),
                 avatar_url: null,
                 bio: null,
                 city: null,
@@ -134,8 +136,8 @@ const Matches = () => {
 
             setMatches(prev => [matchWithProfile, ...prev]);
             toast({
-              title: "Nuovo Match! 🎉",
-              description: `Hai un nuovo match con ${matchWithProfile.otherUser.full_name}!`,
+              title: t("matches.newMatch"),
+              description: `${t("matches.newMatchWith")} ${matchWithProfile.otherUser.full_name}!`,
             });
           }
         )
@@ -154,7 +156,7 @@ const Matches = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">Caricamento...</p>
+        <p className="text-muted-foreground">{t("matches.loading")}</p>
       </div>
     );
   }
@@ -165,22 +167,22 @@ const Matches = () => {
         <div className="mb-4">
           <Button variant="ghost" onClick={() => navigate("/")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Indietro
+            {t("matches.back")}
           </Button>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">I Tuoi Match</CardTitle>
+            <CardTitle className="text-2xl">{t("matches.title")}</CardTitle>
           </CardHeader>
           <CardContent>
             {matches.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground mb-4">
-                  Non hai ancora match. Continua a esplorare!
+                  {t("matches.noMatches")}
                 </p>
                 <Button onClick={() => navigate("/explore")}>
-                  Esplora Profili
+                  {t("matches.exploreProfiles")}
                 </Button>
               </div>
             ) : (
@@ -201,7 +203,7 @@ const Matches = () => {
                               {match.otherUser.full_name}
                             </h3>
                             <p className="text-sm text-muted-foreground">
-                              Vicino alle tue parti
+                              {t("matches.nearYourParts")}
                             </p>
                             {match.otherUser.bio && (
                               <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
@@ -209,7 +211,7 @@ const Matches = () => {
                               </p>
                             )}
                             <p className="text-xs text-muted-foreground mt-2">
-                              Match dal {new Date(match.created_at).toLocaleDateString()}
+                              {t("matches.matchSince")} {new Date(match.created_at).toLocaleDateString()}
                             </p>
                           </div>
                         </div>
@@ -218,7 +220,7 @@ const Matches = () => {
                           className="ml-4"
                         >
                           <MessageCircle className="h-4 w-4 mr-2" />
-                          Chatta
+                          {t("matches.chat")}
                         </Button>
                       </div>
                     </CardContent>

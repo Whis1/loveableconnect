@@ -254,5 +254,15 @@
     "imageSent": "تم إرسال الصورة",
     "success": "نجاح",
     "errorUploadingImage": "تعذر تحميل الصورة"
+  },
+  "messages": {
+    "back": "رجوع",
+    "loading": "جاري التحميل...",
+    "title": "الرسائل",
+    "noMessages": "ليس لديك رسائل حتى الآن. ابدأ الدردشة مع مطابقاتك!",
+    "viewMatches": "عرض المطابقات",
+    "error": "خطأ",
+    "errorLoadingMessages": "تعذر تحميل الرسائل",
+    "unknownUser": "مستخدم غير معروف"
   }
 }

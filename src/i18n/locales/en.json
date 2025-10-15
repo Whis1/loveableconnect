@@ -344,14 +344,28 @@
   "chat": {
     "back": "Back",
     "loading": "Loading...",
+    "messageDeleted": "Message deleted",
+    "deleteMessage": "Delete message",
     "typeMessage": "Type a message...",
+    "send": "Send",
     "error": "Error",
+    "errorSendingMessage": "Unable to send message",
+    "errorDeletingMessage": "Unable to delete message",
     "matchNotFound": "Match not found",
     "profileNotFound": "Profile not found",
-    "cannotSendMessage": "Cannot send message",
     "imageSent": "Image sent",
     "success": "Success",
-    "cannotUploadImage": "Cannot upload image"
+    "errorUploadingImage": "Unable to upload image"
+  },
+  "messages": {
+    "back": "Back",
+    "loading": "Loading...",
+    "title": "Messages",
+    "noMessages": "You don't have any messages yet. Start chatting with your matches!",
+    "viewMatches": "View Matches",
+    "error": "Error",
+    "errorLoadingMessages": "Unable to load messages",
+    "unknownUser": "Unknown user"
   },
   "userProfile": {
     "years": "years",

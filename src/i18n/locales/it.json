@@ -362,6 +362,16 @@
     "success": "Successo",
     "errorUploadingImage": "Impossibile caricare l'immagine"
   },
+  "messages": {
+    "back": "Indietro",
+    "loading": "Caricamento...",
+    "title": "Messaggi",
+    "noMessages": "Non hai ancora messaggi. Inizia a chattare con i tuoi match!",
+    "viewMatches": "Visualizza Match",
+    "error": "Errore",
+    "errorLoadingMessages": "Impossibile caricare i messaggi",
+    "unknownUser": "Utente sconosciuto"
+  },
   "userProfile": {
     "years": "anni",
     "lookingFor": "Cerca",
