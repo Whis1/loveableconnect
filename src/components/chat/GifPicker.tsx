@@ -1,27 +1,66 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Image, Search } from "lucide-react";
+import { Image, Search, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-// Popular GIF search terms
 const POPULAR_SEARCHES = [
-  "happy", "love", "excited", "laugh", "sad", "angry", 
-  "dance", "celebration", "thinking", "yes", "no", "thanks"
+  "amore", "felice", "eccitato", "ridere", "triste", "arrabbiato", 
+  "ballare", "festa", "pensare", "sì", "no", "grazie"
 ];
 
 interface GifPickerProps {
   onGifSelect: (gifUrl: string) => void;
 }
 
+interface GiphyGif {
+  id: string;
+  images: {
+    fixed_height: {
+      url: string;
+    };
+  };
+}
+
 export const GifPicker = ({ onGifSelect }: GifPickerProps) => {
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
-  const [gifs] = useState<string[]>([
-    "https://media.giphy.com/media/3o7TKSjRrfIPjeiVyM/giphy.gif",
-    "https://media.giphy.com/media/l4FGGafcOHmrlQxG0/giphy.gif",
-    "https://media.giphy.com/media/26u4cqiYI30juCOGY/giphy.gif",
-    "https://media.giphy.com/media/3oz8xIsloV7zOmt81G/giphy.gif",
-  ]);
+  const [gifs, setGifs] = useState<GiphyGif[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchGifs(search);
+  }, [search]);
+
+  const fetchGifs = async (searchTerm: string) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('search-giphy', {
+        body: { searchTerm, limit: 20 }
+      });
+
+      if (error) throw error;
+      
+      if (data && data.data) {
+        setGifs(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching GIFs:', error);
+      toast({
+        title: "Errore",
+        description: "Impossibile caricare le GIF",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGifSelect = (gif: GiphyGif) => {
+    onGifSelect(gif.images.fixed_height.url);
+  };
 
   return (
     <Popover>
@@ -58,18 +97,24 @@ export const GifPicker = ({ onGifSelect }: GifPickerProps) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
-            {gifs.map((gif, index) => (
-              <button
-                key={index}
-                type="button"
-                onClick={() => onGifSelect(gif)}
-                className="aspect-square rounded overflow-hidden hover:opacity-80 transition-opacity"
-              >
-                <img src={gif} alt="GIF" className="w-full h-full object-cover" />
-              </button>
-            ))}
-          </div>
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+              {gifs.map((gif) => (
+                <button
+                  key={gif.id}
+                  type="button"
+                  onClick={() => handleGifSelect(gif)}
+                  className="aspect-square rounded overflow-hidden hover:opacity-80 transition-opacity"
+                >
+                  <img src={gif.images.fixed_height.url} alt="GIF" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </PopoverContent>
     </Popover>

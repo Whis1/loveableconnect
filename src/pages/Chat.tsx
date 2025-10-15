@@ -3,14 +3,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, Send, ImagePlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { GifPicker } from "@/components/chat/GifPicker";
 import { MessageBubble } from "@/components/chat/MessageBubble";
+import { ChatUserProfile } from "@/components/chat/ChatUserProfile";
 
 interface Message {
   id: string;
@@ -123,23 +123,27 @@ const Chat = () => {
         .on(
           "postgres_changes",
           {
-            event: "*",
+            event: "INSERT",
             schema: "public",
             table: "messages",
             filter: `match_id=eq.${matchId}`,
           },
           (payload) => {
-            if (payload.eventType === 'INSERT') {
-              const newMsg = payload.new as Message;
-              setMessages((prev) => [...prev, newMsg]);
-              
-              // Mark as read if received
-              if (newMsg.receiver_id === session.user.id) {
-                supabase
-                  .from("messages")
-                  .update({ read: true })
-                  .eq("id", newMsg.id);
-              }
+            const newMsg = payload.new as Message;
+            
+            // Only add if not already in the list (prevent duplicates)
+            setMessages((prev) => {
+              const exists = prev.some(m => m.id === newMsg.id);
+              if (exists) return prev;
+              return [...prev, newMsg];
+            });
+            
+            // Mark as read if received
+            if (newMsg.receiver_id === session.user.id) {
+              supabase
+                .from("messages")
+                .update({ read: true })
+                .eq("id", newMsg.id);
             }
           }
         )
@@ -249,26 +253,27 @@ const Chat = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-4">
-      <div className="container mx-auto max-w-4xl h-[calc(100vh-2rem)]">
-        <Card className="h-full flex flex-col">
-          <CardHeader className="border-b">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/matches")}>
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={otherUser?.avatar_url || undefined} />
-                <AvatarFallback>
-                  {otherUser?.full_name.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
-              <CardTitle>{otherUser?.full_name}</CardTitle>
-            </div>
-          </CardHeader>
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900">
+      <div className="container mx-auto max-w-5xl h-screen flex flex-col">
+        <Card className="flex-1 flex flex-col overflow-hidden shadow-xl">
+          {/* Header with back button */}
+          <div className="border-b p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => navigate("/matches")}
+              className="mb-2"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </div>
+
+          {/* User Profile Section */}
+          {otherUser && <ChatUserProfile userId={otherUser.id} />}
           
+          {/* Messages Section */}
           <CardContent className="flex-1 overflow-hidden p-0">
-            <ScrollArea className="h-full p-4">
+            <ScrollArea className="h-full p-6">
               <div className="space-y-4">
                 {messages.map((message) => {
                   const isOwn = message.sender_id === currentUser;
@@ -288,8 +293,9 @@ const Chat = () => {
             </ScrollArea>
           </CardContent>
 
-          <div className="border-t p-4">
-            <form onSubmit={(e) => handleSendMessage(e)} className="space-y-2">
+          {/* Input Section */}
+          <div className="border-t p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <form onSubmit={(e) => handleSendMessage(e)}>
               <div className="flex gap-2 items-center">
                 <input
                   ref={fileInputRef}
@@ -304,6 +310,7 @@ const Chat = () => {
                   size="icon"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
+                  className="shrink-0"
                 >
                   <ImagePlus className="h-5 w-5" />
                 </Button>
@@ -315,7 +322,11 @@ const Chat = () => {
                   placeholder="Scrivi un messaggio..."
                   className="flex-1"
                 />
-                <Button type="submit" disabled={!newMessage.trim() || uploading}>
+                <Button 
+                  type="submit" 
+                  disabled={!newMessage.trim() || uploading}
+                  className="shrink-0"
+                >
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
