@@ -124,6 +124,7 @@ export type Database = {
           city: string | null
           created_at: string
           full_name: string
+          gallery_private: boolean | null
           gender: string | null
           id: string
           interests: string[] | null
@@ -145,6 +146,7 @@ export type Database = {
           city?: string | null
           created_at?: string
           full_name: string
+          gallery_private?: boolean | null
           gender?: string | null
           id: string
           interests?: string[] | null
@@ -166,6 +168,7 @@ export type Database = {
           city?: string | null
           created_at?: string
           full_name?: string
+          gallery_private?: boolean | null
           gender?: string | null
           id?: string
           interests?: string[] | null

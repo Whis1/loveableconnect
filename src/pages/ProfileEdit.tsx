@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save, Upload, X, Camera } from "lucide-react";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
@@ -26,6 +27,7 @@ interface Profile {
   looking_for: string[] | null;
   sexual_orientation: string | null;
   relationship_type: string | null;
+  gallery_private: boolean | null;
 }
 
 const ProfileEdit = () => {
@@ -241,6 +243,7 @@ const ProfileEdit = () => {
           photos: photosPaths.length > 0 ? photosPaths : null,
           looking_for: lookingFor.length > 0 ? lookingFor : null,
           relationship_type: profile.relationship_type,
+          gallery_private: profile.gallery_private,
         })
         .eq("id", profile.id);
 
@@ -340,7 +343,29 @@ const ProfileEdit = () => {
 
               {/* Photo Gallery */}
               <div className="space-y-4">
-                <Label>{t('profile.gallery')} ({photoPreviews.length}/6)</Label>
+                <div className="flex items-center justify-between">
+                  <Label>{t('profile.gallery')} ({photoPreviews.length}/6)</Label>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="gallery-private"
+                      checked={profile.gallery_private || false}
+                      onCheckedChange={(checked) => 
+                        setProfile({ ...profile, gallery_private: checked as boolean })
+                      }
+                    />
+                    <label
+                      htmlFor="gallery-private"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      Galleria privata
+                    </label>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {profile.gallery_private 
+                    ? "🔒 La tua galleria è privata - solo tu puoi vederla" 
+                    : "🌍 La tua galleria è pubblica - tutti possono vederla"}
+                </p>
                 <div className="grid grid-cols-3 gap-4">
                   {photoPreviews.map((preview, index) => (
                     <div key={index} className="relative aspect-square">
