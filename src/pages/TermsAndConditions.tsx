@@ -286,7 +286,95 @@ const TermsAndConditions = () => {
                   <div className="space-y-3">
                     <h3 className="text-lg font-semibold">10. RISOLUZIONE</h3>
                     <p>
-                      Le parti potranno risolvere il contratto secondo quanto previsto dalla normativa applicabile.
+                      Fatto salvo quanto previsto altrove all'interno delle presenti CONDIZIONI GENERALI, in caso di violazione degli articoli 3.2, 3.3, 3.5, 4 e 7 delle presenti CONDIZIONI GENERALI da parte dell'Utente, ai sensi dell'art. 1456 cod. civ., la Società si riserva il diritto di sospenderne il Profilo dell'Utente e, se del caso, di risolvere di diritto le CONDIZIONI GENERALI, a fronte della semplice comunicazione (via e-mail o in-app) di volersi avvalere della presente clausola.
+                    </p>
+                    <p>
+                      Questa risoluzione sarà a pieno titolo, fatto salvo il diritto della Società di agire contro l'Utente o suoi danti causa per ottenere il risarcimento di eventuali danni subiti in conseguenza dell'uso improprio del Servizio. I dati relativi all'Utente verranno cancellati immediatamente dietro sua espressa richiesta o in ogni caso dalla Società entro il termine previsto dalla normativa applicabile e necessario ai fini della tutela degli interessi della Società e/o degli altri Utenti.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">11. LEGGE APPLICABILE E FORO COMPETENTE</h3>
+                    <p>
+                      <strong>11.1</strong> Le presenti CONDIZIONI GENERALI sono interamente disciplinate dalla legge italiana.
+                    </p>
+                    <p>
+                      <strong>11.2</strong> Fermo restando quanto stabilito a tutela dei consumatori in materia di foro competente, qualsiasi controversia sorgesse tra le Parti in relazione alla validità, interpretazione, esecuzione e risoluzione delle presenti CONDIZIONI GENERALI e/o comunque in connessione con le presenti CONDIZIONI GENERALI sarà di esclusiva competenza del Foro di Milano, con esclusione di ogni altro, anche concorrente o alternativo.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">12. MODIFICHE</h3>
+                    <p>
+                      La Società si riserva il diritto di aggiornare o modificare in qualsiasi momento le presenti CONDIZIONI GENERALI, nel caso in cui tali aggiornamento o modifiche si rendano necessari per adeguare il Servizio a disposizioni di legge o di regolamento o delle policy o condizioni App Store e Play Store sopravvenute, per implementare misure di sicurezza che si rendano necessarie per ottimizzare la fornitura del Servizio o per migliorare le caratteristiche del Servizio.
+                    </p>
+                    <p>
+                      La Società informerà delle modifiche sopravvenute direttamente sul Sito/App. Le modifiche alle CONDIZIONI GENERALI saranno automaticamente valide ed efficaci a partire dal decimo giorno dalla data di pubblicazione sul Sito/App e si intenderanno accettate dall'Utente. L'Utente riconosce ed accetta che sarà proprio onere controllare periodicamente la pagina del Sito/App che riporta le CONDIZIONI GENERALI al fine di verificare la presenza di eventuali aggiornamenti.
+                    </p>
+                    <p>
+                      In caso di modifiche alle presenti CONDIZIONI GENERALI, l'Utente avrà comunque diritto di recesso, che potrà esercitare in qualsiasi momento attraverso semplice comunicazione scritta alla Società o chiudendo direttamente il proprio account sul Sito/App tramite la propria area personale.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">13. CLAUSOLE GENERALI</h3>
+                    <p>
+                      <strong>13.1</strong> L'eventuale tolleranza da parte della Società verso comportamenti dell'Utente posti in essere in violazione di una qualunque disposizione delle CONDIZIONI GENERALI non costituisce rinuncia ai diritti derivanti dalla disposizione violata, né al diritto di esigere il corretto adempimento di tutte le disposizioni delle CONDIZIONI GENERALI stesse.
+                    </p>
+                    <p>
+                      <strong>13.2</strong> Il mancato o ritardato esercizio di un diritto spettante a LovableConnect ai sensi delle CONDIZIONI GENERALI non comporta rinuncia allo stesso.
+                    </p>
+                    <p>
+                      <strong>13.3</strong> Le CONDIZIONI GENERALI contengono l'accordo complessivamente raggiunto dalle Parti rispetto all'oggetto delle stesse ed esse prevalgono su tutte le precedenti comunicazioni, dichiarazioni, nonché le intese e gli accordi, sia orali che scritti, raggiunti dalle Parti.
+                    </p>
+                    <p>
+                      <strong>13.4</strong> Qualora qualsiasi termine o altra disposizione delle presenti CONDIZIONI GENERALI fosse dichiarato nullo, annullabile o inapplicabile, tutte le altre condizioni e disposizioni delle presenti CONDIZIONI GENERALI rimarranno, comunque, pienamente valide ed efficaci. Nel caso in cui vi sia l'annullamento o la nullità di qualche termine o disposizione poiché invalido, contrario a norme imperative od inapplicabile, le Parti si impegnano a negoziare in buona fede per modificare le presenti CONDIZIONI GENERALI in modo tale da realizzare nel miglior modo possibile l'originale intenzione delle Parti al fine di adempiere nel miglior modo possibile gli impegni ivi previsti.
+                    </p>
+                    <p>
+                      <strong>13.5</strong> LovableConnect e gli Utenti agiscono in piena autonomia ed indipendenza. Le presenti CONDIZIONI GENERALI non fanno sorgere tra loro alcun rapporto di collaborazione, agenzia, associazione, intermediazione o lavoro subordinato.
+                    </p>
+                    <p>
+                      <strong>13.6</strong> Qualunque comunicazione da una Parte all'altra ai sensi delle CONDIZIONI GENERALI dovrà essere inviata o mezzo lettera raccomandata al seguente indirizzo Iumob Srl, Via Comelico, 3, 20135 Milano (purché con l'opzione di notifica di ricevimento) o tramite il form contatti del customer care.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">14. CLAUSOLE VESSATORIE</h3>
+                    <p>
+                      L'Utente riconosce ed accetta che alcuni paragrafi delle CONDIZIONI GENERALI contengono alcune previsioni vessatorie, tra cui i punti di seguito elencati e che pertanto, dovrà accettarle espressamente in sede di iscrizione, ai sensi degli articoli 1341 e 1342 del Codice Civile:
+                    </p>
+                    <p>
+                      2. Conclusione Del Contratto; 3. I Servizi di LovableConnect (in particolare, 3.2, 3.3, 3.4, 3.5, 3.6, 3.11, 3.12, 3.13 e 3.14); 4. Dichiarazioni e Garanzie dell'utente; 5. Responsabilità; 8. Durata e Sopravvivenza di Clausole; 9. Recesso; 10. Risoluzione; 11. Legge Applicabile e Foro Competente; 12. Modifiche.
+                    </p>
+                    <p className="italic">
+                      L'Utente è invitato a leggere attentamente le predette clausole prima di concludere la Registrazione sul Sito/download della App, rinunciando a qualsivoglia pretesa in merito alle stesse, anche a titolo di rimborso o risarcitorio.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">15. SICUREZZA E PRIVACY</h3>
+                    
+                    <h4 className="font-semibold mt-4">Pensi che il tuo account sia stato compromesso?</h4>
+                    <p>
+                      Se noti attività sospette sul tuo account, come messaggi che non hai inviato o foto che non hai caricato, ci sono alcune cose che puoi fare per assicurarti che il tuo account sia sicuro.
+                    </p>
+                    
+                    <p className="font-semibold">Accesso con Facebook Login</p>
+                    <p>
+                      Se pensi che qualcuno abbia effettuato un accesso non autorizzato al tuo account Facebook, visita il Centro assistenza di Facebook per un supporto immediato e diretto, oppure contatta il nostro customer care.
+                    </p>
+                    
+                    <p className="font-semibold">Accesso tramite Login con E-mail e Password</p>
+                    <p>
+                      Per mantenere il tuo account al sicuro, ti consigliamo vivamente di non condividere mai questi le credenziali di accesso con nessuno in caso tu ritenga che il tuo account sia stato compromesso contattaci subito.
+                    </p>
+                    
+                    <h4 className="font-semibold mt-4">Vuoi segnalare un disservizio o una vulnerabilità del Sito/App?</h4>
+                    <p>
+                      Per qualsiasi tipo di segnalazione relativa a possibili disservizi/malfunzionamenti e vulnerabilità del Sito/App puoi contattare il nostro customer care.
+                    </p>
+                    <p>
+                      Per qualsiasi tipo di segnalazione relativa alla vulnerabilità e alla protezione dei tuoi dati puoi fare riferimento alla nostra Privacy Policy o contattarci immediatamente.
                     </p>
                   </div>
                 </div>
