@@ -287,7 +287,7 @@ const Dashboard = () => {
         <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-white to-pink-50/50 dark:from-gray-900 dark:to-pink-950/20 animate-fade-in" style={{ animationDelay: '0.4s' }}>
           {/* Card Background */}
           <div 
-            className="absolute inset-0 opacity-5 dark:opacity-10" 
+            className="absolute inset-0 opacity-5 dark:opacity-10 pointer-events-none" 
             style={{
               backgroundImage: 'url(/images/love-background.png)',
               backgroundSize: 'cover',
@@ -309,7 +309,7 @@ const Dashboard = () => {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="pt-6 pb-8">
+          <CardContent className="pt-6 pb-8 relative z-10">
             <div className="grid md:grid-cols-2 gap-4">
               <Button 
                 className="h-16 text-lg font-semibold bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] group" 
