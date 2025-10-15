@@ -10,19 +10,16 @@ const CookieBanner = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   useEffect(() => {
-    // Check if user has already given consent
     const consent = localStorage.getItem("cookieConsent");
     if (!consent) {
-      // Small delay for animation
       setTimeout(() => setIsVisible(true), 500);
     }
   }, []);
 
   const handleConsent = (accepted: boolean) => {
-    if (accepted && !termsAccepted && isExpanded) {
-      return; // Don't allow consent without accepting terms when expanded
+    if (accepted && isExpanded && !termsAccepted) {
+      return;
     }
-
     localStorage.setItem("cookieConsent", accepted ? "accepted" : "rejected");
     setIsVisible(false);
   };
@@ -30,8 +27,8 @@ const CookieBanner = () => {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 p-4 animate-slide-in-bottom">
-      <div className="max-w-4xl mx-auto">
+    <div className="fixed inset-x-0 bottom-0 z-50 p-4 animate-slide-in-bottom pointer-events-none">
+      <div className="max-w-4xl mx-auto pointer-events-auto">
         <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
           <div className="p-6 md:p-8">
             <div className="flex items-start gap-4">
@@ -52,7 +49,6 @@ const CookieBanner = () => {
                   </p>
                 </div>
 
-                {/* Links */}
                 <div className="flex flex-wrap gap-3 text-sm">
                   <Link 
                     to="/terms" 
@@ -76,7 +72,6 @@ const CookieBanner = () => {
                   </Link>
                 </div>
 
-                {/* Expandable Section */}
                 <div className="border-t border-white/20 pt-4">
                   <button
                     onClick={() => setIsExpanded(!isExpanded)}
@@ -128,7 +123,7 @@ const CookieBanner = () => {
                         </div>
                       </div>
 
-                      {isExpanded && !termsAccepted && (
+                      {!termsAccepted && (
                         <p className="text-xs text-pink-200 animate-fade-in">
                           ⚠️ Devi accettare i termini per poter continuare
                         </p>
@@ -137,7 +132,6 @@ const CookieBanner = () => {
                   )}
                 </div>
 
-                {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3 pt-2">
                   <Button
                     onClick={() => handleConsent(true)}
