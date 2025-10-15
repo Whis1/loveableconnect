@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Send, ImagePlus } from "lucide-react";
+import { ArrowLeft, Send, Paperclip } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { GifPicker } from "@/components/chat/GifPicker";
@@ -340,7 +340,7 @@ const Chat = () => {
                   disabled={uploading}
                   className="shrink-0"
                 >
-                  <ImagePlus className="h-5 w-5" />
+                  <Paperclip className="h-5 w-5" />
                 </Button>
                 <EmojiPicker onEmojiSelect={handleEmojiSelect} />
                 <GifPicker onGifSelect={handleGifSelect} />
