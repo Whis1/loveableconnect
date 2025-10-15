@@ -13,6 +13,7 @@ import { Heart } from "lucide-react";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguageDetection } from "@/hooks/useLanguageDetection";
+import { CookieBanner } from "@/components/CookieBanner";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -29,8 +30,15 @@ const Auth = () => {
   const [gender, setGender] = useState("");
   const [relationshipStatus, setRelationshipStatus] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showCookieBanner, setShowCookieBanner] = useState(false);
 
   useEffect(() => {
+    // Check cookie consent
+    const cookieConsent = localStorage.getItem("cookieConsent");
+    if (!cookieConsent) {
+      setShowCookieBanner(true);
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         navigate("/");
@@ -191,7 +199,9 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-950 dark:via-purple-950 dark:to-indigo-950">
+    <>
+      {showCookieBanner && <CookieBanner onConsent={() => setShowCookieBanner(false)} />}
+      <div className="min-h-screen flex items-center justify-center p-4 relative bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-950 dark:via-purple-950 dark:to-indigo-950">
       {/* Background Image */}
       <div 
         className="fixed inset-0 z-0 opacity-20 dark:opacity-30" 
@@ -392,7 +402,8 @@ const Auth = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </>
   );
 };
 

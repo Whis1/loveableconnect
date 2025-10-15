@@ -1,78 +1,106 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
-import { X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, Cookie } from "lucide-react";
 
-export const CookieBanner = () => {
-  const [showBanner, setShowBanner] = useState(false);
-  const navigate = useNavigate();
+interface CookieBannerProps {
+  onConsent: () => void;
+}
 
-  useEffect(() => {
-    // Check if user has already made a choice
-    const cookieConsent = localStorage.getItem("cookieConsent");
-    if (!cookieConsent) {
-      // Show banner after a short delay
-      setTimeout(() => setShowBanner(true), 1000);
+export const CookieBanner = ({ onConsent }: CookieBannerProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+  const handleConsent = () => {
+    if (!agreedToTerms) {
+      return; // Non permettere di procedere senza accettare i termini
     }
-  }, []);
-
-  const handleAccept = () => {
     localStorage.setItem("cookieConsent", "accepted");
-    setShowBanner(false);
+    onConsent();
   };
-
-  const handleReject = () => {
-    localStorage.setItem("cookieConsent", "rejected");
-    setShowBanner(false);
-  };
-
-  const handleClose = () => {
-    setShowBanner(false);
-  };
-
-  if (!showBanner) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 animate-slide-in-bottom">
-      <Card className="max-w-4xl mx-auto relative bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-2 border-primary/20 shadow-2xl">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 h-8 w-8"
-          onClick={handleClose}
-        >
-          <X className="h-4 w-4" />
-        </Button>
-        
-        <div className="p-6 pr-12">
-          <h3 className="text-lg font-bold mb-2">🍪 Utilizzo dei Cookie</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Utilizziamo cookie tecnici necessari per il funzionamento del sito e cookie analitici per migliorare la tua esperienza. 
-            Accettando, acconsenti all'uso di tutti i cookie. Puoi rifiutare i cookie non essenziali.{" "}
-            <button
-              onClick={() => navigate("/terms")}
-              className="text-primary hover:underline font-medium"
-            >
-              Leggi la Cookie Policy
-            </button>
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button
-              onClick={handleAccept}
-              className="flex-1 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
-            >
-              Accetta tutti
-            </Button>
-            <Button
-              onClick={handleReject}
-              variant="outline"
-              className="flex-1"
-            >
-              Rifiuta non essenziali
-            </Button>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end justify-center p-4 animate-fade-in">
+      <Card className="w-full max-w-2xl bg-gradient-to-br from-white via-pink-50/30 to-purple-50/30 dark:from-gray-900 dark:via-pink-950/20 dark:to-purple-950/20 border-2 border-pink-200 dark:border-pink-800 shadow-2xl animate-slide-in-bottom">
+        <div className="p-6 space-y-4">
+          {/* Header con icona */}
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl shadow-lg">
+              <Cookie className="h-6 w-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                Consenso Cookie
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Utilizziamo cookie tecnici necessari per il funzionamento del sito e cookie analitici per migliorare la tua esperienza. 
+                Per continuare, è necessario accettare i nostri{" "}
+                <a 
+                  href="/terms" 
+                  target="_blank"
+                  className="text-primary hover:underline font-semibold"
+                >
+                  Termini di Servizio e Privacy Policy
+                </a>.
+              </p>
+            </div>
           </div>
+
+          {/* Collapsible per checkbox termini */}
+          <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+            <CollapsibleTrigger className="flex items-center gap-2 w-full p-3 rounded-lg hover:bg-accent/50 transition-colors group">
+              <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+              <span className="text-sm font-medium group-hover:text-primary">
+                Dichiarazione di accettazione (richiesta)
+              </span>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3 px-3 pb-1">
+              <div className="flex items-start gap-3 p-4 bg-accent/30 rounded-lg border border-border">
+                <Checkbox
+                  id="terms"
+                  checked={agreedToTerms}
+                  onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
+                  className="mt-1"
+                />
+                <label
+                  htmlFor="terms"
+                  className="text-sm leading-relaxed cursor-pointer flex-1"
+                >
+                  Dichiaro di aver letto e accettato i{" "}
+                  <a 
+                    href="/terms" 
+                    target="_blank"
+                    className="text-primary hover:underline font-semibold"
+                  >
+                    Termini di Servizio
+                  </a>{" "}
+                  e l'{" "}
+                  <a 
+                    href="/terms" 
+                    target="_blank"
+                    className="text-primary hover:underline font-semibold"
+                  >
+                    Informativa sulla Privacy
+                  </a>.
+                </label>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Pulsante Consenti */}
+          <Button
+            onClick={handleConsent}
+            disabled={!agreedToTerms}
+            className="w-full h-12 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg font-semibold text-base"
+          >
+            {agreedToTerms ? "✓ Consenti e Continua" : "Accetta i termini per continuare"}
+          </Button>
+
+          <p className="text-xs text-center text-muted-foreground">
+            Il consenso verrà salvato e questo banner non apparirà più
+          </p>
         </div>
       </Card>
     </div>
