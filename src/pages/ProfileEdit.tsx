@@ -25,7 +25,6 @@ interface Profile {
   avatar_url: string | null;
   photos: string[] | null;
   looking_for: string[] | null;
-  sexual_orientation: string | null;
   relationship_type: string | null;
   gallery_private: boolean | null;
 }
@@ -237,7 +236,6 @@ const ProfileEdit = () => {
           age: profile.age,
           gender: profile.gender,
           city: profile.city,
-          sexual_orientation: profile.sexual_orientation,
           interests: interests.length > 0 ? interests : null,
           avatar_url: avatarPath,
           photos: photosPaths.length > 0 ? photosPaths : null,
@@ -469,6 +467,9 @@ const ProfileEdit = () => {
                     <SelectContent>
                       <SelectItem value="male">Uomo</SelectItem>
                       <SelectItem value="female">Donna</SelectItem>
+                      <SelectItem value="transgender">Transgender</SelectItem>
+                      <SelectItem value="transessuale">Transessuale</SelectItem>
+                      <SelectItem value="omosessuale">Omosessuale</SelectItem>
                       <SelectItem value="non-binary">Non Binario</SelectItem>
                     </SelectContent>
                   </Select>
@@ -483,26 +484,6 @@ const ProfileEdit = () => {
                     id="city"
                   />
                 </div>
-              </div>
-
-              {/* Sexual Orientation */}
-              <div className="space-y-2">
-                <Label htmlFor="orientation">{t('profile.orientation')}</Label>
-                <Select
-                  value={profile.sexual_orientation || ""}
-                  onValueChange={(value) => setProfile({ ...profile, sexual_orientation: value })}
-                >
-                  <SelectTrigger id="orientation">
-                    <SelectValue placeholder="Seleziona orientamento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="etero">Etero</SelectItem>
-                    <SelectItem value="omosessuale">Omosessuale</SelectItem>
-                    <SelectItem value="transgender">Transgender</SelectItem>
-                    <SelectItem value="transensuale">Transensuale</SelectItem>
-                    <SelectItem value="non-binario">Non Binario</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
 
               {/* Relationship Type */}
