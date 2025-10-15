@@ -48,15 +48,16 @@ const Search = () => {
   const resultsPerPage = 20;
 
   // Filtri
-  const [ageRange, setAgeRange] = useState([18, 99]);
+  const [ageRange, setAgeRange] = useState([18, 90]);
   const [distanceRange, setDistanceRange] = useState([100]);
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<"distance" | "last_active">("distance");
 
   const genderOptions = [
     { value: "male", label: "Uomo" },
     { value: "female", label: "Donna" },
-    { value: "trans", label: "Trans" },
+    { value: "transexual", label: "Transensuale" },
+    { value: "transgender", label: "Transgender" },
+    { value: "homosexual", label: "Omosessuale" },
     { value: "non-binary", label: "Non binario" },
   ];
 
@@ -181,13 +182,12 @@ const Search = () => {
             return false; // Escludi profili senza posizione se il filtro distanza è attivo
           });
 
-        // Ordina per distanza o ultima attività
-        if (sortBy === "distance") {
+        // Ordina per distanza
+        if (userLocation && locationPermission) {
           filteredProfiles.sort((a, b) => ((a as any).distance || 999999) - ((b as any).distance || 999999));
         }
-      }
-
-      if (sortBy === "last_active") {
+      } else {
+        // Se la posizione non è attiva, ordina per ultima attività
         filteredProfiles.sort((a, b) => {
           const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
           const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
@@ -214,7 +214,7 @@ const Search = () => {
   };
 
   const resetFilters = () => {
-    setAgeRange([18, 99]);
+    setAgeRange([18, 90]);
     setDistanceRange([100]);
     setSelectedGenders([]);
     setProfiles([]);
@@ -294,7 +294,7 @@ const Search = () => {
                 value={ageRange}
                 onValueChange={setAgeRange}
                 min={18}
-                max={99}
+                max={90}
                 step={1}
                 className="w-full"
               />
@@ -334,28 +334,6 @@ const Search = () => {
                     </label>
                   </div>
                 ))}
-              </div>
-            </div>
-
-            {/* Ordinamento */}
-            <div className="space-y-3">
-              <Label className="text-base font-semibold">Ordina per</Label>
-              <div className="flex gap-3">
-                <Button
-                  variant={sortBy === "distance" ? "default" : "outline"}
-                  onClick={() => setSortBy("distance")}
-                  disabled={!locationPermission}
-                  className="flex-1"
-                >
-                  Distanza
-                </Button>
-                <Button
-                  variant={sortBy === "last_active" ? "default" : "outline"}
-                  onClick={() => setSortBy("last_active")}
-                  className="flex-1"
-                >
-                  Ultimo Accesso
-                </Button>
               </div>
             </div>
 
