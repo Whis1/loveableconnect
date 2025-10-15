@@ -14,6 +14,7 @@ import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguageDetection } from "@/hooks/useLanguageDetection";
 import { CookieBanner } from "@/components/CookieBanner";
+import authHeartBg from "@/assets/auth-heart-background.png";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -216,15 +217,26 @@ const Auth = () => {
       <div className="absolute top-4 right-4 z-20">
         <LanguageSwitcher />
       </div>
-      <Card className="w-full max-w-md relative z-10 backdrop-blur-sm bg-white/95 dark:bg-gray-900/95 shadow-2xl">
-        <CardHeader className="text-center">
+      <Card className="w-full max-w-md relative z-10 backdrop-blur-sm bg-white/95 dark:bg-gray-900/95 shadow-2xl overflow-hidden">
+        {/* Background decorative image */}
+        <div 
+          className="absolute top-0 right-0 w-48 h-48 opacity-20 dark:opacity-30 pointer-events-none"
+          style={{
+            backgroundImage: `url(${authHeartBg})`,
+            backgroundSize: 'contain',
+            backgroundPosition: 'top right',
+            backgroundRepeat: 'no-repeat',
+          }}
+        />
+        
+        <CardHeader className="text-center relative z-10">
           <div className="flex justify-center mb-4">
             <Heart className="h-12 w-12 text-pink-500" />
           </div>
           <CardTitle className="text-3xl font-bold">{t('app.name')}</CardTitle>
           <CardDescription>{t('app.tagline')}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative z-10">
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">{t('auth.signin')}</TabsTrigger>
