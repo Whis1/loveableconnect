@@ -228,7 +228,7 @@ const Chat = () => {
   };
 
   const handleEmojiSelect = (emoji: string) => {
-    handleSendMessage(undefined, 'emoji', null, emoji);
+    setNewMessage((prev) => prev + emoji);
   };
 
   const handleGifSelect = (gifUrl: string) => {
