@@ -158,10 +158,10 @@ const ProfileEdit = () => {
   };
 
   const handleAddInterest = (interest: string) => {
-    if (interests.length >= 8) {
+    if (interests.length >= 6) {
       toast({
         title: "Limite raggiunto",
-        description: "Puoi aggiungere massimo 8 interessi",
+        description: "Puoi aggiungere massimo 6 interessi",
         variant: "destructive",
       });
       return;
