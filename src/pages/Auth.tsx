@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Heart } from "lucide-react";
@@ -27,8 +26,7 @@ const Auth = () => {
   const [nickname, setNickname] = useState("");
   const [age, setAge] = useState("");
   const [city, setCity] = useState("");
-  const [gender, setGender] = useState<"uomo" | "donna">("uomo");
-  const [sexualOrientation, setSexualOrientation] = useState("");
+  const [gender, setGender] = useState("");
   const [relationshipStatus, setRelationshipStatus] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
@@ -51,7 +49,7 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password || !nickname || !age || !city || !sexualOrientation || !relationshipStatus) {
+    if (!email || !password || !nickname || !age || !city || !gender || !relationshipStatus) {
       toast({
         title: t('auth.errorSignUp'),
         description: t('auth.errorAllFields'),
@@ -97,7 +95,6 @@ const Auth = () => {
             age: ageNum,
             city,
             gender,
-            sexual_orientation: sexualOrientation,
             relationship_status: relationshipStatus,
           }] as any);
 
@@ -326,32 +323,20 @@ const Auth = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t('profile.gender')}</Label>
-                  <RadioGroup value={gender} onValueChange={(value: any) => setGender(value)}>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="uomo" id="uomo" />
-                      <Label htmlFor="uomo" className="cursor-pointer">{t('profile.male')}</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="donna" id="donna" />
-                      <Label htmlFor="donna" className="cursor-pointer">{t('profile.female')}</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="non-binario" id="non-binario" />
-                      <Label htmlFor="non-binario" className="cursor-pointer">{t('profile.nonBinary')}</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-orientation">{t('profile.orientation')}</Label>
-                  <Input
-                    id="signup-orientation"
-                    type="text"
-                    placeholder={t('profile.orientationPlaceholder')}
-                    value={sexualOrientation}
-                    onChange={(e) => setSexualOrientation(e.target.value)}
-                    required
-                  />
+                  <Label htmlFor="signup-gender">{t('profile.gender')}</Label>
+                  <Select value={gender} onValueChange={setGender} required>
+                    <SelectTrigger id="signup-gender" className="w-full">
+                      <SelectValue placeholder="Seleziona il tuo genere" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      <SelectItem value="male">Uomo</SelectItem>
+                      <SelectItem value="female">Donna</SelectItem>
+                      <SelectItem value="transgender">Transgender</SelectItem>
+                      <SelectItem value="transessuale">Transessuale</SelectItem>
+                      <SelectItem value="omosessuale">Omosessuale</SelectItem>
+                      <SelectItem value="non-binary">Non Binario</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-relationship">{t('profile.relationshipStatus')}</Label>

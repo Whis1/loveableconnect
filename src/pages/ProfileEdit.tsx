@@ -26,6 +26,7 @@ interface Profile {
   photos: string[] | null;
   looking_for: string[] | null;
   relationship_type: string | null;
+  relationship_status: string | null;
   gallery_private: boolean | null;
 }
 
@@ -241,6 +242,7 @@ const ProfileEdit = () => {
           photos: photosPaths.length > 0 ? photosPaths : null,
           looking_for: lookingFor.length > 0 ? lookingFor : null,
           relationship_type: profile.relationship_type,
+          relationship_status: profile.relationship_status,
           gallery_private: profile.gallery_private,
         })
         .eq("id", profile.id);
@@ -502,6 +504,27 @@ const ProfileEdit = () => {
                     <SelectItem value="friendship">Amicizia</SelectItem>
                     <SelectItem value="not-sure">Non lo so ancora</SelectItem>
                     <SelectItem value="prefer-not-say">Preferisco non dirlo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Relationship Status */}
+              <div className="space-y-2">
+                <Label htmlFor="relationship-status">Stato relazionale</Label>
+                <Select
+                  value={profile.relationship_status || ""}
+                  onValueChange={(value) => setProfile({ ...profile, relationship_status: value })}
+                >
+                  <SelectTrigger id="relationship-status">
+                    <SelectValue placeholder="Seleziona il tuo stato" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="single">Single</SelectItem>
+                    <SelectItem value="sposato">Sposato</SelectItem>
+                    <SelectItem value="divorziato">Divorziato</SelectItem>
+                    <SelectItem value="vedovo">Vedovo</SelectItem>
+                    <SelectItem value="preferisco_non_dirlo">Preferisco non dirlo</SelectItem>
+                    <SelectItem value="scoprilo">Scoprilo</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
