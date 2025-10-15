@@ -73,5 +73,11 @@
     "privacy": "Privacy",
     "termsAndConditions": "Terms and Conditions",
     "cookies": "Cookies"
+  },
+  "cookies": {
+    "title": "Cookie Usage",
+    "description": "We use technical cookies necessary for the site to function and analytics cookies to improve your experience. By clicking \"Accept and Continue\", you accept our",
+    "readPolicy": "Terms of Service and Privacy Policy",
+    "acceptButton": "Accept and Continue"
   }
 }

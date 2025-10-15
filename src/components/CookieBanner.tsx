@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Cookie } from "lucide-react";
@@ -7,6 +8,8 @@ interface CookieBannerProps {
 }
 
 export const CookieBanner = ({ onConsent }: CookieBannerProps) => {
+  const { t } = useTranslation();
+
   const handleConsent = () => {
     localStorage.setItem("cookieConsent", "accepted");
     onConsent();
@@ -22,17 +25,16 @@ export const CookieBanner = ({ onConsent }: CookieBannerProps) => {
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent mb-2">
-                🍪 Utilizzo dei Cookie
+                🍪 {t('cookies.title')}
               </h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Utilizziamo cookie tecnici necessari per il funzionamento del sito e cookie analitici per migliorare la tua esperienza. 
-                Cliccando "Consenti e Continua", accetti i nostri{" "}
+                {t('cookies.description')}{" "}
                 <a 
                   href="/terms" 
                   target="_blank"
                   className="text-primary hover:underline font-semibold"
                 >
-                  Termini di Servizio e Privacy Policy
+                  {t('cookies.readPolicy')}
                 </a>.
               </p>
             </div>
@@ -42,7 +44,7 @@ export const CookieBanner = ({ onConsent }: CookieBannerProps) => {
             onClick={handleConsent}
             className="w-full h-11 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 shadow-lg font-semibold"
           >
-            ✓ Consenti e Continua
+            ✓ {t('cookies.acceptButton')}
           </Button>
         </div>
       </Card>

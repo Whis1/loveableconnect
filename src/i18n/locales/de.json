@@ -73,5 +73,11 @@
     "privacy": "Datenschutz",
     "termsAndConditions": "Allgemeine Geschäftsbedingungen",
     "cookies": "Cookies"
+  },
+  "cookies": {
+    "title": "Cookie-Nutzung",
+    "description": "Wir verwenden technische Cookies, die für den Betrieb der Website erforderlich sind, und Analyse-Cookies, um Ihr Erlebnis zu verbessern. Durch Klicken auf \"Akzeptieren und Fortfahren\" akzeptieren Sie unsere",
+    "readPolicy": "Nutzungsbedingungen und Datenschutzrichtlinie",
+    "acceptButton": "Akzeptieren und Fortfahren"
   }
 }
