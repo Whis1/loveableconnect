@@ -31,11 +31,10 @@ export const ProfileCreator = () => {
 
     setLoading(true);
     try {
-      // Genera un ID casuale per il profilo admin (non legato ad auth)
       const profileId = crypto.randomUUID();
+      console.log("Creating profile with ID:", profileId);
 
-      // Create profile direttamente (senza account auth)
-      const { error: profileError } = await supabase.from("profiles").insert({
+      const { data, error: profileError } = await supabase.from("profiles").insert({
         id: profileId,
         nickname: formData.nickname,
         full_name: formData.full_name,
@@ -43,16 +42,20 @@ export const ProfileCreator = () => {
         bio: formData.bio || null,
         city: formData.city || null,
         is_admin_profile: true,
-      });
+      }).select();
 
-      if (profileError) throw profileError;
+      console.log("Insert result:", { data, error: profileError });
+
+      if (profileError) {
+        console.error("Profile creation error:", profileError);
+        throw profileError;
+      }
 
       toast({
         title: "Profilo creato",
         description: `Profilo ${formData.nickname} creato con successo`,
       });
 
-      // Reset form
       setFormData({
         nickname: "",
         full_name: "",
@@ -61,13 +64,12 @@ export const ProfileCreator = () => {
         city: "",
       });
 
-      // Ricarica la pagina per mostrare il nuovo profilo
-      window.location.reload();
+      setTimeout(() => window.location.reload(), 1000);
     } catch (error: any) {
       console.error("Error creating profile:", error);
       toast({
         title: "Errore",
-        description: error.message,
+        description: error.message || "Errore durante la creazione del profilo",
         variant: "destructive",
       });
     } finally {
