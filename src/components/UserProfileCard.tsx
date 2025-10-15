@@ -67,8 +67,7 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
           
           <div className="space-y-2 w-full">
             <div>
-              <h2 className="text-2xl font-bold">{profile.nickname}</h2>
-              <p className="text-muted-foreground">{profile.full_name}</p>
+              <h2 className="text-2xl font-bold text-foreground">{profile.nickname}</h2>
               {profile.age && (
                 <p className="text-sm text-muted-foreground">{profile.age} {t("userProfile.years")}</p>
               )}
