@@ -125,7 +125,34 @@
       "title": "🎉 إنه تطابق!",
       "description": "لقد تطابقت مع {{name}}!"
     },
-    "error": "خطأ"
+    "error": "خطأ",
+    "geolocation": {
+      "permissionTitle": "ابحث عن أشخاص قريبين منك",
+      "permissionDescription": "لاستخدام فلتر المسافة، نحتاج إلى موقعك. نستخدمه فقط لإظهار الأشخاص القريبين منك.",
+      "activateButton": "تفعيل تحديد الموقع الجغرافي",
+      "active": "تحديد الموقع الجغرافي نشط",
+      "acquired": "تم الحصول على الموقع",
+      "acquiredDescription": "يمكنك الآن التصفية حسب المسافة!",
+      "error": "خطأ في تحديد الموقع الجغرافي",
+      "errorDescription": "لم نتمكن من الحصول على موقعك.",
+      "notSupported": "تحديد الموقع الجغرافي غير مدعوم",
+      "notSupportedDescription": "متصفحك لا يدعم تحديد الموقع الجغرافي."
+    },
+    "ageRange": "العمر: {{min}} - {{max}} سنة",
+    "distanceRange": "المسافة: {{min}} - {{max}} كم",
+    "genderLabel": "يبحث عن",
+    "applyFilters": "تطبيق الفلاتر",
+    "resetFilters": "إعادة تعيين",
+    "filtersApplied": "تم تطبيق الفلاتر",
+    "profilesFound": "تم العثور على {{count}} ملف تعريف",
+    "genders": {
+      "male": "رجل",
+      "female": "امرأة",
+      "transexual": "متحول جنسياً",
+      "transgender": "متحول جندرياً",
+      "homosexual": "مثلي",
+      "nonBinary": "غير ثنائي"
+    }
   },
   "search": {
     "title": "بحث متقدم",

@@ -137,7 +137,34 @@
       "title": "🎉 C'est un Match !",
       "description": "Vous avez matché avec {{name}} !"
     },
-    "error": "Erreur"
+    "error": "Erreur",
+    "geolocation": {
+      "permissionTitle": "Trouvez des personnes près de chez vous",
+      "permissionDescription": "Pour utiliser le filtre de distance, nous avons besoin de votre position. Nous l'utilisons uniquement pour vous montrer des personnes à proximité.",
+      "activateButton": "Activer la Géolocalisation",
+      "active": "Géolocalisation active",
+      "acquired": "Position acquise",
+      "acquiredDescription": "Vous pouvez maintenant filtrer par distance !",
+      "error": "Erreur de géolocalisation",
+      "errorDescription": "Impossible d'obtenir votre position.",
+      "notSupported": "Géolocalisation non prise en charge",
+      "notSupportedDescription": "Votre navigateur ne prend pas en charge la géolocalisation."
+    },
+    "ageRange": "Âge : {{min}} - {{max}} ans",
+    "distanceRange": "Distance : {{min}} - {{max}} km",
+    "genderLabel": "Recherche",
+    "applyFilters": "Appliquer les Filtres",
+    "resetFilters": "Réinitialiser",
+    "filtersApplied": "Filtres appliqués",
+    "profilesFound": "{{count}} profils trouvés",
+    "genders": {
+      "male": "Homme",
+      "female": "Femme",
+      "transexual": "Transexuel",
+      "transgender": "Transgenre",
+      "homosexual": "Homosexuel",
+      "nonBinary": "Non binaire"
+    }
   },
   "search": {
     "title": "Recherche Avancée",
