@@ -151,7 +151,7 @@
       "notSupportedDescription": "Il tuo browser non supporta la geolocalizzazione."
     },
     "ageRange": "Età: {{min}} - {{max}} anni",
-    "distanceValue": "Distanza massima: {{distance}} km",
+    "distanceRange": "Distanza: {{min}} - {{max}} km",
     "genderLabel": "Genere cercato",
     "applyFilters": "Applica Filtri",
     "resetFilters": "Reset",

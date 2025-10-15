@@ -53,7 +53,7 @@ const Explore = () => {
   const [locationPermission, setLocationPermission] = useState<boolean>(false);
   
   const [ageRange, setAgeRange] = useState([18, 90]);
-  const [distanceRange, setDistanceRange] = useState([100]);
+  const [distanceRange, setDistanceRange] = useState([1, 100]);
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
 
   const genderOptions = [
@@ -227,7 +227,8 @@ const Explore = () => {
         })
         .filter(profile => {
           if ((profile as any).distance !== undefined) {
-            return (profile as any).distance <= distanceRange[0];
+            const distance = (profile as any).distance;
+            return distance >= distanceRange[0] && distance <= distanceRange[1];
           }
           return false;
         });
@@ -253,7 +254,7 @@ const Explore = () => {
 
   const resetFilters = () => {
     setAgeRange([18, 90]);
-    setDistanceRange([100]);
+    setDistanceRange([1, 100]);
     setSelectedGenders([]);
     setProfiles(allProfiles);
     setCurrentIndex(0);
@@ -383,7 +384,7 @@ const Explore = () => {
               {/* Filtro Distanza */}
               {locationPermission && (
                 <div className="space-y-3">
-                  <Label className="text-base font-semibold">{t("explore.distanceValue", { distance: distanceRange[0] })}</Label>
+                  <Label className="text-base font-semibold">{t("explore.distanceRange", { min: distanceRange[0], max: distanceRange[1] })}</Label>
                   <Slider
                     value={distanceRange}
                     onValueChange={setDistanceRange}
