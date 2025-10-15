@@ -180,7 +180,7 @@ export const RecentMessages = ({ currentUserId }: RecentMessagesProps) => {
             </p>
             <Button 
               className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold text-sm"
-              onClick={() => navigate("/matches")}
+              onClick={() => navigate("/messages")}
             >
               {t("dashboard.seeYourMessages")}
               <Send className="h-3.5 w-3.5 ml-2" />
@@ -220,7 +220,7 @@ export const RecentMessages = ({ currentUserId }: RecentMessagesProps) => {
             ))}
             <Button 
               className="w-full mt-1 bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold text-sm py-2"
-              onClick={() => navigate("/matches")}
+              onClick={() => navigate("/messages")}
             >
               {t("dashboard.seeAllMessages")}
               <MessageCircle className="h-3.5 w-3.5 ml-2" />
