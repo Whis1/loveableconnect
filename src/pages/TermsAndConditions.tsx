@@ -380,11 +380,129 @@ const TermsAndConditions = () => {
                 </div>
               </TabsContent>
 
-              <TabsContent value="cookies" className="space-y-4 mt-6">
-                <h2 className="text-xl font-semibold">Politica sui Cookie</h2>
-                <p className="text-muted-foreground">
-                  Contenuto della politica sui cookie sarà inserito qui.
-                </p>
+              <TabsContent value="cookies" className="space-y-6 mt-6 text-sm max-h-[600px] overflow-y-auto">
+                <div className="space-y-4">
+                  <h2 className="text-2xl font-bold">Cookie Policy di LovableConnect</h2>
+                  <p className="text-sm text-muted-foreground">Ultimo aggiornamento: 15/10/2025</p>
+                  
+                  <p>
+                    Questa Cookie Policy ha lo scopo di spiegarti quali cookie e strumenti simili (tracciatori) utilizziamo, a quali fini, come puoi gestirli e come esercitare i tuoi diritti in merito.
+                  </p>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">1. Cosa sono i cookie</h3>
+                    <p>
+                      I cookie sono piccoli file di testo che un sito invia al browser del tuo dispositivo, dove vengono memorizzati per essere poi ritrasmessi allo stesso sito alla tua visita successiva. Esistono cookie "propri" (o di prima parte), impostati direttamente dal Sito, e cookie di "terze parti", impostati da domini esterni per funzioni aggiuntive (es. analisi, pubblicità, social).
+                    </p>
+                    <p>I cookie possono essere:</p>
+                    <ul className="list-disc list-inside pl-4 space-y-1">
+                      <li><strong>di sessione:</strong> eliminati alla chiusura del browser;</li>
+                      <li><strong>persistenti:</strong> restano nel dispositivo per un periodo prestabilito.</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">2. Tipologie di cookie utilizzati</h3>
+                    <p>LovableConnect utilizza varie tipologie di cookie, con funzioni differenti:</p>
+                    
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse border border-border">
+                        <thead>
+                          <tr className="bg-muted">
+                            <th className="border border-border p-2 text-left">Categoria</th>
+                            <th className="border border-border p-2 text-left">Tipologia</th>
+                            <th className="border border-border p-2 text-left">Finalità</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td className="border border-border p-2">Cookie tecnici / necessari</td>
+                            <td className="border border-border p-2">di prima parte</td>
+                            <td className="border border-border p-2">Servono per il funzionamento essenziale del sito: login, navigazione, salvataggio preferenze base (es. lingua), gestione sessioni. Senza questi il sito potrebbe non funzionare correttamente.</td>
+                          </tr>
+                          <tr>
+                            <td className="border border-border p-2">Cookie di preferenza / funzionalità</td>
+                            <td className="border border-border p-2">di prima parte</td>
+                            <td className="border border-border p-2">Permettono di memorizzare le tue preferenze (es. lingua, tema, visualizzazione schermata) per rendere più facile e comoda la navigazione.</td>
+                          </tr>
+                          <tr>
+                            <td className="border border-border p-2">Cookie analitici / statistiche</td>
+                            <td className="border border-border p-2">di terze parti (in alcuni casi)</td>
+                            <td className="border border-border p-2">Raccogliere dati aggregati sull'uso del sito: quante persone visitano, quali pagine sono più usate, da dove arrivano gli utenti, ecc. Dati anonimi, non identificativi delle persone.</td>
+                          </tr>
+                          <tr>
+                            <td className="border border-border p-2">Cookie di profilazione / pubblicità</td>
+                            <td className="border border-border p-2">di terze parti</td>
+                            <td className="border border-border p-2">Utilizzati per mostrarti contenuti o pubblicità che potrebbero interessarti in base al tuo comportamento di navigazione o preferenze. Si attivano solo con il tuo consenso esplicito.</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">3. Quali cookie specifici usiamo (esempi)</h3>
+                    <p>Esempi di cookie che potrebbero essere presenti (dipende dalle tecnologie che deciderai di usare):</p>
+                    <ul className="list-disc list-inside pl-4 space-y-2">
+                      <li><strong>"session_id"</strong> — cookie tecnico di sessione per identificarti mentre navighi.</li>
+                      <li><strong>"lang_pref"</strong> — cookie preferenza lingua.</li>
+                      <li><strong>"analytics_tracker"</strong> — cookie analitico di terze parti (per esempio Google Analytics) per comprendere come usi il sito.</li>
+                      <li><strong>"ads_profile"</strong> — cookie di profilazione per personalizzare pubblicità (solo se acconsenti).</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">4. Gestione del consenso</h3>
+                    <p>
+                      Al primo accesso al Sito comparirà un banner che ti informa dell'uso dei cookie. Potrai accettare tutti i cookie, negare quelli non necessari o gestire le preferenze.
+                    </p>
+                    <p>
+                      Le tue scelte saranno memorizzate tramite un cookie tecnico che ricorda la preferenza.
+                    </p>
+                    <p>
+                      Se cambi idea, puoi modificare le tue preferenze in qualsiasi momento tramite il link "Preferenze Cookie" nel footer del sito.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">5. Effetti della disattivazione</h3>
+                    <ul className="list-disc list-inside pl-4 space-y-2">
+                      <li>Se disattivi i cookie tecnici, alcune funzionalità potrebbero non funzionare: login, salvataggio preferenze, aree riservate, ecc.</li>
+                      <li>Se disattivi cookie analitici o di profilazione, non saranno raccolti dati di quel tipo su di te, ma il sito rimarrà accessibile.</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">6. Durata dei cookie</h3>
+                    <p>
+                      I cookie tecnici generalmente durano fino alla fine della sessione o per pochi giorni. I cookie persistenti possono restare nel dispositivo per qualche mese o fino al recesso della tua preferenza. I cookie di terze parti seguono le politiche dei rispettivi fornitori.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">7. Cookie di terze parti</h3>
+                    <p>Il sito potrebbe includere funzionalità fornite da terzi che usano i propri cookie, ad esempio:</p>
+                    <ul className="list-disc list-inside pl-4 space-y-1">
+                      <li>strumenti di analisi (es. Google Analytics)</li>
+                      <li>social login o pulsanti di condivisione</li>
+                      <li>pubblicità esterna (se presente)</li>
+                    </ul>
+                    <p>
+                      Prima di usare queste funzioni, ti consigliamo di leggere le policy privacy / cookie dei terzi; hai sempre il controllo su quali accettare.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">8. Diritti dell'utente</h3>
+                    <p>Hai il diritto di:</p>
+                    <ul className="list-disc list-inside pl-4 space-y-2">
+                      <li>richiedere informazioni su quali cookie usiamo;</li>
+                      <li>accettare o rifiutare cookie non necessari;</li>
+                      <li>cancellare cookie dal tuo browser;</li>
+                      <li>esercitare altri diritti relativi alla privacy (accesso, rettifica, cancellazione dei dati personali) secondo la normativa GDPR (ove applicabile).</li>
+                    </ul>
+                  </div>
+                </div>
               </TabsContent>
             </Tabs>
           </CardContent>
