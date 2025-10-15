@@ -440,12 +440,21 @@ const ProfileEdit = () => {
               {/* Sexual Orientation */}
               <div className="space-y-2">
                 <Label htmlFor="orientation">{t('profile.orientation')}</Label>
-                <Input
-                  id="orientation"
+                <Select
                   value={profile.sexual_orientation || ""}
-                  onChange={(e) => setProfile({ ...profile, sexual_orientation: e.target.value })}
-                  placeholder={t('profile.orientationPlaceholder')}
-                />
+                  onValueChange={(value) => setProfile({ ...profile, sexual_orientation: value })}
+                >
+                  <SelectTrigger id="orientation">
+                    <SelectValue placeholder="Seleziona orientamento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="etero">Etero</SelectItem>
+                    <SelectItem value="omosessuale">Omosessuale</SelectItem>
+                    <SelectItem value="transgender">Transgender</SelectItem>
+                    <SelectItem value="transensuale">Transensuale</SelectItem>
+                    <SelectItem value="non-binario">Non Binario</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Relationship Type */}
@@ -466,26 +475,6 @@ const ProfileEdit = () => {
                 </Select>
               </div>
 
-              {/* Looking For */}
-              <div className="space-y-2">
-                <Label htmlFor="looking-for">Genere che cerchi</Label>
-                <Select
-                  value={lookingFor[0] || ""}
-                  onValueChange={(value) => setLookingFor([value])}
-                >
-                  <SelectTrigger id="looking-for">
-                    <SelectValue placeholder="Seleziona genere" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male">{t('profile.male')}</SelectItem>
-                    <SelectItem value="female">{t('profile.female')}</SelectItem>
-                    <SelectItem value="non-binary">{t('profile.nonBinary')}</SelectItem>
-                    <SelectItem value="trans">{t('profile.trans')}</SelectItem>
-                    <SelectItem value="all">{t('profile.allGenders')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Bio */}
               <div className="space-y-2">
                 <Label htmlFor="bio">{t('profile.bio')}</Label>
@@ -500,7 +489,7 @@ const ProfileEdit = () => {
 
               {/* Interests */}
               <div className="space-y-2">
-                <Label htmlFor="interests">{t('profile.interests')} ({interests.length}/8)</Label>
+                <Label htmlFor="interests">{t('profile.interests')} ({interests.length}/6)</Label>
                 
                 {/* Selected Interests Tags */}
                 {interests.length > 0 && (
@@ -524,7 +513,7 @@ const ProfileEdit = () => {
                 )}
 
                 {/* Input with Suggestions */}
-                {interests.length < 8 && (
+                {interests.length < 6 && (
                   <div className="relative">
                     <Input
                       id="interests"
