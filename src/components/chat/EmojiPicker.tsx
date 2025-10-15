@@ -22,18 +22,18 @@ export const EmojiPicker = ({ onEmojiSelect }: EmojiPickerProps) => {
           <Smile className="h-5 w-5" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 max-h-96 overflow-y-auto" align="end">
-        <div className="space-y-4">
+      <PopoverContent className="w-80 p-0 bg-background border shadow-lg" align="end" sideOffset={8}>
+        <div className="max-h-96 overflow-y-auto p-4 space-y-4">
           {Object.entries(EMOJI_CATEGORIES).map(([category, emojis]) => (
             <div key={category}>
-              <h4 className="text-xs font-semibold mb-2 capitalize">{category}</h4>
-              <div className="grid grid-cols-8 gap-2">
+              <h4 className="text-xs font-semibold mb-2 capitalize text-foreground">{category}</h4>
+              <div className="grid grid-cols-8 gap-1">
                 {emojis.map((emoji) => (
                   <button
                     key={emoji}
                     type="button"
                     onClick={() => onEmojiSelect(emoji)}
-                    className="text-2xl hover:bg-accent p-2 rounded transition-colors"
+                    className="text-2xl hover:bg-accent/50 active:bg-accent p-1.5 rounded-md transition-colors flex items-center justify-center"
                   >
                     {emoji}
                   </button>

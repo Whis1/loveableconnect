@@ -69,8 +69,8 @@ export const GifPicker = ({ onGifSelect }: GifPickerProps) => {
           <Image className="h-5 w-5" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 max-h-96" align="end">
-        <div className="space-y-4">
+      <PopoverContent className="w-80 p-0 bg-background border shadow-lg" align="end" sideOffset={8}>
+        <div className="p-4 space-y-4 max-h-[500px] overflow-y-auto">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -82,7 +82,7 @@ export const GifPicker = ({ onGifSelect }: GifPickerProps) => {
           </div>
           
           <div className="space-y-2">
-            <h4 className="text-xs font-semibold">Popolari</h4>
+            <h4 className="text-xs font-semibold text-foreground">Popolari</h4>
             <div className="flex flex-wrap gap-2">
               {POPULAR_SEARCHES.map((term) => (
                 <button
@@ -98,17 +98,17 @@ export const GifPicker = ({ onGifSelect }: GifPickerProps) => {
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center h-64">
+            <div className="flex items-center justify-center h-48">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+            <div className="grid grid-cols-2 gap-2">
               {gifs.map((gif) => (
                 <button
                   key={gif.id}
                   type="button"
                   onClick={() => handleGifSelect(gif)}
-                  className="aspect-square rounded overflow-hidden hover:opacity-80 transition-opacity"
+                  className="aspect-square rounded-md overflow-hidden hover:opacity-80 transition-opacity border"
                 >
                   <img src={gif.images.fixed_height.url} alt="GIF" className="w-full h-full object-cover" />
                 </button>
