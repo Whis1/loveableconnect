@@ -369,9 +369,11 @@
   "chat": {
     "back": "Back",
     "loading": "Loading...",
+    "loadingProfile": "Loading profile...",
     "messageDeleted": "Message deleted",
     "deleteMessage": "Delete message",
     "typeMessage": "Type a message...",
+    "writeMessage": "Type a message...",
     "send": "Send",
     "error": "Error",
     "errorSendingMessage": "Unable to send message",
@@ -380,7 +382,14 @@
     "profileNotFound": "Profile not found",
     "imageSent": "Image sent",
     "success": "Success",
-    "errorUploadingImage": "Unable to upload image"
+    "errorUploadingImage": "Unable to upload image",
+    "cannotUploadImage": "Unable to upload image",
+    "cannotSendMessage": "Unable to send message",
+    "creditsInsufficient": "Insufficient credits",
+    "creditsInsuffficientDescription": "You don't have enough credits to send messages. Purchase more credits or wait for the daily automatic recharge.",
+    "years": "years",
+    "photoGallery": "Photo Gallery",
+    "photo": "Photo"
   },
   "messages": {
     "back": "Back",
@@ -464,23 +473,6 @@
     "requiredFields": "Required fields",
     "requiredFieldsDescription": "Please fill in all fields",
     "back": "Back"
-  },
-  "chat": {
-    "loading": "Loading...",
-    "loadingProfile": "Loading profile...",
-    "writeMessage": "Write a message...",
-    "creditsInsufficient": "Insufficient credits",
-    "creditsInsuffficientDescription": "You have run out of credits. Buy credits to continue chatting.",
-    "error": "Error",
-    "cannotSendMessage": "Unable to send message",
-    "success": "Success",
-    "imageSent": "Image sent",
-    "cannotUploadImage": "Unable to upload image",
-    "matchNotFound": "Match not found",
-    "profileNotFound": "Profile not found",
-    "years": "years old",
-    "photoGallery": "Photo Gallery",
-    "photo": "Photo"
   },
   "common": {
     "title": "Customer Support",

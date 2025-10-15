@@ -374,18 +374,27 @@
   "chat": {
     "back": "Indietro",
     "loading": "Caricamento...",
+    "loadingProfile": "Caricamento profilo...",
     "messageDeleted": "Messaggio eliminato",
     "deleteMessage": "Elimina messaggio",
     "typeMessage": "Scrivi un messaggio...",
+    "writeMessage": "Scrivi un messaggio...",
     "send": "Invia",
     "error": "Errore",
     "errorSendingMessage": "Impossibile inviare il messaggio",
     "errorDeletingMessage": "Impossibile eliminare il messaggio",
     "matchNotFound": "Match non trovato",
-    "profileNotFound": "Profil non trovato",
+    "profileNotFound": "Profilo non trovato",
     "imageSent": "Immagine inviata",
     "success": "Successo",
-    "errorUploadingImage": "Impossibile caricare l'immagine"
+    "errorUploadingImage": "Impossibile caricare l'immagine",
+    "cannotUploadImage": "Impossibile caricare l'immagine",
+    "cannotSendMessage": "Impossibile inviare il messaggio",
+    "creditsInsufficient": "Crediti insufficienti",
+    "creditsInsuffficientDescription": "Non hai abbastanza crediti per inviare messaggi. Acquista più crediti o attendi la ricarica automatica giornaliera.",
+    "years": "anni",
+    "photoGallery": "Galleria Foto",
+    "photo": "Foto"
   },
   "messages": {
     "back": "Indietro",
@@ -469,23 +478,6 @@
     "requiredFields": "Campi obbligatori",
     "requiredFieldsDescription": "Compila tutti i campi",
     "back": "Indietro"
-  },
-  "chat": {
-    "loading": "Caricamento...",
-    "loadingProfile": "Caricamento profilo...",
-    "writeMessage": "Scrivi un messaggio...",
-    "creditsInsufficient": "Crediti insufficienti",
-    "creditsInsuffficientDescription": "Hai esaurito i crediti. Acquista crediti per continuare a chattare.",
-    "error": "Errore",
-    "cannotSendMessage": "Impossibile inviare il messaggio",
-    "success": "Successo",
-    "imageSent": "Immagine inviata",
-    "cannotUploadImage": "Impossibile caricare l'immagine",
-    "matchNotFound": "Match non trovato",
-    "profileNotFound": "Profilo non trovato",
-    "years": "anni",
-    "photoGallery": "Galleria Foto",
-    "photo": "Foto"
   },
   "common": {
     "title": "Supporto Clienti",

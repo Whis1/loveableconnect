@@ -168,6 +168,16 @@ const Chat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Scroll to bottom on initial load
+  useEffect(() => {
+    if (!loading && messages.length > 0) {
+      // Small timeout to ensure DOM has updated
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
+  }, [loading]);
+
   const handleSendMessage = async (
     e?: React.FormEvent, 
     messageType: 'text' | 'emoji' | 'gif' | 'image' = 'text',
