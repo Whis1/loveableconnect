@@ -2,3 +2,9 @@ project_id = "tcmhvrlsaggyuukdscue"
 
 [functions.create-unlock-payment]
 verify_jwt = true
+
+[functions.detect-language]
+verify_jwt = false
+
+[functions.search-giphy]
+verify_jwt = true

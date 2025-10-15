@@ -41,18 +41,18 @@ export const GifPicker = ({ onGifSelect }: GifPickerProps) => {
         body: { searchTerm, limit: 20 }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Giphy function error:', error);
+        throw error;
+      }
       
       if (data && data.data) {
         setGifs(data.data);
       }
     } catch (error) {
       console.error('Error fetching GIFs:', error);
-      toast({
-        title: "Errore",
-        description: "Impossibile caricare le GIF",
-        variant: "destructive",
-      });
+      // Non mostrare errore all'utente, mostra solo GIF vuote
+      setGifs([]);
     } finally {
       setLoading(false);
     }
