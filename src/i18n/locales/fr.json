@@ -253,7 +253,23 @@
     "creditsInsuffficientDescription": "Vous avez épuisé vos crédits. Achetez des crédits pour continuer à discuter.",
     "years": "ans",
     "photoGallery": "Galerie de Photos",
-    "photo": "Photo"
+    "photo": "Photo",
+    "searchGif": "Rechercher GIF...",
+    "popular": "Populaire",
+    "popularSearches": {
+      "love": "amour",
+      "happy": "heureux",
+      "excited": "excité",
+      "laugh": "rire",
+      "sad": "triste",
+      "angry": "en colère",
+      "dance": "danser",
+      "party": "fête",
+      "thinking": "pensant",
+      "yes": "oui",
+      "no": "non",
+      "thanks": "merci"
+    }
   },
   "common": {
     "male": "Homme",

@@ -259,7 +259,23 @@
     "profileNotFound": "Perfil no encontrado",
     "years": "años",
     "photoGallery": "Galería de Fotos",
-    "photo": "Foto"
+    "photo": "Foto",
+    "searchGif": "Buscar GIF...",
+    "popular": "Popular",
+    "popularSearches": {
+      "love": "amor",
+      "happy": "feliz",
+      "excited": "emocionado",
+      "laugh": "reír",
+      "sad": "triste",
+      "angry": "enojado",
+      "dance": "bailar",
+      "party": "fiesta",
+      "thinking": "pensando",
+      "yes": "sí",
+      "no": "no",
+      "thanks": "gracias"
+    }
   },
   "messages": {
     "back": "Atrás",

@@ -253,7 +253,23 @@
     "creditsInsuffficientDescription": "Sie haben keine Credits mehr. Kaufen Sie Credits, um weiter zu chatten.",
     "years": "Jahre alt",
     "photoGallery": "Fotogalerie",
-    "photo": "Foto"
+    "photo": "Foto",
+    "searchGif": "GIF suchen...",
+    "popular": "Beliebt",
+    "popularSearches": {
+      "love": "liebe",
+      "happy": "glücklich",
+      "excited": "aufgeregt",
+      "laugh": "lachen",
+      "sad": "traurig",
+      "angry": "wütend",
+      "dance": "tanzen",
+      "party": "party",
+      "thinking": "denken",
+      "yes": "ja",
+      "no": "nein",
+      "thanks": "danke"
+    }
   },
   "common": {
     "male": "Mann",

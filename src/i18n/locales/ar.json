@@ -281,7 +281,23 @@
     "creditsInsuffficientDescription": "لقد نفدت أرصدتك. اشتر أرصدة لمواصلة الدردشة.",
     "years": "سنة",
     "photoGallery": "معرض الصور",
-    "photo": "صورة"
+    "photo": "صورة",
+    "searchGif": "بحث عن GIF...",
+    "popular": "شائع",
+    "popularSearches": {
+      "love": "حب",
+      "happy": "سعيد",
+      "excited": "متحمس",
+      "laugh": "يضحك",
+      "sad": "حزين",
+      "angry": "غاضب",
+      "dance": "رقص",
+      "party": "حفلة",
+      "thinking": "تفكير",
+      "yes": "نعم",
+      "no": "لا",
+      "thanks": "شكرا"
+    }
   },
   "userProfile": {
     "years": "سنة",

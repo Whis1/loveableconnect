@@ -5,11 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Image, Search, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
-const POPULAR_SEARCHES = [
-  "amore", "felice", "eccitato", "ridere", "triste", "arrabbiato", 
-  "ballare", "festa", "pensare", "sì", "no", "grazie"
-];
+import { useTranslation } from "react-i18next";
 
 interface GifPickerProps {
   onGifSelect: (gifUrl: string) => void;
@@ -26,9 +22,25 @@ interface GiphyGif {
 
 export const GifPicker = ({ onGifSelect }: GifPickerProps) => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [gifs, setGifs] = useState<GiphyGif[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const POPULAR_SEARCHES = [
+    { key: "love", term: t("chat.popularSearches.love") },
+    { key: "happy", term: t("chat.popularSearches.happy") },
+    { key: "excited", term: t("chat.popularSearches.excited") },
+    { key: "laugh", term: t("chat.popularSearches.laugh") },
+    { key: "sad", term: t("chat.popularSearches.sad") },
+    { key: "angry", term: t("chat.popularSearches.angry") },
+    { key: "dance", term: t("chat.popularSearches.dance") },
+    { key: "party", term: t("chat.popularSearches.party") },
+    { key: "thinking", term: t("chat.popularSearches.thinking") },
+    { key: "yes", term: t("chat.popularSearches.yes") },
+    { key: "no", term: t("chat.popularSearches.no") },
+    { key: "thanks", term: t("chat.popularSearches.thanks") }
+  ];
 
   useEffect(() => {
     fetchGifs(search);
@@ -74,7 +86,7 @@ export const GifPicker = ({ onGifSelect }: GifPickerProps) => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Cerca GIF..."
+              placeholder={t("chat.searchGif")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -82,16 +94,16 @@ export const GifPicker = ({ onGifSelect }: GifPickerProps) => {
           </div>
           
           <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-foreground">Popolari</h4>
+            <h4 className="text-xs font-semibold text-foreground">{t("chat.popular")}</h4>
             <div className="flex flex-wrap gap-2">
-              {POPULAR_SEARCHES.map((term) => (
+              {POPULAR_SEARCHES.map((item) => (
                 <button
-                  key={term}
+                  key={item.key}
                   type="button"
-                  onClick={() => setSearch(term)}
+                  onClick={() => setSearch(item.term)}
                   className="px-2 py-1 text-xs bg-accent hover:bg-accent/80 rounded-full transition-colors"
                 >
-                  {term}
+                  {item.term}
                 </button>
               ))}
             </div>

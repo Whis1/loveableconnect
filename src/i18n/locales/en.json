@@ -389,7 +389,23 @@
     "creditsInsuffficientDescription": "You don't have enough credits to send messages. Purchase more credits or wait for the daily automatic recharge.",
     "years": "years",
     "photoGallery": "Photo Gallery",
-    "photo": "Photo"
+    "photo": "Photo",
+    "searchGif": "Search GIF...",
+    "popular": "Popular",
+    "popularSearches": {
+      "love": "love",
+      "happy": "happy",
+      "excited": "excited",
+      "laugh": "laugh",
+      "sad": "sad",
+      "angry": "angry",
+      "dance": "dance",
+      "party": "party",
+      "thinking": "thinking",
+      "yes": "yes",
+      "no": "no",
+      "thanks": "thanks"
+    }
   },
   "messages": {
     "back": "Back",

@@ -394,7 +394,23 @@
     "creditsInsuffficientDescription": "Non hai abbastanza crediti per inviare messaggi. Acquista più crediti o attendi la ricarica automatica giornaliera.",
     "years": "anni",
     "photoGallery": "Galleria Foto",
-    "photo": "Foto"
+    "photo": "Foto",
+    "searchGif": "Cerca GIF...",
+    "popular": "Popolari",
+    "popularSearches": {
+      "love": "amore",
+      "happy": "felice",
+      "excited": "eccitato",
+      "laugh": "ridere",
+      "sad": "triste",
+      "angry": "arrabbiato",
+      "dance": "ballare",
+      "party": "festa",
+      "thinking": "pensare",
+      "yes": "sì",
+      "no": "no",
+      "thanks": "grazie"
+    }
   },
   "messages": {
     "back": "Indietro",
