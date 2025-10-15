@@ -158,6 +158,7 @@ export type Database = {
           gender: string | null
           id: string
           interests: string[] | null
+          is_admin_profile: boolean
           last_active: string | null
           latitude: number | null
           longitude: number | null
@@ -180,6 +181,7 @@ export type Database = {
           gender?: string | null
           id: string
           interests?: string[] | null
+          is_admin_profile?: boolean
           last_active?: string | null
           latitude?: number | null
           longitude?: number | null
@@ -202,6 +204,7 @@ export type Database = {
           gender?: string | null
           id?: string
           interests?: string[] | null
+          is_admin_profile?: boolean
           last_active?: string | null
           latitude?: number | null
           longitude?: number | null

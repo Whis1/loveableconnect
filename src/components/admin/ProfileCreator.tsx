@@ -50,6 +50,7 @@ export const ProfileCreator = () => {
         age: formData.age ? parseInt(formData.age) : null,
         bio: formData.bio || null,
         city: formData.city || null,
+        is_admin_profile: true, // Flag profilo admin
       });
 
       if (profileError) throw profileError;

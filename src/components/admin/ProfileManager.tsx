@@ -55,6 +55,7 @@ export const ProfileManager = () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
+        .eq("is_admin_profile", true) // Solo profili admin
         .order("created_at", { ascending: false });
 
       if (error) throw error;
