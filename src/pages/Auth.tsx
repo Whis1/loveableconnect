@@ -14,7 +14,6 @@ import { Heart } from "lucide-react";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguageDetection } from "@/hooks/useLanguageDetection";
-import CookieBanner from "@/components/CookieBanner";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -196,7 +195,6 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-4">
-      <CookieBanner />
       <div className="absolute top-4 right-4">
         <LanguageSwitcher />
       </div>
