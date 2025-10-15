@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,9 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
   const { t } = useTranslation();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Memorizza la frase di location per non cambiarla ad ogni render
+  const locationPhrase = useMemo(() => getGenericLocationPhrase(t), [t]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -87,7 +90,7 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
 
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <MapPin className="h-4 w-4" />
-              <span>{getGenericLocationPhrase(t)}</span>
+              <span>{locationPhrase}</span>
             </div>
 
             {profile.relationship_type && (

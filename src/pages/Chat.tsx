@@ -14,6 +14,7 @@ import { ChatUserProfile } from "@/components/chat/ChatUserProfile";
 
 interface Message {
   id: string;
+  match_id: string;
   sender_id: string;
   receiver_id: string;
   content: string;
@@ -175,8 +176,25 @@ const Chat = () => {
     const messageContent = content || newMessage.trim();
     if (!messageContent || !currentUser || !otherUser || !matchId) return;
 
+    // Crea il messaggio temporaneo per mostrarlo subito
+    const tempMessage: Message = {
+      id: `temp-${Date.now()}`,
+      match_id: matchId,
+      sender_id: currentUser,
+      receiver_id: otherUser.id,
+      content: messageContent,
+      message_type: messageType,
+      media_url: mediaUrl,
+      created_at: new Date().toISOString(),
+      read: false,
+    };
+
+    // Aggiungi subito il messaggio alla lista locale
+    setMessages((prev) => [...prev, tempMessage]);
+    setNewMessage("");
+
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("messages")
         .insert({
           match_id: matchId,
@@ -185,12 +203,22 @@ const Chat = () => {
           content: messageContent,
           message_type: messageType,
           media_url: mediaUrl,
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
-      setNewMessage("");
+      // Sostituisci il messaggio temporaneo con quello reale
+      if (data) {
+        setMessages((prev) => 
+          prev.map(msg => msg.id === tempMessage.id ? data as Message : msg)
+        );
+      }
     } catch (error: any) {
+      // Rimuovi il messaggio temporaneo in caso di errore
+      setMessages((prev) => prev.filter(msg => msg.id !== tempMessage.id));
+      
       toast({
         title: "Errore",
         description: "Impossibile inviare il messaggio",
