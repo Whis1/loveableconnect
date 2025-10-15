@@ -123,7 +123,8 @@
     "support": "الدعم",
     "supportDescription": "هل تحتاج مساعدة؟",
     "sendMessage": "إرسال رسالة",
-    "contactSupport": "اتصل بفريق الدعم لدينا لأي أسئلة أو مشاكل."
+    "contactSupport": "اتصل بفريق الدعم لدينا لأي أسئلة أو مشاكل.",
+    "credits": "الأرصدة"
   },
   "common": {
     "male": "ذكر",

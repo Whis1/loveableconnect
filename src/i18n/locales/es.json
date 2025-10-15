@@ -143,7 +143,8 @@
     "support": "Soporte",
     "supportDescription": "¿Necesitas ayuda?",
     "sendMessage": "Enviar Mensaje",
-    "contactSupport": "Contacta a nuestro equipo de soporte para cualquier pregunta o problema."
+    "contactSupport": "Contacta a nuestro equipo de soporte para cualquier pregunta o problema.",
+    "credits": "Créditos"
   },
   "userProfile": {
     "years": "años",
