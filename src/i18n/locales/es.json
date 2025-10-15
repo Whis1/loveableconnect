@@ -79,5 +79,33 @@
     "description": "Utilizamos cookies técnicas necesarias para el funcionamiento del sitio y cookies analíticas para mejorar tu experiencia. Al hacer clic en \"Aceptar y Continuar\", aceptas nuestros",
     "readPolicy": "Términos de Servicio y Política de Privacidad",
     "acceptButton": "Aceptar y Continuar"
+  },
+  "dashboard": {
+    "title": "LovableConnect",
+    "tagline": "Encuentra tu alma gemela",
+    "signOut": "Cerrar sesión",
+    "loading": "Cargando...",
+    "matches": "Tus Matches",
+    "viewMatches": "Ver Matches",
+    "likesReceived": "Likes Recibidos",
+    "seeWhoLikes": "Ver Quién Te Gusta",
+    "discover": "Descubre Nuevas Personas",
+    "discoverDescription": "Comienza a explorar y encuentra tu alma gemela",
+    "exploreProfiles": "Explorar Perfiles",
+    "newMatch": "¡Nuevo Match! 🎉",
+    "newMatchDescription": "¡Tienes un nuevo match!",
+    "editProfile": "Editar Perfil",
+    "messages": "Mensajes",
+    "noMessages": "Actualmente no tienes mensajes",
+    "seeAllMessages": "Ver Todos los Mensajes",
+    "seeYourMessages": "Ver tus mensajes"
+  },
+  "common": {
+    "male": "Hombre",
+    "female": "Mujer",
+    "transexual": "Transexual",
+    "transgender": "Transgénero",
+    "homosexual": "Homosexual",
+    "nonBinary": "No binario"
   }
 }

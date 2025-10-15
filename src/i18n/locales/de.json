@@ -79,5 +79,33 @@
     "description": "Wir verwenden technische Cookies, die für den Betrieb der Website erforderlich sind, und Analyse-Cookies, um Ihr Erlebnis zu verbessern. Durch Klicken auf \"Akzeptieren und Fortfahren\" akzeptieren Sie unsere",
     "readPolicy": "Nutzungsbedingungen und Datenschutzrichtlinie",
     "acceptButton": "Akzeptieren und Fortfahren"
+  },
+  "dashboard": {
+    "title": "LovableConnect",
+    "tagline": "Finde deine Seelenverwandte",
+    "signOut": "Abmelden",
+    "loading": "Lädt...",
+    "matches": "Deine Matches",
+    "viewMatches": "Matches ansehen",
+    "likesReceived": "Erhaltene Likes",
+    "seeWhoLikes": "Siehe wer dich mag",
+    "discover": "Neue Leute entdecken",
+    "discoverDescription": "Beginne zu erkunden und finde deine Seelenverwandte",
+    "exploreProfiles": "Profile erkunden",
+    "newMatch": "Neues Match! 🎉",
+    "newMatchDescription": "Du hast ein neues Match!",
+    "editProfile": "Profil bearbeiten",
+    "messages": "Nachrichten",
+    "noMessages": "Du hast derzeit keine Nachrichten",
+    "seeAllMessages": "Alle Nachrichten ansehen",
+    "seeYourMessages": "Deine Nachrichten ansehen"
+  },
+  "common": {
+    "male": "Mann",
+    "female": "Frau",
+    "transexual": "Transsexuell",
+    "transgender": "Transgender",
+    "homosexual": "Homosexuell",
+    "nonBinary": "Nicht-binär"
   }
 }

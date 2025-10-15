@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Send } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "react-i18next";
 
 interface Message {
   id: string;
@@ -33,6 +34,7 @@ interface RecentMessagesProps {
 
 export const RecentMessages = ({ currentUserId }: RecentMessagesProps) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [matchesWithMessages, setMatchesWithMessages] = useState<MatchWithLastMessage[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -141,11 +143,11 @@ export const RecentMessages = ({ currentUserId }: RecentMessagesProps) => {
             <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
               <MessageCircle className="h-5 w-5" />
             </div>
-            <span className="font-bold">Messaggi</span>
+            <span className="font-bold">{t("dashboard.messages")}</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="relative">
-          <p className="text-white/90">Caricamento...</p>
+          <p className="text-white/90">{t("dashboard.loading")}</p>
         </CardContent>
       </Card>
     );
@@ -161,7 +163,7 @@ export const RecentMessages = ({ currentUserId }: RecentMessagesProps) => {
           <div className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm group-hover:scale-110 transition-transform">
             <MessageCircle className="h-4 w-4" />
           </div>
-          <span className="font-bold">Messaggi</span>
+          <span className="font-bold">{t("dashboard.messages")}</span>
         </CardTitle>
       </CardHeader>
       
@@ -174,13 +176,13 @@ export const RecentMessages = ({ currentUserId }: RecentMessagesProps) => {
               </div>
             </div>
             <p className="text-white text-sm font-medium mb-3">
-              Attualmente non hai nessun messaggio
+              {t("dashboard.noMessages")}
             </p>
             <Button 
               className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold text-sm"
               onClick={() => navigate("/matches")}
             >
-              Vedi i tuoi messaggi
+              {t("dashboard.seeYourMessages")}
               <Send className="h-3.5 w-3.5 ml-2" />
             </Button>
           </div>
@@ -220,7 +222,7 @@ export const RecentMessages = ({ currentUserId }: RecentMessagesProps) => {
               className="w-full mt-1 bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold text-sm py-2"
               onClick={() => navigate("/matches")}
             >
-              Vedi Tutti i Messaggi
+              {t("dashboard.seeAllMessages")}
               <MessageCircle className="h-3.5 w-3.5 ml-2" />
             </Button>
           </>

@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Heart, LogOut, Users, Sparkles, Search } from "lucide-react";
 import { UserProfileCard } from "@/components/UserProfileCard";
 import { RecentMessages } from "@/components/RecentMessages";
+import { useTranslation } from "react-i18next";
 
 interface Profile {
   id: string;
@@ -28,6 +29,7 @@ interface UserRole {
 const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -100,8 +102,8 @@ const Dashboard = () => {
             if (newMatch.user1_id === session.user.id || newMatch.user2_id === session.user.id) {
               setMatches(prev => [newMatch, ...prev]);
               toast({
-                title: "Nuovo Match! 🎉",
-                description: "Hai un nuovo match!",
+                title: t("dashboard.newMatch"),
+                description: t("dashboard.newMatchDescription"),
               });
             }
           }
@@ -155,7 +157,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">Caricamento...</p>
+        <p className="text-muted-foreground">{t("dashboard.loading")}</p>
       </div>
     );
   }
@@ -182,9 +184,9 @@ const Dashboard = () => {
             </div>
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-                LovableConnect
+                {t("dashboard.title")}
               </h1>
-              <p className="text-xs text-muted-foreground">Trova la tua anima gemella</p>
+              <p className="text-xs text-muted-foreground">{t("dashboard.tagline")}</p>
             </div>
           </div>
           <Button 
@@ -193,7 +195,7 @@ const Dashboard = () => {
             className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-all duration-300"
           >
             <LogOut className="h-4 w-4 mr-2" />
-            Esci
+            {t("dashboard.signOut")}
           </Button>
         </div>
 
@@ -224,7 +226,7 @@ const Dashboard = () => {
                     <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
                       <Heart className="h-5 w-5" fill="white" />
                     </div>
-                    <span className="font-bold">I Tuoi Match</span>
+                    <span className="font-bold">{t("dashboard.matches")}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="relative">
@@ -235,7 +237,7 @@ const Dashboard = () => {
                     className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold shadow-lg group-hover:shadow-xl transition-all duration-300"
                     onClick={() => navigate("/matches")}
                   >
-                    Visualizza Match
+                    {t("dashboard.viewMatches")}
                     <Heart className="h-4 w-4 ml-2" />
                   </Button>
                 </CardContent>
@@ -258,7 +260,7 @@ const Dashboard = () => {
                     <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
                       <Sparkles className="h-5 w-5" />
                     </div>
-                    <span className="font-bold">Like Ricevuti</span>
+                    <span className="font-bold">{t("dashboard.likesReceived")}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="relative">
@@ -269,7 +271,7 @@ const Dashboard = () => {
                     className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold shadow-lg group-hover:shadow-xl transition-all duration-300"
                     onClick={() => navigate("/likes")}
                   >
-                    Vedi Chi Ti Piace
+                    {t("dashboard.seeWhoLikes")}
                     <Sparkles className="h-4 w-4 ml-2" />
                   </Button>
                 </CardContent>
@@ -301,10 +303,10 @@ const Dashboard = () => {
                   <div className="p-2 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl">
                     <Search className="h-6 w-6 text-white" />
                   </div>
-                  Scopri Nuove Persone
+                  {t("dashboard.discover")}
                 </CardTitle>
                 <CardDescription className="mt-2 text-base">
-                  Inizia a esplorare e trova la tua anima gemella
+                  {t("dashboard.discoverDescription")}
                 </CardDescription>
               </div>
             </div>
@@ -317,7 +319,7 @@ const Dashboard = () => {
                 onClick={() => navigate("/explore")}
               >
                 <Users className="h-6 w-6 mr-2 group-hover:scale-110 transition-transform" />
-                Esplora Profili
+                {t("dashboard.exploreProfiles")}
               </Button>
             </div>
           </CardContent>

@@ -79,5 +79,41 @@
     "description": "نستخدم ملفات تعريف الارتباط التقنية الضرورية لعمل الموقع وملفات تعريف الارتباط التحليلية لتحسين تجربتك. بالنقر على \"قبول والمتابعة\"، فإنك توافق على",
     "readPolicy": "شروط الخدمة وسياسة الخصوصية",
     "acceptButton": "قبول والمتابعة"
+  },
+  "dashboard": {
+    "title": "LovableConnect",
+    "tagline": "ابحث عن توأم روحك",
+    "signOut": "تسجيل الخروج",
+    "loading": "جاري التحميل...",
+    "matches": "مطابقاتك",
+    "viewMatches": "عرض المطابقات",
+    "likesReceived": "الإعجابات المستلمة",
+    "seeWhoLikes": "انظر من يعجبك",
+    "discover": "اكتشف أشخاصاً جدد",
+    "discoverDescription": "ابدأ الاستكشاف واعثر على توأم روحك",
+    "exploreProfiles": "استكشف الملفات الشخصية",
+    "newMatch": "مطابقة جديدة! 🎉",
+    "newMatchDescription": "لديك مطابقة جديدة!",
+    "editProfile": "تعديل الملف الشخصي",
+    "messages": "الرسائل",
+    "noMessages": "ليس لديك رسائل حالياً",
+    "seeAllMessages": "عرض جميع الرسائل",
+    "seeYourMessages": "عرض رسائلك"
+  },
+  "common": {
+    "male": "ذكر",
+    "female": "أنثى",
+    "transexual": "متحول جنسياً",
+    "transgender": "متحول جنسياً",
+    "homosexual": "مثلي",
+    "nonBinary": "غير ثنائي"
+  },
+  "userProfile": {
+    "years": "سنة",
+    "lookingFor": "يبحث عن",
+    "serious": "علاقة جادة",
+    "casual": "علاقة عابرة",
+    "friendship": "صداقة",
+    "interests": "الاهتمامات"
   }
 }

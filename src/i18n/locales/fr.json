@@ -79,5 +79,33 @@
     "description": "Nous utilisons des cookies techniques nécessaires au fonctionnement du site et des cookies d'analyse pour améliorer votre expérience. En cliquant sur \"Accepter et Continuer\", vous acceptez nos",
     "readPolicy": "Conditions d'Utilisation et Politique de Confidentialité",
     "acceptButton": "Accepter et Continuer"
+  },
+  "dashboard": {
+    "title": "LovableConnect",
+    "tagline": "Trouvez votre âme sœur",
+    "signOut": "Se déconnecter",
+    "loading": "Chargement...",
+    "matches": "Vos Matchs",
+    "viewMatches": "Voir les Matchs",
+    "likesReceived": "Likes Reçus",
+    "seeWhoLikes": "Voir Qui Vous Aime",
+    "discover": "Découvrir de Nouvelles Personnes",
+    "discoverDescription": "Commencez à explorer et trouvez votre âme sœur",
+    "exploreProfiles": "Explorer les Profils",
+    "newMatch": "Nouveau Match ! 🎉",
+    "newMatchDescription": "Vous avez un nouveau match !",
+    "editProfile": "Modifier le Profil",
+    "messages": "Messages",
+    "noMessages": "Vous n'avez actuellement aucun message",
+    "seeAllMessages": "Voir Tous les Messages",
+    "seeYourMessages": "Voir vos messages"
+  },
+  "common": {
+    "male": "Homme",
+    "female": "Femme",
+    "transexual": "Transexuel",
+    "transgender": "Transgenre",
+    "homosexual": "Homosexuel",
+    "nonBinary": "Non-binaire"
   }
 }

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Edit, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface Profile {
   id: string;
@@ -25,6 +26,7 @@ interface UserProfileCardProps {
 
 export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
@@ -68,7 +70,7 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
               <h2 className="text-2xl font-bold">{profile.nickname}</h2>
               <p className="text-muted-foreground">{profile.full_name}</p>
               {profile.age && (
-                <p className="text-sm text-muted-foreground">{profile.age} anni</p>
+                <p className="text-sm text-muted-foreground">{profile.age} {t("userProfile.years")}</p>
               )}
             </div>
 
@@ -81,10 +83,10 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
 
             {profile.relationship_type && (
               <Badge variant="secondary" className="text-xs">
-                Cerca: {
-                  profile.relationship_type === 'serious' ? 'Relazione seria' :
-                  profile.relationship_type === 'casual' ? 'Relazione occasionale' :
-                  profile.relationship_type === 'friendship' ? 'Amicizia' :
+                {t("userProfile.lookingFor")}: {
+                  profile.relationship_type === 'serious' ? t("userProfile.serious") :
+                  profile.relationship_type === 'casual' ? t("userProfile.casual") :
+                  profile.relationship_type === 'friendship' ? t("userProfile.friendship") :
                   profile.relationship_type
                 }
               </Badge>
@@ -101,7 +103,7 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
 
           {profile.interests && profile.interests.length > 0 && (
             <div className="w-full space-y-2">
-              <p className="text-sm font-semibold">Interessi</p>
+              <p className="text-sm font-semibold">{t("userProfile.interests")}</p>
               <div className="flex flex-wrap gap-2 justify-center">
                 {profile.interests.map((interest, index) => (
                   <Badge key={index} variant="outline" className="text-xs">
@@ -118,7 +120,7 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
             variant="outline"
           >
             <Edit className="h-4 w-4 mr-2" />
-            Modifica Profilo
+            {t("dashboard.editProfile")}
           </Button>
         </div>
       </CardContent>
