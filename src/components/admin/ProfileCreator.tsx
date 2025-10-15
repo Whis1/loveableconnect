@@ -12,8 +12,6 @@ export const ProfileCreator = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
     nickname: "",
     full_name: "",
     age: "",
@@ -22,10 +20,10 @@ export const ProfileCreator = () => {
   });
 
   const handleCreateProfile = async () => {
-    if (!formData.email || !formData.password || !formData.nickname || !formData.full_name) {
+    if (!formData.nickname || !formData.full_name) {
       toast({
         title: "Errore",
-        description: "Compila tutti i campi obbligatori",
+        description: "Inserisci almeno nickname e nome completo",
         variant: "destructive",
       });
       return;
@@ -33,24 +31,18 @@ export const ProfileCreator = () => {
 
     setLoading(true);
     try {
-      // Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-      });
+      // Genera un ID casuale per il profilo admin (non legato ad auth)
+      const profileId = crypto.randomUUID();
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("Creazione utente fallita");
-
-      // Create profile
+      // Create profile direttamente (senza account auth)
       const { error: profileError } = await supabase.from("profiles").insert({
-        id: authData.user.id,
+        id: profileId,
         nickname: formData.nickname,
         full_name: formData.full_name,
         age: formData.age ? parseInt(formData.age) : null,
         bio: formData.bio || null,
         city: formData.city || null,
-        is_admin_profile: true, // Flag profilo admin
+        is_admin_profile: true,
       });
 
       if (profileError) throw profileError;
@@ -62,14 +54,15 @@ export const ProfileCreator = () => {
 
       // Reset form
       setFormData({
-        email: "",
-        password: "",
         nickname: "",
         full_name: "",
         age: "",
         bio: "",
         city: "",
       });
+
+      // Ricarica la pagina per mostrare il nuovo profilo
+      window.location.reload();
     } catch (error: any) {
       console.error("Error creating profile:", error);
       toast({
@@ -91,27 +84,6 @@ export const ProfileCreator = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password *</Label>
-            <Input
-              id="password"
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            />
-          </div>
-        </div>
-
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="nickname">Nickname *</Label>
