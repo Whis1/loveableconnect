@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -40,6 +41,7 @@ interface UserLocation {
 const Explore = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
@@ -55,12 +57,12 @@ const Explore = () => {
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
 
   const genderOptions = [
-    { value: "male", label: "Uomo" },
-    { value: "female", label: "Donna" },
-    { value: "transexual", label: "Transensuale" },
-    { value: "transgender", label: "Transgender" },
-    { value: "homosexual", label: "Omosessuale" },
-    { value: "non-binary", label: "Non binario" },
+    { value: "male", label: t("search.genders.male") },
+    { value: "female", label: t("search.genders.female") },
+    { value: "transexual", label: t("search.genders.transexual") },
+    { value: "transgender", label: t("search.genders.transgender") },
+    { value: "homosexual", label: t("search.genders.homosexual") },
+    { value: "non-binary", label: t("search.genders.nonBinary") },
   ];
 
   useEffect(() => {
@@ -122,15 +124,15 @@ const Explore = () => {
 
       if (mutualLike) {
         toast({
-          title: "🎉 È un Match!",
-          description: `Hai fatto match con ${profile.full_name}!`,
+          title: t("explore.match.title"),
+          description: t("explore.match.description", { name: profile.full_name }),
         });
       }
 
       setCurrentIndex(currentIndex + 1);
     } catch (error: any) {
       toast({
-        title: "Errore",
+        title: t("explore.error"),
         description: error.message,
         variant: "destructive",
       });
@@ -152,8 +154,8 @@ const Explore = () => {
           setUserLocation(location);
           setLocationPermission(true);
           toast({
-            title: "Posizione acquisita",
-            description: "Ora puoi filtrare per distanza!",
+            title: t("search.geolocation.acquired"),
+            description: t("search.geolocation.acquiredDescription"),
           });
           
           if (currentUser) {
@@ -169,8 +171,8 @@ const Explore = () => {
         },
         (error) => {
           toast({
-            title: "Errore geolocalizzazione",
-            description: "Non è stato possibile ottenere la tua posizione.",
+            title: t("search.geolocation.error"),
+            description: t("search.geolocation.errorDescription"),
             variant: "destructive",
           });
           console.error("Geolocation error:", error);
@@ -178,8 +180,8 @@ const Explore = () => {
       );
     } else {
       toast({
-        title: "Geolocalizzazione non supportata",
-        description: "Il tuo browser non supporta la geolocalizzazione.",
+        title: t("search.geolocation.notSupported"),
+        description: t("search.geolocation.notSupportedDescription"),
         variant: "destructive",
       });
     }
@@ -244,8 +246,8 @@ const Explore = () => {
     setShowFilters(false);
     
     toast({
-      title: "Filtri applicati",
-      description: `Trovati ${filtered.length} profili`,
+      title: t("search.filtersApplied"),
+      description: t("search.profilesFound", { count: filtered.length }),
     });
   };
 
@@ -281,7 +283,7 @@ const Explore = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">Caricamento...</p>
+        <p className="text-muted-foreground">{t("explore.loading")}</p>
       </div>
     );
   }
@@ -291,12 +293,12 @@ const Explore = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-4">
         <Card className="w-full max-w-md text-center">
           <CardContent className="pt-6">
-            <h2 className="text-2xl font-bold mb-4">Non ci sono più profili</h2>
+            <h2 className="text-2xl font-bold mb-4">{t("explore.noMoreProfiles")}</h2>
             <p className="text-muted-foreground mb-6">
-              Hai visto tutti i profili disponibili. Torna più tardi per nuove persone!
+              {t("explore.noMoreProfilesDescription")}
             </p>
             <Button onClick={() => navigate("/")}>
-              Torna alla Dashboard
+              {t("explore.backToDashboard")}
             </Button>
           </CardContent>
         </Card>
@@ -321,14 +323,14 @@ const Explore = () => {
         <div className="mb-4 flex justify-between items-center">
           <Button variant="ghost" onClick={() => navigate("/")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Indietro
+            {t("explore.back")}
           </Button>
           <Button 
             variant="outline" 
             onClick={() => setShowFilters(!showFilters)}
           >
             <Filter className="h-4 w-4 mr-2" />
-            Filtri
+            {t("explore.filters")}
           </Button>
         </div>
 
@@ -343,14 +345,13 @@ const Explore = () => {
                     <MapPin className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
                     <div className="flex-1">
                       <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
-                        Trova persone vicino a te
+                        {t("search.geolocation.permissionTitle")}
                       </h3>
                       <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
-                        Per usare il filtro distanza, abbiamo bisogno della tua posizione. 
-                        La utilizziamo solo per mostrarti persone vicine.
+                        {t("search.geolocation.permissionDescription")}
                       </p>
                       <Button onClick={requestLocationPermission} size="sm" variant="default">
-                        Attiva Geolocalizzazione
+                        {t("search.geolocation.activateButton")}
                       </Button>
                     </div>
                   </div>
@@ -361,14 +362,14 @@ const Explore = () => {
                 <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
                   <p className="text-sm text-green-700 dark:text-green-300 flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
-                    Geolocalizzazione attiva
+                    {t("search.geolocation.active")}
                   </p>
                 </div>
               )}
 
               {/* Filtro Età */}
               <div className="space-y-3">
-                <Label className="text-base font-semibold">Età: {ageRange[0]} - {ageRange[1]} anni</Label>
+                <Label className="text-base font-semibold">{t("search.ageRange", { min: ageRange[0], max: ageRange[1] })}</Label>
                 <Slider
                   value={ageRange}
                   onValueChange={setAgeRange}
@@ -382,7 +383,7 @@ const Explore = () => {
               {/* Filtro Distanza */}
               {locationPermission && (
                 <div className="space-y-3">
-                  <Label className="text-base font-semibold">Distanza massima: {distanceRange[0]} km</Label>
+                  <Label className="text-base font-semibold">{t("search.distanceValue", { distance: distanceRange[0] })}</Label>
                   <Slider
                     value={distanceRange}
                     onValueChange={setDistanceRange}
@@ -396,7 +397,7 @@ const Explore = () => {
 
               {/* Filtro Genere */}
               <div className="space-y-3">
-                <Label className="text-base font-semibold">Genere cercato</Label>
+                <Label className="text-base font-semibold">{t("search.genderLabel")}</Label>
                 <div className="grid grid-cols-2 gap-3">
                   {genderOptions.map((option) => (
                     <div key={option.value} className="flex items-center space-x-2">
@@ -419,10 +420,10 @@ const Explore = () => {
               {/* Pulsanti Azione */}
               <div className="flex gap-2">
                 <Button onClick={applyFilters} className="flex-1">
-                  Applica Filtri
+                  {t("search.applyFilters")}
                 </Button>
                 <Button onClick={resetFilters} variant="outline">
-                  Reset
+                  {t("search.resetFilters")}
                 </Button>
               </div>
             </CardContent>
@@ -464,9 +465,7 @@ const Explore = () => {
                 </div>
                 {currentProfile.relationship_type && (
                   <Badge variant="secondary" className="text-xs">
-                    {currentProfile.relationship_type === 'serious' ? 'Relazione seria' :
-                     currentProfile.relationship_type === 'casual' ? 'Occasionale' :
-                     currentProfile.relationship_type === 'friendship' ? 'Amicizia' : ''}
+                    {t(`explore.relationshipTypes.${currentProfile.relationship_type}`)}
                   </Badge>
                 )}
               </div>
@@ -484,7 +483,7 @@ const Explore = () => {
 
               {currentProfile.interests && currentProfile.interests.length > 0 && (
                 <div className="mb-4">
-                  <p className="font-semibold mb-2 text-sm">Interessi</p>
+                  <p className="font-semibold mb-2 text-sm">{t("explore.interests")}</p>
                   <div className="flex flex-wrap gap-2">
                     {currentProfile.interests.map((interest, index) => (
                       <Badge key={index} variant="outline" className="text-xs">

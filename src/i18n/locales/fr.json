@@ -120,6 +120,64 @@
     "seeAllMessages": "Voir Tous les Messages",
     "seeYourMessages": "Voir vos messages"
   },
+  "explore": {
+    "back": "Retour",
+    "filters": "Filtres",
+    "loading": "Chargement...",
+    "noMoreProfiles": "Plus de profils",
+    "noMoreProfilesDescription": "Vous avez vu tous les profils disponibles. Revenez plus tard pour de nouvelles personnes !",
+    "backToDashboard": "Retour au Tableau de Bord",
+    "interests": "Intérêts",
+    "relationshipTypes": {
+      "serious": "Relation sérieuse",
+      "casual": "Occasionnel",
+      "friendship": "Amitié"
+    },
+    "match": {
+      "title": "🎉 C'est un Match !",
+      "description": "Vous avez matché avec {{name}} !"
+    },
+    "error": "Erreur"
+  },
+  "search": {
+    "title": "Recherche Avancée",
+    "back": "Retour",
+    "filters": "Filtres",
+    "genders": {
+      "male": "Homme",
+      "female": "Femme",
+      "transexual": "Transexuel",
+      "transgender": "Transgenre",
+      "homosexual": "Homosexuel",
+      "nonBinary": "Non binaire"
+    },
+    "geolocation": {
+      "permissionTitle": "Trouvez des personnes près de chez vous",
+      "permissionDescription": "Pour utiliser le filtre de distance, nous avons besoin de votre position. Nous l'utilisons uniquement pour vous montrer des personnes à proximité.",
+      "activateButton": "Activer la Géolocalisation",
+      "active": "Géolocalisation active",
+      "acquired": "Position acquise",
+      "acquiredDescription": "Vous pouvez maintenant filtrer par distance !",
+      "error": "Erreur de géolocalisation",
+      "errorDescription": "Impossible d'obtenir votre position.",
+      "notSupported": "Géolocalisation non prise en charge",
+      "notSupportedDescription": "Votre navigateur ne prend pas en charge la géolocalisation."
+    },
+    "results": "résultats trouvés",
+    "noResults": "Aucun profil trouvé avec les filtres sélectionnés",
+    "filterBy": "Filtrer par",
+    "ageLabel": "Âge",
+    "ageRange": "Âge : {{min}} - {{max}} ans",
+    "distanceLabel": "Distance maximale",
+    "distanceValue": "Distance maximale : {{distance}} km",
+    "genderLabel": "Recherche",
+    "applyFilters": "Appliquer les Filtres",
+    "resetFilters": "Réinitialiser",
+    "filtersApplied": "Filtres appliqués",
+    "profilesFound": "{{count}} profils trouvés",
+    "previousPage": "Page Précédente",
+    "nextPage": "Page Suivante"
+  },
   "common": {
     "male": "Homme",
     "female": "Femme",
@@ -127,5 +185,13 @@
     "transgender": "Transgenre",
     "homosexual": "Homosexuel",
     "nonBinary": "Non-binaire"
+  },
+  "userProfile": {
+    "years": "ans",
+    "lookingFor": "Recherche",
+    "serious": "Relation sérieuse",
+    "casual": "Relation occasionnelle",
+    "friendship": "Amitié",
+    "interests": "Intérêts"
   }
 }

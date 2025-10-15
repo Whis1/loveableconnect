@@ -108,6 +108,64 @@
     "homosexual": "مثلي",
     "nonBinary": "غير ثنائي"
   },
+  "explore": {
+    "back": "رجوع",
+    "filters": "الفلاتر",
+    "loading": "جار التحميل...",
+    "noMoreProfiles": "لا مزيد من الملفات الشخصية",
+    "noMoreProfilesDescription": "لقد شاهدت جميع الملفات الشخصية المتاحة. عد لاحقًا لأشخاص جدد!",
+    "backToDashboard": "العودة إلى لوحة التحكم",
+    "interests": "الاهتمامات",
+    "relationshipTypes": {
+      "serious": "علاقة جادة",
+      "casual": "عارضة",
+      "friendship": "صداقة"
+    },
+    "match": {
+      "title": "🎉 إنه تطابق!",
+      "description": "لقد تطابقت مع {{name}}!"
+    },
+    "error": "خطأ"
+  },
+  "search": {
+    "title": "بحث متقدم",
+    "back": "رجوع",
+    "filters": "الفلاتر",
+    "genders": {
+      "male": "رجل",
+      "female": "امرأة",
+      "transexual": "متحول جنسياً",
+      "transgender": "متحول جندرياً",
+      "homosexual": "مثلي",
+      "nonBinary": "غير ثنائي"
+    },
+    "geolocation": {
+      "permissionTitle": "ابحث عن أشخاص قريبين منك",
+      "permissionDescription": "لاستخدام فلتر المسافة، نحتاج إلى موقعك. نستخدمه فقط لإظهار الأشخاص القريبين منك.",
+      "activateButton": "تفعيل تحديد الموقع الجغرافي",
+      "active": "تحديد الموقع الجغرافي نشط",
+      "acquired": "تم الحصول على الموقع",
+      "acquiredDescription": "يمكنك الآن التصفية حسب المسافة!",
+      "error": "خطأ في تحديد الموقع الجغرافي",
+      "errorDescription": "لم نتمكن من الحصول على موقعك.",
+      "notSupported": "تحديد الموقع الجغرافي غير مدعوم",
+      "notSupportedDescription": "متصفحك لا يدعم تحديد الموقع الجغرافي."
+    },
+    "results": "نتائج تم العثور عليها",
+    "noResults": "لم يتم العثور على ملفات تعريف بالفلاتر المحددة",
+    "filterBy": "تصفية حسب",
+    "ageLabel": "العمر",
+    "ageRange": "العمر: {{min}} - {{max}} سنة",
+    "distanceLabel": "المسافة القصوى",
+    "distanceValue": "المسافة القصوى: {{distance}} كم",
+    "genderLabel": "يبحث عن",
+    "applyFilters": "تطبيق الفلاتر",
+    "resetFilters": "إعادة تعيين",
+    "filtersApplied": "تم تطبيق الفلاتر",
+    "profilesFound": "تم العثور على {{count}} ملف تعريف",
+    "previousPage": "الصفحة السابقة",
+    "nextPage": "الصفحة التالية"
+  },
   "userProfile": {
     "years": "سنة",
     "lookingFor": "يبحث عن",
