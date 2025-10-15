@@ -11,6 +11,7 @@ import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { GifPicker } from "@/components/chat/GifPicker";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ChatUserProfile } from "@/components/chat/ChatUserProfile";
+import { useCredits } from "@/hooks/useCredits";
 
 interface Message {
   id: string;
@@ -42,6 +43,7 @@ const Chat = () => {
   const [uploading, setUploading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { deductCredits } = useCredits();
 
   useEffect(() => {
     const initChat = async () => {
@@ -175,6 +177,17 @@ const Chat = () => {
     
     const messageContent = content || newMessage.trim();
     if (!messageContent || !currentUser || !otherUser || !matchId) return;
+
+    // Check and deduct credits before sending
+    const hasCredits = await deductCredits();
+    if (!hasCredits) {
+      toast({
+        title: "Crediti insufficienti",
+        description: "Hai esaurito i crediti. Acquista crediti per continuare a chattare.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Crea il messaggio temporaneo per mostrarlo subito
     const tempMessage: Message = {

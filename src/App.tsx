@@ -16,6 +16,9 @@ import Messages from "./pages/Messages";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import TermsAndConditions from "./pages/TermsAndConditions";
+import Credits from "./pages/Credits";
+import PurchaseSuccess from "./pages/PurchaseSuccess";
+import PremiumSuccess from "./pages/PremiumSuccess";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +40,9 @@ const App = () => (
           <Route path="/chat/:matchId" element={<Chat />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/terms" element={<TermsAndConditions />} />
+          <Route path="/credits" element={<Credits />} />
+          <Route path="/purchase-success" element={<PurchaseSuccess />} />
+          <Route path="/premium-success" element={<PremiumSuccess />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

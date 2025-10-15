@@ -9,6 +9,7 @@ import { Heart, LogOut, Users, Sparkles, Search } from "lucide-react";
 import { UserProfileCard } from "@/components/UserProfileCard";
 import { RecentMessages } from "@/components/RecentMessages";
 import { useTranslation } from "react-i18next";
+import { CreditsDisplay } from "@/components/CreditsDisplay";
 
 interface Profile {
   id: string;
@@ -189,14 +190,17 @@ const Dashboard = () => {
               <p className="text-xs text-muted-foreground">{t("dashboard.tagline")}</p>
             </div>
           </div>
-          <Button 
-            variant="outline" 
-            onClick={handleSignOut}
-            className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-all duration-300"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            {t("dashboard.signOut")}
-          </Button>
+          <div className="flex items-center gap-3">
+            <CreditsDisplay />
+            <Button 
+              variant="outline" 
+              onClick={handleSignOut}
+              className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-all duration-300"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              {t("dashboard.signOut")}
+            </Button>
+          </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3 mb-8">
