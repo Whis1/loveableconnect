@@ -7,6 +7,7 @@ import { Edit, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import profileBackground from "@/assets/profile-background.png";
 
 interface Profile {
   id: string;
@@ -55,10 +56,21 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
   if (!profile) return null;
 
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-6">
+    <Card className="overflow-hidden relative">
+      {/* Background Image */}
+      <div 
+        className="absolute inset-0 w-full h-full"
+        style={{
+          backgroundImage: `url(${profileBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          opacity: 0.3
+        }}
+      />
+      
+      <CardContent className="p-6 relative z-10">
         <div className="flex flex-col items-center text-center space-y-4">
-          <Avatar className="h-32 w-32 border-4 border-primary/10">
+          <Avatar className="h-32 w-32 border-4 border-primary/10 shadow-lg">
             <AvatarImage src={avatarUrl || undefined} />
             <AvatarFallback className="text-4xl">
               {profile.nickname?.charAt(0) || profile.full_name?.charAt(0)}
