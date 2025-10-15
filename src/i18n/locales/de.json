@@ -281,7 +281,8 @@
     "nonBinary": "Nicht-binär",
     "nearbyUser1": "Benutzer in Ihrer Nähe",
     "nearbyUser2": "Benutzer aus Ihrer Gegend",
-    "nearbyUser3": "Benutzer in der Nähe"
+    "nearbyUser3": "Benutzer in der Nähe",
+    "nearbyLocation": "In Ihrer Nähe"
   },
   "userProfile": {
     "years": "Jahre",

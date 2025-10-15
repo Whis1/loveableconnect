@@ -6,5 +6,5 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getGenericLocationPhrase(t: any): string {
-  return "Vicino alle tue parti";
+  return t("common.nearbyLocation");
 }

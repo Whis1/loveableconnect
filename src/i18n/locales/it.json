@@ -440,7 +440,8 @@
     "nonBinary": "Non binario",
     "nearbyUser1": "Utente vicino alle tue parti",
     "nearbyUser2": "Utente della tua zona",
-    "nearbyUser3": "Utente nelle vicinanze"
+    "nearbyUser3": "Utente nelle vicinanze",
+    "nearbyLocation": "Vicino alle tue parti"
   },
   "credits": {
     "back": "Indietro",

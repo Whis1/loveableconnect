@@ -135,7 +135,8 @@
     "nonBinary": "غير ثنائي",
     "nearbyUser1": "مستخدم بالقرب من منطقتك",
     "nearbyUser2": "مستخدم من منطقتك",
-    "nearbyUser3": "مستخدم قريب"
+    "nearbyUser3": "مستخدم قريب",
+    "nearbyLocation": "بالقرب من منطقتك"
   },
   "credits": {
     "back": "رجوع",

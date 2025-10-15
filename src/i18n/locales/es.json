@@ -365,7 +365,8 @@
     "nonBinary": "No Binario",
     "nearbyUser1": "Usuario cerca de tu zona",
     "nearbyUser2": "Usuario de tu área",
-    "nearbyUser3": "Usuario cercano"
+    "nearbyUser3": "Usuario cercano",
+    "nearbyLocation": "Cerca de tu zona"
   },
   "credits": {
     "back": "Atrás",
