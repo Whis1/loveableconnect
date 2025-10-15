@@ -26,13 +26,13 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: `Support Request <onboarding@resend.dev>`,
       replyTo: userEmail,
-      to: ["supportoclientiloovableconnect@gmail.com"],
+      to: ["loovableconnect@hotmail.com"],
       subject: `Richiesta Supporto da ${userEmail}`,
       html: `
         <h2>Nuova Richiesta di Supporto</h2>
         <p><strong>Da:</strong> ${userEmail}</p>
         <hr />
-        <p>${message.replace(/\n/g, '<br>')}</p>
+        <p>${message.replace(/\n/g, "<br>")}</p>
       `,
     });
 
@@ -47,13 +47,10 @@ const handler = async (req: Request): Promise<Response> => {
     });
   } catch (error: any) {
     console.error("Error sending support email:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
   }
 };
 
