@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { UserCreditsManager } from "@/components/admin/UserCreditsManager";
 import { ProfileCreator } from "@/components/admin/ProfileCreator";
+import { ProfileManager } from "@/components/admin/ProfileManager";
 import { ChatMonitor } from "@/components/admin/ChatMonitor";
 import { Shield, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -115,6 +116,8 @@ export default function AdminArrettu() {
           <UserCreditsManager />
           <ProfileCreator />
         </div>
+
+        <ProfileManager />
 
         <ChatMonitor />
       </div>
