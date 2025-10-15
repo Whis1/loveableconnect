@@ -26,8 +26,7 @@ export default function AdminArrettu() {
   }, []);
 
   const handleLogin = () => {
-    // NOTA: Credenziali hardcoded - SOSTITUISCI CON LE TUE
-    if (nickname === "admin" && password === "admin123") {
+    if (nickname === "adminarrettu" && password === "arrettuadmin") {
       sessionStorage.setItem("adminArrettu", "true");
       setIsLoggedIn(true);
       toast({
