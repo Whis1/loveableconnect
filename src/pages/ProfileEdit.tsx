@@ -121,6 +121,7 @@ const ProfileEdit = () => {
         description: t('profile.maxPhotos'),
         variant: "destructive",
       });
+      e.target.value = "";
       return;
     }
 
@@ -133,6 +134,9 @@ const ProfileEdit = () => {
       };
       reader.readAsDataURL(file);
     });
+    
+    // Reset input value to allow selecting the same file again
+    e.target.value = "";
   };
 
   const handleRemovePhoto = async (index: number) => {
