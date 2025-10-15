@@ -218,20 +218,22 @@ const Auth = () => {
         <LanguageSwitcher />
       </div>
       <Card className="w-full max-w-md relative z-10 backdrop-blur-sm bg-white/95 dark:bg-gray-900/95 shadow-2xl overflow-hidden">
-        {/* Background decorative image */}
+        {/* Background decorative image - full coverage */}
         <div 
-          className="absolute top-0 right-0 w-48 h-48 opacity-20 dark:opacity-30 pointer-events-none"
+          className="absolute inset-0 opacity-10 dark:opacity-15 pointer-events-none"
           style={{
             backgroundImage: `url(${authHeartBg})`,
-            backgroundSize: 'contain',
-            backgroundPosition: 'top right',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
           }}
         />
         
         <CardHeader className="text-center relative z-10">
           <div className="flex justify-center mb-4">
-            <Heart className="h-12 w-12 text-pink-500" />
+            <div className="p-3 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full shadow-xl">
+              <Heart className="h-8 w-8 text-white" fill="white" />
+            </div>
           </div>
           <CardTitle className="text-3xl font-bold">{t('app.name')}</CardTitle>
           <CardDescription>{t('app.tagline')}</CardDescription>
