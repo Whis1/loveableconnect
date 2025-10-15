@@ -139,7 +139,11 @@
     "messages": "Messages",
     "noMessages": "You currently have no messages",
     "seeAllMessages": "See All Messages",
-    "seeYourMessages": "See your messages"
+    "seeYourMessages": "See your messages",
+    "support": "Support",
+    "supportDescription": "Need help?",
+    "sendMessage": "Send Message",
+    "contactSupport": "Contact our support team for any questions or issues."
   },
   "explore": {
     "back": "Back",
@@ -406,5 +410,22 @@
     "nearbyUser1": "User near your area",
     "nearbyUser2": "User from your zone",
     "nearbyUser3": "Nearby user"
+  },
+  "support": {
+    "title": "Customer Support",
+    "description": "Need help? Send us a message and we'll get back to you as soon as possible!",
+    "yourEmail": "Your email",
+    "emailPlaceholder": "example@email.com",
+    "message": "Message",
+    "messagePlaceholder": "Describe your problem or question...",
+    "sendButton": "Send Message",
+    "sending": "Sending...",
+    "messageSent": "Message sent!",
+    "messageSentDescription": "We'll reply as soon as possible",
+    "error": "Error",
+    "errorSending": "Unable to send message",
+    "requiredFields": "Required fields",
+    "requiredFieldsDescription": "Please enter email and message",
+    "back": "Back"
   }
 }

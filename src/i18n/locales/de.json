@@ -139,7 +139,11 @@
     "messages": "Nachrichten",
     "noMessages": "Du hast derzeit keine Nachrichten",
     "seeAllMessages": "Alle Nachrichten ansehen",
-    "seeYourMessages": "Deine Nachrichten ansehen"
+    "seeYourMessages": "Deine Nachrichten ansehen",
+    "support": "Support",
+    "supportDescription": "Brauchst du Hilfe?",
+    "sendMessage": "Nachricht Senden",
+    "contactSupport": "Kontaktiere unser Support-Team für Fragen oder Probleme."
   },
   "explore": {
     "back": "Zurück",
@@ -308,5 +312,22 @@
     "error": "Fehler",
     "errorLoadingMessages": "Nachrichten konnten nicht geladen werden",
     "unknownUser": "Unbekannter Benutzer"
+  },
+  "support": {
+    "title": "Kundensupport",
+    "description": "Brauchst du Hilfe? Sende uns eine Nachricht und wir melden uns so schnell wie möglich bei dir!",
+    "yourEmail": "Deine E-Mail",
+    "emailPlaceholder": "beispiel@email.com",
+    "message": "Nachricht",
+    "messagePlaceholder": "Beschreibe dein Problem oder deine Frage...",
+    "sendButton": "Nachricht Senden",
+    "sending": "Wird gesendet...",
+    "messageSent": "Nachricht gesendet!",
+    "messageSentDescription": "Wir werden uns so schnell wie möglich bei dir melden",
+    "error": "Fehler",
+    "errorSending": "Nachricht konnte nicht gesendet werden",
+    "requiredFields": "Pflichtfelder",
+    "requiredFieldsDescription": "Bitte gib E-Mail und Nachricht ein",
+    "back": "Zurück"
   }
 }

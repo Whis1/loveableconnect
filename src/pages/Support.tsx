@@ -23,8 +23,8 @@ const Support = () => {
     
     if (!email || !message) {
       toast({
-        title: "Campi obbligatori",
-        description: "Inserisci email e messaggio",
+        title: t("support.requiredFields"),
+        description: t("support.requiredFieldsDescription"),
         variant: "destructive",
       });
       return;
@@ -40,8 +40,8 @@ const Support = () => {
       if (error) throw error;
 
       toast({
-        title: "Messaggio inviato!",
-        description: "Ti risponderemo al più presto",
+        title: t("support.messageSent"),
+        description: t("support.messageSentDescription"),
       });
 
       setEmail("");
@@ -49,8 +49,8 @@ const Support = () => {
     } catch (error: any) {
       console.error("Error sending support message:", error);
       toast({
-        title: "Errore",
-        description: "Non è stato possibile inviare il messaggio",
+        title: t("support.error"),
+        description: t("support.errorSending"),
         variant: "destructive",
       });
     } finally {
@@ -77,7 +77,7 @@ const Support = () => {
           className="mb-6 hover:bg-primary/10"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Indietro
+          {t("support.back")}
         </Button>
 
         <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
@@ -88,20 +88,20 @@ const Support = () => {
               </div>
             </div>
             <CardTitle className="text-3xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-              Supporto Clienti
+              {t("support.title")}
             </CardTitle>
             <CardDescription className="text-base mt-2">
-              Hai bisogno di aiuto? Inviaci un messaggio e ti risponderemo al più presto!
+              {t("support.description")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="email">La tua email</Label>
+                <Label htmlFor="email">{t("support.yourEmail")}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="esempio@email.com"
+                  placeholder={t("support.emailPlaceholder")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -110,10 +110,10 @@ const Support = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="message">Messaggio</Label>
+                <Label htmlFor="message">{t("support.message")}</Label>
                 <Textarea
                   id="message"
-                  placeholder="Descrivi il tuo problema o la tua domanda..."
+                  placeholder={t("support.messagePlaceholder")}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   required
@@ -127,11 +127,11 @@ const Support = () => {
                 disabled={loading}
               >
                 {loading ? (
-                  "Invio in corso..."
+                  t("support.sending")
                 ) : (
                   <>
                     <Send className="h-5 w-5 mr-2" />
-                    Invia Messaggio
+                    {t("support.sendButton")}
                   </>
                 )}
               </Button>

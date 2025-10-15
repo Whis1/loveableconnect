@@ -119,7 +119,11 @@
     "messages": "الرسائل",
     "noMessages": "ليس لديك رسائل حالياً",
     "seeAllMessages": "عرض جميع الرسائل",
-    "seeYourMessages": "عرض رسائلك"
+    "seeYourMessages": "عرض رسائلك",
+    "support": "الدعم",
+    "supportDescription": "هل تحتاج مساعدة؟",
+    "sendMessage": "إرسال رسالة",
+    "contactSupport": "اتصل بفريق الدعم لدينا لأي أسئلة أو مشاكل."
   },
   "common": {
     "male": "ذكر",
@@ -288,5 +292,22 @@
     "error": "خطأ",
     "errorLoadingMessages": "تعذر تحميل الرسائل",
     "unknownUser": "مستخدم غير معروف"
+  },
+  "support": {
+    "title": "دعم العملاء",
+    "description": "هل تحتاج مساعدة؟ أرسل لنا رسالة وسنرد عليك في أقرب وقت ممكن!",
+    "yourEmail": "بريدك الإلكتروني",
+    "emailPlaceholder": "مثال@بريد.com",
+    "message": "الرسالة",
+    "messagePlaceholder": "صف مشكلتك أو سؤالك...",
+    "sendButton": "إرسال الرسالة",
+    "sending": "جاري الإرسال...",
+    "messageSent": "تم إرسال الرسالة!",
+    "messageSentDescription": "سنرد عليك في أقرب وقت ممكن",
+    "error": "خطأ",
+    "errorSending": "تعذر إرسال الرسالة",
+    "requiredFields": "الحقول المطلوبة",
+    "requiredFieldsDescription": "الرجاء إدخال البريد الإلكتروني والرسالة",
+    "back": "رجوع"
   }
 }

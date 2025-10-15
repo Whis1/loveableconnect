@@ -139,7 +139,11 @@
     "messages": "Messaggi",
     "noMessages": "Attualmente non hai nessun messaggio",
     "seeAllMessages": "Vedi Tutti i Messaggi",
-    "seeYourMessages": "Vedi i tuoi messaggi"
+    "seeYourMessages": "Vedi i tuoi messaggi",
+    "support": "Supporto",
+    "supportDescription": "Hai bisogno di aiuto?",
+    "sendMessage": "Invia Messaggio",
+    "contactSupport": "Contatta il nostro team di supporto per qualsiasi domanda o problema."
   },
   "explore": {
     "back": "Indietro",
@@ -411,5 +415,22 @@
     "nearbyUser1": "Utente vicino alle tue parti",
     "nearbyUser2": "Utente della tua zona",
     "nearbyUser3": "Utente nelle vicinanze"
+  },
+  "support": {
+    "title": "Supporto Clienti",
+    "description": "Hai bisogno di aiuto? Inviaci un messaggio e ti risponderemo al più presto!",
+    "yourEmail": "La tua email",
+    "emailPlaceholder": "esempio@email.com",
+    "message": "Messaggio",
+    "messagePlaceholder": "Descrivi il tuo problema o la tua domanda...",
+    "sendButton": "Invia Messaggio",
+    "sending": "Invio in corso...",
+    "messageSent": "Messaggio inviato!",
+    "messageSentDescription": "Ti risponderemo al più presto",
+    "error": "Errore",
+    "errorSending": "Non è stato possibile inviare il messaggio",
+    "requiredFields": "Campi obbligatori",
+    "requiredFieldsDescription": "Inserisci email e messaggio",
+    "back": "Indietro"
   }
 }

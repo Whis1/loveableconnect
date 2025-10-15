@@ -139,7 +139,11 @@
     "messages": "Messages",
     "noMessages": "Vous n'avez actuellement aucun message",
     "seeAllMessages": "Voir Tous les Messages",
-    "seeYourMessages": "Voir vos messages"
+    "seeYourMessages": "Voir vos messages",
+    "support": "Support",
+    "supportDescription": "Besoin d'aide?",
+    "sendMessage": "Envoyer un Message",
+    "contactSupport": "Contactez notre équipe de support pour toute question ou problème."
   },
   "explore": {
     "back": "Retour",
@@ -308,5 +312,22 @@
     "error": "Erreur",
     "errorLoadingMessages": "Impossible de charger les messages",
     "unknownUser": "Utilisateur inconnu"
+  },
+  "support": {
+    "title": "Support Client",
+    "description": "Besoin d'aide? Envoyez-nous un message et nous vous répondrons dès que possible!",
+    "yourEmail": "Votre email",
+    "emailPlaceholder": "exemple@email.com",
+    "message": "Message",
+    "messagePlaceholder": "Décrivez votre problème ou votre question...",
+    "sendButton": "Envoyer le Message",
+    "sending": "Envoi en cours...",
+    "messageSent": "Message envoyé!",
+    "messageSentDescription": "Nous vous répondrons dès que possible",
+    "error": "Erreur",
+    "errorSending": "Impossible d'envoyer le message",
+    "requiredFields": "Champs obligatoires",
+    "requiredFieldsDescription": "Veuillez entrer l'email et le message",
+    "back": "Retour"
   }
 }

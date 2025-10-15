@@ -305,20 +305,20 @@ const Dashboard = () => {
                     <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
                       <MessageCircle className="h-5 w-5" />
                     </div>
-                    <span className="font-bold">Supporto</span>
+                    <span className="font-bold">{t("dashboard.support")}</span>
                   </CardTitle>
                   <CardDescription className="text-white/80">
-                    Hai bisogno di aiuto?
+                    {t("dashboard.supportDescription")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="relative">
                   <p className="text-white/90 mb-6">
-                    Contatta il nostro team di supporto per qualsiasi domanda o problema.
+                    {t("dashboard.contactSupport")}
                   </p>
                   <Button 
                     className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold shadow-lg group-hover:shadow-xl transition-all duration-300"
                   >
-                    Invia Messaggio
+                    {t("dashboard.sendMessage")}
                     <MessageCircle className="h-4 w-4 ml-2" />
                   </Button>
                 </CardContent>
