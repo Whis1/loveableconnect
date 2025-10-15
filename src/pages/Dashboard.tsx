@@ -5,7 +5,7 @@ import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, LogOut, Users, Sparkles, Search } from "lucide-react";
+import { Heart, LogOut, Users, Sparkles, Search, MessageCircle } from "lucide-react";
 import { UserProfileCard } from "@/components/UserProfileCard";
 import { RecentMessages } from "@/components/RecentMessages";
 import { useTranslation } from "react-i18next";
@@ -282,9 +282,47 @@ const Dashboard = () => {
               </Card>
             </div>
 
-            {/* Recent Messages */}
-            <div className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
-              {user && <RecentMessages currentUserId={user.id} />}
+            {/* Messages and Support */}
+            <div className="grid gap-4 md:grid-cols-2 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+              <div>
+                {user && <RecentMessages currentUserId={user.id} />}
+              </div>
+              
+              <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+                onClick={() => navigate("/support")}
+              >
+                <div 
+                  className="absolute inset-0 opacity-10" 
+                  style={{
+                    backgroundImage: 'url(/images/love-background.png)',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                  }}
+                />
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTR6bTAtMTBjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-20" />
+                <CardHeader className="relative">
+                  <CardTitle className="flex items-center gap-3 text-white">
+                    <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
+                      <MessageCircle className="h-5 w-5" />
+                    </div>
+                    <span className="font-bold">Supporto</span>
+                  </CardTitle>
+                  <CardDescription className="text-white/80">
+                    Hai bisogno di aiuto?
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="relative">
+                  <p className="text-white/90 mb-6">
+                    Contatta il nostro team di supporto per qualsiasi domanda o problema.
+                  </p>
+                  <Button 
+                    className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold shadow-lg group-hover:shadow-xl transition-all duration-300"
+                  >
+                    Invia Messaggio
+                    <MessageCircle className="h-4 w-4 ml-2" />
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>

@@ -19,6 +19,7 @@ import TermsAndConditions from "./pages/TermsAndConditions";
 import Credits from "./pages/Credits";
 import PurchaseSuccess from "./pages/PurchaseSuccess";
 import PremiumSuccess from "./pages/PremiumSuccess";
+import Support from "./pages/Support";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
           <Route path="/credits" element={<Credits />} />
           <Route path="/purchase-success" element={<PurchaseSuccess />} />
           <Route path="/premium-success" element={<PremiumSuccess />} />
+          <Route path="/support" element={<Support />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
