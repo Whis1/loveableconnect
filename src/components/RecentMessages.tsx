@@ -52,7 +52,7 @@ export const RecentMessages = ({ currentUserId }: RecentMessagesProps) => {
 
       // For each match, get last message and unread count
       const matchesData = await Promise.all(
-        matches.slice(0, 5).map(async (match) => {
+        matches.slice(0, 3).map(async (match) => {
           const otherUserId = match.user1_id === currentUserId ? match.user2_id : match.user1_id;
 
           // Get other user's profile
@@ -156,32 +156,32 @@ export const RecentMessages = ({ currentUserId }: RecentMessagesProps) => {
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTR6bTAtMTBjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] pointer-events-none" />
       
-      <CardHeader className="relative bg-white/10 backdrop-blur-sm border-b border-white/20">
-        <CardTitle className="flex items-center gap-3 text-white">
-          <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm group-hover:scale-110 transition-transform">
-            <MessageCircle className="h-5 w-5" />
+      <CardHeader className="relative bg-white/10 backdrop-blur-sm border-b border-white/20 p-4">
+        <CardTitle className="flex items-center gap-2 text-white text-lg">
+          <div className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm group-hover:scale-110 transition-transform">
+            <MessageCircle className="h-4 w-4" />
           </div>
           <span className="font-bold">Messaggi</span>
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="space-y-3 pt-4 relative">
+      <CardContent className="space-y-2 p-4 relative">
         {matchesWithMessages.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="mb-4 flex justify-center">
-              <div className="p-4 bg-white/20 rounded-full backdrop-blur-sm">
-                <MessageCircle className="h-12 w-12 text-white" />
+          <div className="text-center py-6">
+            <div className="mb-3 flex justify-center">
+              <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
+                <MessageCircle className="h-8 w-8 text-white" />
               </div>
             </div>
-            <p className="text-white font-medium mb-4">
+            <p className="text-white text-sm font-medium mb-3">
               Attualmente non hai nessun messaggio
             </p>
             <Button 
-              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold"
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold text-sm"
               onClick={() => navigate("/matches")}
             >
               Vedi i tuoi messaggi
-              <Send className="h-4 w-4 ml-2" />
+              <Send className="h-3.5 w-3.5 ml-2" />
             </Button>
           </div>
         ) : (
@@ -190,21 +190,21 @@ export const RecentMessages = ({ currentUserId }: RecentMessagesProps) => {
               <div
                 key={match.match_id}
                 onClick={() => navigate(`/chat/${match.match_id}`)}
-                className="flex items-start gap-3 p-3 rounded-xl bg-white/10 backdrop-blur-sm hover:bg-white/20 cursor-pointer transition-all duration-300 border border-white/20"
+                className="flex items-start gap-2 p-2.5 rounded-lg bg-white/10 backdrop-blur-sm hover:bg-white/20 cursor-pointer transition-all duration-300 border border-white/20"
               >
-                <Avatar className="h-12 w-12 border-2 border-white/30">
+                <Avatar className="h-10 w-10 border-2 border-white/30">
                   <AvatarImage src={match.otherUserAvatar || undefined} />
-                  <AvatarFallback className="bg-white/20 text-white font-bold">
+                  <AvatarFallback className="bg-white/20 text-white font-bold text-sm">
                     {match.otherUserName.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="font-semibold text-sm truncate text-white">
+                    <p className="font-semibold text-xs truncate text-white">
                       {match.otherUserName}
                     </p>
                     {match.unreadCount > 0 && (
-                      <Badge className="text-xs h-5 min-w-5 flex items-center justify-center bg-white text-blue-600 hover:bg-white/90">
+                      <Badge className="text-xs h-4 min-w-4 flex items-center justify-center bg-white text-blue-600 hover:bg-white/90 px-1.5">
                         {match.unreadCount}
                       </Badge>
                     )}
@@ -213,15 +213,15 @@ export const RecentMessages = ({ currentUserId }: RecentMessagesProps) => {
                     {match.lastMessage}
                   </p>
                 </div>
-                <Send className="h-4 w-4 text-white/70 flex-shrink-0 mt-1" />
+                <Send className="h-3.5 w-3.5 text-white/70 flex-shrink-0 mt-1" />
               </div>
             ))}
             <Button 
-              className="w-full mt-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold"
+              className="w-full mt-1 bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold text-sm py-2"
               onClick={() => navigate("/matches")}
             >
               Vedi Tutti i Messaggi
-              <MessageCircle className="h-4 w-4 ml-2" />
+              <MessageCircle className="h-3.5 w-3.5 ml-2" />
             </Button>
           </>
         )}
