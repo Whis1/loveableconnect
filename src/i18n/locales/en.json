@@ -65,5 +65,13 @@
     "saving": "Saving...",
     "profileUpdated": "Profile updated!",
     "profileUpdateSuccess": "Your changes have been saved successfully"
+  },
+  "terms": {
+    "link": "Privacy - Terms and Conditions - Cookies",
+    "title": "Legal Information",
+    "back": "Back",
+    "privacy": "Privacy",
+    "termsAndConditions": "Terms and Conditions",
+    "cookies": "Cookies"
   }
 }

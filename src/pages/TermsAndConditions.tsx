@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,6 +7,7 @@ import { ArrowLeft } from "lucide-react";
 
 const TermsAndConditions = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4 md:p-8">
@@ -16,21 +18,21 @@ const TermsAndConditions = () => {
           className="mb-4"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Indietro
+          {t('terms.back')}
         </Button>
 
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl md:text-3xl text-center">
-              Informazioni Legali
+              {t('terms.title')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="privacy" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="privacy">Privacy</TabsTrigger>
-                <TabsTrigger value="terms">Termini e Condizioni</TabsTrigger>
-                <TabsTrigger value="cookies">Cookie</TabsTrigger>
+                <TabsTrigger value="privacy">{t('terms.privacy')}</TabsTrigger>
+                <TabsTrigger value="terms">{t('terms.termsAndConditions')}</TabsTrigger>
+                <TabsTrigger value="cookies">{t('terms.cookies')}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="privacy" className="space-y-6 mt-6 text-sm">

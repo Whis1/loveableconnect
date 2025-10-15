@@ -65,5 +65,13 @@
     "saving": "Enregistrement...",
     "profileUpdated": "Profil mis à jour!",
     "profileUpdateSuccess": "Vos modifications ont été enregistrées avec succès"
+  },
+  "terms": {
+    "link": "Confidentialité - Conditions Générales - Cookies",
+    "title": "Informations Légales",
+    "back": "Retour",
+    "privacy": "Confidentialité",
+    "termsAndConditions": "Conditions Générales",
+    "cookies": "Cookies"
   }
 }

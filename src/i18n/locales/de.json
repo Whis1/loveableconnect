@@ -65,5 +65,13 @@
     "saving": "Wird gespeichert...",
     "profileUpdated": "Profil aktualisiert!",
     "profileUpdateSuccess": "Deine Änderungen wurden erfolgreich gespeichert"
+  },
+  "terms": {
+    "link": "Datenschutz - AGB - Cookies",
+    "title": "Rechtliche Informationen",
+    "back": "Zurück",
+    "privacy": "Datenschutz",
+    "termsAndConditions": "Allgemeine Geschäftsbedingungen",
+    "cookies": "Cookies"
   }
 }

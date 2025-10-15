@@ -391,7 +391,7 @@ const Auth = () => {
               onClick={() => navigate("/terms")}
               className="hover:underline"
             >
-              Privacy - Termini e condizioni - Cookie
+              {t('terms.link')}
             </button>
           </div>
         </CardContent>

@@ -14,6 +14,7 @@ const languages = [
   { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
   { code: 'es', name: 'Español', flag: '🇪🇸' },
   { code: 'fr', name: 'Français', flag: '🇫🇷' },
+  { code: 'ar', name: 'العربية', flag: '🇸🇦' },
 ];
 
 export const LanguageSwitcher = () => {
