@@ -12,6 +12,7 @@ import { GifPicker } from "@/components/chat/GifPicker";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ChatUserProfile } from "@/components/chat/ChatUserProfile";
 import { useCredits } from "@/hooks/useCredits";
+import { useTranslation } from "react-i18next";
 
 interface Message {
   id: string;
@@ -35,6 +36,7 @@ const Chat = () => {
   const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [otherUser, setOtherUser] = useState<Profile | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -42,6 +44,7 @@ const Chat = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { deductCredits } = useCredits();
 
@@ -70,8 +73,8 @@ const Chat = () => {
 
       if (!match) {
         toast({
-          title: "Errore",
-          description: "Match non trovato",
+          title: t("chat.error"),
+          description: t("chat.matchNotFound"),
           variant: "destructive",
         });
         navigate("/matches");
@@ -91,8 +94,8 @@ const Chat = () => {
 
       if (!profile) {
         toast({
-          title: "Errore",
-          description: "Profilo non trovato",
+          title: t("chat.error"),
+          description: t("chat.profileNotFound"),
           variant: "destructive",
         });
         navigate("/matches");
@@ -162,9 +165,7 @@ const Chat = () => {
 
   useEffect(() => {
     // Scroll to bottom when messages change
-    if (scrollRef.current) {
-      scrollRef.current.scrollIntoView({ behavior: "smooth" });
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const handleSendMessage = async (
@@ -182,8 +183,8 @@ const Chat = () => {
     const hasCredits = await deductCredits();
     if (!hasCredits) {
       toast({
-        title: "Crediti insufficienti",
-        description: "Hai esaurito i crediti. Acquista crediti per continuare a chattare.",
+        title: t("chat.creditsInsufficient"),
+        description: t("chat.creditsInsuffficientDescription"),
         variant: "destructive",
       });
       return;
@@ -233,8 +234,8 @@ const Chat = () => {
       setMessages((prev) => prev.filter(msg => msg.id !== tempMessage.id));
       
       toast({
-        title: "Errore",
-        description: "Impossibile inviare il messaggio",
+        title: t("chat.error"),
+        description: t("chat.cannotSendMessage"),
         variant: "destructive",
       });
     }
@@ -267,16 +268,16 @@ const Chat = () => {
         .from('chat-images')
         .getPublicUrl(fileName);
 
-      await handleSendMessage(undefined, 'image', data.publicUrl, 'Immagine');
+      await handleSendMessage(undefined, 'image', data.publicUrl, t("chat.photo"));
       
       toast({
-        title: "Successo",
-        description: "Immagine inviata",
+        title: t("chat.success"),
+        description: t("chat.imageSent"),
       });
     } catch (error: any) {
       toast({
-        title: "Errore",
-        description: "Impossibile caricare l'immagine",
+        title: t("chat.error"),
+        description: t("chat.cannotUploadImage"),
         variant: "destructive",
       });
     } finally {
@@ -288,7 +289,7 @@ const Chat = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">Caricamento...</p>
+        <p className="text-muted-foreground">{t("chat.loading")}</p>
       </div>
     );
   }
@@ -329,7 +330,7 @@ const Chat = () => {
                     />
                   );
                 })}
-                <div ref={scrollRef} />
+                <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
           </CardContent>
@@ -360,7 +361,7 @@ const Chat = () => {
                 <Input
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Scrivi un messaggio..."
+                  placeholder={t("chat.writeMessage")}
                   className="flex-1"
                 />
                 <Button 

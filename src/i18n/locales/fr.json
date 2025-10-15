@@ -230,6 +230,23 @@
     "previousPage": "Page Précédente",
     "nextPage": "Page Suivante"
   },
+  "chat": {
+    "loading": "Chargement...",
+    "loadingProfile": "Chargement du profil...",
+    "writeMessage": "Écrivez un message...",
+    "creditsInsufficient": "Crédits insuffisants",
+    "creditsInsuffficientDescription": "Vous avez épuisé vos crédits. Achetez des crédits pour continuer à discuter.",
+    "error": "Erreur",
+    "cannotSendMessage": "Impossible d'envoyer le message",
+    "success": "Succès",
+    "imageSent": "Image envoyée",
+    "cannotUploadImage": "Impossible de télécharger l'image",
+    "matchNotFound": "Match introuvable",
+    "profileNotFound": "Profil introuvable",
+    "years": "ans",
+    "photoGallery": "Galerie de Photos",
+    "photo": "Photo"
+  },
   "common": {
     "male": "Homme",
     "female": "Femme",

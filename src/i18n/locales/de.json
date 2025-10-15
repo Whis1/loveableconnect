@@ -230,6 +230,23 @@
     "previousPage": "Vorherige Seite",
     "nextPage": "Nächste Seite"
   },
+  "chat": {
+    "loading": "Laden...",
+    "loadingProfile": "Profil wird geladen...",
+    "writeMessage": "Nachricht schreiben...",
+    "creditsInsufficient": "Unzureichende Credits",
+    "creditsInsuffficientDescription": "Sie haben keine Credits mehr. Kaufen Sie Credits, um weiter zu chatten.",
+    "error": "Fehler",
+    "cannotSendMessage": "Nachricht konnte nicht gesendet werden",
+    "success": "Erfolg",
+    "imageSent": "Bild gesendet",
+    "cannotUploadImage": "Bild konnte nicht hochgeladen werden",
+    "matchNotFound": "Match nicht gefunden",
+    "profileNotFound": "Profil nicht gefunden",
+    "years": "Jahre alt",
+    "photoGallery": "Fotogalerie",
+    "photo": "Foto"
+  },
   "common": {
     "male": "Mann",
     "female": "Frau",

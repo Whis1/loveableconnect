@@ -60,7 +60,7 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
   if (loading) {
     return (
       <div className="p-4 text-center">
-        <p className="text-muted-foreground">Caricamento profilo...</p>
+        <p className="text-muted-foreground">{t("chat.loadingProfile")}</p>
       </div>
     );
   }
@@ -84,7 +84,7 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
             <div>
               <h3 className="text-2xl font-bold">{profile.nickname}</h3>
               {profile.age && (
-                <p className="text-muted-foreground">{profile.age} anni</p>
+                <p className="text-muted-foreground">{profile.age} {t("chat.years")}</p>
               )}
             </div>
 
@@ -129,15 +129,15 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
           <div className="mt-4">
             <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
               <User className="h-4 w-4" />
-              Galleria Foto
+              {t("chat.photoGallery")}
             </h4>
             <ScrollArea className="w-full">
               <div className="flex gap-2 pb-2">
                 {profile.photos.map((photo, index) => (
-                  <ImageDialog key={index} src={photo} alt={`Foto ${index + 1}`}>
+                  <ImageDialog key={index} src={photo} alt={`${t("chat.photo")} ${index + 1}`}>
                     <img
                       src={photo}
-                      alt={`Foto ${index + 1}`}
+                      alt={`${t("chat.photo")} ${index + 1}`}
                       className="h-20 w-20 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
                     />
                   </ImageDialog>
