@@ -13,7 +13,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Heart, X, ArrowLeft, MapPin, Filter, User } from "lucide-react";
 import { ImageDialog } from "@/components/ImageDialog";
-import { getGenericLocationPhrase } from "@/lib/utils";
 
 interface Profile {
   id: string;
@@ -472,10 +471,12 @@ const Explore = () => {
                 )}
               </div>
               
-              <div className="flex items-center gap-2 text-muted-foreground mb-3">
-                <MapPin className="h-4 w-4" />
-                <span>{getGenericLocationPhrase(t)}</span>
-              </div>
+              {currentProfile.city && (
+                <div className="flex items-center gap-2 text-muted-foreground mb-3">
+                  <MapPin className="h-4 w-4" />
+                  <span>{currentProfile.city}</span>
+                </div>
+              )}
 
               {currentProfile.bio && (
                 <div className="bg-muted/50 rounded-lg p-4 mb-4">
@@ -516,10 +517,6 @@ const Explore = () => {
             </div>
           </CardContent>
         </Card>
-
-        <div className="text-center mt-4 text-muted-foreground">
-          {currentIndex + 1} di {profiles.length}
-        </div>
       </div>
     </div>
   );
