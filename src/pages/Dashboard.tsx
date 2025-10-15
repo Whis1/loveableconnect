@@ -241,14 +241,23 @@ const Dashboard = () => {
               Esplora i profili con filtri personalizzati e trova la tua anima gemella
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-6">
+          <CardContent className="pt-6 space-y-3">
             <Button 
               className="w-full" 
               size="lg"
               onClick={() => navigate("/explore")}
             >
+              <Users className="h-5 w-5 mr-2" />
+              Esplora Profili
+            </Button>
+            <Button 
+              className="w-full" 
+              size="lg"
+              variant="outline"
+              onClick={() => navigate("/search")}
+            >
               <Search className="h-5 w-5 mr-2" />
-              Inizia a Esplorare con Filtri
+              Ricerca Avanzata
             </Button>
           </CardContent>
         </Card>

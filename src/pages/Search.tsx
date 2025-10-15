@@ -1,0 +1,520 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { ArrowLeft, MapPin, Search as SearchIcon, RotateCcw, Heart, MessageCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+
+interface Profile {
+  id: string;
+  full_name: string;
+  nickname: string;
+  bio: string | null;
+  age: number | null;
+  gender: string | null;
+  city: string | null;
+  interests: string[] | null;
+  avatar_url: string | null;
+  photos: string[] | null;
+  relationship_type: string | null;
+  looking_for: string[] | null;
+  sexual_orientation: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  last_active: string | null;
+  distance?: number;
+}
+
+interface UserLocation {
+  latitude: number;
+  longitude: number;
+}
+
+const Search = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [locationPermission, setLocationPermission] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const resultsPerPage = 20;
+
+  // Filtri
+  const [ageRange, setAgeRange] = useState([18, 99]);
+  const [distanceRange, setDistanceRange] = useState([100]);
+  const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState<"distance" | "last_active">("distance");
+
+  const genderOptions = [
+    { value: "male", label: "Uomo" },
+    { value: "female", label: "Donna" },
+    { value: "trans", label: "Trans" },
+    { value: "non-binary", label: "Non binario" },
+  ];
+
+  useEffect(() => {
+    const initializeSearch = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+
+      setCurrentUser(session.user.id);
+      setLoading(false);
+    };
+
+    initializeSearch();
+  }, [navigate]);
+
+  const requestLocationPermission = () => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const location = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          };
+          setUserLocation(location);
+          setLocationPermission(true);
+          toast({
+            title: "Posizione acquisita",
+            description: "Ora puoi cercare persone vicino a te!",
+          });
+          
+          // Salva la posizione nel profilo dell'utente
+          if (currentUser) {
+            supabase
+              .from("profiles")
+              .update({
+                latitude: location.latitude,
+                longitude: location.longitude,
+              })
+              .eq("id", currentUser)
+              .then(() => console.log("Location saved"));
+          }
+        },
+        (error) => {
+          toast({
+            title: "Errore geolocalizzazione",
+            description: "Non è stato possibile ottenere la tua posizione. La ricerca per distanza non sarà disponibile.",
+            variant: "destructive",
+          });
+          console.error("Geolocation error:", error);
+        }
+      );
+    } else {
+      toast({
+        title: "Geolocalizzazione non supportata",
+        description: "Il tuo browser non supporta la geolocalizzazione.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371; // Raggio della Terra in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  const applyFilters = async () => {
+    if (!currentUser) return;
+
+    setLoading(true);
+
+    try {
+      // Fetch tutti i profili escludendo l'utente corrente
+      let query = supabase
+        .from("profiles")
+        .select("*")
+        .neq("id", currentUser);
+
+      // Filtro età
+      query = query.gte("age", ageRange[0]).lte("age", ageRange[1]);
+
+      // Filtro genere
+      if (selectedGenders.length > 0) {
+        query = query.in("gender", selectedGenders);
+      }
+
+      const { data: profilesData, error } = await query;
+
+      if (error) throw error;
+
+      let filteredProfiles: Profile[] = (profilesData || []) as Profile[];
+
+      // Calcola distanza se la posizione è disponibile
+      if (userLocation && locationPermission) {
+        filteredProfiles = filteredProfiles
+          .map(profile => {
+            if (profile.latitude && profile.longitude) {
+              const distance = calculateDistance(
+                userLocation.latitude,
+                userLocation.longitude,
+                profile.latitude,
+                profile.longitude
+              );
+              return { ...profile, distance: Math.round(distance) } as Profile;
+            }
+            return profile;
+          })
+          .filter(profile => {
+            if ((profile as any).distance !== undefined) {
+              return (profile as any).distance <= distanceRange[0];
+            }
+            return false; // Escludi profili senza posizione se il filtro distanza è attivo
+          });
+
+        // Ordina per distanza o ultima attività
+        if (sortBy === "distance") {
+          filteredProfiles.sort((a, b) => ((a as any).distance || 999999) - ((b as any).distance || 999999));
+        }
+      }
+
+      if (sortBy === "last_active") {
+        filteredProfiles.sort((a, b) => {
+          const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
+          const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
+          return dateB - dateA;
+        });
+      }
+
+      setProfiles(filteredProfiles);
+      setCurrentPage(1);
+      
+      toast({
+        title: "Ricerca completata",
+        description: `Trovati ${filteredProfiles.length} profili`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Errore",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetFilters = () => {
+    setAgeRange([18, 99]);
+    setDistanceRange([100]);
+    setSelectedGenders([]);
+    setProfiles([]);
+    setCurrentPage(1);
+  };
+
+  const toggleGender = (gender: string) => {
+    setSelectedGenders(prev => 
+      prev.includes(gender) 
+        ? prev.filter(g => g !== gender)
+        : [...prev, gender]
+    );
+  };
+
+  // Paginazione
+  const totalPages = Math.ceil(profiles.length / resultsPerPage);
+  const startIndex = (currentPage - 1) * resultsPerPage;
+  const endIndex = startIndex + resultsPerPage;
+  const currentProfiles = profiles.slice(startIndex, endIndex);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-muted-foreground">Caricamento...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-4">
+      <div className="container mx-auto max-w-6xl">
+        <div className="mb-6 flex justify-between items-center">
+          <Button variant="ghost" onClick={() => navigate("/")}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Indietro
+          </Button>
+          <h1 className="text-2xl font-bold">Ricerca Avanzata</h1>
+        </div>
+
+        {/* Pannello Filtri */}
+        <Card className="mb-6">
+          <CardContent className="pt-6 space-y-6">
+            {/* Richiesta Posizione */}
+            {!locationPermission && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="flex items-start gap-3">
+                  <MapPin className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                      Trova persone vicino a te
+                    </h3>
+                    <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                      Per usare il filtro distanza, abbiamo bisogno della tua posizione. 
+                      La utilizziamo solo per mostrarti persone vicine e non viene salvata permanentemente senza il tuo consenso.
+                    </p>
+                    <Button onClick={requestLocationPermission} size="sm" variant="default">
+                      Attiva Geolocalizzazione
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {locationPermission && (
+              <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
+                <p className="text-sm text-green-700 dark:text-green-300 flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  Geolocalizzazione attiva - Ricerca per distanza disponibile
+                </p>
+              </div>
+            )}
+
+            {/* Filtro Età */}
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">Età: {ageRange[0]} - {ageRange[1]} anni</Label>
+              <Slider
+                value={ageRange}
+                onValueChange={setAgeRange}
+                min={18}
+                max={99}
+                step={1}
+                className="w-full"
+              />
+            </div>
+
+            {/* Filtro Distanza (solo se posizione attiva) */}
+            {locationPermission && (
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Distanza massima: {distanceRange[0]} km</Label>
+                <Slider
+                  value={distanceRange}
+                  onValueChange={setDistanceRange}
+                  min={1}
+                  max={500}
+                  step={5}
+                  className="w-full"
+                />
+              </div>
+            )}
+
+            {/* Filtro Genere */}
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">Genere cercato</Label>
+              <div className="grid grid-cols-2 gap-3">
+                {genderOptions.map((option) => (
+                  <div key={option.value} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={option.value}
+                      checked={selectedGenders.includes(option.value)}
+                      onCheckedChange={() => toggleGender(option.value)}
+                    />
+                    <label
+                      htmlFor={option.value}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      {option.label}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Ordinamento */}
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">Ordina per</Label>
+              <div className="flex gap-3">
+                <Button
+                  variant={sortBy === "distance" ? "default" : "outline"}
+                  onClick={() => setSortBy("distance")}
+                  disabled={!locationPermission}
+                  className="flex-1"
+                >
+                  Distanza
+                </Button>
+                <Button
+                  variant={sortBy === "last_active" ? "default" : "outline"}
+                  onClick={() => setSortBy("last_active")}
+                  className="flex-1"
+                >
+                  Ultimo Accesso
+                </Button>
+              </div>
+            </div>
+
+            {/* Pulsanti Azione */}
+            <div className="flex gap-3 pt-4 border-t">
+              <Button onClick={applyFilters} className="flex-1" size="lg">
+                <SearchIcon className="h-4 w-4 mr-2" />
+                Applica Filtri
+              </Button>
+              <Button onClick={resetFilters} variant="outline" size="lg">
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Reset
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Risultati */}
+        {profiles.length > 0 && (
+          <>
+            <div className="mb-4">
+              <p className="text-sm text-muted-foreground">
+                {profiles.length} risultati trovati {currentPage > 1 && `- Pagina ${currentPage} di ${totalPages}`}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              {currentProfiles.map((profile) => (
+                <Card key={profile.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="aspect-square bg-gradient-to-br from-pink-200 to-purple-200 dark:from-pink-900 dark:to-purple-900 flex items-center justify-center">
+                    {profile.avatar_url ? (
+                      <img
+                        src={supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl}
+                        alt={profile.nickname || profile.full_name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Avatar className="h-32 w-32">
+                        <AvatarFallback className="text-4xl">
+                          {profile.nickname?.charAt(0) || profile.full_name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                  </div>
+                  <CardContent className="p-4">
+                    <div className="mb-3">
+                      <h3 className="text-xl font-bold">
+                        {profile.nickname || profile.full_name}
+                        {profile.age && <span className="text-muted-foreground ml-1">, {profile.age}</span>}
+                      </h3>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                        <MapPin className="h-3 w-3" />
+                        <span>
+                          {profile.distance !== undefined 
+                            ? `${profile.distance} km` 
+                            : profile.city || "Posizione non specificata"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {profile.bio && (
+                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                        {profile.bio}
+                      </p>
+                    )}
+
+                    {profile.interests && profile.interests.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {profile.interests.slice(0, 3).map((interest, idx) => (
+                          <Badge key={idx} variant="secondary" className="text-xs">
+                            {interest}
+                          </Badge>
+                        ))}
+                        {profile.interests.length > 3 && (
+                          <Badge variant="secondary" className="text-xs">
+                            +{profile.interests.length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => {
+                          // Aggiungi like
+                          if (currentUser) {
+                            supabase
+                              .from("likes")
+                              .insert({
+                                from_user_id: currentUser,
+                                to_user_id: profile.id,
+                              })
+                              .then(() => {
+                                toast({
+                                  title: "Like inviato!",
+                                  description: `Hai messo like a ${profile.nickname || profile.full_name}`,
+                                });
+                              });
+                          }
+                        }}
+                      >
+                        <Heart className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => navigate(`/profile/${profile.id}`)}
+                      >
+                        <MessageCircle className="h-4 w-4 mr-1" />
+                        Profilo
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Paginazione */}
+            {totalPages > 1 && (
+              <div className="flex justify-center gap-2 mb-8">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Precedente
+                </Button>
+                <div className="flex items-center px-4">
+                  Pagina {currentPage} di {totalPages}
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Successiva
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+
+        {profiles.length === 0 && !loading && (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <SearchIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-semibold mb-2">Nessun risultato</h3>
+              <p className="text-muted-foreground">
+                Imposta i filtri e clicca su "Applica Filtri" per iniziare la ricerca
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Search;
