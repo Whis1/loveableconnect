@@ -289,7 +289,7 @@ const Chat = () => {
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={() => navigate("/matches")}
+              onClick={() => navigate("/")}
               className="mb-2"
             >
               <ArrowLeft className="h-5 w-5" />
