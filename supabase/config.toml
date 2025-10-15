@@ -6,5 +6,26 @@ verify_jwt = true
 [functions.detect-language]
 verify_jwt = false
 
+[functions.purchase-credits]
+verify_jwt = true
+
+[functions.reset-daily-credits]
+verify_jwt = false
+
 [functions.search-giphy]
+verify_jwt = true
+
+[functions.seed-profiles]
+verify_jwt = false
+
+[functions.send-support-email]
+verify_jwt = true
+
+[functions.subscribe-premium]
+verify_jwt = true
+
+[functions.verify-payment]
+verify_jwt = true
+
+[functions.verify-subscription]
 verify_jwt = true
