@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Send, MessageCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -16,9 +15,8 @@ const Support = () => {
   const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !message) {
@@ -30,32 +28,23 @@ const Support = () => {
       return;
     }
 
-    setLoading(true);
+    // Create mailto link with pre-filled data
+    const subject = encodeURIComponent(`Supporto da ${email}`);
+    const body = encodeURIComponent(`Email: ${email}\n\n${message}`);
+    const mailtoLink = `mailto:loovableconnect@hotmail.com?subject=${subject}&body=${body}`;
 
-    try {
-      const { error } = await supabase.functions.invoke("send-support-email", {
-        body: { userEmail: email, message },
-      });
+    // Open email client
+    window.location.href = mailtoLink;
 
-      if (error) throw error;
-
-      toast({
-        title: t("support.messageSent"),
-        description: t("support.messageSentDescription"),
-      });
-
-      setEmail("");
-      setMessage("");
-    } catch (error: any) {
-      console.error("Error sending support message:", error);
-      toast({
-        title: t("support.error"),
-        description: t("support.errorSending"),
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    // Show success message
+    toast({
+      title: t("support.messageSent"),
+      description: t("support.messageSentDescription"),
+    });
+    
+    // Clear form
+    setEmail("");
+    setMessage("");
   };
 
   return (
@@ -124,16 +113,9 @@ const Support = () => {
               <Button
                 type="submit"
                 className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 shadow-lg"
-                disabled={loading}
               >
-                {loading ? (
-                  t("support.sending")
-                ) : (
-                  <>
-                    <Send className="h-5 w-5 mr-2" />
-                    {t("support.sendButton")}
-                  </>
-                )}
+                <Send className="h-5 w-5 mr-2" />
+                {t("support.sendButton")}
               </Button>
             </form>
           </CardContent>
