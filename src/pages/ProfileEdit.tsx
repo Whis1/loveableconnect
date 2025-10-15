@@ -295,19 +295,21 @@ const ProfileEdit = () => {
               {/* Avatar Section */}
               <div className="space-y-4">
                 <Label>{t('profile.avatar')}</Label>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-6">
                   {avatarPreview ? (
-                    <div className="relative">
-                      <img
-                        src={avatarPreview}
-                        alt="Avatar"
-                        className="w-24 h-24 rounded-full object-cover border-4 border-primary"
-                      />
+                    <div className="relative group">
+                      <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary/20 shadow-xl ring-2 ring-primary/10">
+                        <img
+                          src={avatarPreview}
+                          alt="Avatar"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                       <Button
                         type="button"
                         size="icon"
                         variant="destructive"
-                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                        className="absolute -top-1 -right-1 h-8 w-8 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => {
                           setAvatarPreview(null);
                           setAvatarFile(null);
@@ -317,11 +319,11 @@ const ProfileEdit = () => {
                       </Button>
                     </div>
                   ) : (
-                    <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center">
-                      <Camera className="h-8 w-8 text-muted-foreground" />
+                    <div className="w-32 h-32 rounded-full bg-gradient-to-br from-pink-100 to-purple-100 dark:from-pink-900/30 dark:to-purple-900/30 flex items-center justify-center border-2 border-dashed border-primary/30">
+                      <Camera className="h-12 w-12 text-primary/60" />
                     </div>
                   )}
-                  <div>
+                  <div className="flex-1">
                     <Input
                       id="avatar-upload"
                       type="file"
@@ -332,11 +334,15 @@ const ProfileEdit = () => {
                     <Button
                       type="button"
                       variant="outline"
+                      className="w-full sm:w-auto bg-gradient-to-r from-pink-500/10 to-purple-500/10 hover:from-pink-500/20 hover:to-purple-500/20 border-pink-200 dark:border-pink-800 transition-all duration-300"
                       onClick={() => document.getElementById('avatar-upload')?.click()}
                     >
                       <Upload className="h-4 w-4 mr-2" />
                       {avatarPreview ? t('profile.changeAvatar') : t('profile.uploadAvatar')}
                     </Button>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      JPG, PNG o WEBP fino a 5MB
+                    </p>
                   </div>
                 </div>
               </div>
@@ -366,27 +372,31 @@ const ProfileEdit = () => {
                     ? "🔒 La tua galleria è privata - solo tu puoi vederla" 
                     : "🌍 La tua galleria è pubblica - tutti possono vederla"}
                 </p>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {photoPreviews.map((preview, index) => (
-                    <div key={index} className="relative aspect-square">
+                    <div key={index} className="relative aspect-square group">
                       <img
                         src={preview}
                         alt={`Photo ${index + 1}`}
-                        className="w-full h-full object-cover rounded-lg"
+                        className="w-full h-full object-cover rounded-2xl shadow-md group-hover:shadow-xl transition-all duration-300"
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       <Button
                         type="button"
                         size="icon"
                         variant="destructive"
-                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                        className="absolute top-2 right-2 h-8 w-8 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 scale-90 group-hover:scale-100"
                         onClick={() => handleRemovePhoto(index)}
                       >
                         <X className="h-4 w-4" />
                       </Button>
+                      <div className="absolute bottom-2 left-2 text-white text-xs font-medium bg-black/40 px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        #{index + 1}
+                      </div>
                     </div>
                   ))}
                   {photoPreviews.length < 6 && (
-                    <div>
+                    <div className="aspect-square">
                       <Input
                         id="photos-upload"
                         type="file"
@@ -398,12 +408,14 @@ const ProfileEdit = () => {
                       <Button
                         type="button"
                         variant="outline"
-                        className="w-full aspect-square"
+                        className="w-full h-full rounded-2xl border-2 border-dashed border-primary/30 bg-gradient-to-br from-pink-50/50 to-purple-50/50 dark:from-pink-950/20 dark:to-purple-950/20 hover:from-pink-100/50 hover:to-purple-100/50 dark:hover:from-pink-900/30 dark:hover:to-purple-900/30 transition-all duration-300 group"
                         onClick={() => document.getElementById('photos-upload')?.click()}
                       >
                         <div className="flex flex-col items-center gap-2">
-                          <Upload className="h-6 w-6" />
-                          <span className="text-xs">{t('profile.uploadPhotos')}</span>
+                          <div className="p-3 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 text-white group-hover:scale-110 transition-transform duration-300">
+                            <Upload className="h-5 w-5" />
+                          </div>
+                          <span className="text-xs font-medium">Aggiungi foto</span>
                         </div>
                       </Button>
                     </div>
