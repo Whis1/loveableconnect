@@ -127,7 +127,10 @@
     "transexual": "متحول جنسياً",
     "transgender": "متحول جنسياً",
     "homosexual": "مثلي",
-    "nonBinary": "غير ثنائي"
+    "nonBinary": "غير ثنائي",
+    "nearbyUser1": "مستخدم بالقرب من منطقتك",
+    "nearbyUser2": "مستخدم من منطقتك",
+    "nearbyUser3": "مستخدم قريب"
   },
   "explore": {
     "back": "رجوع",

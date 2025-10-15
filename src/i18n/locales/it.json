@@ -407,6 +407,9 @@
     "transexual": "Transensuale",
     "transgender": "Transgender",
     "homosexual": "Omosessuale",
-    "nonBinary": "Non binario"
+    "nonBinary": "Non binario",
+    "nearbyUser1": "Utente vicino alle tue parti",
+    "nearbyUser2": "Utente della tua zona",
+    "nearbyUser3": "Utente nelle vicinanze"
   }
 }

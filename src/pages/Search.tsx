@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, MapPin, Search as SearchIcon, RotateCcw, Heart, MessageCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { getGenericLocationPhrase } from "@/lib/utils";
 
 interface Profile {
   id: string;
@@ -401,7 +402,7 @@ const Search = () => {
                         <span>
                            {profile.distance !== undefined 
                             ? `${profile.distance} ${t('search.km')}` 
-                            : profile.city || t('search.locationNotSpecified')}
+                            : getGenericLocationPhrase(t)}
                         </span>
                       </div>
                     </div>

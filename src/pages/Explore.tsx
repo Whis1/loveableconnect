@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Heart, X, ArrowLeft, MapPin, Filter, User } from "lucide-react";
 import { ImageDialog } from "@/components/ImageDialog";
+import { getGenericLocationPhrase } from "@/lib/utils";
 
 interface Profile {
   id: string;
@@ -473,7 +474,7 @@ const Explore = () => {
               
               <div className="flex items-center gap-2 text-muted-foreground mb-3">
                 <MapPin className="h-4 w-4" />
-                <span>{currentProfile.city || "Vicino alle tue parti"}</span>
+                <span>{getGenericLocationPhrase(t)}</span>
               </div>
 
               {currentProfile.bio && (

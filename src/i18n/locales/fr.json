@@ -232,7 +232,10 @@
     "transexual": "Transexuel",
     "transgender": "Transgenre",
     "homosexual": "Homosexuel",
-    "nonBinary": "Non-binaire"
+    "nonBinary": "Non-binaire",
+    "nearbyUser1": "Utilisateur près de chez vous",
+    "nearbyUser2": "Utilisateur de votre région",
+    "nearbyUser3": "Utilisateur à proximité"
   },
   "userProfile": {
     "years": "ans",

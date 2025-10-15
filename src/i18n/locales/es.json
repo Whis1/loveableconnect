@@ -326,5 +326,16 @@
     "previous": "Anterior",
     "next": "Siguiente",
     "error": "Error"
+  },
+  "common": {
+    "male": "Hombre",
+    "female": "Mujer",
+    "transexual": "Transexual",
+    "transgender": "Transgénero",
+    "homosexual": "Homosexual",
+    "nonBinary": "No Binario",
+    "nearbyUser1": "Usuario cerca de tu zona",
+    "nearbyUser2": "Usuario de tu área",
+    "nearbyUser3": "Usuario cercano"
   }
 }
