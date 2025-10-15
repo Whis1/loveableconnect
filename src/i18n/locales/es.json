@@ -26,6 +26,27 @@
     "errorAllFields": "Completa todos los campos obligatorios",
     "errorAge": "Ingresa una edad válida (18-120)"
   },
+  "resetPassword": {
+    "title": "Restablecer contraseña",
+    "description": "Ingresa tu nueva contraseña",
+    "newPassword": "Nueva contraseña",
+    "newPasswordPlaceholder": "Ingresa la nueva contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "confirmPasswordPlaceholder": "Confirma la nueva contraseña",
+    "changePassword": "Cambiar contraseña",
+    "changing": "Cambiando...",
+    "backToLogin": "Volver al inicio de sesión",
+    "success": "✅ ¡Contraseña cambiada con éxito!",
+    "successDescription": "Tu contraseña ha sido actualizada. Serás redirigido al panel de control.",
+    "error": "Error",
+    "errorDescription": "Ocurrió un error al cambiar la contraseña",
+    "fillAllFields": "Completa todos los campos",
+    "passwordTooShort": "La contraseña debe tener al menos 6 caracteres",
+    "passwordsDontMatch": "Las contraseñas no coinciden",
+    "invalidToken": "⚠️ Enlace inválido o caducado",
+    "invalidTokenDescription": "El enlace de restablecimiento de contraseña es inválido o ha caducado. Solicita un nuevo restablecimiento de contraseña.",
+    "checking": "Verificando..."
+  },
   "profile": {
     "nickname": "Apodo",
     "age": "Edad",

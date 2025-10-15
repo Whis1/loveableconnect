@@ -26,6 +26,27 @@
     "errorAllFields": "Compila tutti i campi obbligatori",
     "errorAge": "Inserisci un'età valida (18-120)"
   },
+  "resetPassword": {
+    "title": "Reimposta Password",
+    "description": "Inserisci la tua nuova password",
+    "newPassword": "Nuova password",
+    "newPasswordPlaceholder": "Inserisci la nuova password",
+    "confirmPassword": "Conferma password",
+    "confirmPasswordPlaceholder": "Conferma la nuova password",
+    "changePassword": "Cambia password",
+    "changing": "Cambio in corso...",
+    "backToLogin": "Torna al login",
+    "success": "✅ Password cambiata con successo!",
+    "successDescription": "La tua password è stata aggiornata. Verrai reindirizzato alla dashboard.",
+    "error": "Errore",
+    "errorDescription": "Si è verificato un errore durante il cambio password",
+    "fillAllFields": "Compila tutti i campi",
+    "passwordTooShort": "La password deve essere di almeno 6 caratteri",
+    "passwordsDontMatch": "Le password non corrispondono",
+    "invalidToken": "⚠️ Link non valido o scaduto",
+    "invalidTokenDescription": "Il link di reset password non è valido o è scaduto. Richiedi un nuovo reset della password.",
+    "checking": "Verifica in corso..."
+  },
   "profile": {
     "nickname": "Nickname",
     "age": "Età",

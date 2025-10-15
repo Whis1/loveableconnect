@@ -26,6 +26,27 @@
     "errorAllFields": "Remplissez tous les champs obligatoires",
     "errorAge": "Entrez un âge valide (18-120)"
   },
+  "resetPassword": {
+    "title": "Réinitialiser le mot de passe",
+    "description": "Entrez votre nouveau mot de passe",
+    "newPassword": "Nouveau mot de passe",
+    "newPasswordPlaceholder": "Entrez le nouveau mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "confirmPasswordPlaceholder": "Confirmez le nouveau mot de passe",
+    "changePassword": "Changer le mot de passe",
+    "changing": "Changement en cours...",
+    "backToLogin": "Retour à la connexion",
+    "success": "✅ Mot de passe changé avec succès!",
+    "successDescription": "Votre mot de passe a été mis à jour. Vous serez redirigé vers le tableau de bord.",
+    "error": "Erreur",
+    "errorDescription": "Une erreur s'est produite lors du changement de mot de passe",
+    "fillAllFields": "Remplissez tous les champs",
+    "passwordTooShort": "Le mot de passe doit comporter au moins 6 caractères",
+    "passwordsDontMatch": "Les mots de passe ne correspondent pas",
+    "invalidToken": "⚠️ Lien invalide ou expiré",
+    "invalidTokenDescription": "Le lien de réinitialisation du mot de passe est invalide ou a expiré. Demandez une nouvelle réinitialisation du mot de passe.",
+    "checking": "Vérification en cours..."
+  },
   "profile": {
     "nickname": "Pseudo",
     "age": "Âge",

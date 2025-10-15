@@ -26,6 +26,27 @@
     "errorAllFields": "Füllen Sie alle Pflichtfelder aus",
     "errorAge": "Geben Sie ein gültiges Alter ein (18-120)"
   },
+  "resetPassword": {
+    "title": "Passwort zurücksetzen",
+    "description": "Geben Sie Ihr neues Passwort ein",
+    "newPassword": "Neues Passwort",
+    "newPasswordPlaceholder": "Neues Passwort eingeben",
+    "confirmPassword": "Passwort bestätigen",
+    "confirmPasswordPlaceholder": "Neues Passwort bestätigen",
+    "changePassword": "Passwort ändern",
+    "changing": "Wird geändert...",
+    "backToLogin": "Zurück zur Anmeldung",
+    "success": "✅ Passwort erfolgreich geändert!",
+    "successDescription": "Ihr Passwort wurde aktualisiert. Sie werden zum Dashboard weitergeleitet.",
+    "error": "Fehler",
+    "errorDescription": "Beim Ändern des Passworts ist ein Fehler aufgetreten",
+    "fillAllFields": "Alle Felder ausfüllen",
+    "passwordTooShort": "Das Passwort muss mindestens 6 Zeichen lang sein",
+    "passwordsDontMatch": "Passwörter stimmen nicht überein",
+    "invalidToken": "⚠️ Ungültiger oder abgelaufener Link",
+    "invalidTokenDescription": "Der Link zum Zurücksetzen des Passworts ist ungültig oder abgelaufen. Fordern Sie ein neues Zurücksetzen des Passworts an.",
+    "checking": "Überprüfung läuft..."
+  },
   "profile": {
     "nickname": "Spitzname",
     "age": "Alter",

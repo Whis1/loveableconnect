@@ -26,6 +26,27 @@
     "errorAllFields": "Fill in all required fields",
     "errorAge": "Enter a valid age (18-120)"
   },
+  "resetPassword": {
+    "title": "Reset Password",
+    "description": "Enter your new password",
+    "newPassword": "New password",
+    "newPasswordPlaceholder": "Enter new password",
+    "confirmPassword": "Confirm password",
+    "confirmPasswordPlaceholder": "Confirm new password",
+    "changePassword": "Change password",
+    "changing": "Changing...",
+    "backToLogin": "Back to login",
+    "success": "✅ Password changed successfully!",
+    "successDescription": "Your password has been updated. You will be redirected to the dashboard.",
+    "error": "Error",
+    "errorDescription": "An error occurred while changing password",
+    "fillAllFields": "Fill in all fields",
+    "passwordTooShort": "Password must be at least 6 characters",
+    "passwordsDontMatch": "Passwords don't match",
+    "invalidToken": "⚠️ Invalid or expired link",
+    "invalidTokenDescription": "The password reset link is invalid or has expired. Request a new password reset.",
+    "checking": "Checking..."
+  },
   "profile": {
     "nickname": "Nickname",
     "age": "Age",

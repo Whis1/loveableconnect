@@ -26,6 +26,27 @@
     "errorAllFields": "املأ جميع الحقول المطلوبة",
     "errorAge": "أدخل عمراً صحيحاً (18-120)"
   },
+  "resetPassword": {
+    "title": "إعادة تعيين كلمة المرور",
+    "description": "أدخل كلمة المرور الجديدة",
+    "newPassword": "كلمة المرور الجديدة",
+    "newPasswordPlaceholder": "أدخل كلمة المرور الجديدة",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "confirmPasswordPlaceholder": "أكد كلمة المرور الجديدة",
+    "changePassword": "تغيير كلمة المرور",
+    "changing": "جاري التغيير...",
+    "backToLogin": "العودة إلى تسجيل الدخول",
+    "success": "✅ تم تغيير كلمة المرور بنجاح!",
+    "successDescription": "تم تحديث كلمة المرور الخاصة بك. سيتم إعادة توجيهك إلى لوحة التحكم.",
+    "error": "خطأ",
+    "errorDescription": "حدث خطأ أثناء تغيير كلمة المرور",
+    "fillAllFields": "املأ جميع الحقول",
+    "passwordTooShort": "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل",
+    "passwordsDontMatch": "كلمات المرور غير متطابقة",
+    "invalidToken": "⚠️ رابط غير صالح أو منتهي الصلاحية",
+    "invalidTokenDescription": "رابط إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية. اطلب إعادة تعيين كلمة مرور جديدة.",
+    "checking": "جاري التحقق..."
+  },
   "profile": {
     "nickname": "اللقب",
     "age": "العمر",
