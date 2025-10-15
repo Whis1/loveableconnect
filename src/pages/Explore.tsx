@@ -57,12 +57,12 @@ const Explore = () => {
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
 
   const genderOptions = [
-    { value: "male", label: t("search.genders.male") },
-    { value: "female", label: t("search.genders.female") },
-    { value: "transexual", label: t("search.genders.transexual") },
-    { value: "transgender", label: t("search.genders.transgender") },
-    { value: "homosexual", label: t("search.genders.homosexual") },
-    { value: "non-binary", label: t("search.genders.nonBinary") },
+    { value: "male", label: t("explore.genders.male") },
+    { value: "female", label: t("explore.genders.female") },
+    { value: "transexual", label: t("explore.genders.transexual") },
+    { value: "transgender", label: t("explore.genders.transgender") },
+    { value: "homosexual", label: t("explore.genders.homosexual") },
+    { value: "non-binary", label: t("explore.genders.nonBinary") },
   ];
 
   useEffect(() => {
@@ -154,8 +154,8 @@ const Explore = () => {
           setUserLocation(location);
           setLocationPermission(true);
           toast({
-            title: t("search.geolocation.acquired"),
-            description: t("search.geolocation.acquiredDescription"),
+            title: t("explore.geolocation.acquired"),
+            description: t("explore.geolocation.acquiredDescription"),
           });
           
           if (currentUser) {
@@ -171,8 +171,8 @@ const Explore = () => {
         },
         (error) => {
           toast({
-            title: t("search.geolocation.error"),
-            description: t("search.geolocation.errorDescription"),
+            title: t("explore.geolocation.error"),
+            description: t("explore.geolocation.errorDescription"),
             variant: "destructive",
           });
           console.error("Geolocation error:", error);
@@ -180,8 +180,8 @@ const Explore = () => {
       );
     } else {
       toast({
-        title: t("search.geolocation.notSupported"),
-        description: t("search.geolocation.notSupportedDescription"),
+        title: t("explore.geolocation.notSupported"),
+        description: t("explore.geolocation.notSupportedDescription"),
         variant: "destructive",
       });
     }
@@ -246,8 +246,8 @@ const Explore = () => {
     setShowFilters(false);
     
     toast({
-      title: t("search.filtersApplied"),
-      description: t("search.profilesFound", { count: filtered.length }),
+      title: t("explore.filtersApplied"),
+      description: t("explore.profilesFound", { count: filtered.length }),
     });
   };
 
@@ -345,13 +345,13 @@ const Explore = () => {
                     <MapPin className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
                     <div className="flex-1">
                       <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
-                        {t("search.geolocation.permissionTitle")}
+                        {t("explore.geolocation.permissionTitle")}
                       </h3>
                       <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
-                        {t("search.geolocation.permissionDescription")}
+                        {t("explore.geolocation.permissionDescription")}
                       </p>
                       <Button onClick={requestLocationPermission} size="sm" variant="default">
-                        {t("search.geolocation.activateButton")}
+                        {t("explore.geolocation.activateButton")}
                       </Button>
                     </div>
                   </div>
@@ -362,14 +362,14 @@ const Explore = () => {
                 <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
                   <p className="text-sm text-green-700 dark:text-green-300 flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
-                    {t("search.geolocation.active")}
+                    {t("explore.geolocation.active")}
                   </p>
                 </div>
               )}
 
               {/* Filtro Età */}
               <div className="space-y-3">
-                <Label className="text-base font-semibold">{t("search.ageRange", { min: ageRange[0], max: ageRange[1] })}</Label>
+                <Label className="text-base font-semibold">{t("explore.ageRange", { min: ageRange[0], max: ageRange[1] })}</Label>
                 <Slider
                   value={ageRange}
                   onValueChange={setAgeRange}
@@ -383,7 +383,7 @@ const Explore = () => {
               {/* Filtro Distanza */}
               {locationPermission && (
                 <div className="space-y-3">
-                  <Label className="text-base font-semibold">{t("search.distanceValue", { distance: distanceRange[0] })}</Label>
+                  <Label className="text-base font-semibold">{t("explore.distanceValue", { distance: distanceRange[0] })}</Label>
                   <Slider
                     value={distanceRange}
                     onValueChange={setDistanceRange}
@@ -397,7 +397,7 @@ const Explore = () => {
 
               {/* Filtro Genere */}
               <div className="space-y-3">
-                <Label className="text-base font-semibold">{t("search.genderLabel")}</Label>
+                <Label className="text-base font-semibold">{t("explore.genderLabel")}</Label>
                 <div className="grid grid-cols-2 gap-3">
                   {genderOptions.map((option) => (
                     <div key={option.value} className="flex items-center space-x-2">
@@ -420,10 +420,10 @@ const Explore = () => {
               {/* Pulsanti Azione */}
               <div className="flex gap-2">
                 <Button onClick={applyFilters} className="flex-1">
-                  {t("search.applyFilters")}
+                  {t("explore.applyFilters")}
                 </Button>
                 <Button onClick={resetFilters} variant="outline">
-                  {t("search.resetFilters")}
+                  {t("explore.resetFilters")}
                 </Button>
               </div>
             </CardContent>
