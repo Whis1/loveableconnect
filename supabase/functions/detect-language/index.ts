@@ -24,7 +24,7 @@ serve(async (req) => {
     if (!geoResponse.ok) {
       console.error('Geolocation API error:', geoResponse.status);
       return new Response(
-        JSON.stringify({ language: 'it', country: 'IT' }),
+        JSON.stringify({ language: 'en', country: 'US' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -68,8 +68,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'Unknown error',
-        language: 'it',
-        country: 'IT'
+        language: 'en',
+        country: 'US'
       }),
       { 
         status: 500,

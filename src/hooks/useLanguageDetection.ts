@@ -9,7 +9,7 @@ export const useLanguageDetection = () => {
     const detectAndSetLanguage = async () => {
       // Check if language is already set in localStorage
       const storedLanguage = localStorage.getItem('i18nextLng');
-      if (storedLanguage && storedLanguage !== 'it-IT') {
+      if (storedLanguage) {
         // User has already chosen a language
         return;
       }
@@ -22,7 +22,7 @@ export const useLanguageDetection = () => {
           return;
         }
 
-        if (data?.language && data.language !== i18n.language) {
+        if (data?.language) {
           console.log('Auto-detected language:', data.language, 'from country:', data.country);
           await i18n.changeLanguage(data.language);
         }
