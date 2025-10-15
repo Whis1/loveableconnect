@@ -500,6 +500,8 @@ const ProfileEdit = () => {
                     <SelectItem value="serious">Relazione seria</SelectItem>
                     <SelectItem value="casual">Relazione occasionale</SelectItem>
                     <SelectItem value="friendship">Amicizia</SelectItem>
+                    <SelectItem value="not-sure">Non lo so ancora</SelectItem>
+                    <SelectItem value="prefer-not-say">Preferisco non dirlo</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
