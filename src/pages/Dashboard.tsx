@@ -310,22 +310,14 @@ const Dashboard = () => {
             </div>
           </CardHeader>
           <CardContent className="pt-6 pb-8 relative z-10">
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="flex justify-center">
               <Button 
-                className="h-16 text-lg font-semibold bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] group" 
+                className="h-16 text-lg font-semibold bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] group w-full max-w-md" 
                 size="lg"
                 onClick={() => navigate("/explore")}
               >
                 <Users className="h-6 w-6 mr-2 group-hover:scale-110 transition-transform" />
                 Esplora Profili
-              </Button>
-              <Button 
-                className="h-16 text-lg font-semibold bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] group"
-                size="lg"
-                onClick={() => navigate("/search")}
-              >
-                <Search className="h-6 w-6 mr-2 group-hover:scale-110 transition-transform" />
-                Ricerca Avanzata
               </Button>
             </div>
           </CardContent>

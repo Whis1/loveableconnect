@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Heart, X, ArrowLeft, MapPin, Filter, User } from "lucide-react";
 import { ImageDialog } from "@/components/ImageDialog";
@@ -25,6 +26,15 @@ interface Profile {
   photos: string[] | null;
   relationship_type: string | null;
   looking_for: string[] | null;
+  latitude: number | null;
+  longitude: number | null;
+  last_active: string | null;
+  distance?: number;
+}
+
+interface UserLocation {
+  latitude: number;
+  longitude: number;
 }
 
 const Explore = () => {
@@ -37,12 +47,21 @@ const Explore = () => {
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [filters, setFilters] = useState({
-    gender: "",
-    minAge: "",
-    maxAge: "",
-    relationshipType: "",
-  });
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [locationPermission, setLocationPermission] = useState<boolean>(false);
+  
+  const [ageRange, setAgeRange] = useState([18, 90]);
+  const [distanceRange, setDistanceRange] = useState([100]);
+  const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
+
+  const genderOptions = [
+    { value: "male", label: "Uomo" },
+    { value: "female", label: "Donna" },
+    { value: "transexual", label: "Transensuale" },
+    { value: "transgender", label: "Transgender" },
+    { value: "homosexual", label: "Omosessuale" },
+    { value: "non-binary", label: "Non binario" },
+  ];
 
   useEffect(() => {
     const fetchProfiles = async () => {
@@ -122,44 +141,128 @@ const Explore = () => {
     setCurrentIndex(currentIndex + 1);
   };
 
+  const requestLocationPermission = () => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const location = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          };
+          setUserLocation(location);
+          setLocationPermission(true);
+          toast({
+            title: "Posizione acquisita",
+            description: "Ora puoi filtrare per distanza!",
+          });
+          
+          if (currentUser) {
+            supabase
+              .from("profiles")
+              .update({
+                latitude: location.latitude,
+                longitude: location.longitude,
+              })
+              .eq("id", currentUser)
+              .then(() => console.log("Location saved"));
+          }
+        },
+        (error) => {
+          toast({
+            title: "Errore geolocalizzazione",
+            description: "Non è stato possibile ottenere la tua posizione.",
+            variant: "destructive",
+          });
+          console.error("Geolocation error:", error);
+        }
+      );
+    } else {
+      toast({
+        title: "Geolocalizzazione non supportata",
+        description: "Il tuo browser non supporta la geolocalizzazione.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
   const applyFilters = () => {
     let filtered = [...allProfiles];
 
-    if (filters.gender && filters.gender !== "all") {
-      filtered = filtered.filter(p => {
-        if (filters.gender === "no-preference") return true;
-        return p.gender?.toLowerCase() === filters.gender.toLowerCase();
+    // Filtro età
+    filtered = filtered.filter(p => p.age && p.age >= ageRange[0] && p.age <= ageRange[1]);
+
+    // Filtro genere
+    if (selectedGenders.length > 0) {
+      filtered = filtered.filter(p => p.gender && selectedGenders.includes(p.gender));
+    }
+
+    // Calcola distanza se la posizione è disponibile
+    if (userLocation && locationPermission) {
+      filtered = filtered
+        .map(profile => {
+          if (profile.latitude && profile.longitude) {
+            const distance = calculateDistance(
+              userLocation.latitude,
+              userLocation.longitude,
+              profile.latitude,
+              profile.longitude
+            );
+            return { ...profile, distance: Math.round(distance) } as Profile;
+          }
+          return profile;
+        })
+        .filter(profile => {
+          if ((profile as any).distance !== undefined) {
+            return (profile as any).distance <= distanceRange[0];
+          }
+          return false;
+        });
+
+      filtered.sort((a, b) => ((a as any).distance || 999999) - ((b as any).distance || 999999));
+    } else {
+      filtered.sort((a, b) => {
+        const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
+        const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
+        return dateB - dateA;
       });
-    }
-
-    if (filters.minAge) {
-      const minAge = parseInt(filters.minAge);
-      filtered = filtered.filter(p => p.age && p.age >= minAge);
-    }
-
-    if (filters.maxAge) {
-      const maxAge = parseInt(filters.maxAge);
-      filtered = filtered.filter(p => p.age && p.age <= maxAge);
-    }
-
-    if (filters.relationshipType) {
-      filtered = filtered.filter(p => p.relationship_type === filters.relationshipType);
     }
 
     setProfiles(filtered);
     setCurrentIndex(0);
     setShowFilters(false);
+    
+    toast({
+      title: "Filtri applicati",
+      description: `Trovati ${filtered.length} profili`,
+    });
   };
 
   const resetFilters = () => {
-    setFilters({
-      gender: "",
-      minAge: "",
-      maxAge: "",
-      relationshipType: "",
-    });
+    setAgeRange([18, 90]);
+    setDistanceRange([100]);
+    setSelectedGenders([]);
     setProfiles(allProfiles);
     setCurrentIndex(0);
+  };
+
+  const toggleGender = (gender: string) => {
+    setSelectedGenders(prev => 
+      prev.includes(gender) 
+        ? prev.filter(g => g !== gender)
+        : [...prev, gender]
+    );
   };
 
   const currentProfile = profiles[currentIndex];
@@ -232,59 +335,88 @@ const Explore = () => {
         {/* Filters Panel */}
         {showFilters && (
           <Card className="mb-6">
-            <CardContent className="pt-6 space-y-4">
-              <div className="space-y-2">
-                <Label>Genere</Label>
-                <Select value={filters.gender} onValueChange={(v) => setFilters({...filters, gender: v})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleziona genere" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tutti</SelectItem>
-                    <SelectItem value="male">Uomo</SelectItem>
-                    <SelectItem value="female">Donna</SelectItem>
-                    <SelectItem value="trans">Trans</SelectItem>
-                    <SelectItem value="non-binary">Non binario</SelectItem>
-                    <SelectItem value="no-preference">Nessuna preferenza</SelectItem>
-                  </SelectContent>
-                </Select>
+            <CardContent className="pt-6 space-y-6">
+              {/* Richiesta Posizione */}
+              {!locationPermission && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                        Trova persone vicino a te
+                      </h3>
+                      <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                        Per usare il filtro distanza, abbiamo bisogno della tua posizione. 
+                        La utilizziamo solo per mostrarti persone vicine.
+                      </p>
+                      <Button onClick={requestLocationPermission} size="sm" variant="default">
+                        Attiva Geolocalizzazione
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {locationPermission && (
+                <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
+                  <p className="text-sm text-green-700 dark:text-green-300 flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    Geolocalizzazione attiva
+                  </p>
+                </div>
+              )}
+
+              {/* Filtro Età */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Età: {ageRange[0]} - {ageRange[1]} anni</Label>
+                <Slider
+                  value={ageRange}
+                  onValueChange={setAgeRange}
+                  min={18}
+                  max={90}
+                  step={1}
+                  className="w-full"
+                />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Età minima</Label>
-                  <Input 
-                    type="number" 
-                    placeholder="18"
-                    value={filters.minAge}
-                    onChange={(e) => setFilters({...filters, minAge: e.target.value})}
+              {/* Filtro Distanza */}
+              {locationPermission && (
+                <div className="space-y-3">
+                  <Label className="text-base font-semibold">Distanza massima: {distanceRange[0]} km</Label>
+                  <Slider
+                    value={distanceRange}
+                    onValueChange={setDistanceRange}
+                    min={1}
+                    max={500}
+                    step={5}
+                    className="w-full"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Età massima</Label>
-                  <Input 
-                    type="number" 
-                    placeholder="99"
-                    value={filters.maxAge}
-                    onChange={(e) => setFilters({...filters, maxAge: e.target.value})}
-                  />
+              )}
+
+              {/* Filtro Genere */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Genere cercato</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  {genderOptions.map((option) => (
+                    <div key={option.value} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={option.value}
+                        checked={selectedGenders.includes(option.value)}
+                        onCheckedChange={() => toggleGender(option.value)}
+                      />
+                      <label
+                        htmlFor={option.value}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {option.label}
+                      </label>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Tipo di relazione</Label>
-                <Select value={filters.relationshipType} onValueChange={(v) => setFilters({...filters, relationshipType: v})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleziona tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="serious">Relazione seria</SelectItem>
-                    <SelectItem value="casual">Relazione occasionale</SelectItem>
-                    <SelectItem value="friendship">Amicizia</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
+              {/* Pulsanti Azione */}
               <div className="flex gap-2">
                 <Button onClick={applyFilters} className="flex-1">
                   Applica Filtri
