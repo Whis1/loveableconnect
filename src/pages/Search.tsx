@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,6 +40,7 @@ interface UserLocation {
 const Search = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,12 +55,12 @@ const Search = () => {
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
 
   const genderOptions = [
-    { value: "male", label: "Uomo" },
-    { value: "female", label: "Donna" },
-    { value: "transexual", label: "Transensuale" },
-    { value: "transgender", label: "Transgender" },
-    { value: "homosexual", label: "Omosessuale" },
-    { value: "non-binary", label: "Non binario" },
+    { value: "male", label: t('common.male') },
+    { value: "female", label: t('common.female') },
+    { value: "transexual", label: t('common.transexual') },
+    { value: "transgender", label: t('common.transgender') },
+    { value: "homosexual", label: t('common.homosexual') },
+    { value: "non-binary", label: t('common.nonBinary') },
   ];
 
   useEffect(() => {
@@ -88,8 +90,8 @@ const Search = () => {
           setUserLocation(location);
           setLocationPermission(true);
           toast({
-            title: "Posizione acquisita",
-            description: "Ora puoi cercare persone vicino a te!",
+            title: t('search.locationAcquired'),
+            description: t('search.locationSuccess'),
           });
           
           // Salva la posizione nel profilo dell'utente
@@ -106,8 +108,8 @@ const Search = () => {
         },
         (error) => {
           toast({
-            title: "Errore geolocalizzazione",
-            description: "Non è stato possibile ottenere la tua posizione. La ricerca per distanza non sarà disponibile.",
+            title: t('search.locationError'),
+            description: t('search.locationErrorDescription'),
             variant: "destructive",
           });
           console.error("Geolocation error:", error);
@@ -115,8 +117,8 @@ const Search = () => {
       );
     } else {
       toast({
-        title: "Geolocalizzazione non supportata",
-        description: "Il tuo browser non supporta la geolocalizzazione.",
+        title: t('search.locationNotSupported'),
+        description: t('search.locationNotSupportedDescription'),
         variant: "destructive",
       });
     }
@@ -199,12 +201,12 @@ const Search = () => {
       setCurrentPage(1);
       
       toast({
-        title: "Ricerca completata",
-        description: `Trovati ${filteredProfiles.length} profili`,
+        title: t('search.searchCompleted'),
+        description: `${t('search.profilesFound')} ${filteredProfiles.length} ${t('search.profiles')}`,
       });
     } catch (error: any) {
       toast({
-        title: "Errore",
+        title: t('search.error'),
         description: error.message,
         variant: "destructive",
       });
@@ -238,7 +240,7 @@ const Search = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">Caricamento...</p>
+        <p className="text-muted-foreground">{t('search.loading')}</p>
       </div>
     );
   }
@@ -260,9 +262,9 @@ const Search = () => {
         <div className="mb-6 flex justify-between items-center">
           <Button variant="ghost" onClick={() => navigate("/")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Indietro
+            {t('search.back')}
           </Button>
-          <h1 className="text-2xl font-bold">Ricerca Avanzata</h1>
+          <h1 className="text-2xl font-bold">{t('search.title')}</h1>
         </div>
 
         {/* Pannello Filtri */}
@@ -275,14 +277,13 @@ const Search = () => {
                   <MapPin className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
                   <div className="flex-1">
                     <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
-                      Trova persone vicino a te
+                      {t('search.locationRequest')}
                     </h3>
                     <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
-                      Per usare il filtro distanza, abbiamo bisogno della tua posizione. 
-                      La utilizziamo solo per mostrarti persone vicine e non viene salvata permanentemente senza il tuo consenso.
+                      {t('search.locationDescription')}
                     </p>
                     <Button onClick={requestLocationPermission} size="sm" variant="default">
-                      Attiva Geolocalizzazione
+                      {t('search.enableLocation')}
                     </Button>
                   </div>
                 </div>
@@ -293,14 +294,14 @@ const Search = () => {
               <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
                 <p className="text-sm text-green-700 dark:text-green-300 flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
-                  Geolocalizzazione attiva - Ricerca per distanza disponibile
+                  {t('search.locationActive')}
                 </p>
               </div>
             )}
 
             {/* Filtro Età */}
             <div className="space-y-3">
-              <Label className="text-base font-semibold">Età: {ageRange[0]} - {ageRange[1]} anni</Label>
+              <Label className="text-base font-semibold">{t('search.ageFilter')}: {ageRange[0]} - {ageRange[1]} {t('search.years')}</Label>
               <Slider
                 value={ageRange}
                 onValueChange={setAgeRange}
@@ -314,7 +315,7 @@ const Search = () => {
             {/* Filtro Distanza (solo se posizione attiva) */}
             {locationPermission && (
               <div className="space-y-3">
-                <Label className="text-base font-semibold">Distanza massima: {distanceRange[0]} km</Label>
+                <Label className="text-base font-semibold">{t('search.distanceFilter')}: {distanceRange[0]} {t('search.km')}</Label>
                 <Slider
                   value={distanceRange}
                   onValueChange={setDistanceRange}
@@ -328,7 +329,7 @@ const Search = () => {
 
             {/* Filtro Genere */}
             <div className="space-y-3">
-              <Label className="text-base font-semibold">Genere cercato</Label>
+              <Label className="text-base font-semibold">{t('search.genderFilter')}</Label>
               <div className="grid grid-cols-2 gap-3">
                 {genderOptions.map((option) => (
                   <div key={option.value} className="flex items-center space-x-2">
@@ -352,11 +353,11 @@ const Search = () => {
             <div className="flex gap-3 pt-4 border-t">
               <Button onClick={applyFilters} className="flex-1" size="lg">
                 <SearchIcon className="h-4 w-4 mr-2" />
-                Applica Filtri
+                {t('search.applyFilters')}
               </Button>
               <Button onClick={resetFilters} variant="outline" size="lg">
                 <RotateCcw className="h-4 w-4 mr-2" />
-                Reset
+                {t('search.reset')}
               </Button>
             </div>
           </CardContent>
@@ -367,7 +368,7 @@ const Search = () => {
           <>
             <div className="mb-4">
               <p className="text-sm text-muted-foreground">
-                {profiles.length} risultati trovati {currentPage > 1 && `- Pagina ${currentPage} di ${totalPages}`}
+                {profiles.length} {t('search.resultsFound')} {currentPage > 1 && `- ${t('search.page')} ${currentPage} ${t('search.of')} ${totalPages}`}
               </p>
             </div>
 
@@ -398,9 +399,9 @@ const Search = () => {
                       <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                         <MapPin className="h-3 w-3" />
                         <span>
-                          {profile.distance !== undefined 
-                            ? `${profile.distance} km` 
-                            : profile.city || "Posizione non specificata"}
+                           {profile.distance !== undefined 
+                            ? `${profile.distance} ${t('search.km')}` 
+                            : profile.city || t('search.locationNotSpecified')}
                         </span>
                       </div>
                     </div>
@@ -442,8 +443,8 @@ const Search = () => {
                               })
                               .then(() => {
                                 toast({
-                                  title: "Like inviato!",
-                                  description: `Hai messo like a ${profile.nickname || profile.full_name}`,
+                                  title: t('search.likeSent'),
+                                  description: `${t('search.likedProfile')} ${profile.nickname || profile.full_name}`,
                                 });
                               });
                           }
@@ -457,7 +458,7 @@ const Search = () => {
                         onClick={() => navigate(`/profile/${profile.id}`)}
                       >
                         <MessageCircle className="h-4 w-4 mr-1" />
-                        Profilo
+                        {t('search.profile')}
                       </Button>
                     </div>
                   </CardContent>
@@ -473,17 +474,17 @@ const Search = () => {
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
                 >
-                  Precedente
+                  {t('search.previous')}
                 </Button>
                 <div className="flex items-center px-4">
-                  Pagina {currentPage} di {totalPages}
+                  {t('search.page')} {currentPage} {t('search.of')} {totalPages}
                 </div>
                 <Button
                   variant="outline"
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages}
                 >
-                  Successiva
+                  {t('search.next')}
                 </Button>
               </div>
             )}

@@ -117,7 +117,7 @@ const ProfileEdit = () => {
     
     if (totalPhotos > 6) {
       toast({
-        title: "Limite raggiunto",
+        title: t('profile.limitReached'),
         description: t('profile.maxPhotos'),
         variant: "destructive",
       });
@@ -162,8 +162,8 @@ const ProfileEdit = () => {
   const handleAddInterest = (interest: string) => {
     if (interests.length >= 6) {
       toast({
-        title: "Limite raggiunto",
-        description: "Puoi aggiungere massimo 6 interessi",
+        title: t('profile.limitReached'),
+        description: t('profile.maxInterests'),
         variant: "destructive",
       });
       return;
@@ -257,7 +257,7 @@ const ProfileEdit = () => {
       navigate("/");
     } catch (error: any) {
       toast({
-        title: "Errore",
+        title: t('profile.error'),
         description: error.message,
         variant: "destructive",
       });
@@ -269,7 +269,7 @@ const ProfileEdit = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">Caricamento...</p>
+        <p className="text-muted-foreground">{t('profile.loading')}</p>
       </div>
     );
   }
@@ -293,7 +293,7 @@ const ProfileEdit = () => {
         <div className="mb-4">
           <Button variant="ghost" onClick={() => navigate("/")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Indietro
+            {t('profile.back')}
           </Button>
         </div>
 
@@ -352,7 +352,7 @@ const ProfileEdit = () => {
                       {avatarPreview ? t('profile.changeAvatar') : t('profile.uploadAvatar')}
                     </Button>
                     <p className="text-xs text-muted-foreground mt-2">
-                      JPG, PNG o WEBP fino a 5MB
+                      {t('profile.imageFormats')}
                     </p>
                   </div>
                 </div>
@@ -374,14 +374,14 @@ const ProfileEdit = () => {
                       htmlFor="gallery-private"
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                     >
-                      Galleria privata
+                      {t('profile.galleryPrivate')}
                     </label>
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {profile.gallery_private 
-                    ? "🔒 La tua galleria è privata - solo tu puoi vederla" 
-                    : "🌍 La tua galleria è pubblica - tutti possono vederla"}
+                    ? t('profile.galleryPrivateDesc')
+                    : t('profile.galleryPublicDesc')}
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {photoPreviews.map((preview, index) => (
@@ -426,7 +426,7 @@ const ProfileEdit = () => {
                           <div className="p-3 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 text-white group-hover:scale-110 transition-transform duration-300">
                             <Upload className="h-5 w-5" />
                           </div>
-                          <span className="text-xs font-medium">Aggiungi foto</span>
+                          <span className="text-xs font-medium">{t('profile.addPhoto')}</span>
                         </div>
                       </Button>
                     </div>
@@ -464,15 +464,15 @@ const ProfileEdit = () => {
                     onValueChange={(value) => setProfile({ ...profile, gender: value })}
                   >
                     <SelectTrigger id="gender">
-                      <SelectValue placeholder="Seleziona il tuo genere" />
+                      <SelectValue placeholder={t('profile.selectStatus')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="male">Uomo</SelectItem>
-                      <SelectItem value="female">Donna</SelectItem>
-                      <SelectItem value="transgender">Transgender</SelectItem>
-                      <SelectItem value="transessuale">Transessuale</SelectItem>
-                      <SelectItem value="omosessuale">Omosessuale</SelectItem>
-                      <SelectItem value="non-binary">Non Binario</SelectItem>
+                      <SelectItem value="male">{t('common.male')}</SelectItem>
+                      <SelectItem value="female">{t('common.female')}</SelectItem>
+                      <SelectItem value="transgender">{t('common.transgender')}</SelectItem>
+                      <SelectItem value="transessuale">{t('common.transexual')}</SelectItem>
+                      <SelectItem value="omosessuale">{t('common.homosexual')}</SelectItem>
+                      <SelectItem value="non-binary">{t('common.nonBinary')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -490,41 +490,41 @@ const ProfileEdit = () => {
 
               {/* Relationship Type */}
               <div className="space-y-2">
-                <Label htmlFor="relationship-type">Cosa stai cercando?</Label>
+                <Label htmlFor="relationship-type">{t('profile.whatLookingFor')}</Label>
                 <Select
                   value={profile.relationship_type || ""}
                   onValueChange={(value) => setProfile({ ...profile, relationship_type: value })}
                 >
                   <SelectTrigger id="relationship-type">
-                    <SelectValue placeholder="Seleziona il tipo di relazione" />
+                    <SelectValue placeholder={t('profile.selectStatus')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="serious">Relazione seria</SelectItem>
-                    <SelectItem value="casual">Relazione occasionale</SelectItem>
-                    <SelectItem value="friendship">Amicizia</SelectItem>
-                    <SelectItem value="not-sure">Non lo so ancora</SelectItem>
-                    <SelectItem value="prefer-not-say">Preferisco non dirlo</SelectItem>
+                    <SelectItem value="serious">{t('profile.seriousRelationship')}</SelectItem>
+                    <SelectItem value="casual">{t('profile.casualDating')}</SelectItem>
+                    <SelectItem value="friendship">{t('profile.friendship')}</SelectItem>
+                    <SelectItem value="not-sure">{t('profile.notSpecified')}</SelectItem>
+                    <SelectItem value="prefer-not-say">{t('profile.preferNotToSay')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Relationship Status */}
               <div className="space-y-2">
-                <Label htmlFor="relationship-status">Stato relazionale</Label>
+                <Label htmlFor="relationship-status">{t('profile.relationshipState')}</Label>
                 <Select
                   value={profile.relationship_status || ""}
                   onValueChange={(value) => setProfile({ ...profile, relationship_status: value })}
                 >
                   <SelectTrigger id="relationship-status">
-                    <SelectValue placeholder="Seleziona il tuo stato" />
+                    <SelectValue placeholder={t('profile.selectStatus')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="single">Single</SelectItem>
-                    <SelectItem value="sposato">Sposato</SelectItem>
-                    <SelectItem value="divorziato">Divorziato</SelectItem>
-                    <SelectItem value="vedovo">Vedovo</SelectItem>
-                    <SelectItem value="preferisco_non_dirlo">Preferisco non dirlo</SelectItem>
-                    <SelectItem value="scoprilo">Scoprilo</SelectItem>
+                    <SelectItem value="single">{t('profile.single')}</SelectItem>
+                    <SelectItem value="sposato">{t('profile.married')}</SelectItem>
+                    <SelectItem value="divorziato">{t('profile.divorced')}</SelectItem>
+                    <SelectItem value="vedovo">{t('profile.widowed')}</SelectItem>
+                    <SelectItem value="preferisco_non_dirlo">{t('profile.preferNotToSay')}</SelectItem>
+                    <SelectItem value="scoprilo">{t('profile.findOut')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -574,7 +574,7 @@ const ProfileEdit = () => {
                       value={interestsInput}
                       onChange={(e) => setInterestsInput(e.target.value)}
                       onKeyDown={handleInterestInputKeyDown}
-                      placeholder="Scrivi un interesse e premi Invio..."
+                      placeholder={t('profile.typeAndEnter')}
                     />
                   
                     {/* Suggestions Dropdown */}
