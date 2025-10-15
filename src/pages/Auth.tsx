@@ -194,11 +194,22 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-4">
-      <div className="absolute top-4 right-4">
+    <div className="min-h-screen flex items-center justify-center p-4 relative bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-950 dark:via-purple-950 dark:to-indigo-950">
+      {/* Background Image */}
+      <div 
+        className="fixed inset-0 z-0 opacity-20 dark:opacity-30" 
+        style={{
+          backgroundImage: 'url(/images/love-background.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      />
+      
+      <div className="absolute top-4 right-4 z-20">
         <LanguageSwitcher />
       </div>
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md relative z-10 backdrop-blur-sm bg-white/95 dark:bg-gray-900/95 shadow-2xl">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <Heart className="h-12 w-12 text-pink-500" />

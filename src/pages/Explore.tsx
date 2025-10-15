@@ -202,8 +202,19 @@ const Explore = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-4">
-      <div className="container mx-auto max-w-2xl">
+    <div className="min-h-screen relative bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-4">
+      {/* Background Image */}
+      <div 
+        className="fixed inset-0 z-0 opacity-15 dark:opacity-25" 
+        style={{
+          backgroundImage: 'url(/images/love-background.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      />
+      
+      <div className="container mx-auto max-w-2xl relative z-10">
         <div className="mb-4 flex justify-between items-center">
           <Button variant="ghost" onClick={() => navigate("/")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
