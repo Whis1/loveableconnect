@@ -60,11 +60,14 @@ export const ChatUserProfile = ({ userId, currentUserId }: ChatUserProfileProps)
           // Gallery is public
           setHasAccess(true);
         } else if (session?.session?.user) {
+          // Use currentUserId if provided (for admin profiles), otherwise use auth user id
+          const checkerId = currentUserId || session.session.user.id;
+          
           // Gallery is private, check if user has access
           const { data: accessData } = await supabase
             .from("gallery_access_requests")
             .select("*")
-            .eq("requester_id", session.session.user.id)
+            .eq("requester_id", checkerId)
             .eq("profile_id", userId)
             .eq("status", "accepted")
             .maybeSingle();
@@ -89,10 +92,13 @@ export const ChatUserProfile = ({ userId, currentUserId }: ChatUserProfileProps)
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.user) return;
 
+      // Use currentUserId if provided (for admin profiles), otherwise use auth user id
+      const checkerId = currentUserId || session.session.user.id;
+
       const { data: accessData } = await supabase
         .from("gallery_access_requests")
         .select("*")
-        .eq("requester_id", session.session.user.id)
+        .eq("requester_id", checkerId)
         .eq("profile_id", userId)
         .eq("status", "accepted")
         .maybeSingle();
@@ -119,7 +125,7 @@ export const ChatUserProfile = ({ userId, currentUserId }: ChatUserProfileProps)
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId]);
+  }, [userId, currentUserId]);
 
   const handleRequestAccess = async () => {
     try {
