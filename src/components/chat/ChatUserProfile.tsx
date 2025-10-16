@@ -97,81 +97,58 @@ export const ChatUserProfile = ({ userId, currentUserId }: ChatUserProfileProps)
             </Avatar>
           </ImageDialog>
 
-          <div className="flex-1 space-y-2">
-            <div>
-              <h3 className="text-2xl font-bold">{profile.nickname}</h3>
+          <div className="flex-1 space-y-3">
+            <h3 className="text-2xl font-bold">{profile.nickname}</h3>
+            
+            <div className="space-y-2 text-sm">
               {profile.age && (
-                <p className="text-muted-foreground">{profile.age} {t("chat.years")}</p>
-              )}
-              <div className="flex flex-wrap gap-3 mt-2">
-                {profile.gender && (
-                  <div className="flex items-center gap-1 text-sm">
-                    <span>
-                      {profile.gender === 'male' ? '👨' : 
-                       profile.gender === 'female' ? '👩' : 
-                       profile.gender === 'non-binary' ? '⚧️' :
-                       profile.gender === 'transexual' ? '⚧️' :
-                       profile.gender === 'transgender' ? '⚧️' :
-                       '⚧️'}
-                    </span>
-                    <span className="text-muted-foreground">
-                      {profile.gender === 'male' ? 'Uomo' : 
-                       profile.gender === 'female' ? 'Donna' : 
-                       profile.gender === 'non-binary' ? 'Non binario' :
-                       profile.gender === 'transexual' ? 'Transessuale' :
-                       profile.gender === 'transgender' ? 'Transgender' :
-                       'Altro'}
-                    </span>
-                  </div>
-                )}
-                {profile.relationship_status && (
-                  <div className="flex items-center gap-1 text-sm">
-                    <span>
-                      {profile.relationship_status === 'single' ? '💙' : 
-                       profile.relationship_status === 'in_relationship' ? '❤️' :
-                       profile.relationship_status === 'married' ? '💍' :
-                       profile.relationship_status === 'divorced' ? '💔' :
-                       profile.relationship_status === 'widowed' ? '🖤' :
-                       '💭'}
-                    </span>
-                    <span className="text-muted-foreground">
-                      {profile.relationship_status === 'single' ? 'Single' : 
-                       profile.relationship_status === 'in_relationship' ? 'In una relazione' :
-                       profile.relationship_status === 'married' ? 'Sposato/a' :
-                       profile.relationship_status === 'divorced' ? 'Divorziato/a' :
-                       profile.relationship_status === 'widowed' ? 'Vedovo/a' :
-                       profile.relationship_status === 'prefer_not_say' ? 'Preferisco non dirlo' :
-                       profile.relationship_status}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <MapPin className="h-4 w-4" />
-              <span>{isAdmin && profile.city ? profile.city : locationPhrase}</span>
-            </div>
-
-            {profile.relationship_type && (
-              <div className="flex items-center gap-2">
-                <Heart className="h-4 w-4 text-primary" />
-                <Badge variant="secondary">{profile.relationship_type}</Badge>
-              </div>
-            )}
-
-            {profile.looking_for && profile.looking_for.length > 0 && (
-              <div className="mt-2">
-                <p className="text-sm text-muted-foreground mb-1">Cerca:</p>
-                <div className="flex flex-wrap gap-2">
-                  {profile.looking_for.map((item, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
-                      {item}
-                    </Badge>
-                  ))}
+                <div className="flex gap-2">
+                  <span className="font-semibold min-w-[80px]">Età:</span>
+                  <span className="text-muted-foreground">{profile.age}</span>
                 </div>
+              )}
+              
+              {profile.relationship_status && (
+                <div className="flex gap-2">
+                  <span className="font-semibold min-w-[80px]">Relazione:</span>
+                  <span className="text-muted-foreground">
+                    {profile.relationship_status === 'single' ? 'Single' : 
+                     profile.relationship_status === 'in_relationship' ? 'In una relazione' :
+                     profile.relationship_status === 'married' ? 'Sposato/a' :
+                     profile.relationship_status === 'divorced' ? 'Divorziato/a' :
+                     profile.relationship_status === 'widowed' ? 'Vedovo/a' :
+                     profile.relationship_status === 'prefer_not_say' ? 'Preferisco non dirlo' :
+                     profile.relationship_status}
+                  </span>
+                </div>
+              )}
+              
+              {profile.looking_for && profile.looking_for.length > 0 && (
+                <div className="flex gap-2">
+                  <span className="font-semibold min-w-[80px]">Cerca:</span>
+                  <span className="text-muted-foreground">{profile.looking_for.join(', ')}</span>
+                </div>
+              )}
+              
+              {profile.gender && (
+                <div className="flex gap-2">
+                  <span className="font-semibold min-w-[80px]">Genere:</span>
+                  <span className="text-muted-foreground">
+                    {profile.gender === 'male' ? 'Uomo' : 
+                     profile.gender === 'female' ? 'Donna' : 
+                     profile.gender === 'non-binary' ? 'Non binario' :
+                     profile.gender === 'transexual' ? 'Transessuale' :
+                     profile.gender === 'transgender' ? 'Transgender' :
+                     'Altro'}
+                  </span>
+                </div>
+              )}
+              
+              <div className="flex gap-2">
+                <span className="font-semibold min-w-[80px]">Location:</span>
+                <span className="text-muted-foreground">{isAdmin && profile.city ? profile.city : locationPhrase}</span>
               </div>
-            )}
+            </div>
           </div>
         </div>
 
