@@ -319,7 +319,11 @@ export const ProfileManager = () => {
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={profile.avatar_url || undefined} />
+                      {profile.avatar_url ? (
+                        <AvatarImage 
+                          src={supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl}
+                        />
+                      ) : null}
                       <AvatarFallback>{profile.nickname[0]?.toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div className="text-left">
