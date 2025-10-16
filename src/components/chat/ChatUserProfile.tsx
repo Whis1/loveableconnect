@@ -55,10 +55,7 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
         // Check if user has access to private gallery
         const { data: session } = await supabase.auth.getSession();
         
-        // If viewing own profile, always have access
-        if (session?.session?.user?.id === userId) {
-          setHasAccess(true);
-        } else if (!data.gallery_private) {
+        if (!data.gallery_private) {
           // Gallery is public
           setHasAccess(true);
         } else if (session?.session?.user) {
