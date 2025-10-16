@@ -27,9 +27,10 @@ interface Profile {
 
 interface ChatUserProfileProps {
   userId: string;
+  currentUserId?: string;
 }
 
-export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
+export const ChatUserProfile = ({ userId, currentUserId }: ChatUserProfileProps) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -134,27 +135,14 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
         return;
       }
 
-      // Get the current user's profile ID (could be admin profile)
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", session.session.user.id)
-        .single();
-
-      if (!profileData) {
-        toast({
-          title: t("chat.error") || "Errore",
-          description: "Profilo non trovato",
-          variant: "destructive",
-        });
-        return;
-      }
+      // Use currentUserId if provided (for admin profiles), otherwise use auth.uid()
+      const senderId = currentUserId || session.session.user.id;
 
       // Create access request
       const { error: requestError } = await supabase
         .from("gallery_access_requests")
         .insert({
-          requester_id: profileData.id,
+          requester_id: senderId,
           profile_id: userId,
           status: "pending",
         });
@@ -172,8 +160,8 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
       }
 
       // Find or create match
-      const user1 = profileData.id < userId ? profileData.id : userId;
-      const user2 = profileData.id < userId ? userId : profileData.id;
+      const user1 = senderId < userId ? senderId : userId;
+      const user2 = senderId < userId ? userId : senderId;
 
       let { data: matchData } = await supabase
         .from("matches")
@@ -194,7 +182,7 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
       if (matchData) {
         await supabase.from("messages").insert({
           match_id: matchData.id,
-          sender_id: profileData.id,
+          sender_id: senderId,
           receiver_id: userId,
           content: t("chat.galleryAccessRequest") || "Ha richiesto l'accesso alla tua galleria privata",
           message_type: "gallery_access_request",

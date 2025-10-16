@@ -10,6 +10,7 @@ import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { GifPicker } from "@/components/chat/GifPicker";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ChatUserProfile } from "@/components/chat/ChatUserProfile";
+import { GalleryAccessRequestMessage } from "@/components/chat/GalleryAccessRequestMessage";
 
 interface AdminChatDialogProps {
   open: boolean;
@@ -26,7 +27,7 @@ interface Message {
   sender_id: string;
   receiver_id: string;
   content: string;
-  message_type: 'text' | 'image' | 'emoji' | 'gif';
+  message_type: 'text' | 'image' | 'emoji' | 'gif' | 'gallery_access_request' | 'gallery_access_response';
   media_url: string | null;
   created_at: string;
   read: boolean;
@@ -248,7 +249,7 @@ export const AdminChatDialog = ({
 
         {/* User Profile */}
         <div className="px-6">
-          <ChatUserProfile userId={userId} />
+          <ChatUserProfile userId={userId} currentUserId={adminProfileId} />
         </div>
 
         {/* Messages */}
@@ -259,6 +260,20 @@ export const AdminChatDialog = ({
             <div className="space-y-4 pb-4">
               {messages.map((message) => {
                 const isOwn = message.sender_id === adminProfileId;
+                
+                if (message.message_type === 'gallery_access_request') {
+                  return (
+                    <GalleryAccessRequestMessage
+                      key={message.id}
+                      messageId={message.id}
+                      senderId={message.sender_id}
+                      receiverId={message.receiver_id}
+                      matchId={message.match_id}
+                      isReceiver={message.receiver_id === adminProfileId}
+                    />
+                  );
+                }
+                
                 return (
                   <MessageBubble
                     key={message.id}
