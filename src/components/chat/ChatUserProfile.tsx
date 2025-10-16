@@ -98,11 +98,27 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
         return;
       }
 
+      // Get the current user's profile ID (could be admin profile)
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", session.session.user.id)
+        .single();
+
+      if (!profileData) {
+        toast({
+          title: t("chat.error") || "Errore",
+          description: "Profilo non trovato",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Create access request
       const { error: requestError } = await supabase
         .from("gallery_access_requests")
         .insert({
-          requester_id: session.session.user.id,
+          requester_id: profileData.id,
           profile_id: userId,
           status: "pending",
         });
@@ -119,18 +135,30 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
         return;
       }
 
-      // Send notification message
-      const { data: matchData } = await supabase
+      // Find or create match
+      const user1 = profileData.id < userId ? profileData.id : userId;
+      const user2 = profileData.id < userId ? userId : profileData.id;
+
+      let { data: matchData } = await supabase
         .from("matches")
         .select("id")
-        .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
-        .or(`user1_id.eq.${session.session.user.id},user2_id.eq.${session.session.user.id}`)
+        .eq("user1_id", user1)
+        .eq("user2_id", user2)
         .maybeSingle();
+
+      if (!matchData) {
+        const { data: newMatch } = await supabase
+          .from("matches")
+          .insert({ user1_id: user1, user2_id: user2 })
+          .select("id")
+          .single();
+        matchData = newMatch;
+      }
 
       if (matchData) {
         await supabase.from("messages").insert({
           match_id: matchData.id,
-          sender_id: session.session.user.id,
+          sender_id: profileData.id,
           receiver_id: userId,
           content: t("chat.galleryAccessRequest") || "Ha richiesto l'accesso alla tua galleria privata",
           message_type: "gallery_access_request",
