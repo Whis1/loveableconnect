@@ -89,7 +89,7 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
 
             <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
               <MapPin className="h-4 w-4" />
-              <span>{isAdmin && profile.city ? profile.city : "Vicino alle tue parti"}</span>
+              <span>{isAdmin ? (profile.city || "Vicino alle tue parti") : "Vicino alle tue parti"}</span>
             </div>
 
             {profile.relationship_type && (

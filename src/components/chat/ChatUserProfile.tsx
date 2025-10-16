@@ -146,7 +146,9 @@ export const ChatUserProfile = ({ userId, currentUserId }: ChatUserProfileProps)
               
               <div className="flex gap-2">
                 <span className="font-semibold min-w-[80px]">Location:</span>
-                <span className="text-muted-foreground">{isAdmin && profile.city ? profile.city : "Vicino alle tue parti"}</span>
+                <span className="text-muted-foreground">
+                  {isAdmin ? (profile.city || "Vicino alle tue parti") : "Vicino alle tue parti"}
+                </span>
               </div>
             </div>
           </div>
