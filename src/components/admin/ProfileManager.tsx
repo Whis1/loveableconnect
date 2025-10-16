@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Users, MessageSquare, Save, Upload } from "lucide-react";
+import { Users, MessageSquare, Save, Upload, X, Image as ImageIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Profile {
@@ -45,6 +45,7 @@ export const ProfileManager = () => {
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
     fetchProfiles();
@@ -101,6 +102,128 @@ export const ProfileManager = () => {
       });
     } finally {
       setLoadingMessages(false);
+    }
+  };
+
+  const handleAvatarUpload = async (profileId: string, file: File) => {
+    setUploadingImages({ ...uploadingImages, [`${profileId}-avatar`]: true });
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${profileId}-avatar-${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('profile-images')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: fileName })
+        .eq('id', profileId);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Avatar caricato",
+        description: "L'immagine profilo è stata aggiornata",
+      });
+
+      fetchProfiles();
+    } catch (error: any) {
+      console.error("Error uploading avatar:", error);
+      toast({
+        title: "Errore",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingImages({ ...uploadingImages, [`${profileId}-avatar`]: false });
+    }
+  };
+
+  const handleGalleryUpload = async (profileId: string, file: File) => {
+    const profile = profiles.find(p => p.id === profileId);
+    if (!profile) return;
+    
+    if ((profile.photos || []).length >= 6) {
+      toast({
+        title: "Limite raggiunto",
+        description: "Puoi caricare massimo 6 foto",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingImages({ ...uploadingImages, [`${profileId}-gallery`]: true });
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${profileId}-gallery-${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('profile-images')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const updatedPhotos = [...(profile.photos || []), fileName];
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ photos: updatedPhotos })
+        .eq('id', profileId);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Foto aggiunta",
+        description: "La foto è stata aggiunta alla galleria",
+      });
+
+      fetchProfiles();
+    } catch (error: any) {
+      console.error("Error uploading gallery photo:", error);
+      toast({
+        title: "Errore",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingImages({ ...uploadingImages, [`${profileId}-gallery`]: false });
+    }
+  };
+
+  const handleRemoveGalleryPhoto = async (profileId: string, photoUrl: string) => {
+    const profile = profiles.find(p => p.id === profileId);
+    if (!profile) return;
+
+    try {
+      const { error: deleteError } = await supabase.storage
+        .from('profile-images')
+        .remove([photoUrl]);
+
+      if (deleteError) throw deleteError;
+
+      const updatedPhotos = (profile.photos || []).filter(p => p !== photoUrl);
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ photos: updatedPhotos })
+        .eq('id', profileId);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Foto rimossa",
+        description: "La foto è stata rimossa dalla galleria",
+      });
+
+      fetchProfiles();
+    } catch (error: any) {
+      console.error("Error removing photo:", error);
+      toast({
+        title: "Errore",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -185,6 +308,82 @@ export const ProfileManager = () => {
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-4 pt-4">
+                    {/* Avatar */}
+                    <div className="space-y-2">
+                      <Label>Foto Profilo</Label>
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-20 w-20">
+                          {profile.avatar_url ? (
+                            <AvatarImage 
+                              src={supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl} 
+                            />
+                          ) : null}
+                          <AvatarFallback>{profile.nickname[0]?.toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleAvatarUpload(profile.id, file);
+                            }}
+                            disabled={uploadingImages[`${profile.id}-avatar`]}
+                            className="max-w-xs"
+                          />
+                          {uploadingImages[`${profile.id}-avatar`] && (
+                            <p className="text-sm text-muted-foreground mt-1">Caricamento...</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Galleria Foto */}
+                    <div className="space-y-2">
+                      <Label>Galleria Foto ({(profile.photos || []).length}/6)</Label>
+                      <div className="grid grid-cols-3 gap-3">
+                        {(profile.photos || []).map((photoUrl, index) => (
+                          <div key={index} className="relative group aspect-square">
+                            <img
+                              src={supabase.storage.from('profile-images').getPublicUrl(photoUrl).data.publicUrl}
+                              alt={`Foto ${index + 1}`}
+                              className="w-full h-full object-cover rounded-lg"
+                            />
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => handleRemoveGalleryPhoto(profile.id, photoUrl)}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ))}
+                        {(profile.photos || []).length < 6 && (
+                          <label className="aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-accent transition-colors">
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleGalleryUpload(profile.id, file);
+                              }}
+                              disabled={uploadingImages[`${profile.id}-gallery`]}
+                            />
+                            {uploadingImages[`${profile.id}-gallery`] ? (
+                              <p className="text-xs">Caricamento...</p>
+                            ) : (
+                              <>
+                                <ImageIcon className="h-6 w-6 mb-1 text-muted-foreground" />
+                                <p className="text-xs text-muted-foreground">Aggiungi foto</p>
+                              </>
+                            )}
+                          </label>
+                        )}
+                      </div>
+                    </div>
+
                     {/* Info Base */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
