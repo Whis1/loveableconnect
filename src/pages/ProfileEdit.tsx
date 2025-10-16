@@ -27,7 +27,6 @@ interface Profile {
   looking_for: string[] | null;
   relationship_type: string | null;
   relationship_status: string | null;
-  gallery_private: boolean | null;
 }
 
 const ProfileEdit = () => {
@@ -247,7 +246,6 @@ const ProfileEdit = () => {
           looking_for: lookingFor.length > 0 ? lookingFor : null,
           relationship_type: profile.relationship_type,
           relationship_status: profile.relationship_status,
-          gallery_private: profile.gallery_private,
         })
         .eq("id", profile.id);
 
@@ -364,29 +362,7 @@ const ProfileEdit = () => {
 
               {/* Photo Gallery */}
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label>{t('profile.gallery')} ({photoPreviews.length}/6)</Label>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="gallery-private"
-                      checked={profile.gallery_private || false}
-                      onCheckedChange={(checked) => 
-                        setProfile({ ...profile, gallery_private: checked as boolean })
-                      }
-                    />
-                    <label
-                      htmlFor="gallery-private"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                    >
-                      {t('profile.galleryPrivate')}
-                    </label>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {profile.gallery_private 
-                    ? t('profile.galleryPrivateDesc')
-                    : t('profile.galleryPublicDesc')}
-                </p>
+                <Label>{t('profile.gallery')} ({photoPreviews.length}/6)</Label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {photoPreviews.map((preview, index) => (
                     <div key={index} className="relative aspect-square group">

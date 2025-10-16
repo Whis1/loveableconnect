@@ -1,9 +1,8 @@
 import { ImageDialog } from "@/components/ImageDialog";
-import { GalleryAccessRequestMessage } from "./GalleryAccessRequestMessage";
 
 interface MessageBubbleProps {
   content: string;
-  messageType: 'text' | 'image' | 'emoji' | 'gif' | 'gallery_access_request' | 'gallery_access_response';
+  messageType: 'text' | 'image' | 'emoji' | 'gif';
   mediaUrl: string | null;
   isOwn: boolean;
   timestamp: string;
@@ -26,24 +25,6 @@ export const MessageBubble = ({
 }: MessageBubbleProps) => {
   const renderContent = () => {
     switch (messageType) {
-      case 'gallery_access_request':
-        return messageId && senderId && receiverId && matchId ? (
-          <GalleryAccessRequestMessage
-            messageId={messageId}
-            senderId={senderId}
-            receiverId={receiverId}
-            matchId={matchId}
-            isReceiver={!isOwn}
-          />
-        ) : null;
-      
-      case 'gallery_access_response':
-        return (
-          <div className="text-sm text-muted-foreground italic">
-            {content}
-          </div>
-        );
-      
       case 'emoji':
         return <p className="text-6xl">{content}</p>;
       
@@ -63,15 +44,6 @@ export const MessageBubble = ({
         return <p className="break-words">{content}</p>;
     }
   };
-
-  // Per i messaggi di sistema, non mostrare il bubble tradizionale
-  if (messageType === 'gallery_access_request' || messageType === 'gallery_access_response') {
-    return (
-      <div className="my-2">
-        {renderContent()}
-      </div>
-    );
-  }
 
   return (
     <div className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>

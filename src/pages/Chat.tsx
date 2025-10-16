@@ -11,7 +11,6 @@ import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { GifPicker } from "@/components/chat/GifPicker";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ChatUserProfile } from "@/components/chat/ChatUserProfile";
-import { GalleryAccessRequestMessage } from "@/components/chat/GalleryAccessRequestMessage";
 import { useCredits } from "@/hooks/useCredits";
 import { useTranslation } from "react-i18next";
 
@@ -21,7 +20,7 @@ interface Message {
   sender_id: string;
   receiver_id: string;
   content: string;
-  message_type: 'text' | 'image' | 'emoji' | 'gif' | 'gallery_access_request' | 'gallery_access_response';
+  message_type: 'text' | 'image' | 'emoji' | 'gif';
   media_url: string | null;
   created_at: string;
   read: boolean;
@@ -330,19 +329,6 @@ const Chat = () => {
               <div className="space-y-4">
                 {messages.map((message) => {
                   const isOwn = message.sender_id === currentUser;
-                  
-                  if (message.message_type === 'gallery_access_request') {
-                    return (
-                      <GalleryAccessRequestMessage
-                        key={message.id}
-                        messageId={message.id}
-                        senderId={message.sender_id}
-                        receiverId={message.receiver_id}
-                        matchId={message.match_id}
-                        isReceiver={message.receiver_id === currentUser}
-                      />
-                    );
-                  }
                   
                   return (
                     <MessageBubble
