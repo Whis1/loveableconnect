@@ -195,6 +195,16 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
               {profile.age && (
                 <p className="text-muted-foreground">{profile.age} {t("chat.years")}</p>
               )}
+              {profile.gender && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  {profile.gender === 'male' ? '👨 Uomo' : 
+                   profile.gender === 'female' ? '👩 Donna' : 
+                   profile.gender === 'non-binary' ? '⚧️ Non binario' :
+                   profile.gender === 'transexual' ? '⚧️ Transessuale' :
+                   profile.gender === 'transgender' ? '⚧️ Transgender' :
+                   '⚧️ Altro'}
+                </p>
+              )}
             </div>
 
             <div className="flex items-center gap-2 text-sm text-muted-foreground">

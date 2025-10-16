@@ -376,12 +376,10 @@ export const ProfileManager = () => {
           profileId: profile.id,
           updates: {
             nickname: profile.nickname,
-            full_name: profile.full_name,
             age: profile.age,
             bio: profile.bio,
             city: profile.city,
             gender: profile.gender,
-            sexual_orientation: profile.sexual_orientation,
             relationship_status: profile.relationship_status,
             interests: profile.interests,
             gallery_private: profile.gallery_private,
@@ -592,19 +590,6 @@ export const ProfileManager = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Nome Completo</Label>
-                        <Input
-                          value={profile.full_name}
-                          onChange={(e) => {
-                            const updated = { ...profile, full_name: e.target.value };
-                            setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
                         <Label>Età</Label>
                         <Input
                           type="number"
@@ -615,62 +600,41 @@ export const ProfileManager = () => {
                           }}
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label>Città</Label>
-                        <Input
-                          value={profile.city || ""}
-                          onChange={(e) => {
-                            const updated = { ...profile, city: e.target.value };
-                            setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
-                          }}
-                        />
-                      </div>
                     </div>
 
-                    {/* Genere e Orientamento */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Genere</Label>
-                        <Select
-                          value={profile.gender || ""}
-                          onValueChange={(value) => {
-                            const updated = { ...profile, gender: value };
-                            setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleziona genere" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="male">Uomo</SelectItem>
-                            <SelectItem value="female">Donna</SelectItem>
-                            <SelectItem value="non-binary">Non binario</SelectItem>
-                            <SelectItem value="other">Altro</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Orientamento Sessuale</Label>
-                        <Select
-                          value={profile.sexual_orientation || ""}
-                          onValueChange={(value) => {
-                            const updated = { ...profile, sexual_orientation: value };
-                            setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleziona orientamento" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="heterosexual">Eterosessuale</SelectItem>
-                            <SelectItem value="homosexual">Omosessuale</SelectItem>
-                            <SelectItem value="bisexual">Bisessuale</SelectItem>
-                            <SelectItem value="pansexual">Pansessuale</SelectItem>
-                            <SelectItem value="asexual">Asessuale</SelectItem>
-                            <SelectItem value="other">Altro</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                    <div className="space-y-2">
+                      <Label>Città</Label>
+                      <Input
+                        value={profile.city || ""}
+                        onChange={(e) => {
+                          const updated = { ...profile, city: e.target.value };
+                          setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
+                        }}
+                      />
+                    </div>
+
+                    {/* Genere */}
+                    <div className="space-y-2">
+                      <Label>Genere</Label>
+                      <Select
+                        value={profile.gender || ""}
+                        onValueChange={(value) => {
+                          const updated = { ...profile, gender: value };
+                          setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleziona genere" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="male">Uomo</SelectItem>
+                          <SelectItem value="female">Donna</SelectItem>
+                          <SelectItem value="non-binary">Non binario</SelectItem>
+                          <SelectItem value="transexual">Transessuale</SelectItem>
+                          <SelectItem value="transgender">Transgender</SelectItem>
+                          <SelectItem value="other">Altro</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     {/* Stato Relazione */}
