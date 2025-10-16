@@ -473,8 +473,9 @@ const ProfileEdit = () => {
                     <SelectContent>
                       <SelectItem value="uomo">Uomo</SelectItem>
                       <SelectItem value="donna">Donna</SelectItem>
+                      <SelectItem value="transgender">Transgender</SelectItem>
+                      <SelectItem value="transessuale">Transessuale</SelectItem>
                       <SelectItem value="non-binary">Non binario</SelectItem>
-                      <SelectItem value="trans">Trans</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
