@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { UserCreditsManager } from "@/components/admin/UserCreditsManager";
 import { ProfileCreator } from "@/components/admin/ProfileCreator";
 import { ProfileManager } from "@/components/admin/ProfileManager";
+import { SupportChatMonitor } from "@/components/admin/SupportChatMonitor";
 import { Shield, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -116,6 +117,8 @@ export default function AdminArrettu() {
           <ProfileCreator />
         </div>
 
+        <SupportChatMonitor />
+        
         <ProfileManager />
       </div>
     </div>

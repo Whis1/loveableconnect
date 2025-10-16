@@ -1,51 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Send, MessageCircle } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { SupportChat } from "@/components/support/SupportChat";
+import { supabase } from "@/integrations/supabase/client";
 
 const Support = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { t } = useTranslation();
-  const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
+  const [userEmail, setUserEmail] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!email || !message) {
-      toast({
-        title: t("support.requiredFields"),
-        description: t("support.requiredFieldsDescription"),
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Create mailto link with pre-filled data
-    const subject = encodeURIComponent(`Supporto da ${email}`);
-    const body = encodeURIComponent(`Email: ${email}\n\n${message}`);
-    const mailtoLink = `mailto:loovableconnect@hotmail.com?subject=${subject}&body=${body}`;
-
-    // Open email client
-    window.location.href = mailtoLink;
-
-    // Show success message
-    toast({
-      title: t("support.messageSent"),
-      description: t("support.messageSentDescription"),
-    });
-    
-    // Clear form
-    setEmail("");
-    setMessage("");
-  };
+  useEffect(() => {
+    const fetchUserEmail = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        setUserEmail(user.email);
+      }
+    };
+    fetchUserEmail();
+  }, []);
 
   return (
     <div className="min-h-screen relative bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-950 dark:via-purple-950 dark:to-indigo-950">
@@ -69,57 +43,7 @@ const Support = () => {
           {t("support.back")}
         </Button>
 
-        <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="p-4 bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl">
-                <MessageCircle className="h-10 w-10 text-white" />
-              </div>
-            </div>
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-              {t("support.title")}
-            </CardTitle>
-            <CardDescription className="text-base mt-2">
-              {t("support.description")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="email">{t("support.yourEmail")}</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder={t("support.emailPlaceholder")}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="h-12"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="message">{t("support.message")}</Label>
-                <Textarea
-                  id="message"
-                  placeholder={t("support.messagePlaceholder")}
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  required
-                  className="min-h-[200px] resize-none"
-                />
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 shadow-lg"
-              >
-                <Send className="h-5 w-5 mr-2" />
-                {t("support.sendButton")}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+        <SupportChat userEmail={userEmail} />
       </div>
     </div>
   );

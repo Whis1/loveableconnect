@@ -302,6 +302,36 @@ export type Database = {
         }
         Relationships: []
       }
+      support_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_admin_response: boolean
+          message: string
+          read: boolean
+          user_email: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_admin_response?: boolean
+          message: string
+          read?: boolean
+          user_email: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_admin_response?: boolean
+          message?: string
+          read?: boolean
+          user_email?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_credits: {
         Row: {
           balance: number

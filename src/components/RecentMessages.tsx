@@ -52,9 +52,9 @@ export const RecentMessages = ({ currentUserId }: RecentMessagesProps) => {
         return;
       }
 
-      // For each match, get last message and unread count
+      // For each match, get last message and unread count (max 2 messages)
       const matchesData = await Promise.all(
-        matches.slice(0, 3).map(async (match) => {
+        matches.slice(0, 2).map(async (match) => {
           const otherUserId = match.user1_id === currentUserId ? match.user2_id : match.user1_id;
 
           // Get other user's profile
