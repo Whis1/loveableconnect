@@ -74,7 +74,11 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
       <div className="p-6">
         <div className="flex items-start gap-4">
           <Avatar className="h-20 w-20 ring-2 ring-primary/20">
-            <AvatarImage src={profile.avatar_url || undefined} />
+            {profile.avatar_url ? (
+              <AvatarImage 
+                src={supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl}
+              />
+            ) : null}
             <AvatarFallback className="text-2xl">
               {profile.nickname.charAt(0).toUpperCase()}
             </AvatarFallback>
@@ -133,15 +137,18 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
             </h4>
             <ScrollArea className="w-full">
               <div className="flex gap-2 pb-2">
-                {profile.photos.map((photo, index) => (
-                  <ImageDialog key={index} src={photo} alt={`${t("chat.photo")} ${index + 1}`}>
-                    <img
-                      src={photo}
-                      alt={`${t("chat.photo")} ${index + 1}`}
-                      className="h-20 w-20 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
-                    />
-                  </ImageDialog>
-                ))}
+                {profile.photos.map((photo, index) => {
+                  const photoUrl = supabase.storage.from('profile-images').getPublicUrl(photo).data.publicUrl;
+                  return (
+                    <ImageDialog key={index} src={photoUrl} alt={`${t("chat.photo")} ${index + 1}`}>
+                      <img
+                        src={photoUrl}
+                        alt={`${t("chat.photo")} ${index + 1}`}
+                        className="h-20 w-20 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+                      />
+                    </ImageDialog>
+                  );
+                })}
               </div>
             </ScrollArea>
           </div>
