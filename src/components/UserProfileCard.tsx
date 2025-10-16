@@ -33,6 +33,9 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
+  // Debug log
+  console.log('UserProfileCard - isAdmin:', isAdmin, 'userId:', userId);
+
   useEffect(() => {
     const fetchProfile = async () => {
       const { data } = await supabase

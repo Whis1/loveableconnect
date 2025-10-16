@@ -39,6 +39,9 @@ export const ChatUserProfile = ({ userId, currentUserId }: ChatUserProfileProps)
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Debug log
+  console.log('ChatUserProfile - isAdmin:', isAdmin, 'userId:', userId);
+
   // Memorizza la frase di location per non cambiarla ad ogni render
   const locationPhrase = useMemo(() => getGenericLocationPhrase(), []);
 
@@ -147,7 +150,11 @@ export const ChatUserProfile = ({ userId, currentUserId }: ChatUserProfileProps)
               <div className="flex gap-2">
                 <span className="font-semibold min-w-[80px]">Location:</span>
                 <span className="text-muted-foreground">
-                  {isAdmin ? (profile.city || "Vicino alle tue parti") : "Vicino alle tue parti"}
+                  {(() => {
+                    const displayLocation = isAdmin ? (profile.city || "Vicino alle tue parti") : "Vicino alle tue parti";
+                    console.log('Displaying location:', displayLocation, 'isAdmin:', isAdmin, 'profile.city:', profile.city);
+                    return displayLocation;
+                  })()}
                 </span>
               </div>
             </div>
