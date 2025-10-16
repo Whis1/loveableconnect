@@ -44,6 +44,41 @@ export type Database = {
         }
         Relationships: []
       }
+      gallery_access_requests: {
+        Row: {
+          created_at: string
+          id: string
+          profile_id: string
+          requester_id: string
+          status: Database["public"]["Enums"]["gallery_access_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          profile_id: string
+          requester_id: string
+          status?: Database["public"]["Enums"]["gallery_access_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          profile_id?: string
+          requester_id?: string
+          status?: Database["public"]["Enums"]["gallery_access_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_access_requests_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       likes: {
         Row: {
           created_at: string
@@ -392,6 +427,7 @@ export type Database = {
     }
     Enums: {
       app_role: "user" | "creator" | "admin"
+      gallery_access_status: "pending" | "accepted" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -520,6 +556,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "creator", "admin"],
+      gallery_access_status: ["pending", "accepted", "rejected"],
     },
   },
 } as const

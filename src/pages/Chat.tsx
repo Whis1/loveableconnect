@@ -337,6 +337,10 @@ const Chat = () => {
                       mediaUrl={message.media_url}
                       isOwn={isOwn}
                       timestamp={message.created_at}
+                      messageId={message.id}
+                      senderId={message.sender_id}
+                      receiverId={message.receiver_id}
+                      matchId={message.match_id}
                     />
                   );
                 })}

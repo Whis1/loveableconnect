@@ -6,8 +6,10 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { User, Heart, MapPin } from "lucide-react";
 import { ImageDialog } from "@/components/ImageDialog";
+import { GalleryAccessDialog } from "./GalleryAccessDialog";
 import { getGenericLocationPhrase } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/use-toast";
 
 interface Profile {
   id: string;
@@ -30,8 +32,12 @@ interface ChatUserProfileProps {
 
 export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasAccess, setHasAccess] = useState(false);
+  const [showAccessDialog, setShowAccessDialog] = useState(false);
+  const [isRequesting, setIsRequesting] = useState(false);
 
   // Memorizza la frase di location per non cambiarla ad ogni render
   const locationPhrase = useMemo(() => getGenericLocationPhrase(), []);
@@ -47,6 +53,24 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
 
         if (error) throw error;
         setProfile(data);
+
+        // Check if user has access to private gallery
+        if (data.gallery_private) {
+          const { data: session } = await supabase.auth.getSession();
+          if (session?.session?.user) {
+            const { data: accessData } = await supabase
+              .from("gallery_access_requests")
+              .select("*")
+              .eq("requester_id", session.session.user.id)
+              .eq("profile_id", userId)
+              .eq("status", "accepted")
+              .maybeSingle();
+
+            setHasAccess(!!accessData);
+          }
+        } else {
+          setHasAccess(true);
+        }
       } catch (error) {
         console.error("Error fetching profile:", error);
       } finally {
@@ -56,6 +80,83 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
 
     fetchProfile();
   }, [userId]);
+
+  const handleRequestAccess = async () => {
+    try {
+      setIsRequesting(true);
+      const { data: session } = await supabase.auth.getSession();
+      
+      if (!session?.session?.user) {
+        toast({
+          title: t("chat.error") || "Errore",
+          description: t("chat.mustBeLoggedIn") || "Devi essere autenticato",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create access request
+      const { error: requestError } = await supabase
+        .from("gallery_access_requests")
+        .insert({
+          requester_id: session.session.user.id,
+          profile_id: userId,
+          status: "pending",
+        });
+
+      if (requestError) {
+        if (requestError.code === "23505") {
+          toast({
+            title: t("chat.requestAlreadySent") || "Richiesta già inviata",
+            description: t("chat.waitForResponse") || "Attendi la risposta dell'utente",
+          });
+        } else {
+          throw requestError;
+        }
+        return;
+      }
+
+      // Send notification message
+      const { data: matchData } = await supabase
+        .from("matches")
+        .select("id")
+        .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+        .or(`user1_id.eq.${session.session.user.id},user2_id.eq.${session.session.user.id}`)
+        .maybeSingle();
+
+      if (matchData) {
+        await supabase.from("messages").insert({
+          match_id: matchData.id,
+          sender_id: session.session.user.id,
+          receiver_id: userId,
+          content: t("chat.galleryAccessRequest") || "Ha richiesto l'accesso alla tua galleria privata",
+          message_type: "gallery_access_request",
+        });
+      }
+
+      toast({
+        title: t("chat.requestSent") || "Richiesta inviata",
+        description: t("chat.requestSentSuccess") || "La richiesta è stata inviata con successo",
+      });
+
+      setShowAccessDialog(false);
+    } catch (error) {
+      console.error("Error requesting access:", error);
+      toast({
+        title: t("chat.error") || "Errore",
+        description: t("chat.requestError") || "Errore nell'invio della richiesta",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRequesting(false);
+    }
+  };
+
+  const handlePhotoClick = () => {
+    if (profile?.gallery_private && !hasAccess) {
+      setShowAccessDialog(true);
+    }
+  };
 
   if (loading) {
     return (
@@ -67,7 +168,8 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
 
   if (!profile) return null;
 
-  const canViewGallery = !profile.gallery_private && profile.photos && profile.photos.length > 0;
+  const hasPhotos = profile.photos && profile.photos.length > 0;
+  const canViewGallery = hasPhotos && (!profile.gallery_private || hasAccess);
 
   return (
     <Card className="border-b rounded-none bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
@@ -134,7 +236,7 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
           </div>
         )}
 
-        {canViewGallery && (
+        {hasPhotos && (
           <div className="mt-4">
             <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
               <User className="h-4 w-4" />
@@ -144,6 +246,24 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
               <div className="flex gap-2 pb-2">
                 {profile.photos.map((photo, index) => {
                   const photoUrl = supabase.storage.from('profile-images').getPublicUrl(photo).data.publicUrl;
+                  const isBlurred = profile.gallery_private && !hasAccess;
+                  
+                  if (isBlurred) {
+                    return (
+                      <div
+                        key={index}
+                        onClick={handlePhotoClick}
+                        className="h-20 w-20 rounded-lg cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0 relative overflow-hidden"
+                      >
+                        <img
+                          src={photoUrl}
+                          alt={`${t("chat.photo")} ${index + 1}`}
+                          className="w-full h-full object-cover blur-xl scale-110"
+                        />
+                      </div>
+                    );
+                  }
+                  
                   return (
                     <ImageDialog key={index} src={photoUrl} alt={`${t("chat.photo")} ${index + 1}`}>
                       <img
@@ -158,6 +278,13 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
             </ScrollArea>
           </div>
         )}
+
+        <GalleryAccessDialog
+          open={showAccessDialog}
+          onOpenChange={setShowAccessDialog}
+          onRequestAccess={handleRequestAccess}
+          isRequesting={isRequesting}
+        />
       </div>
     </Card>
   );
