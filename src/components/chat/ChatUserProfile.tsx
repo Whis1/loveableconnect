@@ -57,7 +57,10 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
         // Check if user has access to private gallery
         const { data: session } = await supabase.auth.getSession();
         
-        if (!data.gallery_private) {
+        // If viewing own profile, always have access
+        if (session?.session?.user?.id === userId) {
+          setHasAccess(true);
+        } else if (!data.gallery_private) {
           // Gallery is public
           setHasAccess(true);
         } else if (session?.session?.user) {
@@ -256,28 +259,20 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
                   // Blur if gallery is private AND user doesn't have access
                   const isBlurred = profile.gallery_private && hasAccess === false;
                   
-                  if (isBlurred) {
-                    return (
-                      <div
-                        key={index}
-                        onClick={handlePhotoClick}
-                        className="h-20 w-20 rounded-lg cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0 relative overflow-hidden"
-                      >
-                        <img
-                          src={photoUrl}
-                          alt={`${t("chat.photo")} ${index + 1}`}
-                          className="w-full h-full object-cover blur-xl scale-110"
-                        />
-                      </div>
-                    );
-                  }
-                  
                   return (
-                    <ImageDialog key={index} src={photoUrl} alt={`${t("chat.photo")} ${index + 1}`}>
+                    <ImageDialog 
+                      key={index} 
+                      src={photoUrl} 
+                      alt={`${t("chat.photo")} ${index + 1}`}
+                      isBlurred={isBlurred}
+                      onRequestAccess={isBlurred ? handlePhotoClick : undefined}
+                    >
                       <img
                         src={photoUrl}
                         alt={`${t("chat.photo")} ${index + 1}`}
-                        className="h-20 w-20 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+                        className={`h-20 w-20 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0 ${
+                          isBlurred ? 'blur-xl scale-110' : ''
+                        }`}
                       />
                     </ImageDialog>
                   );
