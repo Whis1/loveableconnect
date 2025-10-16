@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Users, MessageSquare, Save, Upload, X, Image as ImageIcon } from "lucide-react";
@@ -26,6 +27,7 @@ interface Profile {
   interests: string[] | null;
   avatar_url: string | null;
   photos: string[] | null;
+  gallery_private: boolean | null;
 }
 
 interface Message {
@@ -241,6 +243,7 @@ export const ProfileManager = () => {
           sexual_orientation: profile.sexual_orientation,
           relationship_status: profile.relationship_status,
           interests: profile.interests,
+          gallery_private: profile.gallery_private,
         })
         .eq("id", profile.id);
 
@@ -339,8 +342,22 @@ export const ProfileManager = () => {
                     </div>
 
                     {/* Galleria Foto */}
-                    <div className="space-y-2">
-                      <Label>Galleria Foto ({(profile.photos || []).length}/6)</Label>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label>Galleria Foto ({(profile.photos || []).length}/6)</Label>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={profile.gallery_private || false}
+                            onCheckedChange={(checked) => {
+                              const updated = { ...profile, gallery_private: checked };
+                              setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
+                            }}
+                          />
+                          <Label className="text-sm cursor-pointer">
+                            {profile.gallery_private ? "🔒 Privata" : "🌍 Pubblica"}
+                          </Label>
+                        </div>
+                      </div>
                       <div className="grid grid-cols-3 gap-3">
                         {(profile.photos || []).map((photoUrl, index) => (
                           <div key={index} className="relative group aspect-square">
