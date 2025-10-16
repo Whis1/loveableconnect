@@ -618,17 +618,36 @@ export const ProfileManager = () => {
                     </div>
 
                     {/* Cosa Cerchi */}
-                    <div className="space-y-2">
-                      <Label>Cosa cerchi (separati da virgola)</Label>
-                      <Input
-                        value={profile.looking_for?.join(", ") || ""}
-                        onChange={(e) => {
-                          const lookingFor = e.target.value.split(",").map((i) => i.trim()).filter(Boolean);
-                          const updated = { ...profile, looking_for: lookingFor };
-                          setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
-                        }}
-                        placeholder="Es: Uomo, Donna, Trans"
-                      />
+                    <div className="space-y-3">
+                      <Label>Cosa cerchi</Label>
+                      <div className="space-y-2">
+                        {[
+                          { value: "Uomo", label: "Uomo" },
+                          { value: "Donna", label: "Donna" },
+                          { value: "Trans", label: "Trans" },
+                          { value: "Non binario", label: "Non binario" },
+                        ].map((option) => (
+                          <div key={option.value} className="flex items-center space-x-2">
+                            <Switch
+                              id={`${profile.id}-looking-${option.value}`}
+                              checked={(profile.looking_for || []).includes(option.value)}
+                              onCheckedChange={(checked) => {
+                                const currentLookingFor = profile.looking_for || [];
+                                const updated = {
+                                  ...profile,
+                                  looking_for: checked
+                                    ? [...currentLookingFor, option.value]
+                                    : currentLookingFor.filter((lf) => lf !== option.value),
+                                };
+                                setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
+                              }}
+                            />
+                            <Label htmlFor={`${profile.id}-looking-${option.value}`} className="cursor-pointer">
+                              {option.label}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
                     {/* Interessi */}
