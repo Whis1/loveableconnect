@@ -127,12 +127,14 @@ export const ProfileManager = () => {
         throw new Error(uploadError?.message || data.error || 'Upload failed');
       }
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: fileName })
-        .eq('id', profileId);
+      // Usa l'edge function per aggiornare il profilo
+      const { data: updateData, error: updateError } = await supabase.functions.invoke('admin-update-profile', {
+        body: { profileId, updates: { avatar_url: fileName } },
+      });
 
-      if (updateError) throw updateError;
+      if (updateError || !updateData.success) {
+        throw new Error(updateError?.message || updateData.error || 'Update failed');
+      }
 
       toast({
         title: "Avatar caricato",
@@ -185,12 +187,15 @@ export const ProfileManager = () => {
       }
 
       const updatedPhotos = [...(profile.photos || []), fileName];
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ photos: updatedPhotos })
-        .eq('id', profileId);
+      
+      // Usa l'edge function per aggiornare il profilo
+      const { data: updateData, error: updateError } = await supabase.functions.invoke('admin-update-profile', {
+        body: { profileId, updates: { photos: updatedPhotos } },
+      });
 
-      if (updateError) throw updateError;
+      if (updateError || !updateData.success) {
+        throw new Error(updateError?.message || updateData.error || 'Update failed');
+      }
 
       toast({
         title: "Foto aggiunta",
@@ -225,12 +230,15 @@ export const ProfileManager = () => {
       }
 
       const updatedPhotos = (profile.photos || []).filter(p => p !== photoUrl);
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ photos: updatedPhotos })
-        .eq('id', profileId);
+      
+      // Usa l'edge function per aggiornare il profilo
+      const { data: updateData, error: updateError } = await supabase.functions.invoke('admin-update-profile', {
+        body: { profileId, updates: { photos: updatedPhotos } },
+      });
 
-      if (updateError) throw updateError;
+      if (updateError || !updateData.success) {
+        throw new Error(updateError?.message || updateData.error || 'Update failed');
+      }
 
       toast({
         title: "Foto rimossa",
@@ -250,23 +258,27 @@ export const ProfileManager = () => {
 
   const handleUpdateProfile = async (profile: Profile) => {
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          nickname: profile.nickname,
-          full_name: profile.full_name,
-          age: profile.age,
-          bio: profile.bio,
-          city: profile.city,
-          gender: profile.gender,
-          sexual_orientation: profile.sexual_orientation,
-          relationship_status: profile.relationship_status,
-          interests: profile.interests,
-          gallery_private: profile.gallery_private,
-        })
-        .eq("id", profile.id);
+      const { data, error } = await supabase.functions.invoke('admin-update-profile', {
+        body: {
+          profileId: profile.id,
+          updates: {
+            nickname: profile.nickname,
+            full_name: profile.full_name,
+            age: profile.age,
+            bio: profile.bio,
+            city: profile.city,
+            gender: profile.gender,
+            sexual_orientation: profile.sexual_orientation,
+            relationship_status: profile.relationship_status,
+            interests: profile.interests,
+            gallery_private: profile.gallery_private,
+          }
+        },
+      });
 
-      if (error) throw error;
+      if (error || !data.success) {
+        throw new Error(error?.message || data.error || 'Update failed');
+      }
 
       toast({
         title: "Profilo aggiornato",
