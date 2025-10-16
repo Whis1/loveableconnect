@@ -622,10 +622,11 @@ export const ProfileManager = () => {
                       <Label>Cosa cerchi</Label>
                       <div className="space-y-2">
                         {[
-                          { value: "Uomo", label: "Uomo" },
-                          { value: "Donna", label: "Donna" },
-                          { value: "Trans", label: "Trans" },
-                          { value: "Non binario", label: "Non binario" },
+                          { value: "Relazione seria", label: "Relazione seria" },
+                          { value: "Incontri casuali", label: "Incontri casuali" },
+                          { value: "Amicizia", label: "Amicizia" },
+                          { value: "Non specifico", label: "Non specifico" },
+                          { value: "Preferisco non dirlo", label: "Preferisco non dirlo" },
                         ].map((option) => (
                           <div key={option.value} className="flex items-center space-x-2">
                             <Switch
