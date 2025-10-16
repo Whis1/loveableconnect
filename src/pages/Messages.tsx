@@ -15,6 +15,8 @@ interface MatchWithMessages {
   otherUser: {
     id: string;
     full_name: string;
+    nickname: string;
+    is_admin_profile: boolean;
     avatar_url: string | null;
   };
   lastMessage: {
@@ -74,7 +76,7 @@ const Messages = () => {
           // Fetch other user's profile
           const { data: profile } = await supabase
             .from("profiles")
-            .select("id, full_name, avatar_url")
+            .select("id, full_name, nickname, is_admin_profile, avatar_url")
             .eq("id", otherUserId)
             .single();
 
@@ -100,6 +102,8 @@ const Messages = () => {
             otherUser: profile || {
               id: otherUserId,
               full_name: t("messages.unknownUser"),
+              nickname: t("messages.unknownUser"),
+              is_admin_profile: false,
               avatar_url: null,
             },
             lastMessage: messagesData && messagesData.length > 0 
@@ -198,13 +202,17 @@ const Messages = () => {
                         <Avatar className="h-16 w-16">
                           <AvatarImage src={match.otherUser.avatar_url || undefined} />
                           <AvatarFallback>
-                            {match.otherUser.full_name.charAt(0)}
+                            {(match.otherUser.is_admin_profile 
+                              ? match.otherUser.nickname 
+                              : match.otherUser.full_name).charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
                             <h3 className="font-semibold text-lg truncate">
-                              {match.otherUser.full_name}
+                              {match.otherUser.is_admin_profile 
+                                ? match.otherUser.nickname 
+                                : match.otherUser.full_name}
                             </h3>
                             {match.unreadCount > 0 && (
                               <Badge variant="default" className="ml-2">

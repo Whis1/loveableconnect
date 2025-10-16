@@ -29,6 +29,8 @@ interface Message {
 interface Profile {
   id: string;
   full_name: string;
+  nickname: string;
+  is_admin_profile: boolean;
   avatar_url: string | null;
 }
 
@@ -88,7 +90,7 @@ const Chat = () => {
       // Fetch other user's profile
       const { data: profile } = await supabase
         .from("profiles")
-        .select("id, full_name, avatar_url")
+        .select("id, full_name, nickname, is_admin_profile, avatar_url")
         .eq("id", otherUserId)
         .single();
 

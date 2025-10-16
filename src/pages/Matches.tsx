@@ -14,6 +14,8 @@ interface MatchWithProfile {
   otherUser: {
     id: string;
     full_name: string;
+    nickname: string;
+    is_admin_profile: boolean;
     avatar_url: string | null;
     bio: string | null;
     city: string | null;
@@ -73,7 +75,7 @@ const Matches = () => {
 
           const { data: profile } = await supabase
             .from("profiles")
-            .select("id, full_name, avatar_url, bio, city")
+            .select("id, full_name, nickname, is_admin_profile, avatar_url, bio, city")
             .eq("id", otherUserId)
             .single();
 
@@ -83,6 +85,8 @@ const Matches = () => {
             otherUser: profile || {
               id: otherUserId,
               full_name: t("matches.unknownUser"),
+              nickname: t("matches.unknownUser"),
+              is_admin_profile: false,
               avatar_url: null,
               bio: null,
               city: null,
@@ -118,7 +122,7 @@ const Matches = () => {
 
             const { data: profile } = await supabase
               .from("profiles")
-              .select("id, full_name, avatar_url, bio, city")
+              .select("id, full_name, nickname, is_admin_profile, avatar_url, bio, city")
               .eq("id", otherUserId)
               .single();
 
@@ -128,6 +132,8 @@ const Matches = () => {
               otherUser: profile || {
                 id: otherUserId,
                 full_name: t("matches.unknownUser"),
+                nickname: t("matches.unknownUser"),
+                is_admin_profile: false,
                 avatar_url: null,
                 bio: null,
                 city: null,
@@ -135,9 +141,12 @@ const Matches = () => {
             };
 
             setMatches(prev => [matchWithProfile, ...prev]);
+            const displayName = matchWithProfile.otherUser.is_admin_profile 
+              ? matchWithProfile.otherUser.nickname 
+              : matchWithProfile.otherUser.full_name;
             toast({
               title: t("matches.newMatch"),
-              description: `${t("matches.newMatchWith")} ${matchWithProfile.otherUser.full_name}!`,
+              description: `${t("matches.newMatchWith")} ${displayName}!`,
             });
           }
         )
@@ -195,12 +204,16 @@ const Matches = () => {
                           <Avatar className="h-16 w-16">
                             <AvatarImage src={match.otherUser.avatar_url || undefined} />
                             <AvatarFallback>
-                              {match.otherUser.full_name.charAt(0)}
+                              {(match.otherUser.is_admin_profile 
+                                ? match.otherUser.nickname 
+                                : match.otherUser.full_name).charAt(0)}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
                             <h3 className="font-semibold text-lg">
-                              {match.otherUser.full_name}
+                              {match.otherUser.is_admin_profile 
+                                ? match.otherUser.nickname 
+                                : match.otherUser.full_name}
                             </h3>
                             <p className="text-sm text-muted-foreground">
                               {t("matches.nearYourParts")}
