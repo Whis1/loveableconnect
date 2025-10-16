@@ -29,12 +29,9 @@ interface UserProfileCardProps {
 export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { isAdmin } = useAdminRole();
+  const { isAdmin, loading: adminLoading } = useAdminRole();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-
-  // Debug log
-  console.log('UserProfileCard - isAdmin:', isAdmin, 'userId:', userId);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -92,7 +89,7 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
 
             <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
               <MapPin className="h-4 w-4" />
-              <span>{isAdmin ? (profile.city || "Vicino alle tue parti") : "Vicino alle tue parti"}</span>
+              <span>{!adminLoading && isAdmin ? (profile.city || "Vicino alle tue parti") : "Vicino alle tue parti"}</span>
             </div>
 
             {profile.relationship_type && (
