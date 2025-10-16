@@ -493,9 +493,39 @@ export const ProfileManager = () => {
                         <div className="flex items-center gap-2">
                           <Switch
                             checked={profile.gallery_private || false}
-                            onCheckedChange={(checked) => {
+                            onCheckedChange={async (checked) => {
                               const updated = { ...profile, gallery_private: checked };
                               setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
+                              
+                              // Salva immediatamente nel database
+                              try {
+                                const { data, error } = await supabase.functions.invoke('admin-update-profile', {
+                                  body: {
+                                    profileId: profile.id,
+                                    updates: { gallery_private: checked }
+                                  },
+                                });
+
+                                if (error || !data.success) {
+                                  throw new Error(error?.message || data.error || 'Update failed');
+                                }
+
+                                toast({
+                                  title: checked ? "Galleria impostata come privata" : "Galleria impostata come pubblica",
+                                  description: "Le modifiche sono state salvate",
+                                });
+
+                                fetchProfiles();
+                              } catch (error: any) {
+                                console.error("Error updating gallery privacy:", error);
+                                toast({
+                                  title: "Errore",
+                                  description: error.message,
+                                  variant: "destructive",
+                                });
+                                // Ripristina il valore precedente in caso di errore
+                                setProfiles(profiles.map((p) => (p.id === profile.id ? profile : p)));
+                              }
                             }}
                           />
                           <Label className="text-sm cursor-pointer">
