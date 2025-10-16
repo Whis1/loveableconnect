@@ -35,7 +35,7 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
   const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [hasAccess, setHasAccess] = useState(false);
+  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const [showAccessDialog, setShowAccessDialog] = useState(false);
   const [isRequesting, setIsRequesting] = useState(false);
 
@@ -55,24 +55,29 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
         setProfile(data);
 
         // Check if user has access to private gallery
-        if (data.gallery_private) {
-          const { data: session } = await supabase.auth.getSession();
-          if (session?.session?.user) {
-            const { data: accessData } = await supabase
-              .from("gallery_access_requests")
-              .select("*")
-              .eq("requester_id", session.session.user.id)
-              .eq("profile_id", userId)
-              .eq("status", "accepted")
-              .maybeSingle();
-
-            setHasAccess(!!accessData);
-          }
-        } else {
+        const { data: session } = await supabase.auth.getSession();
+        
+        if (!data.gallery_private) {
+          // Gallery is public
           setHasAccess(true);
+        } else if (session?.session?.user) {
+          // Gallery is private, check if user has access
+          const { data: accessData } = await supabase
+            .from("gallery_access_requests")
+            .select("*")
+            .eq("requester_id", session.session.user.id)
+            .eq("profile_id", userId)
+            .eq("status", "accepted")
+            .maybeSingle();
+
+          setHasAccess(!!accessData);
+        } else {
+          // Gallery is private and user is not logged in
+          setHasAccess(false);
         }
       } catch (error) {
         console.error("Error fetching profile:", error);
+        setHasAccess(false);
       } finally {
         setLoading(false);
       }
@@ -169,7 +174,9 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
   if (!profile) return null;
 
   const hasPhotos = profile.photos && profile.photos.length > 0;
-  const canViewGallery = hasPhotos && (!profile.gallery_private || hasAccess);
+  // Show gallery only if: has photos AND (gallery is not private OR user has access)
+  // hasAccess can be null while loading, so we treat null as false
+  const canShowGallery = hasPhotos && hasAccess !== null;
 
   return (
     <Card className="border-b rounded-none bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
@@ -236,7 +243,7 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
           </div>
         )}
 
-        {hasPhotos && (
+        {canShowGallery && (
           <div className="mt-4">
             <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
               <User className="h-4 w-4" />
@@ -246,7 +253,8 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
               <div className="flex gap-2 pb-2">
                 {profile.photos.map((photo, index) => {
                   const photoUrl = supabase.storage.from('profile-images').getPublicUrl(photo).data.publicUrl;
-                  const isBlurred = profile.gallery_private && !hasAccess;
+                  // Blur if gallery is private AND user doesn't have access
+                  const isBlurred = profile.gallery_private && hasAccess === false;
                   
                   if (isBlurred) {
                     return (
