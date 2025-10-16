@@ -9,6 +9,7 @@ import { ImageDialog } from "@/components/ImageDialog";
 import { getGenericLocationPhrase } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
+import { useAdminRole } from "@/hooks/useAdminRole";
 
 interface Profile {
   id: string;
@@ -17,6 +18,7 @@ interface Profile {
   avatar_url: string | null;
   age: number | null;
   bio: string | null;
+  city: string | null;
   gender: string | null;
   relationship_type: string | null;
   relationship_status: string | null;
@@ -33,6 +35,7 @@ interface ChatUserProfileProps {
 
 export const ChatUserProfile = ({ userId, currentUserId }: ChatUserProfileProps) => {
   const { t } = useTranslation();
+  const { isAdmin } = useAdminRole();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -147,7 +150,7 @@ export const ChatUserProfile = ({ userId, currentUserId }: ChatUserProfileProps)
 
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <MapPin className="h-4 w-4" />
-              <span>{locationPhrase}</span>
+              <span>{isAdmin && profile.city ? profile.city : locationPhrase}</span>
             </div>
 
             {profile.relationship_type && (
