@@ -82,6 +82,42 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
     };
 
     fetchProfile();
+
+    // Subscribe to changes in gallery_access_requests
+    const checkAccessStatus = async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) return;
+
+      const { data: accessData } = await supabase
+        .from("gallery_access_requests")
+        .select("*")
+        .eq("requester_id", session.session.user.id)
+        .eq("profile_id", userId)
+        .eq("status", "accepted")
+        .maybeSingle();
+
+      setHasAccess(!!accessData);
+    };
+
+    const channel = supabase
+      .channel(`gallery-access-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "gallery_access_requests",
+          filter: `profile_id=eq.${userId}`,
+        },
+        () => {
+          checkAccessStatus();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId]);
 
   const handleRequestAccess = async () => {

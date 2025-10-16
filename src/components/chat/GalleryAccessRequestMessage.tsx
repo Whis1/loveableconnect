@@ -57,15 +57,14 @@ export const GalleryAccessRequestMessage = ({
 
       setStatus(accept ? "accepted" : "rejected");
 
+      setStatus(accept ? "accepted" : "rejected");
+      
       toast({
         title: accept ? t("chat.requestAccepted") : t("chat.requestRejected"),
         description: accept 
           ? t("chat.accessGranted") || "L'utente può ora vedere la tua galleria"
           : t("chat.accessDenied") || "Richiesta rifiutata",
       });
-
-      // Force page reload to update gallery state
-      window.location.reload();
     } catch (error) {
       console.error("Error responding to request:", error);
       toast({
