@@ -6,7 +6,6 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { User, Heart, MapPin } from "lucide-react";
 import { ImageDialog } from "@/components/ImageDialog";
-import { GalleryAccessDialog } from "./GalleryAccessDialog";
 import { getGenericLocationPhrase } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
@@ -36,7 +35,6 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
-  const [showAccessDialog, setShowAccessDialog] = useState(false);
   const [isRequesting, setIsRequesting] = useState(false);
 
   // Memorizza la frase di location per non cambiarla ad ogni render
@@ -146,8 +144,6 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
         title: t("chat.requestSent") || "Richiesta inviata",
         description: t("chat.requestSentSuccess") || "La richiesta è stata inviata con successo",
       });
-
-      setShowAccessDialog(false);
     } catch (error) {
       console.error("Error requesting access:", error);
       toast({
@@ -160,11 +156,6 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
     }
   };
 
-  const handlePhotoClick = () => {
-    if (profile?.gallery_private && !hasAccess) {
-      setShowAccessDialog(true);
-    }
-  };
 
   if (loading) {
     return (
@@ -265,7 +256,7 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
                       src={photoUrl} 
                       alt={`${t("chat.photo")} ${index + 1}`}
                       isBlurred={isBlurred}
-                      onRequestAccess={isBlurred ? handlePhotoClick : undefined}
+                      onRequestAccess={isBlurred ? handleRequestAccess : undefined}
                     >
                       <img
                         src={photoUrl}
@@ -282,12 +273,6 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
           </div>
         )}
 
-        <GalleryAccessDialog
-          open={showAccessDialog}
-          onOpenChange={setShowAccessDialog}
-          onRequestAccess={handleRequestAccess}
-          isRequesting={isRequesting}
-        />
       </div>
     </Card>
   );
