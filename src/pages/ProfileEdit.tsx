@@ -471,12 +471,10 @@ const ProfileEdit = () => {
                       <SelectValue placeholder={t('profile.selectStatus')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="male">{t('common.male')}</SelectItem>
-                      <SelectItem value="female">{t('common.female')}</SelectItem>
-                      <SelectItem value="transgender">{t('common.transgender')}</SelectItem>
-                      <SelectItem value="transessuale">{t('common.transexual')}</SelectItem>
-                      <SelectItem value="omosessuale">{t('common.homosexual')}</SelectItem>
-                      <SelectItem value="non-binary">{t('common.nonBinary')}</SelectItem>
+                      <SelectItem value="uomo">Uomo</SelectItem>
+                      <SelectItem value="donna">Donna</SelectItem>
+                      <SelectItem value="non-binary">Non binario</SelectItem>
+                      <SelectItem value="trans">Trans</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
