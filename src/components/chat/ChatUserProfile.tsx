@@ -73,16 +73,21 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
     <Card className="border-b rounded-none bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
       <div className="p-6">
         <div className="flex items-start gap-4">
-          <Avatar className="h-20 w-20 ring-2 ring-primary/20">
-            {profile.avatar_url ? (
-              <AvatarImage 
-                src={supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl}
-              />
-            ) : null}
-            <AvatarFallback className="text-2xl">
-              {profile.nickname.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          <ImageDialog 
+            src={profile.avatar_url ? supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl : ''} 
+            alt={profile.nickname}
+          >
+            <Avatar className="h-20 w-20 ring-2 ring-primary/20 cursor-pointer hover:ring-primary/40 transition-all">
+              {profile.avatar_url ? (
+                <AvatarImage 
+                  src={supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl}
+                />
+              ) : null}
+              <AvatarFallback className="text-2xl">
+                {profile.nickname.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </ImageDialog>
 
           <div className="flex-1 space-y-2">
             <div>
