@@ -40,6 +40,16 @@ interface Message {
   receiver_profile?: { nickname: string; avatar_url?: string };
 }
 
+interface UserProfile {
+  id: string;
+  nickname: string;
+  full_name: string;
+  age: number | null;
+  city: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+}
+
 export const ProfileManager = () => {
   const { toast } = useToast();
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -48,9 +58,13 @@ export const ProfileManager = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [uploadingImages, setUploadingImages] = useState<{ [key: string]: boolean }>({});
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [profileLikes, setProfileLikes] = useState<{ [profileId: string]: string[] }>({});
 
   useEffect(() => {
     fetchProfiles();
+    fetchUsers();
   }, []);
 
   const fetchProfiles = async () => {
@@ -58,11 +72,18 @@ export const ProfileManager = () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("is_admin_profile", true) // Solo profili admin
+        .eq("is_admin_profile", true)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       setProfiles(data || []);
+      
+      // Fetch likes for each profile
+      if (data && data.length > 0) {
+        for (const profile of data) {
+          await fetchProfileLikes(profile.id);
+        }
+      }
     } catch (error: any) {
       console.error("Error fetching profiles:", error);
       toast({
@@ -72,6 +93,95 @@ export const ProfileManager = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, nickname, full_name, age, city, avatar_url, bio")
+        .eq("is_admin_profile", false)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error: any) {
+      console.error("Error fetching users:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile caricare gli utenti",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const fetchProfileLikes = async (profileId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("likes")
+        .select("to_user_id")
+        .eq("from_user_id", profileId);
+
+      if (error) throw error;
+      
+      const likedUserIds = (data || []).map(like => like.to_user_id);
+      setProfileLikes(prev => ({ ...prev, [profileId]: likedUserIds }));
+    } catch (error: any) {
+      console.error("Error fetching profile likes:", error);
+    }
+  };
+
+  const handleToggleLike = async (profileId: string, userId: string) => {
+    const currentLikes = profileLikes[profileId] || [];
+    const isLiked = currentLikes.includes(userId);
+
+    try {
+      const action = isLiked ? 'remove' : 'add';
+      
+      const { data, error } = await supabase.functions.invoke('admin-manage-like', {
+        body: { 
+          action, 
+          fromUserId: profileId, 
+          toUserId: userId 
+        },
+      });
+
+      if (error || !data.success) {
+        throw new Error(error?.message || data.error || 'Operation failed');
+      }
+
+      if (isLiked) {
+        setProfileLikes(prev => ({
+          ...prev,
+          [profileId]: currentLikes.filter(id => id !== userId)
+        }));
+
+        toast({
+          title: "Like rimosso",
+          description: "Il like è stato rimosso",
+        });
+      } else {
+        setProfileLikes(prev => ({
+          ...prev,
+          [profileId]: [...currentLikes, userId]
+        }));
+
+        toast({
+          title: "Like aggiunto",
+          description: "Il like è stato aggiunto",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error toggling like:", error);
+      toast({
+        title: "Errore",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -584,6 +694,70 @@ export const ProfileManager = () => {
                         <Save className="h-4 w-4 mr-2" />
                         Salva Modifiche
                       </Button>
+                      
+                      {/* Gestione Likes */}
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline">
+                            <Users className="h-4 w-4 mr-2" />
+                            Likes ({(profileLikes[profile.id] || []).length})
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-3xl max-h-[80vh]">
+                          <DialogHeader>
+                            <DialogTitle>Gestisci Like per {profile.nickname}</DialogTitle>
+                          </DialogHeader>
+                          <ScrollArea className="h-[500px] pr-4">
+                            {loadingUsers ? (
+                              <p className="text-muted-foreground">Caricamento utenti...</p>
+                            ) : users.length === 0 ? (
+                              <p className="text-muted-foreground">Nessun utente disponibile</p>
+                            ) : (
+                              <div className="space-y-2">
+                                {users.map((user) => {
+                                  const isLiked = (profileLikes[profile.id] || []).includes(user.id);
+                                  return (
+                                    <div 
+                                      key={user.id} 
+                                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors"
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <Avatar className="h-10 w-10">
+                                          {user.avatar_url ? (
+                                            <AvatarImage 
+                                              src={supabase.storage.from('profile-images').getPublicUrl(user.avatar_url).data.publicUrl}
+                                            />
+                                          ) : null}
+                                          <AvatarFallback>{user.nickname[0]?.toUpperCase()}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                          <p className="font-semibold">{user.nickname}</p>
+                                          <p className="text-sm text-muted-foreground">
+                                            {user.full_name} • {user.age} anni • {user.city}
+                                          </p>
+                                          {user.bio && (
+                                            <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                                              {user.bio}
+                                            </p>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <Button
+                                        variant={isLiked ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => handleToggleLike(profile.id, user.id)}
+                                      >
+                                        {isLiked ? "❤️ Rimuovi" : "🤍 Like"}
+                                      </Button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </ScrollArea>
+                        </DialogContent>
+                      </Dialog>
+
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button
