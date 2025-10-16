@@ -19,6 +19,7 @@ interface Profile {
   bio: string | null;
   gender: string | null;
   relationship_type: string | null;
+  relationship_status: string | null;
   sexual_orientation: string | null;
   interests: string[] | null;
   photos: string[] | null;
@@ -98,16 +99,49 @@ export const ChatUserProfile = ({ userId, currentUserId }: ChatUserProfileProps)
               {profile.age && (
                 <p className="text-muted-foreground">{profile.age} {t("chat.years")}</p>
               )}
-              {profile.gender && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  {profile.gender === 'male' ? '👨 Uomo' : 
-                   profile.gender === 'female' ? '👩 Donna' : 
-                   profile.gender === 'non-binary' ? '⚧️ Non binario' :
-                   profile.gender === 'transexual' ? '⚧️ Transessuale' :
-                   profile.gender === 'transgender' ? '⚧️ Transgender' :
-                   '⚧️ Altro'}
-                </p>
-              )}
+              <div className="flex flex-wrap gap-3 mt-2">
+                {profile.gender && (
+                  <div className="flex items-center gap-1 text-sm">
+                    <span>
+                      {profile.gender === 'male' ? '👨' : 
+                       profile.gender === 'female' ? '👩' : 
+                       profile.gender === 'non-binary' ? '⚧️' :
+                       profile.gender === 'transexual' ? '⚧️' :
+                       profile.gender === 'transgender' ? '⚧️' :
+                       '⚧️'}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {profile.gender === 'male' ? 'Uomo' : 
+                       profile.gender === 'female' ? 'Donna' : 
+                       profile.gender === 'non-binary' ? 'Non binario' :
+                       profile.gender === 'transexual' ? 'Transessuale' :
+                       profile.gender === 'transgender' ? 'Transgender' :
+                       'Altro'}
+                    </span>
+                  </div>
+                )}
+                {profile.relationship_status && (
+                  <div className="flex items-center gap-1 text-sm">
+                    <span>
+                      {profile.relationship_status === 'single' ? '💙' : 
+                       profile.relationship_status === 'in_relationship' ? '❤️' :
+                       profile.relationship_status === 'married' ? '💍' :
+                       profile.relationship_status === 'divorced' ? '💔' :
+                       profile.relationship_status === 'widowed' ? '🖤' :
+                       '💭'}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {profile.relationship_status === 'single' ? 'Single' : 
+                       profile.relationship_status === 'in_relationship' ? 'In una relazione' :
+                       profile.relationship_status === 'married' ? 'Sposato/a' :
+                       profile.relationship_status === 'divorced' ? 'Divorziato/a' :
+                       profile.relationship_status === 'widowed' ? 'Vedovo/a' :
+                       profile.relationship_status === 'prefer_not_say' ? 'Preferisco non dirlo' :
+                       profile.relationship_status}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center gap-2 text-sm text-muted-foreground">

@@ -610,7 +610,7 @@ export const ProfileManager = () => {
                           <SelectItem value="married">Sposato/a</SelectItem>
                           <SelectItem value="divorced">Divorziato/a</SelectItem>
                           <SelectItem value="widowed">Vedovo/a</SelectItem>
-                          <SelectItem value="complicated">È complicato</SelectItem>
+                          <SelectItem value="prefer_not_say">Preferisco non dirlo</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -787,16 +787,19 @@ export const ProfileManager = () => {
       </CardContent>
 
       {/* Admin Chat Dialog */}
-      {selectedChatProfile && (
-        <AdminChatDialog
-          open={chatDialogOpen}
-          onOpenChange={setChatDialogOpen}
-          adminProfileId={selectedChatProfile.profileId}
-          adminNickname={selectedChatProfile.profileNickname}
-          userId={selectedChatProfile.userId}
-          userNickname={selectedChatProfile.userNickname}
-        />
-      )}
+      <AdminChatDialog
+        open={chatDialogOpen && selectedChatProfile !== null}
+        onOpenChange={(open) => {
+          setChatDialogOpen(open);
+          if (!open) {
+            setSelectedChatProfile(null);
+          }
+        }}
+        adminProfileId={selectedChatProfile?.profileId || ''}
+        adminNickname={selectedChatProfile?.profileNickname || ''}
+        userId={selectedChatProfile?.userId || ''}
+        userNickname={selectedChatProfile?.userNickname || ''}
+      />
     </Card>
   );
 };
