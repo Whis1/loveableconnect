@@ -113,11 +113,19 @@ export const ProfileManager = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `${profileId}-avatar-${Date.now()}.${fileExt}`;
       
-      const { error: uploadError } = await supabase.storage
-        .from('profile-images')
-        .upload(fileName, file, { upsert: true });
+      // Usa l'edge function per caricare con service role
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('fileName', fileName);
+      formData.append('bucket', 'profile-images');
 
-      if (uploadError) throw uploadError;
+      const { data, error: uploadError } = await supabase.functions.invoke('admin-upload-image', {
+        body: formData,
+      });
+
+      if (uploadError || !data.success) {
+        throw new Error(uploadError?.message || data.error || 'Upload failed');
+      }
 
       const { error: updateError } = await supabase
         .from('profiles')
@@ -162,11 +170,19 @@ export const ProfileManager = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `${profileId}-gallery-${Date.now()}.${fileExt}`;
       
-      const { error: uploadError } = await supabase.storage
-        .from('profile-images')
-        .upload(fileName, file);
+      // Usa l'edge function per caricare con service role
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('fileName', fileName);
+      formData.append('bucket', 'profile-images');
 
-      if (uploadError) throw uploadError;
+      const { data, error: uploadError } = await supabase.functions.invoke('admin-upload-image', {
+        body: formData,
+      });
+
+      if (uploadError || !data.success) {
+        throw new Error(uploadError?.message || data.error || 'Upload failed');
+      }
 
       const updatedPhotos = [...(profile.photos || []), fileName];
       const { error: updateError } = await supabase
@@ -199,11 +215,14 @@ export const ProfileManager = () => {
     if (!profile) return;
 
     try {
-      const { error: deleteError } = await supabase.storage
-        .from('profile-images')
-        .remove([photoUrl]);
+      // Usa l'edge function per eliminare con service role
+      const { data, error: deleteError } = await supabase.functions.invoke('admin-delete-image', {
+        body: { filePath: photoUrl, bucket: 'profile-images' },
+      });
 
-      if (deleteError) throw deleteError;
+      if (deleteError || !data.success) {
+        throw new Error(deleteError?.message || data.error || 'Delete failed');
+      }
 
       const updatedPhotos = (profile.photos || []).filter(p => p !== photoUrl);
       const { error: updateError } = await supabase

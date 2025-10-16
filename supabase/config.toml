@@ -1,5 +1,11 @@
 project_id = "tcmhvrlsaggyuukdscue"
 
+[functions.admin-delete-image]
+verify_jwt = false
+
+[functions.admin-upload-image]
+verify_jwt = false
+
 [functions.create-unlock-payment]
 verify_jwt = true
 
