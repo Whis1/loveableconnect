@@ -21,6 +21,7 @@ interface Profile {
   relationship_type: string | null;
   relationship_status: string | null;
   sexual_orientation: string | null;
+  looking_for: string[] | null;
   interests: string[] | null;
   photos: string[] | null;
 }
@@ -153,6 +154,19 @@ export const ChatUserProfile = ({ userId, currentUserId }: ChatUserProfileProps)
               <div className="flex items-center gap-2">
                 <Heart className="h-4 w-4 text-primary" />
                 <Badge variant="secondary">{profile.relationship_type}</Badge>
+              </div>
+            )}
+
+            {profile.looking_for && profile.looking_for.length > 0 && (
+              <div className="mt-2">
+                <p className="text-sm text-muted-foreground mb-1">Cerca:</p>
+                <div className="flex flex-wrap gap-2">
+                  {profile.looking_for.map((item, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {item}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             )}
           </div>

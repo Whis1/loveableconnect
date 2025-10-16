@@ -25,6 +25,7 @@ interface Profile {
   gender: string | null;
   sexual_orientation: string | null;
   relationship_status: string | null;
+  looking_for: string[] | null;
   interests: string[] | null;
   avatar_url: string | null;
   photos: string[] | null;
@@ -380,6 +381,7 @@ export const ProfileManager = () => {
             city: profile.city,
             gender: profile.gender,
             relationship_status: profile.relationship_status,
+            looking_for: profile.looking_for,
             interests: profile.interests,
           }
         },
@@ -613,6 +615,20 @@ export const ProfileManager = () => {
                           <SelectItem value="prefer_not_say">Preferisco non dirlo</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+
+                    {/* Cosa Cerchi */}
+                    <div className="space-y-2">
+                      <Label>Cosa cerchi (separati da virgola)</Label>
+                      <Input
+                        value={profile.looking_for?.join(", ") || ""}
+                        onChange={(e) => {
+                          const lookingFor = e.target.value.split(",").map((i) => i.trim()).filter(Boolean);
+                          const updated = { ...profile, looking_for: lookingFor };
+                          setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
+                        }}
+                        placeholder="Es: Uomo, Donna, Trans"
+                      />
                     </div>
 
                     {/* Interessi */}
