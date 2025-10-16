@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Users, MessageSquare, Save, Upload, X, Image as ImageIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AdminChatDialog } from "./AdminChatDialog";
 
 interface Profile {
   id: string;
@@ -61,6 +62,8 @@ export const ProfileManager = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [profileLikes, setProfileLikes] = useState<{ [profileId: string]: string[] }>({});
+  const [chatDialogOpen, setChatDialogOpen] = useState(false);
+  const [selectedChatProfile, setSelectedChatProfile] = useState<{ profileId: string; profileNickname: string; userId: string; userNickname: string } | null>(null);
 
   useEffect(() => {
     fetchProfiles();
@@ -772,13 +775,31 @@ export const ProfileManager = () => {
                                           )}
                                         </div>
                                       </div>
-                                      <Button
-                                        variant={isLiked ? "default" : "outline"}
-                                        size="sm"
-                                        onClick={() => handleToggleLike(profile.id, user.id)}
-                                      >
-                                        {isLiked ? "❤️ Rimuovi" : "🤍 Like"}
-                                      </Button>
+                                       <div className="flex gap-2">
+                                        <Button
+                                          variant={isLiked ? "default" : "outline"}
+                                          size="sm"
+                                          onClick={() => handleToggleLike(profile.id, user.id)}
+                                        >
+                                          {isLiked ? "❤️ Rimuovi" : "🤍 Like"}
+                                        </Button>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => {
+                                            setSelectedChatProfile({
+                                              profileId: profile.id,
+                                              profileNickname: profile.nickname,
+                                              userId: user.id,
+                                              userNickname: user.nickname,
+                                            });
+                                            setChatDialogOpen(true);
+                                          }}
+                                        >
+                                          <MessageSquare className="h-4 w-4 mr-1" />
+                                          Chat
+                                        </Button>
+                                      </div>
                                     </div>
                                   );
                                 })}
@@ -846,6 +867,18 @@ export const ProfileManager = () => {
           </Accordion>
         </ScrollArea>
       </CardContent>
+
+      {/* Admin Chat Dialog */}
+      {selectedChatProfile && (
+        <AdminChatDialog
+          open={chatDialogOpen}
+          onOpenChange={setChatDialogOpen}
+          adminProfileId={selectedChatProfile.profileId}
+          adminNickname={selectedChatProfile.profileNickname}
+          userId={selectedChatProfile.userId}
+          userNickname={selectedChatProfile.userNickname}
+        />
+      )}
     </Card>
   );
 };
