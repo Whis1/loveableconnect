@@ -474,7 +474,7 @@ const Explore = () => {
               
               <div className="flex items-center gap-2 text-muted-foreground mb-3">
                 <MapPin className="h-4 w-4" />
-                <span>{getGenericLocationPhrase(t)}</span>
+                <span>{getGenericLocationPhrase()}</span>
               </div>
 
               {currentProfile.bio && (

@@ -5,6 +5,6 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function getGenericLocationPhrase(t: any): string {
-  return t("common.nearbyLocation");
+export function getGenericLocationPhrase(): string {
+  return "Vicino alle tue parti";
 }

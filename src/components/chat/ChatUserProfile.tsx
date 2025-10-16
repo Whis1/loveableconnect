@@ -34,7 +34,7 @@ export const ChatUserProfile = ({ userId }: ChatUserProfileProps) => {
   const [loading, setLoading] = useState(true);
 
   // Memorizza la frase di location per non cambiarla ad ogni render
-  const locationPhrase = useMemo(() => getGenericLocationPhrase(t), [t]);
+  const locationPhrase = useMemo(() => getGenericLocationPhrase(), []);
 
   useEffect(() => {
     const fetchProfile = async () => {

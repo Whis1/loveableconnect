@@ -402,7 +402,7 @@ const Search = () => {
                         <span>
                            {profile.distance !== undefined 
                             ? `${profile.distance} ${t('search.km')}` 
-                            : getGenericLocationPhrase(t)}
+                            : getGenericLocationPhrase()}
                         </span>
                       </div>
                     </div>
