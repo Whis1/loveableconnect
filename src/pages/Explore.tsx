@@ -74,11 +74,51 @@ const Explore = () => {
       }
 
       setCurrentUser(session.user.id);
+      
+      // Load all profiles automatically
+      await loadAllProfiles(session.user.id);
+      
       setLoading(false);
     };
 
     initializeExplore();
   }, [navigate]);
+
+  const loadAllProfiles = async (userId: string) => {
+    setLoading(true);
+    
+    try {
+      const { data: profilesData, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .neq("id", userId)
+        .neq("is_admin_profile", true);
+
+      if (error) throw error;
+
+      let allProfiles: Profile[] = (profilesData || []) as Profile[];
+      
+      // Sort by last active
+      allProfiles.sort((a, b) => {
+        const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
+        const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
+        return dateB - dateA;
+      });
+
+      setProfiles(allProfiles);
+      setDisplayedProfiles([]);
+      setPage(1);
+      setHasMore(true);
+    } catch (error: any) {
+      toast({
+        title: "Errore",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadMoreProfiles = useCallback(() => {
     const startIdx = (page - 1) * PROFILES_PER_PAGE;
