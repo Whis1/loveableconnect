@@ -111,11 +111,11 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
 
   return (
     <Card 
-      className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group"
+      className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 hover:border-primary/50"
       onClick={handleCardClick}
     >
       {/* Profile Image */}
-      <div className="relative aspect-square bg-gradient-to-br from-pink-200 to-purple-200 dark:from-pink-900 dark:to-purple-900">
+      <div className="relative aspect-[3/4] bg-gradient-to-br from-pink-200 to-purple-200 dark:from-pink-900 dark:to-purple-900">
         {avatarUrl ? (
           <img
             src={avatarUrl}
@@ -125,28 +125,35 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <Avatar className="h-32 w-32">
-              <AvatarFallback className="text-5xl">
-                <UserIcon className="h-16 w-16" />
+              <AvatarFallback className="text-5xl bg-gradient-to-br from-primary/20 to-secondary/20">
+                <UserIcon className="h-16 w-16 text-primary" />
               </AvatarFallback>
             </Avatar>
           </div>
         )}
         
-        {/* Overlay on hover */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        
+        {/* Distance Badge */}
+        {profile.distance && (
+          <div className="absolute top-3 right-3 bg-background/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold">
+            {profile.distance} km
+          </div>
+        )}
       </div>
 
       {/* Profile Info */}
-      <div className="p-4 space-y-3">
+      <div className="p-4 space-y-3 bg-card">
         <div>
-          <h3 className="text-lg font-bold truncate">
+          <h3 className="text-xl font-bold truncate text-foreground">
             {profile.nickname || profile.full_name}
           </h3>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            {profile.age && <span>{profile.age} anni</span>}
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+            {profile.age && <span className="font-medium">{profile.age} anni</span>}
             {profile.age && profile.gender && <span>•</span>}
             {profile.gender && (
-              <span>
+              <span className="capitalize">
                 {profile.gender === 'male' && 'Uomo'}
                 {profile.gender === 'female' && 'Donna'}
                 {profile.gender === 'transexual' && 'Transessuale'}
@@ -156,28 +163,33 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
               </span>
             )}
           </div>
+          {profile.bio && (
+            <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+              {profile.bio}
+            </p>
+          )}
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 pt-2">
           <Button
             variant={hasLiked ? "default" : "outline"}
-            size="sm"
-            className="flex-1"
+            size="lg"
+            className="flex-1 font-semibold"
             onClick={handleLike}
             disabled={isLiking || hasLiked}
           >
-            <Heart className={`h-4 w-4 mr-1 ${hasLiked ? 'fill-current' : ''}`} />
-            Like
+            <Heart className={`h-5 w-5 mr-2 ${hasLiked ? 'fill-current' : ''}`} />
+            {hasLiked ? 'Piaciuto' : 'Mi Piace'}
           </Button>
           <Button
             variant="default"
-            size="sm"
-            className="flex-1"
+            size="lg"
+            className="flex-1 font-semibold bg-gradient-to-r from-primary to-primary/80"
             onClick={handleChat}
           >
-            <MessageCircle className="h-4 w-4 mr-1" />
-            Chat
+            <MessageCircle className="h-5 w-5 mr-2" />
+            Messaggio
           </Button>
         </div>
       </div>

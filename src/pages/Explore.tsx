@@ -44,13 +44,10 @@ const Explore = () => {
   const [displayedProfiles, setDisplayedProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
-  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
-  const [locationPermission, setLocationPermission] = useState<boolean>(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   
   const [ageRange, setAgeRange] = useState([18, 90]);
-  const [distanceRange, setDistanceRange] = useState([100]);
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
   
   const PROFILES_PER_PAGE = 24;
@@ -91,8 +88,7 @@ const Explore = () => {
       const { data: profilesData, error } = await supabase
         .from("profiles")
         .select("*")
-        .neq("id", userId)
-        .neq("is_admin_profile", true);
+        .neq("id", userId);
 
       if (error) throw error;
 
@@ -156,62 +152,6 @@ const Explore = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [hasMore, loading, loadMoreProfiles]);
 
-  const requestLocationPermission = () => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const location = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          };
-          setUserLocation(location);
-          setLocationPermission(true);
-          toast({
-            title: t("explore.geolocation.acquired"),
-            description: t("explore.geolocation.acquiredDescription"),
-          });
-          
-          if (currentUser) {
-            supabase
-              .from("profiles")
-              .update({
-                latitude: location.latitude,
-                longitude: location.longitude,
-              })
-              .eq("id", currentUser)
-              .then(() => console.log("Location saved"));
-          }
-        },
-        (error) => {
-          toast({
-            title: t("explore.geolocation.error"),
-            description: t("explore.geolocation.errorDescription"),
-            variant: "destructive",
-          });
-          console.error("Geolocation error:", error);
-        }
-      );
-    } else {
-      toast({
-        title: t("explore.geolocation.notSupported"),
-        description: t("explore.geolocation.notSupportedDescription"),
-        variant: "destructive",
-      });
-    }
-  };
-
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  };
-
   const applyFilters = async () => {
     if (!currentUser) return;
 
@@ -223,8 +163,7 @@ const Explore = () => {
       let query = supabase
         .from("profiles")
         .select("*")
-        .neq("id", currentUser)
-        .neq("is_admin_profile", true);
+        .neq("id", currentUser);
 
       // Age filter
       query = query.gte("age", ageRange[0]).lte("age", ageRange[1]);
@@ -240,36 +179,12 @@ const Explore = () => {
 
       let filteredProfiles: Profile[] = (profilesData || []) as Profile[];
 
-      // Distance filter if location is available
-      if (userLocation && locationPermission) {
-        filteredProfiles = filteredProfiles
-          .map(profile => {
-            if (profile.latitude && profile.longitude) {
-              const distance = calculateDistance(
-                userLocation.latitude,
-                userLocation.longitude,
-                profile.latitude,
-                profile.longitude
-              );
-              return { ...profile, distance: Math.round(distance) } as Profile;
-            }
-            return profile;
-          })
-          .filter(profile => {
-            if (profile.distance !== undefined) {
-              return profile.distance <= distanceRange[0];
-            }
-            return false;
-          });
-
-        filteredProfiles.sort((a, b) => (a.distance || 999999) - (b.distance || 999999));
-      } else {
-        filteredProfiles.sort((a, b) => {
-          const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
-          const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
-          return dateB - dateA;
-        });
-      }
+      // Sort by last active
+      filteredProfiles.sort((a, b) => {
+        const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
+        const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
+        return dateB - dateA;
+      });
 
       setProfiles(filteredProfiles);
       setDisplayedProfiles([]);
@@ -293,12 +208,10 @@ const Explore = () => {
 
   const resetFilters = () => {
     setAgeRange([18, 90]);
-    setDistanceRange([100]);
     setSelectedGenders([]);
-    setProfiles([]);
-    setDisplayedProfiles([]);
-    setPage(1);
-    setHasMore(true);
+    if (currentUser) {
+      loadAllProfiles(currentUser);
+    }
   };
 
   const toggleGender = (gender: string) => {
@@ -353,37 +266,8 @@ const Explore = () => {
 
         {/* Filters Panel */}
         {showFilters && (
-          <Card className="mb-6">
+          <Card className="mb-6 shadow-lg">
             <CardContent className="pt-6 space-y-6">
-              {/* Location Request */}
-              {!locationPermission && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <div className="flex items-start gap-3">
-                    <MapPin className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
-                        Attiva la posizione
-                      </h3>
-                      <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
-                        Consenti l'accesso alla posizione per trovare persone vicine a te
-                      </p>
-                      <Button onClick={requestLocationPermission} size="sm" variant="default">
-                        Attiva posizione
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {locationPermission && (
-                <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
-                  <p className="text-sm text-green-700 dark:text-green-300 flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    Posizione attiva
-                  </p>
-                </div>
-              )}
-
               {/* Age Filter */}
               <div className="space-y-3">
                 <Label className="text-base font-semibold">Età: {ageRange[0]} - {ageRange[1]} anni</Label>
@@ -396,21 +280,6 @@ const Explore = () => {
                   className="w-full"
                 />
               </div>
-
-              {/* Distance Filter */}
-              {locationPermission && (
-                <div className="space-y-3">
-                  <Label className="text-base font-semibold">Distanza: fino a {distanceRange[0]} km</Label>
-                  <Slider
-                    value={distanceRange}
-                    onValueChange={setDistanceRange}
-                    min={1}
-                    max={500}
-                    step={5}
-                    className="w-full"
-                  />
-                </div>
-              )}
 
               {/* Gender Filter */}
               <div className="space-y-3">
@@ -458,7 +327,7 @@ const Explore = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-6">
               {displayedProfiles.map((profile) => (
                 <ProfileGridCard
                   key={profile.id}
