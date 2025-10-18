@@ -222,9 +222,9 @@ const Explore = () => {
     );
   };
 
-  const handleProfileLike = () => {
-    // Remove the liked profile from displayed profiles
-    setDisplayedProfiles(prev => prev.filter(p => p.id !== profiles[0]?.id));
+  const handleProfileLike = (profileId: string) => {
+    // This is just for UI responsiveness - the profile list will refresh on next load
+    // Don't remove from displayed profiles to avoid the disappearing bug
   };
 
   if (loading) {

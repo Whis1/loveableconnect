@@ -7,6 +7,7 @@ import { Heart, MessageCircle, User as UserIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { ProfileDialog } from "./ProfileDialog";
 
 interface Profile {
   id: string;
@@ -22,7 +23,7 @@ interface Profile {
 interface ProfileGridCardProps {
   profile: Profile;
   currentUserId: string;
-  onLike: () => void;
+  onLike: (profileId: string) => void;
 }
 
 export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridCardProps) => {
@@ -31,6 +32,7 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
   const { t } = useTranslation();
   const [isLiking, setIsLiking] = useState(false);
   const [hasLiked, setHasLiked] = useState(false);
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
 
   // Check if user already liked this profile
   useEffect(() => {
@@ -117,7 +119,7 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
         }
       }
       
-      onLike();
+      onLike(profile.id);
     } catch (error: any) {
       toast({
         title: "Errore",
@@ -143,13 +145,13 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
       // Navigate to chat
       navigate(`/chat/${matchData.id}`);
     } else {
-      // Navigate to profile view
-      navigate(`/profile/${profile.id}`);
+      // Open profile dialog
+      setShowProfileDialog(true);
     }
   };
 
   const handleCardClick = () => {
-    navigate(`/profile/${profile.id}`);
+    setShowProfileDialog(true);
   };
 
   return (
@@ -236,6 +238,13 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
           </Button>
         </div>
       </div>
+
+      <ProfileDialog
+        profileId={profile.id}
+        currentUserId={currentUserId}
+        open={showProfileDialog}
+        onOpenChange={setShowProfileDialog}
+      />
     </Card>
   );
 };
