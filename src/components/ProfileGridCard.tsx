@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,24 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
   const [isLiking, setIsLiking] = useState(false);
   const [hasLiked, setHasLiked] = useState(false);
 
+  // Check if user already liked this profile
+  useEffect(() => {
+    const checkExistingLike = async () => {
+      const { data } = await supabase
+        .from("likes")
+        .select("id")
+        .eq("from_user_id", currentUserId)
+        .eq("to_user_id", profile.id)
+        .maybeSingle();
+      
+      if (data) {
+        setHasLiked(true);
+      }
+    };
+    
+    checkExistingLike();
+  }, [currentUserId, profile.id]);
+
   const avatarUrl = profile.avatar_url
     ? supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl
     : null;
@@ -39,39 +57,64 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
     
-    if (isLiking || hasLiked) return;
+    if (isLiking) return;
     
     setIsLiking(true);
     
     try {
-      const { error } = await supabase
+      // Check if like already exists
+      const { data: existingLike } = await supabase
         .from("likes")
-        .insert({
-          from_user_id: currentUserId,
-          to_user_id: profile.id,
-        });
-
-      if (error) throw error;
-
-      setHasLiked(true);
-      
-      // Check if there's a match
-      const { data: matchData } = await supabase
-        .from("matches")
-        .select("*")
-        .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profile.id}),and(user1_id.eq.${profile.id},user2_id.eq.${currentUserId})`)
+        .select("id")
+        .eq("from_user_id", currentUserId)
+        .eq("to_user_id", profile.id)
         .maybeSingle();
 
-      if (matchData) {
+      if (existingLike) {
+        // Remove the like
+        const { error } = await supabase
+          .from("likes")
+          .delete()
+          .eq("id", existingLike.id);
+
+        if (error) throw error;
+
+        setHasLiked(false);
         toast({
-          title: "È un Match! 💕",
-          description: `Hai fatto match con ${profile.nickname || profile.full_name}!`,
+          title: "Like rimosso",
+          description: `Hai rimosso il like da ${profile.nickname || profile.full_name}`,
         });
       } else {
-        toast({
-          title: t('search.likeSent'),
-          description: `Like inviato a ${profile.nickname || profile.full_name}`,
-        });
+        // Add the like
+        const { error } = await supabase
+          .from("likes")
+          .insert({
+            from_user_id: currentUserId,
+            to_user_id: profile.id,
+          });
+
+        if (error) throw error;
+
+        setHasLiked(true);
+        
+        // Check if there's a match
+        const { data: matchData } = await supabase
+          .from("matches")
+          .select("*")
+          .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profile.id}),and(user1_id.eq.${profile.id},user2_id.eq.${currentUserId})`)
+          .maybeSingle();
+
+        if (matchData) {
+          toast({
+            title: "È un Match! 💕",
+            description: `Hai fatto match con ${profile.nickname || profile.full_name}!`,
+          });
+        } else {
+          toast({
+            title: t('search.likeSent'),
+            description: `Like inviato a ${profile.nickname || profile.full_name}`,
+          });
+        }
       }
       
       onLike();
@@ -111,11 +154,11 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
 
   return (
     <Card 
-      className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 hover:border-primary/50"
+      className="overflow-hidden hover:shadow-2xl transition-all duration-300 cursor-pointer group border-2 hover:border-primary/50 h-full flex flex-col"
       onClick={handleCardClick}
     >
       {/* Profile Image */}
-      <div className="relative aspect-[3/4] bg-gradient-to-br from-pink-200 to-purple-200 dark:from-pink-900 dark:to-purple-900">
+      <div className="relative aspect-[4/5] bg-gradient-to-br from-pink-200 to-purple-200 dark:from-pink-900 dark:to-purple-900 flex-shrink-0">
         {avatarUrl ? (
           <img
             src={avatarUrl}
@@ -144,12 +187,12 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
       </div>
 
       {/* Profile Info */}
-      <div className="p-4 space-y-3 bg-card">
-        <div>
-          <h3 className="text-xl font-bold truncate text-foreground">
+      <div className="p-5 space-y-4 bg-card flex flex-col flex-1">
+        <div className="flex-1">
+          <h3 className="text-xl font-bold truncate text-foreground mb-2">
             {profile.nickname || profile.full_name}
           </h3>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+          <div className="flex items-center gap-2 text-base text-muted-foreground">
             {profile.age && <span className="font-medium">{profile.age} anni</span>}
             {profile.age && profile.gender && <span>•</span>}
             {profile.gender && (
@@ -164,31 +207,31 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
             )}
           </div>
           {profile.bio && (
-            <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+            <p className="text-sm text-muted-foreground mt-3 line-clamp-2">
               {profile.bio}
             </p>
           )}
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2 pt-2">
+        <div className="flex flex-col gap-3 w-full">
           <Button
             variant={hasLiked ? "default" : "outline"}
             size="lg"
-            className="flex-1 font-semibold"
+            className="w-full font-semibold text-base py-6"
             onClick={handleLike}
-            disabled={isLiking || hasLiked}
+            disabled={isLiking}
           >
-            <Heart className={`h-5 w-5 mr-2 ${hasLiked ? 'fill-current' : ''}`} />
-            {hasLiked ? 'Piaciuto' : 'Mi Piace'}
+            <Heart className={`h-6 w-6 mr-2 ${hasLiked ? 'fill-current' : ''}`} />
+            {hasLiked ? 'Rimuovi Like' : 'Mi Piace'}
           </Button>
           <Button
             variant="default"
             size="lg"
-            className="flex-1 font-semibold bg-gradient-to-r from-primary to-primary/80"
+            className="w-full font-semibold text-base py-6 bg-gradient-to-r from-primary to-primary/80"
             onClick={handleChat}
           >
-            <MessageCircle className="h-5 w-5 mr-2" />
+            <MessageCircle className="h-6 w-6 mr-2" />
             Messaggio
           </Button>
         </div>
