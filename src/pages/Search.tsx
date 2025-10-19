@@ -54,14 +54,23 @@ const Search = () => {
   const [ageRange, setAgeRange] = useState([18, 90]);
   const [distanceRange, setDistanceRange] = useState([100]);
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
+  const [selectedOrientations, setSelectedOrientations] = useState<string[]>([]);
 
   const genderOptions = [
-    { value: "male", label: t('common.male') },
-    { value: "female", label: t('common.female') },
-    { value: "transexual", label: t('common.transexual') },
-    { value: "transgender", label: t('common.transgender') },
-    { value: "homosexual", label: t('common.homosexual') },
-    { value: "non-binary", label: t('common.nonBinary') },
+    { value: "male", label: "Uomo" },
+    { value: "female", label: "Donna" },
+    { value: "transgender", label: "Transgender" },
+    { value: "transexual", label: "Transessuale" },
+    { value: "genderfluid", label: "Genderfluid" },
+    { value: "non-binary", label: "Non binario" },
+  ];
+
+  const orientationOptions = [
+    { value: "heterosexual", label: "Eterosessuale" },
+    { value: "homosexual", label: "Omosessuale" },
+    { value: "bisexual", label: "Bisessuale" },
+    { value: "pansexual", label: "Pansexuale" },
+    { value: "asexual", label: "Asessuale" },
   ];
 
   useEffect(() => {
@@ -157,6 +166,11 @@ const Search = () => {
         query = query.in("gender", selectedGenders);
       }
 
+      // Filtro orientamento sessuale
+      if (selectedOrientations.length > 0) {
+        query = query.in("sexual_orientation", selectedOrientations);
+      }
+
       const { data: profilesData, error } = await query;
 
       if (error) throw error;
@@ -220,6 +234,7 @@ const Search = () => {
     setAgeRange([18, 90]);
     setDistanceRange([100]);
     setSelectedGenders([]);
+    setSelectedOrientations([]);
     setProfiles([]);
     setCurrentPage(1);
   };
@@ -229,6 +244,14 @@ const Search = () => {
       prev.includes(gender) 
         ? prev.filter(g => g !== gender)
         : [...prev, gender]
+    );
+  };
+
+  const toggleOrientation = (orientation: string) => {
+    setSelectedOrientations(prev => 
+      prev.includes(orientation) 
+        ? prev.filter(o => o !== orientation)
+        : [...prev, orientation]
     );
   };
 
@@ -330,7 +353,7 @@ const Search = () => {
 
             {/* Filtro Genere */}
             <div className="space-y-3">
-              <Label className="text-base font-semibold">{t('search.genderFilter')}</Label>
+              <Label className="text-base font-semibold">Genere</Label>
               <div className="grid grid-cols-2 gap-3">
                 {genderOptions.map((option) => (
                   <div key={option.value} className="flex items-center space-x-2">
@@ -341,6 +364,28 @@ const Search = () => {
                     />
                     <label
                       htmlFor={option.value}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      {option.label}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Filtro Orientamento Sessuale */}
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">Orientamento Sessuale</Label>
+              <div className="grid grid-cols-2 gap-3">
+                {orientationOptions.map((option) => (
+                  <div key={option.value} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`orientation-${option.value}`}
+                      checked={selectedOrientations.includes(option.value)}
+                      onCheckedChange={() => toggleOrientation(option.value)}
+                    />
+                    <label
+                      htmlFor={`orientation-${option.value}`}
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                     >
                       {option.label}
@@ -373,7 +418,7 @@ const Search = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               {currentProfiles.map((profile) => (
                 <Card key={profile.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                   <div className="aspect-square bg-gradient-to-br from-pink-200 to-purple-200 dark:from-pink-900 dark:to-purple-900 flex items-center justify-center">

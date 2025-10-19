@@ -207,7 +207,7 @@ export const ProfileDialog = ({
                       {profile.gender === 'female' && 'Donna'}
                       {profile.gender === 'transexual' && 'Transessuale'}
                       {profile.gender === 'transgender' && 'Transgender'}
-                      {profile.gender === 'homosexual' && 'Omosessuale'}
+                      {profile.gender === 'genderfluid' && 'Genderfluid'}
                       {profile.gender === 'non-binary' && 'Non-binario'}
                     </span>
                   )}

@@ -29,6 +29,7 @@ const Auth = () => {
   const [age, setAge] = useState("");
   const [city, setCity] = useState("");
   const [gender, setGender] = useState("");
+  const [sexualOrientation, setSexualOrientation] = useState("");
   const [relationshipStatus, setRelationshipStatus] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showCookieBanner, setShowCookieBanner] = useState(false);
@@ -58,7 +59,7 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password || !nickname || !age || !city || !gender || !relationshipStatus) {
+    if (!email || !password || !nickname || !age || !city || !gender || !sexualOrientation || !relationshipStatus) {
       toast({
         title: t('auth.errorSignUp'),
         description: t('auth.errorAllFields'),
@@ -104,6 +105,7 @@ const Auth = () => {
             age: ageNum,
             city,
             gender,
+            sexual_orientation: sexualOrientation,
             relationship_status: relationshipStatus,
           }] as any);
 
@@ -347,7 +349,7 @@ const Auth = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-gender">{t('profile.gender')}</Label>
+                  <Label htmlFor="signup-gender">Genere</Label>
                   <Select value={gender} onValueChange={setGender} required>
                     <SelectTrigger id="signup-gender" className="w-full">
                       <SelectValue placeholder="Seleziona il tuo genere" />
@@ -356,9 +358,24 @@ const Auth = () => {
                       <SelectItem value="male">Uomo</SelectItem>
                       <SelectItem value="female">Donna</SelectItem>
                       <SelectItem value="transgender">Transgender</SelectItem>
-                      <SelectItem value="transessuale">Transessuale</SelectItem>
-                      <SelectItem value="omosessuale">Omosessuale</SelectItem>
-                      <SelectItem value="non-binary">Non Binario</SelectItem>
+                      <SelectItem value="transexual">Transessuale</SelectItem>
+                      <SelectItem value="genderfluid">Genderfluid</SelectItem>
+                      <SelectItem value="non-binary">Non binario</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-orientation">Orientamento Sessuale</Label>
+                  <Select value={sexualOrientation} onValueChange={setSexualOrientation} required>
+                    <SelectTrigger id="signup-orientation" className="w-full">
+                      <SelectValue placeholder="Seleziona orientamento" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      <SelectItem value="heterosexual">Eterosessuale</SelectItem>
+                      <SelectItem value="homosexual">Omosessuale</SelectItem>
+                      <SelectItem value="bisexual">Bisessuale</SelectItem>
+                      <SelectItem value="pansexual">Pansexuale</SelectItem>
+                      <SelectItem value="asexual">Asessuale</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

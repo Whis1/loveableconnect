@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, MessageCircle, User as UserIcon } from "lucide-react";
+import { Heart, MessageCircle, MapPin, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
@@ -15,6 +15,8 @@ interface Profile {
   full_name: string;
   age: number | null;
   gender: string | null;
+  sexual_orientation: string | null;
+  city: string | null;
   avatar_url: string | null;
   bio: string | null;
   distance?: number;
@@ -171,7 +173,7 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
           <div className="w-full h-full flex items-center justify-center">
             <Avatar className="h-32 w-32">
               <AvatarFallback className="text-5xl bg-gradient-to-br from-primary/20 to-secondary/20">
-                <UserIcon className="h-16 w-16 text-primary" />
+                <User className="h-16 w-16 text-primary" />
               </AvatarFallback>
             </Avatar>
           </div>
@@ -194,25 +196,37 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
           <h3 className="text-xl font-bold truncate text-foreground mb-2">
             {profile.nickname || profile.full_name}
           </h3>
-          <div className="flex items-center gap-2 text-base text-muted-foreground">
-            {profile.age && <span className="font-medium">{profile.age} anni</span>}
-            {profile.age && profile.gender && <span>•</span>}
-            {profile.gender && (
-              <span className="capitalize">
-                {profile.gender === 'male' && 'Uomo'}
-                {profile.gender === 'female' && 'Donna'}
-                {profile.gender === 'transexual' && 'Transessuale'}
-                {profile.gender === 'transgender' && 'Transgender'}
-                {profile.gender === 'homosexual' && 'Omosessuale'}
-                {profile.gender === 'non-binary' && 'Non-binario'}
-              </span>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-base text-muted-foreground">
+              {profile.age && <span className="font-medium">{profile.age} anni</span>}
+              {profile.age && profile.gender && <span>•</span>}
+              {profile.gender && (
+                <span className="capitalize">
+                  {profile.gender === 'male' && 'Uomo'}
+                  {profile.gender === 'female' && 'Donna'}
+                  {profile.gender === 'transgender' && 'Transgender'}
+                  {profile.gender === 'transexual' && 'Transessuale'}
+                  {profile.gender === 'genderfluid' && 'Genderfluid'}
+                  {profile.gender === 'non-binary' && 'Non binario'}
+                </span>
+              )}
+            </div>
+            {profile.city && (
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <MapPin className="h-3 w-3" />
+                <span>{profile.city}</span>
+              </div>
+            )}
+            {profile.sexual_orientation && (
+              <p className="text-sm text-muted-foreground">
+                {profile.sexual_orientation === 'heterosexual' && 'Eterosessuale'}
+                {profile.sexual_orientation === 'homosexual' && 'Omosessuale'}
+                {profile.sexual_orientation === 'bisexual' && 'Bisessuale'}
+                {profile.sexual_orientation === 'pansexual' && 'Pansexuale'}
+                {profile.sexual_orientation === 'asexual' && 'Asessuale'}
+              </p>
             )}
           </div>
-          {profile.bio && (
-            <p className="text-sm text-muted-foreground mt-3 line-clamp-2">
-              {profile.bio}
-            </p>
-          )}
         </div>
 
         {/* Action Buttons */}

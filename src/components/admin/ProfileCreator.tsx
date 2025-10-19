@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +19,8 @@ export const ProfileCreator = () => {
     age: "",
     bio: "",
     city: "",
+    gender: "",
+    sexual_orientation: "",
   });
 
   const handleSeedProfiles = async () => {
@@ -67,6 +70,8 @@ export const ProfileCreator = () => {
         age: formData.age ? parseInt(formData.age) : null,
         bio: formData.bio || null,
         city: formData.city || null,
+        gender: formData.gender || null,
+        sexual_orientation: formData.sexual_orientation || null,
         is_admin_profile: true,
       }).select();
 
@@ -88,6 +93,8 @@ export const ProfileCreator = () => {
         age: "",
         bio: "",
         city: "",
+        gender: "",
+        sexual_orientation: "",
       });
 
       setTimeout(() => window.location.reload(), 1000);
@@ -166,6 +173,40 @@ export const ProfileCreator = () => {
               value={formData.city}
               onChange={(e) => setFormData({ ...formData, city: e.target.value })}
             />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="gender">Genere</Label>
+            <Select value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleziona genere" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="male">Uomo</SelectItem>
+                <SelectItem value="female">Donna</SelectItem>
+                <SelectItem value="transgender">Transgender</SelectItem>
+                <SelectItem value="transexual">Transessuale</SelectItem>
+                <SelectItem value="genderfluid">Genderfluid</SelectItem>
+                <SelectItem value="non-binary">Non binario</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="orientation">Orientamento Sessuale</Label>
+            <Select value={formData.sexual_orientation} onValueChange={(value) => setFormData({ ...formData, sexual_orientation: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleziona orientamento" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="heterosexual">Eterosessuale</SelectItem>
+                <SelectItem value="homosexual">Omosessuale</SelectItem>
+                <SelectItem value="bisexual">Bisessuale</SelectItem>
+                <SelectItem value="pansexual">Pansexuale</SelectItem>
+                <SelectItem value="asexual">Asessuale</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

@@ -20,6 +20,7 @@ interface Profile {
   bio: string | null;
   age: number | null;
   gender: string | null;
+  sexual_orientation: string | null;
   city: string | null;
   interests: string[] | null;
   avatar_url: string | null;
@@ -239,6 +240,7 @@ const ProfileEdit = () => {
           bio: profile.bio,
           age: profile.age,
           gender: profile.gender,
+          sexual_orientation: profile.sexual_orientation,
           city: profile.city,
           interests: interests.length > 0 ? interests : null,
           avatar_url: avatarPath,
@@ -438,20 +440,40 @@ const ProfileEdit = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="gender">{t('profile.gender')}</Label>
+                  <Label htmlFor="gender">Genere</Label>
                   <Select
                     value={profile.gender || ""}
                     onValueChange={(value) => setProfile({ ...profile, gender: value })}
                   >
                     <SelectTrigger id="gender">
-                      <SelectValue placeholder={t('profile.selectStatus')} />
+                      <SelectValue placeholder="Seleziona genere" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="uomo">Uomo</SelectItem>
-                      <SelectItem value="donna">Donna</SelectItem>
+                      <SelectItem value="male">Uomo</SelectItem>
+                      <SelectItem value="female">Donna</SelectItem>
                       <SelectItem value="transgender">Transgender</SelectItem>
-                      <SelectItem value="transessuale">Transessuale</SelectItem>
+                      <SelectItem value="transexual">Transessuale</SelectItem>
+                      <SelectItem value="genderfluid">Genderfluid</SelectItem>
                       <SelectItem value="non-binary">Non binario</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="sexual-orientation">Orientamento Sessuale</Label>
+                  <Select
+                    value={profile.sexual_orientation || ""}
+                    onValueChange={(value) => setProfile({ ...profile, sexual_orientation: value })}
+                  >
+                    <SelectTrigger id="sexual-orientation">
+                      <SelectValue placeholder="Seleziona orientamento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="heterosexual">Eterosessuale</SelectItem>
+                      <SelectItem value="homosexual">Omosessuale</SelectItem>
+                      <SelectItem value="bisexual">Bisessuale</SelectItem>
+                      <SelectItem value="pansexual">Pansexuale</SelectItem>
+                      <SelectItem value="asexual">Asessuale</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
