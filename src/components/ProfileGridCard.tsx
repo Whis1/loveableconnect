@@ -230,11 +230,11 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col gap-3 w-full">
+        <div className="flex gap-3 w-full">
           <Button
             variant={hasLiked ? "default" : "outline"}
             size="lg"
-            className="w-full font-semibold text-base py-6"
+            className="flex-1 font-semibold text-base py-6"
             onClick={handleLike}
             disabled={isLiking}
           >
@@ -244,7 +244,7 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
           <Button
             variant="default"
             size="lg"
-            className="w-full font-semibold text-base py-6 bg-gradient-to-r from-primary to-primary/80"
+            className="flex-1 font-semibold text-base py-6 bg-gradient-to-r from-primary to-primary/80"
             onClick={handleChat}
           >
             <MessageCircle className="h-6 w-6 mr-2" />

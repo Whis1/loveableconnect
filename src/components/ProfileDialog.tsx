@@ -302,7 +302,10 @@ export const ProfileDialog = ({
                 variant={hasLiked ? "default" : "outline"}
                 size="lg"
                 className="flex-1"
-                onClick={handleLike}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleLike();
+                }}
                 disabled={isLiking}
               >
                 <Heart className={`h-5 w-5 mr-2 ${hasLiked ? 'fill-current' : ''}`} />
@@ -312,7 +315,10 @@ export const ProfileDialog = ({
                 variant="default"
                 size="lg"
                 className="flex-1"
-                onClick={handleChat}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleChat();
+                }}
               >
                 <MessageCircle className="h-5 w-5 mr-2" />
                 Messaggio
@@ -323,17 +329,19 @@ export const ProfileDialog = ({
       </Dialog>
 
       {/* Image Viewer Dialog */}
-      <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
-        <DialogContent className="max-w-4xl w-full p-0 overflow-hidden">
-          <div className="relative">
-            <img
-              src={selectedImage || ""}
-              alt="Foto ingrandita"
-              className="w-full h-auto max-h-[90vh] object-contain"
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
+      {selectedImage && (
+        <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
+          <DialogContent className="max-w-4xl w-full p-0 overflow-hidden">
+            <div className="relative">
+              <img
+                src={selectedImage || ""}
+                alt="Foto ingrandita"
+                className="w-full h-auto max-h-[90vh] object-contain"
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 };
