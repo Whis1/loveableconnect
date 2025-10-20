@@ -198,7 +198,22 @@
       "transgender": "Transgénero",
       "homosexual": "Homosexual",
       "nonBinary": "No binario"
-    }
+    },
+    "profilesFoundText": "perfiles encontrados",
+    "noMoreToShow": "No hay más perfiles para mostrar",
+    "startSearchTitle": "Inicia tu búsqueda",
+    "startSearchDescription": "Establece filtros y haz clic en \"Buscar\" para encontrar personas cerca de ti",
+    "searchCompleted": "Búsqueda completada",
+    "searchButton": "Buscar",
+    "ageTitle": "Edad",
+    "yearsOld": "años",
+    "genderTitle": "Género",
+    "orientationTitle": "Orientación Sexual",
+    "statusLabel": "Estado:",
+    "lookingForLabel": "Busca:",
+    "likeButton": "Me Gusta",
+    "chatButton": "Chat",
+    "nearYourLocation": "Cerca de ti"
   },
   "matches": {
     "back": "Atrás",

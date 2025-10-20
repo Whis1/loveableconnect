@@ -308,12 +308,12 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
             <div className="space-y-1">
               {profile.relationship_status && (
                 <div className="text-xs text-muted-foreground">
-                  <span className="font-semibold">Stato:</span> {getRelationshipStatusLabel(profile.relationship_status)}
+                  <span className="font-semibold">{t("explore.statusLabel")}</span> {getRelationshipStatusLabel(profile.relationship_status)}
                 </div>
               )}
               {profile.looking_for && profile.looking_for.length > 0 && (
                 <div className="text-xs text-muted-foreground">
-                  <span className="font-semibold">Cerca:</span> {getLookingForLabel(profile.looking_for)}
+                  <span className="font-semibold">{t("explore.lookingForLabel")}</span> {getLookingForLabel(profile.looking_for)}
                 </div>
               )}
             </div>
@@ -329,7 +329,7 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
                   disabled={isLiking}
                 >
                   <Heart className="h-3.5 w-3.5 mr-1" />
-                  Mi Piace
+                  {t("explore.likeButton")}
                 </Button>
               )}
               <Button
@@ -339,7 +339,7 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
                 onClick={handleChat}
               >
                 <MessageCircle className="h-3.5 w-3.5 mr-1" />
-                Chat
+                {t("explore.chatButton")}
               </Button>
             </div>
           </div>

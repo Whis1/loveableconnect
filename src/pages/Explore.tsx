@@ -312,8 +312,8 @@ const Explore = () => {
       setHasMore(true);
       
       toast({
-        title: "Ricerca completata",
-        description: `Trovati ${filteredProfiles.length} profili`,
+        title: t("explore.searchCompleted"),
+        description: `${t("explore.profilesFound", { count: filteredProfiles.length })}`,
       });
     } catch (error: any) {
       toast({
@@ -410,7 +410,7 @@ const Explore = () => {
             <CardContent className="pt-6 space-y-6">
               {/* Age Filter */}
               <div className="space-y-3">
-                <Label className="text-base font-semibold">Età: {ageRange[0]} - {ageRange[1]} anni</Label>
+                <Label className="text-base font-semibold">{t("explore.ageTitle")}: {ageRange[0]} - {ageRange[1]} {t("explore.yearsOld")}</Label>
                 <Slider
                   value={ageRange}
                   onValueChange={setAgeRange}
@@ -423,7 +423,7 @@ const Explore = () => {
 
               {/* Gender Filter */}
               <div className="space-y-3">
-                <Label className="text-base font-semibold">Genere</Label>
+                <Label className="text-base font-semibold">{t("explore.genderTitle")}</Label>
                 <div className="grid grid-cols-2 gap-3">
                   {genderOptions.map((option) => (
                     <div key={option.value} className="flex items-center space-x-2">
@@ -445,7 +445,7 @@ const Explore = () => {
 
               {/* Sexual Orientation Filter */}
               <div className="space-y-3">
-                <Label className="text-base font-semibold">Orientamento Sessuale</Label>
+                <Label className="text-base font-semibold">{t("explore.orientationTitle")}</Label>
                 <div className="grid grid-cols-2 gap-3">
                   {orientationOptions.map((option) => (
                     <div key={option.value} className="flex items-center space-x-2">
@@ -469,11 +469,11 @@ const Explore = () => {
               <div className="flex gap-3 pt-4 border-t">
                 <Button onClick={applyFilters} className="flex-1" size="lg" disabled={loading}>
                   <SearchIcon className="h-4 w-4 mr-2" />
-                  Cerca
+                  {t("explore.searchButton")}
                 </Button>
                 <Button onClick={resetFilters} variant="outline" size="lg">
                   <RotateCcw className="h-4 w-4 mr-2" />
-                  Reset
+                  {t("explore.resetFilters")}
                 </Button>
               </div>
             </CardContent>
@@ -485,7 +485,7 @@ const Explore = () => {
           <>
             <div className="mb-4">
               <p className="text-sm text-muted-foreground">
-                {profiles.length} profili trovati
+                {profiles.length} {t("explore.profilesFoundText")}
               </p>
             </div>
 
@@ -503,19 +503,19 @@ const Explore = () => {
 
             {loading && (
               <div className="text-center py-8">
-                <p className="text-muted-foreground">Caricamento...</p>
+                <p className="text-muted-foreground">{t("explore.loading")}</p>
               </div>
             )}
 
             {!hasMore && displayedProfiles.length > 0 && (
               <div className="text-center py-8">
-                <p className="text-muted-foreground">Nessun altro profilo da mostrare</p>
+                <p className="text-muted-foreground">{t("explore.noMoreToShow")}</p>
                 <Button 
                   onClick={() => navigate("/")} 
                   variant="outline" 
                   className="mt-4"
                 >
-                  Torna alla Dashboard
+                  {t("explore.backToDashboard")}
                 </Button>
               </div>
             )}
@@ -523,9 +523,9 @@ const Explore = () => {
         ) : (
           !loading && (
             <Card className="text-center p-12">
-              <h2 className="text-2xl font-bold mb-4">Inizia la tua ricerca</h2>
+              <h2 className="text-2xl font-bold mb-4">{t("explore.startSearchTitle")}</h2>
               <p className="text-muted-foreground mb-6">
-                Imposta i filtri e clicca su "Cerca" per trovare persone vicine a te
+                {t("explore.startSearchDescription")}
               </p>
             </Card>
           )

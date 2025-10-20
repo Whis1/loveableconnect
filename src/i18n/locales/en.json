@@ -190,7 +190,22 @@
       "transgender": "Transgender",
       "homosexual": "Homosexual",
       "nonBinary": "Non-binary"
-    }
+    },
+    "profilesFoundText": "profiles found",
+    "noMoreToShow": "No more profiles to show",
+    "startSearchTitle": "Start your search",
+    "startSearchDescription": "Set filters and click \"Search\" to find people near you",
+    "searchCompleted": "Search completed",
+    "searchButton": "Search",
+    "ageTitle": "Age",
+    "yearsOld": "years",
+    "genderTitle": "Gender",
+    "orientationTitle": "Sexual Orientation",
+    "statusLabel": "Status:",
+    "lookingForLabel": "Looking for:",
+    "likeButton": "Like",
+    "chatButton": "Chat",
+    "nearYourLocation": "Near your area"
   },
   "search": {
     "title": "Advanced Search",
