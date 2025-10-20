@@ -39,8 +39,8 @@ export const NotificationMonitor = () => {
         .from("admin_notifications")
         .select(`
           *,
-          user_profile:profiles!admin_notifications_user_id_fkey(nickname, avatar_url),
-          admin_profile:profiles!admin_notifications_admin_profile_id_fkey(nickname)
+          user_profile:user_id(nickname, avatar_url),
+          admin_profile:admin_profile_id(nickname)
         `)
         .order("created_at", { ascending: false })
         .limit(100);
