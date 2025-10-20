@@ -36,6 +36,7 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
   const { t } = useTranslation();
   const [isLiking, setIsLiking] = useState(false);
   const [hasLiked, setHasLiked] = useState(false);
+  const [hasActiveMatch, setHasActiveMatch] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
 
   const getGenderLabel = (gender: string | null) => {
@@ -84,22 +85,81 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
     return lookingFor.join(", ");
   };
 
-  // Check if user already liked this profile
+  // Check if user already liked this profile or has an active match
   useEffect(() => {
-    const checkExistingLike = async () => {
-      const { data } = await supabase
+    const checkLikeAndMatch = async () => {
+      // Check for existing like
+      const { data: likeData } = await supabase
         .from("likes")
         .select("id")
         .eq("from_user_id", currentUserId)
         .eq("to_user_id", profile.id)
         .maybeSingle();
       
-      if (data) {
-        setHasLiked(true);
+      setHasLiked(!!likeData);
+
+      // Check for match
+      const { data: matchData } = await supabase
+        .from("matches")
+        .select("id")
+        .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profile.id}),and(user1_id.eq.${profile.id},user2_id.eq.${currentUserId})`)
+        .maybeSingle();
+
+      if (matchData) {
+        // Check if match is hidden with 'both'
+        const { data: hiddenData } = await supabase
+          .from("hidden_matches")
+          .select("hidden_from")
+          .eq("match_id", matchData.id)
+          .eq("user_id", currentUserId)
+          .eq("hidden_from", "both")
+          .maybeSingle();
+        
+        // Match is active if it exists and is not hidden with 'both'
+        setHasActiveMatch(!hiddenData);
+      } else {
+        setHasActiveMatch(false);
       }
     };
     
-    checkExistingLike();
+    checkLikeAndMatch();
+
+    // Subscribe to changes in likes and matches
+    const likesChannel = supabase
+      .channel(`likes-${currentUserId}-${profile.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'likes',
+          filter: `from_user_id=eq.${currentUserId}`
+        },
+        () => checkLikeAndMatch()
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'matches'
+        },
+        () => checkLikeAndMatch()
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'hidden_matches'
+        },
+        () => checkLikeAndMatch()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(likesChannel);
+    };
   }, [currentUserId, profile.id]);
 
   const avatarUrl = profile.avatar_url
@@ -260,20 +320,22 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
 
             {/* Action Buttons */}
             <div className="flex gap-2 pt-1">
-              <Button
-                variant={hasLiked ? "default" : "outline"}
-                size="sm"
-                className="flex-1 h-9 text-xs"
-                onClick={handleLike}
-                disabled={isLiking || hasLiked}
-              >
-                <Heart className={`h-3.5 w-3.5 mr-1 ${hasLiked ? 'fill-current' : ''}`} />
-                {hasLiked ? "Piaciuto" : "Mi Piace"}
-              </Button>
+              {!hasLiked && !hasActiveMatch && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 h-9 text-xs"
+                  onClick={handleLike}
+                  disabled={isLiking}
+                >
+                  <Heart className="h-3.5 w-3.5 mr-1" />
+                  Mi Piace
+                </Button>
+              )}
               <Button
                 variant="default"
                 size="sm"
-                className="flex-1 h-9 text-xs bg-gradient-to-r from-primary to-primary/80"
+                className={`${hasLiked || hasActiveMatch ? 'w-full' : 'flex-1'} h-9 text-xs bg-gradient-to-r from-primary to-primary/80`}
                 onClick={handleChat}
               >
                 <MessageCircle className="h-3.5 w-3.5 mr-1" />

@@ -46,6 +46,7 @@ export const ProfileDialog = ({
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [hasLiked, setHasLiked] = useState(false);
+  const [hasActiveMatch, setHasActiveMatch] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
@@ -91,6 +92,29 @@ export const ProfileDialog = ({
         .maybeSingle();
 
       setHasLiked(!!likeData);
+
+      // Check for match
+      const { data: matchData } = await supabase
+        .from("matches")
+        .select("id")
+        .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profileId}),and(user1_id.eq.${profileId},user2_id.eq.${currentUserId})`)
+        .maybeSingle();
+
+      if (matchData) {
+        // Check if match is hidden with 'both'
+        const { data: hiddenData } = await supabase
+          .from("hidden_matches")
+          .select("hidden_from")
+          .eq("match_id", matchData.id)
+          .eq("user_id", currentUserId)
+          .eq("hidden_from", "both")
+          .maybeSingle();
+        
+        // Match is active if it exists and is not hidden with 'both'
+        setHasActiveMatch(!hiddenData);
+      } else {
+        setHasActiveMatch(false);
+      }
     };
 
     fetchProfile();
@@ -424,23 +448,25 @@ export const ProfileDialog = ({
 
             {/* Action Buttons */}
             <div className="flex gap-3 pt-2">
-              <Button
-                variant={hasLiked ? "default" : "outline"}
-                size="lg"
-                className="flex-1 h-14 text-base font-semibold"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleLike();
-                }}
-                disabled={isLiking}
-              >
-                <Heart className={`h-5 w-5 mr-2 ${hasLiked ? 'fill-current' : ''}`} />
-                {hasLiked ? 'Rimuovi Like' : 'Mi Piace'}
-              </Button>
+              {!hasLiked && !hasActiveMatch && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="flex-1 h-14 text-base font-semibold"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLike();
+                  }}
+                  disabled={isLiking}
+                >
+                  <Heart className="h-5 w-5 mr-2" />
+                  Mi Piace
+                </Button>
+              )}
               <Button
                 variant="default"
                 size="lg"
-                className="flex-1 h-14 text-base font-semibold bg-gradient-to-r from-primary to-primary/80"
+                className={`${hasLiked || hasActiveMatch ? 'w-full' : 'flex-1'} h-14 text-base font-semibold bg-gradient-to-r from-primary to-primary/80`}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleChat();
