@@ -183,10 +183,14 @@ export const AdminChatDialog = ({
 
       // La risposta è { success: true, message: {...} }
       if (data?.success && data?.message) {
-        console.log('Replacing temp message with real message:', data.message);
-        setMessages((prev) =>
-          prev.map(msg => msg.id === tempMessage.id ? data.message as Message : msg)
-        );
+        console.log('Dedup and remove temp; rely on realtime if already present:', data.message);
+        setMessages((prev) => {
+          // remove temp
+          const base = prev.filter(msg => msg.id !== tempMessage.id);
+          // avoid duplicate if realtime already appended
+          const exists = base.some(m => m.id === (data.message as Message).id);
+          return exists ? base : [...base, data.message as Message];
+        });
       } else {
         console.warn('Unexpected response format:', data);
       }
@@ -261,7 +265,7 @@ export const AdminChatDialog = ({
         </div>
 
         {/* Main Content: Messages only (notebooks spostati fuori) */}
-        <div className="flex-1 flex px-6 py-4 min-h-0">
+        <div className="flex-1 flex px-3 md:px-6 py-4 min-h-0">
           <ScrollArea className="flex-1 min-h-0">
             {loading ? (
               <p className="text-muted-foreground text-center py-8">Caricamento...</p>

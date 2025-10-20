@@ -48,14 +48,14 @@ export const MessageBubble = ({
   };
 
   return (
-    <div className={`flex w-full px-3 md:px-4 ${isOwn ? "justify-end" : "justify-start"}`}>
+    <div className={`flex w-full px-2 md:px-4 ${isOwn ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[85%] sm:max-w-[75%] md:max-w-[70%] w-fit rounded-lg px-4 py-2 ${
+        className={`max-w-[85%] sm:max-w-[75%] md:max-w-[68%] w-fit rounded-lg px-4 py-2 ${
           messageType === 'emoji' ? 'bg-transparent' : 
           isOwn
             ? "bg-primary text-primary-foreground"
             : "bg-muted text-foreground"
-        } ${isOwn ? 'mr-3 md:mr-6' : 'ml-3 md:ml-6'}`}
+        } ${isOwn ? 'mr-2 md:mr-3' : 'ml-2 md:ml-3'}`}
       >
         {renderContent()}
         <p
