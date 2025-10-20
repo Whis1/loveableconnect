@@ -211,14 +211,15 @@ export const ProfileDialog = ({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 bg-gradient-to-br from-background via-background to-primary/5">
-          {/* Hero Section with Avatar */}
-          <div className="relative h-64 bg-gradient-to-br from-primary/20 via-primary/10 to-background overflow-hidden">
+          {/* Hero Section with Avatar Rectangle */}
+          <div className="relative p-6 bg-gradient-to-br from-primary/20 via-primary/10 to-background overflow-hidden">
             <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIHN0cm9rZT0iY3VycmVudENvbG9yIiBzdHJva2Utb3BhY2l0eT0iLjEiLz48L2c+PC9zdmc+')] opacity-20"></div>
             
-            {/* Avatar */}
-            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2">
-              <div className="relative">
-                <div className="w-40 h-40 rounded-full border-4 border-background shadow-2xl overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5">
+            {/* Avatar Rectangle */}
+            <div className="relative flex flex-col items-center">
+              <div className="relative group">
+                {/* Main Rectangle Card */}
+                <div className="relative w-48 h-64 rounded-3xl border-4 border-background shadow-2xl overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 transform transition-transform duration-300 group-hover:scale-105">
                   {avatarUrl ? (
                     <img
                       src={avatarUrl}
@@ -226,20 +227,30 @@ export const ProfileDialog = ({
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-6xl font-bold text-primary/40">
-                      {profile.nickname?.charAt(0) || profile.full_name?.charAt(0)}
+                    <div className="w-full h-full flex items-center justify-center">
+                      <span className="text-8xl font-bold text-primary/40">
+                        {profile.nickname?.charAt(0) || profile.full_name?.charAt(0)}
+                      </span>
                     </div>
                   )}
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
                 </div>
-                <div className="absolute -bottom-2 -right-2 bg-primary text-primary-foreground rounded-full p-3 shadow-lg">
-                  <Sparkles className="h-5 w-5" />
+                
+                {/* Sparkle Badge */}
+                <div className="absolute -top-3 -right-3 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground rounded-2xl p-3 shadow-xl rotate-12 group-hover:rotate-0 transition-transform duration-300">
+                  <Sparkles className="h-6 w-6" />
                 </div>
+                
+                {/* Decorative Corner Elements */}
+                <div className="absolute -bottom-2 -left-2 w-12 h-12 bg-primary/20 rounded-full blur-xl"></div>
+                <div className="absolute -top-2 -right-2 w-12 h-12 bg-primary/20 rounded-full blur-xl"></div>
               </div>
             </div>
           </div>
 
           {/* Content */}
-          <div className="px-6 pb-6 space-y-6 mt-24">
+          <div className="px-6 pb-6 space-y-6 mt-6">
             {/* Name and Basic Info */}
             <div className="text-center space-y-3">
               <h2 className="text-3xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">

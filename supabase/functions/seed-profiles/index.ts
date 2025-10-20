@@ -15,6 +15,7 @@ interface Profile {
   bio: string;
   city: string;
   interests: string[];
+  relationship_type: string;
   is_admin_profile: boolean;
 }
 
@@ -112,6 +113,8 @@ const genders = ['male', 'female', 'female', 'female', 'female', 'female', 'fema
 const orientations = ['heterosexual', 'heterosexual', 'heterosexual', 'heterosexual', 
                       'homosexual', 'homosexual', 'bisexual', 'bisexual', 'pansexual', 'asexual'];
 
+const relationshipTypes = ['serious', 'casual', 'friendship'];
+
 function getRandomElement<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)];
 }
@@ -149,6 +152,7 @@ function generateProfiles(count: number): Profile[] {
       bio: getRandomElement(bios),
       city: getRandomElement(cities),
       interests: getRandomElements(interests, Math.floor(Math.random() * 5) + 3),
+      relationship_type: getRandomElement(relationshipTypes),
       is_admin_profile: true,
     });
   }
