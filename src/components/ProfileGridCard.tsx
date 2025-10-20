@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, MessageCircle, MapPin, User } from "lucide-react";
+import { Heart, MessageCircle, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { ProfileDialog } from "./ProfileDialog";
+import { getGenericLocationPhrase } from "@/lib/utils";
 
 interface Profile {
   id: string;
@@ -35,6 +34,31 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
   const [isLiking, setIsLiking] = useState(false);
   const [hasLiked, setHasLiked] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
+
+  const getGenderLabel = (gender: string | null) => {
+    if (!gender) return "";
+    const genderMap: Record<string, string> = {
+      male: "Uomo",
+      female: "Donna",
+      transgender: "Transgender",
+      transexual: "Transessuale",
+      genderfluid: "Genderfluid",
+      "non-binary": "Non binario",
+    };
+    return genderMap[gender] || gender;
+  };
+
+  const getOrientationLabel = (orientation: string | null) => {
+    if (!orientation) return "";
+    const orientationMap: Record<string, string> = {
+      heterosexual: "Eterosessuale",
+      homosexual: "Omosessuale",
+      bisexual: "Bisessuale",
+      pansexual: "Pansexuale",
+      asexual: "Asessuale",
+    };
+    return orientationMap[orientation] || orientation;
+  };
 
   // Check if user already liked this profile
   useEffect(() => {
@@ -157,99 +181,97 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
   };
 
   return (
-    <Card 
-      className="overflow-hidden hover:shadow-2xl transition-all duration-300 cursor-pointer group border-2 hover:border-primary/50 h-full flex flex-col"
-      onClick={handleCardClick}
-    >
-      {/* Profile Image */}
-      <div className="relative aspect-[4/5] bg-gradient-to-br from-pink-200 to-purple-200 dark:from-pink-900 dark:to-purple-900 flex-shrink-0">
-        {avatarUrl ? (
-          <img
-            src={avatarUrl}
-            alt={profile.nickname || profile.full_name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Avatar className="h-32 w-32">
-              <AvatarFallback className="text-5xl bg-gradient-to-br from-primary/20 to-secondary/20">
-                <User className="h-16 w-16 text-primary" />
-              </AvatarFallback>
-            </Avatar>
-          </div>
-        )}
-        
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        
-        {/* Distance Badge */}
-        {profile.distance && (
-          <div className="absolute top-3 right-3 bg-background/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold">
-            {profile.distance} km
-          </div>
-        )}
-      </div>
+    <>
+      <div 
+        className="group relative cursor-pointer"
+        onClick={handleCardClick}
+      >
+        {/* Card Container */}
+        <div className="relative rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 bg-card border-2 border-border hover:border-primary/50">
+          {/* Main Image */}
+          <div className="relative aspect-[3/4] overflow-hidden">
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={profile.nickname}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                <div className="text-6xl font-bold text-primary/20">
+                  {profile.nickname.charAt(0).toUpperCase()}
+                </div>
+              </div>
+            )}
 
-      {/* Profile Info */}
-      <div className="p-5 space-y-4 bg-card flex flex-col flex-1">
-        <div className="flex-1">
-          <h3 className="text-xl font-bold truncate text-foreground mb-2">
-            {profile.nickname || profile.full_name}
-          </h3>
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-base text-muted-foreground">
-              {profile.age && <span className="font-medium">{profile.age} anni</span>}
-              {profile.age && profile.gender && <span>•</span>}
-              {profile.gender && (
-                <span className="capitalize">
-                  {profile.gender === 'male' && 'Uomo'}
-                  {profile.gender === 'female' && 'Donna'}
-                  {profile.gender === 'transgender' && 'Transgender'}
-                  {profile.gender === 'transexual' && 'Transessuale'}
-                  {profile.gender === 'genderfluid' && 'Genderfluid'}
-                  {profile.gender === 'non-binary' && 'Non binario'}
+            {/* Distance Badge */}
+            {profile.distance && (
+              <div className="absolute top-3 right-3 bg-background/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold shadow-md">
+                {profile.distance} km
+              </div>
+            )}
+          </div>
+
+          {/* Info Section */}
+          <div className="p-4 space-y-3">
+            {/* Name and Age */}
+            <div className="flex items-baseline gap-2">
+              <h3 className="text-xl font-bold text-foreground truncate">
+                {profile.nickname}
+              </h3>
+              {profile.age && (
+                <span className="text-lg text-muted-foreground font-medium">
+                  {profile.age}
                 </span>
               )}
             </div>
-            {profile.city && (
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <MapPin className="h-3 w-3" />
-                <span>{profile.city}</span>
-              </div>
-            )}
-            {profile.sexual_orientation && (
-              <p className="text-sm text-muted-foreground">
-                {profile.sexual_orientation === 'heterosexual' && 'Eterosessuale'}
-                {profile.sexual_orientation === 'homosexual' && 'Omosessuale'}
-                {profile.sexual_orientation === 'bisexual' && 'Bisessuale'}
-                {profile.sexual_orientation === 'pansexual' && 'Pansexuale'}
-                {profile.sexual_orientation === 'asexual' && 'Asessuale'}
-              </p>
-            )}
-          </div>
-        </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3 w-full">
-          <Button
-            variant={hasLiked ? "default" : "outline"}
-            size="lg"
-            className="flex-1 font-semibold text-base py-6"
-            onClick={handleLike}
-            disabled={isLiking}
-          >
-            <Heart className={`h-6 w-6 mr-2 ${hasLiked ? 'fill-current' : ''}`} />
-            {hasLiked ? 'Rimuovi Like' : 'Mi Piace'}
-          </Button>
-          <Button
-            variant="default"
-            size="lg"
-            className="flex-1 font-semibold text-base py-6 bg-gradient-to-r from-primary to-primary/80"
-            onClick={handleChat}
-          >
-            <MessageCircle className="h-6 w-6 mr-2" />
-            Messaggio
-          </Button>
+            {/* Details */}
+            <div className="space-y-1.5 text-sm">
+              {/* Location */}
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <MapPin className="h-4 w-4 flex-shrink-0 text-primary" />
+                <span className="truncate">{getGenericLocationPhrase()}</span>
+              </div>
+
+              {/* Gender & Orientation Pills */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {profile.gender && (
+                  <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                    {getGenderLabel(profile.gender)}
+                  </span>
+                )}
+                {profile.sexual_orientation && (
+                  <span className="px-2.5 py-1 rounded-full bg-secondary/10 text-secondary-foreground text-xs font-medium">
+                    {getOrientationLabel(profile.sexual_orientation)}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant={hasLiked ? "default" : "outline"}
+                size="sm"
+                className="flex-1"
+                onClick={handleLike}
+                disabled={isLiking}
+              >
+                <Heart className={`h-4 w-4 mr-1.5 ${hasLiked ? 'fill-current' : ''}`} />
+                {hasLiked ? "Rimuovi" : "Mi Piace"}
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                className="flex-1 bg-gradient-to-r from-primary to-primary/80"
+                onClick={handleChat}
+              >
+                <MessageCircle className="h-4 w-4 mr-1.5" />
+                Chat
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -259,6 +281,6 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
         open={showProfileDialog}
         onOpenChange={setShowProfileDialog}
       />
-    </Card>
+    </>
   );
 };
