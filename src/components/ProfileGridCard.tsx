@@ -42,10 +42,13 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
       female: "Donna",
       transgender: "Transgender",
       transexual: "Transessuale",
+      trans: "Transgender",
       genderfluid: "Genderfluid",
       "non-binary": "Non binario",
+      uomo: "Uomo",
+      donna: "Donna",
     };
-    return genderMap[gender] || gender;
+    return genderMap[gender.toLowerCase()] || gender;
   };
 
   const getOrientationLabel = (orientation: string | null) => {
