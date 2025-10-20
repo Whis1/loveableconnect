@@ -266,7 +266,7 @@ export const AdminChatDialog = ({
 
         {/* Main Content: Messages only (notebooks spostati fuori) */}
         <div className="flex-1 flex px-3 md:px-6 py-4 min-h-0">
-          <ScrollArea className="flex-1 min-h-0">
+          <ScrollArea className="flex-1 min-h-0 overflow-x-hidden">
             {loading ? (
               <p className="text-muted-foreground text-center py-8">Caricamento...</p>
             ) : (
