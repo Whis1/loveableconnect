@@ -179,16 +179,14 @@ const Matches = () => {
     
     if (!currentUserId) return;
 
+    // Delete the match completely so the profile reappears in Explore
     const { error } = await supabase
-      .from("hidden_matches")
-      .insert({
-        user_id: currentUserId,
-        match_id: matchId,
-        hidden_from: "matches",
-      });
+      .from("matches")
+      .delete()
+      .eq("id", matchId);
 
     if (error) {
-      console.error("Error hiding match:", error);
+      console.error("Error deleting match:", error);
       toast({
         title: t("matches.error"),
         description: t("matches.errorHidingMatch"),
