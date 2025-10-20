@@ -55,6 +55,39 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
     };
 
     fetchProfile();
+
+    // Subscribe to profile changes
+    const channel = supabase
+      .channel(`user-profile-card-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${userId}`
+        },
+        (payload) => {
+          console.log('Profile updated in UserProfileCard:', payload.new);
+          const updatedProfile = payload.new as Profile;
+          setProfile(updatedProfile);
+          
+          // Update avatar URL if changed
+          if (updatedProfile.avatar_url) {
+            const { data: urlData } = supabase.storage
+              .from('profile-images')
+              .getPublicUrl(updatedProfile.avatar_url);
+            setAvatarUrl(urlData.publicUrl);
+          } else {
+            setAvatarUrl(null);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId]);
 
   if (!profile) return null;

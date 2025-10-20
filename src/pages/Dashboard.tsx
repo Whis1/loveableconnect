@@ -43,6 +43,7 @@ const Dashboard = () => {
   useEffect(() => {
     let matchesChannel: ReturnType<typeof supabase.channel> | null = null;
     let likesChannel: ReturnType<typeof supabase.channel> | null = null;
+    let profileChannel: ReturnType<typeof supabase.channel> | null = null;
 
     const fetchUserData = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -89,6 +90,24 @@ const Dashboard = () => {
       setLikesReceived(likesData || []);
 
       setLoading(false);
+
+      // Set up realtime subscription for profile updates
+      profileChannel = supabase
+        .channel('dashboard-profile')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'profiles',
+            filter: `id=eq.${session.user.id}`
+          },
+          (payload) => {
+            console.log('Profile updated in dashboard:', payload.new);
+            setProfile(payload.new as Profile);
+          }
+        )
+        .subscribe();
 
       // Set up realtime subscription for new matches
       matchesChannel = supabase
@@ -143,6 +162,9 @@ const Dashboard = () => {
 
     return () => {
       subscription.unsubscribe();
+      if (profileChannel) {
+        supabase.removeChannel(profileChannel);
+      }
       if (matchesChannel) {
         supabase.removeChannel(matchesChannel);
       }

@@ -94,6 +94,48 @@ export const ProfileDialog = ({
     };
 
     fetchProfile();
+
+    // Subscribe to profile changes
+    const channel = supabase
+      .channel(`profile-dialog-${profileId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${profileId}`
+        },
+        (payload) => {
+          console.log('Profile updated in dialog:', payload.new);
+          const updatedProfile = payload.new as Profile;
+          setProfile(updatedProfile);
+          
+          // Update avatar URL if changed
+          if (updatedProfile.avatar_url) {
+            const { data: urlData } = supabase.storage
+              .from("profile-images")
+              .getPublicUrl(updatedProfile.avatar_url);
+            setAvatarUrl(urlData.publicUrl);
+          }
+          
+          // Update photo URLs if changed
+          if (updatedProfile.photos && updatedProfile.photos.length > 0) {
+            const urls = updatedProfile.photos.map((photo: string) => {
+              const { data: urlData } = supabase.storage
+                .from("profile-images")
+                .getPublicUrl(photo);
+              return urlData.publicUrl;
+            });
+            setPhotoUrls(urls);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [profileId, currentUserId, open]);
 
   const handleLike = async () => {
