@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { useBanCheck } from "@/hooks/useBanCheck";
 
 interface MatchWithMessages {
   id: string;
@@ -31,6 +32,7 @@ const Messages = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation();
+  useBanCheck(); // Check if user is banned
   const [matches, setMatches] = useState<MatchWithMessages[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);

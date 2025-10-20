@@ -8,6 +8,7 @@ import { UserCreditsManager } from "@/components/admin/UserCreditsManager";
 import { ProfileCreator } from "@/components/admin/ProfileCreator";
 import { ProfileManager } from "@/components/admin/ProfileManager";
 import { SupportChatMonitor } from "@/components/admin/SupportChatMonitor";
+import { UserBanManager } from "@/components/admin/UserBanManager";
 import { Shield, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -111,6 +112,8 @@ export default function AdminArrettu() {
             Logout
           </Button>
         </div>
+
+        <UserBanManager />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <UserCreditsManager />

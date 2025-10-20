@@ -10,6 +10,7 @@ import { UserProfileCard } from "@/components/UserProfileCard";
 import { RecentMessages } from "@/components/RecentMessages";
 import { useTranslation } from "react-i18next";
 import { CreditsDisplay } from "@/components/CreditsDisplay";
+import { useBanCheck } from "@/hooks/useBanCheck";
 
 interface Profile {
   id: string;
@@ -31,6 +32,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation();
+  useBanCheck(); // Check if user is banned
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);

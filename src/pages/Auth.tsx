@@ -179,12 +179,32 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
+
+      // Check if user is banned
+      if (data.user) {
+        const { data: banData } = await supabase
+          .from("banned_users")
+          .select("*")
+          .eq("user_id", data.user.id)
+          .maybeSingle();
+
+        if (banData) {
+          // User is banned, force logout
+          await supabase.auth.signOut();
+          toast({
+            title: "Account Bannato",
+            description: "Il tuo account è stato sospeso. Contatta il supporto per maggiori informazioni.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
 
       toast({
         title: t('auth.signedIn'),
