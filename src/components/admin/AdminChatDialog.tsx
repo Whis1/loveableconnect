@@ -287,7 +287,7 @@ export const AdminChatDialog = ({
 
         {/* User Profile */}
         <div className="px-6 pb-4 shrink-0 border-b">
-          <ChatUserProfile userId={userId} currentUserId={adminProfileId} />
+          <ChatUserProfile userId={userId} currentUserId={adminProfileId} showRealLocation={true} />
         </div>
 
         {/* Main Content: Messages only (notebooks spostati fuori) */}
