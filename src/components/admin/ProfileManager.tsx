@@ -787,57 +787,6 @@ export const ProfileManager = () => {
                           </ScrollArea>
                         </DialogContent>
                       </Dialog>
-
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedProfile(profile);
-                              fetchProfileMessages(profile.id);
-                            }}
-                          >
-                            <MessageSquare className="h-4 w-4 mr-2" />
-                            Chat
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                          <DialogHeader>
-                            <DialogTitle>Chat di {profile.nickname}</DialogTitle>
-                          </DialogHeader>
-                          <ScrollArea className="h-[500px] pr-4">
-                            {loadingMessages ? (
-                              <p className="text-muted-foreground">Caricamento...</p>
-                            ) : messages.length === 0 ? (
-                              <p className="text-muted-foreground">Nessun messaggio</p>
-                            ) : (
-                              <div className="space-y-3">
-                                {messages.map((msg) => (
-                                  <div key={msg.id} className="border rounded-lg p-3 space-y-2">
-                                    <div className="flex items-center gap-2 text-sm">
-                                      <Avatar className="h-6 w-6">
-                                        <AvatarImage src={msg.sender_profile?.avatar_url} />
-                                        <AvatarFallback>
-                                          {msg.sender_profile?.nickname?.[0]?.toUpperCase()}
-                                        </AvatarFallback>
-                                      </Avatar>
-                                      <span className="font-semibold">
-                                        {msg.sender_profile?.nickname}
-                                      </span>
-                                      <span className="text-muted-foreground">→</span>
-                                      <span>{msg.receiver_profile?.nickname}</span>
-                                      <span className="ml-auto text-xs text-muted-foreground">
-                                        {new Date(msg.created_at).toLocaleString("it-IT")}
-                                      </span>
-                                    </div>
-                                    <p className="text-sm">{msg.content}</p>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </ScrollArea>
-                        </DialogContent>
-                      </Dialog>
                     </div>
                   </div>
                 </AccordionContent>
