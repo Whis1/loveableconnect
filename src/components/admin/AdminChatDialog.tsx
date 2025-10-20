@@ -237,24 +237,24 @@ export const AdminChatDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6 pb-0">
+      <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
           <DialogTitle>
             Chat: {adminNickname} ↔️ {userNickname}
           </DialogTitle>
         </DialogHeader>
 
         {/* User Profile */}
-        <div className="px-6">
+        <div className="px-6 pb-4 shrink-0 border-b">
           <ChatUserProfile userId={userId} currentUserId={adminProfileId} />
         </div>
 
         {/* Messages */}
-        <ScrollArea className="flex-1 px-6">
+        <ScrollArea className="flex-1 px-6 min-h-0">
           {loading ? (
             <p className="text-muted-foreground text-center py-8">Caricamento...</p>
           ) : (
-            <div className="space-y-4 pb-4">
+            <div className="space-y-4 py-4">
               {messages.map((message) => {
                 const isOwn = message.sender_id === adminProfileId;
                 
@@ -279,7 +279,7 @@ export const AdminChatDialog = ({
         </ScrollArea>
 
         {/* Input */}
-        <div className="border-t p-4 bg-background">
+        <div className="border-t p-4 bg-background shrink-0">
           <form onSubmit={(e) => handleSendMessage(e)}>
             <div className="flex gap-2 items-center">
               <input
