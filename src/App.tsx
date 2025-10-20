@@ -4,6 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Explore from "./pages/Explore";
@@ -27,33 +29,36 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/explore" element={<Explore />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="/profile/edit" element={<ProfileEdit />} />
-          <Route path="/matches" element={<Matches />} />
-          <Route path="/likes" element={<Likes />} />
-          <Route path="/messages" element={<Messages />} />
-          <Route path="/chat/:matchId" element={<Chat />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/terms" element={<TermsAndConditions />} />
-          <Route path="/credits" element={<Credits />} />
-          <Route path="/purchase-success" element={<PurchaseSuccess />} />
-          <Route path="/premium-success" element={<PremiumSuccess />} />
-          <Route path="/support" element={<Support />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/adminarrettu" element={<AdminArrettu />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <ThemeSwitcher />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/explore" element={<Explore />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/profile/edit" element={<ProfileEdit />} />
+            <Route path="/matches" element={<Matches />} />
+            <Route path="/likes" element={<Likes />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/chat/:matchId" element={<Chat />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/terms" element={<TermsAndConditions />} />
+            <Route path="/credits" element={<Credits />} />
+            <Route path="/purchase-success" element={<PurchaseSuccess />} />
+            <Route path="/premium-success" element={<PremiumSuccess />} />
+            <Route path="/support" element={<Support />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/adminarrettu" element={<AdminArrettu />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
