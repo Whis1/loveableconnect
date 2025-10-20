@@ -5,13 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Coins } from "lucide-react";
+import { Coins, Crown, Heart } from "lucide-react";
 
 export const UserCreditsManager = () => {
   const { toast } = useToast();
   const [userId, setUserId] = useState("");
   const [creditsAmount, setCreditsAmount] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingPremium, setLoadingPremium] = useState(false);
+  const [loadingUnlock, setLoadingUnlock] = useState(false);
 
   const handleAddCredits = async () => {
     if (!userId || !creditsAmount) {
@@ -61,6 +63,91 @@ export const UserCreditsManager = () => {
     }
   };
 
+  const handleAssignPremium = async () => {
+    if (!userId) {
+      toast({
+        title: "Errore",
+        description: "Inserisci user ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoadingPremium(true);
+    try {
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30);
+
+      const { error } = await supabase
+        .from("user_credits")
+        .update({ 
+          is_premium: true,
+          premium_expires_at: expiresAt.toISOString()
+        })
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Premium Assegnato",
+        description: "Abbonamento premium di 30 giorni assegnato",
+      });
+
+      setUserId("");
+    } catch (error: any) {
+      console.error("Error assigning premium:", error);
+      toast({
+        title: "Errore",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingPremium(false);
+    }
+  };
+
+  const handleUnlockLikes = async () => {
+    if (!userId) {
+      toast({
+        title: "Errore",
+        description: "Inserisci user ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoadingUnlock(true);
+    try {
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24);
+
+      const { error } = await supabase
+        .from("likes_unlocked")
+        .upsert({ 
+          user_id: userId,
+          expires_at: expiresAt.toISOString()
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Likes Sbloccati",
+        description: "Accesso likes sbloccato per 24 ore",
+      });
+
+      setUserId("");
+    } catch (error: any) {
+      console.error("Error unlocking likes:", error);
+      toast({
+        title: "Errore",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingUnlock(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -89,9 +176,32 @@ export const UserCreditsManager = () => {
             placeholder="Es: 100"
           />
         </div>
-        <Button onClick={handleAddCredits} disabled={loading} className="w-full">
-          {loading ? "Aggiungendo..." : "Aggiungi Crediti"}
-        </Button>
+        <div className="grid grid-cols-1 gap-3">
+          <Button onClick={handleAddCredits} disabled={loading} className="w-full">
+            <Coins className="h-4 w-4 mr-2" />
+            {loading ? "Aggiungendo..." : "Aggiungi Crediti"}
+          </Button>
+          
+          <Button 
+            onClick={handleAssignPremium} 
+            disabled={loadingPremium} 
+            className="w-full"
+            variant="secondary"
+          >
+            <Crown className="h-4 w-4 mr-2" />
+            {loadingPremium ? "Assegnando..." : "Assegna Premium (30gg)"}
+          </Button>
+          
+          <Button 
+            onClick={handleUnlockLikes} 
+            disabled={loadingUnlock} 
+            className="w-full"
+            variant="outline"
+          >
+            <Heart className="h-4 w-4 mr-2" />
+            {loadingUnlock ? "Sbloccando..." : "Sblocca Likes (24h)"}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
