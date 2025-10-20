@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
@@ -79,6 +80,7 @@ export function InterestsAutocomplete({
   onInterestsChange,
   maxInterests = 4,
 }: InterestsAutocompleteProps) {
+  const { t } = useTranslation();
   const [inputValue, setInputValue] = useState("");
   const [filteredInterests, setFilteredInterests] = useState<string[]>([]);
 
@@ -134,16 +136,16 @@ export function InterestsAutocomplete({
       {selectedInterests.length < maxInterests && (
         <Command className="border rounded-lg">
           <CommandInput
-            placeholder={`Cerca interessi... (${selectedInterests.length}/${maxInterests})`}
+            placeholder={`${t('common.searchInterests')} (${selectedInterests.length}/${maxInterests})`}
             value={inputValue}
             onValueChange={setInputValue}
           />
           <CommandList>
             {inputValue.trim() && filteredInterests.length === 0 && (
-              <CommandEmpty>Nessun interesse trovato. Scegli dalla lista.</CommandEmpty>
+              <CommandEmpty>{t('common.noInterestsFound')}</CommandEmpty>
             )}
             {inputValue.trim() && filteredInterests.length > 0 && (
-              <CommandGroup heading="Seleziona un interesse">
+              <CommandGroup heading={t('common.selectAnInterest')}>
                 {filteredInterests.slice(0, 10).map((interest) => (
                   <CommandItem
                     key={interest}
@@ -155,7 +157,7 @@ export function InterestsAutocomplete({
                 ))}
                 {filteredInterests.length > 10 && (
                   <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                    +{filteredInterests.length - 10} altri risultati...
+                    +{filteredInterests.length - 10} {t('common.moreResults')}
                   </div>
                 )}
               </CommandGroup>
@@ -166,7 +168,7 @@ export function InterestsAutocomplete({
 
       {selectedInterests.length >= maxInterests && (
         <p className="text-sm text-muted-foreground">
-          Hai raggiunto il limite di {maxInterests} interessi.
+          {t('common.interestLimitReached', { max: maxInterests })}
         </p>
       )}
     </div>
