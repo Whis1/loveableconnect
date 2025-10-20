@@ -54,10 +54,10 @@ export const MessageBubble = ({
   return (
     <div className="flex w-full px-2 md:px-4">
       {!isOwn && (
-        <Avatar className="h-8 w-8 mr-2 shrink-0">
+        <Avatar className="h-12 w-12 mr-3 shrink-0">
           <AvatarImage src={senderAvatarUrl || undefined} alt="Profile" />
           <AvatarFallback>
-            <User className="h-4 w-4" />
+            <User className="h-5 w-5" />
           </AvatarFallback>
         </Avatar>
       )}
@@ -83,10 +83,10 @@ export const MessageBubble = ({
         </p>
       </div>
       {isOwn && (
-        <Avatar className="h-8 w-8 ml-2 shrink-0">
+        <Avatar className="h-12 w-12 ml-3 shrink-0">
           <AvatarImage src={senderAvatarUrl || undefined} alt="Profile" />
           <AvatarFallback>
-            <User className="h-4 w-4" />
+            <User className="h-5 w-5" />
           </AvatarFallback>
         </Avatar>
       )}

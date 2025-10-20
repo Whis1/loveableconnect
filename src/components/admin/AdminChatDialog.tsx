@@ -270,7 +270,7 @@ export const AdminChatDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl w-full h-[90vh] flex flex-col p-0">
+      <DialogContent className="max-w-2xl w-full h-[90vh] flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
           <DialogTitle>
             Chat: {adminNickname} ↔️ {userNickname}
