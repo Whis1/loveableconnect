@@ -199,7 +199,15 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
                   </span>
                 </div>
               )}
-              
+            </div>
+          </div>
+        </div>
+
+        {profile.bio && (
+          <div className="mt-4">
+            <p className="text-sm text-muted-foreground line-clamp-3">{profile.bio}</p>
+          </div>
+        )}
 
         {profile.interests && profile.interests.length > 0 && (
           <div className="mt-4">
