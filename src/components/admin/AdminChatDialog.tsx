@@ -10,7 +10,7 @@ import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { GifPicker } from "@/components/chat/GifPicker";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ChatUserProfile } from "@/components/chat/ChatUserProfile";
-import { ProfileNotebook } from "./ProfileNotebook";
+
 
 interface AdminChatDialogProps {
   open: boolean;
@@ -260,18 +260,8 @@ export const AdminChatDialog = ({
           <ChatUserProfile userId={userId} currentUserId={adminProfileId} />
         </div>
 
-        {/* Main Content: Notebooks + Messages */}
-        <div className="flex-1 flex gap-4 px-6 py-4 min-h-0">
-          {/* Left Notebook - User */}
-          <div className="w-64 shrink-0 h-full">
-            <ProfileNotebook 
-              profileId={userId} 
-              profileName={userNickname}
-              isAdmin={false}
-            />
-          </div>
-
-          {/* Messages */}
+        {/* Main Content: Messages only (notebooks spostati fuori) */}
+        <div className="flex-1 flex px-6 py-4 min-h-0">
           <ScrollArea className="flex-1 min-h-0">
             {loading ? (
               <p className="text-muted-foreground text-center py-8">Caricamento...</p>
@@ -299,15 +289,6 @@ export const AdminChatDialog = ({
               </div>
             )}
           </ScrollArea>
-
-          {/* Right Notebook - Admin */}
-          <div className="w-64 shrink-0 h-full">
-            <ProfileNotebook 
-              profileId={adminProfileId} 
-              profileName={adminNickname}
-              isAdmin={true}
-            />
-          </div>
         </div>
 
         {/* Input */}
