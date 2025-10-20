@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Bell, Heart, MessageSquare, Check } from "lucide-react";
+import { Bell, Heart, MessageSquare, Check, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
@@ -125,6 +125,28 @@ export const NotificationMonitor = () => {
     }
   };
 
+  const handleDeleteAll = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-notifications-delete-all');
+
+      if (error) throw error;
+
+      setNotifications([]);
+
+      toast({
+        title: "Notifiche eliminate",
+        description: "Tutte le notifiche sono state eliminate",
+      });
+    } catch (error: any) {
+      console.error("Error deleting all notifications:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile eliminare le notifiche",
+        variant: "destructive",
+      });
+    }
+  };
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   if (loading) {
@@ -173,6 +195,17 @@ export const NotificationMonitor = () => {
               >
                 <Check className="h-4 w-4 mr-2" />
                 Segna tutte
+              </Button>
+            )}
+            {notifications.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDeleteAll}
+                className="text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Elimina tutte
               </Button>
             )}
           </div>
