@@ -11,7 +11,6 @@ import { GifPicker } from "@/components/chat/GifPicker";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ChatUserProfile } from "@/components/chat/ChatUserProfile";
 
-
 interface AdminChatDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -104,7 +103,6 @@ export const AdminChatDialog = ({
             },
             (payload) => {
               const newMsg = payload.new as Message;
-              console.log('Realtime message payload:', newMsg);
               setMessages((prev) => {
                 const exists = prev.some(m => m.id === newMsg.id);
                 if (exists) return prev;
@@ -164,8 +162,6 @@ export const AdminChatDialog = ({
     setNewMessage("");
 
     try {
-      console.log('Sending message:', { matchId, adminProfileId, userId, messageContent, messageType, mediaUrl });
-      
       const { data, error } = await supabase.functions.invoke('admin-send-message', {
         body: {
           match_id: matchId,
@@ -177,21 +173,14 @@ export const AdminChatDialog = ({
         }
       });
 
-      console.log('Message response:', { data, error });
-
       if (error) throw error;
 
-      // La risposta è { success: true, message: {...} }
-      if (data?.success && data?.message) {
-        console.log('Replacing temp message with real message:', data.message);
+      if (data?.message) {
         setMessages((prev) =>
           prev.map(msg => msg.id === tempMessage.id ? data.message as Message : msg)
         );
-      } else {
-        console.warn('Unexpected response format:', data);
       }
     } catch (error: any) {
-      console.error('Error sending message:', error);
       setMessages((prev) => prev.filter(msg => msg.id !== tempMessage.id));
       toast({
         title: "Errore",
@@ -248,7 +237,7 @@ export const AdminChatDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] h-[90vh] flex flex-col p-0">
+      <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
           <DialogTitle>
             Chat: {adminNickname} ↔️ {userNickname}
@@ -260,36 +249,34 @@ export const AdminChatDialog = ({
           <ChatUserProfile userId={userId} currentUserId={adminProfileId} />
         </div>
 
-        {/* Main Content: Messages only (notebooks spostati fuori) */}
-        <div className="flex-1 flex px-6 py-4 min-h-0">
-          <ScrollArea className="flex-1 min-h-0">
-            {loading ? (
-              <p className="text-muted-foreground text-center py-8">Caricamento...</p>
-            ) : (
-              <div className="space-y-4 py-4">
-                {messages.map((message) => {
-                  const isOwn = message.sender_id === adminProfileId;
-                  
-                  return (
-                    <MessageBubble
-                      key={message.id}
-                      content={message.content}
-                      messageType={message.message_type}
-                      mediaUrl={message.media_url}
-                      isOwn={isOwn}
-                      timestamp={message.created_at}
-                      messageId={message.id}
-                      senderId={message.sender_id}
-                      receiverId={message.receiver_id}
-                      matchId={message.match_id}
-                    />
-                  );
-                })}
-                <div ref={messagesEndRef} />
-              </div>
-            )}
-          </ScrollArea>
-        </div>
+        {/* Messages */}
+        <ScrollArea className="flex-1 px-6 min-h-0">
+          {loading ? (
+            <p className="text-muted-foreground text-center py-8">Caricamento...</p>
+          ) : (
+            <div className="space-y-4 py-4">
+              {messages.map((message) => {
+                const isOwn = message.sender_id === adminProfileId;
+                
+                return (
+                  <MessageBubble
+                    key={message.id}
+                    content={message.content}
+                    messageType={message.message_type}
+                    mediaUrl={message.media_url}
+                    isOwn={isOwn}
+                    timestamp={message.created_at}
+                    messageId={message.id}
+                    senderId={message.sender_id}
+                    receiverId={message.receiver_id}
+                    matchId={message.match_id}
+                  />
+                );
+              })}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </ScrollArea>
 
         {/* Input */}
         <div className="border-t p-4 bg-background shrink-0">

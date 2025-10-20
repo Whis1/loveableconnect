@@ -263,59 +263,6 @@ export type Database = {
           },
         ]
       }
-      profile_notes: {
-        Row: {
-          altro: string | null
-          created_at: string | null
-          eta: string | null
-          figli: string | null
-          hobby: string | null
-          id: string
-          lavoro: string | null
-          location: string | null
-          nome: string | null
-          profile_id: string
-          relazione: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          altro?: string | null
-          created_at?: string | null
-          eta?: string | null
-          figli?: string | null
-          hobby?: string | null
-          id?: string
-          lavoro?: string | null
-          location?: string | null
-          nome?: string | null
-          profile_id: string
-          relazione?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          altro?: string | null
-          created_at?: string | null
-          eta?: string | null
-          figli?: string | null
-          hobby?: string | null
-          id?: string
-          lavoro?: string | null
-          location?: string | null
-          nome?: string | null
-          profile_id?: string
-          relazione?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "profile_notes_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           age: number | null

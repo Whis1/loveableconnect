@@ -65,9 +65,3 @@ verify_jwt = false
 
 [functions.admin-send-message]
 verify_jwt = false
-
-[functions.admin-profile-notes-get]
-verify_jwt = false
-
-[functions.admin-profile-notes-upsert]
-verify_jwt = false
