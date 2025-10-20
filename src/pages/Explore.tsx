@@ -119,15 +119,23 @@ const Explore = () => {
           schema: 'public',
           table: 'profiles'
         },
-        (payload) => {
+        async (payload) => {
           console.log('Profile updated:', payload);
-          // Update the profile in the current list
-          setProfiles(prev => prev.map(p => 
-            p.id === payload.new.id ? { ...p, ...payload.new } : p
-          ));
-          setDisplayedProfiles(prev => prev.map(p => 
-            p.id === payload.new.id ? { ...p, ...payload.new } : p
-          ));
+          // Reload the updated profile completely from database
+          const { data: updatedProfile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', payload.new.id)
+            .single();
+          
+          if (!error && updatedProfile) {
+            setProfiles(prev => prev.map(p => 
+              p.id === updatedProfile.id ? updatedProfile as Profile : p
+            ));
+            setDisplayedProfiles(prev => prev.map(p => 
+              p.id === updatedProfile.id ? updatedProfile as Profile : p
+            ));
+          }
         }
       )
       .subscribe();
