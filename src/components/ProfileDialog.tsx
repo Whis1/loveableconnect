@@ -24,6 +24,7 @@ interface Profile {
   relationship_type: string | null;
   sexual_orientation: string | null;
   relationship_status: string | null;
+  looking_for: string[] | null;
 }
 
 interface ProfileDialogProps {
@@ -298,18 +299,46 @@ export const ProfileDialog = ({
               </div>
             )}
 
-            {/* Relationship Info Section */}
-            {profile.relationship_type && (
-              <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-5 shadow-sm border border-primary/20">
+            {/* Relationship Status Section */}
+            {profile.relationship_status && (
+              <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
                 <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
                   <Heart className="h-5 w-5 text-primary" />
-                  Cerca
+                  Stato Relazione
                 </h3>
-                <div className="text-lg font-medium text-primary">
-                  {getRelationshipTypeLabel(profile.relationship_type)}
+                <div className="text-base font-medium">
+                  {profile.relationship_status === 'single' ? 'Single' :
+                   profile.relationship_status === 'in_relationship' ? 'In una relazione' :
+                   profile.relationship_status === 'married' ? 'Sposato/a' :
+                   profile.relationship_status === 'divorced' ? 'Divorziato/a' :
+                   profile.relationship_status === 'widowed' ? 'Vedovo/a' :
+                   profile.relationship_status === 'prefer_not_say' ? 'Preferisco non dirlo' :
+                   profile.relationship_status}
                 </div>
               </div>
             )}
+
+            {/* Looking For Section */}
+            {(profile.looking_for && profile.looking_for.length > 0) || profile.relationship_type ? (
+              <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-5 shadow-sm border border-primary/20">
+                <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                  <Heart className="h-5 w-5 text-primary" />
+                  Cosa Cerca
+                </h3>
+                <div className="space-y-2">
+                  {profile.looking_for && profile.looking_for.length > 0 && (
+                    <div className="text-base font-medium text-primary">
+                      {profile.looking_for.join(", ")}
+                    </div>
+                  )}
+                  {profile.relationship_type && (
+                    <div className="text-sm text-muted-foreground">
+                      {getRelationshipTypeLabel(profile.relationship_type)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : null}
 
             {/* Interests Section */}
             {profile.interests && profile.interests.length > 0 && (

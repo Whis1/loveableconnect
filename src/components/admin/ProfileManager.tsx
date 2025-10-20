@@ -365,19 +365,20 @@ export const ProfileManager = () => {
     try {
       const { data, error } = await supabase.functions.invoke('admin-update-profile', {
         body: {
-          profileId: profile.id,
-          updates: {
-            nickname: profile.nickname,
-            age: profile.age,
-            bio: profile.bio,
-            city: profile.city,
-            gender: profile.gender,
-            relationship_status: profile.relationship_status,
-            looking_for: profile.looking_for,
-            interests: profile.interests,
-          }
-        },
-      });
+            profileId: profile.id,
+            updates: {
+              nickname: profile.nickname,
+              age: profile.age,
+              bio: profile.bio,
+              city: profile.city,
+              gender: profile.gender,
+              sexual_orientation: profile.sexual_orientation,
+              relationship_status: profile.relationship_status,
+              looking_for: profile.looking_for,
+              interests: profile.interests,
+            }
+          },
+        });
 
       if (error || !data.success) {
         throw new Error(error?.message || data.error || 'Update failed');
@@ -574,12 +575,36 @@ export const ProfileManager = () => {
                         <SelectTrigger>
                           <SelectValue placeholder="Seleziona genere" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-background z-50">
                           <SelectItem value="male">Uomo</SelectItem>
                           <SelectItem value="female">Donna</SelectItem>
                           <SelectItem value="non-binary">Non binario</SelectItem>
                           <SelectItem value="transexual">Transessuale</SelectItem>
                           <SelectItem value="transgender">Transgender</SelectItem>
+                          <SelectItem value="other">Altro</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Orientamento Sessuale */}
+                    <div className="space-y-2">
+                      <Label>Orientamento Sessuale</Label>
+                      <Select
+                        value={profile.sexual_orientation || ""}
+                        onValueChange={(value) => {
+                          const updated = { ...profile, sexual_orientation: value };
+                          setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleziona orientamento" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-50">
+                          <SelectItem value="heterosexual">Eterosessuale</SelectItem>
+                          <SelectItem value="homosexual">Omosessuale</SelectItem>
+                          <SelectItem value="bisexual">Bisessuale</SelectItem>
+                          <SelectItem value="pansexual">Pansessuale</SelectItem>
+                          <SelectItem value="asexual">Asessuale</SelectItem>
                           <SelectItem value="other">Altro</SelectItem>
                         </SelectContent>
                       </Select>
@@ -598,7 +623,7 @@ export const ProfileManager = () => {
                         <SelectTrigger>
                           <SelectValue placeholder="Seleziona stato" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-background z-50">
                           <SelectItem value="single">Single</SelectItem>
                           <SelectItem value="in_relationship">In una relazione</SelectItem>
                           <SelectItem value="married">Sposato/a</SelectItem>

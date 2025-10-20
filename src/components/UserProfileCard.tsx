@@ -20,6 +20,8 @@ interface Profile {
   interests: string[] | null;
   avatar_url: string | null;
   relationship_type: string | null;
+  relationship_status: string | null;
+  looking_for: string[] | null;
 }
 
 interface UserProfileCardProps {
@@ -91,6 +93,26 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
               <MapPin className="h-4 w-4" />
               <span>{!adminLoading && isAdmin ? (profile.city || "Vicino alle tue parti") : "Vicino alle tue parti"}</span>
             </div>
+
+            {profile.relationship_status && (
+              <Badge variant="outline" className="text-xs">
+                <span className="font-semibold">Stato:</span> {
+                  profile.relationship_status === 'single' ? 'Single' :
+                  profile.relationship_status === 'in_relationship' ? 'In relazione' :
+                  profile.relationship_status === 'married' ? 'Sposato/a' :
+                  profile.relationship_status === 'divorced' ? 'Divorziato/a' :
+                  profile.relationship_status === 'widowed' ? 'Vedovo/a' :
+                  profile.relationship_status === 'prefer_not_say' ? 'Preferisco non dirlo' :
+                  profile.relationship_status
+                }
+              </Badge>
+            )}
+
+            {profile.looking_for && profile.looking_for.length > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                <span className="font-semibold">Cerca:</span> {profile.looking_for.join(", ")}
+              </Badge>
+            )}
 
             {profile.relationship_type && (
               <Badge variant="secondary" className="text-xs">

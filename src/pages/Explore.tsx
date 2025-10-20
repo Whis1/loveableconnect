@@ -19,6 +19,7 @@ interface Profile {
   age: number | null;
   gender: string | null;
   sexual_orientation: string | null;
+  relationship_status: string | null;
   city: string | null;
   interests: string[] | null;
   avatar_url: string | null;

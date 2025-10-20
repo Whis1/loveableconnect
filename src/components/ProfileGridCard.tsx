@@ -15,6 +15,8 @@ interface Profile {
   age: number | null;
   gender: string | null;
   sexual_orientation: string | null;
+  relationship_status: string | null;
+  looking_for: string[] | null;
   city: string | null;
   avatar_url: string | null;
   bio: string | null;
@@ -61,6 +63,24 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
       asexual: "Asessuale",
     };
     return orientationMap[orientation] || orientation;
+  };
+
+  const getRelationshipStatusLabel = (status: string | null) => {
+    if (!status) return "";
+    const statusMap: Record<string, string> = {
+      single: "Single",
+      in_relationship: "In relazione",
+      married: "Sposato/a",
+      divorced: "Divorziato/a",
+      widowed: "Vedovo/a",
+      prefer_not_say: "Preferisco non dirlo",
+    };
+    return statusMap[status] || status;
+  };
+
+  const getLookingForLabel = (lookingFor: string[] | null) => {
+    if (!lookingFor || lookingFor.length === 0) return "";
+    return lookingFor.join(", ");
   };
 
   // Check if user already liked this profile
@@ -246,6 +266,20 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
                 <span className="px-2 py-0.5 rounded-full bg-secondary/10 text-secondary-foreground text-xs font-medium">
                   {getOrientationLabel(profile.sexual_orientation)}
                 </span>
+              )}
+            </div>
+
+            {/* Relationship Status & Looking For */}
+            <div className="space-y-1">
+              {profile.relationship_status && (
+                <div className="text-xs text-muted-foreground">
+                  <span className="font-semibold">Stato:</span> {getRelationshipStatusLabel(profile.relationship_status)}
+                </div>
+              )}
+              {profile.looking_for && profile.looking_for.length > 0 && (
+                <div className="text-xs text-muted-foreground">
+                  <span className="font-semibold">Cerca:</span> {getLookingForLabel(profile.looking_for)}
+                </div>
               )}
             </div>
 
