@@ -104,6 +104,7 @@ export const AdminChatDialog = ({
             },
             (payload) => {
               const newMsg = payload.new as Message;
+              console.log('Realtime message payload:', newMsg);
               setMessages((prev) => {
                 const exists = prev.some(m => m.id === newMsg.id);
                 if (exists) return prev;
