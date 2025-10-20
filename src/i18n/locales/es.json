@@ -414,6 +414,8 @@
     "bisexual": "Bisexual",
     "pansexual": "Pansexual",
     "asexual": "Asexual",
+    "other": "Otro",
+    "openRelationship": "Relación abierta",
     "nextRecharge": "Próxima recarga:",
     "rechargeAvailable": "¡Recarga disponible!",
     "addPhoto": "Añadir foto",
@@ -424,6 +426,14 @@
     "loadingProfiles": "Cargando perfiles...",
     "noMessages": "Sin mensajes",
     "manageLikes": "Gestionar Likes para"
+  },
+  "userProfile": {
+    "years": "años",
+    "lookingFor": "Busca",
+    "serious": "Relación seria",
+    "casual": "Relación casual",
+    "friendship": "Amistad",
+    "interests": "Intereses"
   },
   "credits": {
     "back": "Atrás",
