@@ -225,41 +225,27 @@ const Likes = () => {
         return;
       }
 
-      // Create the like
-      const { error: likeError } = await supabase
-        .from("likes")
-        .insert({
-          from_user_id: currentUserId,
-          to_user_id: userId,
-        });
+      // Use the edge function to handle the like properly
+      const { data, error } = await supabase.functions.invoke('admin-manage-like', {
+        body: {
+          action: 'add',
+          fromUserId: currentUserId,
+          toUserId: userId
+        }
+      });
 
-      if (likeError) {
-        console.error("Error creating like:", likeError);
-        toast({
-          title: t("likes.error"),
-          description: t("likes.errorLikingBack"),
-          variant: "destructive",
-        });
-        setLikingUserId(null);
-        return;
+      if (error || !data?.success) {
+        throw new Error(error?.message || data?.error || 'Failed to like back');
       }
 
-      // The check_and_create_match trigger will handle match creation
-      // Check if a match was created (both likes should be deleted if matched)
-      const { data: stillExists } = await supabase
-        .from("likes")
-        .select("id")
-        .eq("id", likeId)
-        .maybeSingle();
-
-      if (!stillExists) {
+      // Check if a match was created
+      if (data.match_created) {
         // Match was created! Show banner
         setMatchBanner({ show: true, userName });
         
         // Remove this like from the list
         setLikes((prev) => prev.filter((l) => l.id !== likeId));
       } else {
-        // Just a like, no match yet
         toast({
           title: t("search.likeSent"),
           description: t("search.likedProfile") + " " + userName,

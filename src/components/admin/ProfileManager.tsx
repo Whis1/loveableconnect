@@ -161,16 +161,33 @@ export const ProfileManager = () => {
           description: "Il like è stato rimosso",
         });
       } else {
-        setProfileLikes(prev => ({
-          ...prev,
-          [profileId]: [...currentLikes, userId]
-        }));
+        // Check if a match was created
+        if (data.match_created) {
+          // Remove from likes since a match was created
+          setProfileLikes(prev => ({
+            ...prev,
+            [profileId]: currentLikes.filter(id => id !== userId)
+          }));
 
-        toast({
-          title: "Like aggiunto",
-          description: "Il like è stato aggiunto",
-        });
+          toast({
+            title: "🎉 Match creato!",
+            description: "È stato creato un match con questo utente",
+          });
+        } else {
+          setProfileLikes(prev => ({
+            ...prev,
+            [profileId]: [...currentLikes, userId]
+          }));
+
+          toast({
+            title: "Like aggiunto",
+            description: "Il like è stato aggiunto",
+          });
+        }
       }
+
+      // Refresh profile likes to ensure consistency
+      await fetchProfileLikes(profileId);
     } catch (error: any) {
       console.error("Error toggling like:", error);
       toast({
