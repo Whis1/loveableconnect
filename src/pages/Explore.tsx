@@ -67,9 +67,27 @@ const Explore = () => {
     { value: "heterosexual", label: "Eterosessuale" },
     { value: "homosexual", label: "Omosessuale" },
     { value: "bisexual", label: "Bisessuale" },
-    { value: "pansexual", label: "Pansexuale" },
+    { value: "pansexual", label: "Pansessuale" },
     { value: "asexual", label: "Asessuale" },
   ];
+
+  // Map canonical filter values to synonyms actually present in DB (Italian/English variants)
+  const genderSynonymsMap: Record<string, string[]> = {
+    "male": ["male", "uomo", "maschio"],
+    "female": ["female", "donna", "femmina"],
+    "transgender": ["transgender", "trans"],
+    "transexual": ["transexual", "transessuale", "transsexual", "transex"],
+    "genderfluid": ["genderfluid"],
+    "non-binary": ["non-binary", "non binary", "nonbinary"],
+  };
+
+  const orientationSynonymsMap: Record<string, string[]> = {
+    "heterosexual": ["heterosexual", "eterosessuale"],
+    "homosexual": ["homosexual", "omosessuale"],
+    "bisexual": ["bisexual", "bisessuale"],
+    "pansexual": ["pansexual", "pansessuale", "pansexuale"],
+    "asexual": ["asexual", "asessuale"],
+  };
 
   useEffect(() => {
     const initializeExplore = async () => {
@@ -178,14 +196,16 @@ const Explore = () => {
       // Age filter
       query = query.gte("age", ageRange[0]).lte("age", ageRange[1]);
 
-      // Gender filter
+      // Gender filter with synonyms
       if (selectedGenders.length > 0) {
-        query = query.in("gender", selectedGenders);
+        const genderValues = Array.from(new Set(selectedGenders.flatMap(g => genderSynonymsMap[g] || [g])));
+        query = query.in("gender", genderValues);
       }
 
-      // Orientation filter
+      // Orientation filter with synonyms
       if (selectedOrientations.length > 0) {
-        query = query.in("sexual_orientation", selectedOrientations);
+        const orientationValues = Array.from(new Set(selectedOrientations.flatMap(o => orientationSynonymsMap[o] || [o])));
+        query = query.in("sexual_orientation", orientationValues);
       }
 
       const { data: profilesData, error } = await query;

@@ -190,7 +190,7 @@ export const ProfileDialog = ({
       heterosexual: "Eterosessuale",
       homosexual: "Omosessuale",
       bisexual: "Bisessuale",
-      pansexual: "Pansexuale",
+      pansexual: "Pansessuale",
       asexual: "Asessuale",
     };
     return labels[orientation] || orientation;

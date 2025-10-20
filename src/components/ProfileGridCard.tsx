@@ -54,7 +54,7 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
       heterosexual: "Eterosessuale",
       homosexual: "Omosessuale",
       bisexual: "Bisessuale",
-      pansexual: "Pansexuale",
+      pansexual: "Pansessuale",
       asexual: "Asessuale",
     };
     return orientationMap[orientation] || orientation;
