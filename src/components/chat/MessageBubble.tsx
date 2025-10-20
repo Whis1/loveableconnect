@@ -31,17 +31,19 @@ export const MessageBubble = ({
       case 'image':
       case 'gif':
         return mediaUrl ? (
-          <ImageDialog src={mediaUrl} alt="Immagine chat">
+          <ImageDialog src={mediaUrl} alt={messageType === 'gif' ? 'GIF chat' : 'Immagine chat'}>
             <img
               src={mediaUrl}
-              alt="Immagine chat"
+              alt={messageType === 'gif' ? 'GIF chat' : 'Immagine chat'}
               className="max-w-xs rounded cursor-pointer hover:opacity-90 transition-opacity"
             />
           </ImageDialog>
-        ) : null;
+        ) : (
+          <p className="break-words whitespace-pre-wrap">{content || (messageType === 'gif' ? 'GIF' : 'Immagine')}</p>
+        );
       
       default:
-        return <p className="break-words">{content}</p>;
+        return <p className="break-words whitespace-pre-wrap">{content}</p>;
     }
   };
 
@@ -52,7 +54,7 @@ export const MessageBubble = ({
           messageType === 'emoji' ? 'bg-transparent' : 
           isOwn
             ? "bg-primary text-primary-foreground"
-            : "bg-muted"
+            : "bg-muted text-foreground"
         }`}
       >
         {renderContent()}
