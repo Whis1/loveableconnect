@@ -62,6 +62,28 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
     };
 
     fetchProfile();
+
+    // Subscribe to profile changes
+    const channel = supabase
+      .channel(`profile-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${userId}`
+        },
+        (payload) => {
+          console.log('Profile updated:', payload.new);
+          setProfile(payload.new as Profile);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId]);
 
 
