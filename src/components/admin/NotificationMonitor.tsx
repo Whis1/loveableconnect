@@ -35,24 +35,12 @@ export const NotificationMonitor = () => {
 
   const fetchNotifications = async () => {
     try {
-      let query = supabase
-        .from("admin_notifications")
-        .select(`
-          *,
-          user_profile:user_id(nickname, avatar_url),
-          admin_profile:admin_profile_id(nickname)
-        `)
-        .order("created_at", { ascending: false })
-        .limit(100);
-
-      if (filter === 'unread') {
-        query = query.eq('read', false);
-      }
-
-      const { data, error } = await query;
+      const { data, error } = await supabase.functions.invoke('admin-list-notifications', {
+        body: { filter }
+      });
 
       if (error) throw error;
-      setNotifications(data as any || []);
+      setNotifications((data as any)?.notifications || []);
     } catch (error: any) {
       console.error("Error fetching notifications:", error);
       toast({
@@ -91,10 +79,9 @@ export const NotificationMonitor = () => {
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {
-      const { error } = await supabase
-        .from("admin_notifications")
-        .update({ read: true })
-        .eq("id", notificationId);
+      const { data, error } = await supabase.functions.invoke('admin-notifications-mark-read', {
+        body: { id: notificationId }
+      });
 
       if (error) throw error;
 
@@ -118,10 +105,7 @@ export const NotificationMonitor = () => {
 
   const handleMarkAllAsRead = async () => {
     try {
-      const { error } = await supabase
-        .from("admin_notifications")
-        .update({ read: true })
-        .eq("read", false);
+      const { data, error } = await supabase.functions.invoke('admin-notifications-mark-all-read');
 
       if (error) throw error;
 

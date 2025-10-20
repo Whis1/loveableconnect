@@ -50,3 +50,12 @@ verify_jwt = true
 
 [functions.verify-subscription]
 verify_jwt = true
+
+[functions.admin-list-notifications]
+verify_jwt = false
+
+[functions.admin-notifications-mark-read]
+verify_jwt = false
+
+[functions.admin-notifications-mark-all-read]
+verify_jwt = false
