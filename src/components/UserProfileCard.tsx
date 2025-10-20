@@ -138,8 +138,8 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
               <MapPin className="h-4 w-4" />
               <span>
                 {(!adminLoading && isAdmin) || (currentUserId === profile.id) 
-                  ? (profile.city || "Vicino alle tue parti") 
-                  : "Vicino alle tue parti"}
+                  ? (profile.city || t("common.nearbyLocation")) 
+                  : t("common.nearbyLocation")}
               </span>
             </div>
 
@@ -147,10 +147,8 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
             <div className="flex flex-wrap gap-2 justify-center items-center w-full">
               {profile.gender && (
                 <Badge variant="outline" className="text-xs">
-                  {profile.gender === 'male' ? 'Uomo' :
-                   profile.gender === 'female' ? 'Donna' :
-                   profile.gender === 'non_binary' ? 'Non binario' :
-                   profile.gender === 'other' ? 'Altro' :
+                  {profile.gender === 'male' ? t("common.male") :
+                   profile.gender === 'female' ? t("common.female") :
                    profile.gender}
                 </Badge>
               )}

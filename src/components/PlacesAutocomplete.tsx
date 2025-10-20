@@ -29,7 +29,7 @@ export const PlacesAutocomplete = ({
   required = false,
   id = "places-autocomplete"
 }: PlacesAutocompleteProps) => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -113,7 +113,7 @@ export const PlacesAutocomplete = ({
           <Command className="rounded-lg border shadow-md bg-background">
             <CommandList>
               {isLoading ? (
-                <CommandEmpty>Caricamento...</CommandEmpty>
+                <CommandEmpty>{t("common.loading")}</CommandEmpty>
               ) : (
                 <CommandGroup>
                   {suggestions.map((suggestion) => (

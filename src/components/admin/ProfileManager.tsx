@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { Users, MessageSquare, Save, Upload, X, Image as ImageIcon, Search } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AdminChatDialog } from "./AdminChatDialog";
@@ -53,6 +54,7 @@ interface UserProfile {
 
 export const ProfileManager = () => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
@@ -283,8 +285,8 @@ export const ProfileManager = () => {
     
     if ((profile.photos || []).length >= 6) {
       toast({
-        title: "Limite raggiunto",
-        description: "Puoi caricare massimo 6 foto",
+        title: t("profile.limitReached"),
+        description: t("profile.maxPhotos"),
         variant: "destructive",
       });
       return;
@@ -436,7 +438,7 @@ export const ProfileManager = () => {
     return (
       <Card>
         <CardContent className="p-6">
-          <p className="text-muted-foreground">Caricamento profili...</p>
+          <p className="text-muted-foreground">{t("common.loadingProfiles")}</p>
         </CardContent>
       </Card>
     );
@@ -509,7 +511,7 @@ export const ProfileManager = () => {
                             className="max-w-xs"
                           />
                           {uploadingImages[`${profile.id}-avatar`] && (
-                            <p className="text-sm text-muted-foreground mt-1">Caricamento...</p>
+                            <p className="text-sm text-muted-foreground mt-1">{t("common.uploadingImage")}</p>
                           )}
                         </div>
                       </div>
@@ -549,11 +551,11 @@ export const ProfileManager = () => {
                               disabled={uploadingImages[`${profile.id}-gallery`]}
                             />
                             {uploadingImages[`${profile.id}-gallery`] ? (
-                              <p className="text-xs">Caricamento...</p>
+                              <p className="text-xs">{t("common.uploadingImage")}</p>
                             ) : (
                               <>
                                 <ImageIcon className="h-6 w-6 mb-1 text-muted-foreground" />
-                                <p className="text-xs text-muted-foreground">Aggiungi foto</p>
+                                <p className="text-xs text-muted-foreground">{t("common.addPhoto")}</p>
                               </>
                             )}
                           </label>
@@ -734,13 +736,13 @@ export const ProfileManager = () => {
                         </DialogTrigger>
                         <DialogContent className="max-w-3xl max-h-[80vh]">
                           <DialogHeader>
-                            <DialogTitle>Gestisci Like per {profile.nickname}</DialogTitle>
+                            <DialogTitle>{t("common.manageLikes")} {profile.nickname}</DialogTitle>
                           </DialogHeader>
                           <ScrollArea className="h-[500px] pr-4">
                             {loadingUsers ? (
-                              <p className="text-muted-foreground">Caricamento utenti...</p>
+                              <p className="text-muted-foreground">{t("common.loadingUsers")}</p>
                             ) : users.length === 0 ? (
-                              <p className="text-muted-foreground">Nessun utente disponibile</p>
+                              <p className="text-muted-foreground">{t("common.noUsersAvailable")}</p>
                             ) : (
                               <div className="space-y-2">
                                 {users.map((user) => {

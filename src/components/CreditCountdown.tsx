@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { Clock } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface CreditCountdownProps {
   lastDailyReset: string;
 }
 
 export const CreditCountdown = ({ lastDailyReset }: CreditCountdownProps) => {
+  const { t } = useTranslation();
   const [timeLeft, setTimeLeft] = useState("");
 
   useEffect(() => {
@@ -16,7 +18,7 @@ export const CreditCountdown = ({ lastDailyReset }: CreditCountdownProps) => {
       const diff = nextResetTime.getTime() - now.getTime();
 
       if (diff <= 0) {
-        setTimeLeft("Ricarica disponibile!");
+        setTimeLeft(t("common.rechargeAvailable"));
         return;
       }
 
@@ -36,7 +38,7 @@ export const CreditCountdown = ({ lastDailyReset }: CreditCountdownProps) => {
   return (
     <div className="flex items-center gap-2 text-sm text-muted-foreground/60">
       <Clock className="h-4 w-4" />
-      <span>Prossima ricarica: {timeLeft}</span>
+      <span>{t("common.nextRecharge")} {timeLeft}</span>
     </div>
   );
 };

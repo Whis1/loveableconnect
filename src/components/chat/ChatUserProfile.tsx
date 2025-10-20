@@ -147,22 +147,22 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
               )}
               
               <div className="flex gap-2">
-                <span className="font-semibold min-w-[80px]">Location:</span>
+                <span className="font-semibold min-w-[80px]">{t("common.location")}</span>
                 <span className="text-muted-foreground">
-                  {showRealLocation ? (profile.city || "Non specificata") : "Vicino alle tue parti"}
+                  {showRealLocation ? (profile.city || t("common.notSpecified")) : t("common.nearbyLocation")}
                 </span>
               </div>
               
               {profile.gender && (
                 <div className="flex gap-2">
-                  <span className="font-semibold min-w-[80px]">Genere:</span>
+                  <span className="font-semibold min-w-[80px]">{t("common.gender")}</span>
                   <span className="text-muted-foreground">
-                    {profile.gender === 'male' ? 'Uomo' : 
-                     profile.gender === 'female' ? 'Donna' : 
-                     profile.gender === 'non-binary' ? 'Non binario' :
-                     profile.gender === 'transexual' ? 'Transessuale' :
-                     profile.gender === 'transgender' ? 'Transgender' :
-                     'Altro'}
+                    {profile.gender === 'male' ? t("common.male") : 
+                     profile.gender === 'female' ? t("common.female") : 
+                     profile.gender === 'non-binary' ? t("common.nonBinary") :
+                     profile.gender === 'transexual' ? t("common.transexual") :
+                     profile.gender === 'transgender' ? t("common.transgender") :
+                     profile.gender}
                   </span>
                 </div>
               )}
