@@ -72,18 +72,13 @@ export const ProfileManager = () => {
 
   const fetchProfiles = async () => {
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("is_admin_profile", true)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setProfiles(data || []);
+      const { data, error } = await supabase.functions.invoke('admin-list-profiles');
+      if (error || !data?.success) throw new Error(error?.message || data?.error || 'Failed to load');
+      const profilesData = (data.profiles || []) as Profile[];
+      setProfiles(profilesData);
       
-      // Fetch likes for each profile
-      if (data && data.length > 0) {
-        for (const profile of data) {
+      if (profilesData.length > 0) {
+        for (const profile of profilesData) {
           await fetchProfileLikes(profile.id);
         }
       }
@@ -124,14 +119,11 @@ export const ProfileManager = () => {
 
   const fetchProfileLikes = async (profileId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("likes")
-        .select("to_user_id")
-        .eq("from_user_id", profileId);
-
-      if (error) throw error;
-      
-      const likedUserIds = (data || []).map(like => like.to_user_id);
+      const { data, error } = await supabase.functions.invoke('admin-get-profile-likes', {
+        body: { profileId },
+      });
+      if (error || !data?.success) throw new Error(error?.message || data?.error || 'Failed to load likes');
+      const likedUserIds = (data.likes || []).map((l: { to_user_id: string }) => l.to_user_id);
       setProfileLikes(prev => ({ ...prev, [profileId]: likedUserIds }));
     } catch (error: any) {
       console.error("Error fetching profile likes:", error);

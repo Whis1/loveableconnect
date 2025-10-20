@@ -12,6 +12,15 @@ verify_jwt = false
 [functions.admin-upload-image]
 verify_jwt = false
 
+[functions.admin-list-profiles]
+verify_jwt = false
+
+[functions.admin-list-support]
+verify_jwt = false
+
+[functions.admin-get-profile-likes]
+verify_jwt = false
+
 [functions.create-unlock-payment]
 verify_jwt = true
 

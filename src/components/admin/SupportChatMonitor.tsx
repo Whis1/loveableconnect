@@ -71,15 +71,11 @@ export const SupportChatMonitor = () => {
 
   const fetchConversations = async () => {
     try {
-      const { data, error } = await supabase
-        .from('support_messages')
-        .select('user_id, user_email, created_at, message, is_admin_response, read')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.functions.invoke('admin-list-support');
+      if (error || !data?.success) throw new Error(error?.message || data?.error || 'Failed to load');
+      const allMessages = (data.messages || []) as SupportMessage[];
 
-      if (error) throw error;
-
-      // Group by user
-      const grouped = (data || []).reduce((acc: Record<string, UserConversation>, msg) => {
+      const grouped = allMessages.reduce((acc: Record<string, UserConversation>, msg) => {
         if (!acc[msg.user_id]) {
           acc[msg.user_id] = {
             user_id: msg.user_id,
@@ -103,21 +99,20 @@ export const SupportChatMonitor = () => {
 
   const fetchMessages = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('support_messages')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: true });
+      const { data, error } = await supabase.functions.invoke('admin-list-support', {
+        body: { userId }
+      });
+      if (error || !data?.success) throw new Error(error?.message || data?.error || 'Failed to load');
+      setMessages((data.messages || []) as SupportMessage[]);
 
-      if (error) throw error;
-      setMessages(data || []);
-
-      // Mark as read
-      await supabase
-        .from('support_messages')
-        .update({ read: true })
-        .eq('user_id', userId)
-        .eq('is_admin_response', false);
+      // Best-effort mark as read (may fail without auth)
+      try {
+        await supabase
+          .from('support_messages')
+          .update({ read: true })
+          .eq('user_id', userId)
+          .eq('is_admin_response', false);
+      } catch {}
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
