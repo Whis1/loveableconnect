@@ -33,6 +33,7 @@ const Auth = () => {
   const [relationshipStatus, setRelationshipStatus] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showCookieBanner, setShowCookieBanner] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   useEffect(() => {
     // Check cookie consent
@@ -111,9 +112,11 @@ const Auth = () => {
 
         if (profileError) throw profileError;
 
+        // Show email confirmation message
+        setEmailSent(true);
         toast({
-          title: t('auth.registrationComplete'),
-          description: t('auth.welcome'),
+          title: "📧 Email di Conferma Inviata",
+          description: "Controlla la tua casella email per confermare l'account prima di fare login.",
         });
       }
     } catch (error: any) {
@@ -184,7 +187,19 @@ const Auth = () => {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check if error is due to unconfirmed email
+        if (error.message.includes("Email not confirmed")) {
+          toast({
+            title: "⚠️ Email Non Confermata",
+            description: "Devi confermare il tuo indirizzo email prima di poter accedere. Controlla la tua casella di posta.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+        throw error;
+      }
 
       // Check if user is banned
       if (data.user) {
@@ -333,7 +348,48 @@ const Auth = () => {
             </TabsContent>
 
             <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
+              {emailSent ? (
+                <div className="space-y-4 text-center py-6">
+                  <div className="flex justify-center mb-4">
+                    <div className="p-4 bg-green-100 dark:bg-green-900/30 rounded-full">
+                      <svg className="h-12 w-12 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-semibold">📧 Controlla la tua Email!</h3>
+                  <p className="text-muted-foreground">
+                    Ti abbiamo inviato un'email di conferma a <strong>{email}</strong>
+                  </p>
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                    <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                      ⚠️ Devi cliccare sul link nell'email per confermare il tuo account prima di poter accedere.
+                    </p>
+                  </div>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>📍 Controlla anche nella cartella spam/posta indesiderata</p>
+                    <p>⏰ Il link scadrà tra 24 ore</p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    className="w-full mt-4"
+                    onClick={() => {
+                      setEmailSent(false);
+                      setEmail("");
+                      setPassword("");
+                      setNickname("");
+                      setAge("");
+                      setCity("");
+                      setGender("");
+                      setSexualOrientation("");
+                      setRelationshipStatus("");
+                    }}
+                  >
+                    ← Torna alla registrazione
+                  </Button>
+                </div>
+              ) : (
+                <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signup-nickname">{t('profile.nickname')}</Label>
                   <Input
@@ -441,6 +497,7 @@ const Auth = () => {
                   {loading ? t('auth.signingUp') : t('auth.signup')}
                 </Button>
               </form>
+              )}
             </TabsContent>
           </Tabs>
           <div className="text-center text-sm text-muted-foreground mt-4">
