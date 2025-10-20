@@ -163,6 +163,8 @@ export const AdminChatDialog = ({
     setNewMessage("");
 
     try {
+      console.log('Sending message:', { matchId, adminProfileId, userId, messageContent, messageType, mediaUrl });
+      
       const { data, error } = await supabase.functions.invoke('admin-send-message', {
         body: {
           match_id: matchId,
@@ -174,14 +176,21 @@ export const AdminChatDialog = ({
         }
       });
 
+      console.log('Message response:', { data, error });
+
       if (error) throw error;
 
-      if (data?.message) {
+      // La risposta è { success: true, message: {...} }
+      if (data?.success && data?.message) {
+        console.log('Replacing temp message with real message:', data.message);
         setMessages((prev) =>
           prev.map(msg => msg.id === tempMessage.id ? data.message as Message : msg)
         );
+      } else {
+        console.warn('Unexpected response format:', data);
       }
     } catch (error: any) {
+      console.error('Error sending message:', error);
       setMessages((prev) => prev.filter(msg => msg.id !== tempMessage.id));
       toast({
         title: "Errore",
