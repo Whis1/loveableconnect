@@ -162,24 +162,22 @@ export const AdminChatDialog = ({
     setNewMessage("");
 
     try {
-      const { data, error } = await supabase
-        .from("messages")
-        .insert({
+      const { data, error } = await supabase.functions.invoke('admin-send-message', {
+        body: {
           match_id: matchId,
           sender_id: adminProfileId,
           receiver_id: userId,
           content: messageContent,
           message_type: messageType,
           media_url: mediaUrl,
-        })
-        .select()
-        .single();
+        }
+      });
 
       if (error) throw error;
 
-      if (data) {
+      if (data?.message) {
         setMessages((prev) =>
-          prev.map(msg => msg.id === tempMessage.id ? data as Message : msg)
+          prev.map(msg => msg.id === tempMessage.id ? data.message as Message : msg)
         );
       }
     } catch (error: any) {

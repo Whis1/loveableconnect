@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.admin-notifications-delete-all]
 verify_jwt = false
+
+[functions.admin-send-message]
+verify_jwt = false
