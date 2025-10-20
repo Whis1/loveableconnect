@@ -48,9 +48,9 @@ export const MessageBubble = ({
   };
 
   return (
-    <div className={`flex w-full ${isOwn ? "justify-end" : "justify-start"}`}>
+    <div className={`flex w-full px-3 md:px-4 ${isOwn ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[70%] w-fit rounded-lg px-4 py-2 ${
+        className={`max-w-[85%] sm:max-w-[75%] md:max-w-[70%] w-fit rounded-lg px-4 py-2 ${
           messageType === 'emoji' ? 'bg-transparent' : 
           isOwn
             ? "bg-primary text-primary-foreground"
