@@ -44,6 +44,7 @@ const Dashboard = () => {
     let matchesChannel: ReturnType<typeof supabase.channel> | null = null;
     let likesChannel: ReturnType<typeof supabase.channel> | null = null;
     let profileChannel: ReturnType<typeof supabase.channel> | null = null;
+    let hiddenMatchesChannel: ReturnType<typeof supabase.channel> | null = null;
 
     const fetchUserData = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -79,7 +80,17 @@ const Dashboard = () => {
         .select("*")
         .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`);
 
-      setMatches(matchesData || []);
+      // Get hidden matches for current user
+      const { data: hiddenMatches } = await supabase
+        .from("hidden_matches")
+        .select("match_id")
+        .eq("user_id", session.user.id);
+      
+      const hiddenMatchIds = new Set(hiddenMatches?.map(h => h.match_id) || []);
+      
+      // Filter out hidden matches
+      const visibleMatches = (matchesData || []).filter(match => !hiddenMatchIds.has(match.id));
+      setMatches(visibleMatches);
 
       // Fetch likes received
       const { data: likesData } = await supabase
@@ -150,6 +161,25 @@ const Dashboard = () => {
           }
         )
         .subscribe();
+
+      // Set up realtime subscription for hidden matches
+      hiddenMatchesChannel = supabase
+        .channel('dashboard-hidden-matches')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'hidden_matches',
+          },
+          (payload) => {
+            const hiddenMatch = payload.new as any;
+            if (hiddenMatch.user_id === session.user.id) {
+              setMatches(prev => prev.filter(m => m.id !== hiddenMatch.match_id));
+            }
+          }
+        )
+        .subscribe();
     };
 
     fetchUserData();
@@ -170,6 +200,9 @@ const Dashboard = () => {
       }
       if (likesChannel) {
         supabase.removeChannel(likesChannel);
+      }
+      if (hiddenMatchesChannel) {
+        supabase.removeChannel(hiddenMatchesChannel);
       }
     };
   }, [navigate, toast]);
