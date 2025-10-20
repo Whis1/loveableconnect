@@ -53,14 +53,12 @@ export const MessageBubble = ({
 
   return (
     <div className="flex w-full px-2 md:px-4">
-      {!isOwn && (
-        <Avatar className="h-12 w-12 mr-3 shrink-0">
-          <AvatarImage src={senderAvatarUrl || undefined} alt="Profile" />
-          <AvatarFallback>
-            <User className="h-5 w-5" />
-          </AvatarFallback>
-        </Avatar>
-      )}
+      <Avatar className="h-12 w-12 mr-3 shrink-0">
+        <AvatarImage src={senderAvatarUrl || undefined} alt="Profile" />
+        <AvatarFallback>
+          <User className="h-5 w-5" />
+        </AvatarFallback>
+      </Avatar>
       <div
         className={`max-w-[85%] sm:max-w-[75%] md:max-w-[68%] w-fit rounded-lg px-4 py-2 ${
           messageType === 'emoji' ? 'bg-transparent' : 
@@ -82,14 +80,6 @@ export const MessageBubble = ({
           })}
         </p>
       </div>
-      {isOwn && (
-        <Avatar className="h-12 w-12 ml-3 shrink-0">
-          <AvatarImage src={senderAvatarUrl || undefined} alt="Profile" />
-          <AvatarFallback>
-            <User className="h-5 w-5" />
-          </AvatarFallback>
-        </Avatar>
-      )}
     </div>
   );
 };
