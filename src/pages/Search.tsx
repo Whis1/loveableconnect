@@ -184,6 +184,18 @@ const Search = () => {
     setLoading(true);
 
     try {
+      // Get user's matches to exclude them
+      const { data: matchesData } = await supabase
+        .from("matches")
+        .select("user1_id, user2_id")
+        .or(`user1_id.eq.${currentUser},user2_id.eq.${currentUser}`);
+
+      const matchedUserIds = new Set(
+        (matchesData || []).map(match => 
+          match.user1_id === currentUser ? match.user2_id : match.user1_id
+        )
+      );
+
       // Fetch tutti i profili escludendo l'utente corrente
       let query = supabase
         .from("profiles")
@@ -207,7 +219,9 @@ const Search = () => {
 
       if (error) throw error;
 
-      let filteredProfiles: Profile[] = (profilesData || []) as Profile[];
+      // Filter out profiles with existing matches
+      let filteredProfiles: Profile[] = (profilesData || [])
+        .filter(profile => !matchedUserIds.has(profile.id)) as Profile[];
 
       // Calcola distanza se la posizione è disponibile
       if (userLocation && locationPermission) {

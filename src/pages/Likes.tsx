@@ -200,6 +200,30 @@ const Likes = () => {
     };
 
     verifyUnlock();
+
+    // Realtime listener for deleted likes (when matches are created)
+    const likesDeleteChannel = supabase
+      .channel('likes-page-delete-channel')
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'likes',
+        },
+        async (payload) => {
+          const deletedLike = payload.old as any;
+          if (deletedLike.to_user_id === currentUserId) {
+            // A like received by this user was deleted, remove it from the list
+            setLikes(prev => prev.filter(like => like.id !== deletedLike.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(likesDeleteChannel);
+    };
   }, [toast, currentUserId, t]);
 
   const handleLikeBack = async (likeId: string, userId: string, userName: string) => {

@@ -228,6 +228,23 @@ const Dashboard = () => {
     
     window.addEventListener('focus', handleFocus);
 
+    // Realtime listener for deleted likes (when matches are created)
+    const likesDeleteChannel = supabase
+      .channel('likes-delete-channel')
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'likes',
+        },
+        async (payload) => {
+          // When a like is deleted, refresh user data
+          await fetchUserData();
+        }
+      )
+      .subscribe();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
         navigate("/auth");
@@ -249,6 +266,7 @@ const Dashboard = () => {
       if (hiddenMatchesChannel) {
         supabase.removeChannel(hiddenMatchesChannel);
       }
+      supabase.removeChannel(likesDeleteChannel);
     };
   }, [navigate, toast]);
 

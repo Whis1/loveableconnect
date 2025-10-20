@@ -109,68 +109,38 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
     
-    if (isLiking) return;
+    if (isLiking || hasLiked) return; // Prevent double-click and removing likes
     
     setIsLiking(true);
     
     try {
-      // Check if like already exists
-      const { data: existingLike } = await supabase
-        .from("likes")
-        .select("id")
-        .eq("from_user_id", currentUserId)
-        .eq("to_user_id", profile.id)
-        .maybeSingle();
-
-      if (existingLike) {
-        // Remove the like using edge function
-        const { data: removeData, error: removeError } = await supabase.functions.invoke(
-          'admin-manage-like',
-          {
-            body: {
-              action: 'remove',
-              fromUserId: currentUserId,
-              toUserId: profile.id
-            }
+      // Add the like using edge function
+      const { data: likeData, error: likeError } = await supabase.functions.invoke(
+        'admin-manage-like',
+        {
+          body: {
+            action: 'add',
+            fromUserId: currentUserId,
+            toUserId: profile.id
           }
-        );
-
-        if (removeError) throw removeError;
-
-        setHasLiked(false);
-        toast({
-          title: "Like rimosso",
-          description: `Hai rimosso il like da ${profile.nickname || profile.full_name}`,
-        });
-      } else {
-        // Add the like using edge function
-        const { data: likeData, error: likeError } = await supabase.functions.invoke(
-          'admin-manage-like',
-          {
-            body: {
-              action: 'add',
-              fromUserId: currentUserId,
-              toUserId: profile.id
-            }
-          }
-        );
-
-        if (likeError) throw likeError;
-
-        if (likeData?.match_created) {
-          // Match was created!
-          setHasLiked(true);
-          if (onMatch) {
-            onMatch(profile.nickname || profile.full_name);
-          }
-        } else {
-          // Just a like, no match
-          setHasLiked(true);
-          toast({
-            title: t("search.likeSent"),
-            description: `Like inviato a ${profile.nickname || profile.full_name}`,
-          });
         }
+      );
+
+      if (likeError) throw likeError;
+
+      if (likeData?.match_created) {
+        // Match was created!
+        setHasLiked(true);
+        if (onMatch) {
+          onMatch(profile.nickname || profile.full_name);
+        }
+      } else {
+        // Just a like, no match
+        setHasLiked(true);
+        toast({
+          title: t("search.likeSent"),
+          description: `Like inviato a ${profile.nickname || profile.full_name}`,
+        });
       }
       
       onLike(profile.id);
@@ -295,10 +265,10 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
                 size="sm"
                 className="flex-1 h-9 text-xs"
                 onClick={handleLike}
-                disabled={isLiking}
+                disabled={isLiking || hasLiked}
               >
                 <Heart className={`h-3.5 w-3.5 mr-1 ${hasLiked ? 'fill-current' : ''}`} />
-                {hasLiked ? "Rimuovi" : "Mi Piace"}
+                {hasLiked ? "Piaciuto" : "Mi Piace"}
               </Button>
               <Button
                 variant="default"

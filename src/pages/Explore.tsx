@@ -145,6 +145,20 @@ const Explore = () => {
           }
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'matches'
+        },
+        async (payload) => {
+          // When a match is deleted, the profiles should reappear
+          if (currentUser) {
+            await loadAllProfiles(currentUser);
+          }
+        }
+      )
       .subscribe();
 
     return () => {
@@ -156,6 +170,18 @@ const Explore = () => {
     setLoading(true);
     
     try {
+      // Get user's matches to exclude them
+      const { data: matchesData } = await supabase
+        .from("matches")
+        .select("user1_id, user2_id")
+        .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
+
+      const matchedUserIds = new Set(
+        (matchesData || []).map(match => 
+          match.user1_id === userId ? match.user2_id : match.user1_id
+        )
+      );
+
       const { data: profilesData, error } = await supabase
         .from("profiles")
         .select("*")
@@ -163,7 +189,9 @@ const Explore = () => {
 
       if (error) throw error;
 
-      let allProfiles: Profile[] = (profilesData || []) as Profile[];
+      // Filter out profiles with existing matches
+      let allProfiles: Profile[] = (profilesData || [])
+        .filter(profile => !matchedUserIds.has(profile.id)) as Profile[];
       
       // Sort by last active
       allProfiles.sort((a, b) => {
@@ -230,6 +258,18 @@ const Explore = () => {
     setShowFilters(false);
 
     try {
+      // Get user's matches to exclude them
+      const { data: matchesData } = await supabase
+        .from("matches")
+        .select("user1_id, user2_id")
+        .or(`user1_id.eq.${currentUser},user2_id.eq.${currentUser}`);
+
+      const matchedUserIds = new Set(
+        (matchesData || []).map(match => 
+          match.user1_id === currentUser ? match.user2_id : match.user1_id
+        )
+      );
+
       // Fetch all profiles excluding current user
       let query = supabase
         .from("profiles")
@@ -255,7 +295,9 @@ const Explore = () => {
 
       if (error) throw error;
 
-      let filteredProfiles: Profile[] = (profilesData || []) as Profile[];
+      // Filter out profiles with existing matches
+      let filteredProfiles: Profile[] = (profilesData || [])
+        .filter(profile => !matchedUserIds.has(profile.id)) as Profile[];
 
       // Sort by last active
       filteredProfiles.sort((a, b) => {
