@@ -38,10 +38,12 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
   });
 
   useEffect(() => {
+    if (!profileId) return;
     fetchNotes();
   }, [profileId]);
 
   const fetchNotes = async () => {
+    if (!profileId) return;
     try {
       const { data, error } = await supabase.functions.invoke('admin-profile-notes-get', {
         body: { profile_id: profileId }
@@ -60,6 +62,8 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
           lavoro: data.notes.lavoro || "",
           altro: data.notes.altro || "",
         });
+      } else {
+        setNotes({ nome: "", eta: "", location: "", relazione: "", figli: "", hobby: "", lavoro: "", altro: "" });
       }
     } catch (error: any) {
       console.error("Error fetching notes:", error);
@@ -67,6 +71,7 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
   };
 
   const handleBlur = async (field: keyof Notes, value: string) => {
+    if (!profileId) return;
     try {
       console.log('Saving note:', { profile_id: profileId, field, value });
       
