@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -42,6 +43,7 @@ export const ProfileDialog = ({
 }: ProfileDialogProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
@@ -242,32 +244,32 @@ export const ProfileDialog = ({
 
   const getGenderLabel = (gender: string) => {
     const labels: Record<string, string> = {
-      male: "Uomo",
-      female: "Donna",
-      transgender: "Transgender",
-      transexual: "Transessuale",
-      genderfluid: "Genderfluid",
-      "non-binary": "Non binario",
+      male: t('common.male'),
+      female: t('common.female'),
+      transgender: t('common.transgender'),
+      transexual: t('common.transexual'),
+      genderfluid: t('common.genderfluid'),
+      "non-binary": t('common.nonBinary'),
     };
     return labels[gender] || gender;
   };
 
   const getOrientationLabel = (orientation: string) => {
     const labels: Record<string, string> = {
-      heterosexual: "Eterosessuale",
-      homosexual: "Omosessuale",
-      bisexual: "Bisessuale",
-      pansexual: "Pansessuale",
-      asexual: "Asessuale",
+      heterosexual: t('common.heterosexual'),
+      homosexual: t('common.homosexual'),
+      bisexual: t('common.bisexual'),
+      pansexual: t('common.pansexual'),
+      asexual: t('common.asexual'),
     };
     return labels[orientation] || orientation;
   };
 
   const getRelationshipTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      serious: "Relazione seria",
-      casual: "Relazione casual",
-      friendship: "Amicizia",
+      serious: t('profile.seriousRelationship'),
+      casual: t('profile.casualDating'),
+      friendship: t('profile.friendship'),
     };
     return labels[type] || type;
   };
@@ -373,12 +375,17 @@ export const ProfileDialog = ({
                   Stato Relazione
                 </h3>
                 <div className="text-base font-medium">
-                  {profile.relationship_status === 'single' ? 'Single' :
-                   profile.relationship_status === 'in_relationship' ? 'In una relazione' :
-                   profile.relationship_status === 'married' ? 'Sposato/a' :
-                   profile.relationship_status === 'divorced' ? 'Divorziato/a' :
-                   profile.relationship_status === 'widowed' ? 'Vedovo/a' :
-                   profile.relationship_status === 'prefer_not_say' ? 'Preferisco non dirlo' :
+                  {profile.relationship_status === 'single' ? t('common.single') :
+                   profile.relationship_status === 'in_relationship' ? t('common.inRelationship') :
+                   profile.relationship_status === 'married' ? t('common.married') :
+                   profile.relationship_status === 'sposato' ? t('common.married') :
+                   profile.relationship_status === 'divorced' ? t('common.divorced') :
+                   profile.relationship_status === 'divorziato' ? t('common.divorced') :
+                   profile.relationship_status === 'widowed' ? t('common.widowed') :
+                   profile.relationship_status === 'vedovo' ? t('common.widowed') :
+                   profile.relationship_status === 'prefer_not_say' ? t('common.preferNotSay') :
+                   profile.relationship_status === 'preferisco_non_dirlo' ? t('common.preferNotSay') :
+                   profile.relationship_status === 'scoprilo' ? t('common.notSpecified') :
                    profile.relationship_status}
                 </div>
               </div>

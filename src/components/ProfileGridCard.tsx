@@ -42,15 +42,15 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
   const getGenderLabel = (gender: string | null) => {
     if (!gender) return "";
     const genderMap: Record<string, string> = {
-      male: "Uomo",
-      female: "Donna",
-      transgender: "Transgender",
-      transexual: "Transessuale",
-      trans: "Transgender",
-      genderfluid: "Genderfluid",
-      "non-binary": "Non binario",
-      uomo: "Uomo",
-      donna: "Donna",
+      male: t('common.male'),
+      female: t('common.female'),
+      transgender: t('common.transgender'),
+      transexual: t('common.transexual'),
+      trans: t('common.transgender'),
+      genderfluid: t('common.genderfluid'),
+      "non-binary": t('common.nonBinary'),
+      uomo: t('common.male'),
+      donna: t('common.female'),
     };
     return genderMap[gender.toLowerCase()] || gender;
   };
@@ -58,11 +58,11 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
   const getOrientationLabel = (orientation: string | null) => {
     if (!orientation) return "";
     const orientationMap: Record<string, string> = {
-      heterosexual: "Eterosessuale",
-      homosexual: "Omosessuale",
-      bisexual: "Bisessuale",
-      pansexual: "Pansessuale",
-      asexual: "Asessuale",
+      heterosexual: t('common.heterosexual'),
+      homosexual: t('common.homosexual'),
+      bisexual: t('common.bisexual'),
+      pansexual: t('common.pansexual'),
+      asexual: t('common.asexual'),
     };
     return orientationMap[orientation] || orientation;
   };
@@ -70,12 +70,17 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
   const getRelationshipStatusLabel = (status: string | null) => {
     if (!status) return "";
     const statusMap: Record<string, string> = {
-      single: "Single",
-      in_relationship: "In relazione",
-      married: "Sposato/a",
-      divorced: "Divorziato/a",
-      widowed: "Vedovo/a",
-      prefer_not_say: "Preferisco non dirlo",
+      single: t('common.single'),
+      in_relationship: t('common.inRelationship'),
+      married: t('common.married'),
+      divorced: t('common.divorced'),
+      widowed: t('common.widowed'),
+      prefer_not_say: t('common.preferNotSay'),
+      sposato: t('common.married'),
+      divorziato: t('common.divorced'),
+      vedovo: t('common.widowed'),
+      preferisco_non_dirlo: t('common.preferNotSay'),
+      scoprilo: t('common.notSpecified'),
     };
     return statusMap[status] || status;
   };
