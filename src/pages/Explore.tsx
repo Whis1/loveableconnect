@@ -50,16 +50,25 @@ const Explore = () => {
   
   const [ageRange, setAgeRange] = useState([18, 90]);
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
+  const [selectedOrientations, setSelectedOrientations] = useState<string[]>([]);
   
   const PROFILES_PER_PAGE = 24;
 
   const genderOptions = [
-    { value: "male", label: t("explore.genders.male") },
-    { value: "female", label: t("explore.genders.female") },
-    { value: "transexual", label: t("explore.genders.transexual") },
-    { value: "transgender", label: t("explore.genders.transgender") },
-    { value: "homosexual", label: t("explore.genders.homosexual") },
-    { value: "non-binary", label: t("explore.genders.nonBinary") },
+    { value: "male", label: "Uomo" },
+    { value: "female", label: "Donna" },
+    { value: "transgender", label: "Transgender" },
+    { value: "transexual", label: "Transessuale" },
+    { value: "genderfluid", label: "Genderfluid" },
+    { value: "non-binary", label: "Non binario" },
+  ];
+
+  const orientationOptions = [
+    { value: "heterosexual", label: "Eterosessuale" },
+    { value: "homosexual", label: "Omosessuale" },
+    { value: "bisexual", label: "Bisessuale" },
+    { value: "pansexual", label: "Pansexuale" },
+    { value: "asexual", label: "Asessuale" },
   ];
 
   useEffect(() => {
@@ -174,6 +183,11 @@ const Explore = () => {
         query = query.in("gender", selectedGenders);
       }
 
+      // Orientation filter
+      if (selectedOrientations.length > 0) {
+        query = query.in("sexual_orientation", selectedOrientations);
+      }
+
       const { data: profilesData, error } = await query;
 
       if (error) throw error;
@@ -210,6 +224,7 @@ const Explore = () => {
   const resetFilters = () => {
     setAgeRange([18, 90]);
     setSelectedGenders([]);
+    setSelectedOrientations([]);
     if (currentUser) {
       loadAllProfiles(currentUser);
     }
@@ -220,6 +235,14 @@ const Explore = () => {
       prev.includes(gender) 
         ? prev.filter(g => g !== gender)
         : [...prev, gender]
+    );
+  };
+
+  const toggleOrientation = (orientation: string) => {
+    setSelectedOrientations(prev => 
+      prev.includes(orientation) 
+        ? prev.filter(o => o !== orientation)
+        : [...prev, orientation]
     );
   };
 
@@ -295,6 +318,28 @@ const Explore = () => {
                       />
                       <label
                         htmlFor={option.value}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {option.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sexual Orientation Filter */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Orientamento Sessuale</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  {orientationOptions.map((option) => (
+                    <div key={option.value} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`orientation-${option.value}`}
+                        checked={selectedOrientations.includes(option.value)}
+                        onCheckedChange={() => toggleOrientation(option.value)}
+                      />
+                      <label
+                        htmlFor={`orientation-${option.value}`}
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                       >
                         {option.label}
