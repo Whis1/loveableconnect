@@ -10,6 +10,7 @@ import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { GifPicker } from "@/components/chat/GifPicker";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ChatUserProfile } from "@/components/chat/ChatUserProfile";
+import { ProfileNotebook } from "./ProfileNotebook";
 
 interface AdminChatDialogProps {
   open: boolean;
@@ -237,7 +238,7 @@ export const AdminChatDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
+      <DialogContent className="max-w-[95vw] h-[90vh] flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
           <DialogTitle>
             Chat: {adminNickname} ↔️ {userNickname}
@@ -249,34 +250,55 @@ export const AdminChatDialog = ({
           <ChatUserProfile userId={userId} currentUserId={adminProfileId} />
         </div>
 
-        {/* Messages */}
-        <ScrollArea className="flex-1 px-6 min-h-0">
-          {loading ? (
-            <p className="text-muted-foreground text-center py-8">Caricamento...</p>
-          ) : (
-            <div className="space-y-4 py-4">
-              {messages.map((message) => {
-                const isOwn = message.sender_id === adminProfileId;
-                
-                return (
-                  <MessageBubble
-                    key={message.id}
-                    content={message.content}
-                    messageType={message.message_type}
-                    mediaUrl={message.media_url}
-                    isOwn={isOwn}
-                    timestamp={message.created_at}
-                    messageId={message.id}
-                    senderId={message.sender_id}
-                    receiverId={message.receiver_id}
-                    matchId={message.match_id}
-                  />
-                );
-              })}
-              <div ref={messagesEndRef} />
-            </div>
-          )}
-        </ScrollArea>
+        {/* Main Content: Notebooks + Messages */}
+        <div className="flex-1 flex gap-4 px-6 min-h-0">
+          {/* Left Notebook - User */}
+          <div className="w-64 shrink-0">
+            <ProfileNotebook 
+              profileId={userId} 
+              profileName={userNickname}
+              isAdmin={false}
+            />
+          </div>
+
+          {/* Messages */}
+          <ScrollArea className="flex-1 min-h-0">
+            {loading ? (
+              <p className="text-muted-foreground text-center py-8">Caricamento...</p>
+            ) : (
+              <div className="space-y-4 py-4">
+                {messages.map((message) => {
+                  const isOwn = message.sender_id === adminProfileId;
+                  
+                  return (
+                    <MessageBubble
+                      key={message.id}
+                      content={message.content}
+                      messageType={message.message_type}
+                      mediaUrl={message.media_url}
+                      isOwn={isOwn}
+                      timestamp={message.created_at}
+                      messageId={message.id}
+                      senderId={message.sender_id}
+                      receiverId={message.receiver_id}
+                      matchId={message.match_id}
+                    />
+                  );
+                })}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
+          </ScrollArea>
+
+          {/* Right Notebook - Admin */}
+          <div className="w-64 shrink-0">
+            <ProfileNotebook 
+              profileId={adminProfileId} 
+              profileName={adminNickname}
+              isAdmin={true}
+            />
+          </div>
+        </div>
 
         {/* Input */}
         <div className="border-t p-4 bg-background shrink-0">
