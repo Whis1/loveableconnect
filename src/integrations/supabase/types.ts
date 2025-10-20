@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_notifications: {
+        Row: {
+          admin_profile_id: string
+          created_at: string
+          id: string
+          interaction_type: string
+          message_preview: string | null
+          read: boolean
+          user_id: string
+        }
+        Insert: {
+          admin_profile_id: string
+          created_at?: string
+          id?: string
+          interaction_type: string
+          message_preview?: string | null
+          read?: boolean
+          user_id: string
+        }
+        Update: {
+          admin_profile_id?: string
+          created_at?: string
+          id?: string
+          interaction_type?: string
+          message_preview?: string | null
+          read?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       banned_users: {
         Row: {
           banned_at: string

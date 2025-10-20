@@ -9,6 +9,7 @@ import { ProfileCreator } from "@/components/admin/ProfileCreator";
 import { ProfileManager } from "@/components/admin/ProfileManager";
 import { SupportChatMonitor } from "@/components/admin/SupportChatMonitor";
 import { UserBanManager } from "@/components/admin/UserBanManager";
+import { NotificationMonitor } from "@/components/admin/NotificationMonitor";
 import { Shield, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -122,8 +123,10 @@ export default function AdminArrettu() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <ProfileManager />
-          <SupportChatMonitor />
+          <NotificationMonitor />
         </div>
+
+        <SupportChatMonitor />
       </div>
     </div>
   );
