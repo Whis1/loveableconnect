@@ -55,7 +55,7 @@ export const MessageBubble = ({
           isOwn
             ? "bg-primary text-primary-foreground"
             : "bg-muted text-foreground"
-        }`}
+        } ${isOwn ? 'mr-3 md:mr-6' : 'ml-3 md:ml-6'}`}
       >
         {renderContent()}
         <p
