@@ -182,11 +182,9 @@ export const AdminChatDialog = ({
       if (error) throw error;
 
       // La risposta è { success: true, message: {...} }
-      if (data?.success && data?.message) {
-        console.log('Replacing temp message with real message:', data.message);
-        setMessages((prev) =>
-          prev.map(msg => msg.id === tempMessage.id ? data.message as Message : msg)
-        );
+      if (data?.success) {
+        console.log('Removing temp message; relying on realtime insert for actual message:', data.message);
+        setMessages((prev) => prev.filter(msg => msg.id !== tempMessage.id));
       } else {
         console.warn('Unexpected response format:', data);
       }

@@ -43,7 +43,7 @@ export const MessageBubble = ({
         );
       
       default:
-        return <p className="break-words whitespace-pre-wrap">{content}</p>;
+        return <p className="break-words whitespace-pre-wrap">{content?.trim() ? content : 'Messaggio vuoto'}</p>;
     }
   };
 
