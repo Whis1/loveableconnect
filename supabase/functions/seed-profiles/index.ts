@@ -106,11 +106,11 @@ const bios = [
   'Scrittrice in erba, ho mille storie da raccontare. Tu ne vuoi far parte?'
 ];
 
-const genders = ['female', 'female', 'female', 'female', 'female', 'female', 'female', 'female', 'female', 'female', 
-                 'transexual', 'transgender', 'non-binary'];
+const genders = ['male', 'female', 'female', 'female', 'female', 'female', 'female', 'female', 
+                 'transgender', 'transexual', 'genderfluid', 'non-binary'];
 
 const orientations = ['heterosexual', 'heterosexual', 'heterosexual', 'heterosexual', 
-                      'homosexual', 'homosexual', 'bisexual', 'bisexual', 'pansexual'];
+                      'homosexual', 'homosexual', 'bisexual', 'bisexual', 'pansexual', 'asexual'];
 
 function getRandomElement<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)];
