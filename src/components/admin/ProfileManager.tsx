@@ -11,7 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Users, MessageSquare, Save, Upload, X, Image as ImageIcon } from "lucide-react";
+import { Users, MessageSquare, Save, Upload, X, Image as ImageIcon, Search } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AdminChatDialog } from "./AdminChatDialog";
 
@@ -64,6 +64,7 @@ export const ProfileManager = () => {
   const [profileLikes, setProfileLikes] = useState<{ [profileId: string]: string[] }>({});
   const [chatDialogOpen, setChatDialogOpen] = useState(false);
   const [selectedChatProfile, setSelectedChatProfile] = useState<{ profileId: string; profileNickname: string; userId: string; userNickname: string } | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchProfiles();
@@ -409,6 +410,11 @@ export const ProfileManager = () => {
     }
   };
 
+  // Filter profiles based on search query
+  const filteredProfiles = profiles.filter((profile) =>
+    profile.nickname.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   if (loading) {
     return (
       <Card>
@@ -422,15 +428,27 @@ export const ProfileManager = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          Gestione Profili ({profiles.length})
-        </CardTitle>
+        <div className="flex items-center justify-between gap-4">
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Gestione Profili ({filteredProfiles.length})
+          </CardTitle>
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Cerca per nickname..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[600px] pr-4">
           <Accordion type="single" collapsible className="space-y-2">
-            {profiles.map((profile) => (
+            {filteredProfiles.map((profile) => (
               <AccordionItem key={profile.id} value={profile.id} className="border rounded-lg px-4">
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-3">
