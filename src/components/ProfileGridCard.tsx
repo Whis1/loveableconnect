@@ -123,13 +123,19 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
         .maybeSingle();
 
       if (existingLike) {
-        // Remove the like
-        const { error } = await supabase
-          .from("likes")
-          .delete()
-          .eq("id", existingLike.id);
+        // Remove the like using edge function
+        const { data: removeData, error: removeError } = await supabase.functions.invoke(
+          'admin-manage-like',
+          {
+            body: {
+              action: 'remove',
+              fromUserId: currentUserId,
+              toUserId: profile.id
+            }
+          }
+        );
 
-        if (error) throw error;
+        if (removeError) throw removeError;
 
         setHasLiked(false);
         toast({
@@ -137,26 +143,21 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
           description: `Hai rimosso il like da ${profile.nickname || profile.full_name}`,
         });
       } else {
-        // Add the like
-        const { data: insertedLike, error } = await supabase
-          .from("likes")
-          .insert({
-            from_user_id: currentUserId,
-            to_user_id: profile.id,
-          })
-          .select()
-          .single();
+        // Add the like using edge function
+        const { data: likeData, error: likeError } = await supabase.functions.invoke(
+          'admin-manage-like',
+          {
+            body: {
+              action: 'add',
+              fromUserId: currentUserId,
+              toUserId: profile.id
+            }
+          }
+        );
 
-        if (error) throw error;
+        if (likeError) throw likeError;
 
-        // Check if the like still exists (if not, a match was created by the trigger)
-        const { data: likeStillExists } = await supabase
-          .from("likes")
-          .select("id")
-          .eq("id", insertedLike.id)
-          .maybeSingle();
-
-        if (!likeStillExists) {
+        if (likeData?.match_created) {
           // Match was created!
           setHasLiked(true);
           if (onMatch) {
