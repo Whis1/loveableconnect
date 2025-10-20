@@ -65,8 +65,12 @@ const Likes = () => {
         .eq("user_id", session.user.id)
         .maybeSingle();
 
-      // User has access if premium OR manually unlocked
-      setHasUnlocked(!!userIsPremium || !!unlockData);
+      // Check if unlock is still valid (not expired)
+      const unlockIsValid = unlockData && 
+        (!unlockData.expires_at || new Date(unlockData.expires_at) > new Date());
+
+      // User has access if premium OR has valid unlock
+      setHasUnlocked(!!userIsPremium || !!unlockIsValid);
       setCheckingUnlock(false);
 
       // Fetch likes
@@ -141,35 +145,55 @@ const Likes = () => {
     }
   };
 
-  // Check URL params for success/cancel
+  // Verify unlock payment after redirect
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const unlockStatus = params.get('unlock');
-    
-    if (unlockStatus === 'success') {
-      // Record unlock in database
-      if (currentUserId) {
-        supabase
-          .from('likes_unlocked')
-          .insert({ user_id: currentUserId })
-          .then(() => {
+    const verifyUnlock = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get('session_id');
+      const unlockStatus = params.get('unlock');
+      
+      if (sessionId && currentUserId) {
+        try {
+          const { data, error } = await supabase.functions.invoke('verify-unlock-payment', {
+            body: { session_id: sessionId }
+          });
+
+          if (error) throw error;
+
+          if (data.success) {
             toast({
               title: t("likes.paymentCompleted"),
               description: t("likes.paymentCompletedDescription"),
             });
-            // Remove query params and reload
-            window.history.replaceState({}, '', '/likes');
             setHasUnlocked(true);
+          } else {
+            toast({
+              title: t("likes.error"),
+              description: t("likes.paymentNotCompleted"),
+              variant: "destructive",
+            });
+          }
+        } catch (error) {
+          console.error("Error verifying unlock:", error);
+          toast({
+            title: t("likes.error"),
+            description: t("likes.errorVerifyingPayment"),
+            variant: "destructive",
           });
+        }
+        
+        window.history.replaceState({}, '', '/likes');
+      } else if (unlockStatus === 'cancel') {
+        toast({
+          title: t("likes.paymentCancelled"),
+          description: t("likes.paymentCancelledDescription"),
+          variant: "destructive",
+        });
+        window.history.replaceState({}, '', '/likes');
       }
-    } else if (unlockStatus === 'cancel') {
-      toast({
-        title: t("likes.paymentCancelled"),
-        description: t("likes.paymentCancelledDescription"),
-        variant: "destructive",
-      });
-      window.history.replaceState({}, '', '/likes');
-    }
+    };
+
+    verifyUnlock();
   }, [toast, currentUserId, t]);
 
   if (loading || checkingUnlock) {

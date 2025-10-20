@@ -40,12 +40,12 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price: "price_1SHjPfK6IHDbrxmE3MnempF2", // The price ID we just created
+          price: "price_1SHjPfK6IHDbrxmE3MnempF2",
           quantity: 1,
         },
       ],
       mode: "payment",
-      success_url: `${req.headers.get("origin")}/likes?unlock=success`,
+      success_url: `${req.headers.get("origin")}/likes?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get("origin")}/likes?unlock=cancel`,
       metadata: {
         user_id: user.id,
