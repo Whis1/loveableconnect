@@ -579,6 +579,7 @@ export const ProfileManager = () => {
                           <SelectItem value="male">Uomo</SelectItem>
                           <SelectItem value="female">Donna</SelectItem>
                           <SelectItem value="non-binary">Non binario</SelectItem>
+                          <SelectItem value="genderfluid">Genderfluid</SelectItem>
                           <SelectItem value="transexual">Transessuale</SelectItem>
                           <SelectItem value="transgender">Transgender</SelectItem>
                           <SelectItem value="other">Altro</SelectItem>
@@ -635,37 +636,26 @@ export const ProfileManager = () => {
                     </div>
 
                     {/* Cosa Cerchi */}
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       <Label>Cosa cerchi</Label>
-                      <div className="space-y-2">
-                        {[
-                          { value: "Relazione seria", label: "Relazione seria" },
-                          { value: "Incontri casuali", label: "Incontri casuali" },
-                          { value: "Amicizia", label: "Amicizia" },
-                          { value: "Non specifico", label: "Non specifico" },
-                          { value: "Preferisco non dirlo", label: "Preferisco non dirlo" },
-                        ].map((option) => (
-                          <div key={option.value} className="flex items-center space-x-2">
-                            <Switch
-                              id={`${profile.id}-looking-${option.value}`}
-                              checked={(profile.looking_for || []).includes(option.value)}
-                              onCheckedChange={(checked) => {
-                                const currentLookingFor = profile.looking_for || [];
-                                const updated = {
-                                  ...profile,
-                                  looking_for: checked
-                                    ? [...currentLookingFor, option.value]
-                                    : currentLookingFor.filter((lf) => lf !== option.value),
-                                };
-                                setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
-                              }}
-                            />
-                            <Label htmlFor={`${profile.id}-looking-${option.value}`} className="cursor-pointer">
-                              {option.label}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
+                      <Select
+                        value={(profile.looking_for || [])[0] || ""}
+                        onValueChange={(value) => {
+                          const updated = { ...profile, looking_for: value ? [value] : [] };
+                          setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleziona cosa cerchi" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-50">
+                          <SelectItem value="Relazione seria">Relazione seria</SelectItem>
+                          <SelectItem value="Incontri casuali">Incontri casuali</SelectItem>
+                          <SelectItem value="Amicizia">Amicizia</SelectItem>
+                          <SelectItem value="Non specifico">Non specifico</SelectItem>
+                          <SelectItem value="Preferisco non dirlo">Preferisco non dirlo</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     {/* Interessi */}
