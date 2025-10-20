@@ -58,11 +58,40 @@ export const NotificationMonitor = () => {
 
     // Sottoscrizione realtime per nuove notifiche
     const channel = supabase
-      .channel('admin_notifications_changes')
+      .channel('admin_notifications_realtime')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
+          schema: 'public',
+          table: 'admin_notifications'
+        },
+        (payload) => {
+          console.log('Nuova notifica ricevuta:', payload);
+          fetchNotifications();
+          
+          // Mostra toast per nuova notifica
+          toast({
+            title: "Nuova notifica",
+            description: "Hai ricevuto una nuova interazione",
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'admin_notifications'
+        },
+        () => {
+          fetchNotifications();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
           schema: 'public',
           table: 'admin_notifications'
         },
