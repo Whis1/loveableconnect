@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save, Upload, X, Camera } from "lucide-react";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
+import { InterestsAutocomplete } from "@/components/InterestsAutocomplete";
 
 interface Profile {
   id: string;
@@ -37,20 +38,12 @@ const ProfileEdit = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [interestsInput, setInterestsInput] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [lookingFor, setLookingFor] = useState<string[]>([]);
-
-  const suggestedInterests = [
-    "Trekking", "Gaming", "Anime", "Viaggi", "Musica", "Cinema", 
-    "Netflix", "Sport", "Cucina", "Lettura", "Fotografia", "Arte",
-    "Yoga", "Fitness", "Danza", "Teatro", "Moda", "Tecnologia",
-    "Serie TV", "Concerti", "Escursioni", "Bicicletta", "Nuoto", "Calcio"
-  ];
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -70,7 +63,6 @@ const ProfileEdit = () => {
       if (profileData) {
         setProfile(profileData);
         setInterests(profileData.interests || []);
-        setInterestsInput("");
         setLookingFor(profileData.looking_for || []);
         
         // Load avatar preview
@@ -163,35 +155,6 @@ const ProfileEdit = () => {
     setPhotoPreviews(newPreviews);
   };
 
-  const handleAddInterest = (interest: string) => {
-    if (interests.length >= 6) {
-      toast({
-        title: t('profile.limitReached'),
-        description: t('profile.maxInterests'),
-        variant: "destructive",
-      });
-      return;
-    }
-    if (!interests.includes(interest) && interest.trim()) {
-      setInterests([...interests, interest.trim()]);
-      setInterestsInput("");
-    }
-  };
-
-  const handleRemoveInterest = (interest: string) => {
-    setInterests(interests.filter(i => i !== interest));
-  };
-
-  const handleInterestInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && interestsInput.trim()) {
-      e.preventDefault();
-      handleAddInterest(interestsInput);
-    }
-  };
-
-  const filteredSuggestions = suggestedInterests.filter(
-    s => s.toLowerCase().includes(interestsInput.toLowerCase()) && !interests.includes(s)
-  );
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -546,57 +509,12 @@ const ProfileEdit = () => {
 
               {/* Interests */}
               <div className="space-y-2">
-                <Label htmlFor="interests">{t('profile.interests')} ({interests.length}/6)</Label>
-                
-                {/* Selected Interests Tags */}
-                {interests.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {interests.map((interest) => (
-                      <div
-                        key={interest}
-                        className="inline-flex items-center gap-1 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm"
-                      >
-                        <span>{interest}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveInterest(interest)}
-                          className="hover:bg-primary-foreground/20 rounded-full p-0.5"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Input with Suggestions */}
-                {interests.length < 6 && (
-                  <div className="relative">
-                    <Input
-                      id="interests"
-                      value={interestsInput}
-                      onChange={(e) => setInterestsInput(e.target.value)}
-                      onKeyDown={handleInterestInputKeyDown}
-                      placeholder={t('profile.typeAndEnter')}
-                    />
-                  
-                    {/* Suggestions Dropdown */}
-                    {interestsInput && filteredSuggestions.length > 0 && (
-                      <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
-                        {filteredSuggestions.slice(0, 8).map((suggestion) => (
-                          <button
-                            key={suggestion}
-                            type="button"
-                            onClick={() => handleAddInterest(suggestion)}
-                            className="w-full text-left px-4 py-2 hover:bg-accent hover:text-accent-foreground transition-colors"
-                          >
-                            {suggestion}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
+                <Label htmlFor="interests">Interessi (max 4)</Label>
+                <InterestsAutocomplete
+                  selectedInterests={interests}
+                  onInterestsChange={setInterests}
+                  maxInterests={4}
+                />
               </div>
 
               <Button type="submit" className="w-full" disabled={saving}>
