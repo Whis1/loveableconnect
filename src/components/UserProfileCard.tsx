@@ -35,6 +35,17 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
   const { isAdmin, loading: adminLoading } = useAdminRole();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setCurrentUserId(session.user.id);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -125,7 +136,11 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
 
             <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
               <MapPin className="h-4 w-4" />
-              <span>{!adminLoading && isAdmin ? (profile.city || "Vicino alle tue parti") : "Vicino alle tue parti"}</span>
+              <span>
+                {(!adminLoading && isAdmin) || (currentUserId === profile.id) 
+                  ? (profile.city || "Vicino alle tue parti") 
+                  : "Vicino alle tue parti"}
+              </span>
             </div>
 
             {/* Info badges row */}
