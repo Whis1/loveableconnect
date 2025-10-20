@@ -250,7 +250,7 @@ const Explore = () => {
         }}
       />
       
-      <div className="container mx-auto max-w-2xl relative z-10">
+      <div className="container mx-auto max-w-7xl relative z-10">
         <div className="mb-4 flex justify-between items-center">
           <Button variant="ghost" onClick={() => navigate("/")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -328,7 +328,7 @@ const Explore = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
               {displayedProfiles.map((profile) => (
                 <ProfileGridCard
                   key={profile.id}

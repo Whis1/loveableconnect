@@ -213,61 +213,58 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
           </div>
 
           {/* Info Section */}
-          <div className="p-4 space-y-3">
+          <div className="p-4 space-y-2.5">
             {/* Name and Age */}
             <div className="flex items-baseline gap-2">
-              <h3 className="text-xl font-bold text-foreground truncate">
+              <h3 className="text-lg font-bold text-foreground truncate">
                 {profile.nickname}
               </h3>
               {profile.age && (
-                <span className="text-lg text-muted-foreground font-medium">
+                <span className="text-base text-muted-foreground font-medium">
                   {profile.age}
                 </span>
               )}
             </div>
 
-            {/* Details */}
-            <div className="space-y-1.5 text-sm">
-              {/* Location */}
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <MapPin className="h-4 w-4 flex-shrink-0 text-primary" />
-                <span className="truncate">{getGenericLocationPhrase()}</span>
-              </div>
+            {/* Location */}
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-primary" />
+              <span className="truncate">{getGenericLocationPhrase()}</span>
+            </div>
 
-              {/* Gender & Orientation Pills */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {profile.gender && (
-                  <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                    {getGenderLabel(profile.gender)}
-                  </span>
-                )}
-                {profile.sexual_orientation && (
-                  <span className="px-2.5 py-1 rounded-full bg-secondary/10 text-secondary-foreground text-xs font-medium">
-                    {getOrientationLabel(profile.sexual_orientation)}
-                  </span>
-                )}
-              </div>
+            {/* Gender & Orientation Pills */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {profile.gender && (
+                <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                  {getGenderLabel(profile.gender)}
+                </span>
+              )}
+              {profile.sexual_orientation && (
+                <span className="px-2 py-0.5 rounded-full bg-secondary/10 text-secondary-foreground text-xs font-medium">
+                  {getOrientationLabel(profile.sexual_orientation)}
+                </span>
+              )}
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2 pt-1">
               <Button
                 variant={hasLiked ? "default" : "outline"}
                 size="sm"
-                className="flex-1"
+                className="flex-1 h-9 text-xs"
                 onClick={handleLike}
                 disabled={isLiking}
               >
-                <Heart className={`h-4 w-4 mr-1.5 ${hasLiked ? 'fill-current' : ''}`} />
+                <Heart className={`h-3.5 w-3.5 mr-1 ${hasLiked ? 'fill-current' : ''}`} />
                 {hasLiked ? "Rimuovi" : "Mi Piace"}
               </Button>
               <Button
                 variant="default"
                 size="sm"
-                className="flex-1 bg-gradient-to-r from-primary to-primary/80"
+                className="flex-1 h-9 text-xs bg-gradient-to-r from-primary to-primary/80"
                 onClick={handleChat}
               >
-                <MessageCircle className="h-4 w-4 mr-1.5" />
+                <MessageCircle className="h-3.5 w-3.5 mr-1" />
                 Chat
               </Button>
             </div>
