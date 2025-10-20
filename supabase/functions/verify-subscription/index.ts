@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { Resend } from "npm:resend@4.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -68,6 +69,50 @@ serve(async (req) => {
       status: "completed",
       completed_at: new Date().toISOString(),
     });
+
+    // Send confirmation email
+    try {
+      const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+      const expiryDate = new Date(subscription.current_period_end * 1000);
+      
+      await resend.emails.send({
+        from: "Love App <onboarding@resend.dev>",
+        to: [user.email!],
+        subject: "✨ Abbonamento Premium Attivato!",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #9333ea;">🎉 Benvenuto tra i Premium!</h1>
+            <p>Ciao,</p>
+            <p>Il tuo abbonamento Premium è stato attivato con successo!</p>
+            
+            <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h2 style="margin-top: 0; color: #374151;">Dettagli Abbonamento</h2>
+              <p><strong>Piano:</strong> Premium Mensile</p>
+              <p><strong>Importo:</strong> €99.99</p>
+              <p><strong>Valido fino:</strong> ${expiryDate.toLocaleDateString('it-IT')}</p>
+              <p><strong>ID Pagamento:</strong> ${session.payment_intent}</p>
+            </div>
+
+            <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #92400e;">✨ I tuoi vantaggi Premium:</h3>
+              <ul style="color: #78350f;">
+                <li>Crediti illimitati per messaggi</li>
+                <li>Accesso completo ai likes ricevuti</li>
+                <li>Priorità nella visualizzazione</li>
+                <li>Badge Premium sul profilo</li>
+              </ul>
+            </div>
+
+            <p>Grazie per il tuo supporto!</p>
+            <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">
+              Riceverai una notifica prima della scadenza del tuo abbonamento.
+            </p>
+          </div>
+        `,
+      });
+    } catch (emailError) {
+      console.error("Error sending premium confirmation email:", emailError);
+    }
 
     return new Response(
       JSON.stringify({ success: true, premium_active: true }),

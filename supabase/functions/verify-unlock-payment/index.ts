@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { Resend } from "npm:resend@4.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -85,6 +86,45 @@ serve(async (req) => {
     }
 
     console.log("Likes unlocked successfully until:", expiresAt);
+
+    // Send confirmation email
+    try {
+      const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+      
+      await resend.emails.send({
+        from: "Love App <onboarding@resend.dev>",
+        to: [user.email!],
+        subject: "💕 Likes Sbloccati per 24 Ore!",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #ec4899;">💕 Likes Sbloccati!</h1>
+            <p>Ciao,</p>
+            <p>Hai sbloccato con successo l'accesso ai tuoi likes ricevuti!</p>
+            
+            <div style="background: #fce7f3; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h2 style="margin-top: 0; color: #9f1239;">Dettagli Sblocco</h2>
+              <p><strong>Importo:</strong> €2.99</p>
+              <p><strong>Durata:</strong> 24 ore</p>
+              <p><strong>Valido fino:</strong> ${expiresAt.toLocaleString('it-IT')}</p>
+              <p><strong>ID Pagamento:</strong> ${session.payment_intent}</p>
+            </div>
+
+            <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 0; color: #92400e;">
+                ✨ Ora puoi vedere chi ha messo like al tuo profilo e iniziare a chattare!
+              </p>
+            </div>
+
+            <p>Approfitta delle prossime 24 ore per scoprire i tuoi ammiratori!</p>
+            <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">
+              Dopo 24 ore l'accesso ai likes tornerà limitato. Considera l'abbonamento Premium per accesso illimitato!
+            </p>
+          </div>
+        `,
+      });
+    } catch (emailError) {
+      console.error("Error sending unlock confirmation email:", emailError);
+    }
 
     return new Response(
       JSON.stringify({ success: true, expires_at: expiresAt }),
