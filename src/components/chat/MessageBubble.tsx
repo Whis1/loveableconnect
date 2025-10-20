@@ -41,7 +41,7 @@ export const MessageBubble = ({
         ) : null;
       
       default:
-        return <p className="break-words">{content}</p>;
+        return <p className="break-words whitespace-pre-wrap">{content}</p>;
     }
   };
 
@@ -52,7 +52,7 @@ export const MessageBubble = ({
           messageType === 'emoji' ? 'bg-transparent' : 
           isOwn
             ? "bg-primary text-primary-foreground"
-            : "bg-muted"
+            : "bg-muted text-foreground"
         }`}
       >
         {renderContent()}
