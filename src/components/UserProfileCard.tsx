@@ -16,12 +16,13 @@ interface Profile {
   nickname: string;
   bio: string | null;
   age: number | null;
+  gender: string | null;
+  sexual_orientation: string | null;
   city: string | null;
   interests: string[] | null;
   avatar_url: string | null;
   relationship_type: string | null;
   relationship_status: string | null;
-  looking_for: string[] | null;
 }
 
 interface UserProfileCardProps {
@@ -127,36 +128,52 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
               <span>{!adminLoading && isAdmin ? (profile.city || "Vicino alle tue parti") : "Vicino alle tue parti"}</span>
             </div>
 
-            {profile.relationship_status && (
-              <Badge variant="outline" className="text-xs">
-                <span className="font-semibold">Stato:</span> {
-                  profile.relationship_status === 'single' ? 'Single' :
-                  profile.relationship_status === 'in_relationship' ? 'In relazione' :
-                  profile.relationship_status === 'married' ? 'Sposato/a' :
-                  profile.relationship_status === 'divorced' ? 'Divorziato/a' :
-                  profile.relationship_status === 'widowed' ? 'Vedovo/a' :
-                  profile.relationship_status === 'prefer_not_say' ? 'Preferisco non dirlo' :
-                  profile.relationship_status
-                }
-              </Badge>
-            )}
-
-            {profile.looking_for && profile.looking_for.length > 0 && (
-              <Badge variant="secondary" className="text-xs">
-                <span className="font-semibold">Cerca:</span> {profile.looking_for.join(", ")}
-              </Badge>
-            )}
-
-            {profile.relationship_type && (
-              <Badge variant="secondary" className="text-xs">
-                {t("userProfile.lookingFor")}: {
-                  profile.relationship_type === 'serious' ? t("userProfile.serious") :
-                  profile.relationship_type === 'casual' ? t("userProfile.casual") :
-                  profile.relationship_type === 'friendship' ? t("userProfile.friendship") :
-                  profile.relationship_type
-                }
-              </Badge>
-            )}
+            {/* Info badges row */}
+            <div className="flex flex-wrap gap-2 justify-center items-center w-full">
+              {profile.gender && (
+                <Badge variant="outline" className="text-xs">
+                  {profile.gender === 'male' ? 'Uomo' :
+                   profile.gender === 'female' ? 'Donna' :
+                   profile.gender === 'non_binary' ? 'Non binario' :
+                   profile.gender === 'other' ? 'Altro' :
+                   profile.gender}
+                </Badge>
+              )}
+              
+              {profile.sexual_orientation && (
+                <Badge variant="outline" className="text-xs">
+                  {profile.sexual_orientation === 'heterosexual' ? 'Eterosessuale' :
+                   profile.sexual_orientation === 'homosexual' ? 'Omosessuale' :
+                   profile.sexual_orientation === 'bisexual' ? 'Bisessuale' :
+                   profile.sexual_orientation === 'pansexual' ? 'Pansessuale' :
+                   profile.sexual_orientation === 'asexual' ? 'Asessuale' :
+                   profile.sexual_orientation === 'other' ? 'Altro' :
+                   profile.sexual_orientation}
+                </Badge>
+              )}
+              
+              {profile.relationship_status && (
+                <Badge variant="outline" className="text-xs">
+                  {profile.relationship_status === 'single' ? 'Single' :
+                   profile.relationship_status === 'in_relationship' ? 'Impegnato/a' :
+                   profile.relationship_status === 'married' ? 'Sposato/a' :
+                   profile.relationship_status === 'divorced' ? 'Divorziato/a' :
+                   profile.relationship_status === 'widowed' ? 'Vedovo/a' :
+                   profile.relationship_status === 'prefer_not_say' ? 'Preferisco non dirlo' :
+                   profile.relationship_status}
+                </Badge>
+              )}
+              
+              {profile.relationship_type && (
+                <Badge variant="secondary" className="text-xs">
+                  {profile.relationship_type === 'serious' ? 'Relazione seria' :
+                   profile.relationship_type === 'casual' ? 'Casual' :
+                   profile.relationship_type === 'friendship' ? 'Amicizia' :
+                   profile.relationship_type === 'open' ? 'Relazione aperta' :
+                   profile.relationship_type}
+                </Badge>
+              )}
+            </div>
           </div>
 
           {profile.bio && (
