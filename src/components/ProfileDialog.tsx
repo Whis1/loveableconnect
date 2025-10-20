@@ -181,8 +181,8 @@ export const ProfileDialog = ({
         await supabase.from("likes").delete().eq("id", existingLike.id);
         setHasLiked(false);
         toast({
-          title: "Like rimosso",
-          description: `Hai rimosso il like da ${profile?.nickname || profile?.full_name}`,
+          title: t("explore.match.title"),
+          description: `${t("explore.match.description", { name: profile?.nickname || profile?.full_name })}`,
         });
       } else {
         // Add like
@@ -201,19 +201,19 @@ export const ProfileDialog = ({
 
         if (matchData) {
           toast({
-            title: "È un Match! 💕",
-            description: `Hai fatto match con ${profile?.nickname || profile?.full_name}!`,
+            title: t("explore.match.title"),
+            description: t("explore.match.description", { name: profile?.nickname || profile?.full_name }),
           });
         } else {
           toast({
-            title: "Like inviato",
-            description: `Like inviato a ${profile?.nickname || profile?.full_name}`,
+            title: t("search.likeSent"),
+            description: `${t("search.likedProfile")} ${profile?.nickname || profile?.full_name}`,
           });
         }
       }
     } catch (error: any) {
       toast({
-        title: "Errore",
+        title: t("common.error"),
         description: error.message,
         variant: "destructive",
       });
@@ -235,8 +235,8 @@ export const ProfileDialog = ({
       onOpenChange(false);
     } else {
       toast({
-        title: "Match richiesto",
-        description: "Devi fare match con questo utente prima di poter chattare",
+        title: t("chat.matchNotFound"),
+        description: t("chat.requestAccess"),
         variant: "destructive",
       });
     }
@@ -330,7 +330,7 @@ export const ProfileDialog = ({
               <div className="flex items-center justify-center gap-2 flex-wrap">
                 {profile.age && (
                   <div className="px-4 py-1.5 rounded-full bg-primary/10 text-primary font-semibold text-sm">
-                    {profile.age} anni
+                    {profile.age} {t('userProfile.years')}
                   </div>
                 )}
                 {profile.gender && (
@@ -372,7 +372,7 @@ export const ProfileDialog = ({
               <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
                 <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
                   <Heart className="h-5 w-5 text-primary" />
-                  Stato Relazione
+                  {t('common.relationshipStatus')}
                 </h3>
                 <div className="text-base font-medium">
                   {profile.relationship_status === 'single' ? t('common.single') :
@@ -396,12 +396,22 @@ export const ProfileDialog = ({
               <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-5 shadow-sm border border-primary/20">
                 <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
                   <Heart className="h-5 w-5 text-primary" />
-                  Cosa Cerca
+                  {t('common.lookingFor')}
                 </h3>
                 <div className="space-y-2">
                   {profile.looking_for && profile.looking_for.length > 0 && (
                     <div className="text-base font-medium text-primary">
-                      {profile.looking_for.join(", ")}
+                      {profile.looking_for.map(item => {
+                        const labels: Record<string, string> = {
+                          serious: t('userProfile.serious'),
+                          casual: t('userProfile.casual'),
+                          friendship: t('userProfile.friendship'),
+                          'relazione seria': t('userProfile.serious'),
+                          'relazione occasionale': t('userProfile.casual'),
+                          'amicizia': t('userProfile.friendship'),
+                        };
+                        return labels[item.toLowerCase()] || item;
+                      }).join(", ")}
                     </div>
                   )}
                   {profile.relationship_type && (
@@ -416,7 +426,7 @@ export const ProfileDialog = ({
             {/* Interests Section */}
             {profile.interests && profile.interests.length > 0 && (
               <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
-                <h3 className="font-semibold text-lg mb-4">Interessi</h3>
+                <h3 className="font-semibold text-lg mb-4">{t('common.interests')}</h3>
                 <div className="flex flex-wrap gap-2">
                   {profile.interests.map((interest, index) => (
                     <span

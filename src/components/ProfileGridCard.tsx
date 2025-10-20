@@ -87,7 +87,15 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
 
   const getLookingForLabel = (lookingFor: string[] | null) => {
     if (!lookingFor || lookingFor.length === 0) return "";
-    return lookingFor.join(", ");
+    const labels: Record<string, string> = {
+      serious: t('userProfile.serious'),
+      casual: t('userProfile.casual'),
+      friendship: t('userProfile.friendship'),
+      'relazione seria': t('userProfile.serious'),
+      'relazione occasionale': t('userProfile.casual'),
+      'amicizia': t('userProfile.friendship'),
+    };
+    return lookingFor.map(item => labels[item.toLowerCase()] || item).join(", ");
   };
 
   // Check if user already liked this profile or has an active match
@@ -204,14 +212,14 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
         setHasLiked(true);
         toast({
           title: t("search.likeSent"),
-          description: `Like inviato a ${profile.nickname || profile.full_name}`,
+          description: `${t("search.likedProfile")} ${profile.nickname || profile.full_name}`,
         });
       }
       
       onLike(profile.id);
     } catch (error: any) {
       toast({
-        title: "Errore",
+        title: t("common.error"),
         description: error.message,
         variant: "destructive",
       });
