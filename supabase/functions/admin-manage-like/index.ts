@@ -34,23 +34,34 @@ Deno.serve(async (req) => {
       const { data, error } = await supabaseAdmin
         .from('likes')
         .insert({ from_user_id: fromUserId, to_user_id: toUserId })
-        .select()
-        .single();
+        .select();
 
       if (error) {
         console.error('Insert error:', error);
         throw error;
       }
 
-      console.log('Like added:', data);
-
-      return new Response(
-        JSON.stringify({ success: true, data }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200 
-        }
-      );
+      // Check if like was created or if a match was created instead (trigger deleted the like)
+      if (data && data.length > 0) {
+        console.log('Like added:', data[0]);
+        return new Response(
+          JSON.stringify({ success: true, data: data[0] }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200 
+          }
+        );
+      } else {
+        // Like was inserted but immediately deleted by trigger (match created)
+        console.log('Match created - like was consumed by trigger');
+        return new Response(
+          JSON.stringify({ success: true, match_created: true }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200 
+          }
+        );
+      }
     } else if (action === 'remove') {
       const { error } = await supabaseAdmin
         .from('likes')
