@@ -77,7 +77,12 @@ const Chat = () => {
           .select("avatar_url")
           .eq("id", session.user.id)
           .maybeSingle();
-        setMyAvatar(myProfile?.avatar_url || null);
+        
+        // Convert path to public URL
+        const myAvatarUrl = myProfile?.avatar_url
+          ? supabase.storage.from('profile-images').getPublicUrl(myProfile.avatar_url).data.publicUrl
+          : null;
+        setMyAvatar(myAvatarUrl);
       } catch (e) {
         console.warn('[Chat] Could not load my avatar', e);
       }
@@ -120,7 +125,15 @@ const Chat = () => {
         return;
       }
 
-      setOtherUser(profile);
+      // Convert avatar path to public URL
+      const profileWithPublicAvatar = {
+        ...profile,
+        avatar_url: profile.avatar_url
+          ? supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl
+          : null
+      };
+
+      setOtherUser(profileWithPublicAvatar);
 
       // Fetch messages
       const { data: messagesData } = await supabase

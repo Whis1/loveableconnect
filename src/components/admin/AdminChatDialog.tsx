@@ -72,8 +72,16 @@ export const AdminChatDialog = ({
           .eq("id", userId)
           .maybeSingle();
         
-        setAdminAvatar(adminProfile?.avatar_url || null);
-        setUserAvatar(userProfile?.avatar_url || null);
+        // Convert paths to public URLs
+        const adminAvatarUrl = adminProfile?.avatar_url 
+          ? supabase.storage.from('profile-images').getPublicUrl(adminProfile.avatar_url).data.publicUrl
+          : null;
+        const userAvatarUrl = userProfile?.avatar_url
+          ? supabase.storage.from('profile-images').getPublicUrl(userProfile.avatar_url).data.publicUrl
+          : null;
+        
+        setAdminAvatar(adminAvatarUrl);
+        setUserAvatar(userAvatarUrl);
 
         // Find or create match
         const user1 = adminProfileId < userId ? adminProfileId : userId;
