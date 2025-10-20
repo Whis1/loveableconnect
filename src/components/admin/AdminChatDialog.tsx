@@ -251,9 +251,9 @@ export const AdminChatDialog = ({
         </div>
 
         {/* Main Content: Notebooks + Messages */}
-        <div className="flex-1 flex gap-4 px-6 min-h-0">
+        <div className="flex-1 flex gap-4 px-6 py-4 min-h-0">
           {/* Left Notebook - User */}
-          <div className="w-64 shrink-0">
+          <div className="w-64 shrink-0 h-full">
             <ProfileNotebook 
               profileId={userId} 
               profileName={userNickname}
@@ -291,7 +291,7 @@ export const AdminChatDialog = ({
           </ScrollArea>
 
           {/* Right Notebook - Admin */}
-          <div className="w-64 shrink-0">
+          <div className="w-64 shrink-0 h-full">
             <ProfileNotebook 
               profileId={adminProfileId} 
               profileName={adminNickname}

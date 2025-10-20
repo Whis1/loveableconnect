@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BookOpen } from "lucide-react";
@@ -67,7 +68,9 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
 
   const handleBlur = async (field: keyof Notes, value: string) => {
     try {
-      const { error } = await supabase.functions.invoke('admin-profile-notes-upsert', {
+      console.log('Saving note:', { profile_id: profileId, field, value });
+      
+      const { data, error } = await supabase.functions.invoke('admin-profile-notes-upsert', {
         body: {
           profile_id: profileId,
           field,
@@ -75,12 +78,18 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
         }
       });
 
+      console.log('Save response:', { data, error });
+
       if (error) throw error;
+      
+      if (!data?.success) {
+        throw new Error(data?.error || 'Unknown error');
+      }
     } catch (error: any) {
       console.error("Error saving note:", error);
       toast({
         title: "Errore",
-        description: "Impossibile salvare la nota",
+        description: error.message || "Impossibile salvare la nota",
         variant: "destructive",
       });
     }
@@ -91,101 +100,105 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
   };
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
+    <Card className="h-full flex flex-col">
+      <CardHeader className="pb-3 shrink-0">
         <CardTitle className="flex items-center gap-2 text-sm">
           <BookOpen className="h-4 w-4" />
           Note {isAdmin ? "Admin" : "Utente"}: {profileName}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Nome:</label>
-          <Input
-            value={notes.nome}
-            onChange={(e) => handleChange("nome", e.target.value)}
-            onBlur={(e) => handleBlur("nome", e.target.value)}
-            placeholder="Inserisci nome..."
-            className="h-8 text-sm"
-          />
-        </div>
+      <CardContent className="flex-1 min-h-0 overflow-hidden">
+        <ScrollArea className="h-full pr-4">
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Nome:</label>
+              <Input
+                value={notes.nome}
+                onChange={(e) => handleChange("nome", e.target.value)}
+                onBlur={(e) => handleBlur("nome", e.target.value)}
+                placeholder="Inserisci nome..."
+                className="h-8 text-sm"
+              />
+            </div>
 
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Età:</label>
-          <Input
-            value={notes.eta}
-            onChange={(e) => handleChange("eta", e.target.value)}
-            onBlur={(e) => handleBlur("eta", e.target.value)}
-            placeholder="Inserisci età..."
-            className="h-8 text-sm"
-          />
-        </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Età:</label>
+              <Input
+                value={notes.eta}
+                onChange={(e) => handleChange("eta", e.target.value)}
+                onBlur={(e) => handleBlur("eta", e.target.value)}
+                placeholder="Inserisci età..."
+                className="h-8 text-sm"
+              />
+            </div>
 
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Location:</label>
-          <Input
-            value={notes.location}
-            onChange={(e) => handleChange("location", e.target.value)}
-            onBlur={(e) => handleBlur("location", e.target.value)}
-            placeholder="Inserisci location..."
-            className="h-8 text-sm"
-          />
-        </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Location:</label>
+              <Input
+                value={notes.location}
+                onChange={(e) => handleChange("location", e.target.value)}
+                onBlur={(e) => handleBlur("location", e.target.value)}
+                placeholder="Inserisci location..."
+                className="h-8 text-sm"
+              />
+            </div>
 
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Relazione:</label>
-          <Input
-            value={notes.relazione}
-            onChange={(e) => handleChange("relazione", e.target.value)}
-            onBlur={(e) => handleBlur("relazione", e.target.value)}
-            placeholder="Inserisci stato relazione..."
-            className="h-8 text-sm"
-          />
-        </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Relazione:</label>
+              <Input
+                value={notes.relazione}
+                onChange={(e) => handleChange("relazione", e.target.value)}
+                onBlur={(e) => handleBlur("relazione", e.target.value)}
+                placeholder="Inserisci stato relazione..."
+                className="h-8 text-sm"
+              />
+            </div>
 
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Figli:</label>
-          <Input
-            value={notes.figli}
-            onChange={(e) => handleChange("figli", e.target.value)}
-            onBlur={(e) => handleBlur("figli", e.target.value)}
-            placeholder="Inserisci info figli..."
-            className="h-8 text-sm"
-          />
-        </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Figli:</label>
+              <Input
+                value={notes.figli}
+                onChange={(e) => handleChange("figli", e.target.value)}
+                onBlur={(e) => handleBlur("figli", e.target.value)}
+                placeholder="Inserisci info figli..."
+                className="h-8 text-sm"
+              />
+            </div>
 
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Hobby:</label>
-          <Input
-            value={notes.hobby}
-            onChange={(e) => handleChange("hobby", e.target.value)}
-            onBlur={(e) => handleBlur("hobby", e.target.value)}
-            placeholder="Inserisci hobby..."
-            className="h-8 text-sm"
-          />
-        </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Hobby:</label>
+              <Input
+                value={notes.hobby}
+                onChange={(e) => handleChange("hobby", e.target.value)}
+                onBlur={(e) => handleBlur("hobby", e.target.value)}
+                placeholder="Inserisci hobby..."
+                className="h-8 text-sm"
+              />
+            </div>
 
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Lavoro:</label>
-          <Input
-            value={notes.lavoro}
-            onChange={(e) => handleChange("lavoro", e.target.value)}
-            onBlur={(e) => handleBlur("lavoro", e.target.value)}
-            placeholder="Inserisci lavoro..."
-            className="h-8 text-sm"
-          />
-        </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Lavoro:</label>
+              <Input
+                value={notes.lavoro}
+                onChange={(e) => handleChange("lavoro", e.target.value)}
+                onBlur={(e) => handleBlur("lavoro", e.target.value)}
+                placeholder="Inserisci lavoro..."
+                className="h-8 text-sm"
+              />
+            </div>
 
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Altro:</label>
-          <Textarea
-            value={notes.altro}
-            onChange={(e) => handleChange("altro", e.target.value)}
-            onBlur={(e) => handleBlur("altro", e.target.value)}
-            placeholder="Altre note..."
-            className="text-sm min-h-[60px] resize-none"
-          />
-        </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Altro:</label>
+              <Textarea
+                value={notes.altro}
+                onChange={(e) => handleChange("altro", e.target.value)}
+                onBlur={(e) => handleBlur("altro", e.target.value)}
+                placeholder="Altre note..."
+                className="text-sm min-h-[60px] resize-none"
+              />
+            </div>
+          </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );
