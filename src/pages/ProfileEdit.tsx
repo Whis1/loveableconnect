@@ -403,40 +403,40 @@ const ProfileEdit = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="gender">{t('common.gender')}</Label>
+                  <Label htmlFor="gender">Genere</Label>
                   <Select
                     value={profile.gender || ""}
                     onValueChange={(value) => setProfile({ ...profile, gender: value })}
                   >
                     <SelectTrigger id="gender">
-                      <SelectValue placeholder={t('common.selectGender')} />
+                      <SelectValue placeholder="Seleziona genere" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="male">{t('common.male')}</SelectItem>
-                      <SelectItem value="female">{t('common.female')}</SelectItem>
-                      <SelectItem value="transgender">{t('common.transgender')}</SelectItem>
-                      <SelectItem value="transexual">{t('common.transexual')}</SelectItem>
-                      <SelectItem value="genderfluid">{t('common.genderfluid')}</SelectItem>
-                      <SelectItem value="non-binary">{t('common.nonBinary')}</SelectItem>
+                      <SelectItem value="male">Uomo</SelectItem>
+                      <SelectItem value="female">Donna</SelectItem>
+                      <SelectItem value="transgender">Transgender</SelectItem>
+                      <SelectItem value="transexual">Transessuale</SelectItem>
+                      <SelectItem value="genderfluid">Genderfluid</SelectItem>
+                      <SelectItem value="non-binary">Non binario</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="sexual-orientation">{t('common.sexualOrientation')}</Label>
+                  <Label htmlFor="sexual-orientation">Orientamento Sessuale</Label>
                   <Select
                     value={profile.sexual_orientation || ""}
                     onValueChange={(value) => setProfile({ ...profile, sexual_orientation: value })}
                   >
                     <SelectTrigger id="sexual-orientation">
-                      <SelectValue placeholder={t('common.selectOrientation')} />
+                      <SelectValue placeholder="Seleziona orientamento" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="heterosexual">{t('common.heterosexual')}</SelectItem>
-                      <SelectItem value="homosexual">{t('common.homosexual')}</SelectItem>
-                      <SelectItem value="bisexual">{t('common.bisexual')}</SelectItem>
-                      <SelectItem value="pansexual">{t('common.pansexual')}</SelectItem>
-                      <SelectItem value="asexual">{t('common.asexual')}</SelectItem>
+                      <SelectItem value="heterosexual">Eterosessuale</SelectItem>
+                      <SelectItem value="homosexual">Omosessuale</SelectItem>
+                      <SelectItem value="bisexual">Bisessuale</SelectItem>
+                      <SelectItem value="pansexual">Pansexuale</SelectItem>
+                      <SelectItem value="asexual">Asessuale</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -485,12 +485,12 @@ const ProfileEdit = () => {
                     <SelectValue placeholder={t('profile.selectStatus')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="single">{t('common.single')}</SelectItem>
-                    <SelectItem value="in_relationship">{t('common.inRelationship')}</SelectItem>
-                    <SelectItem value="married">{t('common.married')}</SelectItem>
-                    <SelectItem value="divorced">{t('common.divorced')}</SelectItem>
-                    <SelectItem value="widowed">{t('common.widowed')}</SelectItem>
-                    <SelectItem value="prefer_not_say">{t('common.preferNotSay')}</SelectItem>
+                    <SelectItem value="single">{t('profile.single')}</SelectItem>
+                    <SelectItem value="sposato">{t('profile.married')}</SelectItem>
+                    <SelectItem value="divorziato">{t('profile.divorced')}</SelectItem>
+                    <SelectItem value="vedovo">{t('profile.widowed')}</SelectItem>
+                    <SelectItem value="preferisco_non_dirlo">{t('profile.preferNotToSay')}</SelectItem>
+                    <SelectItem value="scoprilo">{t('profile.findOut')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -509,7 +509,7 @@ const ProfileEdit = () => {
 
               {/* Interests */}
               <div className="space-y-2">
-                <Label htmlFor="interests">{t('common.interests')} (max 4)</Label>
+                <Label htmlFor="interests">Interessi (max 4)</Label>
                 <InterestsAutocomplete
                   selectedInterests={interests}
                   onInterestsChange={setInterests}
