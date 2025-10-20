@@ -145,6 +145,21 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
                 </div>
               )}
               
+              {profile.sexual_orientation && (
+                <div className="flex gap-2">
+                  <span className="font-semibold min-w-[80px]">Orientamento:</span>
+                  <span className="text-muted-foreground">
+                    {profile.sexual_orientation === 'heterosexual' ? 'Eterosessuale' :
+                     profile.sexual_orientation === 'homosexual' ? 'Omosessuale' :
+                     profile.sexual_orientation === 'bisexual' ? 'Bisessuale' :
+                     profile.sexual_orientation === 'pansexual' ? 'Pansessuale' :
+                     profile.sexual_orientation === 'asexual' ? 'Asessuale' :
+                     profile.sexual_orientation === 'other' ? 'Altro' :
+                     profile.sexual_orientation}
+                  </span>
+                </div>
+              )}
+              
               <div className="flex gap-2">
                 <span className="font-semibold min-w-[80px]">Location:</span>
                 <span className="text-muted-foreground">
