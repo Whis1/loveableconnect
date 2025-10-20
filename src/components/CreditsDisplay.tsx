@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Coins, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { CreditCountdown } from "@/components/CreditCountdown";
 
 export const CreditsDisplay = () => {
   const { credits, loading } = useCredits();
@@ -34,13 +35,20 @@ export const CreditsDisplay = () => {
   }
 
   return (
-    <Button
-      variant="outline"
-      onClick={() => navigate("/credits")}
-      className="flex items-center gap-2"
-    >
-      <Coins className="h-4 w-4 text-primary" />
-      <span className="font-medium">{credits.balance} {t("dashboard.credits")}</span>
-    </Button>
+    <div className="flex flex-col gap-1">
+      <Button
+        variant="outline"
+        onClick={() => navigate("/credits")}
+        className="flex items-center gap-2"
+      >
+        <Coins className="h-4 w-4 text-primary" />
+        <span className="font-medium">{credits.balance} {t("dashboard.credits")}</span>
+      </Button>
+      {credits.last_daily_reset && (
+        <div className="text-xs px-2">
+          <CreditCountdown lastDailyReset={credits.last_daily_reset} />
+        </div>
+      )}
+    </div>
   );
 };

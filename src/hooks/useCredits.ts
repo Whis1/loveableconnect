@@ -21,15 +21,16 @@ export const useCredits = () => {
         return;
       }
 
-      const { data, error } = await supabase
+      // Check if user credits exist
+      const { data: existingCredits, error: fetchError } = await supabase
         .from("user_credits")
         .select("balance, is_premium, last_daily_reset")
         .eq("user_id", session.user.id)
         .maybeSingle();
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
 
-      if (!data) {
+      if (!existingCredits) {
         // Create initial credits record
         const { error: insertError } = await supabase
           .from("user_credits")
@@ -46,7 +47,24 @@ export const useCredits = () => {
           last_daily_reset: new Date().toISOString(),
         });
       } else {
-        setCredits(data as UserCredits);
+        // Check and reset credits if 24 hours have passed
+        const { data: resetData, error: resetError } = await supabase.rpc(
+          "check_and_reset_user_credits",
+          { _user_id: session.user.id }
+        );
+
+        if (resetError) throw resetError;
+
+        if (resetData && resetData.length > 0) {
+          const updatedCredits = resetData[0];
+          setCredits({
+            balance: updatedCredits.balance,
+            is_premium: updatedCredits.is_premium,
+            last_daily_reset: updatedCredits.last_daily_reset,
+          });
+        } else {
+          setCredits(existingCredits as UserCredits);
+        }
       }
     } catch (error: any) {
       console.error("Error fetching credits:", error);

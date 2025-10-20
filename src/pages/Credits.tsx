@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Coins, Crown, Zap, Shield, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { CreditCountdown } from "@/components/CreditCountdown";
 
 const PACKAGES = [
   {
@@ -131,10 +132,15 @@ const Credits = () => {
         {/* Current Balance */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Coins className="h-6 w-6 text-primary" />
-              {t("credits.yourBalance")}
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Coins className="h-6 w-6 text-primary" />
+                {t("credits.yourBalance")}
+              </CardTitle>
+              {!loading && !credits?.is_premium && credits?.last_daily_reset && (
+                <CreditCountdown lastDailyReset={credits.last_daily_reset} />
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {loading ? (

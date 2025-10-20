@@ -401,6 +401,14 @@ export type Database = {
         Args: { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
       }
+      check_and_reset_user_credits: {
+        Args: { _user_id: string }
+        Returns: {
+          balance: number
+          is_premium: boolean
+          last_daily_reset: string
+        }[]
+      }
       deduct_message_credits: {
         Args: { _user_id: string }
         Returns: boolean
