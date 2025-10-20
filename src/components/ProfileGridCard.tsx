@@ -298,7 +298,7 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
                 </span>
               )}
               {profile.sexual_orientation && (
-                <span className="px-2 py-0.5 rounded-full bg-secondary/10 text-secondary-foreground text-xs font-medium">
+                <span className="px-2 py-0.5 rounded-full bg-secondary/10 text-secondary text-xs font-medium">
                   {getOrientationLabel(profile.sexual_orientation)}
                 </span>
               )}
