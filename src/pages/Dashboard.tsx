@@ -161,6 +161,42 @@ const Dashboard = () => {
             }
           }
         )
+        .on(
+          'postgres_changes',
+          {
+            event: 'DELETE',
+            schema: 'public',
+            table: 'likes',
+          },
+          async (payload) => {
+            const deletedLike = payload.old as any;
+            // When a like is deleted, it might mean a match was created
+            // Refresh matches to show the new match
+            if (deletedLike.to_user_id === session.user.id || deletedLike.from_user_id === session.user.id) {
+              const { data: matchesData } = await supabase
+                .from("matches")
+                .select("*")
+                .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`);
+
+              const { data: hiddenMatches } = await supabase
+                .from("hidden_matches")
+                .select("match_id")
+                .eq("user_id", session.user.id)
+                .in("hidden_from", ["matches", "both"]);
+              
+              const hiddenMatchIds = new Set(hiddenMatches?.map(h => h.match_id) || []);
+              const visibleMatches = (matchesData || []).filter(match => !hiddenMatchIds.has(match.id));
+              setMatches(visibleMatches);
+              
+              // Also update likes list
+              const { data: likesData } = await supabase
+                .from("likes")
+                .select("*")
+                .eq("to_user_id", session.user.id);
+              setLikesReceived(likesData || []);
+            }
+          }
+        )
         .subscribe();
 
       // Set up realtime subscription for hidden matches
@@ -185,6 +221,13 @@ const Dashboard = () => {
 
     fetchUserData();
 
+    // Refetch data when window regains focus (user returns to dashboard)
+    const handleFocus = () => {
+      fetchUserData();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
         navigate("/auth");
@@ -192,6 +235,7 @@ const Dashboard = () => {
     });
 
     return () => {
+      window.removeEventListener('focus', handleFocus);
       subscription.unsubscribe();
       if (profileChannel) {
         supabase.removeChannel(profileChannel);
