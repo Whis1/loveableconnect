@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MessageCircle } from "lucide-react";
+import { ArrowLeft, MessageCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useBanCheck } from "@/hooks/useBanCheck";
@@ -57,6 +57,17 @@ const Messages = () => {
         .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`)
         .order("created_at", { ascending: false });
 
+      // Get hidden matches for current user
+      const { data: hiddenMatches } = await supabase
+        .from("hidden_matches")
+        .select("match_id")
+        .eq("user_id", session.user.id);
+      
+      const hiddenMatchIds = new Set(hiddenMatches?.map(h => h.match_id) || []);
+      
+      // Filter out hidden matches
+      const visibleMatches = (matchesData || []).filter(match => !hiddenMatchIds.has(match.id));
+
       if (error) {
         console.error("Error fetching matches:", error);
         toast({
@@ -70,7 +81,7 @@ const Messages = () => {
 
       // For each match, fetch profile and messages
       const matchesWithMessages = await Promise.all(
-        (matchesData || []).map(async (match) => {
+        visibleMatches.map(async (match) => {
           const otherUserId = match.user1_id === session.user.id 
             ? match.user2_id 
             : match.user1_id;
@@ -158,6 +169,35 @@ const Messages = () => {
     };
   }, [navigate, toast, t]);
 
+  const handleHideConversation = async (matchId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!currentUserId) return;
+
+    const { error } = await supabase
+      .from("hidden_matches")
+      .insert({
+        user_id: currentUserId,
+        match_id: matchId,
+      });
+
+    if (error) {
+      console.error("Error hiding conversation:", error);
+      toast({
+        title: t("messages.error"),
+        description: t("messages.errorHidingConversation"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setMatches(prev => prev.filter(m => m.id !== matchId));
+    toast({
+      title: t("messages.conversationHidden"),
+      description: t("messages.conversationHiddenDescription"),
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -196,11 +236,14 @@ const Messages = () => {
                 {matches.map((match) => (
                   <Card 
                     key={match.id} 
-                    className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => navigate(`/chat/${match.id}`)}
+                    className="overflow-hidden hover:shadow-md transition-shadow"
                   >
                     <CardContent className="p-4">
                       <div className="flex items-center gap-4">
+                        <div 
+                          className="flex items-center gap-4 flex-1 cursor-pointer"
+                          onClick={() => navigate(`/chat/${match.id}`)}
+                        >
                         <Avatar className="h-16 w-16">
                           <AvatarImage src={match.otherUser.avatar_url || undefined} />
                           <AvatarFallback>
@@ -233,7 +276,15 @@ const Messages = () => {
                             </>
                           )}
                         </div>
-                        <MessageCircle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => handleHideConversation(match.id, e)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>

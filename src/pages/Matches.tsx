@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, MessageCircle } from "lucide-react";
+import { ArrowLeft, MessageCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 
@@ -55,6 +55,17 @@ const Matches = () => {
         .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`)
         .order("created_at", { ascending: false });
 
+      // Get hidden matches for current user
+      const { data: hiddenMatches } = await supabase
+        .from("hidden_matches")
+        .select("match_id")
+        .eq("user_id", session.user.id);
+      
+      const hiddenMatchIds = new Set(hiddenMatches?.map(h => h.match_id) || []);
+      
+      // Filter out hidden matches
+      const visibleMatches = (matchesData || []).filter(match => !hiddenMatchIds.has(match.id));
+
       if (error) {
         console.error("Error fetching matches:", error);
         toast({
@@ -68,7 +79,7 @@ const Matches = () => {
 
       // For each match, fetch the other user's profile
       const matchesWithProfiles = await Promise.all(
-        (matchesData || []).map(async (match) => {
+        visibleMatches.map(async (match) => {
           const otherUserId = match.user1_id === session.user.id 
             ? match.user2_id 
             : match.user1_id;
@@ -160,7 +171,36 @@ const Matches = () => {
         supabase.removeChannel(channel);
       }
     };
-  }, [navigate, toast]);
+  }, [navigate, toast, t]);
+
+  const handleHideMatch = async (matchId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!currentUserId) return;
+
+    const { error } = await supabase
+      .from("hidden_matches")
+      .insert({
+        user_id: currentUserId,
+        match_id: matchId,
+      });
+
+    if (error) {
+      console.error("Error hiding match:", error);
+      toast({
+        title: t("matches.error"),
+        description: t("matches.errorHidingMatch"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setMatches(prev => prev.filter(m => m.id !== matchId));
+    toast({
+      title: t("matches.matchHidden"),
+      description: t("matches.matchHiddenDescription"),
+    });
+  };
 
   if (loading) {
     return (
@@ -228,13 +268,22 @@ const Matches = () => {
                             </p>
                           </div>
                         </div>
-                        <Button
-                          onClick={() => navigate(`/chat/${match.id}`)}
-                          className="ml-4"
-                        >
-                          <MessageCircle className="h-4 w-4 mr-2" />
-                          {t("matches.chat")}
-                        </Button>
+                        <div className="flex gap-2 ml-4">
+                          <Button
+                            onClick={() => navigate(`/chat/${match.id}`)}
+                          >
+                            <MessageCircle className="h-4 w-4 mr-2" />
+                            {t("matches.chat")}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => handleHideMatch(match.id, e)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>

@@ -116,6 +116,27 @@ export type Database = {
         }
         Relationships: []
       }
+      hidden_matches: {
+        Row: {
+          hidden_at: string
+          id: string
+          match_id: string
+          user_id: string
+        }
+        Insert: {
+          hidden_at?: string
+          id?: string
+          match_id: string
+          user_id: string
+        }
+        Update: {
+          hidden_at?: string
+          id?: string
+          match_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       likes: {
         Row: {
           created_at: string
