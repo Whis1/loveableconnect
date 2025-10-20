@@ -5,6 +5,13 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { CreditCountdown } from "@/components/CreditCountdown";
 
+interface UserCredits {
+  balance: number;
+  is_premium: boolean;
+  last_daily_reset: string;
+  premium_expires_at?: string | null;
+}
+
 export const CreditsDisplay = () => {
   const { credits, loading } = useCredits();
   const navigate = useNavigate();
@@ -21,7 +28,11 @@ export const CreditsDisplay = () => {
 
   if (!credits) return null;
 
-  if (credits.is_premium) {
+  // Check if premium is still valid
+  const isPremiumValid = credits.is_premium && 
+    (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date());
+
+  if (isPremiumValid) {
     return (
       <Button
         variant="outline"

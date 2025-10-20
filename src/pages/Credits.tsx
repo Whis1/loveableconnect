@@ -145,7 +145,7 @@ const Credits = () => {
           <CardContent>
             {loading ? (
               <div className="text-center py-4 text-muted-foreground">{t("credits.loading")}</div>
-            ) : credits?.is_premium ? (
+            ) : (credits?.is_premium && (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date())) ? (
               <div className="flex items-center gap-3">
                 <Crown className="h-8 w-8 text-amber-500" />
                 <div>
@@ -169,7 +169,7 @@ const Credits = () => {
         </Card>
 
         {/* Premium Subscription */}
-        {!credits?.is_premium && (
+        {!(credits?.is_premium && (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date())) && (
           <Card className="mb-8 border-2 border-amber-500/50 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20">
             <CardHeader>
               <div className="flex items-center justify-between">

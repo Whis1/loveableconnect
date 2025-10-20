@@ -33,6 +33,7 @@ const Likes = () => {
   const [hasUnlocked, setHasUnlocked] = useState(false);
   const [checkingUnlock, setCheckingUnlock] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -45,14 +46,27 @@ const Likes = () => {
 
       setCurrentUserId(session.user.id);
 
-      // Check if user has unlocked likes
+      // Check if user is premium
+      const { data: creditsData } = await supabase
+        .from("user_credits")
+        .select("is_premium, premium_expires_at")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+
+      const userIsPremium = creditsData?.is_premium && 
+        (!creditsData.premium_expires_at || new Date(creditsData.premium_expires_at) > new Date());
+
+      setIsPremium(!!userIsPremium);
+
+      // Check if user has unlocked likes (or is premium)
       const { data: unlockData } = await supabase
         .from("likes_unlocked")
         .select("*")
         .eq("user_id", session.user.id)
         .maybeSingle();
 
-      setHasUnlocked(!!unlockData);
+      // User has access if premium OR manually unlocked
+      setHasUnlocked(!!userIsPremium || !!unlockData);
       setCheckingUnlock(false);
 
       // Fetch likes
@@ -184,7 +198,7 @@ const Likes = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {!hasUnlocked && likes.length > 0 && (
+            {!hasUnlocked && !isPremium && likes.length > 0 && (
               <div className="mb-6 p-6 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-950 dark:to-pink-950 rounded-lg text-center">
                 <Lock className="h-12 w-12 mx-auto mb-4 text-purple-600" />
                 <h3 className="text-xl font-bold mb-2">{t("likes.unlockTitle")}</h3>
