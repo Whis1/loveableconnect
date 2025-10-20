@@ -27,7 +27,7 @@ export default function AdminArrettu() {
   }, []);
 
   const handleLogin = () => {
-    if (nickname === "adminarrettu" && password === "arrettuadmin") {
+    if (nickname === "superadmin2025" && password === "AdminSecure!2025") {
       sessionStorage.setItem("adminArrettu", "true");
       setIsLoggedIn(true);
       toast({
