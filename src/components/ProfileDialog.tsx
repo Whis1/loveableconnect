@@ -3,15 +3,12 @@ import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Heart, MessageCircle, MapPin } from "lucide-react";
+import { Heart, MessageCircle, MapPin, Sparkles, User, Heart as HeartIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { getGenericLocationPhrase } from "@/lib/utils";
 
 interface Profile {
   id: string;
@@ -176,103 +173,145 @@ export const ProfileDialog = ({
     }
   };
 
+  const getGenderLabel = (gender: string) => {
+    const labels: Record<string, string> = {
+      male: "Uomo",
+      female: "Donna",
+      transgender: "Transgender",
+      transexual: "Transessuale",
+      genderfluid: "Genderfluid",
+      "non-binary": "Non binario",
+    };
+    return labels[gender] || gender;
+  };
+
+  const getOrientationLabel = (orientation: string) => {
+    const labels: Record<string, string> = {
+      heterosexual: "Eterosessuale",
+      homosexual: "Omosessuale",
+      bisexual: "Bisessuale",
+      pansexual: "Pansexuale",
+      asexual: "Asessuale",
+    };
+    return labels[orientation] || orientation;
+  };
+
+  const getRelationshipTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      serious: "Relazione seria",
+      casual: "Relazione casual",
+      friendship: "Amicizia",
+    };
+    return labels[type] || type;
+  };
+
   if (!profile) return null;
 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl">Profilo</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-6">
-            {/* Header with avatar and basic info */}
-            <div className="flex flex-col items-center text-center space-y-4">
-              <Avatar className="h-32 w-32 border-4 border-primary/10 shadow-lg">
-                <AvatarImage src={avatarUrl || undefined} />
-                <AvatarFallback className="text-4xl">
-                  {profile.nickname?.charAt(0) || profile.full_name?.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
-
-              <div>
-                <h2 className="text-2xl font-bold">{profile.nickname || profile.full_name}</h2>
-                <div className="flex items-center justify-center gap-2 text-muted-foreground mt-1">
-                  {profile.age && <span>{profile.age} anni</span>}
-                  {profile.age && profile.gender && <span>•</span>}
-                  {profile.gender && (
-                    <span className="capitalize">
-                      {profile.gender === 'male' && 'Uomo'}
-                      {profile.gender === 'female' && 'Donna'}
-                      {profile.gender === 'transexual' && 'Transessuale'}
-                      {profile.gender === 'transgender' && 'Transgender'}
-                      {profile.gender === 'genderfluid' && 'Genderfluid'}
-                      {profile.gender === 'non-binary' && 'Non-binario'}
-                    </span>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 bg-gradient-to-br from-background via-background to-primary/5">
+          {/* Hero Section with Avatar */}
+          <div className="relative h-64 bg-gradient-to-br from-primary/20 via-primary/10 to-background overflow-hidden">
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIHN0cm9rZT0iY3VycmVudENvbG9yIiBzdHJva2Utb3BhY2l0eT0iLjEiLz48L2c+PC9zdmc+')] opacity-20"></div>
+            
+            {/* Avatar */}
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2">
+              <div className="relative">
+                <div className="w-40 h-40 rounded-full border-4 border-background shadow-2xl overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt={profile.nickname}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-6xl font-bold text-primary/40">
+                      {profile.nickname?.charAt(0) || profile.full_name?.charAt(0)}
+                    </div>
                   )}
                 </div>
+                <div className="absolute -bottom-2 -right-2 bg-primary text-primary-foreground rounded-full p-3 shadow-lg">
+                  <Sparkles className="h-5 w-5" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="px-6 pb-6 space-y-6 mt-24">
+            {/* Name and Basic Info */}
+            <div className="text-center space-y-3">
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
+                {profile.nickname || profile.full_name}
+              </h2>
+              
+              {/* Age, Gender, Orientation Pills */}
+              <div className="flex items-center justify-center gap-2 flex-wrap">
+                {profile.age && (
+                  <div className="px-4 py-1.5 rounded-full bg-primary/10 text-primary font-semibold text-sm">
+                    {profile.age} anni
+                  </div>
+                )}
+                {profile.gender && (
+                  <div className="px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-500/10 to-blue-600/10 text-blue-600 dark:text-blue-400 font-semibold text-sm">
+                    <User className="h-3.5 w-3.5 inline mr-1" />
+                    {getGenderLabel(profile.gender)}
+                  </div>
+                )}
+                {profile.sexual_orientation && (
+                  <div className="px-4 py-1.5 rounded-full bg-gradient-to-r from-pink-500/10 to-purple-600/10 text-pink-600 dark:text-pink-400 font-semibold text-sm">
+                    <HeartIcon className="h-3.5 w-3.5 inline mr-1" />
+                    {getOrientationLabel(profile.sexual_orientation)}
+                  </div>
+                )}
               </div>
 
-              {profile.city && (
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
-                  <span>{profile.city}</span>
-                </div>
-              )}
+              {/* Location */}
+              <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                <MapPin className="h-4 w-4" />
+                <span className="text-sm">{getGenericLocationPhrase()}</span>
+              </div>
             </div>
 
-            {/* Bio */}
+            {/* Bio Section */}
             {profile.bio && (
-              <div className="space-y-2">
-                <h3 className="font-semibold text-lg">Bio</h3>
-                <p className="text-muted-foreground italic border-l-2 border-primary/20 pl-4">
+              <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
+                <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  Bio
+                </h3>
+                <p className="text-muted-foreground leading-relaxed italic">
                   "{profile.bio}"
                 </p>
               </div>
             )}
 
-            {/* Relationship info */}
-            <div className="space-y-2">
-              {profile.relationship_type && (
-                <Badge variant="secondary">
-                  Cerca: {
-                    profile.relationship_type === 'serious' ? 'Relazione seria' :
-                    profile.relationship_type === 'casual' ? 'Relazione casual' :
-                    profile.relationship_type === 'friendship' ? 'Amicizia' :
-                    profile.relationship_type
-                  }
-                </Badge>
-              )}
-              {profile.relationship_status && (
-                <Badge variant="outline">
-                  {profile.relationship_status === 'single' && 'Single'}
-                  {profile.relationship_status === 'in_relationship' && 'In una relazione'}
-                  {profile.relationship_status === 'married' && 'Sposato/a'}
-                  {profile.relationship_status === 'divorced' && 'Divorziato/a'}
-                  {profile.relationship_status === 'widowed' && 'Vedovo/a'}
-                </Badge>
-              )}
-              {profile.sexual_orientation && (
-                <Badge variant="outline">
-                  {profile.sexual_orientation === 'heterosexual' && 'Eterosessuale'}
-                  {profile.sexual_orientation === 'homosexual' && 'Omosessuale'}
-                  {profile.sexual_orientation === 'bisexual' && 'Bisessuale'}
-                  {profile.sexual_orientation === 'pansexual' && 'Pansessuale'}
-                  {profile.sexual_orientation === 'asexual' && 'Asessuale'}
-                </Badge>
-              )}
-            </div>
+            {/* Relationship Info Section */}
+            {profile.relationship_type && (
+              <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-5 shadow-sm border border-primary/20">
+                <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                  <Heart className="h-5 w-5 text-primary" />
+                  Cerca
+                </h3>
+                <div className="text-lg font-medium text-primary">
+                  {getRelationshipTypeLabel(profile.relationship_type)}
+                </div>
+              </div>
+            )}
 
-            {/* Interests */}
+            {/* Interests Section */}
             {profile.interests && profile.interests.length > 0 && (
-              <div className="space-y-3">
-                <h3 className="font-semibold text-lg">Interessi</h3>
+              <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
+                <h3 className="font-semibold text-lg mb-4">Interessi</h3>
                 <div className="flex flex-wrap gap-2">
                   {profile.interests.map((interest, index) => (
-                    <Badge key={index} variant="outline">
+                    <span
+                      key={index}
+                      className="px-4 py-2 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors text-sm font-medium"
+                    >
                       {interest}
-                    </Badge>
+                    </span>
                   ))}
                 </div>
               </div>
@@ -280,28 +319,33 @@ export const ProfileDialog = ({
 
             {/* Photo Gallery */}
             {photoUrls.length > 0 && (
-              <div className="space-y-3">
-                <h3 className="font-semibold text-lg">Foto</h3>
+              <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
+                <h3 className="font-semibold text-lg mb-4">Galleria Foto</h3>
                 <div className="grid grid-cols-3 gap-3">
                   {photoUrls.map((url, index) => (
-                    <img
+                    <div
                       key={index}
-                      src={url}
-                      alt={`Foto ${index + 1}`}
-                      className="w-full aspect-square object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                      className="relative aspect-square rounded-xl overflow-hidden cursor-pointer group"
                       onClick={() => setSelectedImage(url)}
-                    />
+                    >
+                      <img
+                        src={url}
+                        alt={`Foto ${index + 1}`}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                    </div>
                   ))}
                 </div>
               </div>
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-4 border-t">
+            <div className="flex gap-3 pt-2">
               <Button
                 variant={hasLiked ? "default" : "outline"}
                 size="lg"
-                className="flex-1"
+                className="flex-1 h-14 text-base font-semibold"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleLike();
@@ -314,7 +358,7 @@ export const ProfileDialog = ({
               <Button
                 variant="default"
                 size="lg"
-                className="flex-1"
+                className="flex-1 h-14 text-base font-semibold bg-gradient-to-r from-primary to-primary/80"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleChat();
@@ -331,7 +375,7 @@ export const ProfileDialog = ({
       {/* Image Viewer Dialog */}
       {selectedImage && (
         <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
-          <DialogContent className="max-w-4xl w-full p-0 overflow-hidden">
+          <DialogContent className="max-w-4xl w-full p-0 overflow-hidden bg-black/95">
             <div className="relative">
               <img
                 src={selectedImage || ""}
