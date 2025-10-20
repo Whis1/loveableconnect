@@ -45,13 +45,17 @@ const Chat = () => {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [myAvatar, setMyAvatar] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { deductCredits } = useCredits();
 
   useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
     const initChat = async () => {
+      console.log('[Chat] initChat start', { matchId });
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -65,6 +69,18 @@ const Chat = () => {
       }
 
       setCurrentUser(session.user.id);
+
+      // Load current user's avatar
+      try {
+        const { data: myProfile } = await supabase
+          .from("profiles")
+          .select("avatar_url")
+          .eq("id", session.user.id)
+          .maybeSingle();
+        setMyAvatar(myProfile?.avatar_url || null);
+      } catch (e) {
+        console.warn('[Chat] Could not load my avatar', e);
+      }
 
       // Fetch match to find other user
       const { data: match } = await supabase
@@ -126,7 +142,7 @@ const Chat = () => {
       setLoading(false);
 
       // Subscribe to new messages with realtime
-      const channel = supabase
+      channel = supabase
         .channel(`messages-${matchId}`)
         .on(
           "postgres_changes",
@@ -138,6 +154,7 @@ const Chat = () => {
           },
           (payload) => {
             const newMsg = payload.new as Message;
+            console.log('[Chat] Realtime INSERT', newMsg);
             
             // Only add if not already in the list (prevent duplicates)
             setMessages((prev) => {
@@ -155,15 +172,20 @@ const Chat = () => {
             }
           }
         )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
+        .subscribe((status) => {
+          console.log('[Chat] Channel status:', status);
+        });
     };
 
     initChat();
-  }, [matchId, navigate, toast]);
+
+    return () => {
+      if (channel) {
+        console.log('[Chat] removing channel');
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [matchId, navigate, toast, t]);
 
   useEffect(() => {
     // Scroll to bottom when messages change
@@ -308,7 +330,7 @@ const Chat = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900">
-      <div className="container mx-auto max-w-5xl h-screen flex flex-col">
+      <div className="container mx-auto max-w-2xl h-screen flex flex-col">
         <Card className="flex-1 flex flex-col overflow-hidden shadow-xl">
           {/* Header with back button */}
           <div className="border-b p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -331,6 +353,7 @@ const Chat = () => {
               <div className="space-y-4">
                 {messages.map((message) => {
                   const isOwn = message.sender_id === currentUser;
+                  const senderAvatar = isOwn ? myAvatar : otherUser?.avatar_url || null;
                   
                   return (
                     <MessageBubble
@@ -344,6 +367,7 @@ const Chat = () => {
                       senderId={message.sender_id}
                       receiverId={message.receiver_id}
                       matchId={message.match_id}
+                      senderAvatarUrl={senderAvatar}
                     />
                   );
                 })}
