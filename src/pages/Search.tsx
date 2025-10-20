@@ -87,6 +87,30 @@ const Search = () => {
     };
 
     initializeSearch();
+
+    // Realtime subscription for profile updates
+    const channel = supabase
+      .channel('profile-updates-search')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles'
+        },
+        (payload) => {
+          console.log('Profile updated:', payload);
+          // Update the profile in the current list
+          setProfiles(prev => prev.map(p => 
+            p.id === payload.new.id ? { ...p, ...payload.new } : p
+          ));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [navigate]);
 
   const requestLocationPermission = () => {
