@@ -52,9 +52,20 @@ export const RecentMessages = ({ currentUserId }: RecentMessagesProps) => {
         return;
       }
 
+      // Get hidden matches for current user
+      const { data: hiddenMatches } = await supabase
+        .from("hidden_matches")
+        .select("match_id")
+        .eq("user_id", currentUserId);
+      
+      const hiddenMatchIds = new Set(hiddenMatches?.map(h => h.match_id) || []);
+      
+      // Filter out hidden matches
+      const visibleMatches = matches.filter(match => !hiddenMatchIds.has(match.id));
+
       // For each match, get last message and unread count (max 2 messages)
       const matchesData = await Promise.all(
-        matches.slice(0, 2).map(async (match) => {
+        visibleMatches.slice(0, 2).map(async (match) => {
           const otherUserId = match.user1_id === currentUserId ? match.user2_id : match.user1_id;
 
           // Get other user's profile
