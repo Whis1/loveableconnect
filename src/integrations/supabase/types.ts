@@ -119,18 +119,21 @@ export type Database = {
       hidden_matches: {
         Row: {
           hidden_at: string
+          hidden_from: string
           id: string
           match_id: string
           user_id: string
         }
         Insert: {
           hidden_at?: string
+          hidden_from?: string
           id?: string
           match_id: string
           user_id: string
         }
         Update: {
           hidden_at?: string
+          hidden_from?: string
           id?: string
           match_id?: string
           user_id?: string

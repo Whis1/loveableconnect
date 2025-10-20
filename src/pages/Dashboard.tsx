@@ -80,11 +80,12 @@ const Dashboard = () => {
         .select("*")
         .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`);
 
-      // Get hidden matches for current user
+      // Get hidden matches for current user (only those hidden from matches page)
       const { data: hiddenMatches } = await supabase
         .from("hidden_matches")
         .select("match_id")
-        .eq("user_id", session.user.id);
+        .eq("user_id", session.user.id)
+        .in("hidden_from", ["matches", "both"]);
       
       const hiddenMatchIds = new Set(hiddenMatches?.map(h => h.match_id) || []);
       

@@ -57,11 +57,12 @@ const Messages = () => {
         .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`)
         .order("created_at", { ascending: false });
 
-      // Get hidden matches for current user
+      // Get hidden conversations for current user (only those hidden from messages page)
       const { data: hiddenMatches } = await supabase
         .from("hidden_matches")
         .select("match_id")
-        .eq("user_id", session.user.id);
+        .eq("user_id", session.user.id)
+        .in("hidden_from", ["messages", "both"]);
       
       const hiddenMatchIds = new Set(hiddenMatches?.map(h => h.match_id) || []);
       
@@ -179,6 +180,7 @@ const Messages = () => {
       .insert({
         user_id: currentUserId,
         match_id: matchId,
+        hidden_from: "messages",
       });
 
     if (error) {

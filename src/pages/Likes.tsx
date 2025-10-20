@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Heart, Lock, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { MatchBanner } from "@/components/MatchBanner";
 
 interface LikeWithProfile {
   id: string;
@@ -34,6 +35,11 @@ const Likes = () => {
   const [checkingUnlock, setCheckingUnlock] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState(false);
+  const [matchBanner, setMatchBanner] = useState<{ show: boolean; userName: string }>({
+    show: false,
+    userName: "",
+  });
+  const [likingUserId, setLikingUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -196,6 +202,81 @@ const Likes = () => {
     verifyUnlock();
   }, [toast, currentUserId, t]);
 
+  const handleLikeBack = async (likeId: string, userId: string, userName: string) => {
+    if (!currentUserId || likingUserId) return;
+    
+    setLikingUserId(userId);
+
+    try {
+      // Check if there's already a like from this user to the other user
+      const { data: existingLike } = await supabase
+        .from("likes")
+        .select("id")
+        .eq("from_user_id", currentUserId)
+        .eq("to_user_id", userId)
+        .maybeSingle();
+
+      if (existingLike) {
+        toast({
+          title: t("search.likeSent"),
+          description: t("search.likedProfile") + " " + userName,
+        });
+        setLikingUserId(null);
+        return;
+      }
+
+      // Create the like
+      const { error: likeError } = await supabase
+        .from("likes")
+        .insert({
+          from_user_id: currentUserId,
+          to_user_id: userId,
+        });
+
+      if (likeError) {
+        console.error("Error creating like:", likeError);
+        toast({
+          title: t("likes.error"),
+          description: t("likes.errorLikingBack"),
+          variant: "destructive",
+        });
+        setLikingUserId(null);
+        return;
+      }
+
+      // The check_and_create_match trigger will handle match creation
+      // Check if a match was created (both likes should be deleted if matched)
+      const { data: stillExists } = await supabase
+        .from("likes")
+        .select("id")
+        .eq("id", likeId)
+        .maybeSingle();
+
+      if (!stillExists) {
+        // Match was created! Show banner
+        setMatchBanner({ show: true, userName });
+        
+        // Remove this like from the list
+        setLikes((prev) => prev.filter((l) => l.id !== likeId));
+      } else {
+        // Just a like, no match yet
+        toast({
+          title: t("search.likeSent"),
+          description: t("search.likedProfile") + " " + userName,
+        });
+      }
+    } catch (error) {
+      console.error("Error liking back:", error);
+      toast({
+        title: t("likes.error"),
+        description: t("likes.errorLikingBack"),
+        variant: "destructive",
+      });
+    } finally {
+      setLikingUserId(null);
+    }
+  };
+
   if (loading || checkingUnlock) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -206,6 +287,13 @@ const Likes = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-4">
+      {matchBanner.show && (
+        <MatchBanner
+          matchedUserName={matchBanner.userName}
+          onClose={() => setMatchBanner({ show: false, userName: "" })}
+        />
+      )}
+      
       <div className="container mx-auto max-w-4xl">
         <div className="mb-4">
           <Button variant="ghost" onClick={() => navigate("/")}>
@@ -303,8 +391,13 @@ const Likes = () => {
                           </p>
                         </div>
                         {hasUnlocked && (
-                          <Button onClick={() => navigate(`/explore`)}>
-                            {t("likes.explore")}
+                          <Button 
+                            onClick={() => handleLikeBack(like.id, like.from_user_id, like.profile.nickname)}
+                            disabled={likingUserId === like.from_user_id}
+                            className="bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700"
+                          >
+                            <Heart className="h-4 w-4 mr-2" />
+                            {likingUserId === like.from_user_id ? t("likes.liking") : t("likes.likeBack")}
                           </Button>
                         )}
                       </div>

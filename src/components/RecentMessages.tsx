@@ -52,11 +52,12 @@ export const RecentMessages = ({ currentUserId }: RecentMessagesProps) => {
         return;
       }
 
-      // Get hidden matches for current user
+      // Get hidden conversations for current user (only those hidden from messages)
       const { data: hiddenMatches } = await supabase
         .from("hidden_matches")
         .select("match_id")
-        .eq("user_id", currentUserId);
+        .eq("user_id", currentUserId)
+        .in("hidden_from", ["messages", "both"]);
       
       const hiddenMatchIds = new Set(hiddenMatches?.map(h => h.match_id) || []);
       

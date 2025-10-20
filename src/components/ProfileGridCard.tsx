@@ -27,9 +27,10 @@ interface ProfileGridCardProps {
   profile: Profile;
   currentUserId: string;
   onLike: (profileId: string) => void;
+  onMatch?: (profileName: string) => void;
 }
 
-export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridCardProps) => {
+export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: ProfileGridCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -137,32 +138,35 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike }: ProfileGridC
         });
       } else {
         // Add the like
-        const { error } = await supabase
+        const { data: insertedLike, error } = await supabase
           .from("likes")
           .insert({
             from_user_id: currentUserId,
             to_user_id: profile.id,
-          });
+          })
+          .select()
+          .single();
 
         if (error) throw error;
 
-        setHasLiked(true);
-        
-        // Check if there's a match
-        const { data: matchData } = await supabase
-          .from("matches")
-          .select("*")
-          .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profile.id}),and(user1_id.eq.${profile.id},user2_id.eq.${currentUserId})`)
+        // Check if the like still exists (if not, a match was created by the trigger)
+        const { data: likeStillExists } = await supabase
+          .from("likes")
+          .select("id")
+          .eq("id", insertedLike.id)
           .maybeSingle();
 
-        if (matchData) {
-          toast({
-            title: "È un Match! 💕",
-            description: `Hai fatto match con ${profile.nickname || profile.full_name}!`,
-          });
+        if (!likeStillExists) {
+          // Match was created!
+          setHasLiked(true);
+          if (onMatch) {
+            onMatch(profile.nickname || profile.full_name);
+          }
         } else {
+          // Just a like, no match
+          setHasLiked(true);
           toast({
-            title: t('search.likeSent'),
+            title: t("search.likeSent"),
             description: `Like inviato a ${profile.nickname || profile.full_name}`,
           });
         }

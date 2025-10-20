@@ -55,11 +55,12 @@ const Matches = () => {
         .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`)
         .order("created_at", { ascending: false });
 
-      // Get hidden matches for current user
+      // Get hidden matches for current user (only those hidden from matches page)
       const { data: hiddenMatches } = await supabase
         .from("hidden_matches")
         .select("match_id")
-        .eq("user_id", session.user.id);
+        .eq("user_id", session.user.id)
+        .in("hidden_from", ["matches", "both"]);
       
       const hiddenMatchIds = new Set(hiddenMatches?.map(h => h.match_id) || []);
       
@@ -183,6 +184,7 @@ const Matches = () => {
       .insert({
         user_id: currentUserId,
         match_id: matchId,
+        hidden_from: "matches",
       });
 
     if (error) {

@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useBanCheck } from "@/hooks/useBanCheck";
 import { ArrowLeft, MapPin, Filter, RotateCcw, Search as SearchIcon } from "lucide-react";
 import { ProfileGridCard } from "@/components/ProfileGridCard";
+import { MatchBanner } from "@/components/MatchBanner";
 
 interface Profile {
   id: string;
@@ -54,6 +55,10 @@ const Explore = () => {
   const [ageRange, setAgeRange] = useState([18, 90]);
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
   const [selectedOrientations, setSelectedOrientations] = useState<string[]>([]);
+  const [matchBanner, setMatchBanner] = useState<{ show: boolean; userName: string }>({
+    show: false,
+    userName: "",
+  });
   
   const PROFILES_PER_PAGE = 24;
 
@@ -309,6 +314,10 @@ const Explore = () => {
     // Don't remove from displayed profiles to avoid the disappearing bug
   };
 
+  const handleMatch = (userName: string) => {
+    setMatchBanner({ show: true, userName });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -320,6 +329,13 @@ const Explore = () => {
 
   return (
     <div className="min-h-screen relative bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-4">
+      {matchBanner.show && (
+        <MatchBanner
+          matchedUserName={matchBanner.userName}
+          onClose={() => setMatchBanner({ show: false, userName: "" })}
+        />
+      )}
+      
       {/* Background Image */}
       <div 
         className="fixed inset-0 z-0 opacity-15 dark:opacity-25" 
@@ -438,6 +454,7 @@ const Explore = () => {
                   profile={profile}
                   currentUserId={currentUser!}
                   onLike={handleProfileLike}
+                  onMatch={handleMatch}
                 />
               ))}
             </div>
