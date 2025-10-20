@@ -21,6 +21,8 @@ export const ProfileCreator = () => {
     city: "",
     gender: "",
     sexual_orientation: "",
+    relationship_status: "",
+    looking_for: "",
   });
 
   const handleSeedProfiles = async () => {
@@ -72,6 +74,8 @@ export const ProfileCreator = () => {
         city: formData.city || null,
         gender: formData.gender || null,
         sexual_orientation: formData.sexual_orientation || null,
+        relationship_status: formData.relationship_status || null,
+        looking_for: formData.looking_for ? [formData.looking_for] : null,
         is_admin_profile: true,
       }).select();
 
@@ -95,6 +99,8 @@ export const ProfileCreator = () => {
         city: "",
         gender: "",
         sexual_orientation: "",
+        relationship_status: "",
+        looking_for: "",
       });
 
       setTimeout(() => window.location.reload(), 1000);
@@ -205,6 +211,40 @@ export const ProfileCreator = () => {
                 <SelectItem value="bisexual">Bisessuale</SelectItem>
                 <SelectItem value="pansexual">Pansexuale</SelectItem>
                 <SelectItem value="asexual">Asessuale</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="relationship_status">Stato Relazione</Label>
+            <Select value={formData.relationship_status} onValueChange={(value) => setFormData({ ...formData, relationship_status: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleziona stato" />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                <SelectItem value="single">Single</SelectItem>
+                <SelectItem value="in_relationship">In una relazione</SelectItem>
+                <SelectItem value="married">Sposato/a</SelectItem>
+                <SelectItem value="divorced">Divorziato/a</SelectItem>
+                <SelectItem value="widowed">Vedovo/a</SelectItem>
+                <SelectItem value="prefer_not_say">Preferisco non dirlo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="looking_for">Cosa cerchi</Label>
+            <Select value={formData.looking_for} onValueChange={(value) => setFormData({ ...formData, looking_for: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleziona cosa cerchi" />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                <SelectItem value="Relazione seria">Relazione seria</SelectItem>
+                <SelectItem value="Incontri casuali">Incontri casuali</SelectItem>
+                <SelectItem value="Amicizia">Amicizia</SelectItem>
+                <SelectItem value="Non specifico">Non specifico</SelectItem>
+                <SelectItem value="Preferisco non dirlo">Preferisco non dirlo</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -12,108 +12,141 @@ interface Profile {
   age: number;
   gender: string;
   sexual_orientation: string;
+  relationship_status: string;
+  looking_for: string[];
   bio: string;
   city: string;
   interests: string[];
-  relationship_type: string;
   is_admin_profile: boolean;
 }
 
 const cities = [
   'Roma', 'Milano', 'Napoli', 'Torino', 'Palermo', 'Genova', 'Bologna', 'Firenze',
-  'Bari', 'Catania', 'Venezia', 'Verona', 'Messina', 'Padova', 'Trieste', 'Brescia'
+  'Bari', 'Catania', 'Venezia', 'Verona', 'Messina', 'Padova', 'Trieste', 'Brescia',
+  'Parma', 'Taranto', 'Modena', 'Reggio Calabria', 'Prato', 'Perugia', 'Livorno', 'Cagliari'
 ];
 
 const interests = [
   'Viaggiare', 'Cinema', 'Musica', 'Sport', 'Lettura', 'Cucina', 'Arte', 'Fotografia',
-  'Yoga', 'Fitness', 'Danza', 'Teatro', 'Gaming', 'Escursioni', 'Moda', 'Design'
+  'Yoga', 'Fitness', 'Danza', 'Teatro', 'Gaming', 'Escursioni', 'Moda', 'Design',
+  'Tecnologia', 'Natura', 'Animali', 'Vino', 'Caffè', 'Festival', 'Concerti', 'Meditazione'
 ];
 
 const nicknames = [
-  'LunaNera', 'StellaRibelle', 'VenereRosa', 'AuroraWild', 'IrisLibera', 'GaiaSolare',
-  'ZaraFiamma', 'NovaLuce', 'ElektraVibe', 'PhoenixRed', 'SkyeDream', 'VenusGlow',
-  'AriaBlu', 'SofiaMoon', 'JadePearl', 'RubyFire', 'SapphireWave', 'EmeraldSky',
-  'AmberSun', 'CrystalRain', 'DiamondStar', 'OpalNight', 'TopazGlow', 'PearlShine',
-  'CoralSea', 'IvoryDream', 'GoldenHeart', 'SilverWings', 'BronzeSoul', 'PlatinumVibes',
-  'VelvetMoon', 'SatinStar', 'SilkRose', 'LaceAngel', 'ChiffonDream', 'TulleFairy',
-  'DenimRebel', 'LeatherQueen', 'CashmereChic', 'LinenBreeze', 'WoolWarm', 'CottonSoft',
-  'MysticAura', 'WildSpirit', 'FreedomSoul', 'RebelHeart', 'BraveWoman', 'FierceOne',
-  'GentleRose', 'SweetHoney', 'KindSoul', 'TenderHeart', 'WarmSmile', 'PureJoy'
+  'Lunetta', 'SoleVivo', 'MareBlu', 'Stellina', 'FiammaNera', 'VentoLibero', 
+  'AuroraRosa', 'NuvoleNere', 'CieloSereno', 'PioggiaLeggera', 'NeveCalda',
+  'FioreDiLoto', 'RosaSelvatica', 'GiglioNero', 'OrcheaRara', 'MarghReale',
+  'LupoSolitario', 'AquilaReale', 'LeoneCurioso', 'TigreCalma', 'PanteraRosa',
+  'Sognatore', 'Viandante', 'Navigante', 'Esploratore', 'Avventuriero',
+  'Artista', 'Musicista', 'Scrittore', 'Pensatore', 'Creativo',
+  'Guerriero', 'Combattente', 'Ribelle', 'Libero', 'Indipendente',
+  'Dolce', 'Gentile', 'Affettuoso', 'Premuroso', 'Caloroso',
+  'Magico', 'Mistico', 'Spirito', 'Anima', 'Essenza',
+  'Diamante', 'Rubino', 'Zaffiro', 'Smeraldo', 'Topazio'
 ];
 
-const femaleNames = [
+const names = [
+  // Nomi femminili
   'Alessia Rossi', 'Martina Bianchi', 'Giulia Ferrari', 'Francesca Romano', 'Chiara Colombo',
   'Sara Ricci', 'Valentina Marino', 'Elisa Greco', 'Laura Bruno', 'Silvia Gallo',
   'Anna Conti', 'Elena Rizzo', 'Sofia Costa', 'Giorgia Fontana', 'Federica Esposito',
   'Camilla Moretti', 'Beatrice De Luca', 'Veronica Villa', 'Monica Barbieri', 'Claudia Leone',
-  'Roberta Marchetti', 'Simona Caruso', 'Daniela Ferrara', 'Cristina Santoro', 'Stefania Vitale',
-  'Patrizia Lombardi', 'Manuela Coppola', 'Gabriella Mariani', 'Antonella Rinaldi', 'Ilaria Neri',
-  'Jessica Parisi', 'Michela Mazza', 'Nicole Orlando', 'Serena De Santis', 'Diana Ferretti',
-  'Vanessa Bellini', 'Rebecca Barone', 'Alessandra Vitali', 'Tiziana Benedetti', 'Paola Caputo',
-  'Emanuela Grassi', 'Donatella Longo', 'Sabrina Martinelli', 'Lisa Valenti', 'Angela Farina',
-  'Maria Rosa Guerra', 'Carla Rossetti', 'Eleonora De Rosa', 'Viviana Monti', 'Giada Silvestri'
+  
+  // Nomi maschili
+  'Marco Rossi', 'Andrea Bianchi', 'Luca Ferrari', 'Matteo Romano', 'Alessandro Colombo',
+  'Davide Ricci', 'Simone Marino', 'Federico Greco', 'Lorenzo Bruno', 'Gabriele Gallo',
+  'Riccardo Conti', 'Stefano Rizzo', 'Daniele Costa', 'Francesco Fontana', 'Paolo Esposito',
+  'Giovanni Moretti', 'Antonio De Luca', 'Michele Villa', 'Roberto Barbieri', 'Tommaso Leone',
+  
+  // Nomi neutri/vari
+  'Alex Marchetti', 'Sam Caruso', 'Morgan Ferrara', 'Jordan Santoro', 'Casey Vitale',
+  'River Lombardi', 'Sky Coppola', 'Phoenix Mariani', 'Sage Rinaldi', 'Quinn Neri'
 ];
 
 const bios = [
-  'Amo la vita e cerco qualcuno con cui condividerla. Appassionata di viaggi e nuove esperienze.',
-  'Creativa, sognatrice e sempre in cerca di avventure. Mi piace vivere ogni momento intensamente.',
-  'Amante della natura e degli animali. Cerco autenticità e connessioni vere.',
-  'Sono una persona solare che ama ridere e godersi la vita. Adoro cucinare e scoprire nuovi sapori.',
-  'Appassionata di arte e cultura. Mi piace perdermi nei musei e nei concerti live.',
-  'Sportiva e dinamica, amo mantenermi in forma e vivere all\'aria aperta.',
-  'Bookworm incallita, sempre con un libro in mano. Cerco qualcuno con cui condividere passioni letterarie.',
-  'Libera pensatrice, indipendente ma romantica. Mi piace chi sa sorprendermi.',
-  'Amante della musica, vado pazza per i concerti e i festival. La vita è troppo breve per la noia!',
-  'Yogini e meditazione sono il mio mantra. Cerco equilibrio e serenità in ogni cosa.',
-  'Fashion addicted e amante dello shopping. Ma sono anche una persona profonda, fidati!',
-  'Cinefila sfegatata, potrei parlare di film per ore. Cerco qualcuno per maratone cinematografiche.',
-  'Amante della fotografia, catturo momenti e emozioni. Il mondo è pieno di bellezza.',
-  'Foodie convinta, sempre alla ricerca del ristorante perfetto. Amo condividere buon cibo e risate.',
-  'Viaggiatrice instancabile, ho visto 30 paesi e ne voglio vedere altri 100!',
-  'Ballerina nel cuore, la danza è la mia forma di espressione. Cerco ritmo e passione.',
-  'Gamer girl orgogliosa! Sì, esistiamo davvero. Cerco player 2 per la vita.',
-  'Appassionata di teatro e spettacoli. L\'arte è vita, la vita è arte.',
-  'Fitness enthusiast, ma amo anche rilassarmi con un buon vino. Equilibrio è la chiave!',
-  'Designer di giorno, artista di notte. Cerco ispirazione in ogni angolo del mondo.',
-  'Amante degli animali, ho due gatti adorabili. Se non li ami, swipe left!',
-  'Avventuriera urbana, esploro la mia città come fosse un continente sconosciuto.',
-  'Poetessa dell\'anima, scrivo quello che sento. Cerco qualcuno che capisca le mie parole.',
-  'Appassionata di cucina vegana, ma rispetto tutte le scelte alimentari. Amore e rispetto!',
-  'Imprenditrice ambiziosa ma con i piedi per terra. Cerco qualcuno che supporti i miei sogni.',
-  'Amante del mare, potrei vivere in spiaggia. Il suono delle onde è la mia colonna sonora.',
-  'Nerd orgogliosa, amo scienza e tecnologia. Ma sono anche romantica, promesso!',
-  'Musicista appassionata, suono la chitarra e canto. La musica è il mio linguaggio universale.',
-  'Attivista per i diritti e la giustizia sociale. Cerco qualcuno che condivida i miei valori.',
-  'Amante del vintage e dello stile retrò. Tutto ciò che è vecchio è nuovo di nuovo!',
-  'Esploratrice di montagna, amo le escursioni e i panorami mozzafiato.',
-  'Architetta appassionata, vedo bellezza nelle linee e nelle forme. Il design è ovunque.',
-  'Coffee lover, il mio giorno inizia con un buon espresso. Cerco qualcuno per coffee dates!',
-  'Appassionata di psicologia, mi piace capire le persone. Sono una buona ascoltatrice.',
-  'Amante della notte e delle stelle. Potrei passare ore a guardare il cielo.',
-  'Cuoca provetta, amo sperimentare in cucina. Cerco qualcuno da coccolare con i miei piatti.',
-  'Appassionata di lingue, parlo 4 idiomi. Il mondo è piccolo quando sai comunicare!',
-  'Insegnante di professione, sognatrice per vocazione. Cerco qualcuno con cui crescere.',
-  'Amante del fai-da-te, creo con le mie mani. La creatività non ha limiti!',
-  'Volontaria nel tempo libero, credo nel dare agli altri. Il karma esiste!',
-  'Appassionata di astronomia, l\'universo mi affascina. Siamo polvere di stelle!',
-  'Artista poliedrica, mi esprimo in mille modi diversi. Cerco qualcuno che apprezzi la mia unicità.',
-  'Amante del mistero e dei thriller. La vita è troppo prevedibile, cerco brividi!',
-  'Filosofa nel cuore, mi piacciono le conversazioni profonde fino all\'alba.',
-  'Appassionata di giardinaggio, curo le mie piante come fossero bambini.',
-  'Amante del buon vino e della gastronomia. I piaceri della vita sono da condividere!',
-  'Ballerina di salsa, amo il ritmo latino. Cerco qualcuno che sappia muoversi!',
-  'Appassionata di storia e archeologia. Il passato mi insegna il futuro.',
-  'Amante degli sport estremi, l\'adrenalina è la mia droga. Cerco qualcuno coraggioso!',
-  'Scrittrice in erba, ho mille storie da raccontare. Tu ne vuoi far parte?'
+  'Amo perdermi nei tramonti e trovare me stesso nelle nuove avventure. La vita è troppo breve per non viverla intensamente.',
+  'Sono un\'anima libera che ama esplorare il mondo, una città alla volta. Cerco qualcuno con cui condividere questi momenti.',
+  'Appassionato di buon cibo, vino e conversazioni che durano fino all\'alba. La profondità mi affascina più della superficialità.',
+  'Creativo per natura, sogno ad occhi aperti e realizzo i miei progetti con determinazione. Cerco chi sappia apprezzare l\'unicità.',
+  'Lettore accanito e scrittore occasionale. Le parole sono la mia passione, la musica il mio rifugio.',
+  'Sportivo ma anche intellettuale. Credo nell\'equilibrio tra corpo e mente. Lo yoga mi ha insegnato molto.',
+  'Amante dell\'arte in tutte le sue forme. Dipingo emozioni e cerco chi sappia comprenderle senza spiegarle.',
+  'Viaggiatore per vocazione, fotografo per passione. Catturo momenti e li trasformo in ricordi eterni.',
+  'Musicista nel cuore, suono per esprimere ciò che le parole non possono dire. La vita è una melodia continua.',
+  'Chef improvvisato ma entusiasta. Cucinare è il mio modo di mostrare affetto. Ti va un assaggio?',
+  'Cinefilo incallito con una collezione di film d\'autore impressionante. Cerco qualcuno per maratone notturne.',
+  'Architetto di professione, sognatore per natura. Vedo bellezza nelle linee e poesia nelle strutture.',
+  'Amante degli animali, volontario al rifugio locale. I miei gatti sono la mia famiglia allargata.',
+  'Filosofo della domenica, mi piacciono le domande senza risposta e le conversazioni che fanno pensare.',
+  'Ballerino di salsa e bachata. Il ballo è libertà, espressione, connessione. Vuoi ballare con me?',
+  'Appassionato di tecnologia ma con un\'anima vintage. Il futuro si costruisce rispettando il passato.',
+  'Scrivo codice di giorno e poesie di notte. Sono un nerd romantico, esisto davvero!',
+  'Amante della natura e dell\'escursionismo. La montagna è la mia terapia, il silenzio il mio maestro.',
+  'Attivista per l\'ambiente e la giustizia sociale. Credo che ognuno possa fare la differenza.',
+  'Gamer appassionato ma anche outdoor enthusiast. L\'equilibrio è tutto, anche nei videogiochi della vita.',
+  'Insegnante che impara qualcosa di nuovo ogni giorno dai suoi studenti. La curiosità è la mia guida.',
+  'Fotografo notturno, catturo la magia della città quando tutti dormono. La notte ha storie da raccontare.',
+  'Collezionista di vinili e amante della musica vintage. Il passato suona meglio del presente.',
+  'Artigiano del legno, creo con le mani ciò che immagino con la mente. La creatività non ha limiti.',
+  'Praticante di arti marziali, ma sono una persona pacifica. La forza vera è nel controllo.',
+  'Appassionato di astronomia, passo notti intere a guardare le stelle. L\'universo mi fa sentire piccolo e grande insieme.',
+  'Barista di professione, artista del caffè. Ogni tazza è una tela, ogni cliente una storia.',
+  'Giornalista freelance sempre in cerca della prossima storia da raccontare. La verità mi affascina.',
+  'Designer grafico con un debole per l\'illustrazione. Trasformo idee in immagini che parlano.',
+  'Biologo marino, passo più tempo sott\'acqua che sulla terraferma. L\'oceano è il mio mondo.',
+  'Personal trainer che crede nel benessere olistico. Non solo muscoli, ma mente e spirito.',
+  'Poeta urbano, scrivo versi sui muri della città. L\'arte deve essere per tutti, ovunque.',
+  'Sommelier e appassionato enogastronomico. Ogni vino racconta una storia, ogni piatto un\'emozione.',
+  'Psicologo con una passione per l\'arte terapia. Ascolto, capisco, supporto. Sono qui.',
+  'Archeologo affascinato dal passato che ci insegna il futuro. Ogni reperto è una finestra temporale.',
+  'DJ nei weekend, contabile in settimana. La musica è la mia valvola di sfogo.',
+  'Volontario in una ONG, credo nel potere del dare. La felicità si moltiplica quando è condivisa.',
+  'Appassionato di street art, la città è la mia galleria. Cerco bellezza anche nel grigio urbano.',
+  'Climber che sfida i propri limiti una parete alla volta. La vetta è solo metà del viaggio.',
+  'Floricultore che parla alle piante e le ascolta crescere. La natura ha il suo linguaggio.',
+  'Attore di teatro indipendente, vivo per il palcoscenico. Ogni rappresentazione è un\'emozione unica.',
+  'Tatuatore con il pallino per l\'arte tradizionale giapponese. Ogni tatuaggio è un\'opera d\'arte permanente.',
+  'Produttore musicale che trasforma suoni in emozioni. La musica è la mia lingua madre.',
+  'Restauratore d\'arte, riporto in vita capolavori dimenticati. Il passato merita rispetto e cura.',
+  'Skateboard per passione, urbanista per vocazione. La città è il mio parco giochi.',
+  'Cuoco vegano che sfida gli stereotipi del cibo vegetale. Gusto e etica possono convivere.',
+  'Fotografo di matrimoni che cattura l\'amore nella sua forma più pura. Ogni coppia è unica.',
+  'Libraio che consiglia libri come un sommelier fa col vino. Ogni lettore ha il suo libro perfetto.',
+  'Guida turistica che conosce ogni angolo nascosto della città. Lasciati stupire dai segreti urbani.',
+  'Cercatore di funghi e amante della natura selvaggia. La foresta è il mio supermercato preferito.'
 ];
 
-const genders = ['male', 'female', 'female', 'female', 'female', 'female', 'female', 'female', 
-                 'transgender', 'transexual', 'genderfluid', 'non-binary'];
+const genders = [
+  'male', 'male', 'male', 'male', 'male',
+  'female', 'female', 'female', 'female', 'female',
+  'transgender', 'transgender', 
+  'transexual', 'transexual',
+  'genderfluid', 'genderfluid',
+  'non-binary', 'non-binary'
+];
 
-const orientations = ['heterosexual', 'heterosexual', 'heterosexual', 'heterosexual', 
-                      'homosexual', 'homosexual', 'bisexual', 'bisexual', 'pansexual', 'asexual'];
+const orientations = [
+  'heterosexual', 'heterosexual', 'heterosexual', 'heterosexual',
+  'homosexual', 'homosexual', 'homosexual',
+  'bisexual', 'bisexual', 'bisexual',
+  'pansexual', 'pansexual',
+  'asexual'
+];
 
-const relationshipTypes = ['serious', 'casual', 'friendship'];
+const relationshipStatuses = [
+  'single', 'single', 'single', 'single',
+  'in_relationship', 'divorced', 
+  'prefer_not_say'
+];
+
+const lookingForOptions = [
+  ['Relazione seria'],
+  ['Relazione seria'],
+  ['Incontri casuali'],
+  ['Amicizia'],
+  ['Non specifico'],
+  ['Preferisco non dirlo']
+];
 
 function getRandomElement<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)];
@@ -131,14 +164,16 @@ function generateProfiles(count: number): Profile[] {
 
   for (let i = 0; i < count; i++) {
     let nickname = getRandomElement(nicknames);
+    let counter = 1;
     while (usedNicknames.has(nickname)) {
-      nickname = getRandomElement(nicknames) + Math.floor(Math.random() * 100);
+      nickname = getRandomElement(nicknames) + counter;
+      counter++;
     }
     usedNicknames.add(nickname);
 
-    let fullName = getRandomElement(femaleNames);
+    let fullName = getRandomElement(names);
     while (usedNames.has(fullName)) {
-      fullName = getRandomElement(femaleNames);
+      fullName = getRandomElement(names);
     }
     usedNames.add(fullName);
 
@@ -146,13 +181,14 @@ function generateProfiles(count: number): Profile[] {
       id: crypto.randomUUID(),
       nickname,
       full_name: fullName,
-      age: Math.floor(Math.random() * (45 - 18 + 1)) + 18,
+      age: Math.floor(Math.random() * (55 - 18 + 1)) + 18,
       gender: getRandomElement(genders),
       sexual_orientation: getRandomElement(orientations),
+      relationship_status: getRandomElement(relationshipStatuses),
+      looking_for: getRandomElement(lookingForOptions),
       bio: getRandomElement(bios),
       city: getRandomElement(cities),
-      interests: getRandomElements(interests, Math.floor(Math.random() * 5) + 3),
-      relationship_type: getRandomElement(relationshipTypes),
+      interests: getRandomElements(interests, Math.floor(Math.random() * 6) + 3),
       is_admin_profile: true,
     });
   }
