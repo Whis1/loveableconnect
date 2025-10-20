@@ -1,4 +1,6 @@
 import { ImageDialog } from "@/components/ImageDialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { User } from "lucide-react";
 
 interface MessageBubbleProps {
   content: string;
@@ -10,6 +12,7 @@ interface MessageBubbleProps {
   senderId?: string;
   receiverId?: string;
   matchId?: string;
+  senderAvatarUrl?: string | null;
 }
 
 export const MessageBubble = ({ 
@@ -21,7 +24,8 @@ export const MessageBubble = ({
   messageId,
   senderId,
   receiverId,
-  matchId
+  matchId,
+  senderAvatarUrl
 }: MessageBubbleProps) => {
   const renderContent = () => {
     switch (messageType) {
@@ -49,6 +53,14 @@ export const MessageBubble = ({
 
   return (
     <div className="flex w-full px-2 md:px-4">
+      {!isOwn && (
+        <Avatar className="h-8 w-8 mr-2 shrink-0">
+          <AvatarImage src={senderAvatarUrl || undefined} alt="Profile" />
+          <AvatarFallback>
+            <User className="h-4 w-4" />
+          </AvatarFallback>
+        </Avatar>
+      )}
       <div
         className={`max-w-[85%] sm:max-w-[75%] md:max-w-[68%] w-fit rounded-lg px-4 py-2 ${
           messageType === 'emoji' ? 'bg-transparent' : 
@@ -70,6 +82,14 @@ export const MessageBubble = ({
           })}
         </p>
       </div>
+      {isOwn && (
+        <Avatar className="h-8 w-8 ml-2 shrink-0">
+          <AvatarImage src={senderAvatarUrl || undefined} alt="Profile" />
+          <AvatarFallback>
+            <User className="h-4 w-4" />
+          </AvatarFallback>
+        </Avatar>
+      )}
     </div>
   );
 };

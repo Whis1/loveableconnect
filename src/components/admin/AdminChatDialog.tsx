@@ -47,6 +47,8 @@ export const AdminChatDialog = ({
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [adminAvatar, setAdminAvatar] = useState<string | null>(null);
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -57,6 +59,22 @@ export const AdminChatDialog = ({
       setLoading(true);
       
       try {
+        // Fetch avatars for both users
+        const { data: adminProfile } = await supabase
+          .from("profiles")
+          .select("avatar_url")
+          .eq("id", adminProfileId)
+          .maybeSingle();
+        
+        const { data: userProfile } = await supabase
+          .from("profiles")
+          .select("avatar_url")
+          .eq("id", userId)
+          .maybeSingle();
+        
+        setAdminAvatar(adminProfile?.avatar_url || null);
+        setUserAvatar(userProfile?.avatar_url || null);
+
         // Find or create match
         const user1 = adminProfileId < userId ? adminProfileId : userId;
         const user2 = adminProfileId < userId ? userId : adminProfileId;
@@ -273,6 +291,7 @@ export const AdminChatDialog = ({
               <div className="space-y-4 py-4">
                 {messages.map((message) => {
                   const isOwn = message.sender_id === adminProfileId;
+                  const senderAvatar = isOwn ? adminAvatar : userAvatar;
                   
                   return (
                     <MessageBubble
@@ -286,6 +305,7 @@ export const AdminChatDialog = ({
                       senderId={message.sender_id}
                       receiverId={message.receiver_id}
                       matchId={message.match_id}
+                      senderAvatarUrl={senderAvatar}
                     />
                   );
                 })}
