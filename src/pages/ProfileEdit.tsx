@@ -509,39 +509,7 @@ const ProfileEdit = () => {
                 </Select>
               </div>
 
-              {/* Looking For (Cerca) */}
-              <div className="space-y-3">
-                <Label>Cerca (generi)</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { value: 'uomini', label: 'Uomini' },
-                    { value: 'donne', label: 'Donne' },
-                    { value: 'trans', label: 'Trans' },
-                    { value: 'tutti', label: 'Tutti' },
-                    { value: 'non specificato', label: 'Non specificato' }
-                  ].map((option) => (
-                    <div key={option.value} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`looking-for-${option.value}`}
-                        checked={lookingFor.includes(option.value)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setLookingFor([...lookingFor, option.value]);
-                          } else {
-                            setLookingFor(lookingFor.filter(item => item !== option.value));
-                          }
-                        }}
-                      />
-                      <Label
-                        htmlFor={`looking-for-${option.value}`}
-                        className="text-sm font-normal cursor-pointer"
-                      >
-                        {option.label}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              
 
               {/* Relationship Status */}
               <div className="space-y-2">

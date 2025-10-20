@@ -146,12 +146,12 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
                 </div>
               )}
               
-              {profile.looking_for && profile.looking_for.length > 0 && (
-                <div className="flex gap-2">
-                  <span className="font-semibold min-w-[80px]">Cerca:</span>
-                  <span className="text-muted-foreground">{profile.looking_for.join(', ')}</span>
-                </div>
-              )}
+              <div className="flex gap-2">
+                <span className="font-semibold min-w-[80px]">Location:</span>
+                <span className="text-muted-foreground">
+                  {showRealLocation ? (profile.city || "Non specificata") : "Vicino alle tue parti"}
+                </span>
+              </div>
               
               {profile.gender && (
                 <div className="flex gap-2">
@@ -182,21 +182,24 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
                 </div>
               )}
               
-              <div className="flex gap-2">
-                <span className="font-semibold min-w-[80px]">Location:</span>
-                <span className="text-muted-foreground">
-                  {showRealLocation ? (profile.city || "Non specificata") : "Vicino alle tue parti"}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {profile.bio && (
-          <div className="mt-4">
-            <p className="text-sm text-muted-foreground line-clamp-3">{profile.bio}</p>
-          </div>
-        )}
+              {(profile.relationship_type || (profile.looking_for && profile.looking_for.length > 0)) && (
+                <div className="flex gap-2">
+                  <span className="font-semibold min-w-[80px]">Cerca:</span>
+                  <span className="text-muted-foreground">
+                    {profile.relationship_type
+                      ? (
+                        profile.relationship_type === 'serious' ? 'Relazione seria' :
+                        profile.relationship_type === 'casual' ? 'Incontri casuali' :
+                        profile.relationship_type === 'friendship' ? 'Amicizia' :
+                        profile.relationship_type === 'not-sure' ? 'Non specifico' :
+                        profile.relationship_type === 'prefer-not-say' ? 'Preferisco non dirlo' :
+                        profile.relationship_type
+                        )
+                      : (profile.looking_for?.join(', ') || '')}
+                  </span>
+                </div>
+              )}
+              
 
         {profile.interests && profile.interests.length > 0 && (
           <div className="mt-4">
