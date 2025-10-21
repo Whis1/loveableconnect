@@ -10,69 +10,69 @@ interface InterestsAutocompleteProps {
   maxInterests?: number;
 }
 
-const PREDEFINED_INTERESTS = [
+const INTEREST_KEYS = [
   // Sport e Fitness
-  "Calcio", "Tennis", "Basket", "Pallavolo", "Nuoto", "Corsa", "Ciclismo", 
-  "Yoga", "Pilates", "Palestra", "Fitness", "CrossFit", "Arrampicata", 
-  "Surf", "Snowboard", "Sci", "Pattinaggio", "Danza", "Arti Marziali",
-  "Boxe", "Rugby", "Golf", "Escursionismo", "Trekking", "Hiking",
+  "soccer", "tennis", "basketball", "volleyball", "swimming", "running", "cycling",
+  "yoga", "pilates", "gym", "fitness", "crossfit", "climbing",
+  "surf", "snowboard", "skiing", "skating", "dancing", "martialArts",
+  "boxing", "rugby", "golf", "hiking", "trekking",
   
   // Arte e Cultura
-  "Arte", "Pittura", "Disegno", "Scultura", "Fotografia", "Cinema", 
-  "Teatro", "Musica", "Concerti", "Festival", "Musei", "Mostre",
-  "Architettura", "Design", "Letteratura", "Poesia", "Scrittura",
-  "Calligrafia", "Fumetti", "Manga", "Anime",
+  "art", "painting", "drawing", "sculpture", "photography", "cinema",
+  "theatre", "music", "concerts", "festivals", "museums", "exhibitions",
+  "architecture", "design", "literature", "poetry", "writing",
+  "calligraphy", "comics", "manga", "anime",
   
   // Intrattenimento
-  "Netflix", "Serie TV", "Film", "Documentari", "Gaming", "Videogiochi",
-  "PlayStation", "Xbox", "Nintendo", "PC Gaming", "Streaming", "YouTube",
-  "Podcast", "Audiolibri", "Karaoke", "Escape Room", "Board Games",
+  "netflix", "tvSeries", "movies", "documentaries", "gaming", "videoGames",
+  "playstation", "xbox", "nintendo", "pcGaming", "streaming", "youtube",
+  "podcasts", "audiobooks", "karaoke", "escapeRoom", "boardGames",
   
   // Musica
-  "Rock", "Pop", "Jazz", "Classica", "Hip Hop", "Rap", "Reggae",
-  "Metal", "Indie", "Elettronica", "House", "Techno", "Blues",
-  "Folk", "Country", "R&B", "Soul", "Suonare Chitarra", "Pianoforte",
-  "Batteria", "DJ", "Canto",
+  "rock", "pop", "jazz", "classical", "hipHop", "rap", "reggae",
+  "metal", "indie", "electronic", "house", "techno", "blues",
+  "folk", "country", "rnb", "soul", "playGuitar", "piano",
+  "drums", "dj", "singing",
   
   // Viaggi e Avventura
-  "Viaggi", "Backpacking", "Campeggio", "Avventura", "Esplorare",
-  "Road Trip", "Voli", "Crociere", "Spiaggia", "Montagna", "Natura",
-  "Wildlife", "Safari", "Immersioni", "Snorkeling", "Paracadutismo",
+  "travel", "backpacking", "camping", "adventure", "exploring",
+  "roadTrip", "flights", "cruises", "beach", "mountains", "nature",
+  "wildlife", "safari", "diving", "snorkeling", "skydiving",
   
   // Cibo e Bevande
-  "Cucina", "Cucinare", "Baking", "Pasticceria", "Vino", "Birra",
-  "Cocktail", "Caffè", "Tè", "Ristoranti", "Street Food", "Food Tour",
-  "Vegano", "Vegetariano", "Sushi", "Pizza", "Gourmet", "Degustazioni",
+  "cooking", "baking", "pastry", "wine", "beer",
+  "cocktails", "coffee", "tea", "restaurants", "streetFood", "foodTour",
+  "vegan", "vegetarian", "sushi", "pizza", "gourmet", "tastings",
   
   // Lifestyle
-  "Moda", "Shopping", "Make-up", "Skincare", "Wellness", "Meditazione",
-  "Mindfulness", "Sostenibilità", "Ecologia", "Volontariato",
-  "Beneficenza", "Giardinaggio", "Piante", "Animali", "Cani", "Gatti",
-  "Equitazione", "Pesca", "Caccia",
+  "fashion", "shopping", "makeup", "skincare", "wellness", "meditation",
+  "mindfulness", "sustainability", "ecology", "volunteering",
+  "charity", "gardening", "plants", "animals", "dogs", "cats",
+  "horseRiding", "fishing", "hunting",
   
   // Tecnologia e Scienza
-  "Tecnologia", "Programmazione", "Coding", "IA", "Robotica",
-  "Astronomia", "Fisica", "Chimica", "Biologia", "Scienza",
-  "Innovazione", "Startup", "Crypto", "NFT", "Realtà Virtuale",
+  "technology", "programming", "coding", "ai", "robotics",
+  "astronomy", "physics", "chemistry", "biology", "science",
+  "innovation", "startups", "crypto", "nft", "vr",
   
   // Sociale e Relazioni
-  "Socializzare", "Feste", "Nightlife", "Discoteche", "Bar",
-  "Aperitivi", "Brunch", "Networking", "Eventi", "Community",
-  "Volontariato", "Politica", "Attivismo", "Dibattiti",
+  "socializing", "parties", "nightlife", "clubs", "bars",
+  "aperitifs", "brunch", "networking", "events", "community",
+  "politics", "activism", "debates",
   
   // Hobby Creativi
-  "Bricolage", "Fai da te", "Modellismo", "Collezionismo",
-  "Antiquariato", "Vintage", "Artigianato", "Uncinetto", "Ricamo",
-  "Lavorazione Legno", "Ceramica", "Origami", "Scrapbooking",
+  "diy", "modeling", "collecting",
+  "antiques", "vintage", "crafts", "crochet", "embroidery",
+  "woodworking", "ceramics", "origami", "scrapbooking",
   
   // Benessere Mentale
-  "Psicologia", "Filosofia", "Spiritualità", "Astrologia",
-  "Tarocchi", "Crescita Personale", "Self-improvement", "Coaching",
-  "Terapia", "Lettura", "Libri", "Giornalismo",
+  "psychology", "philosophy", "spirituality", "astrology",
+  "tarot", "personalGrowth", "selfImprovement", "coaching",
+  "therapy", "reading", "books", "journalism",
   
   // Auto e Motori
-  "Auto", "Moto", "Meccanica", "Tuning", "Formula 1", "MotoGP",
-  "Rally", "Karting", "Auto d'epoca",
+  "cars", "motorcycles", "mechanics", "tuning", "formula1", "motoGP",
+  "rally", "karting", "vintageCars",
 ].sort();
 
 export function InterestsAutocomplete({
@@ -84,18 +84,24 @@ export function InterestsAutocomplete({
   const [inputValue, setInputValue] = useState("");
   const [filteredInterests, setFilteredInterests] = useState<string[]>([]);
 
+  // Get translated interests list
+  const translatedInterests = INTEREST_KEYS.map(key => ({
+    key,
+    label: t(`interests.${key}`, key) // fallback to key if translation missing
+  }));
+
   useEffect(() => {
     if (inputValue.trim()) {
-      const filtered = PREDEFINED_INTERESTS.filter(
+      const filtered = translatedInterests.filter(
         (interest) =>
-          interest.toLowerCase().includes(inputValue.toLowerCase()) &&
-          !selectedInterests.includes(interest)
+          interest.label.toLowerCase().includes(inputValue.toLowerCase()) &&
+          !selectedInterests.includes(interest.label)
       );
-      setFilteredInterests(filtered);
+      setFilteredInterests(filtered.map(i => i.label));
     } else {
       setFilteredInterests([]);
     }
-  }, [inputValue, selectedInterests]);
+  }, [inputValue, selectedInterests, translatedInterests]);
 
   const handleSelectInterest = (interest: string) => {
     if (selectedInterests.length < maxInterests && !selectedInterests.includes(interest)) {
