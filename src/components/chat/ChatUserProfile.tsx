@@ -147,138 +147,151 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
   const hasPhotos = profile.photos && profile.photos.length > 0;
 
   return (
-    <Card className="border-b rounded-none bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
-      <div className="p-6">
-        <div className="flex items-start gap-4">
+    <Card className="border-b rounded-none bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 shadow-sm">
+      <div className="p-4">
+        {/* Header con Avatar e Nome */}
+        <div className="flex items-center gap-3 mb-3">
           <ImageDialog 
             src={profile.avatar_url ? supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl : ''} 
             alt={profile.nickname}
           >
-            <Avatar className="h-20 w-20 ring-2 ring-primary/20 cursor-pointer hover:ring-primary/40 transition-all">
+            <Avatar className="h-16 w-16 ring-2 ring-primary/20 cursor-pointer hover:ring-primary/40 transition-all shadow-md">
               {profile.avatar_url ? (
                 <AvatarImage 
                   src={supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl}
                 />
               ) : null}
-              <AvatarFallback className="text-2xl">
+              <AvatarFallback className="text-xl bg-gradient-to-br from-primary/20 to-secondary/20">
                 {profile.nickname.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
           </ImageDialog>
 
-          <div className="flex-1 space-y-3">
-            <h3 className="text-2xl font-bold">{profile.nickname}</h3>
-            
-            <div className="space-y-2 text-sm">
+          <div className="flex-1">
+            <h3 className="text-xl font-bold mb-1">{profile.nickname}</h3>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               {profile.age && (
-                <div className="flex gap-2">
-                  <span className="font-semibold min-w-[80px]">{t("common.age")}</span>
-                  <span className="text-muted-foreground">{profile.age}</span>
-                </div>
-              )}
-              
-              {profile.relationship_status && (
-                <div className="flex gap-2">
-                  <span className="font-semibold min-w-[80px]">{t("common.relationshipStatus")}</span>
-                  <span className="text-muted-foreground">
-                    {profile.relationship_status === 'single' ? t("common.single") : 
-                     profile.relationship_status === 'in_relationship' ? t("common.inRelationship") :
-                     profile.relationship_status === 'married' ? t("common.married") :
-                     profile.relationship_status === 'divorced' ? t("common.divorced") :
-                     profile.relationship_status === 'widowed' ? t("common.widowed") :
-                     profile.relationship_status === 'prefer_not_say' ? t("common.preferNotSay") :
-                     profile.relationship_status}
-                  </span>
-                </div>
-              )}
-              
-              <div className="flex gap-2">
-                <span className="font-semibold min-w-[80px]">{t("common.location")}</span>
-                <span className="text-muted-foreground">
-                  {showRealLocation ? (profile.city || t("common.notSpecified")) : t("common.nearbyLocation")}
+                <span className="flex items-center gap-1">
+                  <User className="h-3 w-3" />
+                  {profile.age} {t("chat.years")}
                 </span>
-              </div>
-              
-              {profile.gender && (
-                <div className="flex gap-2">
-                  <span className="font-semibold min-w-[80px]">{t("common.gender")}</span>
-                  <span className="text-muted-foreground">
-                    {profile.gender === 'male' ? t("common.male") : 
-                     profile.gender === 'female' ? t("common.female") : 
-                     profile.gender === 'non-binary' ? t("common.nonBinary") :
-                     profile.gender === 'transexual' ? t("common.transexual") :
-                     profile.gender === 'transgender' ? t("common.transgender") :
-                     profile.gender === 'genderfluid' ? t("common.genderfluid") :
-                     (profile.translatedGender || profile.gender)}
-                  </span>
-                </div>
               )}
-              
-              {profile.sexual_orientation && (
-                <div className="flex gap-2">
-                  <span className="font-semibold min-w-[80px]">{t("common.orientation")}</span>
-                  <span className="text-muted-foreground">
-                    {profile.sexual_orientation === 'heterosexual' ? t("common.heterosexual") :
-                     profile.sexual_orientation === 'homosexual' ? t("common.homosexual") :
-                     profile.sexual_orientation === 'bisexual' ? t("common.bisexual") :
-                     profile.sexual_orientation === 'pansexual' ? t("common.pansexual") :
-                     profile.sexual_orientation === 'asexual' ? t("common.asexual") :
-                     profile.sexual_orientation === 'other' ? t("common.other") :
-                     (profile.translatedOrientation || profile.sexual_orientation)}
-                  </span>
-                </div>
-              )}
-              
-              {(profile.relationship_type || (profile.looking_for && profile.looking_for.length > 0)) && (
-                <div className="flex gap-2">
-                  <span className="font-semibold min-w-[80px]">{t("common.lookingFor")}</span>
-                  <span className="text-muted-foreground">
-                    {profile.relationship_type
-                      ? (
-                        profile.relationship_type === 'serious' ? t("common.seriousRelationship") :
-                        profile.relationship_type === 'casual' ? t("common.casualDating") :
-                        profile.relationship_type === 'friendship' ? t("common.friendship") :
-                        profile.relationship_type === 'not-sure' ? t("common.notSure") :
-                        profile.relationship_type === 'prefer-not-say' ? t("common.preferNotSay") :
-                        profile.relationship_type
-                        )
-                      : (profile.looking_for?.join(', ') || '')}
-                  </span>
-                </div>
-              )}
+              <span className="flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {showRealLocation ? (profile.city || t("common.notSpecified")) : t("common.nearbyLocation")}
+              </span>
             </div>
           </div>
         </div>
 
+        {/* Info compatte in griglia */}
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs mb-3">
+          {profile.gender && (
+            <div className="flex items-start gap-1.5">
+              <span className="font-medium text-foreground/80 min-w-[60px]">{t("common.gender")}</span>
+              <span className="text-muted-foreground">
+                {profile.gender === 'male' ? t("common.male") : 
+                 profile.gender === 'female' ? t("common.female") : 
+                 profile.gender === 'non-binary' ? t("common.nonBinary") :
+                 profile.gender === 'transexual' ? t("common.transexual") :
+                 profile.gender === 'transgender' ? t("common.transgender") :
+                 profile.gender === 'genderfluid' ? t("common.genderfluid") :
+                 (profile.translatedGender || profile.gender)}
+              </span>
+            </div>
+          )}
+          
+          {profile.sexual_orientation && (
+            <div className="flex items-start gap-1.5">
+              <span className="font-medium text-foreground/80 min-w-[70px]">{t("common.orientation")}</span>
+              <span className="text-muted-foreground">
+                {profile.sexual_orientation === 'heterosexual' ? t("common.heterosexual") :
+                 profile.sexual_orientation === 'homosexual' ? t("common.homosexual") :
+                 profile.sexual_orientation === 'bisexual' ? t("common.bisexual") :
+                 profile.sexual_orientation === 'pansexual' ? t("common.pansexual") :
+                 profile.sexual_orientation === 'asexual' ? t("common.asexual") :
+                 profile.sexual_orientation === 'other' ? t("common.other") :
+                 (profile.translatedOrientation || profile.sexual_orientation)}
+              </span>
+            </div>
+          )}
+          
+          {profile.relationship_status && (
+            <div className="flex items-start gap-1.5 col-span-2">
+              <span className="font-medium text-foreground/80 min-w-[60px]">{t("common.relationshipStatus")}</span>
+              <span className="text-muted-foreground">
+                {profile.relationship_status === 'single' ? t("common.single") : 
+                 profile.relationship_status === 'in_relationship' ? t("common.inRelationship") :
+                 profile.relationship_status === 'married' ? t("common.married") :
+                 profile.relationship_status === 'divorced' ? t("common.divorced") :
+                 profile.relationship_status === 'widowed' ? t("common.widowed") :
+                 profile.relationship_status === 'prefer_not_say' ? t("common.preferNotSay") :
+                 profile.relationship_status}
+              </span>
+            </div>
+          )}
+          
+          {(profile.relationship_type || (profile.looking_for && profile.looking_for.length > 0)) && (
+            <div className="flex items-start gap-1.5 col-span-2">
+              <Heart className="h-3.5 w-3.5 mt-0.5 text-primary/60 flex-shrink-0" />
+              <div className="flex flex-col gap-0.5">
+                <span className="font-medium text-foreground/80">{t("common.lookingFor")}</span>
+                <span className="text-muted-foreground">
+                  {profile.relationship_type
+                    ? (
+                      profile.relationship_type === 'serious' ? t("common.seriousRelationship") :
+                      profile.relationship_type === 'casual' ? t("common.casualDating") :
+                      profile.relationship_type === 'friendship' ? t("common.friendship") :
+                      profile.relationship_type === 'not-sure' ? t("common.notSure") :
+                      profile.relationship_type === 'prefer-not-say' ? t("common.preferNotSay") :
+                      profile.relationship_type
+                      )
+                    : (profile.looking_for?.join(', ') || '')}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Bio */}
         {profile.bio && (
-          <div className="mt-4">
-            <p className="text-sm text-muted-foreground line-clamp-3">
+          <div className="mb-3 p-2.5 bg-background/50 rounded-lg border border-border/50">
+            <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
               {profile.translatedBio || profile.bio}
             </p>
           </div>
         )}
 
+        {/* Interessi */}
         {profile.interests && profile.interests.length > 0 && (
-          <div className="mt-4">
-            <div className="flex flex-wrap gap-2">
-              {(profile.translatedInterests || profile.interests).slice(0, 5).map((interest, index) => (
-                <Badge key={index} variant="outline" className="text-xs">
+          <div className="mb-3">
+            <div className="flex flex-wrap gap-1.5">
+              {(profile.translatedInterests || profile.interests).slice(0, 6).map((interest, index) => (
+                <Badge 
+                  key={index} 
+                  variant="secondary" 
+                  className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary hover:bg-primary/20 border-none"
+                >
                   {interest}
                 </Badge>
               ))}
-              {profile.interests.length > 5 && (
-                <Badge variant="outline" className="text-xs">
-                  +{profile.interests.length - 5}
+              {profile.interests.length > 6 && (
+                <Badge 
+                  variant="secondary" 
+                  className="text-[10px] px-2 py-0.5 bg-muted"
+                >
+                  +{profile.interests.length - 6}
                 </Badge>
               )}
             </div>
           </div>
         )}
 
+        {/* Galleria foto */}
         {hasPhotos && (
-          <div className="mt-4">
-            <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
-              <User className="h-4 w-4" />
+          <div>
+            <h4 className="text-xs font-semibold mb-2 flex items-center gap-1.5 text-foreground/70">
+              <User className="h-3.5 w-3.5" />
               {t("chat.photoGallery")}
             </h4>
             <ScrollArea className="w-full">
@@ -295,7 +308,7 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
                       <img
                         src={photoUrl}
                         alt={`${t("chat.photo")} ${index + 1}`}
-                        className="h-20 w-20 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+                        className="h-16 w-16 object-cover rounded-md cursor-pointer hover:opacity-80 hover:scale-105 transition-all flex-shrink-0 shadow-sm"
                       />
                     </ImageDialog>
                   );
