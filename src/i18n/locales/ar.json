@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "LovableConnect",
+    "name": "LoveableConnect",
     "tagline": "ابحث عن الحب الذي تبحث عنه"
   },
   "auth": {
@@ -17,7 +17,7 @@
     "emailSent": "تم إرسال البريد الإلكتروني!",
     "checkEmail": "تحقق من بريدك الإلكتروني لإعادة تعيين كلمة المرور",
     "signedIn": "تم تسجيل الدخول!",
-    "welcome": "مرحباً بك في LovableConnect",
+    "welcome": "مرحباً بك في LoveableConnect",
     "registrationComplete": "اكتمل التسجيل!",
     "errorSignIn": "خطأ في تسجيل الدخول",
     "errorSignUp": "خطأ أثناء التسجيل",
@@ -103,7 +103,7 @@
     "acceptButton": "قبول والمتابعة"
   },
   "dashboard": {
-    "title": "LovableConnect",
+    "title": "LoveableConnect",
     "tagline": "ابحث عن توأم روحك",
     "signOut": "تسجيل الخروج",
     "loading": "جاري التحميل...",

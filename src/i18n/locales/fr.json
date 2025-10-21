@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "LovableConnect",
+    "name": "LoveableConnect",
     "tagline": "Trouvez l'amour que vous cherchez"
   },
   "auth": {
@@ -17,7 +17,7 @@
     "emailSent": "Email envoyé!",
     "checkEmail": "Vérifiez votre boîte de réception pour réinitialiser votre mot de passe",
     "signedIn": "Connecté!",
-    "welcome": "Bienvenue sur LovableConnect",
+    "welcome": "Bienvenue sur LoveableConnect",
     "registrationComplete": "Inscription terminée!",
     "errorSignIn": "Erreur lors de la connexion",
     "errorSignUp": "Erreur lors de l'inscription",
@@ -123,7 +123,7 @@
     "acceptButton": "Accepter et Continuer"
   },
   "dashboard": {
-    "title": "LovableConnect",
+    "title": "LoveableConnect",
     "tagline": "Trouvez votre âme sœur",
     "signOut": "Se déconnecter",
     "loading": "Chargement...",

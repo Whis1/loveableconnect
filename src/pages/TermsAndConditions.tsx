@@ -49,7 +49,7 @@ const TermsAndConditions = () => {
                     </p>
                     <p className="font-medium">
                       Direttamente online:<br />
-                      Tramite Posta: <a href="mailto:lovablecon@hotmail.it" className="text-primary hover:underline">lovablecon@hotmail.it</a>
+                      Tramite Posta: <a href="mailto:loveableconnect@hotmail.it" className="text-primary hover:underline">loveableconnect@hotmail.it</a>
                     </p>
                   </div>
 
@@ -130,7 +130,7 @@ const TermsAndConditions = () => {
                     </p>
                     <p>
                       <strong>Tramite Posta:</strong><br />
-                      Gli Utenti possono anche contattare il Responsabile della protezione dei dati (RPD o DPO) del Titolare, i cui dati di contatto sono di seguito riportati: e-mail <a href="mailto:lovableconnect@hotmail.it" className="text-primary hover:underline">lovableconnect@hotmail.it</a>
+                      Gli Utenti possono anche contattare il Responsabile della protezione dei dati (RPD o DPO) del Titolare, i cui dati di contatto sono di seguito riportati: e-mail <a href="mailto:loveableconnect@hotmail.it" className="text-primary hover:underline">loveableconnect@hotmail.it</a>
                     </p>
                     <p>
                       Ai sensi della Normativa Applicabile, l'Utente ha il diritto di ottenere l'indicazione (i) dell'origine dei dati personali; (ii) delle finalità e modalità del trattamento; (iii) della logica applicata in caso di trattamento effettuato con l'ausilio di strumenti elettronici; (iv) degli estremi identificativi del titolare e dei responsabili; (v) dei soggetti o delle categorie di soggetti ai quali i dati personali possono essere comunicati o che possono venirne a conoscenza in qualità di responsabili o incaricati.
@@ -168,14 +168,14 @@ const TermsAndConditions = () => {
                   <div className="space-y-3">
                     <h3 className="text-lg font-semibold">1. OGGETTO e DEFINIZIONI</h3>
                     <p>
-                      <strong>1.1</strong> Le presenti condizioni generali di contratto (di seguito, le "CONDIZIONI GENERALI") contengono i termini e le condizioni che regolano la fornitura del Servizio LovableConnect (di seguito anche solo il "Servizio") disponibile sul sito https://lovableconneect.lovable.app e sull'applicazione "LovableConnect" (di seguito, il "Sito/App"). Le CONDIZIONI GENERALI sono stipulate tra Lei, quale Utente finale dei servizi (di seguito, "Lei" o l'"Utente") Le presenti CONDIZIONI GENERALI disciplinano e regolano il Servizio fornito dalla Società all'Utente per mezzo del Sito/App, annullano qualsiasi disposizione precedente tra le Parti non espressamente citata o allegata e costituiscono l'insieme dei diritti e degli obblighi tra la Società e l'Utente. Il Sito/App si propone di facilitare la comunicazione tra gli Utenti al fine di agevolare la nascita di nuove amicizie.
+                      <strong>1.1</strong> Le presenti condizioni generali di contratto (di seguito, le "CONDIZIONI GENERALI") contengono i termini e le condizioni che regolano la fornitura del Servizio LoveableConnect (di seguito anche solo il "Servizio") disponibile sul sito https://lovableconneect.lovable.app e sull'applicazione "LoveableConnect" (di seguito, il "Sito/App"). Le CONDIZIONI GENERALI sono stipulate tra Lei, quale Utente finale dei servizi (di seguito, "Lei" o l'"Utente") Le presenti CONDIZIONI GENERALI disciplinano e regolano il Servizio fornito dalla Società all'Utente per mezzo del Sito/App, annullano qualsiasi disposizione precedente tra le Parti non espressamente citata o allegata e costituiscono l'insieme dei diritti e degli obblighi tra la Società e l'Utente. Il Sito/App si propone di facilitare la comunicazione tra gli Utenti al fine di agevolare la nascita di nuove amicizie.
                     </p>
                     <p><strong>1.2</strong> In aggiunta ai termini ed alle parole definiti altrove nelle CONDIZIONI GENERALI, ai fini delle medesime si definiscono:</p>
                     <ul className="list-disc list-inside space-y-2 pl-4">
                       <li><strong>"Abbonamento"</strong> il periodo di sottoscrizione dei Servizi a pagamento;</li>
-                      <li><strong>"Applicazione"</strong> l'applicazione LovableConnect, disponibile sulle piattaforme App Store di Apple e Play Store di Google scaricabile gratuitamente.</li>
+                      <li><strong>"Applicazione"</strong> l'applicazione LoveableConnect, disponibile sulle piattaforme App Store di Apple e Play Store di Google scaricabile gratuitamente.</li>
                       <li><strong>"Canoni"</strong> le tipologie di pacchetti e/o abbonamenti disponibili sul Sito/App, con le modalità descritte nell'articolo 3.2 e seguenti;</li>
-                      <li><strong>"Cause di Forza Maggiore"</strong> a titolo esemplificativo e senza alcun intento limitativo, si considerano cause di forza maggiore ai sensi e per gli effetti delle CONDIZIONI GENERALI: serrate, scioperi, mancanza assoluta di mezzi di trasporto, guerra, rivolta o altre azioni militari, inondazioni, incendi, fulmini, esplosioni, incidenti, interruzioni dell'energia elettrica, interruzioni, malfunzionamenti o sovraccarichi delle linee telefoniche o telematiche, ritardi o inadempimenti da parte dei terzi fornitori di LovableConnect o qualsiasi altro evento che esuli dalla ragionevole sfera di controllo di LovableConnect e che impedisca il pieno e corretto adempimento delle obbligazioni previste dalle CONDIZIONI GENERALI in capo alla stessa;</li>
+                      <li><strong>"Cause di Forza Maggiore"</strong> a titolo esemplificativo e senza alcun intento limitativo, si considerano cause di forza maggiore ai sensi e per gli effetti delle CONDIZIONI GENERALI: serrate, scioperi, mancanza assoluta di mezzi di trasporto, guerra, rivolta o altre azioni militari, inondazioni, incendi, fulmini, esplosioni, incidenti, interruzioni dell'energia elettrica, interruzioni, malfunzionamenti o sovraccarichi delle linee telefoniche o telematiche, ritardi o inadempimenti da parte dei terzi fornitori di LoveableConnect o qualsiasi altro evento che esuli dalla ragionevole sfera di controllo di LoveableConnect e che impedisca il pieno e corretto adempimento delle obbligazioni previste dalle CONDIZIONI GENERALI in capo alla stessa;</li>
                       <li><strong>"Contenuti"</strong> ogni informazione, dato, video, immagine, foto, testo, descrizione, indicazione, dettaglio personale, interesse, hobby, presentazione forniti dall'Utente e caricati sul Sito/App;</li>
                       <li><strong>"Data di Efficacia"</strong> si considera la data di accettazione delle presenti CONDIZIONI GENERALI da parte dell'Utente</li>
                       <li><strong>"Durata del Contratto"</strong> la durata delle presenti CONDIZIONI GENERALI, come indicata al successivo articolo 8;</li>
@@ -187,15 +187,15 @@ const TermsAndConditions = () => {
                   <div className="space-y-3">
                     <h3 className="text-lg font-semibold">2. CONCLUSIONE DEL CONTRATTO</h3>
                     <p>
-                      La informiamo che premendo il pulsante "Iscriviti" in fase di registrazione del Sito/App o, comunque, utilizzando il Servizio, Lei dichiara di aver letto ed espressamente accetta le presenti CONDIZIONI GENERALI. La registrazione a LovableConnect e l'utilizzo del Servizio (fatto salvo che per i servizi disponibili esclusivamente a pagamento, i quali richiedono la sottoscrizione di un Abbonamento o un pagamento On-Demand) sono completamente gratuiti (salvi i costi per le apparecchiature – computer, applicazioni e mezzi di telecomunicazione – e i costi di connessione alla rete Internet, che sono a carico dell'Utente sulla base delle condizioni economiche stabilite dal proprio operatore).
+                      La informiamo che premendo il pulsante "Iscriviti" in fase di registrazione del Sito/App o, comunque, utilizzando il Servizio, Lei dichiara di aver letto ed espressamente accetta le presenti CONDIZIONI GENERALI. La registrazione a LoveableConnect e l'utilizzo del Servizio (fatto salvo che per i servizi disponibili esclusivamente a pagamento, i quali richiedono la sottoscrizione di un Abbonamento o un pagamento On-Demand) sono completamente gratuiti (salvi i costi per le apparecchiature – computer, applicazioni e mezzi di telecomunicazione – e i costi di connessione alla rete Internet, che sono a carico dell'Utente sulla base delle condizioni economiche stabilite dal proprio operatore).
                     </p>
                     <p>
-                      Qualora non intenda accettare anche uno soltanto dei termini e delle condizioni delle presenti CONDIZIONI GENERALI, La invitiamo cortesemente a non utilizzare il Servizio e ad abbandonare il Sito/App. Lei prende atto ed accetta che i Servizi di cui Lei fruisce sul Sito/App sono per mettere in contatto gli Utenti e che LovableConnect fornisce una mera piattaforma di contatto. La Società, pertanto, non è e non sarà parte ovvero responsabile dei singoli contatti tra Utenti, nonché dei relativi contenuti.
+                      Qualora non intenda accettare anche uno soltanto dei termini e delle condizioni delle presenti CONDIZIONI GENERALI, La invitiamo cortesemente a non utilizzare il Servizio e ad abbandonare il Sito/App. Lei prende atto ed accetta che i Servizi di cui Lei fruisce sul Sito/App sono per mettere in contatto gli Utenti e che LoveableConnect fornisce una mera piattaforma di contatto. La Società, pertanto, non è e non sarà parte ovvero responsabile dei singoli contatti tra Utenti, nonché dei relativi contenuti.
                     </p>
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">3. I SERVIZI DI LOVABLECONNECT</h3>
+                    <h3 className="text-lg font-semibold">3. I SERVIZI DI LOVEABLECONNECT</h3>
                     <p>
                       <strong>3.1</strong> L'Utente nel completare il Profilo in fase di registrazione, inserisce il Territorio, il genere (Maschile/Femmine/altro) di Utenti che sta cercando, il nickname con cui apparirà sul Sito/App, indica la propria età e poi convalida il proprio Profilo tramite la ricezione di una e-mail e relativa conferma.
                     </p>
@@ -210,12 +210,12 @@ const TermsAndConditions = () => {
                     </ul>
                     
                     <p className="font-semibold mt-4">
-                      LovableConnect è una piattaforma di intrattenimento sociale che offre esperienze interattive e conversazioni virtuali.
+                      LoveableConnect è una piattaforma di intrattenimento sociale che offre esperienze interattive e conversazioni virtuali.
                       Gli utenti possono interagire con profili e personaggi progettati per offrire un'esperienza piacevole, stimolante e di svago.
                       Il servizio è pensato per momenti di divertimento e compagnia, non come mezzo per garantire incontri reali.
                     </p>
                     <p className="italic">
-                      L'utente riconosce che alcune interazioni, messaggi o profili presenti su LovableConnect possono essere gestiti da operatori, moderatori o sistemi automatizzati per finalità di intrattenimento. LovableConnect non assicura che ogni profilo rappresenti una persona reale, né che le interazioni conducano a relazioni o incontri fuori dalla piattaforma. L'uso del servizio implica l'accettazione di tale modalità di funzionamento.
+                      L'utente riconosce che alcune interazioni, messaggi o profili presenti su LoveableConnect possono essere gestiti da operatori, moderatori o sistemi automatizzati per finalità di intrattenimento. LoveableConnect non assicura che ogni profilo rappresenti una persona reale, né che le interazioni conducano a relazioni o incontri fuori dalla piattaforma. L'uso del servizio implica l'accettazione di tale modalità di funzionamento.
                     </p>
 
                     <h4 className="font-semibold mt-4">3.8 Diritto di recesso</h4>
@@ -326,7 +326,7 @@ const TermsAndConditions = () => {
                       <strong>13.1</strong> L'eventuale tolleranza da parte della Società verso comportamenti dell'Utente posti in essere in violazione di una qualunque disposizione delle CONDIZIONI GENERALI non costituisce rinuncia ai diritti derivanti dalla disposizione violata, né al diritto di esigere il corretto adempimento di tutte le disposizioni delle CONDIZIONI GENERALI stesse.
                     </p>
                     <p>
-                      <strong>13.2</strong> Il mancato o ritardato esercizio di un diritto spettante a LovableConnect ai sensi delle CONDIZIONI GENERALI non comporta rinuncia allo stesso.
+                      <strong>13.2</strong> Il mancato o ritardato esercizio di un diritto spettante a LoveableConnect ai sensi delle CONDIZIONI GENERALI non comporta rinuncia allo stesso.
                     </p>
                     <p>
                       <strong>13.3</strong> Le CONDIZIONI GENERALI contengono l'accordo complessivamente raggiunto dalle Parti rispetto all'oggetto delle stesse ed esse prevalgono su tutte le precedenti comunicazioni, dichiarazioni, nonché le intese e gli accordi, sia orali che scritti, raggiunti dalle Parti.
@@ -335,7 +335,7 @@ const TermsAndConditions = () => {
                       <strong>13.4</strong> Qualora qualsiasi termine o altra disposizione delle presenti CONDIZIONI GENERALI fosse dichiarato nullo, annullabile o inapplicabile, tutte le altre condizioni e disposizioni delle presenti CONDIZIONI GENERALI rimarranno, comunque, pienamente valide ed efficaci. Nel caso in cui vi sia l'annullamento o la nullità di qualche termine o disposizione poiché invalido, contrario a norme imperative od inapplicabile, le Parti si impegnano a negoziare in buona fede per modificare le presenti CONDIZIONI GENERALI in modo tale da realizzare nel miglior modo possibile l'originale intenzione delle Parti al fine di adempiere nel miglior modo possibile gli impegni ivi previsti.
                     </p>
                     <p>
-                      <strong>13.5</strong> LovableConnect e gli Utenti agiscono in piena autonomia ed indipendenza. Le presenti CONDIZIONI GENERALI non fanno sorgere tra loro alcun rapporto di collaborazione, agenzia, associazione, intermediazione o lavoro subordinato.
+                      <strong>13.5</strong> LoveableConnect e gli Utenti agiscono in piena autonomia ed indipendenza. Le presenti CONDIZIONI GENERALI non fanno sorgere tra loro alcun rapporto di collaborazione, agenzia, associazione, intermediazione o lavoro subordinato.
                     </p>
                     <p>
                       <strong>13.6</strong> Qualunque comunicazione da una Parte all'altra ai sensi delle CONDIZIONI GENERALI dovrà essere inviata o mezzo lettera raccomandata al seguente indirizzo Iumob Srl, Via Comelico, 3, 20135 Milano (purché con l'opzione di notifica di ricevimento) o tramite il form contatti del customer care.
@@ -348,7 +348,7 @@ const TermsAndConditions = () => {
                       L'Utente riconosce ed accetta che alcuni paragrafi delle CONDIZIONI GENERALI contengono alcune previsioni vessatorie, tra cui i punti di seguito elencati e che pertanto, dovrà accettarle espressamente in sede di iscrizione, ai sensi degli articoli 1341 e 1342 del Codice Civile:
                     </p>
                     <p>
-                      2. Conclusione Del Contratto; 3. I Servizi di LovableConnect (in particolare, 3.2, 3.3, 3.4, 3.5, 3.6, 3.11, 3.12, 3.13 e 3.14); 4. Dichiarazioni e Garanzie dell'utente; 5. Responsabilità; 8. Durata e Sopravvivenza di Clausole; 9. Recesso; 10. Risoluzione; 11. Legge Applicabile e Foro Competente; 12. Modifiche.
+                      2. Conclusione Del Contratto; 3. I Servizi di LoveableConnect (in particolare, 3.2, 3.3, 3.4, 3.5, 3.6, 3.11, 3.12, 3.13 e 3.14); 4. Dichiarazioni e Garanzie dell'utente; 5. Responsabilità; 8. Durata e Sopravvivenza di Clausole; 9. Recesso; 10. Risoluzione; 11. Legge Applicabile e Foro Competente; 12. Modifiche.
                     </p>
                     <p className="italic">
                       L'Utente è invitato a leggere attentamente le predette clausole prima di concludere la Registrazione sul Sito/download della App, rinunciando a qualsivoglia pretesa in merito alle stesse, anche a titolo di rimborso o risarcitorio.
@@ -386,7 +386,7 @@ const TermsAndConditions = () => {
 
               <TabsContent value="cookies" className="space-y-6 mt-6 text-sm max-h-[600px] overflow-y-auto">
                 <div className="space-y-4">
-                  <h2 className="text-2xl font-bold">Cookie Policy di LovableConnect</h2>
+                  <h2 className="text-2xl font-bold">Cookie Policy di LoveableConnect</h2>
                   <p className="text-sm text-muted-foreground">Ultimo aggiornamento: 15/10/2025</p>
                   
                   <p>
@@ -407,7 +407,7 @@ const TermsAndConditions = () => {
 
                   <div className="space-y-3">
                     <h3 className="text-lg font-semibold">2. Tipologie di cookie utilizzati</h3>
-                    <p>LovableConnect utilizza varie tipologie di cookie, con funzioni differenti:</p>
+                    <p>LoveableConnect utilizza varie tipologie di cookie, con funzioni differenti:</p>
                     
                     <div className="overflow-x-auto">
                       <table className="w-full border-collapse border border-border">

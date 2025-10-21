@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "LovableConnect",
+    "name": "LoveableConnect",
     "tagline": "Find the love you're looking for"
   },
   "auth": {
@@ -17,7 +17,7 @@
     "emailSent": "Email sent!",
     "checkEmail": "Check your inbox to reset your password",
     "signedIn": "Signed in!",
-    "welcome": "Welcome to LovableConnect",
+    "welcome": "Welcome to LoveableConnect",
     "registrationComplete": "Registration complete!",
     "errorSignIn": "Error signing in",
     "errorSignUp": "Error during registration",
@@ -125,7 +125,7 @@
     "acceptButton": "Accept and Continue"
   },
   "dashboard": {
-    "title": "LovableConnect",
+    "title": "LoveableConnect",
     "tagline": "Find your soulmate",
     "signOut": "Sign out",
     "loading": "Loading...",
