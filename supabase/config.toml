@@ -71,3 +71,9 @@ verify_jwt = false
 
 [functions.admin-profile-notes-upsert]
 verify_jwt = false
+
+[functions.translate-text]
+verify_jwt = true
+
+[functions.verify-unlock-payment]
+verify_jwt = true
