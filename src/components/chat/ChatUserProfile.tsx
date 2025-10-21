@@ -186,9 +186,10 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
 
         {/* Info compatte in griglia */}
         <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs mb-3">
+          {/* Genere */}
           {profile.gender && (
             <div className="flex items-start gap-1.5">
-              <span className="font-medium text-foreground/80 min-w-[60px]">{t("common.gender")}</span>
+              <span className="font-medium text-foreground/80 min-w-[50px]">{t("common.gender")}</span>
               <span className="text-muted-foreground">
                 {profile.gender === 'male' ? t("common.male") : 
                  profile.gender === 'female' ? t("common.female") : 
@@ -201,24 +202,29 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
             </div>
           )}
           
-          {profile.sexual_orientation && (
+          {/* In cerca - accanto al genere */}
+          {(profile.relationship_type || (profile.looking_for && profile.looking_for.length > 0)) && (
             <div className="flex items-start gap-1.5">
-              <span className="font-medium text-foreground/80 min-w-[70px]">{t("common.orientation")}</span>
+              <Heart className="h-3.5 w-3.5 mt-0.5 text-primary/60 flex-shrink-0" />
               <span className="text-muted-foreground">
-                {profile.sexual_orientation === 'heterosexual' ? t("common.heterosexual") :
-                 profile.sexual_orientation === 'homosexual' ? t("common.homosexual") :
-                 profile.sexual_orientation === 'bisexual' ? t("common.bisexual") :
-                 profile.sexual_orientation === 'pansexual' ? t("common.pansexual") :
-                 profile.sexual_orientation === 'asexual' ? t("common.asexual") :
-                 profile.sexual_orientation === 'other' ? t("common.other") :
-                 (profile.translatedOrientation || profile.sexual_orientation)}
+                {profile.relationship_type
+                  ? (
+                    profile.relationship_type === 'serious' ? t("common.seriousRelationship") :
+                    profile.relationship_type === 'casual' ? t("common.casualDating") :
+                    profile.relationship_type === 'friendship' ? t("common.friendship") :
+                    profile.relationship_type === 'not-sure' ? t("common.notSure") :
+                    profile.relationship_type === 'prefer-not-say' ? t("common.preferNotSay") :
+                    profile.relationship_type
+                    )
+                  : (profile.looking_for?.join(', ') || '')}
               </span>
             </div>
           )}
           
+          {/* Stato relazionale */}
           {profile.relationship_status && (
-            <div className="flex items-start gap-1.5 col-span-2">
-              <span className="font-medium text-foreground/80 min-w-[60px]">{t("common.relationshipStatus")}</span>
+            <div className="flex items-start gap-1.5">
+              <span className="font-medium text-foreground/80 min-w-[50px]">{t("common.relationshipStatus")}</span>
               <span className="text-muted-foreground">
                 {profile.relationship_status === 'single' ? t("common.single") : 
                  profile.relationship_status === 'in_relationship' ? t("common.inRelationship") :
@@ -231,24 +237,19 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
             </div>
           )}
           
-          {(profile.relationship_type || (profile.looking_for && profile.looking_for.length > 0)) && (
-            <div className="flex items-start gap-1.5 col-span-2">
-              <Heart className="h-3.5 w-3.5 mt-0.5 text-primary/60 flex-shrink-0" />
-              <div className="flex flex-col gap-0.5">
-                <span className="font-medium text-foreground/80">{t("common.lookingFor")}</span>
-                <span className="text-muted-foreground">
-                  {profile.relationship_type
-                    ? (
-                      profile.relationship_type === 'serious' ? t("common.seriousRelationship") :
-                      profile.relationship_type === 'casual' ? t("common.casualDating") :
-                      profile.relationship_type === 'friendship' ? t("common.friendship") :
-                      profile.relationship_type === 'not-sure' ? t("common.notSure") :
-                      profile.relationship_type === 'prefer-not-say' ? t("common.preferNotSay") :
-                      profile.relationship_type
-                      )
-                    : (profile.looking_for?.join(', ') || '')}
-                </span>
-              </div>
+          {/* Orientamento - sotto stato relazionale */}
+          {profile.sexual_orientation && (
+            <div className="flex items-start gap-1.5">
+              <span className="font-medium text-foreground/80 min-w-[70px]">{t("common.orientation")}</span>
+              <span className="text-muted-foreground">
+                {profile.sexual_orientation === 'heterosexual' ? t("common.heterosexual") :
+                 profile.sexual_orientation === 'homosexual' ? t("common.homosexual") :
+                 profile.sexual_orientation === 'bisexual' ? t("common.bisexual") :
+                 profile.sexual_orientation === 'pansexual' ? t("common.pansexual") :
+                 profile.sexual_orientation === 'asexual' ? t("common.asexual") :
+                 profile.sexual_orientation === 'other' ? t("common.other") :
+                 (profile.translatedOrientation || profile.sexual_orientation)}
+              </span>
             </div>
           )}
         </div>
