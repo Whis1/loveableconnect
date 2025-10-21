@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Heart, Lock, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { useTextTranslation } from "@/hooks/useTranslation";
 import { MatchBanner } from "@/components/MatchBanner";
 
 interface LikeWithProfile {
@@ -22,6 +23,8 @@ interface LikeWithProfile {
     bio: string | null;
     age: number | null;
     interests: string[] | null;
+    translatedBio?: string | null;
+    translatedInterests?: string[] | null;
   };
 }
 
@@ -29,6 +32,7 @@ const Likes = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { translateText, translateArray, currentLanguage } = useTextTranslation();
   const [likes, setLikes] = useState<LikeWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasUnlocked, setHasUnlocked] = useState(false);
@@ -97,7 +101,7 @@ const Likes = () => {
         return;
       }
 
-      // Fetch profiles for each like
+      // Fetch profiles for each like and translate
       const likesWithProfiles = await Promise.all(
         (likesData || []).map(async (like) => {
           const { data: profile } = await supabase
@@ -106,11 +110,28 @@ const Likes = () => {
             .eq("id", like.from_user_id)
             .single();
 
+          if (profile) {
+            // Translate bio and interests
+            const translatedBio = profile.bio ? await translateText(profile.bio) : null;
+            const translatedInterests = profile.interests ? await translateArray(profile.interests) : null;
+
+            return {
+              id: like.id,
+              from_user_id: like.from_user_id,
+              created_at: like.created_at,
+              profile: {
+                ...profile,
+                translatedBio,
+                translatedInterests,
+              },
+            };
+          }
+
           return {
             id: like.id,
             from_user_id: like.from_user_id,
             created_at: like.created_at,
-            profile: profile || {
+            profile: {
               id: like.from_user_id,
               full_name: t("likes.unknownUser"),
               nickname: t("likes.unknownUser"),
@@ -128,7 +149,7 @@ const Likes = () => {
     };
 
     fetchData();
-  }, [navigate, toast]);
+  }, [navigate, toast, currentLanguage, translateText, translateArray, t]);
 
   const handleUnlockLikes = async () => {
     if (!currentUserId) return;
@@ -296,7 +317,7 @@ const Likes = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900/50 dark:to-indigo-900/50 p-4">
       {matchBanner.show && (
         <MatchBanner
           matchedUserName={matchBanner.userName}
@@ -305,34 +326,42 @@ const Likes = () => {
       )}
       
       <div className="container mx-auto max-w-4xl">
-        <div className="mb-4">
-          <Button variant="ghost" onClick={() => navigate("/")}>
+        <div className="mb-6">
+          <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             {t("likes.back")}
           </Button>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <Sparkles className="h-6 w-6 text-purple-500" />
+        <Card className="border-0 shadow-2xl bg-background/95 backdrop-blur">
+          <CardHeader className="space-y-1 pb-4">
+            <CardTitle className="text-3xl font-bold flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-pink-500/20 to-purple-500/20">
+                <Heart className="h-7 w-7 text-pink-500 fill-pink-500/20" />
+              </div>
               {t("likes.title")}
             </CardTitle>
+            {likes.length > 0 && (
+              <p className="text-muted-foreground text-sm">
+                {likes.length} {likes.length === 1 ? t("likes.person") : t("likes.people")} {t("likes.interestedInYou")}
+              </p>
+            )}
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
             {!hasUnlocked && !isPremium && likes.length > 0 && (
-              <div className="mb-6 p-6 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-950 dark:to-pink-950 rounded-lg text-center">
-                <Lock className="h-12 w-12 mx-auto mb-4 text-purple-600" />
-                <h3 className="text-xl font-bold mb-2">{t("likes.unlockTitle")}</h3>
-                <p className="text-muted-foreground mb-4">
-                  {t("likes.unlockDescription", { 
-                    count: likes.length, 
-                    personText: likes.length === 1 ? t("likes.person") : t("likes.people") 
-                  })}
+              <div className="p-8 bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-rose-500/10 dark:from-purple-500/20 dark:via-pink-500/20 dark:to-rose-500/20 rounded-2xl text-center border border-purple-200/50 dark:border-purple-500/30 shadow-lg">
+                <div className="inline-flex p-4 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 mb-4 shadow-xl">
+                  <Lock className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3 bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+                  {t("likes.unlockTitle")}
+                </h3>
+                <p className="text-base text-foreground/70 mb-6 max-w-md mx-auto">
+                  {likes.length} {likes.length === 1 ? t("likes.person") : t("likes.people")} {t("likes.interestedInYou")} {t("likes.unlockDescription")}
                 </p>
                 <Button 
                   size="lg"
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-xl hover:shadow-2xl transition-all duration-300 text-base px-8 py-6 h-auto"
                   onClick={handleUnlockLikes}
                 >
                   <Sparkles className="h-5 w-5 mr-2" />
@@ -342,12 +371,18 @@ const Likes = () => {
             )}
 
             {likes.length === 0 ? (
-              <div className="text-center py-12">
-                <Heart className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground mb-4">
+              <div className="text-center py-16 space-y-4">
+                <div className="inline-flex p-6 rounded-full bg-muted/50 mb-4">
+                  <Heart className="h-16 w-16 text-muted-foreground/50" />
+                </div>
+                <p className="text-lg text-muted-foreground max-w-md mx-auto">
                   {t("likes.noLikes")}
                 </p>
-                <Button onClick={() => navigate("/explore")}>
+                <Button 
+                  onClick={() => navigate("/explore")}
+                  className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 shadow-lg"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
                   {t("likes.exploreProfiles")}
                 </Button>
               </div>
@@ -356,47 +391,62 @@ const Likes = () => {
                 {likes.map((like) => (
                   <Card 
                     key={like.id} 
-                    className={`overflow-hidden ${!hasUnlocked ? 'relative' : ''}`}
+                    className={`overflow-hidden transition-all duration-300 hover:shadow-xl border-0 bg-gradient-to-br from-background to-muted/20 ${!hasUnlocked ? 'relative' : ''}`}
                   >
                     {!hasUnlocked && (
-                      <div className="absolute inset-0 backdrop-blur-lg bg-white/30 dark:bg-black/30 z-10 flex items-center justify-center">
-                        <Lock className="h-12 w-12 text-purple-600" />
+                      <div className="absolute inset-0 backdrop-blur-md bg-background/40 z-10 flex items-center justify-center">
+                        <div className="p-4 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 shadow-2xl">
+                          <Lock className="h-8 w-8 text-white" />
+                        </div>
                       </div>
                     )}
-                    <CardContent className="p-4">
+                    <CardContent className="p-5">
                       <div className="flex items-center gap-4">
-                        <Avatar className="h-16 w-16">
-                          <AvatarImage 
-                            src={hasUnlocked && like.profile.avatar_url ? like.profile.avatar_url : undefined} 
-                          />
-                          <AvatarFallback>
-                            {like.profile.nickname?.charAt(0) || like.profile.full_name.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-lg">
+                        <div className="relative">
+                          <Avatar className="h-20 w-20 ring-2 ring-primary/20 shadow-lg">
+                            <AvatarImage 
+                              src={hasUnlocked && like.profile.avatar_url ? supabase.storage.from('profile-images').getPublicUrl(like.profile.avatar_url).data.publicUrl : undefined} 
+                            />
+                            <AvatarFallback className="text-xl bg-gradient-to-br from-pink-500/20 to-purple-500/20">
+                              {hasUnlocked ? (like.profile.nickname?.charAt(0) || like.profile.full_name.charAt(0)) : '?'}
+                            </AvatarFallback>
+                          </Avatar>
+                          {hasUnlocked && (
+                            <div className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 shadow-lg">
+                              <Heart className="h-3 w-3 text-white fill-white" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-xl mb-1">
                             {hasUnlocked ? like.profile.nickname : '???'}
                           </h3>
                           {hasUnlocked && like.profile.age && (
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-muted-foreground font-medium">
                               {like.profile.age} {t("likes.years")}
                             </p>
                           )}
-                          {hasUnlocked && like.profile.bio && (
-                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                              {like.profile.bio}
+                          {hasUnlocked && like.profile.translatedBio && (
+                            <p className="text-sm text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
+                              {like.profile.translatedBio}
                             </p>
                           )}
-                          {hasUnlocked && like.profile.interests && like.profile.interests.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {like.profile.interests.slice(0, 3).map((interest, index) => (
-                                <Badge key={index} variant="secondary" className="text-xs">
+                          {hasUnlocked && like.profile.translatedInterests && like.profile.translatedInterests.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mt-3">
+                              {like.profile.translatedInterests.slice(0, 4).map((interest, index) => (
+                                <Badge key={index} variant="secondary" className="text-xs px-2.5 py-0.5 bg-primary/10 text-primary border-none">
                                   {interest}
                                 </Badge>
                               ))}
+                              {like.profile.translatedInterests.length > 4 && (
+                                <Badge variant="secondary" className="text-xs px-2 py-0.5 bg-muted">
+                                  +{like.profile.translatedInterests.length - 4}
+                                </Badge>
+                              )}
                             </div>
                           )}
-                          <p className="text-xs text-muted-foreground mt-2">
+                          <p className="text-xs text-muted-foreground/70 mt-3 flex items-center gap-1">
+                            <Sparkles className="h-3 w-3" />
                             {t("likes.likeReceived")} {new Date(like.created_at).toLocaleDateString()}
                           </p>
                         </div>
@@ -404,9 +454,9 @@ const Likes = () => {
                           <Button 
                             onClick={() => handleLikeBack(like.id, like.from_user_id, like.profile.nickname)}
                             disabled={likingUserId === like.from_user_id}
-                            className="bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700"
+                            className="bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 shadow-lg hover:shadow-xl transition-all duration-300 px-6"
                           >
-                            <Heart className="h-4 w-4 mr-2" />
+                            <Heart className={`h-4 w-4 mr-2 ${likingUserId === like.from_user_id ? '' : 'fill-white'}`} />
                             {likingUserId === like.from_user_id ? t("likes.liking") : t("likes.likeBack")}
                           </Button>
                         )}
