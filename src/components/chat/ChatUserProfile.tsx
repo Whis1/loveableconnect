@@ -29,6 +29,8 @@ interface Profile {
   photos: string[] | null;
   translatedBio?: string | null;
   translatedInterests?: string[] | null;
+  translatedGender?: string | null;
+  translatedOrientation?: string | null;
 }
 
 interface ChatUserProfileProps {
@@ -61,11 +63,24 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
         // Translate bio and interests
         const translatedBio = data.bio ? await translateText(data.bio) : null;
         const translatedInterests = data.interests ? await translateArray(data.interests) : null;
+
+        // Normalize possible localized stored values for gender/orientation
+        const genderCodes = ['male','female','non-binary','transexual','transgender','genderfluid'];
+        const orientationCodes = ['heterosexual','homosexual','bisexual','pansexual','asexual','other'];
+
+        const translatedGender = data.gender && !genderCodes.includes(data.gender)
+          ? await translateText(data.gender)
+          : null;
+        const translatedOrientation = data.sexual_orientation && !orientationCodes.includes(data.sexual_orientation)
+          ? await translateText(data.sexual_orientation)
+          : null;
         
         setProfile({
           ...data,
           translatedBio,
-          translatedInterests
+          translatedInterests,
+          translatedGender,
+          translatedOrientation
         });
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -92,11 +107,21 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
           const newProfile = payload.new as Profile;
           const translatedBio = newProfile.bio ? await translateText(newProfile.bio) : null;
           const translatedInterests = newProfile.interests ? await translateArray(newProfile.interests) : null;
+          const genderCodes = ['male','female','non-binary','transexual','transgender','genderfluid'];
+          const orientationCodes = ['heterosexual','homosexual','bisexual','pansexual','asexual','other'];
+          const translatedGender = newProfile.gender && !genderCodes.includes(newProfile.gender)
+            ? await translateText(newProfile.gender)
+            : null;
+          const translatedOrientation = newProfile.sexual_orientation && !orientationCodes.includes(newProfile.sexual_orientation)
+            ? await translateText(newProfile.sexual_orientation)
+            : null;
           
           setProfile({
             ...newProfile,
             translatedBio,
-            translatedInterests
+            translatedInterests,
+            translatedGender,
+            translatedOrientation
           });
         }
       )
@@ -147,58 +172,59 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
             <div className="space-y-2 text-sm">
               {profile.age && (
                 <div className="flex gap-2">
-                  <span className="font-semibold min-w-[80px]">{t("common.age")}</span>
+                  <span className="font-semibold min-w-[80px]">{t("chat.age")}</span>
                   <span className="text-muted-foreground">{profile.age}</span>
                 </div>
               )}
               
               {profile.relationship_status && (
                 <div className="flex gap-2">
-                  <span className="font-semibold min-w-[80px]">{t("common.relationshipStatus")}</span>
+                  <span className="font-semibold min-w-[80px]">{t("chat.relationshipStatus")}</span>
                   <span className="text-muted-foreground">
-                    {profile.relationship_status === 'single' ? t("common.single") : 
-                     profile.relationship_status === 'in_relationship' ? t("common.inRelationship") :
-                     profile.relationship_status === 'married' ? t("common.married") :
-                     profile.relationship_status === 'divorced' ? t("common.divorced") :
-                     profile.relationship_status === 'widowed' ? t("common.widowed") :
-                     profile.relationship_status === 'prefer_not_say' ? t("common.preferNotSay") :
+                    {profile.relationship_status === 'single' ? t("chat.single") : 
+                     profile.relationship_status === 'in_relationship' ? t("chat.inRelationship") :
+                     profile.relationship_status === 'married' ? t("chat.married") :
+                     profile.relationship_status === 'divorced' ? t("chat.divorced") :
+                     profile.relationship_status === 'widowed' ? t("chat.widowed") :
+                     profile.relationship_status === 'prefer_not_say' ? t("chat.preferNotSay") :
                      profile.relationship_status}
                   </span>
                 </div>
               )}
               
               <div className="flex gap-2">
-                <span className="font-semibold min-w-[80px]">{t("common.location")}</span>
+                <span className="font-semibold min-w-[80px]">{t("chat.location")}</span>
                 <span className="text-muted-foreground">
-                  {showRealLocation ? (profile.city || t("common.notSpecified")) : t("common.nearbyLocation")}
+                  {showRealLocation ? (profile.city || t("chat.notSpecified")) : t("chat.nearbyLocation")}
                 </span>
               </div>
               
               {profile.gender && (
                 <div className="flex gap-2">
-                  <span className="font-semibold min-w-[80px]">{t("common.gender")}</span>
+                  <span className="font-semibold min-w-[80px]">{t("chat.gender")}</span>
                   <span className="text-muted-foreground">
                     {profile.gender === 'male' ? t("common.male") : 
                      profile.gender === 'female' ? t("common.female") : 
                      profile.gender === 'non-binary' ? t("common.nonBinary") :
                      profile.gender === 'transexual' ? t("common.transexual") :
                      profile.gender === 'transgender' ? t("common.transgender") :
-                     profile.gender}
+                     profile.gender === 'genderfluid' ? t("common.genderfluid") :
+                     (profile.translatedGender || profile.gender)}
                   </span>
                 </div>
               )}
               
               {profile.sexual_orientation && (
                 <div className="flex gap-2">
-                  <span className="font-semibold min-w-[80px]">{t("common.orientation")}</span>
+                  <span className="font-semibold min-w-[80px]">{t("chat.orientation")}</span>
                   <span className="text-muted-foreground">
-                    {profile.sexual_orientation === 'heterosexual' ? t("common.heterosexual") :
-                     profile.sexual_orientation === 'homosexual' ? t("common.homosexual") :
-                     profile.sexual_orientation === 'bisexual' ? t("common.bisexual") :
-                     profile.sexual_orientation === 'pansexual' ? t("common.pansexual") :
-                     profile.sexual_orientation === 'asexual' ? t("common.asexual") :
-                     profile.sexual_orientation === 'other' ? t("common.other") :
-                     profile.sexual_orientation}
+                    {profile.sexual_orientation === 'heterosexual' ? t("chat.heterosexual") :
+                     profile.sexual_orientation === 'homosexual' ? t("chat.homosexual") :
+                     profile.sexual_orientation === 'bisexual' ? t("chat.bisexual") :
+                     profile.sexual_orientation === 'pansexual' ? t("chat.pansexual") :
+                     profile.sexual_orientation === 'asexual' ? t("chat.asexual") :
+                     profile.sexual_orientation === 'other' ? t("chat.other") :
+                     (profile.translatedOrientation || profile.sexual_orientation)}
                   </span>
                 </div>
               )}
