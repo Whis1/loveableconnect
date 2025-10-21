@@ -35,6 +35,43 @@ interface LikeWithProfile {
   };
 }
 
+// Helper function to normalize gender/orientation values to standard codes
+const normalizeValue = (value: string | null | undefined): string | null => {
+  if (!value) return null;
+  const normalized = value.toLowerCase().trim();
+  
+  // Gender mappings
+  const genderMap: Record<string, string> = {
+    'male': 'male', 'man': 'male', 'uomo': 'male', 'homme': 'male', 'mann': 'male', 'hombre': 'male',
+    'female': 'female', 'woman': 'female', 'donna': 'female', 'femme': 'female', 'frau': 'female', 'mujer': 'female',
+    'non-binary': 'non-binary', 'nonbinary': 'non-binary', 'non binario': 'non-binary', 'nicht-binär': 'non-binary',
+    'transexual': 'transexual', 'transessuale': 'transexual', 'transsexuell': 'transexual',
+    'transgender': 'transgender', 'transgenre': 'transgender',
+    'genderfluid': 'genderfluid', 'genre fluide': 'genderfluid'
+  };
+  
+  // Orientation mappings
+  const orientationMap: Record<string, string> = {
+    'heterosexual': 'heterosexual', 'eterosessuale': 'heterosexual', 'hétérosexuel': 'heterosexual', 'heterosexuell': 'heterosexual',
+    'homosexual': 'homosexual', 'omosessuale': 'homosexual', 'homosexuel': 'homosexual', 'homosexuell': 'homosexual',
+    'bisexual': 'bisexual', 'bisessuale': 'bisexual', 'bisexuel': 'bisexual', 'bisexuell': 'bisexual',
+    'pansexual': 'pansexual', 'pansessuale': 'pansexual', 'pansexuel': 'pansexual', 'pansexuell': 'pansexual',
+    'asexual': 'asexual', 'asessuale': 'asexual', 'asexuel': 'asexual', 'asexuell': 'asexual',
+    'other': 'other', 'altro': 'other', 'autre': 'other', 'sonstiges': 'other'
+  };
+  
+  // Relationship type mappings
+  const relationshipMap: Record<string, string> = {
+    'serious': 'serious', 'seria': 'serious', 'sérieuse': 'serious', 'ernsthafte': 'serious',
+    'casual': 'casual', 'occasionale': 'casual', 'occasionnel': 'casual', 'zwanglos': 'casual',
+    'friendship': 'friendship', 'amicizia': 'friendship', 'amitié': 'friendship', 'freundschaft': 'friendship',
+    'not-sure': 'not-sure', 'non sono sicuro': 'not-sure', 'pas sûr': 'not-sure', 'unsicher': 'not-sure'
+  };
+  
+  // Try all mappings
+  return genderMap[normalized] || orientationMap[normalized] || relationshipMap[normalized] || null;
+};
+
 const Likes = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -458,13 +495,18 @@ const Likes = () => {
                                  <div className="flex items-start gap-1">
                                    <span className="font-medium text-foreground/70">{t("common.gender")}</span>
                                    <span className="text-muted-foreground">
-                                     {like.profile.gender.toLowerCase() === 'male' ? t("common.male") : 
-                                      like.profile.gender.toLowerCase() === 'female' ? t("common.female") : 
-                                      like.profile.gender.toLowerCase() === 'non-binary' ? t("common.nonBinary") :
-                                      like.profile.gender.toLowerCase() === 'transexual' ? t("common.transexual") :
-                                      like.profile.gender.toLowerCase() === 'transgender' ? t("common.transgender") :
-                                      like.profile.gender.toLowerCase() === 'genderfluid' ? t("common.genderfluid") :
-                                      (like.profile.translatedGender || like.profile.gender)}
+                                     {(() => {
+                                       const normalized = normalizeValue(like.profile.gender);
+                                       switch(normalized) {
+                                         case 'male': return t("common.male");
+                                         case 'female': return t("common.female");
+                                         case 'non-binary': return t("common.nonBinary");
+                                         case 'transexual': return t("common.transexual");
+                                         case 'transgender': return t("common.transgender");
+                                         case 'genderfluid': return t("common.genderfluid");
+                                         default: return like.profile.translatedGender || like.profile.gender;
+                                       }
+                                     })()}
                                    </span>
                                  </div>
                                )}
@@ -473,13 +515,18 @@ const Likes = () => {
                                  <div className="flex items-start gap-1">
                                    <span className="font-medium text-foreground/70">{t("common.orientation")}</span>
                                    <span className="text-muted-foreground">
-                                     {like.profile.sexual_orientation.toLowerCase() === 'heterosexual' ? t("common.heterosexual") :
-                                      like.profile.sexual_orientation.toLowerCase() === 'homosexual' ? t("common.homosexual") :
-                                      like.profile.sexual_orientation.toLowerCase() === 'bisexual' ? t("common.bisexual") :
-                                      like.profile.sexual_orientation.toLowerCase() === 'pansexual' ? t("common.pansexual") :
-                                      like.profile.sexual_orientation.toLowerCase() === 'asexual' ? t("common.asexual") :
-                                      like.profile.sexual_orientation.toLowerCase() === 'other' ? t("common.other") :
-                                      (like.profile.translatedOrientation || like.profile.sexual_orientation)}
+                                     {(() => {
+                                       const normalized = normalizeValue(like.profile.sexual_orientation);
+                                       switch(normalized) {
+                                         case 'heterosexual': return t("common.heterosexual");
+                                         case 'homosexual': return t("common.homosexual");
+                                         case 'bisexual': return t("common.bisexual");
+                                         case 'pansexual': return t("common.pansexual");
+                                         case 'asexual': return t("common.asexual");
+                                         case 'other': return t("common.other");
+                                         default: return like.profile.translatedOrientation || like.profile.sexual_orientation;
+                                       }
+                                     })()}
                                    </span>
                                  </div>
                                )}
@@ -488,13 +535,18 @@ const Likes = () => {
                                  <div className="flex items-start gap-1">
                                    <span className="font-medium text-foreground/70">{t("common.relationshipStatus")}</span>
                                    <span className="text-muted-foreground">
-                                     {like.profile.relationship_status.toLowerCase() === 'single' ? t("common.single") : 
-                                      like.profile.relationship_status.toLowerCase() === 'in_relationship' ? t("common.inRelationship") :
-                                      like.profile.relationship_status.toLowerCase() === 'married' ? t("common.married") :
-                                      like.profile.relationship_status.toLowerCase() === 'divorced' ? t("common.divorced") :
-                                      like.profile.relationship_status.toLowerCase() === 'widowed' ? t("common.widowed") :
-                                      like.profile.relationship_status.toLowerCase() === 'prefer_not_say' ? t("common.preferNotSay") :
-                                      like.profile.relationship_status}
+                                     {(() => {
+                                       const normalized = normalizeValue(like.profile.relationship_status);
+                                       switch(normalized) {
+                                         case 'single': return t("common.single");
+                                         case 'in_relationship': return t("common.inRelationship");
+                                         case 'married': return t("common.married");
+                                         case 'divorced': return t("common.divorced");
+                                         case 'widowed': return t("common.widowed");
+                                         case 'prefer_not_say': return t("common.preferNotSay");
+                                         default: return like.profile.relationship_status;
+                                       }
+                                     })()}
                                    </span>
                                  </div>
                                )}
@@ -503,12 +555,17 @@ const Likes = () => {
                                  <div className="flex items-start gap-1">
                                    <span className="font-medium text-foreground/70">{t("common.lookingFor")}</span>
                                    <span className="text-muted-foreground">
-                                     {like.profile.relationship_type.toLowerCase() === 'serious' ? t("common.seriousRelationship") :
-                                      like.profile.relationship_type.toLowerCase() === 'casual' ? t("common.casualDating") :
-                                      like.profile.relationship_type.toLowerCase() === 'friendship' ? t("common.friendship") :
-                                      like.profile.relationship_type.toLowerCase() === 'not-sure' ? t("common.notSure") :
-                                      like.profile.relationship_type.toLowerCase() === 'prefer-not-say' ? t("common.preferNotSay") :
-                                      (like.profile.translatedRelationshipType || like.profile.relationship_type)}
+                                     {(() => {
+                                       const normalized = normalizeValue(like.profile.relationship_type);
+                                       switch(normalized) {
+                                         case 'serious': return t("common.seriousRelationship");
+                                         case 'casual': return t("common.casualDating");
+                                         case 'friendship': return t("common.friendship");
+                                         case 'not-sure': return t("common.notSure");
+                                         case 'prefer-not-say': return t("common.preferNotSay");
+                                         default: return like.profile.translatedRelationshipType || like.profile.relationship_type;
+                                       }
+                                     })()}
                                    </span>
                                  </div>
                                )}
