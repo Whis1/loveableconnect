@@ -262,17 +262,23 @@ export const ProfileDialog = ({
   };
 
   const getOrientationLabel = (orientation: string) => {
+    const key = orientation.toLowerCase();
     const labels: Record<string, string> = {
       heterosexual: t('common.heterosexual'),
+      eterosessuale: t('common.heterosexual'),
       homosexual: t('common.homosexual'),
+      omosessuale: t('common.homosexual'),
       bisexual: t('common.bisexual'),
+      bisessuale: t('common.bisexual'),
       pansexual: t('common.pansexual'),
+      pansessuale: t('common.pansexual'),
       asexual: t('common.asexual'),
+      asessuale: t('common.asexual'),
       other: t('common.other'),
+      altro: t('common.other'),
     };
-    return labels[orientation.toLowerCase()] || orientation;
+    return labels[key] || orientation;
   };
-
   const getRelationshipTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
       serious: t('profile.seriousRelationship'),
