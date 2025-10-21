@@ -63,8 +63,9 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
       bisexual: t('common.bisexual'),
       pansexual: t('common.pansexual'),
       asexual: t('common.asexual'),
+      other: t('common.other'),
     };
-    return orientationMap[orientation] || orientation;
+    return orientationMap[orientation.toLowerCase()] || orientation;
   };
 
   const getRelationshipStatusLabel = (status: string | null) => {
@@ -82,7 +83,7 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
       preferisco_non_dirlo: t('common.preferNotSay'),
       scoprilo: t('common.notSpecified'),
     };
-    return statusMap[status] || status;
+    return statusMap[status.toLowerCase()] || status;
   };
 
   const getLookingForLabel = (lookingFor: string[] | null) => {

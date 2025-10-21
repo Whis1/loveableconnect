@@ -261,8 +261,9 @@ export const ProfileDialog = ({
       bisexual: t('common.bisexual'),
       pansexual: t('common.pansexual'),
       asexual: t('common.asexual'),
+      other: t('common.other'),
     };
-    return labels[orientation] || orientation;
+    return labels[orientation.toLowerCase()] || orientation;
   };
 
   const getRelationshipTypeLabel = (type: string) => {
