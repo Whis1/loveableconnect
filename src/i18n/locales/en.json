@@ -263,11 +263,18 @@
     "error": "Error",
     "cannotLoadLikes": "Cannot load likes",
     "unknownUser": "Unknown user",
+    "likeBack": "Like Back",
+    "liking": "Liking...",
+    "errorLikingBack": "Unable to like back",
+    "errorLoadingLikes": "Unable to load likes",
     "paymentCompleted": "Payment completed!",
     "paymentCompletedDescription": "You can now see who liked you",
     "paymentCanceled": "Payment canceled",
     "paymentCanceledDescription": "You can unlock likes anytime",
-    "cannotStartPayment": "Cannot start payment"
+    "cannotStartPayment": "Cannot start payment",
+    "unlockTitle": "Unlock your Likes",
+    "person": "person",
+    "people": "people"
   },
   "search": {
     "title": "Advanced Search",

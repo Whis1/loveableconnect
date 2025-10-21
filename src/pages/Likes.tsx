@@ -372,7 +372,7 @@ const Likes = () => {
             </CardTitle>
             {likes.length > 0 && (
               <p className="text-muted-foreground text-sm">
-                {likes.length} {likes.length === 1 ? t("likes.person") : t("likes.people")} {t("likes.interestedInYou")}
+                {likes.length} {likes.length === 1 ? t("likes.peopleInterested") : t("likes.peopleInterestedPlural")} {t("likes.interestedInYou")}
               </p>
             )}
           </CardHeader>
@@ -386,7 +386,7 @@ const Likes = () => {
                   {t("likes.unlockTitle")}
                 </h3>
                 <p className="text-base text-foreground/70 mb-6 max-w-md mx-auto">
-                  {likes.length} {likes.length === 1 ? t("likes.person") : t("likes.people")} {t("likes.interestedInYou")} {t("likes.unlockDescription")}
+                  {likes.length} {likes.length === 1 ? t("likes.peopleInterested") : t("likes.peopleInterestedPlural")} {t("likes.interestedInYou")} {t("likes.unlockDescription")}
                 </p>
                 <Button 
                   size="lg"
