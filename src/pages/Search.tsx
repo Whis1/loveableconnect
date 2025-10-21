@@ -399,7 +399,7 @@ const Search = () => {
 
             {/* Filtro Genere */}
             <div className="space-y-3">
-              <Label className="text-base font-semibold">Genere</Label>
+              <Label className="text-base font-semibold">{t('common.gender')}</Label>
               <div className="grid grid-cols-2 gap-3">
                 {genderOptions.map((option) => (
                   <div key={option.value} className="flex items-center space-x-2">
@@ -421,7 +421,7 @@ const Search = () => {
 
             {/* Filtro Orientamento Sessuale */}
             <div className="space-y-3">
-              <Label className="text-base font-semibold">Orientamento Sessuale</Label>
+              <Label className="text-base font-semibold">{t('common.orientation')}</Label>
               <div className="grid grid-cols-2 gap-3">
                 {orientationOptions.map((option) => (
                   <div key={option.value} className="flex items-center space-x-2">

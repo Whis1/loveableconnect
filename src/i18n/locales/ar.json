@@ -52,6 +52,7 @@
     "age": "العمر",
     "location": "مكان الإقامة",
     "locationPlaceholder": "ابدأ بكتابة مدينتك...",
+    "genderPlaceholder": "اختر جنسك",
     "gender": "الجنس",
     "male": "ذكر",
     "female": "أنثى",

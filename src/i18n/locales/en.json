@@ -52,6 +52,7 @@
     "age": "Age",
     "location": "Location",
     "locationPlaceholder": "Start typing your city...",
+    "genderPlaceholder": "Select your gender",
     "gender": "Gender",
     "male": "Male",
     "female": "Female",

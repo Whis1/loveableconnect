@@ -425,33 +425,33 @@ const Auth = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-gender">Genere</Label>
+                  <Label htmlFor="signup-gender">{t('common.gender')}</Label>
                   <Select value={gender} onValueChange={setGender} required>
                     <SelectTrigger id="signup-gender" className="w-full">
-                      <SelectValue placeholder="Seleziona il tuo genere" />
+                      <SelectValue placeholder={t('profile.genderPlaceholder')} />
                     </SelectTrigger>
                     <SelectContent className="bg-background z-50">
-                      <SelectItem value="male">Uomo</SelectItem>
-                      <SelectItem value="female">Donna</SelectItem>
-                      <SelectItem value="transgender">Transgender</SelectItem>
-                      <SelectItem value="transexual">Transessuale</SelectItem>
-                      <SelectItem value="genderfluid">Genderfluid</SelectItem>
-                      <SelectItem value="non-binary">Non binario</SelectItem>
+                      <SelectItem value="male">{t('common.male')}</SelectItem>
+                      <SelectItem value="female">{t('common.female')}</SelectItem>
+                      <SelectItem value="transgender">{t('common.transgender')}</SelectItem>
+                      <SelectItem value="transexual">{t('common.transexual')}</SelectItem>
+                      <SelectItem value="genderfluid">{t('common.genderfluid')}</SelectItem>
+                      <SelectItem value="non-binary">{t('common.nonBinary')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-orientation">Orientamento Sessuale</Label>
+                  <Label htmlFor="signup-orientation">{t('common.orientation')}</Label>
                   <Select value={sexualOrientation} onValueChange={setSexualOrientation} required>
                     <SelectTrigger id="signup-orientation" className="w-full">
-                      <SelectValue placeholder="Seleziona orientamento" />
+                      <SelectValue placeholder={t('profile.orientationPlaceholder')} />
                     </SelectTrigger>
                     <SelectContent className="bg-background z-50">
-                      <SelectItem value="heterosexual">Eterosessuale</SelectItem>
-                      <SelectItem value="homosexual">Omosessuale</SelectItem>
-                      <SelectItem value="bisexual">Bisessuale</SelectItem>
-                      <SelectItem value="pansexual">Pansexuale</SelectItem>
-                      <SelectItem value="asexual">Asessuale</SelectItem>
+                      <SelectItem value="heterosexual">{t('common.heterosexual')}</SelectItem>
+                      <SelectItem value="homosexual">{t('common.homosexual')}</SelectItem>
+                      <SelectItem value="bisexual">{t('common.bisexual')}</SelectItem>
+                      <SelectItem value="pansexual">{t('common.pansexual')}</SelectItem>
+                      <SelectItem value="asexual">{t('common.asexual')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

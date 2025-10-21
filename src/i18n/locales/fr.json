@@ -52,6 +52,7 @@
     "age": "Âge",
     "location": "Lieu de résidence",
     "locationPlaceholder": "Commencez à taper votre ville...",
+    "genderPlaceholder": "Sélectionnez votre genre",
     "gender": "Genre",
     "male": "Homme",
     "female": "Femme",
