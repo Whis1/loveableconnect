@@ -32,6 +32,7 @@ interface Profile {
   translatedGender?: string | null;
   translatedOrientation?: string | null;
   translatedRelationshipType?: string | null;
+  translatedLookingFor?: string[] | null;
 }
 
 interface ChatUserProfileProps {
@@ -64,6 +65,7 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
         // Translate bio and interests
         const translatedBio = data.bio ? await translateText(data.bio) : null;
         const translatedInterests = data.interests ? await translateArray(data.interests) : null;
+        const translatedLookingFor = data.looking_for ? await translateArray(data.looking_for) : null;
 
         // Normalize possible localized stored values for gender/orientation/relationship_type
         const genderCodes = ['male','female','non-binary','transexual','transgender','genderfluid'];
@@ -86,7 +88,8 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
           translatedInterests,
           translatedGender,
           translatedOrientation,
-          translatedRelationshipType
+          translatedRelationshipType,
+          translatedLookingFor
         });
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -113,6 +116,7 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
           const newProfile = payload.new as Profile;
           const translatedBio = newProfile.bio ? await translateText(newProfile.bio) : null;
           const translatedInterests = newProfile.interests ? await translateArray(newProfile.interests) : null;
+          const translatedLookingFor = newProfile.looking_for ? await translateArray(newProfile.looking_for) : null;
           const genderCodes = ['male','female','non-binary','transexual','transgender','genderfluid'];
           const orientationCodes = ['heterosexual','homosexual','bisexual','pansexual','asexual','other'];
           const relationshipTypeCodes = ['serious','casual','friendship','not-sure','prefer-not-say'];
@@ -132,7 +136,8 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
             translatedInterests,
             translatedGender,
             translatedOrientation,
-            translatedRelationshipType
+            translatedRelationshipType,
+            translatedLookingFor
           });
         }
       )
@@ -227,7 +232,7 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
                     profile.relationship_type === 'prefer-not-say' ? t("common.preferNotSay") :
                     (profile.translatedRelationshipType || profile.relationship_type)
                     )
-                  : (profile.looking_for?.join(', ') || '')}
+                  : (((profile.translatedLookingFor || profile.looking_for)?.join(', ')) || '')}
               </span>
             </div>
           )}
