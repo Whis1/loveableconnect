@@ -31,6 +31,7 @@ interface Profile {
   translatedInterests?: string[] | null;
   translatedGender?: string | null;
   translatedOrientation?: string | null;
+  translatedRelationshipType?: string | null;
 }
 
 interface ChatUserProfileProps {
@@ -64,9 +65,10 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
         const translatedBio = data.bio ? await translateText(data.bio) : null;
         const translatedInterests = data.interests ? await translateArray(data.interests) : null;
 
-        // Normalize possible localized stored values for gender/orientation
+        // Normalize possible localized stored values for gender/orientation/relationship_type
         const genderCodes = ['male','female','non-binary','transexual','transgender','genderfluid'];
         const orientationCodes = ['heterosexual','homosexual','bisexual','pansexual','asexual','other'];
+        const relationshipTypeCodes = ['serious','casual','friendship','not-sure','prefer-not-say'];
 
         const translatedGender = data.gender && !genderCodes.includes(data.gender)
           ? await translateText(data.gender)
@@ -74,13 +76,17 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
         const translatedOrientation = data.sexual_orientation && !orientationCodes.includes(data.sexual_orientation)
           ? await translateText(data.sexual_orientation)
           : null;
+        const translatedRelationshipType = data.relationship_type && !relationshipTypeCodes.includes(data.relationship_type)
+          ? await translateText(data.relationship_type)
+          : null;
         
         setProfile({
           ...data,
           translatedBio,
           translatedInterests,
           translatedGender,
-          translatedOrientation
+          translatedOrientation,
+          translatedRelationshipType
         });
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -109,11 +115,15 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
           const translatedInterests = newProfile.interests ? await translateArray(newProfile.interests) : null;
           const genderCodes = ['male','female','non-binary','transexual','transgender','genderfluid'];
           const orientationCodes = ['heterosexual','homosexual','bisexual','pansexual','asexual','other'];
+          const relationshipTypeCodes = ['serious','casual','friendship','not-sure','prefer-not-say'];
           const translatedGender = newProfile.gender && !genderCodes.includes(newProfile.gender)
             ? await translateText(newProfile.gender)
             : null;
           const translatedOrientation = newProfile.sexual_orientation && !orientationCodes.includes(newProfile.sexual_orientation)
             ? await translateText(newProfile.sexual_orientation)
+            : null;
+          const translatedRelationshipType = newProfile.relationship_type && !relationshipTypeCodes.includes(newProfile.relationship_type)
+            ? await translateText(newProfile.relationship_type)
             : null;
           
           setProfile({
@@ -121,7 +131,8 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
             translatedBio,
             translatedInterests,
             translatedGender,
-            translatedOrientation
+            translatedOrientation,
+            translatedRelationshipType
           });
         }
       )
@@ -214,7 +225,7 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
                     profile.relationship_type === 'friendship' ? t("common.friendship") :
                     profile.relationship_type === 'not-sure' ? t("common.notSure") :
                     profile.relationship_type === 'prefer-not-say' ? t("common.preferNotSay") :
-                    profile.relationship_type
+                    (profile.translatedRelationshipType || profile.relationship_type)
                     )
                   : (profile.looking_for?.join(', ') || '')}
               </span>
