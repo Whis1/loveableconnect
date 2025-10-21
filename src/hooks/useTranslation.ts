@@ -47,5 +47,25 @@ export const useTextTranslation = () => {
     return translations;
   };
 
-  return { translateText, translateArray, currentLanguage };
+  // Batch translate profiles for better performance
+  const translateProfiles = async (profiles: any[]): Promise<any[]> => {
+    const translatedProfiles = await Promise.all(
+      profiles.map(async (profile) => {
+        const [translatedBio, translatedInterests] = await Promise.all([
+          profile.bio ? translateText(profile.bio) : null,
+          profile.interests ? translateArray(profile.interests) : null
+        ]);
+
+        return {
+          ...profile,
+          translatedBio,
+          translatedInterests
+        };
+      })
+    );
+
+    return translatedProfiles;
+  };
+
+  return { translateText, translateArray, translateProfiles, currentLanguage };
 };

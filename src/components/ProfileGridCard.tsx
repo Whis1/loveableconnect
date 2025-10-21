@@ -22,6 +22,8 @@ interface Profile {
   avatar_url: string | null;
   bio: string | null;
   distance?: number;
+  translatedBio?: string | null;
+  translatedInterests?: string[] | null;
 }
 
 interface ProfileGridCardProps {
@@ -185,15 +187,18 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
     };
   }, [currentUserId, profile.id]);
 
+  // Use pre-translated bio if available, otherwise translate on mount
   useEffect(() => {
     const loadTranslation = async () => {
-      if (profile.bio) {
+      if (profile.translatedBio) {
+        setTranslatedBio(profile.translatedBio);
+      } else if (profile.bio) {
         const translated = await translateText(profile.bio);
         setTranslatedBio(translated);
       }
     };
     loadTranslation();
-  }, [profile.bio]);
+  }, [profile.bio, profile.translatedBio]);
 
   const avatarUrl = profile.avatar_url
     ? supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl

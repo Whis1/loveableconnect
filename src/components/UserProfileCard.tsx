@@ -24,6 +24,8 @@ interface Profile {
   avatar_url: string | null;
   relationship_type: string | null;
   relationship_status: string | null;
+  translatedBio?: string | null;
+  translatedInterests?: string[] | null;
 }
 
 interface UserProfileCardProps {
@@ -108,17 +110,23 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
 
   useEffect(() => {
     const loadTranslations = async () => {
-      if (profile?.bio) {
+      // Use pre-translated data if available
+      if (profile?.translatedBio) {
+        setTranslatedBio(profile.translatedBio);
+      } else if (profile?.bio) {
         const translated = await translateText(profile.bio);
         setTranslatedBio(translated);
       }
-      if (profile?.interests) {
+      
+      if (profile?.translatedInterests) {
+        setTranslatedInterests(profile.translatedInterests);
+      } else if (profile?.interests) {
         const translated = await translateArray(profile.interests);
         setTranslatedInterests(translated);
       }
     };
     loadTranslations();
-  }, [profile?.bio, profile?.interests]);
+  }, [profile?.bio, profile?.interests, profile?.translatedBio, profile?.translatedInterests]);
 
   if (!profile) return null;
 

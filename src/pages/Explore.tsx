@@ -12,6 +12,7 @@ import { useBanCheck } from "@/hooks/useBanCheck";
 import { ArrowLeft, MapPin, Filter, RotateCcw, Search as SearchIcon } from "lucide-react";
 import { ProfileGridCard } from "@/components/ProfileGridCard";
 import { MatchBanner } from "@/components/MatchBanner";
+import { useTextTranslation } from "@/hooks/useTranslation";
 
 interface Profile {
   id: string;
@@ -32,6 +33,8 @@ interface Profile {
   longitude: number | null;
   last_active: string | null;
   distance?: number;
+  translatedBio?: string | null;
+  translatedInterests?: string[] | null;
 }
 
 interface UserLocation {
@@ -43,6 +46,7 @@ const Explore = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { translateProfiles } = useTextTranslation();
   useBanCheck(); // Check if user is banned
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -136,11 +140,14 @@ const Explore = () => {
             .single();
           
           if (!error && updatedProfile) {
+            // Translate the updated profile before setting it
+            const [translatedProfile] = await translateProfiles([updatedProfile as Profile]);
+            
             setProfiles(prev => prev.map(p => 
-              p.id === updatedProfile.id ? updatedProfile as Profile : p
+              p.id === translatedProfile.id ? translatedProfile : p
             ));
             setDisplayedProfiles(prev => prev.map(p => 
-              p.id === updatedProfile.id ? updatedProfile as Profile : p
+              p.id === translatedProfile.id ? translatedProfile : p
             ));
           }
         }
@@ -200,7 +207,10 @@ const Explore = () => {
         return dateB - dateA;
       });
 
-      setProfiles(allProfiles);
+      // Pre-translate profiles for better UX
+      const translatedProfiles = await translateProfiles(allProfiles);
+
+      setProfiles(translatedProfiles);
       setDisplayedProfiles([]);
       setPage(1);
       setHasMore(true);
@@ -306,7 +316,10 @@ const Explore = () => {
         return dateB - dateA;
       });
 
-      setProfiles(filteredProfiles);
+      // Pre-translate profiles for better UX
+      const translatedProfiles = await translateProfiles(filteredProfiles);
+
+      setProfiles(translatedProfiles);
       setDisplayedProfiles([]);
       setPage(1);
       setHasMore(true);
