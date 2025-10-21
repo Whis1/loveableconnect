@@ -459,64 +459,64 @@ const Likes = () => {
                           {/* Info aggiuntive: genere, orientamento, stato, cerca */}
                           {hasUnlocked && (
                             <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-xs">
-                              {like.profile.gender && (
-                                <div className="flex items-start gap-1">
-                                  <span className="font-medium text-foreground/70">{t("common.gender")}</span>
-                                  <span className="text-muted-foreground">
-                                    {like.profile.gender === 'male' ? t("common.male") : 
-                                     like.profile.gender === 'female' ? t("common.female") : 
-                                     like.profile.gender === 'non-binary' ? t("common.nonBinary") :
-                                     like.profile.gender === 'transexual' ? t("common.transexual") :
-                                     like.profile.gender === 'transgender' ? t("common.transgender") :
-                                     like.profile.gender === 'genderfluid' ? t("common.genderfluid") :
-                                     (like.profile.translatedGender || like.profile.gender)}
-                                  </span>
-                                </div>
-                              )}
+                               {like.profile.gender && (
+                                 <div className="flex items-start gap-1">
+                                   <span className="font-medium text-foreground/70">{t("common.gender")}</span>
+                                   <span className="text-muted-foreground">
+                                     {like.profile.gender.toLowerCase() === 'male' ? t("common.male") : 
+                                      like.profile.gender.toLowerCase() === 'female' ? t("common.female") : 
+                                      like.profile.gender.toLowerCase() === 'non-binary' ? t("common.nonBinary") :
+                                      like.profile.gender.toLowerCase() === 'transexual' ? t("common.transexual") :
+                                      like.profile.gender.toLowerCase() === 'transgender' ? t("common.transgender") :
+                                      like.profile.gender.toLowerCase() === 'genderfluid' ? t("common.genderfluid") :
+                                      (like.profile.translatedGender || like.profile.gender)}
+                                   </span>
+                                 </div>
+                               )}
                               
-                              {like.profile.sexual_orientation && (
-                                <div className="flex items-start gap-1">
-                                  <span className="font-medium text-foreground/70">{t("common.orientation")}</span>
-                                  <span className="text-muted-foreground">
-                                    {like.profile.sexual_orientation === 'heterosexual' ? t("common.heterosexual") :
-                                     like.profile.sexual_orientation === 'homosexual' ? t("common.homosexual") :
-                                     like.profile.sexual_orientation === 'bisexual' ? t("common.bisexual") :
-                                     like.profile.sexual_orientation === 'pansexual' ? t("common.pansexual") :
-                                     like.profile.sexual_orientation === 'asexual' ? t("common.asexual") :
-                                     like.profile.sexual_orientation === 'other' ? t("common.other") :
-                                     (like.profile.translatedOrientation || like.profile.sexual_orientation)}
-                                  </span>
-                                </div>
-                              )}
+                               {like.profile.sexual_orientation && (
+                                 <div className="flex items-start gap-1">
+                                   <span className="font-medium text-foreground/70">{t("common.orientation")}</span>
+                                   <span className="text-muted-foreground">
+                                     {like.profile.sexual_orientation.toLowerCase() === 'heterosexual' ? t("common.heterosexual") :
+                                      like.profile.sexual_orientation.toLowerCase() === 'homosexual' ? t("common.homosexual") :
+                                      like.profile.sexual_orientation.toLowerCase() === 'bisexual' ? t("common.bisexual") :
+                                      like.profile.sexual_orientation.toLowerCase() === 'pansexual' ? t("common.pansexual") :
+                                      like.profile.sexual_orientation.toLowerCase() === 'asexual' ? t("common.asexual") :
+                                      like.profile.sexual_orientation.toLowerCase() === 'other' ? t("common.other") :
+                                      (like.profile.translatedOrientation || like.profile.sexual_orientation)}
+                                   </span>
+                                 </div>
+                               )}
                               
-                              {like.profile.relationship_status && (
-                                <div className="flex items-start gap-1">
-                                  <span className="font-medium text-foreground/70">{t("common.relationshipStatus")}</span>
-                                  <span className="text-muted-foreground">
-                                    {like.profile.relationship_status === 'single' ? t("common.single") : 
-                                     like.profile.relationship_status === 'in_relationship' ? t("common.inRelationship") :
-                                     like.profile.relationship_status === 'married' ? t("common.married") :
-                                     like.profile.relationship_status === 'divorced' ? t("common.divorced") :
-                                     like.profile.relationship_status === 'widowed' ? t("common.widowed") :
-                                     like.profile.relationship_status === 'prefer_not_say' ? t("common.preferNotSay") :
-                                     like.profile.relationship_status}
-                                  </span>
-                                </div>
-                              )}
+                               {like.profile.relationship_status && (
+                                 <div className="flex items-start gap-1">
+                                   <span className="font-medium text-foreground/70">{t("common.relationshipStatus")}</span>
+                                   <span className="text-muted-foreground">
+                                     {like.profile.relationship_status.toLowerCase() === 'single' ? t("common.single") : 
+                                      like.profile.relationship_status.toLowerCase() === 'in_relationship' ? t("common.inRelationship") :
+                                      like.profile.relationship_status.toLowerCase() === 'married' ? t("common.married") :
+                                      like.profile.relationship_status.toLowerCase() === 'divorced' ? t("common.divorced") :
+                                      like.profile.relationship_status.toLowerCase() === 'widowed' ? t("common.widowed") :
+                                      like.profile.relationship_status.toLowerCase() === 'prefer_not_say' ? t("common.preferNotSay") :
+                                      like.profile.relationship_status}
+                                   </span>
+                                 </div>
+                               )}
                               
-                              {like.profile.relationship_type && (
-                                <div className="flex items-start gap-1">
-                                  <span className="font-medium text-foreground/70">{t("common.lookingFor")}</span>
-                                  <span className="text-muted-foreground">
-                                    {like.profile.relationship_type === 'serious' ? t("common.seriousRelationship") :
-                                     like.profile.relationship_type === 'casual' ? t("common.casualDating") :
-                                     like.profile.relationship_type === 'friendship' ? t("common.friendship") :
-                                     like.profile.relationship_type === 'not-sure' ? t("common.notSure") :
-                                     like.profile.relationship_type === 'prefer-not-say' ? t("common.preferNotSay") :
-                                     (like.profile.translatedRelationshipType || like.profile.relationship_type)}
-                                  </span>
-                                </div>
-                              )}
+                               {like.profile.relationship_type && (
+                                 <div className="flex items-start gap-1">
+                                   <span className="font-medium text-foreground/70">{t("common.lookingFor")}</span>
+                                   <span className="text-muted-foreground">
+                                     {like.profile.relationship_type.toLowerCase() === 'serious' ? t("common.seriousRelationship") :
+                                      like.profile.relationship_type.toLowerCase() === 'casual' ? t("common.casualDating") :
+                                      like.profile.relationship_type.toLowerCase() === 'friendship' ? t("common.friendship") :
+                                      like.profile.relationship_type.toLowerCase() === 'not-sure' ? t("common.notSure") :
+                                      like.profile.relationship_type.toLowerCase() === 'prefer-not-say' ? t("common.preferNotSay") :
+                                      (like.profile.translatedRelationshipType || like.profile.relationship_type)}
+                                   </span>
+                                 </div>
+                               )}
                             </div>
                           )}
                           

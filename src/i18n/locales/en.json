@@ -444,7 +444,8 @@
     "loadingNotifications": "Loading notifications...",
     "loadingProfiles": "Loading profiles...",
     "noMessages": "No messages",
-    "manageLikes": "Manage likes for"
+    "manageLikes": "Manage likes for",
+    "years": "years"
   },
   "credits": {
     "back": "Back",
