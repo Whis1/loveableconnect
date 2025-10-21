@@ -13,6 +13,7 @@ import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ChatUserProfile } from "@/components/chat/ChatUserProfile";
 import { useCredits } from "@/hooks/useCredits";
 import { useTranslation } from "react-i18next";
+import { useTextTranslation } from "@/hooks/useTranslation";
 
 interface Message {
   id: string;
@@ -24,6 +25,7 @@ interface Message {
   media_url: string | null;
   created_at: string;
   read: boolean;
+  translatedContent?: string;
 }
 
 interface Profile {
@@ -39,6 +41,7 @@ const Chat = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { translateText } = useTextTranslation();
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [otherUser, setOtherUser] = useState<Profile | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -142,7 +145,18 @@ const Chat = () => {
         .eq("match_id", matchId)
         .order("created_at", { ascending: true });
 
-      setMessages((messagesData || []) as Message[]);
+      // Translate text messages
+      const translatedMessages = await Promise.all(
+        (messagesData || []).map(async (msg: any) => {
+          if (msg.message_type === 'text' && msg.content) {
+            const translatedContent = await translateText(msg.content);
+            return { ...msg, translatedContent };
+          }
+          return msg;
+        })
+      );
+
+      setMessages(translatedMessages as Message[]);
 
       // Mark messages as read
       await supabase
@@ -165,15 +179,22 @@ const Chat = () => {
             table: "messages",
             filter: `match_id=eq.${matchId}`,
           },
-          (payload) => {
+          async (payload) => {
             const newMsg = payload.new as Message;
             console.log('[Chat] Realtime INSERT', newMsg);
+            
+            // Translate if text message
+            let translatedMsg = newMsg;
+            if (newMsg.message_type === 'text' && newMsg.content) {
+              const translatedContent = await translateText(newMsg.content);
+              translatedMsg = { ...newMsg, translatedContent };
+            }
             
             // Only add if not already in the list (prevent duplicates)
             setMessages((prev) => {
               const exists = prev.some(m => m.id === newMsg.id);
               if (exists) return prev;
-              return [...prev, newMsg];
+              return [...prev, translatedMsg];
             });
             
             // Mark as read if received
@@ -371,7 +392,7 @@ const Chat = () => {
                   return (
                     <MessageBubble
                       key={message.id}
-                      content={message.content}
+                      content={message.translatedContent || message.content}
                       messageType={message.message_type}
                       mediaUrl={message.media_url}
                       isOwn={isOwn}
