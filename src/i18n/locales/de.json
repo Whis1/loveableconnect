@@ -247,6 +247,47 @@
     "previousPage": "Vorherige Seite",
     "nextPage": "Nächste Seite"
   },
+  "matches": {
+    "title": "Deine Matches",
+    "back": "Zurück",
+    "loading": "Wird geladen...",
+    "noMatches": "Noch keine Matches. Weiter erkunden!",
+    "exploreProfiles": "Profile erkunden",
+    "nearYou": "In deiner Nähe",
+    "matchSince": "Match seit",
+    "chat": "Chat",
+    "error": "Fehler",
+    "cannotLoadMatches": "Matches konnten nicht geladen werden",
+    "unknownUser": "Unbekannter Benutzer",
+    "newMatch": "Neues Match! 🎉",
+    "newMatchWith": "Du hast ein neues Match mit"
+  },
+  "likes": {
+    "title": "Erhaltene Likes",
+    "back": "Zurück",
+    "loading": "Wird geladen...",
+    "unlockLikes": "Likes entsperren",
+    "peopleInterested": "Person",
+    "peopleInterestedPlural": "Personen",
+    "interestedInYou": "interessiert an dir!",
+    "unlockDescription": "Entsperren um zu sehen, wer dich geliked hat.",
+    "unlockNow": "Jetzt entsperren - €2.99",
+    "noLikes": "Noch keine Likes. Weiter erkunden!",
+    "exploreProfiles": "Profile erkunden",
+    "likeReceived": "Like erhalten",
+    "explore": "Erkunden",
+    "likeBack": "Zurück liken",
+    "liking": "Like wird gesendet...",
+    "errorLikingBack": "Fehler beim Zurückliken",
+    "error": "Fehler",
+    "cannotLoadLikes": "Likes konnten nicht geladen werden",
+    "unknownUser": "Unbekannter Benutzer",
+    "paymentCompleted": "Zahlung abgeschlossen!",
+    "paymentCompletedDescription": "Du kannst jetzt sehen, wer dich geliked hat",
+    "paymentCanceled": "Zahlung abgebrochen",
+    "paymentCanceledDescription": "Du kannst Likes jederzeit entsperren",
+    "cannotStartPayment": "Zahlung konnte nicht gestartet werden"
+  },
   "chat": {
     "back": "Zurück",
     "loading": "Laden...",
@@ -346,7 +387,8 @@
     "loadingNotifications": "Benachrichtigungen werden geladen...",
     "loadingProfiles": "Profile werden geladen...",
     "noMessages": "Keine Nachrichten",
-    "manageLikes": "Likes verwalten für"
+    "manageLikes": "Likes verwalten für",
+    "years": "Jahre"
   },
   "support": {
     "title": "Kundensupport",

@@ -247,6 +247,47 @@
     "previousPage": "Page Précédente",
     "nextPage": "Page Suivante"
   },
+  "matches": {
+    "title": "Vos Matchs",
+    "back": "Retour",
+    "loading": "Chargement...",
+    "noMatches": "Pas encore de matchs. Continuez à explorer !",
+    "exploreProfiles": "Explorer les Profils",
+    "nearYou": "Près de vous",
+    "matchSince": "Match depuis",
+    "chat": "Chat",
+    "error": "Erreur",
+    "cannotLoadMatches": "Impossible de charger les matchs",
+    "unknownUser": "Utilisateur inconnu",
+    "newMatch": "Nouveau Match ! 🎉",
+    "newMatchWith": "Vous avez un nouveau match avec"
+  },
+  "likes": {
+    "title": "Likes Reçus",
+    "back": "Retour",
+    "loading": "Chargement...",
+    "unlockLikes": "Débloquer vos Likes",
+    "peopleInterested": "personne",
+    "peopleInterestedPlural": "personnes",
+    "interestedInYou": "intéressée par vous !",
+    "unlockDescription": "Débloquez pour voir qui vous a liké.",
+    "unlockNow": "Débloquer maintenant - €2.99",
+    "noLikes": "Pas encore de likes. Continuez à explorer !",
+    "exploreProfiles": "Explorer les Profils",
+    "likeReceived": "Like reçu",
+    "explore": "Explorer",
+    "likeBack": "Liker en retour",
+    "liking": "Envoi du like...",
+    "errorLikingBack": "Erreur lors du like en retour",
+    "error": "Erreur",
+    "cannotLoadLikes": "Impossible de charger les likes",
+    "unknownUser": "Utilisateur inconnu",
+    "paymentCompleted": "Paiement effectué !",
+    "paymentCompletedDescription": "Vous pouvez maintenant voir qui vous a liké",
+    "paymentCanceled": "Paiement annulé",
+    "paymentCanceledDescription": "Vous pouvez débloquer les likes à tout moment",
+    "cannotStartPayment": "Impossible de démarrer le paiement"
+  },
   "chat": {
     "back": "Retour",
     "loading": "Chargement...",
@@ -346,7 +387,8 @@
     "loadingNotifications": "Chargement des notifications...",
     "loadingProfiles": "Chargement des profils...",
     "noMessages": "Aucun message",
-    "manageLikes": "Gérer les Likes pour"
+    "manageLikes": "Gérer les Likes pour",
+    "years": "ans"
   },
   "support": {
     "title": "Support Client",

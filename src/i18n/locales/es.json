@@ -245,6 +245,9 @@
     "years": "años",
     "likeReceived": "Like recibido",
     "explore": "Explorar",
+    "likeBack": "Dar like de vuelta",
+    "liking": "Enviando like...",
+    "errorLikingBack": "No se pudo devolver el like",
     "error": "Error",
     "errorLoadingLikes": "No se pudieron cargar los likes",
     "paymentCompleted": "¡Pago completado!",
@@ -430,7 +433,8 @@
     "loadingNotifications": "Cargando notificaciones...",
     "loadingProfiles": "Cargando perfiles...",
     "noMessages": "Sin mensajes",
-    "manageLikes": "Gestionar Likes para"
+    "manageLikes": "Gestionar Likes para",
+    "years": "años"
   },
   "userProfile": {
     "years": "años",

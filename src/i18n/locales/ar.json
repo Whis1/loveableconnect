@@ -361,9 +361,11 @@
     "unlockNow": "افتح الآن - €2.99",
     "noLikes": "لم تتلق إعجابات بعد. استمر في الاستكشاف!",
     "exploreProfiles": "استكشف الملفات الشخصية",
-    "years": "سنة",
     "likeReceived": "تم استلام الإعجاب",
     "explore": "استكشف",
+    "likeBack": "أعجبني أيضاً",
+    "liking": "جاري الإعجاب...",
+    "errorLikingBack": "تعذر الرد على الإعجاب",
     "error": "خطأ",
     "errorLoadingLikes": "تعذر تحميل الإعجابات",
     "paymentCompleted": "اكتمل الدفع!",
@@ -441,7 +443,8 @@
     "loadingNotifications": "جاري تحميل الإشعارات...",
     "loadingProfiles": "جاري تحميل الملفات الشخصية...",
     "noMessages": "لا توجد رسائل",
-    "manageLikes": "إدارة الإعجابات لـ"
+    "manageLikes": "إدارة الإعجابات لـ",
+    "years": "سنة"
   },
   "support": {
     "title": "دعم العملاء",

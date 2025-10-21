@@ -370,11 +370,6 @@ const Likes = () => {
               </div>
               {t("likes.title")}
             </CardTitle>
-            {likes.length > 0 && (
-              <p className="text-muted-foreground text-sm">
-                {likes.length} {likes.length === 1 ? t("likes.peopleInterested") : t("likes.peopleInterestedPlural")} {t("likes.interestedInYou")}
-              </p>
-            )}
           </CardHeader>
           <CardContent className="space-y-6">
             {!hasUnlocked && !isPremium && likes.length > 0 && (
