@@ -270,8 +270,11 @@ const Matches = () => {
                                 ? match.otherUser.nickname 
                                 : match.otherUser.full_name}
                             </h3>
+                            <p className="text-sm text-muted-foreground">
+                              {t("matches.nearYourParts")}
+                            </p>
                             {match.otherUser.city && (
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-xs text-muted-foreground">
                                 {match.otherUser.city}
                               </p>
                             )}
