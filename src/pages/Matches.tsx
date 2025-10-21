@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, MessageCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { useTextTranslation } from "@/hooks/useTranslation";
 
 interface MatchWithProfile {
   id: string;
@@ -19,6 +20,7 @@ interface MatchWithProfile {
     avatar_url: string | null;
     bio: string | null;
     city: string | null;
+    translatedBio?: string | null;
   };
 }
 
@@ -26,6 +28,7 @@ const Matches = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { translateText } = useTextTranslation();
   const [matches, setMatches] = useState<MatchWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -91,10 +94,15 @@ const Matches = () => {
             .eq("id", otherUserId)
             .single();
 
+          const translatedBio = profile?.bio ? await translateText(profile.bio) : null;
+
           return {
             id: match.id,
             created_at: match.created_at,
-            otherUser: profile || {
+            otherUser: profile ? {
+              ...profile,
+              translatedBio,
+            } : {
               id: otherUserId,
               full_name: t("matches.unknownUser"),
               nickname: t("matches.unknownUser"),
@@ -102,6 +110,7 @@ const Matches = () => {
               avatar_url: null,
               bio: null,
               city: null,
+              translatedBio: null,
             },
           };
         })
@@ -138,10 +147,15 @@ const Matches = () => {
               .eq("id", otherUserId)
               .single();
 
+            const translatedBio = profile?.bio ? await translateText(profile.bio) : null;
+
             const matchWithProfile = {
               id: newMatch.id,
               created_at: newMatch.created_at,
-              otherUser: profile || {
+              otherUser: profile ? {
+                ...profile,
+                translatedBio,
+              } : {
                 id: otherUserId,
                 full_name: t("matches.unknownUser"),
                 nickname: t("matches.unknownUser"),
@@ -149,6 +163,7 @@ const Matches = () => {
                 avatar_url: null,
                 bio: null,
                 city: null,
+                translatedBio: null,
               },
             };
 
@@ -258,9 +273,9 @@ const Matches = () => {
                             <p className="text-sm text-muted-foreground">
                               {t("matches.nearYourParts")}
                             </p>
-                            {match.otherUser.bio && (
+                            {(match.otherUser.translatedBio || match.otherUser.bio) && (
                               <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                                {match.otherUser.bio}
+                                {match.otherUser.translatedBio || match.otherUser.bio}
                               </p>
                             )}
                             <p className="text-xs text-muted-foreground mt-2">
