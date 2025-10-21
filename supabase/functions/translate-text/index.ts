@@ -46,7 +46,6 @@ serve(async (req) => {
             content: text
           }
         ],
-        temperature: 0.3,
       }),
     });
 
