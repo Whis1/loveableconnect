@@ -137,8 +137,12 @@ const Credits = () => {
                 <Coins className="h-6 w-6 text-primary" />
                 {t("credits.yourBalance")}
               </CardTitle>
-              {!loading && !credits?.is_premium && credits?.last_daily_reset && (
-                <CreditCountdown lastDailyReset={credits.last_daily_reset} />
+              {!loading && 
+               !credits?.is_premium && 
+               credits?.balance !== undefined &&
+               credits.balance < 40 &&
+               credits?.credits_depleted_at && (
+                <CreditCountdown creditsDepletedAt={credits.credits_depleted_at} />
               )}
             </div>
           </CardHeader>

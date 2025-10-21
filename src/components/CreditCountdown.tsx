@@ -3,17 +3,17 @@ import { Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface CreditCountdownProps {
-  lastDailyReset: string;
+  creditsDepletedAt: string;
 }
 
-export const CreditCountdown = ({ lastDailyReset }: CreditCountdownProps) => {
+export const CreditCountdown = ({ creditsDepletedAt }: CreditCountdownProps) => {
   const { t } = useTranslation();
   const [timeLeft, setTimeLeft] = useState("");
 
   useEffect(() => {
     const calculateTimeLeft = () => {
-      const resetTime = new Date(lastDailyReset);
-      const nextResetTime = new Date(resetTime.getTime() + 24 * 60 * 60 * 1000);
+      const depletedTime = new Date(creditsDepletedAt);
+      const nextResetTime = new Date(depletedTime.getTime() + 24 * 60 * 60 * 1000);
       const now = new Date();
       const diff = nextResetTime.getTime() - now.getTime();
 
@@ -33,7 +33,7 @@ export const CreditCountdown = ({ lastDailyReset }: CreditCountdownProps) => {
     const interval = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(interval);
-  }, [lastDailyReset]);
+  }, [creditsDepletedAt]);
 
   return (
     <div className="flex items-center gap-2 text-sm text-muted-foreground/60">

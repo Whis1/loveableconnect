@@ -10,6 +10,7 @@ interface UserCredits {
   is_premium: boolean;
   last_daily_reset: string;
   premium_expires_at?: string | null;
+  credits_depleted_at?: string | null;
 }
 
 export const CreditsDisplay = () => {
@@ -45,6 +46,11 @@ export const CreditsDisplay = () => {
     );
   }
 
+  const showCountdown = 
+    credits.balance < 40 && 
+    credits.credits_depleted_at !== null && 
+    credits.credits_depleted_at !== undefined;
+
   return (
     <div className="flex flex-col gap-1">
       <Button
@@ -55,9 +61,9 @@ export const CreditsDisplay = () => {
         <Coins className="h-4 w-4 text-primary" />
         <span className="font-medium">{credits.balance} {t("dashboard.credits")}</span>
       </Button>
-      {credits.last_daily_reset && (
+      {showCountdown && (
         <div className="text-xs px-2">
-          <CreditCountdown lastDailyReset={credits.last_daily_reset} />
+          <CreditCountdown creditsDepletedAt={credits.credits_depleted_at!} />
         </div>
       )}
     </div>

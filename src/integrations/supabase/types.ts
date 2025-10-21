@@ -485,6 +485,7 @@ export type Database = {
         Row: {
           balance: number
           created_at: string
+          credits_depleted_at: string | null
           id: string
           is_premium: boolean
           last_daily_reset: string
@@ -497,6 +498,7 @@ export type Database = {
         Insert: {
           balance?: number
           created_at?: string
+          credits_depleted_at?: string | null
           id?: string
           is_premium?: boolean
           last_daily_reset?: string
@@ -509,6 +511,7 @@ export type Database = {
         Update: {
           balance?: number
           created_at?: string
+          credits_depleted_at?: string | null
           id?: string
           is_premium?: boolean
           last_daily_reset?: string
