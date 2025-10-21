@@ -172,36 +172,36 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
             <div className="space-y-2 text-sm">
               {profile.age && (
                 <div className="flex gap-2">
-                  <span className="font-semibold min-w-[80px]">{t("chat.age")}</span>
+                  <span className="font-semibold min-w-[80px]">{t("common.age")}</span>
                   <span className="text-muted-foreground">{profile.age}</span>
                 </div>
               )}
               
               {profile.relationship_status && (
                 <div className="flex gap-2">
-                  <span className="font-semibold min-w-[80px]">{t("chat.relationshipStatus")}</span>
+                  <span className="font-semibold min-w-[80px]">{t("common.relationshipStatus")}</span>
                   <span className="text-muted-foreground">
-                    {profile.relationship_status === 'single' ? t("chat.single") : 
-                     profile.relationship_status === 'in_relationship' ? t("chat.inRelationship") :
-                     profile.relationship_status === 'married' ? t("chat.married") :
-                     profile.relationship_status === 'divorced' ? t("chat.divorced") :
-                     profile.relationship_status === 'widowed' ? t("chat.widowed") :
-                     profile.relationship_status === 'prefer_not_say' ? t("chat.preferNotSay") :
+                    {profile.relationship_status === 'single' ? t("common.single") : 
+                     profile.relationship_status === 'in_relationship' ? t("common.inRelationship") :
+                     profile.relationship_status === 'married' ? t("common.married") :
+                     profile.relationship_status === 'divorced' ? t("common.divorced") :
+                     profile.relationship_status === 'widowed' ? t("common.widowed") :
+                     profile.relationship_status === 'prefer_not_say' ? t("common.preferNotSay") :
                      profile.relationship_status}
                   </span>
                 </div>
               )}
               
               <div className="flex gap-2">
-                <span className="font-semibold min-w-[80px]">{t("chat.location")}</span>
+                <span className="font-semibold min-w-[80px]">{t("common.location")}</span>
                 <span className="text-muted-foreground">
-                  {showRealLocation ? (profile.city || t("chat.notSpecified")) : t("chat.nearbyLocation")}
+                  {showRealLocation ? (profile.city || t("common.notSpecified")) : t("common.nearbyLocation")}
                 </span>
               </div>
               
               {profile.gender && (
                 <div className="flex gap-2">
-                  <span className="font-semibold min-w-[80px]">{t("chat.gender")}</span>
+                  <span className="font-semibold min-w-[80px]">{t("common.gender")}</span>
                   <span className="text-muted-foreground">
                     {profile.gender === 'male' ? t("common.male") : 
                      profile.gender === 'female' ? t("common.female") : 
@@ -216,14 +216,14 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
               
               {profile.sexual_orientation && (
                 <div className="flex gap-2">
-                  <span className="font-semibold min-w-[80px]">{t("chat.orientation")}</span>
+                  <span className="font-semibold min-w-[80px]">{t("common.orientation")}</span>
                   <span className="text-muted-foreground">
-                    {profile.sexual_orientation === 'heterosexual' ? t("chat.heterosexual") :
-                     profile.sexual_orientation === 'homosexual' ? t("chat.homosexual") :
-                     profile.sexual_orientation === 'bisexual' ? t("chat.bisexual") :
-                     profile.sexual_orientation === 'pansexual' ? t("chat.pansexual") :
-                     profile.sexual_orientation === 'asexual' ? t("chat.asexual") :
-                     profile.sexual_orientation === 'other' ? t("chat.other") :
+                    {profile.sexual_orientation === 'heterosexual' ? t("common.heterosexual") :
+                     profile.sexual_orientation === 'homosexual' ? t("common.homosexual") :
+                     profile.sexual_orientation === 'bisexual' ? t("common.bisexual") :
+                     profile.sexual_orientation === 'pansexual' ? t("common.pansexual") :
+                     profile.sexual_orientation === 'asexual' ? t("common.asexual") :
+                     profile.sexual_orientation === 'other' ? t("common.other") :
                      (profile.translatedOrientation || profile.sexual_orientation)}
                   </span>
                 </div>
