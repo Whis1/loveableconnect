@@ -41,8 +41,8 @@ interface ChatUserProfileProps {
 }
 
 export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = false }: ChatUserProfileProps) => {
-  const { t } = useTranslation();
-  const { translateText, translateArray } = useTextTranslation();
+  const { t, i18n } = useTranslation();
+  const { translateText, translateArray, currentLanguage } = useTextTranslation();
   const { isAdmin, loading: adminLoading } = useAdminRole();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -141,7 +141,7 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId, translateText, translateArray]);
+  }, [userId, translateText, translateArray, currentLanguage]);
 
 
 
