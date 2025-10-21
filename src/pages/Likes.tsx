@@ -418,7 +418,7 @@ const Likes = () => {
                   {t("likes.unlockTitle")}
                 </h3>
                 <p className="text-base text-foreground/70 mb-6 max-w-md mx-auto">
-                  {likes.length} {likes.length === 1 ? t("likes.peopleInterested") : t("likes.peopleInterestedPlural")} {t("likes.interestedInYou")} {t("likes.unlockDescription")}
+                  {t("likes.unlockMessage", { count: likes.length })}
                 </p>
                 <Button 
                   size="lg"
