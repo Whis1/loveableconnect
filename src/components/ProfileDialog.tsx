@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useTextTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -51,6 +52,9 @@ export const ProfileDialog = ({
   const [hasActiveMatch, setHasActiveMatch] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [translatedBio, setTranslatedBio] = useState<string>('');
+  const [translatedInterests, setTranslatedInterests] = useState<string[]>([]);
+  const { translateText, translateArray } = useTextTranslation();
 
   useEffect(() => {
     if (!open || !profileId) return;
@@ -163,6 +167,20 @@ export const ProfileDialog = ({
       supabase.removeChannel(channel);
     };
   }, [profileId, currentUserId, open]);
+
+  useEffect(() => {
+    const loadTranslations = async () => {
+      if (profile?.bio) {
+        const translated = await translateText(profile.bio);
+        setTranslatedBio(translated);
+      }
+      if (profile?.interests) {
+        const translated = await translateArray(profile.interests);
+        setTranslatedInterests(translated);
+      }
+    };
+    loadTranslations();
+  }, [profile?.bio, profile?.interests]);
 
   const handleLike = async () => {
     if (isLiking) return;
@@ -376,7 +394,7 @@ export const ProfileDialog = ({
                   Bio
                 </h3>
                 <p className="text-muted-foreground leading-relaxed italic">
-                  "{profile.bio}"
+                  "{translatedBio || profile.bio}"
                 </p>
               </div>
             )}
@@ -432,7 +450,7 @@ export const ProfileDialog = ({
               <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
                 <h3 className="font-semibold text-lg mb-4">{t('common.interests')}</h3>
                 <div className="flex flex-wrap gap-2">
-                  {profile.interests.map((interest, index) => (
+                  {(translatedInterests.length > 0 ? translatedInterests : profile.interests).map((interest, index) => (
                     <span
                       key={index}
                       className="px-4 py-2 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors text-sm font-medium"

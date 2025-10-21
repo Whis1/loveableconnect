@@ -5,6 +5,7 @@ import { Heart, MessageCircle, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { useTextTranslation } from "@/hooks/useTranslation";
 import { ProfileDialog } from "./ProfileDialog";
 import { getGenericLocationPhrase } from "@/lib/utils";
 
@@ -38,6 +39,8 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
   const [hasLiked, setHasLiked] = useState(false);
   const [hasActiveMatch, setHasActiveMatch] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
+  const [translatedBio, setTranslatedBio] = useState<string>('');
+  const { translateText } = useTextTranslation();
 
   const getGenderLabel = (gender: string | null) => {
     if (!gender) return "";
@@ -181,6 +184,16 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
       supabase.removeChannel(likesChannel);
     };
   }, [currentUserId, profile.id]);
+
+  useEffect(() => {
+    const loadTranslation = async () => {
+      if (profile.bio) {
+        const translated = await translateText(profile.bio);
+        setTranslatedBio(translated);
+      }
+    };
+    loadTranslation();
+  }, [profile.bio]);
 
   const avatarUrl = profile.avatar_url
     ? supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl

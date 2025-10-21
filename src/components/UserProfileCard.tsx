@@ -7,6 +7,7 @@ import { Edit, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useTextTranslation } from "@/hooks/useTranslation";
 import profileBackground from "@/assets/profile-background.png";
 import { useAdminRole } from "@/hooks/useAdminRole";
 
@@ -36,6 +37,9 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [translatedBio, setTranslatedBio] = useState<string>('');
+  const [translatedInterests, setTranslatedInterests] = useState<string[]>([]);
+  const { translateText, translateArray } = useTextTranslation();
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -101,6 +105,20 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
       supabase.removeChannel(channel);
     };
   }, [userId]);
+
+  useEffect(() => {
+    const loadTranslations = async () => {
+      if (profile?.bio) {
+        const translated = await translateText(profile.bio);
+        setTranslatedBio(translated);
+      }
+      if (profile?.interests) {
+        const translated = await translateArray(profile.interests);
+        setTranslatedInterests(translated);
+      }
+    };
+    loadTranslations();
+  }, [profile?.bio, profile?.interests]);
 
   if (!profile) return null;
 
@@ -192,7 +210,7 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
           {profile.bio && (
             <div className="w-full">
               <p className="text-sm text-muted-foreground italic border-l-2 border-primary/20 pl-4">
-                "{profile.bio}"
+                "{translatedBio || profile.bio}"
               </p>
             </div>
           )}
@@ -201,7 +219,7 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
             <div className="w-full space-y-2">
               <p className="text-sm font-semibold">{t("userProfile.interests")}</p>
               <div className="flex flex-wrap gap-2 justify-center">
-                {profile.interests.map((interest, index) => (
+                {(translatedInterests.length > 0 ? translatedInterests : profile.interests).map((interest, index) => (
                   <Badge key={index} variant="outline" className="text-xs">
                     {interest}
                   </Badge>
