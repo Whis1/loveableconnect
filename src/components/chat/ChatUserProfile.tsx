@@ -10,6 +10,7 @@ import { getGenericLocationPhrase } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminRole } from "@/hooks/useAdminRole";
+import { useTextTranslation } from "@/hooks/useTranslation";
 
 interface Profile {
   id: string;
@@ -26,6 +27,8 @@ interface Profile {
   looking_for: string[] | null;
   interests: string[] | null;
   photos: string[] | null;
+  translatedBio?: string | null;
+  translatedInterests?: string[] | null;
 }
 
 interface ChatUserProfileProps {
@@ -36,6 +39,7 @@ interface ChatUserProfileProps {
 
 export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = false }: ChatUserProfileProps) => {
   const { t } = useTranslation();
+  const { translateText, translateArray } = useTextTranslation();
   const { isAdmin, loading: adminLoading } = useAdminRole();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,7 +57,16 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
           .single();
 
         if (error) throw error;
-        setProfile(data);
+        
+        // Translate bio and interests
+        const translatedBio = data.bio ? await translateText(data.bio) : null;
+        const translatedInterests = data.interests ? await translateArray(data.interests) : null;
+        
+        setProfile({
+          ...data,
+          translatedBio,
+          translatedInterests
+        });
       } catch (error) {
         console.error("Error fetching profile:", error);
       } finally {
@@ -74,9 +87,17 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
           table: 'profiles',
           filter: `id=eq.${userId}`
         },
-        (payload) => {
+        async (payload) => {
           console.log('Profile updated:', payload.new);
-          setProfile(payload.new as Profile);
+          const newProfile = payload.new as Profile;
+          const translatedBio = newProfile.bio ? await translateText(newProfile.bio) : null;
+          const translatedInterests = newProfile.interests ? await translateArray(newProfile.interests) : null;
+          
+          setProfile({
+            ...newProfile,
+            translatedBio,
+            translatedInterests
+          });
         }
       )
       .subscribe();
@@ -84,7 +105,7 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId]);
+  }, [userId, translateText, translateArray]);
 
 
 
@@ -126,21 +147,21 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
             <div className="space-y-2 text-sm">
               {profile.age && (
                 <div className="flex gap-2">
-                  <span className="font-semibold min-w-[80px]">Età:</span>
+                  <span className="font-semibold min-w-[80px]">{t("common.age")}</span>
                   <span className="text-muted-foreground">{profile.age}</span>
                 </div>
               )}
               
               {profile.relationship_status && (
                 <div className="flex gap-2">
-                  <span className="font-semibold min-w-[80px]">Relazione:</span>
+                  <span className="font-semibold min-w-[80px]">{t("common.relationshipStatus")}</span>
                   <span className="text-muted-foreground">
-                    {profile.relationship_status === 'single' ? 'Single' : 
-                     profile.relationship_status === 'in_relationship' ? 'In una relazione' :
-                     profile.relationship_status === 'married' ? 'Sposato/a' :
-                     profile.relationship_status === 'divorced' ? 'Divorziato/a' :
-                     profile.relationship_status === 'widowed' ? 'Vedovo/a' :
-                     profile.relationship_status === 'prefer_not_say' ? 'Preferisco non dirlo' :
+                    {profile.relationship_status === 'single' ? t("common.single") : 
+                     profile.relationship_status === 'in_relationship' ? t("common.inRelationship") :
+                     profile.relationship_status === 'married' ? t("common.married") :
+                     profile.relationship_status === 'divorced' ? t("common.divorced") :
+                     profile.relationship_status === 'widowed' ? t("common.widowed") :
+                     profile.relationship_status === 'prefer_not_say' ? t("common.preferNotSay") :
                      profile.relationship_status}
                   </span>
                 </div>
@@ -169,14 +190,14 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
               
               {profile.sexual_orientation && (
                 <div className="flex gap-2">
-                  <span className="font-semibold min-w-[80px]">Orientamento:</span>
+                  <span className="font-semibold min-w-[80px]">{t("common.orientation")}</span>
                   <span className="text-muted-foreground">
-                    {profile.sexual_orientation === 'heterosexual' ? 'Eterosessuale' :
-                     profile.sexual_orientation === 'homosexual' ? 'Omosessuale' :
-                     profile.sexual_orientation === 'bisexual' ? 'Bisessuale' :
-                     profile.sexual_orientation === 'pansexual' ? 'Pansessuale' :
-                     profile.sexual_orientation === 'asexual' ? 'Asessuale' :
-                     profile.sexual_orientation === 'other' ? 'Altro' :
+                    {profile.sexual_orientation === 'heterosexual' ? t("common.heterosexual") :
+                     profile.sexual_orientation === 'homosexual' ? t("common.homosexual") :
+                     profile.sexual_orientation === 'bisexual' ? t("common.bisexual") :
+                     profile.sexual_orientation === 'pansexual' ? t("common.pansexual") :
+                     profile.sexual_orientation === 'asexual' ? t("common.asexual") :
+                     profile.sexual_orientation === 'other' ? t("common.other") :
                      profile.sexual_orientation}
                   </span>
                 </div>
@@ -184,15 +205,15 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
               
               {(profile.relationship_type || (profile.looking_for && profile.looking_for.length > 0)) && (
                 <div className="flex gap-2">
-                  <span className="font-semibold min-w-[80px]">Cerca:</span>
+                  <span className="font-semibold min-w-[80px]">{t("common.lookingFor")}</span>
                   <span className="text-muted-foreground">
                     {profile.relationship_type
                       ? (
-                        profile.relationship_type === 'serious' ? 'Relazione seria' :
-                        profile.relationship_type === 'casual' ? 'Incontri casuali' :
-                        profile.relationship_type === 'friendship' ? 'Amicizia' :
-                        profile.relationship_type === 'not-sure' ? 'Non specifico' :
-                        profile.relationship_type === 'prefer-not-say' ? 'Preferisco non dirlo' :
+                        profile.relationship_type === 'serious' ? t("common.seriousRelationship") :
+                        profile.relationship_type === 'casual' ? t("common.casualDating") :
+                        profile.relationship_type === 'friendship' ? t("common.friendship") :
+                        profile.relationship_type === 'not-sure' ? t("common.notSure") :
+                        profile.relationship_type === 'prefer-not-say' ? t("common.preferNotSay") :
                         profile.relationship_type
                         )
                       : (profile.looking_for?.join(', ') || '')}
@@ -205,14 +226,16 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
 
         {profile.bio && (
           <div className="mt-4">
-            <p className="text-sm text-muted-foreground line-clamp-3">{profile.bio}</p>
+            <p className="text-sm text-muted-foreground line-clamp-3">
+              {profile.translatedBio || profile.bio}
+            </p>
           </div>
         )}
 
         {profile.interests && profile.interests.length > 0 && (
           <div className="mt-4">
             <div className="flex flex-wrap gap-2">
-              {profile.interests.slice(0, 5).map((interest, index) => (
+              {(profile.translatedInterests || profile.interests).slice(0, 5).map((interest, index) => (
                 <Badge key={index} variant="outline" className="text-xs">
                   {interest}
                 </Badge>
