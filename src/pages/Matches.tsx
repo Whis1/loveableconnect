@@ -273,11 +273,6 @@ const Matches = () => {
                             <p className="text-sm text-muted-foreground">
                               {t("matches.nearYourParts")}
                             </p>
-                            {match.otherUser.city && (
-                              <p className="text-xs text-muted-foreground">
-                                {match.otherUser.city}
-                              </p>
-                            )}
                             {(match.otherUser.translatedBio || match.otherUser.bio) && (
                               <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                                 {match.otherUser.translatedBio || match.otherUser.bio}
