@@ -23,8 +23,15 @@ interface LikeWithProfile {
     bio: string | null;
     age: number | null;
     interests: string[] | null;
+    gender: string | null;
+    sexual_orientation: string | null;
+    relationship_status: string | null;
+    relationship_type: string | null;
     translatedBio?: string | null;
     translatedInterests?: string[] | null;
+    translatedGender?: string | null;
+    translatedOrientation?: string | null;
+    translatedRelationshipType?: string | null;
   };
 }
 
@@ -106,7 +113,7 @@ const Likes = () => {
         (likesData || []).map(async (like) => {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("id, full_name, nickname, avatar_url, bio, age, interests")
+            .select("id, full_name, nickname, avatar_url, bio, age, interests, gender, sexual_orientation, relationship_status, relationship_type")
             .eq("id", like.from_user_id)
             .single();
 
@@ -114,6 +121,21 @@ const Likes = () => {
             // Translate bio and interests
             const translatedBio = profile.bio ? await translateText(profile.bio) : null;
             const translatedInterests = profile.interests ? await translateArray(profile.interests) : null;
+
+            // Normalize and translate gender, orientation, relationship_type
+            const genderCodes = ['male','female','non-binary','transexual','transgender','genderfluid'];
+            const orientationCodes = ['heterosexual','homosexual','bisexual','pansexual','asexual','other'];
+            const relationshipTypeCodes = ['serious','casual','friendship','not-sure','prefer-not-say'];
+
+            const translatedGender = profile.gender && !genderCodes.includes(profile.gender)
+              ? await translateText(profile.gender)
+              : null;
+            const translatedOrientation = profile.sexual_orientation && !orientationCodes.includes(profile.sexual_orientation)
+              ? await translateText(profile.sexual_orientation)
+              : null;
+            const translatedRelationshipType = profile.relationship_type && !relationshipTypeCodes.includes(profile.relationship_type)
+              ? await translateText(profile.relationship_type)
+              : null;
 
             return {
               id: like.id,
@@ -123,6 +145,9 @@ const Likes = () => {
                 ...profile,
                 translatedBio,
                 translatedInterests,
+                translatedGender,
+                translatedOrientation,
+                translatedRelationshipType,
               },
             };
           }
@@ -139,6 +164,10 @@ const Likes = () => {
               bio: null,
               age: null,
               interests: null,
+              gender: null,
+              sexual_orientation: null,
+              relationship_status: null,
+              relationship_type: null,
             },
           };
         })
@@ -423,9 +452,74 @@ const Likes = () => {
                           </h3>
                           {hasUnlocked && like.profile.age && (
                             <p className="text-sm text-muted-foreground font-medium">
-                              {like.profile.age} {t("likes.years")}
+                              {like.profile.age} {t("common.years")}
                             </p>
                           )}
+                          
+                          {/* Info aggiuntive: genere, orientamento, stato, cerca */}
+                          {hasUnlocked && (
+                            <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-xs">
+                              {like.profile.gender && (
+                                <div className="flex items-start gap-1">
+                                  <span className="font-medium text-foreground/70">{t("common.gender")}</span>
+                                  <span className="text-muted-foreground">
+                                    {like.profile.gender === 'male' ? t("common.male") : 
+                                     like.profile.gender === 'female' ? t("common.female") : 
+                                     like.profile.gender === 'non-binary' ? t("common.nonBinary") :
+                                     like.profile.gender === 'transexual' ? t("common.transexual") :
+                                     like.profile.gender === 'transgender' ? t("common.transgender") :
+                                     like.profile.gender === 'genderfluid' ? t("common.genderfluid") :
+                                     (like.profile.translatedGender || like.profile.gender)}
+                                  </span>
+                                </div>
+                              )}
+                              
+                              {like.profile.sexual_orientation && (
+                                <div className="flex items-start gap-1">
+                                  <span className="font-medium text-foreground/70">{t("common.orientation")}</span>
+                                  <span className="text-muted-foreground">
+                                    {like.profile.sexual_orientation === 'heterosexual' ? t("common.heterosexual") :
+                                     like.profile.sexual_orientation === 'homosexual' ? t("common.homosexual") :
+                                     like.profile.sexual_orientation === 'bisexual' ? t("common.bisexual") :
+                                     like.profile.sexual_orientation === 'pansexual' ? t("common.pansexual") :
+                                     like.profile.sexual_orientation === 'asexual' ? t("common.asexual") :
+                                     like.profile.sexual_orientation === 'other' ? t("common.other") :
+                                     (like.profile.translatedOrientation || like.profile.sexual_orientation)}
+                                  </span>
+                                </div>
+                              )}
+                              
+                              {like.profile.relationship_status && (
+                                <div className="flex items-start gap-1">
+                                  <span className="font-medium text-foreground/70">{t("common.relationshipStatus")}</span>
+                                  <span className="text-muted-foreground">
+                                    {like.profile.relationship_status === 'single' ? t("common.single") : 
+                                     like.profile.relationship_status === 'in_relationship' ? t("common.inRelationship") :
+                                     like.profile.relationship_status === 'married' ? t("common.married") :
+                                     like.profile.relationship_status === 'divorced' ? t("common.divorced") :
+                                     like.profile.relationship_status === 'widowed' ? t("common.widowed") :
+                                     like.profile.relationship_status === 'prefer_not_say' ? t("common.preferNotSay") :
+                                     like.profile.relationship_status}
+                                  </span>
+                                </div>
+                              )}
+                              
+                              {like.profile.relationship_type && (
+                                <div className="flex items-start gap-1">
+                                  <span className="font-medium text-foreground/70">{t("common.lookingFor")}</span>
+                                  <span className="text-muted-foreground">
+                                    {like.profile.relationship_type === 'serious' ? t("common.seriousRelationship") :
+                                     like.profile.relationship_type === 'casual' ? t("common.casualDating") :
+                                     like.profile.relationship_type === 'friendship' ? t("common.friendship") :
+                                     like.profile.relationship_type === 'not-sure' ? t("common.notSure") :
+                                     like.profile.relationship_type === 'prefer-not-say' ? t("common.preferNotSay") :
+                                     (like.profile.translatedRelationshipType || like.profile.relationship_type)}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          
                           {hasUnlocked && like.profile.translatedBio && (
                             <p className="text-sm text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
                               {like.profile.translatedBio}
