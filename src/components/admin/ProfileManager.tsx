@@ -68,6 +68,46 @@ export const ProfileManager = () => {
   const [selectedChatProfile, setSelectedChatProfile] = useState<{ profileId: string; profileNickname: string; userId: string; userNickname: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const getGenderLabel = (gender: string | null) => {
+    if (!gender) return "";
+    const key = gender.toLowerCase();
+    const genderMap: Record<string, string> = {
+      male: t('common.male'),
+      uomo: t('common.male'),
+      female: t('common.female'),
+      donna: t('common.female'),
+      transgender: t('common.transgender'),
+      transexual: t('common.transexual'),
+      transessuale: t('common.transexual'),
+      genderfluid: t('common.genderfluid'),
+      "non-binary": t('common.nonBinary'),
+      "non binario": t('common.nonBinary'),
+      other: t('common.other'),
+      altro: t('common.other'),
+    };
+    return genderMap[key] || gender;
+  };
+
+  const getOrientationLabel = (orientation: string | null) => {
+    if (!orientation) return "";
+    const key = orientation.toLowerCase();
+    const orientationMap: Record<string, string> = {
+      heterosexual: t('common.heterosexual'),
+      eterosessuale: t('common.heterosexual'),
+      homosexual: t('common.homosexual'),
+      omosessuale: t('common.homosexual'),
+      bisexual: t('common.bisexual'),
+      bisessuale: t('common.bisexual'),
+      pansexual: t('common.pansexual'),
+      pansessuale: t('common.pansexual'),
+      asexual: t('common.asexual'),
+      asessuale: t('common.asexual'),
+      other: t('common.other'),
+      altro: t('common.other'),
+    };
+    return orientationMap[key] || orientation;
+  };
+
   useEffect(() => {
     fetchProfiles();
     fetchUsers();
@@ -610,7 +650,9 @@ export const ProfileManager = () => {
                         }}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Seleziona genere" />
+                          <SelectValue placeholder="Seleziona genere">
+                            {profile.gender ? getGenderLabel(profile.gender) : "Seleziona genere"}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent className="bg-background z-50">
                           <SelectItem value="male">Uomo</SelectItem>
@@ -635,7 +677,9 @@ export const ProfileManager = () => {
                         }}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Seleziona orientamento" />
+                          <SelectValue placeholder="Seleziona orientamento">
+                            {profile.sexual_orientation ? getOrientationLabel(profile.sexual_orientation) : "Seleziona orientamento"}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent className="bg-background z-50">
                           <SelectItem value="heterosexual">Eterosessuale</SelectItem>
