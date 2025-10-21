@@ -41,31 +41,43 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
 
   const getGenderLabel = (gender: string | null) => {
     if (!gender) return "";
+    const key = gender.toLowerCase();
     const genderMap: Record<string, string> = {
       male: t('common.male'),
+      uomo: t('common.male'),
       female: t('common.female'),
+      donna: t('common.female'),
       transgender: t('common.transgender'),
-      transexual: t('common.transexual'),
       trans: t('common.transgender'),
+      transexual: t('common.transexual'),
+      transessuale: t('common.transexual'),
       genderfluid: t('common.genderfluid'),
       "non-binary": t('common.nonBinary'),
-      uomo: t('common.male'),
-      donna: t('common.female'),
+      "non binario": t('common.nonBinary'),
+      other: t('common.other'),
+      altro: t('common.other'),
     };
-    return genderMap[gender.toLowerCase()] || gender;
+    return genderMap[key] || gender;
   };
 
   const getOrientationLabel = (orientation: string | null) => {
     if (!orientation) return "";
+    const key = orientation.toLowerCase();
     const orientationMap: Record<string, string> = {
       heterosexual: t('common.heterosexual'),
+      eterosessuale: t('common.heterosexual'),
       homosexual: t('common.homosexual'),
+      omosessuale: t('common.homosexual'),
       bisexual: t('common.bisexual'),
+      bisessuale: t('common.bisexual'),
       pansexual: t('common.pansexual'),
+      pansessuale: t('common.pansexual'),
       asexual: t('common.asexual'),
+      asessuale: t('common.asexual'),
       other: t('common.other'),
+      altro: t('common.other'),
     };
-    return orientationMap[orientation.toLowerCase()] || orientation;
+    return orientationMap[key] || orientation;
   };
 
   const getRelationshipStatusLabel = (status: string | null) => {
@@ -88,15 +100,9 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
 
   const getLookingForLabel = (lookingFor: string[] | null) => {
     if (!lookingFor || lookingFor.length === 0) return "";
-    const labels: Record<string, string> = {
-      serious: t('userProfile.serious'),
-      casual: t('userProfile.casual'),
-      friendship: t('userProfile.friendship'),
-      'relazione seria': t('userProfile.serious'),
-      'relazione occasionale': t('userProfile.casual'),
-      'amicizia': t('userProfile.friendship'),
-    };
-    return lookingFor.map(item => labels[item.toLowerCase()] || item).join(", ");
+    return lookingFor
+      .map((item) => getGenderLabel(item))
+      .join(", ");
   };
 
   // Check if user already liked this profile or has an active match
@@ -293,7 +299,7 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
               </h3>
               {profile.age && (
                 <span className="text-base text-muted-foreground font-medium">
-                  {profile.age}
+                  {profile.age} {t('userProfile.years')}
                 </span>
               )}
             </div>

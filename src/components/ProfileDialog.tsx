@@ -243,15 +243,22 @@ export const ProfileDialog = ({
   };
 
   const getGenderLabel = (gender: string) => {
+    const key = gender.toLowerCase();
     const labels: Record<string, string> = {
       male: t('common.male'),
+      uomo: t('common.male'),
       female: t('common.female'),
+      donna: t('common.female'),
       transgender: t('common.transgender'),
       transexual: t('common.transexual'),
+      transessuale: t('common.transexual'),
       genderfluid: t('common.genderfluid'),
       "non-binary": t('common.nonBinary'),
+      "non binario": t('common.nonBinary'),
+      other: t('common.other'),
+      altro: t('common.other'),
     };
-    return labels[gender] || gender;
+    return labels[key] || gender;
   };
 
   const getOrientationLabel = (orientation: string) => {
@@ -402,17 +409,7 @@ export const ProfileDialog = ({
                 <div className="space-y-2">
                   {profile.looking_for && profile.looking_for.length > 0 && (
                     <div className="text-base font-medium text-primary">
-                      {profile.looking_for.map(item => {
-                        const labels: Record<string, string> = {
-                          serious: t('userProfile.serious'),
-                          casual: t('userProfile.casual'),
-                          friendship: t('userProfile.friendship'),
-                          'relazione seria': t('userProfile.serious'),
-                          'relazione occasionale': t('userProfile.casual'),
-                          'amicizia': t('userProfile.friendship'),
-                        };
-                        return labels[item.toLowerCase()] || item;
-                      }).join(", ")}
+                      {profile.looking_for.map((item) => getGenderLabel(item)).join(", ")}
                     </div>
                   )}
                   {profile.relationship_type && (
