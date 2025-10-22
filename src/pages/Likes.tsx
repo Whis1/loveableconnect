@@ -466,7 +466,7 @@ const Likes = () => {
                         <div className="relative">
                           <Avatar className="h-20 w-20 ring-2 ring-primary/20 shadow-lg">
                             <AvatarImage 
-                              src={hasUnlocked && like.profile.avatar_url ? supabase.storage.from('profile-images').getPublicUrl(like.profile.avatar_url).data.publicUrl : undefined} 
+                              src={hasUnlocked ? (like.profile.avatar_url || undefined) : undefined} 
                             />
                             <AvatarFallback className="text-xl bg-gradient-to-br from-pink-500/20 to-purple-500/20">
                               {hasUnlocked ? (like.profile.nickname?.charAt(0) || like.profile.full_name.charAt(0)) : '?'}
