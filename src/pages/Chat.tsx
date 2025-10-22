@@ -11,6 +11,7 @@ import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { GifPicker } from "@/components/chat/GifPicker";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ChatUserProfile } from "@/components/chat/ChatUserProfile";
+import { InsufficientCreditsBanner } from "@/components/chat/InsufficientCreditsBanner";
 import { useCredits } from "@/hooks/useCredits";
 import { useTranslation } from "react-i18next";
 import { useTextTranslation } from "@/hooks/useTranslation";
@@ -53,6 +54,7 @@ const Chat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { deductCredits } = useCredits();
+  const [showCreditsBanner, setShowCreditsBanner] = useState(false);
 
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -250,11 +252,7 @@ const Chat = () => {
     // Check and deduct credits before sending
     const hasCredits = await deductCredits();
     if (!hasCredits) {
-      toast({
-        title: t("chat.creditsInsufficient"),
-        description: t("chat.creditsInsuffficientDescription"),
-        variant: "destructive",
-      });
+      setShowCreditsBanner(true);
       return;
     }
 
@@ -364,6 +362,10 @@ const Chat = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900">
+      <InsufficientCreditsBanner 
+        isVisible={showCreditsBanner} 
+        onClose={() => setShowCreditsBanner(false)} 
+      />
       <div className="container mx-auto max-w-2xl h-screen flex flex-col">
         <Card className="flex-1 flex flex-col overflow-hidden shadow-xl">
           {/* Header with back button */}

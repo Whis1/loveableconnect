@@ -509,7 +509,8 @@
     "loadingProfiles": "Caricamento profili...",
     "noMessages": "Nessun messaggio",
     "manageLikes": "Gestisci Like per",
-    "years": "anni"
+    "years": "anni",
+    "autoCloseIn10Seconds": "Si chiuderà automaticamente in 10 secondi"
   },
   "credits": {
     "back": "Indietro",
@@ -546,7 +547,8 @@
     "errorSubscribing": "Impossibile avviare l'abbonamento",
     "credits50": "50 Crediti",
     "credits75": "75 Crediti",
-    "credits100": "100 Crediti"
+    "credits100": "100 Crediti",
+    "rechargeOrSubscribe": "Ricarica o Abbonati"
   },
   "support": {
     "title": "Supporto",
