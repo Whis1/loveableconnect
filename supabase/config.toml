@@ -1,5 +1,8 @@
 project_id = "tcmhvrlsaggyuukdscue"
 
+[functions.admin-add-credits]
+verify_jwt = false
+
 [functions.admin-delete-image]
 verify_jwt = false
 

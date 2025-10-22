@@ -27,26 +27,22 @@ export const UserCreditsManager = () => {
 
     setLoading(true);
     try {
-      // Get current balance
-      const { data: currentData, error: fetchError } = await supabase
-        .from("user_credits")
-        .select("balance")
-        .eq("user_id", userId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      // Update with new balance
-      const { error } = await supabase
-        .from("user_credits")
-        .update({ balance: currentData.balance + parseInt(creditsAmount) })
-        .eq("user_id", userId);
+      const { data, error } = await supabase.functions.invoke('admin-add-credits', {
+        body: { 
+          userId, 
+          creditsAmount: parseInt(creditsAmount) 
+        }
+      });
 
       if (error) throw error;
 
+      if (!data.success) {
+        throw new Error(data.error || 'Errore sconosciuto');
+      }
+
       toast({
         title: "Crediti aggiunti",
-        description: `${creditsAmount} crediti aggiunti all'utente`,
+        description: `${creditsAmount} crediti aggiunti all'utente (nuovo saldo: ${data.newBalance})`,
       });
 
       setUserId("");
@@ -55,7 +51,7 @@ export const UserCreditsManager = () => {
       console.error("Error adding credits:", error);
       toast({
         title: "Errore",
-        description: error.message,
+        description: error.message || "Impossibile aggiungere crediti",
         variant: "destructive",
       });
     } finally {
