@@ -72,6 +72,12 @@ const normalizeValue = (value: string | null | undefined): string | null => {
   return genderMap[normalized] || orientationMap[normalized] || relationshipMap[normalized] || null;
 };
 
+const toPublicAvatarUrl = (path: string | null) => {
+  if (!path) return null;
+  if (/^https?:\/\//.test(path)) return path;
+  return supabase.storage.from('profile-images').getPublicUrl(path).data.publicUrl;
+};
+
 const Likes = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -180,6 +186,7 @@ const Likes = () => {
               created_at: like.created_at,
               profile: {
                 ...profile,
+                avatar_url: toPublicAvatarUrl(profile.avatar_url),
                 translatedBio,
                 translatedInterests,
                 translatedGender,
@@ -466,7 +473,7 @@ const Likes = () => {
                         <div className="relative">
                           <Avatar className="h-20 w-20 ring-2 ring-primary/20 shadow-lg">
                             <AvatarImage 
-                              src={hasUnlocked ? (like.profile.avatar_url || undefined) : undefined} 
+                              src={like.profile.avatar_url || undefined} 
                             />
                             <AvatarFallback className="text-xl bg-gradient-to-br from-pink-500/20 to-purple-500/20">
                               {hasUnlocked ? (like.profile.nickname?.charAt(0) || like.profile.full_name.charAt(0)) : '?'}

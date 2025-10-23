@@ -24,6 +24,12 @@ interface MatchWithProfile {
   };
 }
 
+const toPublicAvatarUrl = (path: string | null) => {
+  if (!path) return null;
+  if (/^https?:\/\//.test(path)) return path;
+  return supabase.storage.from('profile-images').getPublicUrl(path).data.publicUrl;
+};
+
 const Matches = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -101,6 +107,7 @@ const Matches = () => {
             created_at: match.created_at,
             otherUser: profile ? {
               ...profile,
+              avatar_url: toPublicAvatarUrl(profile.avatar_url),
               translatedBio,
             } : {
               id: otherUserId,
@@ -154,6 +161,7 @@ const Matches = () => {
               created_at: newMatch.created_at,
               otherUser: profile ? {
                 ...profile,
+                avatar_url: toPublicAvatarUrl(profile.avatar_url),
                 translatedBio,
               } : {
                 id: otherUserId,
