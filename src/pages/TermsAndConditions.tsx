@@ -47,7 +47,7 @@ const TermsAndConditions = () => {
                       <br />
                       Tramite Posta:{" "}
                       <a href="mailto:loveableconnect@hotmail.com" className="text-primary hover:underline">
-                        loveableconnect@hotmail.it
+                        loveableconnect@hotmail.com
                       </a>
                     </p>
                   </div>
