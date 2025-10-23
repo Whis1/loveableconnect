@@ -1,9 +1,11 @@
 import { useCredits } from "@/hooks/useCredits";
+import { useDailyLikes } from "@/hooks/useDailyLikes";
 import { Button } from "@/components/ui/button";
 import { Coins, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { CreditCountdown } from "@/components/CreditCountdown";
+import { DailyLikesDisplay } from "@/components/DailyLikesDisplay";
 
 interface UserCredits {
   balance: number;
@@ -15,6 +17,7 @@ interface UserCredits {
 
 export const CreditsDisplay = () => {
   const { credits, loading } = useCredits();
+  const dailyLikes = useDailyLikes();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -52,20 +55,31 @@ export const CreditsDisplay = () => {
     credits.credits_depleted_at !== undefined;
 
   return (
-    <div className="flex flex-col gap-1">
-      <Button
-        variant="outline"
-        onClick={() => navigate("/credits")}
-        className="flex items-center gap-2"
-      >
-        <Coins className="h-4 w-4 text-primary" />
-        <span className="font-medium">{credits.balance} {t("dashboard.credits")}</span>
-      </Button>
-      {showCountdown && (
-        <div className="text-xs px-2">
-          <CreditCountdown creditsDepletedAt={credits.credits_depleted_at!} />
-        </div>
-      )}
+    <div className="flex flex-col lg:flex-row gap-2">
+      {/* Daily Likes Display */}
+      <DailyLikesDisplay
+        likesRemaining={dailyLikes.likesRemaining}
+        isPremium={dailyLikes.isPremium}
+        resetAt={dailyLikes.resetAt}
+        loading={dailyLikes.loading}
+      />
+      
+      {/* Credits Display */}
+      <div className="flex flex-col gap-1">
+        <Button
+          variant="outline"
+          onClick={() => navigate("/credits")}
+          className="flex items-center gap-2"
+        >
+          <Coins className="h-4 w-4 text-primary" />
+          <span className="font-medium">{credits.balance} {t("dashboard.credits")}</span>
+        </Button>
+        {showCountdown && (
+          <div className="text-xs px-2">
+            <CreditCountdown creditsDepletedAt={credits.credits_depleted_at!} />
+          </div>
+        )}
+      </div>
     </div>
   );
 };

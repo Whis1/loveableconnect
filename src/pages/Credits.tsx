@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Coins, Crown, Zap, Shield, Eye } from "lucide-react";
+import { ArrowLeft, Coins, Crown, Zap, Shield, Eye, Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { CreditCountdown } from "@/components/CreditCountdown";
@@ -193,6 +193,10 @@ const Credits = () => {
                 <li className="flex items-center gap-2">
                   <Zap className="h-5 w-5 text-amber-500" />
                   <span>{t("credits.unlimitedMessaging")}</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Heart className="h-5 w-5 text-amber-500" />
+                  <span>Like illimitati giornalieri</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Eye className="h-5 w-5 text-amber-500" />

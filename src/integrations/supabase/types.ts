@@ -486,6 +486,8 @@ export type Database = {
           balance: number
           created_at: string
           credits_depleted_at: string | null
+          daily_likes_remaining: number
+          daily_likes_reset_at: string | null
           id: string
           is_premium: boolean
           last_daily_reset: string
@@ -499,6 +501,8 @@ export type Database = {
           balance?: number
           created_at?: string
           credits_depleted_at?: string | null
+          daily_likes_remaining?: number
+          daily_likes_reset_at?: string | null
           id?: string
           is_premium?: boolean
           last_daily_reset?: string
@@ -512,6 +516,8 @@ export type Database = {
           balance?: number
           created_at?: string
           credits_depleted_at?: string | null
+          daily_likes_remaining?: number
+          daily_likes_reset_at?: string | null
           id?: string
           is_premium?: boolean
           last_daily_reset?: string
@@ -553,6 +559,14 @@ export type Database = {
         Args: { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
       }
+      check_and_reset_daily_likes: {
+        Args: { _user_id: string }
+        Returns: {
+          is_premium: boolean
+          likes_remaining: number
+          reset_at: string
+        }[]
+      }
       check_and_reset_user_credits: {
         Args: { _user_id: string }
         Returns: {
@@ -561,10 +575,16 @@ export type Database = {
           last_daily_reset: string
         }[]
       }
-      deduct_message_credits: {
-        Args: { _user_id: string }
-        Returns: boolean
+      consume_daily_like: {
+        Args: { _use_credits?: boolean; _user_id: string }
+        Returns: {
+          credits_used: boolean
+          likes_remaining: number
+          new_balance: number
+          success: boolean
+        }[]
       }
+      deduct_message_credits: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -572,10 +592,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      reset_daily_credits: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      reset_daily_credits: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "user" | "creator" | "admin"

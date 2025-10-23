@@ -8,6 +8,8 @@ interface UserCredits {
   last_daily_reset: string;
   premium_expires_at?: string | null;
   credits_depleted_at?: string | null;
+  daily_likes_remaining?: number;
+  daily_likes_reset_at?: string | null;
 }
 
 export const useCredits = () => {
@@ -26,7 +28,7 @@ export const useCredits = () => {
       // Check if user credits exist
       const { data: existingCredits, error: fetchError } = await supabase
         .from("user_credits")
-        .select("balance, is_premium, last_daily_reset, premium_expires_at, credits_depleted_at")
+        .select("balance, is_premium, last_daily_reset, premium_expires_at, credits_depleted_at, daily_likes_remaining, daily_likes_reset_at")
         .eq("user_id", session.user.id)
         .maybeSingle();
 
@@ -49,6 +51,8 @@ export const useCredits = () => {
           last_daily_reset: new Date().toISOString(),
           premium_expires_at: null,
           credits_depleted_at: null,
+          daily_likes_remaining: 13,
+          daily_likes_reset_at: null,
         });
       } else {
         // Check and reset credits if 24 hours have passed

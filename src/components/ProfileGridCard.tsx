@@ -8,6 +8,9 @@ import { useTranslation } from "react-i18next";
 import { useTextTranslation } from "@/hooks/useTranslation";
 import { ProfileDialog } from "./ProfileDialog";
 import { getGenericLocationPhrase } from "@/lib/utils";
+import { useDailyLikes } from "@/hooks/useDailyLikes";
+import { useCredits } from "@/hooks/useCredits";
+import { DailyLikesExhaustedBanner } from "./DailyLikesExhaustedBanner";
 
 interface Profile {
   id: string;
@@ -41,8 +44,11 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
   const [hasLiked, setHasLiked] = useState(false);
   const [hasActiveMatch, setHasActiveMatch] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
+  const [showLikesExhausted, setShowLikesExhausted] = useState(false);
   const [translatedBio, setTranslatedBio] = useState<string>('');
   const { translateText } = useTextTranslation();
+  const { consumeLike, likesRemaining, resetAt } = useDailyLikes();
+  const { credits } = useCredits();
 
   const getGenderLabel = (gender: string | null) => {
     if (!gender) return "";
@@ -204,7 +210,7 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
     ? supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl
     : null;
 
-  const handleLike = async (e: React.MouseEvent) => {
+  const handleLike = async (e: React.MouseEvent, useCredits: boolean = false) => {
     e.stopPropagation();
     
     if (isLiking || hasLiked) return; // Prevent double-click and removing likes
@@ -212,6 +218,26 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
     setIsLiking(true);
     
     try {
+      // Check if can consume a daily like
+      const { success, creditsUsed } = await consumeLike(useCredits);
+      
+      if (!success && !useCredits) {
+        // Show banner to use credits or wait
+        setShowLikesExhausted(true);
+        setIsLiking(false);
+        return;
+      }
+      
+      if (!success && useCredits) {
+        toast({
+          title: t("common.error"),
+          description: "Crediti insufficienti",
+          variant: "destructive",
+        });
+        setIsLiking(false);
+        return;
+      }
+
       // Add the like using edge function
       const { data: likeData, error: likeError } = await supabase.functions.invoke(
         'admin-manage-like',
@@ -251,6 +277,11 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
     } finally {
       setIsLiking(false);
     }
+  };
+
+  const handleUseCreditsForLike = async () => {
+    setShowLikesExhausted(false);
+    await handleLike({ stopPropagation: () => {} } as React.MouseEvent, true);
   };
 
   const handleChat = async (e: React.MouseEvent) => {
@@ -389,6 +420,14 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
         currentUserId={currentUserId}
         open={showProfileDialog}
         onOpenChange={setShowProfileDialog}
+      />
+      
+      <DailyLikesExhaustedBanner
+        open={showLikesExhausted}
+        onOpenChange={setShowLikesExhausted}
+        onUseCredits={handleUseCreditsForLike}
+        resetAt={resetAt}
+        hasEnoughCredits={(credits?.balance ?? 0) >= 2}
       />
     </>
   );
