@@ -26,7 +26,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: `Support Request <onboarding@resend.dev>`,
       replyTo: userEmail,
-      to: ["loovableconnect@hotmail.com"],
+      to: ["loveableconnect@hotmail.com"],
       subject: `Richiesta Supporto da ${userEmail}`,
       html: `
         <h2>Nuova Richiesta di Supporto</h2>
