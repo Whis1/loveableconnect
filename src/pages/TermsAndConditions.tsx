@@ -35,6 +35,8 @@ const TermsAndConditions = () => {
                 <div className="space-y-4">
                   <h2 className="text-2xl font-bold">INFORMATIVA PRIVACY CONTATTI</h2>
 
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">COME CONTATTARCI?</h3>
                     <p>
                       Il Titolare tiene nella massima considerazione il diritto alla privacy e alla protezione dei dati
                       personali dei propri Utenti. Per ogni informazione in relazione alla presente informativa privacy,
@@ -53,7 +55,8 @@ const TermsAndConditions = () => {
                   <div className="space-y-3">
                     <h3 className="text-lg font-semibold">COSA FACCIAMO? – FINALITÀ DEL TRATTAMENTO</h3>
                     <p>
-                      L'Utente può contattare il Titolare via e-mail. In relazione a tali
+                      L'Utente può contattare il Titolare attraverso l'apposito form, tramite la navigazione del Sito o
+                      dell'App, via e-mail o eventualmente con altra modalità indicata dal Titolare. In relazione a tali
                       attività, il Titolare raccoglie dati personali relativi agli Utenti.
                     </p>
                     <p>
@@ -166,15 +169,15 @@ const TermsAndConditions = () => {
                     <p>
                       <strong>Direttamente online:</strong>
                       <br />
-                      Contattando il supporto clienti tramite il sito nell'apposita chat supporto clienti
+                      Contattando il servizio clienti tramite l'apposito form Contatti
                     </p>
                     <p>
                       <strong>Tramite Posta:</strong>
                       <br />
                       Gli Utenti possono anche contattare il Responsabile della protezione dei dati (RPD o DPO) del
                       Titolare, i cui dati di contatto sono di seguito riportati: e-mail{" "}
-                      <a href="mailto:loveableconnect@hotmail.com" className="text-primary hover:underline">
-                        loveableconnect@hotmail.com
+                      <a href="mailto:loveableconnect@hotmail.it" className="text-primary hover:underline">
+                        loveableconnect@hotmail.it
                       </a>
                     </p>
                     <p>
