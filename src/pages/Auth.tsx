@@ -89,6 +89,11 @@ const Auth = () => {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
             nickname,
+            age: ageNum,
+            city,
+            gender,
+            sexual_orientation: sexualOrientation,
+            relationship_status: relationshipStatus,
           }
         },
       });
