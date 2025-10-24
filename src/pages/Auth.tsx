@@ -96,23 +96,7 @@ const Auth = () => {
       if (error) throw error;
 
       if (data.user) {
-        // Create profile
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert([{
-            id: data.user.id,
-            full_name: nickname,
-            nickname,
-            age: ageNum,
-            city,
-            gender,
-            sexual_orientation: sexualOrientation,
-            relationship_status: relationshipStatus,
-          }] as any);
-
-        if (profileError) throw profileError;
-
-        // Show email confirmation message
+        // Profilo e crediti vengono creati automaticamente dal trigger lato backend
         setEmailSent(true);
         toast({
           title: "📧 Email di Conferma Inviata",
