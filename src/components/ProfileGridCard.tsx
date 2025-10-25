@@ -51,7 +51,7 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
   const [translatedBio, setTranslatedBio] = useState<string>('');
   const { translateText } = useTextTranslation();
   const { consumeLike, likesRemaining, resetAt } = useDailyLikes();
-  const { credits, deductCredits } = useCredits();
+  const { credits } = useCredits();
 
   const getGenderLabel = (gender: string | null) => {
     if (!gender) return "";
@@ -312,6 +312,12 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
     setIsCreatingChat(true);
     
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        setIsCreatingChat(false);
+        return;
+      }
+
       // Verifica crediti sufficienti
       if (!credits || credits.balance < 6) {
         toast({
@@ -324,9 +330,13 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
         return;
       }
 
-      // Deduce 6 crediti
-      const success = await deductCredits(6);
-      if (!success) {
+      // Deduce 6 crediti usando la RPC function
+      const { data: deductSuccess, error: deductError } = await supabase.rpc(
+        "deduct_credits",
+        { _user_id: session.user.id, _amount: 6 }
+      );
+
+      if (deductError || !deductSuccess) {
         toast({
           title: t("common.error"),
           description: "Crediti insufficienti per iniziare una chat",
