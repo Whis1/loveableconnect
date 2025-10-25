@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useBanCheck } from "@/hooks/useBanCheck";
 import { ArrowLeft, MapPin, Filter, RotateCcw, Search as SearchIcon } from "lucide-react";
-import { ProfileGridCard } from "@/components/ProfileGridCard";
+import { ProfileGridCardMemo } from "@/components/ProfileGridCardMemo";
 import { MatchBanner } from "@/components/MatchBanner";
 import { useTextTranslation } from "@/hooks/useTranslation";
 
@@ -140,14 +140,12 @@ const Explore = () => {
             .single();
           
           if (!error && updatedProfile) {
-            // Translate the updated profile before setting it
-            const [translatedProfile] = await translateProfiles([updatedProfile as Profile]);
-            
+            // Set updated profile without translation for performance
             setProfiles(prev => prev.map(p => 
-              p.id === translatedProfile.id ? translatedProfile : p
+              p.id === updatedProfile.id ? updatedProfile as Profile : p
             ));
             setDisplayedProfiles(prev => prev.map(p => 
-              p.id === translatedProfile.id ? translatedProfile : p
+              p.id === updatedProfile.id ? updatedProfile as Profile : p
             ));
           }
         }
@@ -177,11 +175,12 @@ const Explore = () => {
     setLoading(true);
     
     try {
-      // Get user's matches to exclude them
+      // Get user's matches to exclude them (with limit for better performance)
       const { data: matchesData } = await supabase
         .from("matches")
         .select("user1_id, user2_id")
-        .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
+        .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+        .limit(100); // Limit matches query
 
       const matchedUserIds = new Set(
         (matchesData || []).map(match => 
@@ -189,28 +188,22 @@ const Explore = () => {
         )
       );
 
+      // Load only first batch of profiles for better initial load
       const { data: profilesData, error } = await supabase
         .from("profiles")
         .select("*")
-        .neq("id", userId);
+        .neq("id", userId)
+        .order("last_active", { ascending: false })
+        .limit(50); // Load only 50 profiles initially
 
       if (error) throw error;
 
       // Filter out profiles with existing matches
       let allProfiles: Profile[] = (profilesData || [])
         .filter(profile => !matchedUserIds.has(profile.id)) as Profile[];
-      
-      // Sort by last active
-      allProfiles.sort((a, b) => {
-        const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
-        const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
-        return dateB - dateA;
-      });
 
-      // Pre-translate profiles for better UX
-      const translatedProfiles = await translateProfiles(allProfiles);
-
-      setProfiles(translatedProfiles);
+      // Skip translation for better performance
+      setProfiles(allProfiles);
       setDisplayedProfiles([]);
       setPage(1);
       setHasMore(true);
@@ -316,10 +309,8 @@ const Explore = () => {
         return dateB - dateA;
       });
 
-      // Pre-translate profiles for better UX
-      const translatedProfiles = await translateProfiles(filteredProfiles);
-
-      setProfiles(translatedProfiles);
+      // Skip translation for better performance
+      setProfiles(filteredProfiles);
       setDisplayedProfiles([]);
       setPage(1);
       setHasMore(true);
@@ -504,7 +495,7 @@ const Explore = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
               {displayedProfiles.map((profile) => (
-                <ProfileGridCard
+                <ProfileGridCardMemo
                   key={profile.id}
                   profile={profile}
                   currentUserId={currentUser!}
