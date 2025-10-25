@@ -90,9 +90,20 @@ export const useTextTranslation = () => {
       return translationCache.get(cacheKey)!;
     }
 
-    // Skip translation - just return original text to avoid API overload
-    // Translation feature disabled to improve performance
-    return text;
+    try {
+      const { data, error } = await supabase.functions.invoke('translate-text', {
+        body: { text, targetLanguage: currentLanguage }
+      });
+
+      if (error) throw error;
+
+      const translatedText = data.translatedText || text;
+      translationCache.set(cacheKey, translatedText);
+      return translatedText;
+    } catch (error) {
+      console.error('Translation error:', error);
+      return text; // Return original text on error
+    }
   };
 
   const translateArray = async (items: string[] | null | undefined): Promise<string[]> => {
