@@ -558,10 +558,25 @@ const ProfileEdit = () => {
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={saving}>
-                <Save className="h-4 w-4 mr-2" />
-                {saving ? t('profile.saving') : t('profile.save')}
-              </Button>
+              <div className="flex gap-3">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => navigate("/")}
+                  disabled={saving}
+                >
+                  {t('common.cancel')}
+                </Button>
+                <Button 
+                  type="submit" 
+                  className="flex-1" 
+                  disabled={saving}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {saving ? t('profile.saving') : t('profile.save')}
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>

@@ -523,7 +523,8 @@
     "noMessages": "Nessun messaggio",
     "manageLikes": "Gestisci Like per",
     "years": "anni",
-    "autoCloseIn10Seconds": "Si chiuderà automaticamente in 10 secondi"
+    "autoCloseIn10Seconds": "Si chiuderà automaticamente in 10 secondi",
+    "cancel": "Annulla"
   },
   "credits": {
     "back": "Indietro",
