@@ -284,19 +284,21 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
                 <p className="text-sm font-semibold">{t("profile.favoriteSongs")}</p>
               </div>
               <ScrollArea className="w-full h-[200px]">
-                <div className="space-y-2">
+                <div className="flex flex-col gap-2">
                   {favoriteSongs.map((song: any, index: number) => (
-                    <SpotifySongCard
-                      key={index}
-                      song={{
-                        id: song.id || `song-${index}`,
-                        name: song.name || song.title,
-                        artist: song.artist || song.artists,
-                        album: song.album || '',
-                        image_url: song.albumArt || song.image || song.album_art || song.image_url || '',
-                        preview_url: song.preview_url || '',
-                      }}
-                    />
+                    <div key={index} className="w-full">
+                      <SpotifySongCard
+                        song={{
+                          id: song.id || `song-${index}`,
+                          name: song.name || song.title,
+                          artist: song.artist || song.artists,
+                          album: song.album || '',
+                          image_url: song.albumArt || song.image || song.album_art || song.image_url || '',
+                          preview_url: song.preview_url || '',
+                        }}
+                        size="medium"
+                      />
+                    </div>
                   ))}
                 </div>
               </ScrollArea>
