@@ -99,3 +99,18 @@ verify_jwt = false
 [functions.admin-list-messages]
 verify_jwt = false
 
+[functions.create-admin-account]
+verify_jwt = false
+
+[functions.admin-list-banned-users]
+verify_jwt = false
+
+[functions.send-push-notification]
+verify_jwt = false
+
+[functions.send-reset-password-email]
+verify_jwt = false
+
+[functions.check-subscription-expiry]
+verify_jwt = false
+
