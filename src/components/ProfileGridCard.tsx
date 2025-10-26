@@ -11,6 +11,7 @@ import { getGenericLocationPhrase } from "@/lib/utils";
 import { useDailyLikes } from "@/hooks/useDailyLikes";
 import { useCredits } from "@/hooks/useCredits";
 import { DailyLikesExhaustedBanner } from "./DailyLikesExhaustedBanner";
+import { ChatConfirmationBanner } from "./ChatConfirmationBanner";
 
 interface Profile {
   id: string;
@@ -45,10 +46,12 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
   const [hasActiveMatch, setHasActiveMatch] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [showLikesExhausted, setShowLikesExhausted] = useState(false);
+  const [showChatConfirmation, setShowChatConfirmation] = useState(false);
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
   const [translatedBio, setTranslatedBio] = useState<string>('');
   const { translateText } = useTextTranslation();
   const { consumeLike, likesRemaining, resetAt } = useDailyLikes();
-  const { credits } = useCredits();
+  const { credits, deductCredits } = useCredits();
 
   const getGenderLabel = (gender: string | null) => {
     if (!gender) return "";
@@ -298,8 +301,84 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
       // Navigate to chat
       navigate(`/chat/${matchData.id}`);
     } else {
-      // Open profile dialog
-      setShowProfileDialog(true);
+      // Show chat confirmation banner
+      setShowChatConfirmation(true);
+    }
+  };
+
+  const handleConfirmChat = async () => {
+    if (isCreatingChat) return;
+    
+    setIsCreatingChat(true);
+    
+    try {
+      // Verifica crediti sufficienti
+      if (!credits || credits.balance < 6) {
+        toast({
+          title: t("common.error"),
+          description: "Crediti insufficienti per iniziare una chat",
+          variant: "destructive",
+        });
+        setShowChatConfirmation(false);
+        setIsCreatingChat(false);
+        return;
+      }
+
+      // Deduce 6 crediti
+      const success = await deductCredits(6);
+      if (!success) {
+        toast({
+          title: t("common.error"),
+          description: "Crediti insufficienti per iniziare una chat",
+          variant: "destructive",
+        });
+        setShowChatConfirmation(false);
+        setIsCreatingChat(false);
+        return;
+      }
+
+      // Crea il match
+      const user1Id = currentUserId < profile.id ? currentUserId : profile.id;
+      const user2Id = currentUserId < profile.id ? profile.id : currentUserId;
+
+      const { data: matchData, error: matchError } = await supabase
+        .from('matches')
+        .insert({
+          user1_id: user1Id,
+          user2_id: user2Id,
+        })
+        .select()
+        .single();
+
+      if (matchError) {
+        console.error('Errore creazione match:', matchError);
+        toast({
+          title: t("common.error"),
+          description: "Errore nella creazione della chat",
+          variant: "destructive",
+        });
+        setIsCreatingChat(false);
+        return;
+      }
+
+      toast({
+        title: "Chat attivata!",
+        description: `Ora puoi chattare con ${profile.nickname || profile.full_name}!`,
+      });
+
+      setShowChatConfirmation(false);
+      setIsCreatingChat(false);
+      
+      // Naviga alla chat
+      navigate(`/chat/${matchData.id}`);
+    } catch (error) {
+      console.error('Errore:', error);
+      toast({
+        title: t("common.error"),
+        description: "Si è verificato un errore",
+        variant: "destructive",
+      });
+      setIsCreatingChat(false);
     }
   };
 
@@ -428,6 +507,14 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
         onUseCredits={handleUseCreditsForLike}
         resetAt={resetAt}
         hasEnoughCredits={(credits?.balance ?? 0) >= 2}
+      />
+      
+      <ChatConfirmationBanner
+        isVisible={showChatConfirmation}
+        onClose={() => setShowChatConfirmation(false)}
+        onConfirm={handleConfirmChat}
+        userName={profile.nickname || profile.full_name}
+        isLoading={isCreatingChat}
       />
     </>
   );
