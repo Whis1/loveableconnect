@@ -149,9 +149,9 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
           Note {isAdmin ? "Admin" : "Utente"}: {profileName}
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 min-h-0 overflow-hidden">
-        <ScrollArea className="h-full pr-4">
-          <div className="space-y-3">
+      <CardContent className="flex-1 min-h-0 p-0">
+        <ScrollArea className="h-full px-6 py-4">
+          <div className="space-y-3 pr-4">
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">Nome:</label>
               <Input
@@ -175,61 +175,6 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Location:</label>
-              <Input
-                value={notes.location}
-                onChange={(e) => handleChange("location", e.target.value)}
-                onBlur={(e) => handleBlur("location", e.target.value)}
-                placeholder="Inserisci location..."
-                className="h-8 text-sm"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Relazione:</label>
-              <Input
-                value={notes.relazione}
-                onChange={(e) => handleChange("relazione", e.target.value)}
-                onBlur={(e) => handleBlur("relazione", e.target.value)}
-                placeholder="Inserisci stato relazione..."
-                className="h-8 text-sm"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Figli:</label>
-              <Input
-                value={notes.figli}
-                onChange={(e) => handleChange("figli", e.target.value)}
-                onBlur={(e) => handleBlur("figli", e.target.value)}
-                placeholder="Inserisci info figli..."
-                className="h-8 text-sm"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Hobby:</label>
-              <Input
-                value={notes.hobby}
-                onChange={(e) => handleChange("hobby", e.target.value)}
-                onBlur={(e) => handleBlur("hobby", e.target.value)}
-                placeholder="Inserisci hobby..."
-                className="h-8 text-sm"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Lavoro:</label>
-              <Input
-                value={notes.lavoro}
-                onChange={(e) => handleChange("lavoro", e.target.value)}
-                onBlur={(e) => handleBlur("lavoro", e.target.value)}
-                placeholder="Inserisci lavoro..."
-                className="h-8 text-sm"
-              />
-            </div>
-
-            <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">Compleanno:</label>
               <Input
                 value={notes.compleanno}
@@ -237,6 +182,66 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
                 onBlur={(e) => handleBlur("compleanno", e.target.value)}
                 placeholder="Inserisci data di nascita..."
                 className="h-8 text-sm"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Location:</label>
+              <Textarea
+                value={notes.location}
+                onChange={(e) => handleChange("location", e.target.value)}
+                onBlur={(e) => handleBlur("location", e.target.value)}
+                placeholder="Inserisci location..."
+                className="text-sm min-h-[32px] resize-none"
+                rows={1}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Relazione:</label>
+              <Textarea
+                value={notes.relazione}
+                onChange={(e) => handleChange("relazione", e.target.value)}
+                onBlur={(e) => handleBlur("relazione", e.target.value)}
+                placeholder="Inserisci stato relazione..."
+                className="text-sm min-h-[32px] resize-none"
+                rows={1}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Figli:</label>
+              <Textarea
+                value={notes.figli}
+                onChange={(e) => handleChange("figli", e.target.value)}
+                onBlur={(e) => handleBlur("figli", e.target.value)}
+                placeholder="Inserisci info figli..."
+                className="text-sm min-h-[32px] resize-none"
+                rows={1}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Hobby:</label>
+              <Textarea
+                value={notes.hobby}
+                onChange={(e) => handleChange("hobby", e.target.value)}
+                onBlur={(e) => handleBlur("hobby", e.target.value)}
+                placeholder="Inserisci hobby..."
+                className="text-sm min-h-[32px] resize-none"
+                rows={1}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Lavoro:</label>
+              <Textarea
+                value={notes.lavoro}
+                onChange={(e) => handleChange("lavoro", e.target.value)}
+                onBlur={(e) => handleBlur("lavoro", e.target.value)}
+                placeholder="Inserisci lavoro..."
+                className="text-sm min-h-[32px] resize-none"
+                rows={1}
               />
             </div>
 
@@ -253,23 +258,25 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
 
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">Piercings:</label>
-              <Input
+              <Textarea
                 value={notes.piercings}
                 onChange={(e) => handleChange("piercings", e.target.value)}
                 onBlur={(e) => handleBlur("piercings", e.target.value)}
                 placeholder="Inserisci info piercings..."
-                className="h-8 text-sm"
+                className="text-sm min-h-[32px] resize-none"
+                rows={1}
               />
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">Tatuaggi:</label>
-              <Input
+              <Textarea
                 value={notes.tatuaggi}
                 onChange={(e) => handleChange("tatuaggi", e.target.value)}
                 onBlur={(e) => handleBlur("tatuaggi", e.target.value)}
                 placeholder="Inserisci info tatuaggi..."
-                className="h-8 text-sm"
+                className="text-sm min-h-[32px] resize-none"
+                rows={1}
               />
             </div>
 
@@ -313,7 +320,8 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
                 onChange={(e) => handleChange("altro", e.target.value)}
                 onBlur={(e) => handleBlur("altro", e.target.value)}
                 placeholder="Altre note..."
-                className="text-sm min-h-[60px] resize-none"
+                className="text-sm min-h-[60px] resize-y"
+                rows={3}
               />
             </div>
           </div>
