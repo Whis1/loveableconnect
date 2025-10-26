@@ -21,9 +21,9 @@ serve(async (req) => {
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
     await resend.emails.send({
-      from: "LoveableConnect <onboarding@resend.dev>",
+      from: "Arrettu <onboarding@resend.dev>",
       to: [email],
-      subject: "💕 Conferma il tuo Account - LoveableConnect",
+      subject: "💕 Conferma il tuo Account - Arrettu",
       html: `
         <!DOCTYPE html>
         <html>
@@ -36,8 +36,8 @@ serve(async (req) => {
             
             <!-- Header con gradient -->
             <div style="background: linear-gradient(135deg, #ec4899 0%, #9333ea 100%); padding: 40px 20px; text-align: center;">
-              <div style="font-size: 48px; margin-bottom: 10px;">💕</div>
-              <h1 style="color: white; font-size: 32px; margin: 0; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">LoveableConnect</h1>
+              <div style="font-size: 48px; margin-bottom: 10px;">💘</div>
+              <h1 style="color: white; font-size: 32px; margin: 0; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">Arrettu</h1>
               <p style="color: rgba(255,255,255,0.95); margin: 10px 0 0 0; font-size: 16px;">Trova l'amore che cerchi</p>
             </div>
 
@@ -46,7 +46,7 @@ serve(async (req) => {
               <h2 style="color: #9333ea; font-size: 24px; margin: 0 0 20px 0; font-weight: 600;">Ciao ${nickname || 'there'}! 👋</h2>
               
               <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0;">
-                Benvenuto su <strong style="color: #ec4899;">LoveableConnect</strong>! Siamo entusiasti di averti con noi nella nostra community. 💖
+                Benvenuto su <strong style="color: #ec4899;">Arrettu</strong>! Siamo entusiasti di averti con noi nella nostra community. 💖
               </p>
               
               <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0 0 25px 0;">
@@ -79,7 +79,7 @@ serve(async (req) => {
 
               <!-- Features Box -->
               <div style="background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 100%); padding: 25px; border-radius: 12px; margin: 25px 0;">
-                <h3 style="color: #9333ea; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">🌟 Cosa puoi fare su LoveableConnect:</h3>
+                <h3 style="color: #9333ea; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">🌟 Cosa puoi fare su Arrettu:</h3>
                 <ul style="color: #6b7280; line-height: 1.8; margin: 0; padding-left: 20px;">
                   <li style="margin-bottom: 8px;">💫 Scopri profili compatibili nella tua zona</li>
                   <li style="margin-bottom: 8px;">💬 Chatta con persone interessanti</li>
@@ -104,7 +104,7 @@ serve(async (req) => {
                 Questo link scadrà tra 24 ore
               </p>
               <p style="color: #9ca3af; font-size: 12px; margin: 5px 0 0 0;">
-                💕 <strong style="color: #ec4899;">LoveableConnect</strong> - Connessioni autentiche, storie vere
+                💘 <strong style="color: #ec4899;">Arrettu</strong> - Connessioni autentiche, storie vere
               </p>
             </div>
           </div>

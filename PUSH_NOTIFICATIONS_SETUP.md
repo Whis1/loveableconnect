@@ -1,6 +1,35 @@
-# 🔔 Sistema di Notifiche Push - LoveableConnect
+# 🔔 Sistema di Notifiche Push & Email - Arrettu
 
-## Panoramica
+## 📧 Sistema Email Personalizzate
+
+### Email di Reset Password
+
+L'app ora utilizza email personalizzate per il reset password con:
+- 🎨 Design personalizzato a tema Arrettu
+- ⏰ Token valido per 2 ore (invece di 1 ora standard)
+- 💌 Template HTML responsive e professionale
+
+**Configurazione:**
+
+1. **Email Template già pronta**: `supabase/functions/send-reset-password-email/index.ts`
+2. **Da configurare nel Dashboard Supabase**:
+   - Vai su Authentication → Email Templates → "Password Recovery"
+   - Imposta:
+     - Enable Custom SMTP: OFF
+     - Use Edge Function: ON
+     - Edge Function URL: `https://tcmhvrlsaggyuukdscue.supabase.co/functions/v1/send-reset-password-email`
+
+3. **Aumenta il token expiry**:
+   - Dashboard Supabase → Authentication → URL Configuration
+   - "Mailer URL paths" → imposta expiry a 7200 secondi
+
+### Email di Conferma Account
+
+Email personalizzata già configurata con tema Arrettu! 💘
+
+---
+
+## 🔔 Sistema di Notifiche Push
 
 Il sistema di notifiche push è completamente implementato e pronto all'uso! Gli utenti riceveranno notifiche istantanee per:
 
@@ -10,7 +39,7 @@ Il sistema di notifiche push è completamente implementato e pronto all'uso! Gli
 
 Le notifiche funzionano su **desktop e mobile**, anche quando il browser è chiuso!
 
-## 🚀 Cosa è stato implementato
+## Panoramica Push Notifications
 
 ### 1. Database ✅
 - **push_subscriptions**: Memorizza le sottoscrizioni degli utenti
@@ -198,7 +227,7 @@ CHECK (type IN ('message', 'like', 'match', 'premium_expiring'));
 
 2. Controlla permessi browser:
    - Settings → Impostazioni notifiche
-   - LoveableConnect deve essere "Allow"
+   - Arrettu deve essere "Allow"
 
 3. Verifica VAPID keys:
    - Keys devono corrispondere tra frontend e backend
