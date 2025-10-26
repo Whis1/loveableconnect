@@ -33,11 +33,12 @@ interface Profile {
 interface ProfileGridCardProps {
   profile: Profile;
   currentUserId: string;
+  likedProfileIds?: Set<string>;
   onLike: (profileId: string) => void;
   onMatch?: (profileName: string) => void;
 }
 
-export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: ProfileGridCardProps) => {
+export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLike, onMatch }: ProfileGridCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -122,15 +123,20 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
   // Check if user already liked this profile or has an active match
   useEffect(() => {
     const checkLikeAndMatch = async () => {
-      // Check for existing like
-      const { data: likeData } = await supabase
-        .from("likes")
-        .select("id")
-        .eq("from_user_id", currentUserId)
-        .eq("to_user_id", profile.id)
-        .maybeSingle();
-      
-      setHasLiked(!!likeData);
+      // Se abbiamo già i like pre-caricati, usali
+      if (likedProfileIds) {
+        setHasLiked(likedProfileIds.has(profile.id));
+      } else {
+        // Fallback: carica dal database solo se necessario
+        const { data: likeData } = await supabase
+          .from("likes")
+          .select("id")
+          .eq("from_user_id", currentUserId)
+          .eq("to_user_id", profile.id)
+          .maybeSingle();
+        
+        setHasLiked(!!likeData);
+      }
 
       // Check for match
       const { data: matchData } = await supabase
@@ -194,7 +200,7 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
     return () => {
       supabase.removeChannel(likesChannel);
     };
-  }, [currentUserId, profile.id]);
+  }, [currentUserId, profile.id, likedProfileIds]);
 
   // Use pre-translated bio if available, otherwise translate on mount
   useEffect(() => {

@@ -13,6 +13,8 @@ import { ArrowLeft, MapPin, Filter, RotateCcw, Search as SearchIcon } from "luci
 import { ProfileGridCard } from "@/components/ProfileGridCard";
 import { MatchBanner } from "@/components/MatchBanner";
 import { useTextTranslation } from "@/hooks/useTranslation";
+import { useLikes } from "@/hooks/useLikes";
+import { useProfiles } from "@/hooks/useProfiles";
 
 interface Profile {
   id: string;
@@ -48,6 +50,8 @@ const Explore = () => {
   const { t } = useTranslation();
   const { translateProfiles } = useTextTranslation();
   useBanCheck(); // Check if user is banned
+  const { likedProfileIds, loading: likesLoading } = useLikes();
+  const { profiles: cachedProfiles, loading: profilesLoading } = useProfiles();
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [displayedProfiles, setDisplayedProfiles] = useState<Profile[]>([]);
@@ -373,7 +377,7 @@ const Explore = () => {
     setMatchBanner({ show: true, userName });
   };
 
-  if (loading) {
+  if (loading || likesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <p className="text-muted-foreground">{t("explore.loading")}</p>
@@ -508,6 +512,7 @@ const Explore = () => {
                   key={profile.id}
                   profile={profile}
                   currentUserId={currentUser!}
+                  likedProfileIds={likedProfileIds}
                   onLike={handleProfileLike}
                   onMatch={handleMatch}
                 />
