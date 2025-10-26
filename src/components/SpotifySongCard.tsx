@@ -80,8 +80,16 @@ export const SpotifySongCard = ({ song, size = "medium", onPlay }: SpotifySongCa
     e.stopPropagation();
     e.preventDefault();
     
-    if (!song.preview_url || !audioRef.current) {
-      console.log('No preview URL or audio ref');
+    // If no preview available, open the track on Spotify
+    if (!song.preview_url) {
+      if (song.id) {
+        window.open(`https://open.spotify.com/track/${song.id}`, '_blank', 'noopener,noreferrer');
+      }
+      return;
+    }
+
+    if (!audioRef.current) {
+      console.log('No audio element');
       return;
     }
 
@@ -124,11 +132,11 @@ export const SpotifySongCard = ({ song, size = "medium", onPlay }: SpotifySongCa
   const hasPreview = !!song.preview_url;
 
   return (
-    <div className="flex-shrink-0">
+    <div className="flex-shrink-0" role="button" tabIndex={0}>
       <div
-        className={`${sizeClasses[size]} rounded-lg overflow-hidden bg-muted relative group ${hasPreview ? 'cursor-pointer hover:ring-2 hover:ring-primary/50' : 'cursor-not-allowed'} transition-all`}
-        onClick={hasPreview ? togglePlay : undefined}
-        title={hasPreview ? `${song.name} - ${song.artist}` : `${song.name} - ${song.artist} (Anteprima non disponibile)`}
+        className={`${sizeClasses[size]} rounded-lg overflow-hidden bg-muted relative group cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all`}
+        onClick={togglePlay}
+        title={hasPreview ? `${song.name} - ${song.artist}` : `${song.name} - ${song.artist} (Apri su Spotify)`}
       >
         {song.image_url ? (
           <img
