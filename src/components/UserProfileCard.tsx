@@ -128,6 +128,44 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
     loadTranslations();
   }, [profile?.bio, profile?.interests, profile?.translatedBio, profile?.translatedInterests]);
 
+  const getRelationshipTypeLabel = (type: string) => {
+    const key = type.toLowerCase();
+    const labels: Record<string, string> = {
+      serious: t('profile.seriousRelationship'),
+      'relazione seria': t('profile.seriousRelationship'),
+      'serious relationship': t('profile.seriousRelationship'),
+      casual: t('profile.casualDating'),
+      'incontri casuali': t('profile.casualDating'),
+      'casual dating': t('profile.casualDating'),
+      friendship: t('profile.friendship'),
+      amicizia: t('profile.friendship'),
+      open: t('common.openRelationship'),
+      'relazione aperta': t('common.openRelationship'),
+      'open relationship': t('common.openRelationship'),
+    };
+    return labels[key] || type;
+  };
+
+  const getRelationshipStatusLabel = (status: string) => {
+    const key = status.toLowerCase();
+    const labels: Record<string, string> = {
+      single: t('common.single'),
+      sposato: t('common.married'),
+      married: t('common.married'),
+      divorced: t('common.divorced'),
+      divorziato: t('common.divorced'),
+      widowed: t('common.widowed'),
+      vedovo: t('common.widowed'),
+      in_relationship: t('common.inRelationship'),
+      'in una relazione': t('common.inRelationship'),
+      prefer_not_say: t('common.preferNotSay'),
+      preferisco_non_dirlo: t('common.preferNotSay'),
+      'preferisco non dirlo': t('common.preferNotSay'),
+      scoprilo: t('common.notSpecified'),
+    };
+    return labels[key] || status;
+  };
+
   if (!profile) return null;
 
   return (
@@ -193,23 +231,13 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
               
               {profile.relationship_status && (
                 <Badge variant="outline" className="text-xs">
-                  {profile.relationship_status === 'single' ? t("common.single") :
-                   profile.relationship_status === 'in_relationship' ? t("common.inRelationship") :
-                   profile.relationship_status === 'married' ? t("common.married") :
-                   profile.relationship_status === 'divorced' ? t("common.divorced") :
-                   profile.relationship_status === 'widowed' ? t("common.widowed") :
-                   profile.relationship_status === 'prefer_not_say' ? t("common.preferNotSay") :
-                   profile.relationship_status}
+                  {getRelationshipStatusLabel(profile.relationship_status)}
                 </Badge>
               )}
               
               {profile.relationship_type && (
                 <Badge variant="secondary" className="text-xs">
-                  {profile.relationship_type === 'serious' ? t("userProfile.serious") :
-                   profile.relationship_type === 'casual' ? t("userProfile.casual") :
-                   profile.relationship_type === 'friendship' ? t("userProfile.friendship") :
-                   profile.relationship_type === 'open' ? t("common.openRelationship") :
-                   profile.relationship_type}
+                  {getRelationshipTypeLabel(profile.relationship_type)}
                 </Badge>
               )}
             </div>

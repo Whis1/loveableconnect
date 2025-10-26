@@ -399,12 +399,41 @@ export const ProfileDialog = ({
     return labels[key] || orientation;
   };
   const getRelationshipTypeLabel = (type: string) => {
+    const key = type.toLowerCase();
     const labels: Record<string, string> = {
       serious: t('profile.seriousRelationship'),
+      'relazione seria': t('profile.seriousRelationship'),
+      'serious relationship': t('profile.seriousRelationship'),
       casual: t('profile.casualDating'),
+      'incontri casuali': t('profile.casualDating'),
+      'casual dating': t('profile.casualDating'),
       friendship: t('profile.friendship'),
+      amicizia: t('profile.friendship'),
+      open: t('common.openRelationship'),
+      'relazione aperta': t('common.openRelationship'),
+      'open relationship': t('common.openRelationship'),
     };
-    return labels[type] || type;
+    return labels[key] || type;
+  };
+
+  const getRelationshipStatusLabel = (status: string) => {
+    const key = status.toLowerCase();
+    const labels: Record<string, string> = {
+      single: t('common.single'),
+      sposato: t('common.married'),
+      married: t('common.married'),
+      divorced: t('common.divorced'),
+      divorziato: t('common.divorced'),
+      widowed: t('common.widowed'),
+      vedovo: t('common.widowed'),
+      in_relationship: t('common.inRelationship'),
+      'in una relazione': t('common.inRelationship'),
+      prefer_not_say: t('common.preferNotSay'),
+      preferisco_non_dirlo: t('common.preferNotSay'),
+      'preferisco non dirlo': t('common.preferNotSay'),
+      scoprilo: t('common.notSpecified'),
+    };
+    return labels[key] || status;
   };
 
   if (!profile) return null;
@@ -517,18 +546,7 @@ export const ProfileDialog = ({
                   {t('common.relationshipStatus')}
                 </h3>
                 <div className="text-base font-medium">
-                  {profile.relationship_status === 'single' ? t('common.single') :
-                   profile.relationship_status === 'in_relationship' ? t('common.inRelationship') :
-                   profile.relationship_status === 'married' ? t('common.married') :
-                   profile.relationship_status === 'sposato' ? t('common.married') :
-                   profile.relationship_status === 'divorced' ? t('common.divorced') :
-                   profile.relationship_status === 'divorziato' ? t('common.divorced') :
-                   profile.relationship_status === 'widowed' ? t('common.widowed') :
-                   profile.relationship_status === 'vedovo' ? t('common.widowed') :
-                   profile.relationship_status === 'prefer_not_say' ? t('common.preferNotSay') :
-                   profile.relationship_status === 'preferisco_non_dirlo' ? t('common.preferNotSay') :
-                   profile.relationship_status === 'scoprilo' ? t('common.notSpecified') :
-                   profile.relationship_status}
+                  {getRelationshipStatusLabel(profile.relationship_status)}
                 </div>
               </div>
             )}
