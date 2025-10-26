@@ -9,12 +9,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Heart } from "lucide-react";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguageDetection } from "@/hooks/useLanguageDetection";
 import { CookieBanner } from "@/components/CookieBanner";
 import authHeartBg from "@/assets/auth-heart-background.png";
+import authLogo from "@/assets/auth-logo.png";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -273,9 +272,11 @@ const Auth = () => {
         
         <CardHeader className="text-center relative z-10">
           <div className="flex justify-center mb-4">
-            <div className="p-3 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full shadow-xl">
-              <Heart className="h-8 w-8 text-white" fill="white" />
-            </div>
+            <img 
+              src={authLogo} 
+              alt="Logo" 
+              className="h-24 w-24 object-contain"
+            />
           </div>
           <CardTitle className="text-3xl font-bold">{t('app.name')}</CardTitle>
           <CardDescription>{t('app.tagline')}</CardDescription>
