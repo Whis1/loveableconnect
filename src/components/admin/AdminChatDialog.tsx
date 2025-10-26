@@ -270,10 +270,10 @@ export const AdminChatDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] w-full h-[95vh] p-0">
-        <div className="flex h-full gap-2 p-2">
-          {/* Notebook Utente (Sinistra) */}
-          <div className="hidden lg:block w-64 shrink-0">
+      <DialogContent className="max-w-[95vw] w-full h-[95vh] p-0 flex flex-col">
+        <div className="flex flex-1 gap-2 p-2 min-h-0">
+          {/* Notebook Utente (Sinistra) - Altezza fissa con scroll interno */}
+          <div className="hidden lg:block w-64 shrink-0 h-full">
             <ProfileNotebook 
               profileId={userId} 
               profileName={userNickname}
@@ -281,21 +281,21 @@ export const AdminChatDialog = ({
             />
           </div>
 
-          {/* Chat Centrale */}
-          <div className="flex-1 flex flex-col border rounded-lg overflow-hidden bg-background">
+          {/* Chat Centrale - Flex layout per garantire che l'input rimanga visibile */}
+          <div className="flex-1 flex flex-col border rounded-lg overflow-hidden bg-background min-w-0">
             <DialogHeader className="px-6 pt-6 pb-4 shrink-0 border-b">
               <DialogTitle>
                 Chat: {adminNickname} ↔️ {userNickname}
               </DialogTitle>
             </DialogHeader>
 
-            {/* User Profile */}
-            <div className="px-6 pb-4 shrink-0 border-b">
+            {/* User Profile - Collapsible */}
+            <div className="px-6 pb-4 shrink-0 border-b max-h-[30vh] overflow-auto">
               <ChatUserProfile userId={userId} currentUserId={adminProfileId} showRealLocation={true} />
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 px-3 md:px-6 py-4 min-h-0">
+            {/* Messages - Flex-1 con min-h-0 per permettere lo scroll */}
+            <div className="flex-1 px-3 md:px-6 py-4 min-h-0 overflow-hidden">
               <ScrollArea className="h-full">
                 {loading ? (
                   <p className="text-muted-foreground text-center py-8">Caricamento...</p>
@@ -327,7 +327,7 @@ export const AdminChatDialog = ({
               </ScrollArea>
             </div>
 
-            {/* Input */}
+            {/* Input - Sempre visibile in basso */}
             <div className="border-t p-4 bg-background shrink-0">
               <form onSubmit={(e) => handleSendMessage(e)}>
                 <div className="flex gap-2 items-center">
@@ -368,8 +368,8 @@ export const AdminChatDialog = ({
             </div>
           </div>
 
-          {/* Notebook Admin (Destra) */}
-          <div className="hidden lg:block w-64 shrink-0">
+          {/* Notebook Admin (Destra) - Altezza fissa con scroll interno */}
+          <div className="hidden lg:block w-64 shrink-0 h-full">
             <ProfileNotebook 
               profileId={adminProfileId} 
               profileName={adminNickname}
