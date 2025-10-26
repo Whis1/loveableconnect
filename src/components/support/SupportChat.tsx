@@ -94,6 +94,8 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
         return;
       }
 
+      const isFirstMessage = messages.length === 0;
+
       const { error } = await supabase
         .from('support_messages')
         .insert({
@@ -105,11 +107,21 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
 
       if (error) throw error;
 
+      // Se è il primo messaggio, invia un messaggio automatico di risposta
+      if (isFirstMessage) {
+        setTimeout(async () => {
+          await supabase
+            .from('support_messages')
+            .insert({
+              user_id: user.id,
+              user_email: userEmail,
+              message: "Il supporto clienti ti assisterà appena possibile",
+              is_admin_response: true,
+            });
+        }, 1000);
+      }
+
       setNewMessage("");
-      toast({
-        title: "Messaggio inviato",
-        description: "Il tuo messaggio è stato inviato al supporto",
-      });
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
@@ -123,42 +135,55 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
   };
 
   return (
-    <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MessageCircle className="h-5 w-5 text-primary" />
-          Chat di Supporto
+    <Card className="border-0 shadow-2xl bg-background/95 backdrop-blur-md h-[600px] flex flex-col">
+      <CardHeader className="border-b bg-primary/5 pb-4">
+        <CardTitle className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <MessageCircle className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold">Supporto Clienti</h3>
+            <p className="text-sm text-muted-foreground font-normal">Siamo qui per aiutarti</p>
+          </div>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[400px] pr-4 mb-4" ref={scrollRef}>
+      <CardContent className="flex-1 flex flex-col p-0">
+        <ScrollArea className="flex-1 px-4 py-6" ref={scrollRef}>
           <div className="space-y-4">
             {messages.length === 0 ? (
-              <div className="text-center text-muted-foreground py-8">
-                Nessun messaggio ancora. Inizia una conversazione!
+              <div className="text-center py-12">
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <MessageCircle className="h-8 w-8 text-primary" />
+                </div>
+                <p className="text-muted-foreground">
+                  Inizia una conversazione con il nostro team di supporto
+                </p>
               </div>
             ) : (
               messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`flex gap-3 ${msg.is_admin_response ? 'justify-start' : 'justify-end'}`}
+                  className={`flex gap-3 ${msg.is_admin_response ? 'justify-start' : 'justify-end'} animate-in fade-in slide-in-from-bottom-2`}
                 >
                   {msg.is_admin_response && (
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-primary text-primary-foreground">
-                        A
+                    <Avatar className="h-9 w-9 border-2 border-primary/20">
+                      <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                        S
                       </AvatarFallback>
                     </Avatar>
                   )}
                   <div
-                    className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                    className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
                       msg.is_admin_response
-                        ? 'bg-muted'
-                        : 'bg-primary text-primary-foreground'
+                        ? 'bg-muted rounded-tl-sm'
+                        : 'bg-primary text-primary-foreground rounded-tr-sm'
                     }`}
                   >
-                    <p className="text-sm">{msg.message}</p>
-                    <p className="text-xs opacity-70 mt-1">
+                    {msg.is_admin_response && (
+                      <p className="text-xs font-semibold mb-1 opacity-70">Supporto</p>
+                    )}
+                    <p className="text-sm leading-relaxed">{msg.message}</p>
+                    <p className="text-xs opacity-60 mt-1.5">
                       {new Date(msg.created_at).toLocaleTimeString('it-IT', {
                         hour: '2-digit',
                         minute: '2-digit',
@@ -166,9 +191,9 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
                     </p>
                   </div>
                   {!msg.is_admin_response && (
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-secondary">
-                        U
+                    <Avatar className="h-9 w-9 border-2 border-primary/20">
+                      <AvatarFallback className="bg-secondary text-secondary-foreground font-semibold">
+                        Tu
                       </AvatarFallback>
                     </Avatar>
                   )}
@@ -178,17 +203,25 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
           </div>
         </ScrollArea>
 
-        <div className="flex gap-2">
-          <Input
-            placeholder="Scrivi un messaggio..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && !loading && handleSendMessage()}
-            disabled={loading}
-          />
-          <Button onClick={handleSendMessage} disabled={loading}>
-            <Send className="h-4 w-4" />
-          </Button>
+        <div className="border-t bg-background/50 p-4">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Scrivi un messaggio..."
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && !loading && handleSendMessage()}
+              disabled={loading}
+              className="flex-1 rounded-full border-2 focus-visible:ring-primary"
+            />
+            <Button 
+              onClick={handleSendMessage} 
+              disabled={loading || !newMessage.trim()}
+              size="icon"
+              className="rounded-full h-10 w-10 shadow-md"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

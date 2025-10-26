@@ -33,17 +33,23 @@ const Support = () => {
         }}
       />
       
-      <div className="container mx-auto p-4 max-w-3xl relative z-10">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="mb-6 hover:bg-primary/10"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {t("support.back")}
-        </Button>
+      <div className="container mx-auto p-4 max-w-4xl relative z-10">
+        <div className="mb-6">
+          <Button
+            variant="ghost"
+            onClick={() => navigate(-1)}
+            className="hover:bg-primary/10"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t("support.back")}
+          </Button>
+        </div>
 
-        <SupportChat userEmail={userEmail} />
+        <div className="flex justify-center">
+          <div className="w-full max-w-2xl">
+            <SupportChat userEmail={userEmail} />
+          </div>
+        </div>
       </div>
     </div>
   );
