@@ -296,7 +296,7 @@ const Dashboard = () => {
       
       <div className="container mx-auto p-4 max-w-7xl relative z-10">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8 animate-fade-in">
+        <div className="flex justify-end items-center gap-6 mb-8 animate-fade-in">
           <div className="flex items-center gap-3">
             <img src={loveIcon} alt="Love Icon" className="h-14 w-14" />
             <div>
