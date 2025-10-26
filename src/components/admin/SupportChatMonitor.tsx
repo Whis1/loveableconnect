@@ -405,7 +405,7 @@ export const SupportChatMonitor = () => {
                                 : 'bg-muted'
                             }`}
                           >
-                            <p className="text-sm whitespace-pre-line">{msg.message}</p>
+                            <p className="text-sm">{msg.message}</p>
                             <p className="text-xs opacity-70 mt-1">
                               {new Date(msg.created_at).toLocaleTimeString('it-IT', {
                                 hour: '2-digit',
@@ -422,74 +422,38 @@ export const SupportChatMonitor = () => {
                           )}
                         </div>
                         
-                        {/* Banner per richiesta cambio location - solo per messaggi non admin */}
-                        {msg.request_type === 'location_change' && !msg.is_admin_response && msg.request_status === 'pending' && (
-                          <div className="mt-3 mb-4 ml-11">
-                            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 rounded-xl border-2 border-blue-300 dark:border-blue-700 shadow-md">
-                              <div className="flex items-center gap-3 mb-3">
-                                <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
-                                  <MapPin className="h-5 w-5 text-white" />
-                                </div>
-                                <div className="flex-1">
-                                  <p className="font-bold text-blue-900 dark:text-blue-100 text-base">
-                                    🗺️ Richiesta Cambio Location
-                                  </p>
-                                  <p className="text-sm text-blue-700 dark:text-blue-300">
-                                    L'utente desidera cambiare location
-                                  </p>
-                                </div>
-                              </div>
-                              
-                              <div className="bg-white/50 dark:bg-black/20 rounded-lg p-3 mb-3">
-                                <p className="text-sm text-blue-800 dark:text-blue-200 mb-1">
-                                  <span className="font-semibold">Nuova location richiesta:</span>
-                                </p>
-                                <p className="text-lg font-bold text-blue-900 dark:text-blue-100 flex items-center gap-2">
-                                  <MapPin className="h-5 w-5" />
-                                  {msg.request_data?.city}
-                                </p>
-                              </div>
-                              
-                              <div className="flex gap-3">
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleApproveLocationChange(msg)}
-                                  disabled={loading}
-                                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold shadow-md"
-                                >
-                                  <Check className="h-4 w-4 mr-2" />
-                                  ✅ Approva
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleRejectLocationChange(msg)}
-                                  disabled={loading}
-                                  className="flex-1 font-semibold shadow-md"
-                                >
-                                  <X className="h-4 w-4 mr-2" />
-                                  ❌ Rifiuta
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Mostra stato per richieste approvate/rifiutate */}
-                        {msg.request_type === 'location_change' && !msg.is_admin_response && msg.request_status !== 'pending' && (
-                          <div className="mt-2 mb-3 ml-11">
-                            <div className={`p-3 rounded-lg border ${
-                              msg.request_status === 'approved'
-                                ? 'bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700'
-                                : 'bg-red-50 dark:bg-red-950 border-red-300 dark:border-red-700'
-                            }`}>
-                              <p className={`text-sm font-semibold ${
-                                msg.request_status === 'approved'
-                                  ? 'text-green-900 dark:text-green-100'
-                                  : 'text-red-900 dark:text-red-100'
-                              }`}>
-                                {msg.request_status === 'approved' ? '✅ Richiesta approvata' : '❌ Richiesta rifiutata'}
+                        {/* Mostra pulsanti di approvazione/rifiuto per richieste di cambio location */}
+                        {msg.request_type === 'location_change' && msg.request_status === 'pending' && !msg.is_admin_response && (
+                          <div className="mt-2 ml-11 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                            <div className="flex items-center gap-2 mb-2">
+                              <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                              <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                                Richiesta Cambio Location
                               </p>
+                            </div>
+                            <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
+                              Nuova location: <strong>{msg.request_data?.city}</strong>
+                            </p>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => handleApproveLocationChange(msg)}
+                                disabled={loading}
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                <Check className="h-4 w-4 mr-1" />
+                                Approva
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleRejectLocationChange(msg)}
+                                disabled={loading}
+                              >
+                                <X className="h-4 w-4 mr-1" />
+                                Rifiuta
+                              </Button>
                             </div>
                           </div>
                         )}

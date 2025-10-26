@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, MessageCircle, Image as ImageIcon, X, Bot, Headphones, MapPin } from "lucide-react";
+import { Send, MessageCircle, Image as ImageIcon, X, Bot, Headphones } from "lucide-react";
 import { AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -39,18 +39,6 @@ export const SupportChat = ({ userEmail, isLocationChangeRequest, newLocationDat
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [requestSent, setRequestSent] = useState(false);
-
-  // Invia automaticamente la richiesta di cambio location al caricamento
-  useEffect(() => {
-    if (isLocationChangeRequest && newLocationData && !requestSent) {
-      setRequestSent(true);
-      // Aspetta che i messaggi vengano caricati
-      setTimeout(() => {
-        sendLocationChangeRequest();
-      }, 500);
-    }
-  }, [isLocationChangeRequest, newLocationData, requestSent]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -177,59 +165,6 @@ export const SupportChat = ({ userEmail, isLocationChangeRequest, newLocationDat
     return data.publicUrl;
   };
 
-  const sendLocationChangeRequest = async () => {
-    setLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !newLocationData) return;
-
-      const messageText = `🗺️ Richiesta cambio location\n\nVorrei cambiare la mia location in: ${newLocationData.city}`;
-
-      const { error } = await supabase
-        .from('support_messages')
-        .insert({
-          user_id: user.id,
-          user_email: userEmail,
-          message: messageText,
-          is_admin_response: false,
-          request_type: 'location_change',
-          request_status: 'pending',
-          request_data: newLocationData,
-        });
-
-      if (error) throw error;
-
-      // Messaggio automatico di conferma
-      setTimeout(async () => {
-        await supabase
-          .from('support_messages')
-          .insert({
-            user_id: user.id,
-            user_email: userEmail,
-            message: "📍 Grazie per la tua richiesta di cambio location. Il nostro team la esaminerà al più presto e ti farà sapere se potrà essere approvata.",
-            is_admin_response: true,
-          });
-      }, 500);
-
-      toast({
-        title: "✅ Richiesta inviata",
-        description: `Richiesta di cambio location a "${newLocationData.city}" inviata con successo`,
-      });
-
-      // Refresh dei messaggi
-      fetchMessages();
-    } catch (error) {
-      console.error('Error sending location request:', error);
-      toast({
-        title: "Errore",
-        description: "Impossibile inviare la richiesta",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSendMessage = async () => {
     if (!newMessage.trim() && !selectedImage) return;
 
@@ -260,14 +195,24 @@ export const SupportChat = ({ userEmail, isLocationChangeRequest, newLocationDat
         }
       }
 
+      let messageText = newMessage || t("support.imageLabel");
+      
+      // Se è una richiesta di cambio location, aggiungi i dettagli al messaggio
+      if (isLocationChangeRequest && newLocationData) {
+        messageText = `🗺️ Richiesta cambio location\n\nVorrei cambiare la mia location in: ${newLocationData.city}\n\n${messageText || 'In attesa di approvazione.'}`;
+      }
+
       const { error } = await supabase
         .from('support_messages')
         .insert({
           user_id: user.id,
           user_email: userEmail,
-          message: newMessage || t("support.imageLabel"),
+          message: messageText,
           is_admin_response: false,
           image_url: imageUrl,
+          request_type: isLocationChangeRequest ? 'location_change' : 'general',
+          request_status: isLocationChangeRequest ? 'pending' : 'completed',
+          request_data: isLocationChangeRequest ? newLocationData : null,
         });
 
       if (error) throw error;
@@ -280,7 +225,9 @@ export const SupportChat = ({ userEmail, isLocationChangeRequest, newLocationDat
             .insert({
               user_id: user.id,
               user_email: userEmail,
-              message: t("support.autoResponse"),
+              message: isLocationChangeRequest 
+                ? "📍 Grazie per la tua richiesta di cambio location. Il nostro team la esaminerà al più presto e ti farà sapere se potrà essere approvata."
+                : t("support.autoResponse"),
               is_admin_response: true,
             });
         }, 1000);
@@ -288,6 +235,14 @@ export const SupportChat = ({ userEmail, isLocationChangeRequest, newLocationDat
 
       setNewMessage("");
       removeImage();
+      
+      // Se era una richiesta di cambio location, mostra un messaggio di conferma
+      if (isLocationChangeRequest) {
+        toast({
+          title: "Richiesta inviata",
+          description: "La tua richiesta di cambio location è stata inviata al supporto clienti",
+        });
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
@@ -333,112 +288,61 @@ export const SupportChat = ({ userEmail, isLocationChangeRequest, newLocationDat
                    msg.message.includes("Il supporto clienti ti assisterà"));
                 
                 return (
-                  <div key={msg.id}>
-                    <div
-                      className={`flex gap-3 ${msg.is_admin_response ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2`}
-                    >
-                      {!msg.is_admin_response && (
-                        <Avatar className="h-9 w-9 border-2 border-primary/20 flex-shrink-0">
-                          <AvatarFallback className="bg-secondary text-secondary-foreground font-semibold">
-                            {t("support.you")}
-                          </AvatarFallback>
-                        </Avatar>
-                      )}
-                      <div
-                        className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm break-words ${
-                          msg.is_admin_response
-                            ? 'bg-primary text-primary-foreground rounded-tr-sm'
-                            : 'bg-muted rounded-tl-sm'
-                        }`}
-                      >
-                        {msg.is_admin_response && (
-                          <p className="text-xs font-semibold mb-1 opacity-70">
-                            {isAutomaticBotMessage ? 'Bot' : 'Supporto Clienti'}
-                          </p>
-                        )}
-                        {msg.image_url && (
-                          <img 
-                            src={msg.image_url} 
-                            alt="Immagine allegata" 
-                            className="rounded-lg max-w-[280px] max-h-64 object-cover mb-2 cursor-pointer hover:opacity-90 transition-opacity"
-                            onClick={() => window.open(msg.image_url, '_blank')}
-                          />
-                        )}
-                        <p className="text-sm leading-relaxed whitespace-pre-line">{msg.message}</p>
-                        <p className="text-xs opacity-60 mt-1.5">
-                          {new Date(msg.created_at).toLocaleTimeString('it-IT', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </p>
-                      </div>
-                      {msg.is_admin_response && (
-                        <Avatar className="h-9 w-9 border-2 border-primary/20 flex-shrink-0 overflow-hidden">
-                          {isAutomaticBotMessage ? (
-                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
-                              <Bot className="h-5 w-5" />
-                            </AvatarFallback>
-                          ) : (
-                            <AvatarFallback className="bg-gradient-to-br from-green-500 to-teal-600 text-white font-semibold">
-                              <Headphones className="h-5 w-5" />
-                            </AvatarFallback>
-                          )}
-                        </Avatar>
-                      )}
-                    </div>
-
-                    {/* Banner per richiesta cambio location dell'utente */}
-                    {msg.request_type === 'location_change' && !msg.is_admin_response && (
-                      <div className="ml-12 mt-2 mb-4">
-                        <div className={`p-4 rounded-lg border-2 ${
-                          msg.request_status === 'pending' 
-                            ? 'bg-blue-50 dark:bg-blue-950 border-blue-300 dark:border-blue-700' 
-                            : msg.request_status === 'approved'
-                            ? 'bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700'
-                            : 'bg-red-50 dark:bg-red-950 border-red-300 dark:border-red-700'
-                        }`}>
-                          <div className="flex items-start gap-3">
-                            <MapPin className={`h-5 w-5 mt-0.5 ${
-                              msg.request_status === 'pending'
-                                ? 'text-blue-600 dark:text-blue-400'
-                                : msg.request_status === 'approved'
-                                ? 'text-green-600 dark:text-green-400'
-                                : 'text-red-600 dark:text-red-400'
-                            }`} />
-                            <div className="flex-1">
-                              <p className={`font-semibold text-sm mb-1 ${
-                                msg.request_status === 'pending'
-                                  ? 'text-blue-900 dark:text-blue-100'
-                                  : msg.request_status === 'approved'
-                                  ? 'text-green-900 dark:text-green-100'
-                                  : 'text-red-900 dark:text-red-100'
-                              }`}>
-                                {msg.request_status === 'pending' && '⏳ Richiesta in attesa'}
-                                {msg.request_status === 'approved' && '✅ Richiesta approvata!'}
-                                {msg.request_status === 'rejected' && '❌ Richiesta rifiutata'}
-                              </p>
-                              <p className={`text-sm ${
-                                msg.request_status === 'pending'
-                                  ? 'text-blue-800 dark:text-blue-200'
-                                  : msg.request_status === 'approved'
-                                  ? 'text-green-800 dark:text-green-200'
-                                  : 'text-red-800 dark:text-red-200'
-                              }`}>
-                                Nuova location: <strong>{msg.request_data?.city}</strong>
-                              </p>
-                              {msg.request_status === 'pending' && (
-                                <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
-                                  Il supporto clienti esaminerà la tua richiesta al più presto.
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                  <div
+                    key={msg.id}
+                    className={`flex gap-3 ${msg.is_admin_response ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2`}
+                  >
+                    {!msg.is_admin_response && (
+                      <Avatar className="h-9 w-9 border-2 border-primary/20 flex-shrink-0">
+                        <AvatarFallback className="bg-secondary text-secondary-foreground font-semibold">
+                          {t("support.you")}
+                        </AvatarFallback>
+                      </Avatar>
                     )}
-                  </div>
-                );
-              })
+                    <div
+                      className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm break-words ${
+                        msg.is_admin_response
+                          ? 'bg-primary text-primary-foreground rounded-tr-sm'
+                          : 'bg-muted rounded-tl-sm'
+                      }`}
+                    >
+                      {msg.is_admin_response && (
+                        <p className="text-xs font-semibold mb-1 opacity-70">
+                          {isAutomaticBotMessage ? 'Bot' : 'Supporto Clienti'}
+                        </p>
+                      )}
+                      {msg.image_url && (
+                        <img 
+                          src={msg.image_url} 
+                          alt="Immagine allegata" 
+                          className="rounded-lg max-w-[280px] max-h-64 object-cover mb-2 cursor-pointer hover:opacity-90 transition-opacity"
+                          onClick={() => window.open(msg.image_url, '_blank')}
+                        />
+                      )}
+                      <p className="text-sm leading-relaxed">{msg.message}</p>
+                      <p className="text-xs opacity-60 mt-1.5">
+                        {new Date(msg.created_at).toLocaleTimeString('it-IT', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
+                    {msg.is_admin_response && (
+                      <Avatar className="h-9 w-9 border-2 border-primary/20 flex-shrink-0 overflow-hidden">
+                        {isAutomaticBotMessage ? (
+                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
+                            <Bot className="h-5 w-5" />
+                          </AvatarFallback>
+                        ) : (
+                          <AvatarFallback className="bg-gradient-to-br from-green-500 to-teal-600 text-white font-semibold">
+                            <Headphones className="h-5 w-5" />
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                    )}
+                </div>
+              );
+            })
             )}
             <div ref={messagesEndRef} />
           </div>
