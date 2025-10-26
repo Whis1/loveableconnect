@@ -34,6 +34,7 @@ interface Profile {
   latitude: number | null;
   longitude: number | null;
   last_active: string | null;
+  is_admin_profile?: boolean;
   distance?: number;
   translatedBio?: string | null;
   translatedInterests?: string[] | null;
@@ -494,7 +495,7 @@ const Explore = () => {
         {displayedProfiles.length > 0 ? (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
-              {displayedProfiles.map((profile) => (
+              {displayedProfiles.filter(p => !p.is_admin_profile).map((profile) => (
                 <ProfileGridCard
                   key={profile.id}
                   profile={profile}
