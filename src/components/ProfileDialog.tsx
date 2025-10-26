@@ -16,6 +16,9 @@ import { getGenericLocationPhrase } from "@/lib/utils";
 import { ChatConfirmationBanner } from "./ChatConfirmationBanner";
 import { useCredits } from "@/hooks/useCredits";
 import profileBadge from "@/assets/profile-badge.png";
+import { SpotifySongCard } from "./SpotifySongCard";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Music } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -34,6 +37,7 @@ interface Profile {
   looking_for: string[] | null;
   translatedBio?: string | null;
   translatedInterests?: string[] | null;
+  favorite_songs?: any[] | null;
 }
 
 interface ProfileDialogProps {
@@ -77,7 +81,15 @@ export const ProfileDialog = ({
         .single();
 
       if (data) {
-        setProfile(data);
+        // Parse favorite_songs from Json
+        const favoriteSongs = data.favorite_songs
+          ? (Array.isArray(data.favorite_songs) ? data.favorite_songs : [])
+          : null;
+        
+        setProfile({
+          ...data,
+          favorite_songs: favoriteSongs
+        });
         
         // Get avatar URL
         if (data.avatar_url) {
@@ -148,8 +160,17 @@ export const ProfileDialog = ({
         },
         (payload) => {
           console.log('Profile updated in dialog:', payload.new);
-          const updatedProfile = payload.new as Profile;
-          setProfile(updatedProfile);
+          const updatedProfile = payload.new as any;
+          
+          // Parse favorite_songs from Json
+          const favoriteSongs = updatedProfile.favorite_songs
+            ? (Array.isArray(updatedProfile.favorite_songs) ? updatedProfile.favorite_songs : [])
+            : null;
+          
+          setProfile({
+            ...updatedProfile,
+            favorite_songs: favoriteSongs
+          });
           
           // Update avatar URL if changed
           if (updatedProfile.avatar_url) {
@@ -610,6 +631,35 @@ export const ProfileDialog = ({
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Favorite Songs */}
+            {profile.favorite_songs && profile.favorite_songs.length > 0 && (
+              <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
+                <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                  <Music className="h-5 w-5 text-primary" />
+                  🎵 Canzoni Preferite
+                </h3>
+                <ScrollArea className="w-full">
+                  <div className="flex gap-4 pb-2">
+                    {profile.favorite_songs.map((song: any, index: number) => (
+                      <SpotifySongCard
+                        key={index}
+                        song={song}
+                        size="large"
+                        onPlay={() => {
+                          // Pause all other songs
+                          profile.favorite_songs?.forEach((s: any, i: number) => {
+                            if (i !== index && (window as any)[`pauseAudio_${s.id}`]) {
+                              (window as any)[`pauseAudio_${s.id}`]();
+                            }
+                          });
+                        }}
+                      />
+                    ))}
+                  </div>
+                </ScrollArea>
               </div>
             )}
 

@@ -12,6 +12,7 @@ import { useDailyLikes } from "@/hooks/useDailyLikes";
 import { useCredits } from "@/hooks/useCredits";
 import { DailyLikesExhaustedBanner } from "./DailyLikesExhaustedBanner";
 import { ChatConfirmationBanner } from "./ChatConfirmationBanner";
+import { SpotifySongCard } from "./SpotifySongCard";
 
 interface Profile {
   id: string;
@@ -491,23 +492,19 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
                 </div>
                 <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
                   {profile.favorite_songs.slice(0, 3).map((song: any, idx: number) => (
-                    <div
+                    <SpotifySongCard
                       key={idx}
-                      className="flex-shrink-0 w-12 h-12 rounded overflow-hidden bg-muted relative group"
-                      title={`${song.name} - ${song.artist}`}
-                    >
-                      {song.image_url ? (
-                        <img
-                          src={song.image_url}
-                          alt={song.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-primary/10">
-                          <span className="text-xs">🎵</span>
-                        </div>
-                      )}
-                    </div>
+                      song={song}
+                      size="small"
+                      onPlay={() => {
+                        // Pause all other songs
+                        profile.favorite_songs?.forEach((s: any, i: number) => {
+                          if (i !== idx && (window as any)[`pauseAudio_${s.id}`]) {
+                            (window as any)[`pauseAudio_${s.id}`]();
+                          }
+                        });
+                      }}
+                    />
                   ))}
                   {profile.favorite_songs.length > 3 && (
                     <div className="flex-shrink-0 w-12 h-12 rounded bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground">

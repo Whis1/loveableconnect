@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useTextTranslation } from "@/hooks/useTranslation";
+import { SpotifySongCard } from "@/components/SpotifySongCard";
 
 interface Profile {
   id: string;
@@ -357,27 +358,19 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
             <ScrollArea className="w-full">
               <div className="flex gap-2 pb-2">
                 {profile.favorite_songs.map((song: any, index: number) => (
-                  <div
+                  <SpotifySongCard
                     key={index}
-                    className="flex-shrink-0 w-20 group cursor-pointer"
-                    title={`${song.name} - ${song.artist}`}
-                  >
-                    <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted relative mb-1">
-                      {song.image_url ? (
-                        <img
-                          src={song.image_url}
-                          alt={song.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-primary/10">
-                          <span className="text-2xl">🎵</span>
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-[10px] font-medium text-foreground truncate">{song.name}</p>
-                    <p className="text-[9px] text-muted-foreground truncate">{song.artist}</p>
-                  </div>
+                    song={song}
+                    size="medium"
+                    onPlay={() => {
+                      // Pause all other songs
+                      profile.favorite_songs?.forEach((s: any, i: number) => {
+                        if (i !== index && (window as any)[`pauseAudio_${s.id}`]) {
+                          (window as any)[`pauseAudio_${s.id}`]();
+                        }
+                      });
+                    }}
+                  />
                 ))}
               </div>
             </ScrollArea>
