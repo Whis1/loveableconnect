@@ -83,35 +83,26 @@ export const AdminChatDialog = ({
         setAdminAvatar(adminAvatarUrl);
         setUserAvatar(userAvatarUrl);
 
-        // Find or create match
-        const user1 = adminProfileId < userId ? adminProfileId : userId;
-        const user2 = adminProfileId < userId ? userId : adminProfileId;
+        // Use edge function to find or create match (bypasses RLS)
+        const { data: matchData, error: matchError } = await supabase.functions.invoke('admin-get-or-create-match', {
+          body: {
+            adminProfileId,
+            userId,
+          }
+        });
 
-        let { data: existingMatch } = await supabase
-          .from("matches")
-          .select("id")
-          .eq("user1_id", user1)
-          .eq("user2_id", user2)
-          .maybeSingle();
-
-        if (!existingMatch) {
-          const { data: newMatch, error: matchError } = await supabase
-            .from("matches")
-            .insert({ user1_id: user1, user2_id: user2 })
-            .select("id")
-            .single();
-
-          if (matchError) throw matchError;
-          existingMatch = newMatch;
+        if (matchError) throw matchError;
+        if (!matchData?.success || !matchData?.match_id) {
+          throw new Error('Failed to get or create match');
         }
 
-        setMatchId(existingMatch.id);
+        setMatchId(matchData.match_id);
 
         // Fetch messages
         const { data: messagesData, error: messagesError } = await supabase
           .from("messages")
           .select("*")
-          .eq("match_id", existingMatch.id)
+          .eq("match_id", matchData.match_id)
           .order("created_at", { ascending: true });
 
         if (messagesError) throw messagesError;
@@ -119,14 +110,14 @@ export const AdminChatDialog = ({
 
         // Subscribe to new messages
         const channel = supabase
-          .channel(`admin-chat-${existingMatch.id}`)
+          .channel(`admin-chat-${matchData.match_id}`)
           .on(
             "postgres_changes",
             {
               event: "INSERT",
               schema: "public",
               table: "messages",
-              filter: `match_id=eq.${existingMatch.id}`,
+              filter: `match_id=eq.${matchData.match_id}`,
             },
             (payload) => {
               const newMsg = payload.new as Message;
