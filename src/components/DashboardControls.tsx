@@ -37,12 +37,11 @@ export const DashboardControls = () => {
       </Button>
       <Button
         variant="outline"
-        size="icon"
         onClick={handleSignOut}
-        title={t("dashboard.signOut")}
         className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-all duration-300"
       >
-        <LogOut className="h-4 w-4" />
+        <LogOut className="h-4 w-4 mr-2" />
+        {t("dashboard.signOut")}
       </Button>
     </div>
   );
