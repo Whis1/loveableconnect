@@ -12,14 +12,17 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    // Auth client for verifying user
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: req.headers.get('Authorization') || '' } },
     });
 
-    const { data: authData, error: authError } = await supabase.auth.getUser();
+    const { data: authData, error: authError } = await authClient.auth.getUser();
     if (authError || !authData?.user) {
+      console.error('Auth error:', authError);
       return new Response(JSON.stringify({ success: false, error: 'Non autenticato' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 401,
@@ -28,13 +31,17 @@ Deno.serve(async (req) => {
 
     const adminId = authData.user.id;
 
-    // Check admin role using DB function has_role
+    // Service role client for DB operations
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Check admin role
     const { data: isAdmin, error: roleError } = await supabase.rpc('has_role', {
       _user_id: adminId,
       _role: 'admin',
     });
 
     if (roleError || !isAdmin) {
+      console.error('Role check error:', roleError, 'isAdmin:', isAdmin);
       return new Response(JSON.stringify({ success: false, error: 'Permessi insufficienti' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 403,
@@ -50,13 +57,16 @@ Deno.serve(async (req) => {
     }
 
     // If already banned, return success
-    const { data: existing, error: existingErr } = await createClient(supabaseUrl, supabaseServiceKey)
+    const { data: existing, error: existingErr } = await supabase
       .from('banned_users')
       .select('*')
       .eq('user_id', user_id)
       .maybeSingle();
 
-    if (existingErr) throw existingErr;
+    if (existingErr) {
+      console.error('Error checking existing ban:', existingErr);
+      throw existingErr;
+    }
     if (existing) {
       return new Response(JSON.stringify({ success: true, alreadyBanned: true, ban: existing }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -64,8 +74,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const svcClient = createClient(supabaseUrl, supabaseServiceKey);
-    const { data: insertData, error } = await svcClient.from('banned_users').insert({
+    const { data: insertData, error } = await supabase.from('banned_users').insert({
       user_id,
       banned_by: adminId,
       reason: reason || 'Ban amministrativo',

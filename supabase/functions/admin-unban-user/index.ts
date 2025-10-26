@@ -12,14 +12,17 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    // Auth client
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: req.headers.get('Authorization') || '' } },
     });
 
-    const { data: authData, error: authError } = await supabase.auth.getUser();
+    const { data: authData, error: authError } = await authClient.auth.getUser();
     if (authError || !authData?.user) {
+      console.error('Auth error:', authError);
       return new Response(JSON.stringify({ success: false, error: 'Non autenticato' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 401,
@@ -28,6 +31,9 @@ Deno.serve(async (req) => {
 
     const adminId = authData.user.id;
 
+    // Service role client
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     // Check admin role
     const { data: isAdmin, error: roleError } = await supabase.rpc('has_role', {
       _user_id: adminId,
@@ -35,6 +41,7 @@ Deno.serve(async (req) => {
     });
 
     if (roleError || !isAdmin) {
+      console.error('Role check error:', roleError, 'isAdmin:', isAdmin);
       return new Response(JSON.stringify({ success: false, error: 'Permessi insufficienti' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 403,
@@ -49,9 +56,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    const svcClient = createClient(supabaseUrl, supabaseServiceKey);
-    const { error } = await svcClient.from('banned_users').delete().eq('user_id', user_id);
-    if (error) throw error;
+    const { error } = await supabase.from('banned_users').delete().eq('user_id', user_id);
+    if (error) {
+      console.error('Error unbanning user:', error);
+      throw error;
+    }
 
     return new Response(
       JSON.stringify({ success: true }),
