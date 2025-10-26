@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, MessageCircle, Image as ImageIcon, X, Bot } from "lucide-react";
+import { Send, MessageCircle, Image as ImageIcon, X, Bot, Headphones } from "lucide-react";
 import { AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -309,16 +309,9 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
                             <Bot className="h-5 w-5" />
                           </AvatarFallback>
                         ) : (
-                          <>
-                            <AvatarImage 
-                              src="/images/support-avatar.png" 
-                              alt="Supporto Clienti"
-                              className="object-cover w-full h-full"
-                            />
-                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
-                              SC
-                            </AvatarFallback>
-                          </>
+                          <AvatarFallback className="bg-gradient-to-br from-green-500 to-teal-600 text-white font-semibold">
+                            <Headphones className="h-5 w-5" />
+                          </AvatarFallback>
                         )}
                       </Avatar>
                     )}
