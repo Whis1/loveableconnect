@@ -409,6 +409,7 @@ export type Database = {
           is_admin_profile: boolean
           last_active: string | null
           latitude: number | null
+          location_locked: boolean | null
           longitude: number | null
           looking_for: string[] | null
           nickname: string
@@ -432,6 +433,7 @@ export type Database = {
           is_admin_profile?: boolean
           last_active?: string | null
           latitude?: number | null
+          location_locked?: boolean | null
           longitude?: number | null
           looking_for?: string[] | null
           nickname: string
@@ -455,6 +457,7 @@ export type Database = {
           is_admin_profile?: boolean
           last_active?: string | null
           latitude?: number | null
+          location_locked?: boolean | null
           longitude?: number | null
           looking_for?: string[] | null
           nickname?: string
@@ -549,6 +552,9 @@ export type Database = {
           is_admin_response: boolean
           message: string
           read: boolean
+          request_data: Json | null
+          request_status: string | null
+          request_type: string | null
           user_email: string
           user_id: string | null
         }
@@ -559,6 +565,9 @@ export type Database = {
           is_admin_response?: boolean
           message: string
           read?: boolean
+          request_data?: Json | null
+          request_status?: string | null
+          request_type?: string | null
           user_email: string
           user_id?: string | null
         }
@@ -569,6 +578,9 @@ export type Database = {
           is_admin_response?: boolean
           message?: string
           read?: boolean
+          request_data?: Json | null
+          request_status?: string | null
+          request_type?: string | null
           user_email?: string
           user_id?: string | null
         }
@@ -690,6 +702,10 @@ export type Database = {
         Returns: boolean
       }
       reset_daily_credits: { Args: never; Returns: undefined }
+      unlock_location_for_user: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "user" | "creator" | "admin"

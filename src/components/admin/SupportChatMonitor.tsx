@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, MessageCircle, User, Trash2 } from "lucide-react";
+import { Send, MessageCircle, User, Trash2, MapPin, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,6 +18,9 @@ interface SupportMessage {
   created_at: string;
   read: boolean;
   profiles?: { nickname: string };
+  request_type?: string;
+  request_status?: string;
+  request_data?: any;
 }
 
 interface UserConversation {
@@ -169,6 +172,99 @@ export const SupportChatMonitor = () => {
     }
   };
 
+  const handleApproveLocationChange = async (msg: SupportMessage) => {
+    if (!msg.request_data) return;
+
+    setLoading(true);
+    try {
+      // Aggiorna il profilo con la nuova location
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          city: msg.request_data.city,
+          latitude: msg.request_data.latitude,
+          longitude: msg.request_data.longitude,
+          location_locked: true,
+        })
+        .eq('id', msg.user_id);
+
+      if (updateError) throw updateError;
+
+      // Aggiorna lo stato della richiesta
+      const { error: msgError } = await supabase
+        .from('support_messages')
+        .update({ request_status: 'approved' })
+        .eq('id', msg.id);
+
+      if (msgError) throw msgError;
+
+      // Invia messaggio di conferma
+      await supabase
+        .from('support_messages')
+        .insert({
+          user_id: msg.user_id,
+          user_email: msg.user_email,
+          message: `✅ La tua richiesta di cambio location a "${msg.request_data.city}" è stata approvata!`,
+          is_admin_response: true,
+        });
+
+      toast({
+        title: "Richiesta approvata",
+        description: "La location è stata aggiornata con successo",
+      });
+
+      fetchMessages(msg.user_id);
+    } catch (error) {
+      console.error('Error approving location change:', error);
+      toast({
+        title: "Errore",
+        description: "Impossibile approvare la richiesta",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRejectLocationChange = async (msg: SupportMessage) => {
+    setLoading(true);
+    try {
+      // Aggiorna lo stato della richiesta
+      const { error: msgError } = await supabase
+        .from('support_messages')
+        .update({ request_status: 'rejected' })
+        .eq('id', msg.id);
+
+      if (msgError) throw msgError;
+
+      // Invia messaggio di rifiuto
+      await supabase
+        .from('support_messages')
+        .insert({
+          user_id: msg.user_id,
+          user_email: msg.user_email,
+          message: `❌ La tua richiesta di cambio location è stata rifiutata. Per maggiori informazioni contatta il supporto.`,
+          is_admin_response: true,
+        });
+
+      toast({
+        title: "Richiesta rifiutata",
+        description: "L'utente è stato informato",
+      });
+
+      fetchMessages(msg.user_id);
+    } catch (error) {
+      console.error('Error rejecting location change:', error);
+      toast({
+        title: "Errore",
+        description: "Impossibile rifiutare la richiesta",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedUserId) return;
 
@@ -291,38 +387,75 @@ export const SupportChatMonitor = () => {
                 <ScrollArea className="h-[480px] pr-4 mb-4" ref={scrollRef}>
                   <div className="space-y-4">
                     {messages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`flex gap-3 ${msg.is_admin_response ? 'justify-end' : 'justify-start'}`}
-                      >
-                        {!msg.is_admin_response && (
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback className="bg-secondary">
-                              U
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
+                      <div key={msg.id}>
                         <div
-                          className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                            msg.is_admin_response
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted'
-                          }`}
+                          className={`flex gap-3 ${msg.is_admin_response ? 'justify-end' : 'justify-start'}`}
                         >
-                          <p className="text-sm">{msg.message}</p>
-                          <p className="text-xs opacity-70 mt-1">
-                            {new Date(msg.created_at).toLocaleTimeString('it-IT', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </p>
+                          {!msg.is_admin_response && (
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="bg-secondary">
+                                U
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
+                          <div
+                            className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                              msg.is_admin_response
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-muted'
+                            }`}
+                          >
+                            <p className="text-sm">{msg.message}</p>
+                            <p className="text-xs opacity-70 mt-1">
+                              {new Date(msg.created_at).toLocaleTimeString('it-IT', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </p>
+                          </div>
+                          {msg.is_admin_response && (
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="bg-primary text-primary-foreground">
+                                A
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
                         </div>
-                        {msg.is_admin_response && (
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback className="bg-primary text-primary-foreground">
-                              A
-                            </AvatarFallback>
-                          </Avatar>
+                        
+                        {/* Mostra pulsanti di approvazione/rifiuto per richieste di cambio location */}
+                        {msg.request_type === 'location_change' && msg.request_status === 'pending' && !msg.is_admin_response && (
+                          <div className="mt-2 ml-11 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                            <div className="flex items-center gap-2 mb-2">
+                              <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                              <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                                Richiesta Cambio Location
+                              </p>
+                            </div>
+                            <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
+                              Nuova location: <strong>{msg.request_data?.city}</strong>
+                            </p>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => handleApproveLocationChange(msg)}
+                                disabled={loading}
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                <Check className="h-4 w-4 mr-1" />
+                                Approva
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleRejectLocationChange(msg)}
+                                disabled={loading}
+                              >
+                                <X className="h-4 w-4 mr-1" />
+                                Rifiuta
+                              </Button>
+                            </div>
+                          </div>
                         )}
                       </div>
                     ))}

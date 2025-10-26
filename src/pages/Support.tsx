@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -8,8 +8,13 @@ import { supabase } from "@/integrations/supabase/client";
 
 const Support = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const [userEmail, setUserEmail] = useState("");
+  const locationState = location.state as { 
+    isLocationChangeRequest?: boolean; 
+    newLocationData?: { city: string; latitude: number; longitude: number } 
+  } | null;
 
   useEffect(() => {
     const fetchUserEmail = async () => {
@@ -47,7 +52,11 @@ const Support = () => {
 
         <div className="flex justify-center">
           <div className="w-full max-w-2xl">
-            <SupportChat userEmail={userEmail} />
+            <SupportChat 
+              userEmail={userEmail} 
+              isLocationChangeRequest={locationState?.isLocationChangeRequest}
+              newLocationData={locationState?.newLocationData}
+            />
           </div>
         </div>
       </div>

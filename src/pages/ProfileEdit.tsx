@@ -10,10 +10,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Upload, X, Camera } from "lucide-react";
+import { ArrowLeft, Save, Upload, X, Camera, MapPin, AlertCircle } from "lucide-react";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
 import { InterestsAutocomplete } from "@/components/InterestsAutocomplete";
 import { SpotifySongSelector } from "@/components/SpotifySongSelector";
+import { LocationChangeRequest } from "@/components/LocationChangeRequest";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SpotifySong {
   id: string;
@@ -33,6 +35,9 @@ interface Profile {
   gender: string | null;
   sexual_orientation: string | null;
   city: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  location_locked: boolean | null;
   interests: string[] | null;
   avatar_url: string | null;
   photos: string[] | null;
@@ -56,6 +61,8 @@ const ProfileEdit = () => {
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [lookingFor, setLookingFor] = useState<string[]>([]);
   const [favoriteSongs, setFavoriteSongs] = useState<SpotifySong[]>([]);
+  const [showLocationRequest, setShowLocationRequest] = useState(false);
+  const [pendingLocationData, setPendingLocationData] = useState<{ city: string; latitude: number; longitude: number } | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -183,6 +190,24 @@ const ProfileEdit = () => {
   };
 
 
+  const handleCityChange = (city: string, lat?: number, lng?: number) => {
+    if (profile?.location_locked) {
+      // Non permettere il cambio diretto se bloccato
+      return;
+    }
+    setProfile({ 
+      ...profile!, 
+      city, 
+      latitude: lat || null, 
+      longitude: lng || null 
+    });
+  };
+
+  const handleLocationChangeRequest = (city: string, latitude: number, longitude: number) => {
+    setPendingLocationData({ city, latitude, longitude });
+    setShowLocationRequest(true);
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -232,6 +257,9 @@ const ProfileEdit = () => {
           gender: profile.gender,
           sexual_orientation: profile.sexual_orientation,
           city: profile.city,
+          latitude: profile.latitude,
+          longitude: profile.longitude,
+          location_locked: profile.city && !profile.location_locked ? true : profile.location_locked,
           interests: interests.length > 0 ? interests : null,
           avatar_url: avatarPath,
           photos: photosPaths.length > 0 ? photosPaths : null,
@@ -270,6 +298,36 @@ const ProfileEdit = () => {
   }
 
   if (!profile) return null;
+
+  if (showLocationRequest) {
+    return (
+      <div className="min-h-screen relative bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-4">
+        <div 
+          className="fixed inset-0 z-0 opacity-15 dark:opacity-25" 
+          style={{
+            backgroundImage: 'url(/images/love-background.png)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
+          }}
+        />
+        <div className="container mx-auto max-w-4xl relative z-10 py-8">
+          <LocationChangeRequest
+            currentCity={profile.city || undefined}
+            onRequestSubmit={(city, lat, lng) => {
+              // La richiesta viene inviata tramite il supporto
+              navigate('/support', { 
+                state: { 
+                  isLocationChangeRequest: true,
+                  newLocationData: { city, latitude: lat, longitude: lng }
+                }
+              });
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen relative bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-4">
@@ -471,12 +529,40 @@ const ProfileEdit = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="city">{t('profile.location')}</Label>
-                  <PlacesAutocomplete
-                    value={profile.city || ""}
-                    onChange={(value) => setProfile({ ...profile, city: value })}
-                    placeholder={t('profile.locationPlaceholder')}
-                    id="city"
-                  />
+                  {profile.location_locked ? (
+                    <div className="space-y-3">
+                      <div className="relative">
+                        <Input
+                          value={profile.city || ""}
+                          disabled
+                          className="bg-muted cursor-not-allowed pr-10"
+                        />
+                        <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <Alert className="bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
+                        <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        <AlertDescription className="text-amber-800 dark:text-amber-200 text-sm">
+                          {t('profile.locationLocked')}
+                        </AlertDescription>
+                      </Alert>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowLocationRequest(true)}
+                        className="w-full"
+                      >
+                        <MapPin className="h-4 w-4 mr-2" />
+                        {t('profile.requestLocationChange')}
+                      </Button>
+                    </div>
+                  ) : (
+                    <PlacesAutocomplete
+                      value={profile.city || ""}
+                      onChange={handleCityChange}
+                      placeholder={t('profile.locationPlaceholder')}
+                      id="city"
+                    />
+                  )}
                 </div>
               </div>
 

@@ -19,13 +19,18 @@ interface SupportMessage {
   created_at: string;
   read: boolean;
   image_url?: string;
+  request_type?: string;
+  request_status?: string;
+  request_data?: any;
 }
 
 interface SupportChatProps {
   userEmail: string;
+  isLocationChangeRequest?: boolean;
+  newLocationData?: { city: string; latitude: number; longitude: number };
 }
 
-export const SupportChat = ({ userEmail }: SupportChatProps) => {
+export const SupportChat = ({ userEmail, isLocationChangeRequest, newLocationData }: SupportChatProps) => {
   const { toast } = useToast();
   const { t } = useTranslation();
   const [messages, setMessages] = useState<SupportMessage[]>([]);
@@ -190,14 +195,24 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
         }
       }
 
+      let messageText = newMessage || t("support.imageLabel");
+      
+      // Se è una richiesta di cambio location, aggiungi i dettagli al messaggio
+      if (isLocationChangeRequest && newLocationData) {
+        messageText = `🗺️ Richiesta cambio location\n\nVorrei cambiare la mia location in: ${newLocationData.city}\n\n${messageText || 'In attesa di approvazione.'}`;
+      }
+
       const { error } = await supabase
         .from('support_messages')
         .insert({
           user_id: user.id,
           user_email: userEmail,
-          message: newMessage || t("support.imageLabel"),
+          message: messageText,
           is_admin_response: false,
           image_url: imageUrl,
+          request_type: isLocationChangeRequest ? 'location_change' : 'general',
+          request_status: isLocationChangeRequest ? 'pending' : 'completed',
+          request_data: isLocationChangeRequest ? newLocationData : null,
         });
 
       if (error) throw error;
@@ -210,7 +225,9 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
             .insert({
               user_id: user.id,
               user_email: userEmail,
-              message: t("support.autoResponse"),
+              message: isLocationChangeRequest 
+                ? "📍 Grazie per la tua richiesta di cambio location. Il nostro team la esaminerà al più presto e ti farà sapere se potrà essere approvata."
+                : t("support.autoResponse"),
               is_admin_response: true,
             });
         }, 1000);
@@ -218,6 +235,14 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
 
       setNewMessage("");
       removeImage();
+      
+      // Se era una richiesta di cambio location, mostra un messaggio di conferma
+      if (isLocationChangeRequest) {
+        toast({
+          title: "Richiesta inviata",
+          description: "La tua richiesta di cambio location è stata inviata al supporto clienti",
+        });
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       toast({

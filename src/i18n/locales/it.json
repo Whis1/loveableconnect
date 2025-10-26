@@ -107,7 +107,9 @@
     "suggested": "Suggeriti:",
     "maxInterestsNote": "Massimo 6 interessi",
     "loading": "Caricamento...",
-    "favoriteSongs": "Canzoni Preferite"
+    "favoriteSongs": "Canzoni Preferite",
+    "locationLocked": "⚠️ La location è bloccata. Puoi richiedere una modifica tramite supporto clienti.",
+    "requestLocationChange": "Richiedi Cambio Location"
   },
   "terms": {
     "link": "Privacy - Termini e condizioni - Cookie",

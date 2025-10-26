@@ -5,7 +5,7 @@ import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@
 
 interface PlacesAutocompleteProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string, lat?: number, lng?: number) => void;
   placeholder?: string;
   required?: boolean;
   id?: string;
@@ -13,6 +13,8 @@ interface PlacesAutocompleteProps {
 
 interface NominatimResult {
   display_name: string;
+  lat: string;
+  lon: string;
   address: {
     city?: string;
     town?: string;
@@ -30,7 +32,7 @@ export const PlacesAutocomplete = ({
   id = "places-autocomplete"
 }: PlacesAutocompleteProps) => {
   const { i18n, t } = useTranslation();
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<Array<{ label: string; lat: number; lon: number }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout>();
@@ -68,15 +70,23 @@ export const PlacesAutocomplete = ({
             const city = result.address.city || result.address.town || result.address.village || '';
             const province = result.address.province || result.address.state || '';
             
+            let label = '';
             if (city && province) {
               // Extract province abbreviation if available (e.g., "MI" from "Milano")
               const provinceAbbr = province.match(/\(([^)]+)\)/)?.[1] || province;
-              return `${city}, ${provinceAbbr}`;
+              label = `${city}, ${provinceAbbr}`;
+            } else {
+              label = city || province;
             }
-            return city || province;
+            
+            return {
+              label,
+              lat: parseFloat(result.lat),
+              lon: parseFloat(result.lon),
+            };
           })
           .filter((suggestion, index, self) => 
-            suggestion && self.indexOf(suggestion) === index
+            suggestion.label && self.findIndex(s => s.label === suggestion.label) === index
           );
 
         setSuggestions(formattedSuggestions);
@@ -118,14 +128,14 @@ export const PlacesAutocomplete = ({
                 <CommandGroup>
                   {suggestions.map((suggestion) => (
                     <CommandItem
-                      key={suggestion}
+                      key={suggestion.label}
                       onSelect={() => {
-                        onChange(suggestion);
+                        onChange(suggestion.label, suggestion.lat, suggestion.lon);
                         setShowSuggestions(false);
                       }}
                       className="cursor-pointer"
                     >
-                      {suggestion}
+                      {suggestion.label}
                     </CommandItem>
                   ))}
                 </CommandGroup>
