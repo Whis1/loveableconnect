@@ -255,14 +255,6 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
             </div>
           </div>
 
-          {profile.bio && (
-            <div className="w-full">
-              <p className="text-sm text-muted-foreground italic border-l-2 border-primary/20 pl-4">
-                "{translatedBio || profile.bio}"
-              </p>
-            </div>
-          )}
-
           {profile.interests && profile.interests.length > 0 && (
             <div className="w-full space-y-2">
               <p className="text-sm font-semibold">{t("userProfile.interests")}</p>
