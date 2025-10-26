@@ -156,7 +156,6 @@ export const ProfileManager = () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("id, nickname, full_name, age, city, avatar_url, bio")
-        .eq("is_admin_profile", false)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
