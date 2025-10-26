@@ -25,7 +25,17 @@ import Support from "./pages/Support";
 import Admin from "./pages/Admin";
 import AdminArrettu from "./pages/AdminArrettu";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minuti - i dati restano freschi
+      gcTime: 10 * 60 * 1000, // 10 minuti - cache mantiene i dati
+      refetchOnWindowFocus: false, // Non ricarica quando si torna alla finestra
+      refetchOnMount: false, // Non ricarica al mount se i dati sono freschi
+      retry: 1, // Riprova solo 1 volta in caso di errore
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
