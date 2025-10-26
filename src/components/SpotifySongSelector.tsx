@@ -55,7 +55,9 @@ export const SpotifySongSelector = ({
       });
 
       if (error) throw error;
-      setSearchResults(data.tracks || []);
+      // Filter only songs with preview available
+      const tracksWithPreview = (data.tracks || []).filter((track: SpotifySong) => track.preview_url);
+      setSearchResults(tracksWithPreview);
     } catch (error: any) {
       console.error('Error searching Spotify:', error);
       toast({

@@ -80,16 +80,8 @@ export const SpotifySongCard = ({ song, size = "medium", onPlay }: SpotifySongCa
     e.stopPropagation();
     e.preventDefault();
     
-    // If no preview available, open the track on Spotify
-    if (!song.preview_url) {
-      if (song.id) {
-        window.open(`https://open.spotify.com/track/${song.id}`, '_blank', 'noopener,noreferrer');
-      }
-      return;
-    }
-
-    if (!audioRef.current) {
-      console.log('No audio element');
+    if (!song.preview_url || !audioRef.current) {
+      console.log('No preview URL or audio ref');
       return;
     }
 
