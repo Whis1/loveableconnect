@@ -10,6 +10,7 @@ import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { GifPicker } from "@/components/chat/GifPicker";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ChatUserProfile } from "@/components/chat/ChatUserProfile";
+import { ProfileNotebook } from "@/components/admin/ProfileNotebook";
 
 
 interface AdminChatDialogProps {
@@ -269,89 +270,112 @@ export const AdminChatDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl w-full h-[90vh] flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
-          <DialogTitle>
-            Chat: {adminNickname} ↔️ {userNickname}
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-[95vw] w-full h-[95vh] p-0">
+        <div className="flex h-full gap-2 p-2">
+          {/* Notebook Utente (Sinistra) */}
+          <div className="hidden lg:block w-64 shrink-0">
+            <ProfileNotebook 
+              profileId={userId} 
+              profileName={userNickname}
+              isAdmin={false}
+            />
+          </div>
 
-        {/* User Profile */}
-        <div className="px-6 pb-4 shrink-0 border-b">
-          <ChatUserProfile userId={userId} currentUserId={adminProfileId} showRealLocation={true} />
-        </div>
+          {/* Chat Centrale */}
+          <div className="flex-1 flex flex-col border rounded-lg overflow-hidden bg-background">
+            <DialogHeader className="px-6 pt-6 pb-4 shrink-0 border-b">
+              <DialogTitle>
+                Chat: {adminNickname} ↔️ {userNickname}
+              </DialogTitle>
+            </DialogHeader>
 
-        {/* Main Content: Messages only (notebooks spostati fuori) */}
-        <div className="flex-1 flex px-3 md:px-6 py-4 min-h-0">
-          <ScrollArea className="flex-1 min-h-0 overflow-x-hidden">
-            {loading ? (
-              <p className="text-muted-foreground text-center py-8">Caricamento...</p>
-            ) : (
-              <div className="space-y-4 py-4">
-                {messages.map((message) => {
-                  const isOwn = message.sender_id === adminProfileId;
-                  const senderAvatar = isOwn ? adminAvatar : userAvatar;
-                  
-                  return (
-                    <MessageBubble
-                      key={message.id}
-                      content={message.content}
-                      messageType={message.message_type}
-                      mediaUrl={message.media_url}
-                      isOwn={isOwn}
-                      timestamp={message.created_at}
-                      messageId={message.id}
-                      senderId={message.sender_id}
-                      receiverId={message.receiver_id}
-                      matchId={message.match_id}
-                      senderAvatarUrl={senderAvatar}
-                    />
-                  );
-                })}
-                <div ref={messagesEndRef} />
-              </div>
-            )}
-          </ScrollArea>
-        </div>
-
-        {/* Input */}
-        <div className="border-t p-4 bg-background shrink-0">
-          <form onSubmit={(e) => handleSendMessage(e)}>
-            <div className="flex gap-2 items-center">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageUpload}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="shrink-0"
-              >
-                <Paperclip className="h-5 w-5" />
-              </Button>
-              <EmojiPicker onEmojiSelect={handleEmojiSelect} />
-              <GifPicker onGifSelect={handleGifSelect} />
-              <Input
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Scrivi un messaggio..."
-                className="flex-1"
-              />
-              <Button
-                type="submit"
-                disabled={!newMessage.trim() || uploading}
-                className="shrink-0"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
+            {/* User Profile */}
+            <div className="px-6 pb-4 shrink-0 border-b">
+              <ChatUserProfile userId={userId} currentUserId={adminProfileId} showRealLocation={true} />
             </div>
-          </form>
+
+            {/* Messages */}
+            <div className="flex-1 px-3 md:px-6 py-4 min-h-0">
+              <ScrollArea className="h-full">
+                {loading ? (
+                  <p className="text-muted-foreground text-center py-8">Caricamento...</p>
+                ) : (
+                  <div className="space-y-4 py-4">
+                    {messages.map((message) => {
+                      const isOwn = message.sender_id === adminProfileId;
+                      const senderAvatar = isOwn ? adminAvatar : userAvatar;
+                      
+                      return (
+                        <MessageBubble
+                          key={message.id}
+                          content={message.content}
+                          messageType={message.message_type}
+                          mediaUrl={message.media_url}
+                          isOwn={isOwn}
+                          timestamp={message.created_at}
+                          messageId={message.id}
+                          senderId={message.sender_id}
+                          receiverId={message.receiver_id}
+                          matchId={message.match_id}
+                          senderAvatarUrl={senderAvatar}
+                        />
+                      );
+                    })}
+                    <div ref={messagesEndRef} />
+                  </div>
+                )}
+              </ScrollArea>
+            </div>
+
+            {/* Input */}
+            <div className="border-t p-4 bg-background shrink-0">
+              <form onSubmit={(e) => handleSendMessage(e)}>
+                <div className="flex gap-2 items-center">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="shrink-0"
+                  >
+                    <Paperclip className="h-5 w-5" />
+                  </Button>
+                  <EmojiPicker onEmojiSelect={handleEmojiSelect} />
+                  <GifPicker onGifSelect={handleGifSelect} />
+                  <Input
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Scrivi un messaggio..."
+                    className="flex-1"
+                  />
+                  <Button
+                    type="submit"
+                    disabled={!newMessage.trim() || uploading}
+                    className="shrink-0"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          {/* Notebook Admin (Destra) */}
+          <div className="hidden lg:block w-64 shrink-0">
+            <ProfileNotebook 
+              profileId={adminProfileId} 
+              profileName={adminNickname}
+              isAdmin={true}
+            />
+          </div>
         </div>
       </DialogContent>
     </Dialog>
