@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, MessageCircle, Image as ImageIcon, X } from "lucide-react";
+import { Send, MessageCircle, Image as ImageIcon, X, Bot } from "lucide-react";
 import { AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -256,29 +256,49 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
                 </p>
               </div>
             ) : (
-              messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex gap-3 ${msg.is_admin_response ? 'justify-start' : 'justify-end'} animate-in fade-in slide-in-from-bottom-2`}
-                >
-                  {msg.is_admin_response && (
-                    <Avatar className="h-9 w-9 border-2 border-primary/20 flex-shrink-0">
-                      <AvatarImage src="/images/support-avatar.png" alt="Supporto Clienti" />
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
-                        SC
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
+              messages.map((msg) => {
+                // Check if it's the automatic bot response
+                const isAutomaticBotMessage = msg.is_admin_response && 
+                  (msg.message.includes(t("support.autoResponse")) || 
+                   msg.message.includes("Il supporto clienti ti assisterà"));
+                
+                return (
                   <div
-                    className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm break-words ${
-                      msg.is_admin_response
-                        ? 'bg-muted rounded-tl-sm'
-                        : 'bg-primary text-primary-foreground rounded-tr-sm'
-                    }`}
+                    key={msg.id}
+                    className={`flex gap-3 ${msg.is_admin_response ? 'justify-start' : 'justify-end'} animate-in fade-in slide-in-from-bottom-2`}
                   >
                     {msg.is_admin_response && (
-                      <p className="text-xs font-semibold mb-1 opacity-70">Supporto Clienti</p>
+                      <Avatar className="h-9 w-9 border-2 border-primary/20 flex-shrink-0 overflow-hidden">
+                        {isAutomaticBotMessage ? (
+                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
+                            <Bot className="h-5 w-5" />
+                          </AvatarFallback>
+                        ) : (
+                          <>
+                            <AvatarImage 
+                              src="/images/support-avatar.png" 
+                              alt="Supporto Clienti"
+                              className="object-cover w-full h-full scale-150"
+                            />
+                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
+                              SC
+                            </AvatarFallback>
+                          </>
+                        )}
+                      </Avatar>
                     )}
+                    <div
+                      className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm break-words ${
+                        msg.is_admin_response
+                          ? 'bg-muted rounded-tl-sm'
+                          : 'bg-primary text-primary-foreground rounded-tr-sm'
+                      }`}
+                    >
+                      {msg.is_admin_response && (
+                        <p className="text-xs font-semibold mb-1 opacity-70">
+                          {isAutomaticBotMessage ? 'Bot' : 'Supporto Clienti'}
+                        </p>
+                      )}
                     {msg.image_url && (
                       <img 
                         src={msg.image_url} 
@@ -303,7 +323,8 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
                     </Avatar>
                   )}
                 </div>
-              ))
+              );
+            })
             )}
             <div ref={messagesEndRef} />
           </div>
