@@ -4,10 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, MessageCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useTextTranslation } from "@/hooks/useTranslation";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 
 interface MatchWithProfile {
   id: string;
@@ -38,6 +40,7 @@ const Matches = () => {
   const [matches, setMatches] = useState<MatchWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const { unreadCounts, getUnreadForMatch } = useUnreadMessages(currentUserId);
 
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -126,7 +129,7 @@ const Matches = () => {
       setMatches(matchesWithProfiles);
       setLoading(false);
 
-      // Set up realtime subscription for new matches
+      // Set up realtime subscription for new matches and messages
       channel = supabase
         .channel('matches-channel')
         .on(
@@ -182,6 +185,31 @@ const Matches = () => {
             toast({
               title: t("matches.newMatch"),
               description: `${t("matches.newMatchWith")} ${displayName}!`,
+            });
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `receiver_id=eq.${session.user.id}`,
+          },
+          async (payload) => {
+            const newMessage = payload.new as any;
+            
+            // Find the match for this message
+            const match = matchesWithProfiles.find(m => m.id === newMessage.match_id);
+            if (!match) return;
+
+            const displayName = match.otherUser.is_admin_profile 
+              ? match.otherUser.nickname 
+              : match.otherUser.full_name;
+            
+            toast({
+              title: `Nuovo messaggio da ${displayName}`,
+              description: newMessage.content.substring(0, 50) + (newMessage.content.length > 50 ? '...' : ''),
             });
           }
         )
@@ -292,12 +320,22 @@ const Matches = () => {
                           </div>
                         </div>
                         <div className="flex gap-2 ml-4">
-                          <Button
-                            onClick={() => navigate(`/chat/${match.id}`)}
-                          >
-                            <MessageCircle className="h-4 w-4 mr-2" />
-                            {t("matches.chat")}
-                          </Button>
+                          <div className="relative">
+                            <Button
+                              onClick={() => navigate(`/chat/${match.id}`)}
+                            >
+                              <MessageCircle className="h-4 w-4 mr-2" />
+                              {t("matches.chat")}
+                            </Button>
+                            {getUnreadForMatch(match.id) > 0 && (
+                              <Badge 
+                                variant="destructive" 
+                                className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                              >
+                                {getUnreadForMatch(match.id)}
+                              </Badge>
+                            )}
+                          </div>
                           <Button
                             variant="ghost"
                             size="icon"
