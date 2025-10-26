@@ -38,7 +38,7 @@ export const CreditCountdown = ({ creditsDepletedAt }: CreditCountdownProps) => 
   return (
     <div className="flex items-center gap-2 text-sm text-muted-foreground/60">
       <Clock className="h-4 w-4" />
-      <span>Rinnovo giornaliero</span>
+      <span>Rinnovo giornaliero: {timeLeft}</span>
     </div>
   );
 };
