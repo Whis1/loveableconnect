@@ -50,7 +50,7 @@ export const CreditsDisplay = () => {
   }
 
   const showCountdown = 
-    credits.balance < 40 && 
+    credits.balance < 26 && 
     credits.credits_depleted_at !== null && 
     credits.credits_depleted_at !== undefined;
 
