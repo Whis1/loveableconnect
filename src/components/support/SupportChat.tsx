@@ -30,7 +30,7 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
   const [loading, setLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const scrollViewportRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -60,9 +60,7 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
 
   useEffect(() => {
     // Scroll to bottom when new messages arrive
-    if (scrollViewportRef.current) {
-      scrollViewportRef.current.scrollTop = scrollViewportRef.current.scrollHeight;
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const fetchMessages = async () => {
@@ -243,9 +241,8 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
-        <div className="flex-1 relative">
-          <ScrollArea className="absolute inset-0">
-            <div ref={scrollViewportRef} className="px-4 py-6 space-y-4">
+        <ScrollArea className="flex-1 px-4 py-6">
+          <div className="space-y-4">
             {messages.length === 0 ? (
               <div className="text-center py-12">
                 <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -304,9 +301,9 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
                 </div>
               ))
             )}
-            </div>
-          </ScrollArea>
-        </div>
+            <div ref={messagesEndRef} />
+          </div>
+        </ScrollArea>
 
         <div className="border-t bg-background/50 p-4">
           {imagePreview && (
