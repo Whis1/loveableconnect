@@ -208,13 +208,9 @@ const Credits = () => {
                       <Badge variant="default">{t("credits.popular")}</Badge>
                     )}
                   </div>
-                  <CardDescription>{pkg.credits} {t("credits.creditsUnit")}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="text-3xl font-bold">{pkg.price}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {(pkg.priceValue / pkg.credits).toFixed(2)}€ {t("credits.perCredit")}
-                  </div>
                   <Button
                     onClick={() => handlePurchaseCredits(pkg.id)}
                     disabled={purchasing || credits?.is_premium}
