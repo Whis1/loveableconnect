@@ -35,7 +35,10 @@ Deno.serve(async (req) => {
 
     const { data, error } = await supabase
       .from('support_messages')
-      .select('*')
+      .select(`
+        *,
+        profiles:user_id (nickname)
+      `)
       .order('created_at', { ascending: false });
     if (error) throw error;
     return new Response(JSON.stringify({ success: true, messages: data || [] }), {

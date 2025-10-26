@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, MessageCircle, User } from "lucide-react";
+import { Send, MessageCircle, User, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,11 +17,13 @@ interface SupportMessage {
   is_admin_response: boolean;
   created_at: string;
   read: boolean;
+  profiles?: { nickname: string };
 }
 
 interface UserConversation {
   user_id: string;
   user_email: string;
+  nickname: string;
   unread_count: number;
   last_message: string;
   last_message_time: string;
@@ -80,6 +82,7 @@ export const SupportChatMonitor = () => {
           acc[msg.user_id] = {
             user_id: msg.user_id,
             user_email: msg.user_email,
+            nickname: msg.profiles?.nickname || 'N/A',
             unread_count: 0,
             last_message: msg.message,
             last_message_time: msg.created_at,
@@ -121,6 +124,47 @@ export const SupportChatMonitor = () => {
   const handleSelectUser = (userId: string) => {
     setSelectedUserId(userId);
     fetchMessages(userId);
+  };
+
+  const handleDeleteConversation = async (userId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!confirm('Sei sicuro di voler eliminare questa conversazione? Tutti i messaggi verranno eliminati.')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('support_messages')
+        .delete()
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Conversazione eliminata",
+        description: "La conversazione è stata eliminata con successo",
+      });
+
+      // Reset selected user if it was the deleted one
+      if (selectedUserId === userId) {
+        setSelectedUserId(null);
+        setMessages([]);
+      }
+
+      // Refresh conversations
+      fetchConversations();
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+      toast({
+        title: "Errore",
+        description: "Impossibile eliminare la conversazione",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSendMessage = async () => {
@@ -191,14 +235,29 @@ export const SupportChatMonitor = () => {
                     >
                       <div className="flex items-center gap-2 mb-1">
                         <User className="h-4 w-4" />
-                        <span className="font-medium text-sm truncate">
-                          {conv.user_email}
-                        </span>
-                        {conv.unread_count > 0 && (
-                          <span className="ml-auto bg-primary text-primary-foreground text-xs rounded-full px-2">
-                            {conv.unread_count}
-                          </span>
-                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">
+                            {conv.nickname}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {conv.user_email}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {conv.unread_count > 0 && (
+                            <span className="bg-primary text-primary-foreground text-xs rounded-full px-2">
+                              {conv.unread_count}
+                            </span>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={(e) => handleDeleteConversation(conv.user_id, e)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                       <p className="text-xs text-muted-foreground truncate">
                         {conv.last_message}
