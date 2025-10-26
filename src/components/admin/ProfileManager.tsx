@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import { Users, MessageSquare, Save, Upload, X, Image as ImageIcon, Search } from "lucide-react";
+import { Users, MessageSquare, Save, Upload, X, Image as ImageIcon, Search, Heart } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AdminChatDialog } from "./AdminChatDialog";
 
@@ -203,9 +203,7 @@ export const ProfileManager = () => {
           description: "Il like è stato rimosso",
         });
       } else {
-        // Check if a match was created
         if (data.match_created) {
-          // Remove from likes since a match was created
           setProfileLikes(prev => ({
             ...prev,
             [profileId]: currentLikes.filter(id => id !== userId)
@@ -228,7 +226,6 @@ export const ProfileManager = () => {
         }
       }
 
-      // Refresh profile likes to ensure consistency
       await fetchProfileLikes(profileId);
     } catch (error: any) {
       console.error("Error toggling like:", error);
@@ -240,45 +237,12 @@ export const ProfileManager = () => {
     }
   };
 
-  const fetchProfileMessages = async (profileId: string) => {
-    setLoadingMessages(true);
-    try {
-      const { data, error } = await supabase
-        .from("messages")
-        .select(`
-          id,
-          content,
-          created_at,
-          sender_id,
-          receiver_id,
-          sender_profile:profiles!messages_sender_id_fkey(nickname, avatar_url),
-          receiver_profile:profiles!messages_receiver_id_fkey(nickname, avatar_url)
-        `)
-        .or(`sender_id.eq.${profileId},receiver_id.eq.${profileId}`)
-        .order("created_at", { ascending: false })
-        .limit(100);
-
-      if (error) throw error;
-      setMessages(data as any || []);
-    } catch (error: any) {
-      console.error("Error fetching messages:", error);
-      toast({
-        title: "Errore",
-        description: "Impossibile caricare i messaggi",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingMessages(false);
-    }
-  };
-
   const handleAvatarUpload = async (profileId: string, file: File) => {
     setUploadingImages({ ...uploadingImages, [`${profileId}-avatar`]: true });
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${profileId}-avatar-${Date.now()}.${fileExt}`;
       
-      // Usa l'edge function per caricare con service role
       const formData = new FormData();
       formData.append('file', file);
       formData.append('fileName', fileName);
@@ -292,7 +256,6 @@ export const ProfileManager = () => {
         throw new Error(uploadError?.message || data.error || 'Upload failed');
       }
 
-      // Usa l'edge function per aggiornare il profilo
       const { data: updateData, error: updateError } = await supabase.functions.invoke('admin-update-profile', {
         body: { profileId, updates: { avatar_url: fileName } },
       });
@@ -337,7 +300,6 @@ export const ProfileManager = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `${profileId}-gallery-${Date.now()}.${fileExt}`;
       
-      // Usa l'edge function per caricare con service role
       const formData = new FormData();
       formData.append('file', file);
       formData.append('fileName', fileName);
@@ -353,7 +315,6 @@ export const ProfileManager = () => {
 
       const updatedPhotos = [...(profile.photos || []), fileName];
       
-      // Usa l'edge function per aggiornare il profilo
       const { data: updateData, error: updateError } = await supabase.functions.invoke('admin-update-profile', {
         body: { profileId, updates: { photos: updatedPhotos } },
       });
@@ -385,7 +346,6 @@ export const ProfileManager = () => {
     if (!profile) return;
 
     try {
-      // Usa l'edge function per eliminare con service role
       const { data, error: deleteError } = await supabase.functions.invoke('admin-delete-image', {
         body: { filePath: photoUrl, bucket: 'profile-images' },
       });
@@ -396,7 +356,6 @@ export const ProfileManager = () => {
 
       const updatedPhotos = (profile.photos || []).filter(p => p !== photoUrl);
       
-      // Usa l'edge function per aggiornare il profilo
       const { data: updateData, error: updateError } = await supabase.functions.invoke('admin-update-profile', {
         body: { profileId, updates: { photos: updatedPhotos } },
       });
@@ -469,7 +428,6 @@ export const ProfileManager = () => {
     }
   };
 
-  // Filter profiles based on search query
   const filteredProfiles = profiles.filter((profile) =>
     profile.nickname.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -485,296 +443,316 @@ export const ProfileManager = () => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between gap-4">
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Gestione Profili ({filteredProfiles.length})
-          </CardTitle>
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Cerca per nickname..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-4">
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Gestione Profili ({filteredProfiles.length})
+            </CardTitle>
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Cerca per nickname..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[600px] pr-4">
-          <Accordion type="single" collapsible className="space-y-2">
-            {filteredProfiles.map((profile) => (
-              <AccordionItem key={profile.id} value={profile.id} className="border rounded-lg px-4">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
-                      {profile.avatar_url ? (
-                        <AvatarImage 
-                          src={supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl}
-                        />
-                      ) : null}
-                      <AvatarFallback>{profile.nickname[0]?.toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <div className="text-left">
-                      <p className="font-semibold">{profile.nickname}</p>
-                      <p className="text-sm text-muted-foreground">{profile.full_name}</p>
-                    </div>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-4 pt-4">
-                    {/* Avatar */}
-                    <div className="space-y-2">
-                      <Label>Foto Profilo</Label>
-                      <div className="flex items-center gap-4">
-                        <Avatar className="h-20 w-20">
-                          {profile.avatar_url ? (
-                            <AvatarImage 
-                              src={supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl} 
-                            />
-                          ) : null}
-                          <AvatarFallback>{profile.nickname[0]?.toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) handleAvatarUpload(profile.id, file);
-                            }}
-                            disabled={uploadingImages[`${profile.id}-avatar`]}
-                            className="max-w-xs"
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[600px] pr-4">
+            <Accordion type="single" collapsible className="space-y-2">
+              {filteredProfiles.map((profile) => (
+                <AccordionItem key={profile.id} value={profile.id} className="border rounded-lg px-4">
+                  <AccordionTrigger className="hover:no-underline">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        {profile.avatar_url ? (
+                          <AvatarImage 
+                            src={supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl}
                           />
-                          {uploadingImages[`${profile.id}-avatar`] && (
-                            <p className="text-sm text-muted-foreground mt-1">{t("common.uploadingImage")}</p>
-                          )}
-                        </div>
+                        ) : null}
+                        <AvatarFallback>{profile.nickname[0]?.toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <div className="text-left">
+                        <p className="font-semibold">{profile.nickname}</p>
+                        <p className="text-sm text-muted-foreground">{profile.full_name}</p>
                       </div>
                     </div>
-
-                    {/* Galleria Foto */}
-                    <div className="space-y-3">
-                      <Label>Galleria Foto ({(profile.photos || []).length}/6)</Label>
-                      <div className="grid grid-cols-3 gap-3">
-                        {(profile.photos || []).map((photoUrl, index) => (
-                          <div key={index} className="relative group aspect-square">
-                            <img
-                              src={supabase.storage.from('profile-images').getPublicUrl(photoUrl).data.publicUrl}
-                              alt={`Foto ${index + 1}`}
-                              className="w-full h-full object-cover rounded-lg"
-                            />
-                            <Button
-                              variant="destructive"
-                              size="icon"
-                              className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => handleRemoveGalleryPhoto(profile.id, photoUrl)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        ))}
-                        {(profile.photos || []).length < 6 && (
-                          <label className="aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-accent transition-colors">
-                            <Input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) handleGalleryUpload(profile.id, file);
-                              }}
-                              disabled={uploadingImages[`${profile.id}-gallery`]}
-                            />
-                            {uploadingImages[`${profile.id}-gallery`] ? (
-                              <p className="text-xs">{t("common.uploadingImage")}</p>
-                            ) : (
-                              <>
-                                <ImageIcon className="h-6 w-6 mb-1 text-muted-foreground" />
-                                <p className="text-xs text-muted-foreground">{t("common.addPhoto")}</p>
-                              </>
-                            )}
-                          </label>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Info Base */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Nickname</Label>
-                        <Input
-                          value={profile.nickname}
-                          onChange={(e) => {
-                            const updated = { ...profile, nickname: e.target.value };
-                            setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
-                          }}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Età</Label>
-                        <Input
-                          type="number"
-                          value={profile.age || ""}
-                          onChange={(e) => {
-                            const updated = { ...profile, age: parseInt(e.target.value) || null };
-                            setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Città</Label>
-                      <Input
-                        value={profile.city || ""}
-                        onChange={(e) => {
-                          const updated = { ...profile, city: e.target.value };
-                          setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
-                        }}
-                      />
-                    </div>
-
-                    {/* Genere */}
-                    <div className="space-y-2">
-                      <Label>Genere</Label>
-                      <Select
-                        value={profile.gender || ""}
-                        onValueChange={(value) => {
-                          const updated = { ...profile, gender: value };
-                          setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleziona genere">
-                            {profile.gender ? getGenderLabel(profile.gender) : "Seleziona genere"}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent className="bg-background z-50">
-                          <SelectItem value="male">Uomo</SelectItem>
-                          <SelectItem value="female">Donna</SelectItem>
-                          <SelectItem value="non-binary">Non binario</SelectItem>
-                          <SelectItem value="genderfluid">Genderfluid</SelectItem>
-                          <SelectItem value="transexual">Transessuale</SelectItem>
-                          <SelectItem value="transgender">Transgender</SelectItem>
-                          <SelectItem value="other">Altro</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Orientamento Sessuale */}
-                    <div className="space-y-2">
-                      <Label>Orientamento Sessuale</Label>
-                      <Select
-                        value={profile.sexual_orientation || ""}
-                        onValueChange={(value) => {
-                          const updated = { ...profile, sexual_orientation: value };
-                          setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleziona orientamento">
-                            {profile.sexual_orientation ? getOrientationLabel(profile.sexual_orientation) : "Seleziona orientamento"}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent className="bg-background z-50">
-                          <SelectItem value="heterosexual">Eterosessuale</SelectItem>
-                          <SelectItem value="homosexual">Omosessuale</SelectItem>
-                          <SelectItem value="bisexual">Bisessuale</SelectItem>
-                          <SelectItem value="pansexual">Pansessuale</SelectItem>
-                          <SelectItem value="asexual">Asessuale</SelectItem>
-                          <SelectItem value="other">Altro</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Stato Relazione */}
-                    <div className="space-y-2">
-                      <Label>Stato Relazione</Label>
-                      <Select
-                        value={profile.relationship_status || ""}
-                        onValueChange={(value) => {
-                          const updated = { ...profile, relationship_status: value };
-                          setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleziona stato" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background z-50">
-                          <SelectItem value="single">Single</SelectItem>
-                          <SelectItem value="in_relationship">In una relazione</SelectItem>
-                          <SelectItem value="married">Sposato/a</SelectItem>
-                          <SelectItem value="divorced">Divorziato/a</SelectItem>
-                          <SelectItem value="widowed">Vedovo/a</SelectItem>
-                          <SelectItem value="prefer_not_say">Preferisco non dirlo</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Cosa Cerchi */}
-                    <div className="space-y-2">
-                      <Label>Cosa cerchi</Label>
-                      <Select
-                        value={(profile.looking_for || [])[0] || ""}
-                        onValueChange={(value) => {
-                          const updated = { ...profile, looking_for: value ? [value] : [] };
-                          setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleziona cosa cerchi" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background z-50">
-                          <SelectItem value="Relazione seria">Relazione seria</SelectItem>
-                          <SelectItem value="Incontri casuali">Incontri casuali</SelectItem>
-                          <SelectItem value="Amicizia">Amicizia</SelectItem>
-                          <SelectItem value="Non specifico">Non specifico</SelectItem>
-                          <SelectItem value="Preferisco non dirlo">Preferisco non dirlo</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Interessi */}
-                    <div className="space-y-2">
-                      <Label>Interessi (separati da virgola)</Label>
-                      <Input
-                        value={profile.interests?.join(", ") || ""}
-                        onChange={(e) => handleInterestsChange(profile.id, e.target.value)}
-                        placeholder="Es: Cinema, Sport, Viaggi"
-                      />
-                    </div>
-
-                    {/* Bio */}
-                    <div className="space-y-2">
-                      <Label>Bio</Label>
-                      <Textarea
-                        value={profile.bio || ""}
-                        onChange={(e) => {
-                          const updated = { ...profile, bio: e.target.value };
-                          setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
-                        }}
-                        rows={3}
-                        placeholder="Scrivi qualcosa su di te..."
-                      />
-                    </div>
-
-                    {/* Azioni */}
-                    <div className="flex gap-2 pt-2">
-                      <Button onClick={() => handleUpdateProfile(profile)} className="flex-1">
-                        <Save className="h-4 w-4 mr-2" />
-                        Salva Modifiche
-                      </Button>
-                      
-                      {/* Gestione Likes */}
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="flex gap-2 pt-4">
+                      {/* Dialog Modifica Profilo */}
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button variant="outline">
-                            <Users className="h-4 w-4 mr-2" />
+                          <Button variant="outline" className="flex-1">
+                            <Save className="h-4 w-4 mr-2" />
+                            Modifica profilo
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl max-h-[90vh]">
+                          <DialogHeader>
+                            <DialogTitle>Modifica Profilo: {profile.nickname}</DialogTitle>
+                          </DialogHeader>
+                          <ScrollArea className="max-h-[calc(90vh-120px)] pr-4">
+                            <div className="space-y-4 pt-4">
+                              {/* Avatar */}
+                              <div className="space-y-2">
+                                <Label>Foto Profilo</Label>
+                                <div className="flex items-center gap-4">
+                                  <Avatar className="h-20 w-20">
+                                    {profile.avatar_url ? (
+                                      <AvatarImage 
+                                        src={supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl} 
+                                      />
+                                    ) : null}
+                                    <AvatarFallback>{profile.nickname[0]?.toUpperCase()}</AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <Input
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) handleAvatarUpload(profile.id, file);
+                                      }}
+                                      disabled={uploadingImages[`${profile.id}-avatar`]}
+                                      className="max-w-xs"
+                                    />
+                                    {uploadingImages[`${profile.id}-avatar`] && (
+                                      <p className="text-sm text-muted-foreground mt-1">{t("common.uploadingImage")}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Galleria Foto */}
+                              <div className="space-y-3">
+                                <Label>Galleria Foto ({(profile.photos || []).length}/6)</Label>
+                                <div className="grid grid-cols-3 gap-3">
+                                  {(profile.photos || []).map((photoUrl, index) => (
+                                    <div key={index} className="relative group aspect-square">
+                                      <img
+                                        src={supabase.storage.from('profile-images').getPublicUrl(photoUrl).data.publicUrl}
+                                        alt={`Foto ${index + 1}`}
+                                        className="w-full h-full object-cover rounded-lg"
+                                      />
+                                      <Button
+                                        variant="destructive"
+                                        size="icon"
+                                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => handleRemoveGalleryPhoto(profile.id, photoUrl)}
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  ))}
+                                  {(profile.photos || []).length < 6 && (
+                                    <label className="aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-accent transition-colors">
+                                      <Input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                          const file = e.target.files?.[0];
+                                          if (file) handleGalleryUpload(profile.id, file);
+                                        }}
+                                        disabled={uploadingImages[`${profile.id}-gallery`]}
+                                      />
+                                      {uploadingImages[`${profile.id}-gallery`] ? (
+                                        <p className="text-xs">{t("common.uploadingImage")}</p>
+                                      ) : (
+                                        <>
+                                          <ImageIcon className="h-6 w-6 mb-1 text-muted-foreground" />
+                                          <p className="text-xs text-muted-foreground">{t("common.addPhoto")}</p>
+                                        </>
+                                      )}
+                                    </label>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Info Base */}
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label>Nickname</Label>
+                                  <Input
+                                    value={profile.nickname}
+                                    onChange={(e) => {
+                                      const updated = { ...profile, nickname: e.target.value };
+                                      setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
+                                    }}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label>Età</Label>
+                                  <Input
+                                    type="number"
+                                    value={profile.age || ""}
+                                    onChange={(e) => {
+                                      const updated = { ...profile, age: parseInt(e.target.value) || null };
+                                      setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
+                                    }}
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label>Città</Label>
+                                <Input
+                                  value={profile.city || ""}
+                                  onChange={(e) => {
+                                    const updated = { ...profile, city: e.target.value };
+                                    setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
+                                  }}
+                                />
+                              </div>
+
+                              {/* Genere */}
+                              <div className="space-y-2">
+                                <Label>Genere</Label>
+                                <Select
+                                  value={profile.gender || ""}
+                                  onValueChange={(value) => {
+                                    const updated = { ...profile, gender: value };
+                                    setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
+                                  }}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Seleziona genere">
+                                      {profile.gender ? getGenderLabel(profile.gender) : "Seleziona genere"}
+                                    </SelectValue>
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-background z-50">
+                                    <SelectItem value="male">Uomo</SelectItem>
+                                    <SelectItem value="female">Donna</SelectItem>
+                                    <SelectItem value="non-binary">Non binario</SelectItem>
+                                    <SelectItem value="genderfluid">Genderfluid</SelectItem>
+                                    <SelectItem value="transexual">Transessuale</SelectItem>
+                                    <SelectItem value="transgender">Transgender</SelectItem>
+                                    <SelectItem value="other">Altro</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              {/* Orientamento Sessuale */}
+                              <div className="space-y-2">
+                                <Label>Orientamento Sessuale</Label>
+                                <Select
+                                  value={profile.sexual_orientation || ""}
+                                  onValueChange={(value) => {
+                                    const updated = { ...profile, sexual_orientation: value };
+                                    setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
+                                  }}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Seleziona orientamento">
+                                      {profile.sexual_orientation ? getOrientationLabel(profile.sexual_orientation) : "Seleziona orientamento"}
+                                    </SelectValue>
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-background z-50">
+                                    <SelectItem value="heterosexual">Eterosessuale</SelectItem>
+                                    <SelectItem value="homosexual">Omosessuale</SelectItem>
+                                    <SelectItem value="bisexual">Bisessuale</SelectItem>
+                                    <SelectItem value="pansexual">Pansessuale</SelectItem>
+                                    <SelectItem value="asexual">Asessuale</SelectItem>
+                                    <SelectItem value="other">Altro</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              {/* Stato Relazione */}
+                              <div className="space-y-2">
+                                <Label>Stato Relazione</Label>
+                                <Select
+                                  value={profile.relationship_status || ""}
+                                  onValueChange={(value) => {
+                                    const updated = { ...profile, relationship_status: value };
+                                    setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
+                                  }}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Seleziona stato" />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-background z-50">
+                                    <SelectItem value="single">Single</SelectItem>
+                                    <SelectItem value="in_relationship">In una relazione</SelectItem>
+                                    <SelectItem value="married">Sposato/a</SelectItem>
+                                    <SelectItem value="divorced">Divorziato/a</SelectItem>
+                                    <SelectItem value="widowed">Vedovo/a</SelectItem>
+                                    <SelectItem value="prefer_not_say">Preferisco non dirlo</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              {/* Cosa Cerchi */}
+                              <div className="space-y-2">
+                                <Label>Cosa cerchi</Label>
+                                <Select
+                                  value={(profile.looking_for || [])[0] || ""}
+                                  onValueChange={(value) => {
+                                    const updated = { ...profile, looking_for: value ? [value] : [] };
+                                    setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
+                                  }}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Seleziona cosa cerchi" />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-background z-50">
+                                    <SelectItem value="Relazione seria">Relazione seria</SelectItem>
+                                    <SelectItem value="Incontri casuali">Incontri casuali</SelectItem>
+                                    <SelectItem value="Amicizia">Amicizia</SelectItem>
+                                    <SelectItem value="Non specifico">Non specifico</SelectItem>
+                                    <SelectItem value="Preferisco non dirlo">Preferisco non dirlo</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              {/* Interessi */}
+                              <div className="space-y-2">
+                                <Label>Interessi (separati da virgola)</Label>
+                                <Input
+                                  value={profile.interests?.join(", ") || ""}
+                                  onChange={(e) => handleInterestsChange(profile.id, e.target.value)}
+                                  placeholder="Es: Cinema, Sport, Viaggi"
+                                />
+                              </div>
+
+                              {/* Bio */}
+                              <div className="space-y-2">
+                                <Label>Bio</Label>
+                                <Textarea
+                                  value={profile.bio || ""}
+                                  onChange={(e) => {
+                                    const updated = { ...profile, bio: e.target.value };
+                                    setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
+                                  }}
+                                  rows={3}
+                                  placeholder="Scrivi qualcosa su di te..."
+                                />
+                              </div>
+
+                              {/* Pulsante Salva */}
+                              <div className="flex justify-end pt-4 border-t">
+                                <Button onClick={() => handleUpdateProfile(profile)}>
+                                  <Save className="h-4 w-4 mr-2" />
+                                  Salva Modifiche
+                                </Button>
+                              </div>
+                            </div>
+                          </ScrollArea>
+                        </DialogContent>
+                      </Dialog>
+
+                      {/* Dialog Gestione Likes */}
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" className="flex-1">
+                            <Heart className="h-4 w-4 mr-2" />
                             Likes ({(profileLikes[profile.id] || []).length})
                           </Button>
                         </DialogTrigger>
@@ -817,7 +795,7 @@ export const ProfileManager = () => {
                                           )}
                                         </div>
                                       </div>
-                                       <div className="flex gap-2">
+                                      <div className="flex gap-2">
                                         <Button
                                           variant={isLiked ? "default" : "outline"}
                                           size="sm"
@@ -851,28 +829,28 @@ export const ProfileManager = () => {
                         </DialogContent>
                       </Dialog>
                     </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </ScrollArea>
-      </CardContent>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </ScrollArea>
+        </CardContent>
+      </Card>
 
       {/* Admin Chat Dialog */}
-      <AdminChatDialog
-        open={chatDialogOpen && selectedChatProfile !== null}
-        onOpenChange={(open) => {
-          setChatDialogOpen(open);
-          if (!open) {
-            setSelectedChatProfile(null);
-          }
-        }}
-        adminProfileId={selectedChatProfile?.profileId || ''}
-        adminNickname={selectedChatProfile?.profileNickname || ''}
-        userId={selectedChatProfile?.userId || ''}
-        userNickname={selectedChatProfile?.userNickname || ''}
-      />
-    </Card>
+      {selectedChatProfile && (
+        <AdminChatDialog
+          open={chatDialogOpen}
+          onOpenChange={(open) => {
+            setChatDialogOpen(open);
+            if (!open) setSelectedChatProfile(null);
+          }}
+          adminProfileId={selectedChatProfile.profileId}
+          adminNickname={selectedChatProfile.profileNickname}
+          userId={selectedChatProfile.userId}
+          userNickname={selectedChatProfile.userNickname}
+        />
+      )}
+    </>
   );
 };
