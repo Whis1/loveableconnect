@@ -44,36 +44,37 @@ export function UserBanManager() {
   const loadAllUsers = async () => {
     setLoading(true);
     try {
-      // Load all profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+      // Use backend functions with service role to bypass RLS for admin tools
+      const [{ data: profilesRes, error: profilesError }, { data: bannedRes, error: bannedError }] = await Promise.all([
+        supabase.functions.invoke('admin-list-all-profiles'),
+        supabase.functions.invoke('admin-list-banned-users')
+      ]);
 
-      if (profilesError) throw profilesError;
+      if (profilesError || !profilesRes?.success) {
+        throw new Error(profilesError?.message || profilesRes?.error || 'Failed to load profiles');
+      }
+      if (bannedError || !bannedRes?.success) {
+        throw new Error(bannedError?.message || bannedRes?.error || 'Failed to load bans');
+      }
 
-      // Load all banned users
-      const { data: bannedUsers, error: bannedError } = await supabase
-        .from("banned_users")
-        .select("*");
-
-      if (bannedError) throw bannedError;
+      const profiles = (profilesRes.profiles || []);
+      const bannedUsers = (bannedRes.bans || []);
 
       // Create map of banned users for quick lookup
-      const bannedMap = new Map();
-      bannedUsers?.forEach((ban) => {
+      const bannedMap = new Map<string, any>();
+      bannedUsers.forEach((ban: any) => {
         bannedMap.set(ban.user_id, ban);
       });
 
-      setAllUsers(profiles || []);
-      setFilteredUsers(profiles || []);
+      setAllUsers(profiles);
+      setFilteredUsers(profiles);
       setBannedUsersMap(bannedMap);
     } catch (error: any) {
-      console.error("Error loading users:", error);
+      console.error('Error loading users:', error);
       toast({
-        title: "Errore",
-        description: "Errore nel caricamento degli utenti",
-        variant: "destructive",
+        title: 'Errore',
+        description: error?.message || 'Errore nel caricamento degli utenti',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
