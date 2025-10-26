@@ -60,9 +60,14 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
           .from("profiles")
           .select("*")
           .eq("id", userId)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
+        if (!data) {
+          console.log("Profile not found for user:", userId);
+          setLoading(false);
+          return;
+        }
         
         // Translate bio and interests
         const translatedBio = data.bio ? await translateText(data.bio) : null;
