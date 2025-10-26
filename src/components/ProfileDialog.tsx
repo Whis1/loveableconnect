@@ -9,12 +9,13 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, MapPin, Sparkles, User, Heart as HeartIcon } from "lucide-react";
+import { Heart, MessageCircle, MapPin, User, Heart as HeartIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getGenericLocationPhrase } from "@/lib/utils";
 import { ChatConfirmationBanner } from "./ChatConfirmationBanner";
 import { useCredits } from "@/hooks/useCredits";
+import profileBadge from "@/assets/profile-badge.png";
 
 interface Profile {
   id: string;
@@ -447,9 +448,9 @@ export const ProfileDialog = ({
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
                 </div>
                 
-                {/* Sparkle Badge */}
-                <div className="absolute -top-3 -right-3 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground rounded-2xl p-3 shadow-xl rotate-12 group-hover:rotate-0 transition-transform duration-300">
-                  <Sparkles className="h-6 w-6" />
+                {/* Profile Badge */}
+                <div className="absolute -top-3 -right-3 w-14 h-14 rounded-2xl shadow-xl rotate-12 group-hover:rotate-0 transition-transform duration-300 overflow-hidden">
+                  <img src={profileBadge} alt="Profile Badge" className="w-full h-full object-cover" />
                 </div>
                 
                 {/* Decorative Corner Elements */}
@@ -499,7 +500,7 @@ export const ProfileDialog = ({
             {profile.bio && (
               <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
                 <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-primary" />
+                  <Heart className="h-5 w-5 text-primary" />
                   Bio
                 </h3>
                 <p className="text-muted-foreground leading-relaxed italic">
