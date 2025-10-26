@@ -774,7 +774,7 @@ export const ProfileManager = () => {
                         <DialogTrigger asChild>
                           <Button variant="outline" className="flex-1">
                             <Heart className="h-4 w-4 mr-2" />
-                            Likes ({(profileLikes[profile.id] || []).length})
+                            Utenti
                           </Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-3xl max-h-[80vh]">
