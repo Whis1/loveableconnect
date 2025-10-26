@@ -33,15 +33,27 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data, error } = await supabase
+    // Recupera i messaggi
+    const { data: messages, error } = await supabase
       .from('support_messages')
-      .select(`
-        *,
-        profiles:user_id (nickname)
-      `)
+      .select('*')
       .order('created_at', { ascending: false });
     if (error) throw error;
-    return new Response(JSON.stringify({ success: true, messages: data || [] }), {
+
+    // Recupera i nickname per gli user_id unici
+    const userIds = [...new Set((messages || []).map((m: any) => m.user_id))];
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, nickname')
+      .in('id', userIds);
+
+    // Mappa i nickname ai messaggi
+    const messagesWithNicknames = (messages || []).map((msg: any) => ({
+      ...msg,
+      profiles: profiles?.find((p: any) => p.id === msg.user_id) || null
+    }));
+
+    return new Response(JSON.stringify({ success: true, messages: messagesWithNicknames }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
