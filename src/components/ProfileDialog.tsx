@@ -5,6 +5,7 @@ import { useTextTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
+  DialogPortal,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Heart, MessageCircle, MapPin, Sparkles, User, Heart as HeartIcon } from "lucide-react";
@@ -615,6 +616,16 @@ export const ProfileDialog = ({
             </div>
           </div>
         </DialogContent>
+        <DialogPortal>
+          <ChatConfirmationBanner
+            isVisible={showChatConfirmation}
+            onClose={() => setShowChatConfirmation(false)}
+            onConfirm={handleConfirmChat}
+            userName={profile?.nickname || profile?.full_name}
+            isLoading={isCreatingChat}
+            withinDialog
+          />
+        </DialogPortal>
       </Dialog>
 
       {/* Image Viewer Dialog */}
@@ -631,14 +642,6 @@ export const ProfileDialog = ({
           </DialogContent>
         </Dialog>
       )}
-      
-      <ChatConfirmationBanner
-        isVisible={showChatConfirmation}
-        onClose={() => setShowChatConfirmation(false)}
-        onConfirm={handleConfirmChat}
-        userName={profile?.nickname || profile?.full_name}
-        isLoading={isCreatingChat}
-      />
     </>
   );
 };

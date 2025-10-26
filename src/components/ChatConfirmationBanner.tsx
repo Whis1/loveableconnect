@@ -7,6 +7,7 @@ interface ChatConfirmationBannerProps {
   onConfirm: () => void;
   userName: string;
   isLoading?: boolean;
+  withinDialog?: boolean;
 }
 
 export const ChatConfirmationBanner = ({
@@ -14,13 +15,14 @@ export const ChatConfirmationBanner = ({
   onClose,
   onConfirm,
   userName,
-  isLoading = false
+  isLoading = false,
+  withinDialog = false,
 }: ChatConfirmationBannerProps) => {
   if (!isVisible) return null;
 
   const content = (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-card border border-border rounded-lg shadow-lg max-w-md w-full p-6 relative animate-in fade-in zoom-in duration-200">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div role="dialog" aria-modal="true" className="bg-card border border-border rounded-lg shadow-lg max-w-md w-full p-6 relative animate-in fade-in zoom-in duration-200" onMouseDown={(e) => e.stopPropagation()}>
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
@@ -71,5 +73,5 @@ export const ChatConfirmationBanner = ({
     </div>
   );
 
-  return typeof document !== "undefined" ? createPortal(content, document.body) : content;
+  return withinDialog ? content : (typeof document !== "undefined" ? createPortal(content, document.body) : content);
 };
