@@ -10,9 +10,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useBanCheck } from "@/hooks/useBanCheck";
 import { ArrowLeft, MapPin, Filter, RotateCcw, Search as SearchIcon } from "lucide-react";
-import { ProfileGridCard } from "@/components/ProfileGridCard";
+import { ProfileGridCardMemo } from "@/components/ProfileGridCardMemo";
 import { MatchBanner } from "@/components/MatchBanner";
-import { useTextTranslation } from "@/hooks/useTranslation";
+
 
 interface Profile {
   id: string;
@@ -46,7 +46,6 @@ const Explore = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation();
-  const { translateProfiles } = useTextTranslation();
   useBanCheck(); // Check if user is banned
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -130,27 +129,24 @@ const Explore = () => {
           schema: 'public',
           table: 'profiles'
         },
-        async (payload) => {
-          console.log('Profile updated:', payload);
-          // Reload the updated profile completely from database
-          const { data: updatedProfile, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', payload.new.id)
-            .single();
-          
-          if (!error && updatedProfile) {
-            // Translate the updated profile before setting it
-            const [translatedProfile] = await translateProfiles([updatedProfile as Profile]);
+          async (payload) => {
+            console.log('Profile updated:', payload);
+            // Reload the updated profile completely from database
+            const { data: updatedProfile, error } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', payload.new.id)
+              .single();
             
-            setProfiles(prev => prev.map(p => 
-              p.id === translatedProfile.id ? translatedProfile : p
-            ));
-            setDisplayedProfiles(prev => prev.map(p => 
-              p.id === translatedProfile.id ? translatedProfile : p
-            ));
+            if (!error && updatedProfile) {
+              setProfiles(prev => prev.map(p => 
+                p.id === updatedProfile.id ? updatedProfile as Profile : p
+              ));
+              setDisplayedProfiles(prev => prev.map(p => 
+                p.id === updatedProfile.id ? updatedProfile as Profile : p
+              ));
+            }
           }
-        }
       )
       .on(
         'postgres_changes',
@@ -177,11 +173,12 @@ const Explore = () => {
     setLoading(true);
     
     try {
-      // Get user's matches to exclude them
+      // Get user's matches to exclude them (limit to recent for better performance)
       const { data: matchesData } = await supabase
         .from("matches")
         .select("user1_id, user2_id")
-        .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
+        .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+        .limit(100);
 
       const matchedUserIds = new Set(
         (matchesData || []).map(match => 
@@ -189,28 +186,21 @@ const Explore = () => {
         )
       );
 
+      // Load only 50 profiles at a time for better performance
       const { data: profilesData, error } = await supabase
         .from("profiles")
         .select("*")
-        .neq("id", userId);
+        .neq("id", userId)
+        .order("last_active", { ascending: false })
+        .limit(50);
 
       if (error) throw error;
 
       // Filter out profiles with existing matches
       let allProfiles: Profile[] = (profilesData || [])
         .filter(profile => !matchedUserIds.has(profile.id)) as Profile[];
-      
-      // Sort by last active
-      allProfiles.sort((a, b) => {
-        const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
-        const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
-        return dateB - dateA;
-      });
 
-      // Pre-translate profiles for better UX
-      const translatedProfiles = await translateProfiles(allProfiles);
-
-      setProfiles(translatedProfiles);
+      setProfiles(allProfiles);
       setDisplayedProfiles([]);
       setPage(1);
       setHasMore(true);
@@ -316,10 +306,7 @@ const Explore = () => {
         return dateB - dateA;
       });
 
-      // Pre-translate profiles for better UX
-      const translatedProfiles = await translateProfiles(filteredProfiles);
-
-      setProfiles(translatedProfiles);
+      setProfiles(filteredProfiles);
       setDisplayedProfiles([]);
       setPage(1);
       setHasMore(true);
@@ -504,7 +491,7 @@ const Explore = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
               {displayedProfiles.map((profile) => (
-                <ProfileGridCard
+                <ProfileGridCardMemo
                   key={profile.id}
                   profile={profile}
                   currentUserId={currentUser!}

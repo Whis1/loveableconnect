@@ -5,7 +5,6 @@ import { Heart, MessageCircle, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import { useTextTranslation } from "@/hooks/useTranslation";
 import { ProfileDialog } from "./ProfileDialog";
 import { getGenericLocationPhrase } from "@/lib/utils";
 import { useDailyLikes } from "@/hooks/useDailyLikes";
@@ -48,8 +47,6 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
   const [showLikesExhausted, setShowLikesExhausted] = useState(false);
   const [showChatConfirmation, setShowChatConfirmation] = useState(false);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
-  const [translatedBio, setTranslatedBio] = useState<string>('');
-  const { translateText } = useTextTranslation();
   const { consumeLike, likesRemaining, resetAt } = useDailyLikes();
   const { credits } = useCredits();
 
@@ -122,34 +119,33 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
   // Check if user already liked this profile or has an active match
   useEffect(() => {
     const checkLikeAndMatch = async () => {
-      // Check for existing like
-      const { data: likeData } = await supabase
-        .from("likes")
-        .select("id")
-        .eq("from_user_id", currentUserId)
-        .eq("to_user_id", profile.id)
-        .maybeSingle();
+      // Batch all checks in parallel for better performance
+      const [likeResult, matchResult] = await Promise.all([
+        supabase
+          .from("likes")
+          .select("id")
+          .eq("from_user_id", currentUserId)
+          .eq("to_user_id", profile.id)
+          .maybeSingle(),
+        supabase
+          .from("matches")
+          .select("id")
+          .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profile.id}),and(user1_id.eq.${profile.id},user2_id.eq.${currentUserId})`)
+          .maybeSingle()
+      ]);
       
-      setHasLiked(!!likeData);
+      setHasLiked(!!likeResult.data);
 
-      // Check for match
-      const { data: matchData } = await supabase
-        .from("matches")
-        .select("id")
-        .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profile.id}),and(user1_id.eq.${profile.id},user2_id.eq.${currentUserId})`)
-        .maybeSingle();
-
-      if (matchData) {
+      if (matchResult.data) {
         // Check if match is hidden with 'both'
         const { data: hiddenData } = await supabase
           .from("hidden_matches")
           .select("hidden_from")
-          .eq("match_id", matchData.id)
+          .eq("match_id", matchResult.data.id)
           .eq("user_id", currentUserId)
           .eq("hidden_from", "both")
           .maybeSingle();
         
-        // Match is active if it exists and is not hidden with 'both'
         setHasActiveMatch(!hiddenData);
       } else {
         setHasActiveMatch(false);
@@ -157,57 +153,8 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
     };
     
     checkLikeAndMatch();
-
-    // Subscribe to changes in likes and matches
-    const likesChannel = supabase
-      .channel(`likes-${currentUserId}-${profile.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'likes',
-          filter: `from_user_id=eq.${currentUserId}`
-        },
-        () => checkLikeAndMatch()
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'matches'
-        },
-        () => checkLikeAndMatch()
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'hidden_matches'
-        },
-        () => checkLikeAndMatch()
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(likesChannel);
-    };
   }, [currentUserId, profile.id]);
 
-  // Use pre-translated bio if available, otherwise translate on mount
-  useEffect(() => {
-    const loadTranslation = async () => {
-      if (profile.translatedBio) {
-        setTranslatedBio(profile.translatedBio);
-      } else if (profile.bio) {
-        const translated = await translateText(profile.bio);
-        setTranslatedBio(translated);
-      }
-    };
-    loadTranslation();
-  }, [profile.bio, profile.translatedBio]);
 
   const avatarUrl = profile.avatar_url
     ? supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl
@@ -410,6 +357,7 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
               <img
                 src={avatarUrl}
                 alt={profile.nickname}
+                loading="lazy"
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
             ) : (
