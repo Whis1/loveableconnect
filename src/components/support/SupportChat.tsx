@@ -281,7 +281,7 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
                       <img 
                         src={msg.image_url} 
                         alt="Immagine allegata" 
-                        className="rounded-lg max-w-full mb-2 cursor-pointer hover:opacity-90 transition-opacity"
+                        className="rounded-lg w-full max-h-64 object-cover mb-2 cursor-pointer hover:opacity-90 transition-opacity"
                         onClick={() => window.open(msg.image_url, '_blank')}
                       />
                     )}
