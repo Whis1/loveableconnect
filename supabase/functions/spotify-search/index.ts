@@ -73,7 +73,7 @@ serve(async (req) => {
 
     const searchData = await searchResponse.json();
     
-    const tracks = searchData.tracks.items.map((track: any) => ({
+    let tracks = searchData.tracks.items.map((track: any) => ({
       id: track.id,
       name: track.name,
       artist: track.artists.map((a: any) => a.name).join(', '),
@@ -81,6 +81,29 @@ serve(async (req) => {
       image_url: track.album.images[0]?.url || null,
       preview_url: track.preview_url
     }));
+
+    // Fallback: if no Spotify previews, try iTunes 30s previews
+    const hasPreview = tracks.some((t: any) => !!t.preview_url);
+    if (!hasPreview) {
+      try {
+        const itunesRes = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=25`);
+        if (itunesRes.ok) {
+          const itunesData = await itunesRes.json();
+          tracks = (itunesData.results || [])
+            .map((item: any) => ({
+              id: `itunes:${item.trackId}`,
+              name: item.trackName,
+              artist: item.artistName,
+              album: item.collectionName || '',
+              image_url: item.artworkUrl100 ? item.artworkUrl100.replace('100x100', '300x300') : null,
+              preview_url: item.previewUrl || null
+            }))
+            .filter((t: any) => !!t.preview_url);
+        }
+      } catch (e) {
+        console.error('iTunes fallback error:', e);
+      }
+    }
 
     return new Response(
       JSON.stringify({ tracks }),
