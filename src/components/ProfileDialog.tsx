@@ -616,17 +616,17 @@ export const ProfileDialog = ({
             </div>
           </div>
         </DialogContent>
-        <DialogPortal>
-          <ChatConfirmationBanner
-            isVisible={showChatConfirmation}
-            onClose={() => setShowChatConfirmation(false)}
-            onConfirm={handleConfirmChat}
-            userName={profile?.nickname || profile?.full_name}
-            isLoading={isCreatingChat}
-            withinDialog
-          />
-        </DialogPortal>
       </Dialog>
+      
+      {showChatConfirmation && (
+        <ChatConfirmationBanner
+          isVisible={showChatConfirmation}
+          onClose={() => setShowChatConfirmation(false)}
+          onConfirm={handleConfirmChat}
+          userName={profile?.nickname || profile?.full_name}
+          isLoading={isCreatingChat}
+        />
+      )}
 
       {/* Image Viewer Dialog */}
       {selectedImage && (
