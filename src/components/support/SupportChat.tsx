@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, MessageCircle, Image as ImageIcon, X, Bot } from "lucide-react";
+import { Send, MessageCircle, Image as ImageIcon, X } from "lucide-react";
+import { AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useTranslation } from "react-i18next";
@@ -262,8 +263,9 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
                 >
                   {msg.is_admin_response && (
                     <Avatar className="h-9 w-9 border-2 border-primary/20 flex-shrink-0">
+                      <AvatarImage src="/images/support-avatar.png" alt="Supporto Clienti" />
                       <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
-                        <Bot className="h-5 w-5" />
+                        SC
                       </AvatarFallback>
                     </Avatar>
                   )}
@@ -275,7 +277,7 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
                     }`}
                   >
                     {msg.is_admin_response && (
-                      <p className="text-xs font-semibold mb-1 opacity-70">Bot</p>
+                      <p className="text-xs font-semibold mb-1 opacity-70">Supporto Clienti</p>
                     )}
                     {msg.image_url && (
                       <img 
