@@ -99,15 +99,15 @@ export const AdminChatDialog = ({
 
         setMatchId(matchData.match_id);
 
-        // Fetch messages
-        const { data: messagesData, error: messagesError } = await supabase
-          .from("messages")
-          .select("*")
-          .eq("match_id", matchData.match_id)
-          .order("created_at", { ascending: true });
+        // Fetch messages via edge function (bypasses RLS)
+        const { data: listData, error: listError } = await supabase.functions.invoke('admin-list-messages', {
+          body: { match_id: matchData.match_id }
+        });
 
-        if (messagesError) throw messagesError;
-        setMessages((messagesData || []) as Message[]);
+        if (listError || !listData?.success) {
+          throw new Error(listError?.message || listData?.error || 'Failed to load messages');
+        }
+        setMessages(((listData.messages || []) as Message[]));
 
         // Subscribe to new messages
         const channel = supabase
