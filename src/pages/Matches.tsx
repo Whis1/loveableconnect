@@ -7,7 +7,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, MessageCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import { useTextTranslation } from "@/hooks/useTranslation";
 
 interface MatchWithProfile {
   id: string;
@@ -34,7 +33,6 @@ const Matches = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation();
-  const { translateText } = useTextTranslation();
   const [matches, setMatches] = useState<MatchWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -87,7 +85,7 @@ const Matches = () => {
         return;
       }
 
-      // For each match, fetch the other user's profile
+      // For each match, fetch the other user's profile - optimized
       const matchesWithProfiles = await Promise.all(
         visibleMatches.map(async (match) => {
           const otherUserId = match.user1_id === session.user.id 
@@ -100,15 +98,13 @@ const Matches = () => {
             .eq("id", otherUserId)
             .single();
 
-          const translatedBio = profile?.bio ? await translateText(profile.bio) : null;
-
           return {
             id: match.id,
             created_at: match.created_at,
             otherUser: profile ? {
               ...profile,
               avatar_url: toPublicAvatarUrl(profile.avatar_url),
-              translatedBio,
+              translatedBio: profile.bio, // Use original bio for performance
             } : {
               id: otherUserId,
               full_name: t("matches.unknownUser"),
@@ -154,15 +150,13 @@ const Matches = () => {
               .eq("id", otherUserId)
               .single();
 
-            const translatedBio = profile?.bio ? await translateText(profile.bio) : null;
-
             const matchWithProfile = {
               id: newMatch.id,
               created_at: newMatch.created_at,
               otherUser: profile ? {
                 ...profile,
                 avatar_url: toPublicAvatarUrl(profile.avatar_url),
-                translatedBio,
+                translatedBio: profile.bio, // Use original bio for performance
               } : {
                 id: otherUserId,
                 full_name: t("matches.unknownUser"),

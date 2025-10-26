@@ -47,6 +47,7 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
   const [showLikesExhausted, setShowLikesExhausted] = useState(false);
   const [showChatConfirmation, setShowChatConfirmation] = useState(false);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
+  const [translatedBio, setTranslatedBio] = useState<string>('');
   const { consumeLike, likesRemaining, resetAt } = useDailyLikes();
   const { credits } = useCredits();
 
@@ -116,45 +117,69 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
       .join(", ");
   };
 
-  // Check if user already liked this profile or has an active match
+  // Check if user already liked this profile or has an active match - optimized
   useEffect(() => {
+    let mounted = true;
+    
     const checkLikeAndMatch = async () => {
-      // Batch all checks in parallel for better performance
-      const [likeResult, matchResult] = await Promise.all([
-        supabase
-          .from("likes")
-          .select("id")
-          .eq("from_user_id", currentUserId)
-          .eq("to_user_id", profile.id)
-          .maybeSingle(),
-        supabase
-          .from("matches")
-          .select("id")
-          .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profile.id}),and(user1_id.eq.${profile.id},user2_id.eq.${currentUserId})`)
-          .maybeSingle()
-      ]);
-      
-      setHasLiked(!!likeResult.data);
+      try {
+        // Batch all checks together for better performance
+        const [likeResult, matchResult] = await Promise.all([
+          supabase
+            .from("likes")
+            .select("id")
+            .eq("from_user_id", currentUserId)
+            .eq("to_user_id", profile.id)
+            .maybeSingle(),
+          supabase
+            .from("matches")
+            .select("id")
+            .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profile.id}),and(user1_id.eq.${profile.id},user2_id.eq.${currentUserId})`)
+            .maybeSingle()
+        ]);
 
-      if (matchResult.data) {
-        // Check if match is hidden with 'both'
-        const { data: hiddenData } = await supabase
-          .from("hidden_matches")
-          .select("hidden_from")
-          .eq("match_id", matchResult.data.id)
-          .eq("user_id", currentUserId)
-          .eq("hidden_from", "both")
-          .maybeSingle();
-        
-        setHasActiveMatch(!hiddenData);
-      } else {
-        setHasActiveMatch(false);
+        if (!mounted) return;
+
+        setHasLiked(!!likeResult.data);
+
+        if (matchResult.data) {
+          // Check if match is hidden
+          const { data: hiddenData } = await supabase
+            .from("hidden_matches")
+            .select("hidden_from")
+            .eq("match_id", matchResult.data.id)
+            .eq("user_id", currentUserId)
+            .eq("hidden_from", "both")
+            .maybeSingle();
+          
+          if (mounted) {
+            setHasActiveMatch(!hiddenData);
+          }
+        } else {
+          if (mounted) {
+            setHasActiveMatch(false);
+          }
+        }
+      } catch (error) {
+        console.error("Error checking like/match status:", error);
       }
     };
     
     checkLikeAndMatch();
+
+    return () => {
+      mounted = false;
+    };
   }, [currentUserId, profile.id]);
 
+  // Use original bio for performance - skip translation
+  useEffect(() => {
+    if (profile.translatedBio) {
+      setTranslatedBio(profile.translatedBio);
+    } else if (profile.bio) {
+      setTranslatedBio(profile.bio); // Use original bio
+    }
+  }, [profile.bio, profile.translatedBio]);
 
   const avatarUrl = profile.avatar_url
     ? supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl
@@ -352,7 +377,7 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
         {/* Card Container */}
         <div className="relative rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 bg-card border-2 border-border hover:border-primary/50">
           {/* Main Image */}
-          <div className="relative aspect-[3/4] overflow-hidden">
+          <div className="relative aspect-[3/4] overflow-hidden bg-muted">
             {avatarUrl ? (
               <img
                 src={avatarUrl}

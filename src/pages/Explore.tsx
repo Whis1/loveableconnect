@@ -12,7 +12,7 @@ import { useBanCheck } from "@/hooks/useBanCheck";
 import { ArrowLeft, MapPin, Filter, RotateCcw, Search as SearchIcon } from "lucide-react";
 import { ProfileGridCardMemo } from "@/components/ProfileGridCardMemo";
 import { MatchBanner } from "@/components/MatchBanner";
-
+import { useTextTranslation } from "@/hooks/useTranslation";
 
 interface Profile {
   id: string;
@@ -46,6 +46,7 @@ const Explore = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { translateProfiles } = useTextTranslation();
   useBanCheck(); // Check if user is banned
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -129,24 +130,25 @@ const Explore = () => {
           schema: 'public',
           table: 'profiles'
         },
-          async (payload) => {
-            console.log('Profile updated:', payload);
-            // Reload the updated profile completely from database
-            const { data: updatedProfile, error } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', payload.new.id)
-              .single();
-            
-            if (!error && updatedProfile) {
-              setProfiles(prev => prev.map(p => 
-                p.id === updatedProfile.id ? updatedProfile as Profile : p
-              ));
-              setDisplayedProfiles(prev => prev.map(p => 
-                p.id === updatedProfile.id ? updatedProfile as Profile : p
-              ));
-            }
+        async (payload) => {
+          console.log('Profile updated:', payload);
+          // Reload the updated profile completely from database
+          const { data: updatedProfile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', payload.new.id)
+            .single();
+          
+          if (!error && updatedProfile) {
+            // Set updated profile without translation for performance
+            setProfiles(prev => prev.map(p => 
+              p.id === updatedProfile.id ? updatedProfile as Profile : p
+            ));
+            setDisplayedProfiles(prev => prev.map(p => 
+              p.id === updatedProfile.id ? updatedProfile as Profile : p
+            ));
           }
+        }
       )
       .on(
         'postgres_changes',
@@ -173,12 +175,12 @@ const Explore = () => {
     setLoading(true);
     
     try {
-      // Get user's matches to exclude them (limit to recent for better performance)
+      // Get user's matches to exclude them (with limit for better performance)
       const { data: matchesData } = await supabase
         .from("matches")
         .select("user1_id, user2_id")
         .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
-        .limit(100);
+        .limit(100); // Limit matches query
 
       const matchedUserIds = new Set(
         (matchesData || []).map(match => 
@@ -186,13 +188,13 @@ const Explore = () => {
         )
       );
 
-      // Load only 50 profiles at a time for better performance
+      // Load only first batch of profiles for better initial load
       const { data: profilesData, error } = await supabase
         .from("profiles")
         .select("*")
         .neq("id", userId)
         .order("last_active", { ascending: false })
-        .limit(50);
+        .limit(50); // Load only 50 profiles initially
 
       if (error) throw error;
 
@@ -200,6 +202,7 @@ const Explore = () => {
       let allProfiles: Profile[] = (profilesData || [])
         .filter(profile => !matchedUserIds.has(profile.id)) as Profile[];
 
+      // Skip translation for better performance
       setProfiles(allProfiles);
       setDisplayedProfiles([]);
       setPage(1);
@@ -306,6 +309,7 @@ const Explore = () => {
         return dateB - dateA;
       });
 
+      // Skip translation for better performance
       setProfiles(filteredProfiles);
       setDisplayedProfiles([]);
       setPage(1);

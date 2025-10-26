@@ -1,5 +1,5 @@
-import { memo } from "react";
-import { ProfileGridCard } from "./ProfileGridCard";
+import { memo } from 'react';
+import { ProfileGridCard } from './ProfileGridCard';
 
 interface Profile {
   id: string;
@@ -18,15 +18,34 @@ interface Profile {
   translatedInterests?: string[] | null;
 }
 
-interface ProfileGridCardProps {
+interface ProfileGridCardMemoProps {
   profile: Profile;
   currentUserId: string;
   onLike: (profileId: string) => void;
   onMatch?: (profileName: string) => void;
 }
 
-export const ProfileGridCardMemo = memo(ProfileGridCard, (prevProps, nextProps) => {
-  // Only re-render if profile id changes or currentUserId changes
-  return prevProps.profile.id === nextProps.profile.id &&
-         prevProps.currentUserId === nextProps.currentUserId;
-});
+// Memoized version of ProfileGridCard for better performance
+export const ProfileGridCardMemo = memo(
+  ({ profile, currentUserId, onLike, onMatch }: ProfileGridCardMemoProps) => {
+    return (
+      <ProfileGridCard
+        profile={profile}
+        currentUserId={currentUserId}
+        onLike={onLike}
+        onMatch={onMatch}
+      />
+    );
+  },
+  // Custom comparison function to prevent unnecessary re-renders
+  (prevProps, nextProps) => {
+    return (
+      prevProps.profile.id === nextProps.profile.id &&
+      prevProps.currentUserId === nextProps.currentUserId &&
+      prevProps.profile.bio === nextProps.profile.bio &&
+      prevProps.profile.avatar_url === nextProps.profile.avatar_url
+    );
+  }
+);
+
+ProfileGridCardMemo.displayName = 'ProfileGridCardMemo';
