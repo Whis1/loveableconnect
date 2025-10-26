@@ -106,10 +106,15 @@ export default function AdminArrettu() {
               Gestione completa del sistema
             </p>
           </div>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="h-5 w-5 mr-2" />
-            Logout
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate("/admin/profiles")}>
+              Profili & Chat
+            </Button>
+            <Button variant="outline" onClick={handleLogout}>
+              <LogOut className="h-5 w-5 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
 
         <UserBanManager />
