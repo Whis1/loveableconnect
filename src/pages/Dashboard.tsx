@@ -297,18 +297,16 @@ const Dashboard = () => {
       <div className="container mx-auto p-4 max-w-7xl relative z-10">
         {/* Header */}
         <div className="flex justify-between items-center mb-8 animate-fade-in">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-3">
-              <img src={loveIcon} alt="Love Icon" className="h-14 w-14" />
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-                  {t("dashboard.title")}
-                </h1>
-                <p className="text-xs text-muted-foreground">{t("dashboard.tagline")}</p>
-              </div>
+          <div className="flex items-center gap-3">
+            <img src={loveIcon} alt="Love Icon" className="h-14 w-14" />
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
+                {t("dashboard.title")}
+              </h1>
+              <p className="text-xs text-muted-foreground">{t("dashboard.tagline")}</p>
             </div>
-            <CreditsDisplay />
           </div>
+          <CreditsDisplay />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3 mb-8">
