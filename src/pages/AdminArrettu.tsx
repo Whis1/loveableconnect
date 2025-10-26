@@ -10,6 +10,8 @@ import { SupportChatMonitor } from "@/components/admin/SupportChatMonitor";
 import { UserBanManager } from "@/components/admin/UserBanManager";
 import { Shield, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAdminRole } from "@/hooks/useAdminRole";
 
 export default function AdminArrettu() {
   const navigate = useNavigate();
@@ -17,34 +19,40 @@ export default function AdminArrettu() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
+  const { isAdmin, loading: adminLoading } = useAdminRole();
 
   useEffect(() => {
-    // Check if already logged in
-    const adminSession = sessionStorage.getItem("adminArrettu");
-    if (adminSession === "true") {
-      setIsLoggedIn(true);
-    }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session?.user);
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session?.user);
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
-  const handleLogin = () => {
-    if (nickname === "superadmin2025" && password === "AdminSecure!2025") {
-      sessionStorage.setItem("adminArrettu", "true");
-      setIsLoggedIn(true);
+  const handleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: nickname,
+        password,
+      });
+      if (error) throw error;
       toast({
         title: "Accesso effettuato",
         description: "Benvenuto nel pannello admin",
       });
-    } else {
+    } catch (e: any) {
       toast({
         title: "Errore",
-        description: "Credenziali non valide",
+        description: e.message || "Credenziali non valide",
         variant: "destructive",
       });
     }
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem("adminArrettu");
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setIsLoggedIn(false);
     setNickname("");
     setPassword("");
@@ -66,12 +74,13 @@ export default function AdminArrettu() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="nickname">Nickname</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="nickname"
+                id="email"
+                type="email"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleLogin()}
+                onKeyDown={(e) => e.key === "Enter" && handleLogin()}
               />
             </div>
             <div className="space-y-2">
@@ -87,6 +96,23 @@ export default function AdminArrettu() {
             <Button onClick={handleLogin} className="w-full">
               Accedi
             </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+
+  // Se loggato ma senza ruolo admin
+  if (isLoggedIn && !adminLoading && !isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Permessi insufficienti</CardTitle>
+          </CardHeader>
+          <CardContent>
+            Per accedere al pannello admin il tuo account deve avere il ruolo Admin.
           </CardContent>
         </Card>
       </div>
