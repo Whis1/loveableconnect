@@ -49,7 +49,7 @@ const TermsAndConditions = () => {
                     </p>
                     <p className="font-medium">
                       Direttamente online:<br />
-                      Tramite Posta: <a href="mailto:loveableconnect@hotmail.it" className="text-primary hover:underline">loveableconnect@hotmail.it</a>
+                      Tramite Posta: <a href="mailto:loveableconnect@hotmail.com" className="text-primary hover:underline">loveableconnect@hotmail.com</a>
                     </p>
                   </div>
 
@@ -130,7 +130,7 @@ const TermsAndConditions = () => {
                     </p>
                     <p>
                       <strong>Tramite Posta:</strong><br />
-                      Gli Utenti possono anche contattare il Responsabile della protezione dei dati (RPD o DPO) del Titolare, i cui dati di contatto sono di seguito riportati: e-mail <a href="mailto:loveableconnect@hotmail.it" className="text-primary hover:underline">loveableconnect@hotmail.it</a>
+                      Gli Utenti possono anche contattare il Responsabile della protezione dei dati (RPD o DPO) del Titolare, i cui dati di contatto sono di seguito riportati: e-mail <a href="mailto:loveableconnect@hotmail.com" className="text-primary hover:underline">loveableconnect@hotmail.com</a>
                     </p>
                     <p>
                       Ai sensi della Normativa Applicabile, l'Utente ha il diritto di ottenere l'indicazione (i) dell'origine dei dati personali; (ii) delle finalità e modalità del trattamento; (iii) della logica applicata in caso di trattamento effettuato con l'ausilio di strumenti elettronici; (iv) degli estremi identificativi del titolare e dei responsabili; (v) dei soggetti o delle categorie di soggetti ai quali i dati personali possono essere comunicati o che possono venirne a conoscenza in qualità di responsabili o incaricati.
