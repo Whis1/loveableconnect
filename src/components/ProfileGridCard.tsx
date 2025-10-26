@@ -1,16 +1,16 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Heart, MessageCircle, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { useTextTranslation } from "@/hooks/useTranslation";
 import { ProfileDialog } from "./ProfileDialog";
 import { getGenericLocationPhrase } from "@/lib/utils";
 import { useDailyLikes } from "@/hooks/useDailyLikes";
 import { useCredits } from "@/hooks/useCredits";
 import { DailyLikesExhaustedBanner } from "./DailyLikesExhaustedBanner";
-import { ChatConfirmationBanner } from "./ChatConfirmationBanner";
 
 interface Profile {
   id: string;
@@ -45,15 +45,10 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
   const [hasActiveMatch, setHasActiveMatch] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [showLikesExhausted, setShowLikesExhausted] = useState(false);
-  const [showChatConfirmation, setShowChatConfirmation] = useState(false);
-  const [isCreatingChat, setIsCreatingChat] = useState(false);
   const [translatedBio, setTranslatedBio] = useState<string>('');
+  const { translateText } = useTextTranslation();
   const { consumeLike, likesRemaining, resetAt } = useDailyLikes();
   const { credits } = useCredits();
-
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-  const hasCheckedRef = useRef(false);
 
   const getGenderLabel = (gender: string | null) => {
     if (!gender) return "";
@@ -121,89 +116,94 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
       .join(", ");
   };
 
-  // Observe visibility to defer heavy checks
+  // Check if user already liked this profile or has an active match
   useEffect(() => {
-    const el = cardRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { root: null, rootMargin: '300px', threshold: 0.01 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  // Check if user already liked this profile or has an active match - optimized
-  useEffect(() => {
-    if (!isVisible || hasCheckedRef.current) return;
-
-    let mounted = true;
-    
     const checkLikeAndMatch = async () => {
-      try {
-        // Batch all checks together for better performance
-        const [likeResult, matchResult] = await Promise.all([
-          supabase
-            .from("likes")
-            .select("id")
-            .eq("from_user_id", currentUserId)
-            .eq("to_user_id", profile.id)
-            .maybeSingle(),
-          supabase
-            .from("matches")
-            .select("id")
-            .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profile.id}),and(user1_id.eq.${profile.id},user2_id.eq.${currentUserId})`)
-            .maybeSingle()
-        ]);
+      // Check for existing like
+      const { data: likeData } = await supabase
+        .from("likes")
+        .select("id")
+        .eq("from_user_id", currentUserId)
+        .eq("to_user_id", profile.id)
+        .maybeSingle();
+      
+      setHasLiked(!!likeData);
 
-        if (!mounted) return;
+      // Check for match
+      const { data: matchData } = await supabase
+        .from("matches")
+        .select("id")
+        .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profile.id}),and(user1_id.eq.${profile.id},user2_id.eq.${currentUserId})`)
+        .maybeSingle();
 
-        setHasLiked(!!likeResult.data);
-
-        if (matchResult.data) {
-          // Check if match is hidden
-          const { data: hiddenData } = await supabase
-            .from("hidden_matches")
-            .select("hidden_from")
-            .eq("match_id", matchResult.data.id)
-            .eq("user_id", currentUserId)
-            .eq("hidden_from", "both")
-            .maybeSingle();
-          
-          if (mounted) {
-            setHasActiveMatch(!hiddenData);
-          }
-        } else {
-          if (mounted) {
-            setHasActiveMatch(false);
-          }
-        }
-      } catch (error) {
-        console.error("Error checking like/match status:", error);
+      if (matchData) {
+        // Check if match is hidden with 'both'
+        const { data: hiddenData } = await supabase
+          .from("hidden_matches")
+          .select("hidden_from")
+          .eq("match_id", matchData.id)
+          .eq("user_id", currentUserId)
+          .eq("hidden_from", "both")
+          .maybeSingle();
+        
+        // Match is active if it exists and is not hidden with 'both'
+        setHasActiveMatch(!hiddenData);
+      } else {
+        setHasActiveMatch(false);
       }
     };
     
-    checkLikeAndMatch().finally(() => {
-      hasCheckedRef.current = true;
-    });
+    checkLikeAndMatch();
+
+    // Subscribe to changes in likes and matches
+    const likesChannel = supabase
+      .channel(`likes-${currentUserId}-${profile.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'likes',
+          filter: `from_user_id=eq.${currentUserId}`
+        },
+        () => checkLikeAndMatch()
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'matches'
+        },
+        () => checkLikeAndMatch()
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'hidden_matches'
+        },
+        () => checkLikeAndMatch()
+      )
+      .subscribe();
 
     return () => {
-      mounted = false;
+      supabase.removeChannel(likesChannel);
     };
-  }, [isVisible, currentUserId, profile.id]);
+  }, [currentUserId, profile.id]);
 
-  // Use original bio for performance - skip translation
+  // Use pre-translated bio if available, otherwise translate on mount
   useEffect(() => {
-    if (profile.translatedBio) {
-      setTranslatedBio(profile.translatedBio);
-    } else if (profile.bio) {
-      setTranslatedBio(profile.bio); // Use original bio
-    }
+    const loadTranslation = async () => {
+      if (profile.translatedBio) {
+        setTranslatedBio(profile.translatedBio);
+      } else if (profile.bio) {
+        const translated = await translateText(profile.bio);
+        setTranslatedBio(translated);
+      }
+    };
+    loadTranslation();
   }, [profile.bio, profile.translatedBio]);
 
   const avatarUrl = profile.avatar_url
@@ -298,94 +298,8 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
       // Navigate to chat
       navigate(`/chat/${matchData.id}`);
     } else {
-      // Show chat confirmation banner
-      setShowChatConfirmation(true);
-    }
-  };
-
-  const handleConfirmChat = async () => {
-    if (isCreatingChat) return;
-    
-    setIsCreatingChat(true);
-    
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        setIsCreatingChat(false);
-        return;
-      }
-
-      // Verifica crediti sufficienti
-      if (!credits || credits.balance < 6) {
-        toast({
-          title: t("common.error"),
-          description: "Crediti insufficienti per iniziare una chat",
-          variant: "destructive",
-        });
-        setShowChatConfirmation(false);
-        setIsCreatingChat(false);
-        return;
-      }
-
-      // Deduce 6 crediti usando la RPC function
-      const { data: deductSuccess, error: deductError } = await supabase.rpc(
-        "deduct_credits",
-        { _user_id: session.user.id, _amount: 6 }
-      );
-
-      if (deductError || !deductSuccess) {
-        toast({
-          title: t("common.error"),
-          description: "Crediti insufficienti per iniziare una chat",
-          variant: "destructive",
-        });
-        setShowChatConfirmation(false);
-        setIsCreatingChat(false);
-        return;
-      }
-
-      // Crea il match
-      const user1Id = currentUserId < profile.id ? currentUserId : profile.id;
-      const user2Id = currentUserId < profile.id ? profile.id : currentUserId;
-
-      const { data: matchData, error: matchError } = await supabase
-        .from('matches')
-        .insert({
-          user1_id: user1Id,
-          user2_id: user2Id,
-        })
-        .select()
-        .single();
-
-      if (matchError) {
-        console.error('Errore creazione match:', matchError);
-        toast({
-          title: t("common.error"),
-          description: "Errore nella creazione della chat",
-          variant: "destructive",
-        });
-        setIsCreatingChat(false);
-        return;
-      }
-
-      toast({
-        title: "Chat attivata!",
-        description: `Ora puoi chattare con ${profile.nickname || profile.full_name}!`,
-      });
-
-      setShowChatConfirmation(false);
-      setIsCreatingChat(false);
-      
-      // Naviga alla chat
-      navigate(`/chat/${matchData.id}`);
-    } catch (error) {
-      console.error('Errore:', error);
-      toast({
-        title: t("common.error"),
-        description: "Si è verificato un errore",
-        variant: "destructive",
-      });
-      setIsCreatingChat(false);
+      // Open profile dialog
+      setShowProfileDialog(true);
     }
   };
 
@@ -396,21 +310,17 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
   return (
     <>
       <div 
-        ref={cardRef}
         className="group relative cursor-pointer"
-        style={{ contentVisibility: 'auto', containIntrinsicSize: '300px 400px' }}
         onClick={handleCardClick}
       >
         {/* Card Container */}
         <div className="relative rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 bg-card border-2 border-border hover:border-primary/50">
           {/* Main Image */}
-          <div className="relative aspect-[3/4] overflow-hidden bg-muted">
+          <div className="relative aspect-[3/4] overflow-hidden">
             {avatarUrl ? (
               <img
                 src={avatarUrl}
                 alt={profile.nickname}
-                loading="lazy"
-                decoding="async"
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
             ) : (
@@ -518,14 +428,6 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
         onUseCredits={handleUseCreditsForLike}
         resetAt={resetAt}
         hasEnoughCredits={(credits?.balance ?? 0) >= 2}
-      />
-      
-      <ChatConfirmationBanner
-        isVisible={showChatConfirmation}
-        onClose={() => setShowChatConfirmation(false)}
-        onConfirm={handleConfirmChat}
-        userName={profile.nickname || profile.full_name}
-        isLoading={isCreatingChat}
       />
     </>
   );

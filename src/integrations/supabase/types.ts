@@ -584,10 +584,6 @@ export type Database = {
           success: boolean
         }[]
       }
-      deduct_credits: {
-        Args: { _amount: number; _user_id: string }
-        Returns: boolean
-      }
       deduct_message_credits: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
