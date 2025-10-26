@@ -94,38 +94,29 @@ export function UserBanManager() {
 
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast({
-          title: "Errore",
-          description: "Devi essere autenticato",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { error } = await supabase.from("banned_users").insert({
-        user_id: selectedUser.id,
-        banned_by: user.id,
-        reason: banReason || "Ban amministrativo",
+      const { data, error } = await supabase.functions.invoke('admin-ban-user', {
+        body: {
+          user_id: selectedUser.id,
+          reason: banReason || 'Ban amministrativo',
+        },
       });
 
-      if (error) throw error;
+      if (error || !data?.success) {
+        throw new Error(error?.message || data?.error || 'Errore durante il ban');
+      }
 
       setIsBanned(true);
-      // Refresh the list
       await loadAllUsers();
       toast({
-        title: "Utente bannato",
+        title: 'Utente bannato',
         description: `${selectedUser.nickname} è stato bannato con successo`,
       });
     } catch (error: any) {
-      console.error("Error banning user:", error);
+      console.error('Error banning user:', error);
       toast({
-        title: "Errore",
+        title: 'Errore',
         description: error.message || "Errore durante il ban dell'utente",
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -137,27 +128,26 @@ export function UserBanManager() {
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from("banned_users")
-        .delete()
-        .eq("user_id", selectedUser.id);
-
-      if (error) throw error;
+      const { data, error } = await supabase.functions.invoke('admin-unban-user', {
+        body: { user_id: selectedUser.id },
+      });
+      if (error || !data?.success) {
+        throw new Error(error?.message || data?.error || 'Errore durante lo sban');
+      }
 
       setIsBanned(false);
-      setBanReason("");
-      // Refresh the list
+      setBanReason('');
       await loadAllUsers();
       toast({
-        title: "Utente sbannato",
+        title: 'Utente sbannato',
         description: `${selectedUser.nickname} può ora accedere nuovamente`,
       });
     } catch (error: any) {
-      console.error("Error unbanning user:", error);
+      console.error('Error unbanning user:', error);
       toast({
-        title: "Errore",
+        title: 'Errore',
         description: error.message || "Errore durante lo sban dell'utente",
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
