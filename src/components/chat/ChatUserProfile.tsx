@@ -244,14 +244,25 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
               <span className="text-muted-foreground">
                 {profile.relationship_type
                   ? (
-                    profile.relationship_type?.toLowerCase() === 'serious' || profile.relationship_type?.toLowerCase() === 'serious relationship' ? t("common.seriousRelationship") :
-                    profile.relationship_type?.toLowerCase() === 'casual' || profile.relationship_type?.toLowerCase() === 'casual dating' ? t("common.casualDating") :
-                    profile.relationship_type?.toLowerCase() === 'friendship' ? t("common.friendship") :
-                    profile.relationship_type?.toLowerCase() === 'not-sure' || profile.relationship_type?.toLowerCase() === 'not sure' ? t("common.notSure") :
-                    profile.relationship_type?.toLowerCase() === 'prefer-not-say' || profile.relationship_type?.toLowerCase() === 'prefer not say' || profile.relationship_type?.toLowerCase() === 'prefer not to say' ? t("common.preferNotSay") :
-                    (profile.translatedRelationshipType || profile.relationship_type)
+                    (() => {
+                      const v = profile.relationship_type?.toLowerCase();
+                      return (v === 'serious' || v === 'serious relationship' || v === 'relazione seria') ? t('common.seriousRelationship')
+                        : (v === 'casual' || v === 'casual dating' || v === 'relazione occasionale' || v === 'incontri casuali') ? t('common.casualDating')
+                        : (v === 'friendship' || v === 'amicizia') ? t('common.friendship')
+                        : (v === 'not-sure' || v === 'not sure' || v === 'non specifico') ? t('common.notSure')
+                        : (v === 'prefer-not-say' || v === 'prefer not say' || v === 'prefer not to say' || v === 'preferisco non dirlo') ? t('common.preferNotSay')
+                        : (profile.translatedRelationshipType || profile.relationship_type || '');
+                    })()
                     )
-                  : (((profile.translatedLookingFor || profile.looking_for)?.join(', ')) || '')}
+                  : (((profile.translatedLookingFor || profile.looking_for)?.map((item) => {
+                        const v = (item || '').toLowerCase();
+                        return (v === 'serious' || v === 'serious relationship' || v === 'relazione seria') ? t('common.seriousRelationship')
+                          : (v === 'casual' || v === 'casual dating' || v === 'relazione occasionale' || v === 'incontri casuali') ? t('common.casualDating')
+                          : (v === 'friendship' || v === 'amicizia') ? t('common.friendship')
+                          : (v === 'not-sure' || v === 'not sure' || v === 'non specifico') ? t('common.notSure')
+                          : (v === 'prefer-not-say' || v === 'prefer not say' || v === 'prefer not to say' || v === 'preferisco non dirlo') ? t('common.preferNotSay')
+                          : item;
+                      }).join(', ')) || '')}
               </span>
             </div>
           )}
