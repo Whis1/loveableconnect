@@ -30,10 +30,15 @@ export const ChatConfirmationBanner = ({
     <div
       className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 pointer-events-auto"
       onMouseDown={(e) => {
+        e.stopPropagation();
         if (e.target === e.currentTarget) onClose();
       }}
+      onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => {
-        if (e.key === "Escape") onClose();
+        if (e.key === "Escape") {
+          e.stopPropagation();
+          onClose();
+        }
       }}
       tabIndex={-1}
     >
@@ -42,6 +47,7 @@ export const ChatConfirmationBanner = ({
         aria-modal="true"
         className="bg-card border border-border rounded-lg shadow-lg max-w-md w-full p-6 relative animate-in fade-in zoom-in duration-200 pointer-events-auto"
         onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
