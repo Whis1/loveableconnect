@@ -14,7 +14,6 @@ import { ChatUserProfile } from "@/components/chat/ChatUserProfile";
 import { InsufficientCreditsBanner } from "@/components/chat/InsufficientCreditsBanner";
 import { useCredits } from "@/hooks/useCredits";
 import { useTranslation } from "react-i18next";
-import { useTextTranslation } from "@/hooks/useTranslation";
 
 interface Message {
   id: string;
@@ -42,7 +41,6 @@ const Chat = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation();
-  const { translateText } = useTextTranslation();
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [otherUser, setOtherUser] = useState<Profile | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -148,18 +146,10 @@ const Chat = () => {
         .eq("match_id", matchId)
         .order("created_at", { ascending: true });
 
-      // Translate text messages
-      const translatedMessages = await Promise.all(
-        (messagesData || []).map(async (msg: any) => {
-          if (msg.message_type === 'text' && msg.content) {
-            const translatedContent = await translateText(msg.content);
-            return { ...msg, translatedContent };
-          }
-          return msg;
-        })
-      );
+      // Use original messages without translation
+      const originalMessages = messagesData || [];
 
-      setMessages(translatedMessages as Message[]);
+      setMessages(originalMessages as Message[]);
 
       // Mark messages as read
       await supabase
@@ -186,18 +176,11 @@ const Chat = () => {
             const newMsg = payload.new as Message;
             console.log('[Chat] Realtime INSERT', newMsg);
             
-            // Translate if text message
-            let translatedMsg = newMsg;
-            if (newMsg.message_type === 'text' && newMsg.content) {
-              const translatedContent = await translateText(newMsg.content);
-              translatedMsg = { ...newMsg, translatedContent };
-            }
-            
-            // Only add if not already in the list (prevent duplicates)
+            // Append new message as-is (no translation)
             setMessages((prev) => {
               const exists = prev.some(m => m.id === newMsg.id);
               if (exists) return prev;
-              return [...prev, translatedMsg];
+              return [...prev, newMsg];
             });
             
             // Mark as read if received
@@ -405,7 +388,7 @@ const Chat = () => {
                   return (
                     <MessageBubble
                       key={message.id}
-                      content={message.translatedContent || message.content}
+                      content={message.content}
                       messageType={message.message_type}
                       mediaUrl={message.media_url}
                       isOwn={isOwn}

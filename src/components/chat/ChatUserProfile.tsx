@@ -244,11 +244,11 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
               <span className="text-muted-foreground">
                 {profile.relationship_type
                   ? (
-                    profile.relationship_type === 'serious' ? t("common.seriousRelationship") :
-                    profile.relationship_type === 'casual' ? t("common.casualDating") :
-                    profile.relationship_type === 'friendship' ? t("common.friendship") :
-                    profile.relationship_type === 'not-sure' ? t("common.notSure") :
-                    profile.relationship_type === 'prefer-not-say' ? t("common.preferNotSay") :
+                    profile.relationship_type?.toLowerCase() === 'serious' || profile.relationship_type?.toLowerCase() === 'serious relationship' ? t("common.seriousRelationship") :
+                    profile.relationship_type?.toLowerCase() === 'casual' || profile.relationship_type?.toLowerCase() === 'casual dating' ? t("common.casualDating") :
+                    profile.relationship_type?.toLowerCase() === 'friendship' ? t("common.friendship") :
+                    profile.relationship_type?.toLowerCase() === 'not-sure' || profile.relationship_type?.toLowerCase() === 'not sure' ? t("common.notSure") :
+                    profile.relationship_type?.toLowerCase() === 'prefer-not-say' || profile.relationship_type?.toLowerCase() === 'prefer not say' || profile.relationship_type?.toLowerCase() === 'prefer not to say' ? t("common.preferNotSay") :
                     (profile.translatedRelationshipType || profile.relationship_type)
                     )
                   : (((profile.translatedLookingFor || profile.looking_for)?.join(', ')) || '')}
