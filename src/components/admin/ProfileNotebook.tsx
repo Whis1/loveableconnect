@@ -141,6 +141,12 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
     setNotes(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleTextareaResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
+    const target = e.currentTarget;
+    target.style.height = 'auto';
+    target.style.height = target.scrollHeight + 'px';
+  };
+
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="pb-3 shrink-0">
@@ -191,8 +197,9 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
                 value={notes.location}
                 onChange={(e) => handleChange("location", e.target.value)}
                 onBlur={(e) => handleBlur("location", e.target.value)}
+                onInput={handleTextareaResize}
                 placeholder="Inserisci location..."
-                className="text-sm min-h-[32px] resize-none"
+                className="text-sm min-h-[32px] resize-none overflow-hidden"
                 rows={1}
               />
             </div>
@@ -203,8 +210,9 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
                 value={notes.relazione}
                 onChange={(e) => handleChange("relazione", e.target.value)}
                 onBlur={(e) => handleBlur("relazione", e.target.value)}
+                onInput={handleTextareaResize}
                 placeholder="Inserisci stato relazione..."
-                className="text-sm min-h-[32px] resize-none"
+                className="text-sm min-h-[32px] resize-none overflow-hidden"
                 rows={1}
               />
             </div>
@@ -215,8 +223,9 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
                 value={notes.figli}
                 onChange={(e) => handleChange("figli", e.target.value)}
                 onBlur={(e) => handleBlur("figli", e.target.value)}
+                onInput={handleTextareaResize}
                 placeholder="Inserisci info figli..."
-                className="text-sm min-h-[32px] resize-none"
+                className="text-sm min-h-[32px] resize-none overflow-hidden"
                 rows={1}
               />
             </div>
@@ -227,8 +236,9 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
                 value={notes.hobby}
                 onChange={(e) => handleChange("hobby", e.target.value)}
                 onBlur={(e) => handleBlur("hobby", e.target.value)}
+                onInput={handleTextareaResize}
                 placeholder="Inserisci hobby..."
-                className="text-sm min-h-[32px] resize-none"
+                className="text-sm min-h-[32px] resize-none overflow-hidden"
                 rows={1}
               />
             </div>
@@ -239,8 +249,9 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
                 value={notes.lavoro}
                 onChange={(e) => handleChange("lavoro", e.target.value)}
                 onBlur={(e) => handleBlur("lavoro", e.target.value)}
+                onInput={handleTextareaResize}
                 placeholder="Inserisci lavoro..."
-                className="text-sm min-h-[32px] resize-none"
+                className="text-sm min-h-[32px] resize-none overflow-hidden"
                 rows={1}
               />
             </div>
@@ -262,8 +273,9 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
                 value={notes.piercings}
                 onChange={(e) => handleChange("piercings", e.target.value)}
                 onBlur={(e) => handleBlur("piercings", e.target.value)}
+                onInput={handleTextareaResize}
                 placeholder="Inserisci info piercings..."
-                className="text-sm min-h-[32px] resize-none"
+                className="text-sm min-h-[32px] resize-none overflow-hidden"
                 rows={1}
               />
             </div>
@@ -274,8 +286,9 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
                 value={notes.tatuaggi}
                 onChange={(e) => handleChange("tatuaggi", e.target.value)}
                 onBlur={(e) => handleBlur("tatuaggi", e.target.value)}
+                onInput={handleTextareaResize}
                 placeholder="Inserisci info tatuaggi..."
-                className="text-sm min-h-[32px] resize-none"
+                className="text-sm min-h-[32px] resize-none overflow-hidden"
                 rows={1}
               />
             </div>
@@ -319,8 +332,9 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
                 value={notes.altro}
                 onChange={(e) => handleChange("altro", e.target.value)}
                 onBlur={(e) => handleBlur("altro", e.target.value)}
+                onInput={handleTextareaResize}
                 placeholder="Altre note..."
-                className="text-sm min-h-[60px] resize-y"
+                className="text-sm min-h-[60px] resize-none overflow-hidden"
                 rows={3}
               />
             </div>
