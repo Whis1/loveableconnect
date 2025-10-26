@@ -129,9 +129,6 @@ const Credits = () => {
                 <div className="text-4xl font-bold text-primary mb-2">
                   {credits?.balance || 0} {t("credits.credits")}
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  {t("credits.messagesCost")}
-                </div>
               </div>
             )}
           </CardContent>
