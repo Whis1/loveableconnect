@@ -426,7 +426,10 @@ export const ProfileDialog = ({
             <div className="relative flex flex-col items-center">
               <div className="relative group">
                 {/* Main Rectangle Card */}
-                <div className="relative w-48 h-64 rounded-3xl border-4 border-background shadow-2xl overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 transform transition-transform duration-300 group-hover:scale-105">
+                <div 
+                  className="relative w-72 h-80 rounded-3xl border-4 border-background shadow-2xl overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 transform transition-transform duration-300 group-hover:scale-105 cursor-pointer"
+                  onClick={() => avatarUrl && setSelectedImage(avatarUrl)}
+                >
                   {avatarUrl ? (
                     <img
                       src={avatarUrl}
