@@ -25,7 +25,8 @@ Deno.serve(async (req) => {
         .from('support_messages')
         .select('*')
         .eq('user_id', body.userId)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true })
+        .limit(100);
       if (error) throw error;
       return new Response(JSON.stringify({ success: true, messages: data || [] }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -33,29 +34,29 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Recupera i messaggi
+    // Recupera solo gli ultimi 200 messaggi per evitare timeout
     const { data: messages, error } = await supabase
       .from('support_messages')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(200);
     if (error) throw error;
 
     // Recupera i nickname per gli user_id unici (se presenti)
     const userIds = [...new Set((messages || []).map((m: any) => m.user_id).filter((id: any) => !!id))];
     let profiles: any[] = [];
-    if (userIds.length > 0) {
-      const { data: profData, error: profErr } = await supabase
+    if (userIds.length > 0 && userIds.length < 100) {
+      const { data: profData } = await supabase
         .from('profiles')
         .select('id, nickname')
         .in('id', userIds);
-      if (profErr) throw profErr;
       profiles = profData || [];
     }
 
     // Mappa i nickname ai messaggi
     const messagesWithNicknames = (messages || []).map((msg: any) => ({
       ...msg,
-      profiles: profiles.find((p: any) => p.id === msg.user_id) || null
+      profiles: profiles.find((p: any) => p.id === msg.user_id) || { nickname: 'N/A' }
     }));
 
     return new Response(JSON.stringify({ success: true, messages: messagesWithNicknames }), {
