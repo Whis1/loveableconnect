@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, MessageCircle, Image as ImageIcon, X, Bot } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useTranslation } from "react-i18next";
 
 interface SupportMessage {
   id: string;
@@ -25,6 +26,7 @@ interface SupportChatProps {
 
 export const SupportChat = ({ userEmail }: SupportChatProps) => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<SupportMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -86,8 +88,8 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
         toast({
-          title: "Errore",
-          description: "L'immagine non può superare i 5MB",
+          title: t("support.error"),
+          description: t("support.errorImageSize"),
           variant: "destructive",
         });
         return;
@@ -112,8 +114,8 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
         if (file) {
           if (file.size > 5 * 1024 * 1024) {
             toast({
-              title: "Errore",
-              description: "L'immagine non può superare i 5MB",
+              title: t("support.error"),
+              description: t("support.errorImageSize"),
               variant: "destructive",
             });
             return;
@@ -165,8 +167,8 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast({
-          title: "Errore",
-          description: "Devi effettuare il login per inviare messaggi",
+          title: t("support.error"),
+          description: t("support.errorLogin"),
           variant: "destructive",
         });
         return;
@@ -179,8 +181,8 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
         imageUrl = await uploadImage(selectedImage, user.id);
         if (!imageUrl) {
           toast({
-            title: "Errore",
-            description: "Impossibile caricare l'immagine",
+            title: t("support.error"),
+            description: t("support.errorUploadImage"),
             variant: "destructive",
           });
           return;
@@ -192,7 +194,7 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
         .insert({
           user_id: user.id,
           user_email: userEmail,
-          message: newMessage || "📷 Immagine",
+          message: newMessage || t("support.imageLabel"),
           is_admin_response: false,
           image_url: imageUrl,
         });
@@ -207,7 +209,7 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
             .insert({
               user_id: user.id,
               user_email: userEmail,
-              message: "Il supporto clienti ti assisterà appena possibile",
+              message: t("support.autoResponse"),
               is_admin_response: true,
             });
         }, 1000);
@@ -218,8 +220,8 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
-        title: "Errore",
-        description: "Impossibile inviare il messaggio",
+        title: t("support.error"),
+        description: t("support.errorSendMessage"),
         variant: "destructive",
       });
     } finally {
@@ -235,8 +237,8 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
             <MessageCircle className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold">Supporto Clienti</h3>
-            <p className="text-sm text-muted-foreground font-normal">Siamo qui per aiutarti</p>
+            <h3 className="text-lg font-semibold">{t("support.chatTitle")}</h3>
+            <p className="text-sm text-muted-foreground font-normal">{t("support.chatSubtitle")}</p>
           </div>
         </CardTitle>
       </CardHeader>
@@ -249,7 +251,7 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
                   <MessageCircle className="h-8 w-8 text-primary" />
                 </div>
                 <p className="text-muted-foreground">
-                  Inizia una conversazione con il nostro team di supporto
+                  {t("support.startConversation")}
                 </p>
               </div>
             ) : (
@@ -294,7 +296,7 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
                   {!msg.is_admin_response && (
                     <Avatar className="h-9 w-9 border-2 border-primary/20 flex-shrink-0">
                       <AvatarFallback className="bg-secondary text-secondary-foreground font-semibold">
-                        Tu
+                        {t("support.you")}
                       </AvatarFallback>
                     </Avatar>
                   )}
@@ -341,7 +343,7 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
               <ImageIcon className="h-4 w-4" />
             </Button>
             <Input
-              placeholder="Scrivi un messaggio..."
+              placeholder={t("support.typeMessage")}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && !loading && handleSendMessage()}

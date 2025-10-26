@@ -147,7 +147,9 @@
     "supportDescription": "Need help?",
     "sendMessage": "Send Message",
     "contactSupport": "Contact our support team for any questions or issues.",
-    "credits": "Credits"
+    "credits": "Credits",
+    "dailyRenewal": "Daily renewal:",
+    "unlimitedLikes": "Unlimited Likes"
   },
   "explore": {
     "back": "Back",
@@ -489,19 +491,20 @@
   },
   "support": {
     "title": "Support",
-    "description": "Contact our support team for assistance. We will respond as soon as possible.",
-    "yourEmail": "Your Email",
-    "emailPlaceholder": "your.email@example.com",
-    "message": "Message",
-    "messagePlaceholder": "Describe your issue or question...",
-    "sendButton": "Send Message",
-    "sending": "Sending...",
-    "messageSent": "Message sent!",
-    "messageSentDescription": "We will respond as soon as possible.",
-    "error": "Error",
-    "errorSending": "Failed to send message",
-    "requiredFields": "Required fields",
-    "requiredFieldsDescription": "Please fill in all fields",
-    "back": "Back"
+    "description": "Get help from our support team",
+    "backToDashboard": "Back to Dashboard",
+    "chatTitle": "Customer Support",
+    "chatSubtitle": "We're here to help you",
+    "startConversation": "Start a conversation with our support team",
+    "bot": "Bot",
+    "you": "You",
+    "attachedImage": "Attached image",
+    "typeMessage": "Write a message...",
+    "errorLogin": "You must be logged in to send messages",
+    "errorUploadImage": "Unable to upload image",
+    "errorSendMessage": "Unable to send message",
+    "errorImageSize": "The image cannot exceed 5MB",
+    "autoResponse": "Customer support will assist you as soon as possible",
+    "imageLabel": "📷 Image"
   }
 }

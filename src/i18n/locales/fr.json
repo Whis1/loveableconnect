@@ -145,7 +145,9 @@
     "supportDescription": "Besoin d'aide?",
     "sendMessage": "Envoyer un Message",
     "contactSupport": "Contactez notre équipe de support pour toute question ou problème.",
-    "credits": "Crédits"
+    "credits": "Crédits",
+    "dailyRenewal": "Renouvellement quotidien:",
+    "unlimitedLikes": "Likes Illimités"
   },
   "explore": {
     "back": "Retour",
@@ -391,20 +393,21 @@
     "years": "ans"
   },
   "support": {
-    "title": "Support Client",
-    "description": "Besoin d'aide? Envoyez-nous un message et nous vous répondrons dès que possible!",
-    "yourEmail": "Votre email",
-    "emailPlaceholder": "exemple@email.com",
-    "message": "Message",
-    "messagePlaceholder": "Décrivez votre problème ou votre question...",
-    "sendButton": "Envoyer le Message",
-    "sending": "Envoi en cours...",
-    "messageSent": "Message envoyé!",
-    "messageSentDescription": "Nous vous répondrons dès que possible",
-    "error": "Erreur",
-    "errorSending": "Impossible d'envoyer le message",
-    "requiredFields": "Champs obligatoires",
-    "requiredFieldsDescription": "Veuillez entrer l'email et le message",
-    "back": "Retour"
+    "title": "Support",
+    "description": "Obtenez de l'aide de notre équipe de support",
+    "backToDashboard": "Retour au Tableau de Bord",
+    "chatTitle": "Support Client",
+    "chatSubtitle": "Nous sommes là pour vous aider",
+    "startConversation": "Commencez une conversation avec notre équipe de support",
+    "bot": "Bot",
+    "you": "Vous",
+    "attachedImage": "Image jointe",
+    "typeMessage": "Écrivez un message...",
+    "errorLogin": "Vous devez être connecté pour envoyer des messages",
+    "errorUploadImage": "Impossible de télécharger l'image",
+    "errorSendMessage": "Impossible d'envoyer le message",
+    "errorImageSize": "L'image ne peut pas dépasser 5MB",
+    "autoResponse": "Le support client vous assistera dès que possible",
+    "imageLabel": "📷 Image"
   }
 }

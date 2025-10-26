@@ -1,6 +1,7 @@
 import { Heart, Crown, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 interface DailyLikesDisplayProps {
   likesRemaining: number;
@@ -11,6 +12,7 @@ interface DailyLikesDisplayProps {
 
 export const DailyLikesDisplay = ({ likesRemaining, isPremium, resetAt, loading }: DailyLikesDisplayProps) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   if (loading) {
     return (
@@ -30,7 +32,7 @@ export const DailyLikesDisplay = ({ likesRemaining, isPremium, resetAt, loading 
       >
         <Crown className="h-4 w-4 text-amber-500" />
         <Heart className="h-4 w-4 text-amber-500" />
-        <span className="font-medium text-amber-600 dark:text-amber-400">Like Illimitati</span>
+        <span className="font-medium text-amber-600 dark:text-amber-400">{t("dashboard.unlimitedLikes")}</span>
       </Button>
     );
   }
@@ -64,7 +66,7 @@ export const DailyLikesDisplay = ({ likesRemaining, isPremium, resetAt, loading 
       {timeRemaining && likesRemaining < 13 && (
         <div className="flex items-center gap-1 text-xs text-muted-foreground px-2">
           <Clock className="h-3 w-3" />
-          <span>Rinnovo giornaliero: {timeRemaining}</span>
+          <span>{t("dashboard.dailyRenewal")} {timeRemaining}</span>
         </div>
       )}
     </div>

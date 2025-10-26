@@ -145,7 +145,9 @@
     "supportDescription": "¿Necesitas ayuda?",
     "sendMessage": "Enviar Mensaje",
     "contactSupport": "Contacta a nuestro equipo de soporte para cualquier pregunta o problema.",
-    "credits": "Créditos"
+    "credits": "Créditos",
+    "dailyRenewal": "Renovación diaria:",
+    "unlimitedLikes": "Likes Ilimitados"
   },
   "userProfile": {
     "years": "años",
@@ -481,20 +483,21 @@
     "credits220": "220 Créditos"
   },
   "support": {
-    "title": "Soporte al Cliente",
-    "description": "¿Necesitas ayuda? ¡Envíanos un mensaje y te responderemos lo antes posible!",
-    "yourEmail": "Tu correo electrónico",
-    "emailPlaceholder": "ejemplo@email.com",
-    "message": "Mensaje",
-    "messagePlaceholder": "Describe tu problema o pregunta...",
-    "sendButton": "Enviar Mensaje",
-    "sending": "Enviando...",
-    "messageSent": "¡Mensaje enviado!",
-    "messageSentDescription": "Te responderemos lo antes posible",
-    "error": "Error",
-    "errorSending": "No se pudo enviar el mensaje",
-    "requiredFields": "Campos obligatorios",
-    "requiredFieldsDescription": "Ingresa correo y mensaje",
-    "back": "Atrás"
+    "title": "Soporte",
+    "description": "Obtén ayuda de nuestro equipo de soporte",
+    "backToDashboard": "Volver al Panel",
+    "chatTitle": "Soporte al Cliente",
+    "chatSubtitle": "Estamos aquí para ayudarte",
+    "startConversation": "Inicia una conversación con nuestro equipo de soporte",
+    "bot": "Bot",
+    "you": "Tú",
+    "attachedImage": "Imagen adjunta",
+    "typeMessage": "Escribe un mensaje...",
+    "errorLogin": "Debes iniciar sesión para enviar mensajes",
+    "errorUploadImage": "No se pudo cargar la imagen",
+    "errorSendMessage": "No se pudo enviar el mensaje",
+    "errorImageSize": "La imagen no puede superar los 5MB",
+    "autoResponse": "El soporte al cliente te asistirá lo antes posible",
+    "imageLabel": "📷 Imagen"
   }
 }

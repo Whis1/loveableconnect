@@ -125,7 +125,9 @@
     "supportDescription": "هل تحتاج مساعدة؟",
     "sendMessage": "إرسال رسالة",
     "contactSupport": "اتصل بفريق الدعم لدينا لأي أسئلة أو مشاكل.",
-    "credits": "الأرصدة"
+    "credits": "الأرصدة",
+    "dailyRenewal": "التجديد اليومي:",
+    "unlimitedLikes": "إعجابات غير محدودة"
   },
   "common": {
     "male": "ذكر",
@@ -447,20 +449,21 @@
     "years": "سنة"
   },
   "support": {
-    "title": "دعم العملاء",
-    "description": "هل تحتاج مساعدة؟ أرسل لنا رسالة وسنرد عليك في أقرب وقت ممكن!",
-    "yourEmail": "بريدك الإلكتروني",
-    "emailPlaceholder": "مثال@بريد.com",
-    "message": "الرسالة",
-    "messagePlaceholder": "صف مشكلتك أو سؤالك...",
-    "sendButton": "إرسال الرسالة",
-    "sending": "جاري الإرسال...",
-    "messageSent": "تم إرسال الرسالة!",
-    "messageSentDescription": "سنرد عليك في أقرب وقت ممكن",
-    "error": "خطأ",
-    "errorSending": "تعذر إرسال الرسالة",
-    "requiredFields": "الحقول المطلوبة",
-    "requiredFieldsDescription": "الرجاء إدخال البريد الإلكتروني والرسالة",
-    "back": "رجوع"
+    "title": "الدعم",
+    "description": "احصل على المساعدة من فريق الدعم لدينا",
+    "backToDashboard": "العودة إلى لوحة التحكم",
+    "chatTitle": "دعم العملاء",
+    "chatSubtitle": "نحن هنا لمساعدتك",
+    "startConversation": "ابدأ محادثة مع فريق الدعم لدينا",
+    "bot": "بوت",
+    "you": "أنت",
+    "attachedImage": "صورة مرفقة",
+    "typeMessage": "اكتب رسالة...",
+    "errorLogin": "يجب عليك تسجيل الدخول لإرسال الرسائل",
+    "errorUploadImage": "تعذر تحميل الصورة",
+    "errorSendMessage": "تعذر إرسال الرسالة",
+    "errorImageSize": "لا يمكن أن تتجاوز الصورة 5 ميجابايت",
+    "autoResponse": "سيساعدك دعم العملاء في أقرب وقت ممكن",
+    "imageLabel": "📷 صورة"
   }
 }

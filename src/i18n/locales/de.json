@@ -145,7 +145,9 @@
     "supportDescription": "Brauchst du Hilfe?",
     "sendMessage": "Nachricht Senden",
     "contactSupport": "Kontaktiere unser Support-Team für Fragen oder Probleme.",
-    "credits": "Credits"
+    "credits": "Credits",
+    "dailyRenewal": "Tägliche Erneuerung:",
+    "unlimitedLikes": "Unbegrenzte Likes"
   },
   "explore": {
     "back": "Zurück",
@@ -391,20 +393,21 @@
     "years": "Jahre"
   },
   "support": {
-    "title": "Kundensupport",
-    "description": "Brauchst du Hilfe? Sende uns eine Nachricht und wir melden uns so schnell wie möglich bei dir!",
-    "yourEmail": "Deine E-Mail",
-    "emailPlaceholder": "beispiel@email.com",
-    "message": "Nachricht",
-    "messagePlaceholder": "Beschreibe dein Problem oder deine Frage...",
-    "sendButton": "Nachricht Senden",
-    "sending": "Wird gesendet...",
-    "messageSent": "Nachricht gesendet!",
-    "messageSentDescription": "Wir werden uns so schnell wie möglich bei dir melden",
-    "error": "Fehler",
-    "errorSending": "Nachricht konnte nicht gesendet werden",
-    "requiredFields": "Pflichtfelder",
-    "requiredFieldsDescription": "Bitte gib E-Mail und Nachricht ein",
-    "back": "Zurück"
+    "title": "Support",
+    "description": "Erhalten Sie Hilfe von unserem Support-Team",
+    "backToDashboard": "Zurück zum Dashboard",
+    "chatTitle": "Kundensupport",
+    "chatSubtitle": "Wir sind hier, um Ihnen zu helfen",
+    "startConversation": "Beginnen Sie ein Gespräch mit unserem Support-Team",
+    "bot": "Bot",
+    "you": "Du",
+    "attachedImage": "Angehängtes Bild",
+    "typeMessage": "Schreiben Sie eine Nachricht...",
+    "errorLogin": "Sie müssen angemeldet sein, um Nachrichten zu senden",
+    "errorUploadImage": "Bild konnte nicht hochgeladen werden",
+    "errorSendMessage": "Nachricht konnte nicht gesendet werden",
+    "errorImageSize": "Das Bild darf 5MB nicht überschreiten",
+    "autoResponse": "Der Kundensupport wird Ihnen so schnell wie möglich helfen",
+    "imageLabel": "📷 Bild"
   }
 }

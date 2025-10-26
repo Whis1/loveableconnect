@@ -145,7 +145,9 @@
     "supportDescription": "Hai bisogno di aiuto?",
     "sendMessage": "Invia Messaggio",
     "contactSupport": "Contatta il nostro team di supporto per qualsiasi domanda o problema.",
-    "credits": "Crediti"
+    "credits": "Crediti",
+    "dailyRenewal": "Rinnovo giornaliero:",
+    "unlimitedLikes": "Like Illimitati"
   },
   "explore": {
     "back": "Indietro",
@@ -552,19 +554,20 @@
   },
   "support": {
     "title": "Supporto",
-    "description": "Contatta il nostro team di supporto per assistenza. Risponderemo il prima possibile.",
-    "yourEmail": "La tua Email",
-    "emailPlaceholder": "tua.email@esempio.it",
-    "message": "Messaggio",
-    "messagePlaceholder": "Descrivi il tuo problema o la tua domanda...",
-    "sendButton": "Invia Messaggio",
-    "sending": "Invio in corso...",
-    "messageSent": "Messaggio inviato!",
-    "messageSentDescription": "Risponderemo il prima possibile.",
-    "error": "Errore",
-    "errorSending": "Impossibile inviare il messaggio",
-    "requiredFields": "Campi obbligatori",
-    "requiredFieldsDescription": "Compila tutti i campi",
-    "back": "Indietro"
+    "description": "Ottieni aiuto dal nostro team di supporto",
+    "backToDashboard": "Torna alla Dashboard",
+    "chatTitle": "Supporto Clienti",
+    "chatSubtitle": "Siamo qui per aiutarti",
+    "startConversation": "Inizia una conversazione con il nostro team di supporto",
+    "bot": "Bot",
+    "you": "Tu",
+    "attachedImage": "Immagine allegata",
+    "typeMessage": "Scrivi un messaggio...",
+    "errorLogin": "Devi effettuare il login per inviare messaggi",
+    "errorUploadImage": "Impossibile caricare l'immagine",
+    "errorSendMessage": "Impossibile inviare il messaggio",
+    "errorImageSize": "L'immagine non può superare i 5MB",
+    "autoResponse": "Il supporto clienti ti assisterà appena possibile",
+    "imageLabel": "📷 Immagine"
   }
 }
