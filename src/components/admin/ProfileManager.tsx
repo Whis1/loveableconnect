@@ -16,6 +16,16 @@ import { Users, MessageSquare, Save, Upload, X, Image as ImageIcon, Search, Hear
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AdminChatDialog } from "./AdminChatDialog";
 import { InterestsAutocomplete } from "@/components/InterestsAutocomplete";
+import { SpotifySongSelector } from "@/components/SpotifySongSelector";
+
+interface SpotifySong {
+  id: string;
+  name: string;
+  artist: string;
+  album: string;
+  image_url: string | null;
+  preview_url: string | null;
+}
 
 interface Profile {
   id: string;
@@ -31,6 +41,7 @@ interface Profile {
   interests: string[] | null;
   avatar_url: string | null;
   photos: string[] | null;
+  favorite_songs?: SpotifySong[] | null;
 }
 
 interface Message {
@@ -397,6 +408,7 @@ export const ProfileManager = () => {
               relationship_status: profile.relationship_status,
               looking_for: profile.looking_for,
               interests: profile.interests,
+              favorite_songs: profile.favorite_songs ? JSON.parse(JSON.stringify(profile.favorite_songs)) : null,
             }
           },
         });
@@ -716,6 +728,22 @@ export const ProfileManager = () => {
                                     setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
                                   }}
                                   maxInterests={4}
+                                />
+                              </div>
+
+                              {/* Canzoni Preferite */}
+                              <div className="space-y-2">
+                                <Label>🎵 Canzoni Preferite (max 5)</Label>
+                                <p className="text-sm text-muted-foreground mb-2">
+                                  Aggiungi le canzoni preferite da Spotify per questo profilo
+                                </p>
+                                <SpotifySongSelector
+                                  selectedSongs={profile.favorite_songs || []}
+                                  onSongsChange={(songs) => {
+                                    const updated = { ...profile, favorite_songs: songs };
+                                    setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
+                                  }}
+                                  maxSongs={5}
                                 />
                               </div>
 
