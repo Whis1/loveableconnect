@@ -22,13 +22,15 @@ export const ChatConfirmationBanner = ({
   withinDialog = false,
 }: ChatConfirmationBannerProps) => {
   const { t } = useTranslation();
-  
-  if (!isVisible) return null;
-
   const confirmRef = useRef<HTMLButtonElement>(null);
+  
   useEffect(() => {
-    confirmRef.current?.focus();
-  }, []);
+    if (isVisible) {
+      confirmRef.current?.focus();
+    }
+  }, [isVisible]);
+
+  if (!isVisible) return null;
 
   const content = (
     <div
