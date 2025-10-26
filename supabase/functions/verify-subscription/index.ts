@@ -58,12 +58,12 @@ serve(async (req) => {
       })
       .eq("user_id", user.id);
 
-    // Create purchase record
+    // Create purchase record with actual amount from session
     await supabaseClient.from("purchases").insert({
       user_id: user.id,
       product_type: "premium_monthly",
-      amount_cents: 9999,
-      currency: "eur",
+      amount_cents: session.amount_total || 9999,
+      currency: session.currency || "eur",
       stripe_payment_intent_id: session.payment_intent as string,
       stripe_session_id: session_id,
       status: "completed",
