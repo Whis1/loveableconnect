@@ -32,7 +32,6 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const textareaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchMessages();
@@ -343,7 +342,6 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
               <ImageIcon className="h-4 w-4" />
             </Button>
             <Input
-              ref={textareaRef}
               placeholder="Scrivi un messaggio..."
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
