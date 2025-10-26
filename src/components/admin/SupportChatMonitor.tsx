@@ -47,7 +47,7 @@ export const SupportChatMonitor = () => {
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'support_messages',
         },
@@ -114,7 +114,8 @@ export const SupportChatMonitor = () => {
           .from('support_messages')
           .update({ read: true })
           .eq('user_id', userId)
-          .eq('is_admin_response', false);
+          .eq('is_admin_response', false)
+          .eq('read', false);
       } catch {}
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -175,12 +176,25 @@ export const SupportChatMonitor = () => {
       const selectedConv = conversations.find(c => c.user_id === selectedUserId);
       if (!selectedConv) return;
 
+      // Optimistic UI update
+      const tempMsg: SupportMessage = {
+        id: `temp-${Date.now()}`,
+        user_id: selectedUserId,
+        user_email: selectedConv.user_email,
+        message: newMessage,
+        is_admin_response: true,
+        created_at: new Date().toISOString(),
+        read: true,
+      };
+      setMessages((prev) => [...prev, tempMsg]);
+      setNewMessage("");
+
       const { error } = await supabase
         .from('support_messages')
         .insert({
           user_id: selectedUserId,
           user_email: selectedConv.user_email,
-          message: newMessage,
+          message: tempMsg.message,
           is_admin_response: true,
         });
 
