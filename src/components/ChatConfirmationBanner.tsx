@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { X, MessageCircle, Coins } from "lucide-react";
-
+import { createPortal } from "react-dom";
 interface ChatConfirmationBannerProps {
   isVisible: boolean;
   onClose: () => void;
@@ -18,8 +18,8 @@ export const ChatConfirmationBanner = ({
 }: ChatConfirmationBannerProps) => {
   if (!isVisible) return null;
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+  const content = (
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-card border border-border rounded-lg shadow-lg max-w-md w-full p-6 relative animate-in fade-in zoom-in duration-200">
         <button
           onClick={onClose}
@@ -70,4 +70,6 @@ export const ChatConfirmationBanner = ({
       </div>
     </div>
   );
+
+  return typeof document !== "undefined" ? createPortal(content, document.body) : content;
 };
