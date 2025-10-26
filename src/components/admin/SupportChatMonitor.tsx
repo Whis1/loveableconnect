@@ -136,25 +136,26 @@ export const SupportChatMonitor = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('support_messages')
-        .delete()
-        .eq('user_id', userId);
+      const { data, error } = await supabase.functions.invoke('admin-delete-support-conversation', {
+        body: { userId }
+      });
 
-      if (error) throw error;
+      if (error || !data?.success) throw new Error(error?.message || data?.error || 'Delete failed');
 
       toast({
         title: "Conversazione eliminata",
         description: "La conversazione è stata eliminata con successo",
       });
 
-      // Reset selected user if it was the deleted one
+      // Aggiorna stato locale immediatamente
+      setConversations((prev) => prev.filter((c) => c.user_id !== userId));
+
       if (selectedUserId === userId) {
         setSelectedUserId(null);
         setMessages([]);
       }
 
-      // Refresh conversations
+      // Refresh di sicurezza
       fetchConversations();
     } catch (error) {
       console.error('Error deleting conversation:', error);
