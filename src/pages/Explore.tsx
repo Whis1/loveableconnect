@@ -196,8 +196,7 @@ const Explore = () => {
       const { data: profilesData, error } = await supabase
         .from("profiles")
         .select("*")
-        .neq("id", userId)
-        .eq("is_admin_profile", false);
+        .neq("id", userId);
 
       if (error) throw error;
 
@@ -283,12 +282,11 @@ const Explore = () => {
         )
       );
 
-      // Fetch all profiles excluding current user and admin profiles
+      // Fetch all profiles excluding current user
       let query = supabase
         .from("profiles")
         .select("*")
-        .neq("id", currentUser)
-        .eq("is_admin_profile", false);
+        .neq("id", currentUser);
 
       // Age filter
       query = query.gte("age", ageRange[0]).lte("age", ageRange[1]);
