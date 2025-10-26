@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Coins, Crown, Zap, Shield, Eye, Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import { CreditCountdown } from "@/components/CreditCountdown";
 
 const Credits = () => {
   const navigate = useNavigate();
@@ -110,13 +109,6 @@ const Credits = () => {
                 <Coins className="h-6 w-6 text-primary" />
                 {t("credits.yourBalance")}
               </CardTitle>
-              {!loading && 
-               !credits?.is_premium && 
-               credits?.balance !== undefined &&
-               credits.balance < 40 &&
-               credits?.credits_depleted_at && (
-                <CreditCountdown creditsDepletedAt={credits.credits_depleted_at} />
-              )}
             </div>
           </CardHeader>
           <CardContent>
