@@ -105,11 +105,6 @@ export const useCredits = () => {
       if (error) throw error;
 
       if (!data) {
-        toast({
-          title: "Crediti insufficienti",
-          description: "Hai esaurito i crediti di oggi. Acquista crediti per continuare.",
-          variant: "destructive",
-        });
         return false;
       }
 

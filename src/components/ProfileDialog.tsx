@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getGenericLocationPhrase } from "@/lib/utils";
 import { ChatConfirmationBanner } from "./ChatConfirmationBanner";
+import { InsufficientCreditsBanner } from "@/components/chat/InsufficientCreditsBanner";
 import { useCredits } from "@/hooks/useCredits";
 import profileBadge from "@/assets/profile-badge.png";
 import { SpotifySongCard } from "./SpotifySongCard";
@@ -67,6 +68,7 @@ export const ProfileDialog = ({
   const [translatedInterests, setTranslatedInterests] = useState<string[]>([]);
   const [showChatConfirmation, setShowChatConfirmation] = useState(false);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
+  const [showCreditsBanner, setShowCreditsBanner] = useState(false);
   const { translateText, translateArray } = useTextTranslation();
   const { credits } = useCredits();
 
@@ -309,11 +311,9 @@ export const ProfileDialog = ({
 
       // Verifica crediti sufficienti
       if (!credits || credits.balance < 6) {
-        toast({
-          title: t("common.error"),
-          description: "Crediti insufficienti per iniziare una chat",
-          variant: "destructive",
-        });
+        setShowChatConfirmation(false);
+        setIsCreatingChat(false);
+        setShowCreditsBanner(true);
         setShowChatConfirmation(false);
         setIsCreatingChat(false);
         return;
@@ -326,11 +326,9 @@ export const ProfileDialog = ({
       );
 
       if (deductError || !deductSuccess) {
-        toast({
-          title: t("common.error"),
-          description: "Crediti insufficienti per iniziare una chat",
-          variant: "destructive",
-        });
+        setShowChatConfirmation(false);
+        setIsCreatingChat(false);
+        setShowCreditsBanner(true);
         setShowChatConfirmation(false);
         setIsCreatingChat(false);
         return;
@@ -706,6 +704,8 @@ export const ProfileDialog = ({
           isLoading={isCreatingChat}
         />
       )}
+
+      <InsufficientCreditsBanner isVisible={showCreditsBanner} onClose={() => setShowCreditsBanner(false)} />
 
       {/* Image Viewer Dialog */}
       {selectedImage && (

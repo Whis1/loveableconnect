@@ -13,6 +13,7 @@ import { useCredits } from "@/hooks/useCredits";
 import { DailyLikesExhaustedBanner } from "./DailyLikesExhaustedBanner";
 import { ChatConfirmationBanner } from "./ChatConfirmationBanner";
 import { SpotifySongCard } from "./SpotifySongCard";
+import { InsufficientCreditsBanner } from "@/components/chat/InsufficientCreditsBanner";
 
 interface Profile {
   id: string;
@@ -51,6 +52,7 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
   const [showLikesExhausted, setShowLikesExhausted] = useState(false);
   const [showChatConfirmation, setShowChatConfirmation] = useState(false);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
+  const [showCreditsBanner, setShowCreditsBanner] = useState(false);
   const [translatedBio, setTranslatedBio] = useState<string>('');
   const { translateText } = useTextTranslation();
   const { consumeLike, likesRemaining, resetAt } = useDailyLikes();
@@ -328,12 +330,8 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
 
       // Verifica crediti sufficienti
       if (!credits || credits.balance < 6) {
-        toast({
-          title: t("common.error"),
-          description: "Crediti insufficienti per iniziare una chat",
-          variant: "destructive",
-        });
         setShowChatConfirmation(false);
+        setShowCreditsBanner(true);
         setIsCreatingChat(false);
         return;
       }
@@ -345,11 +343,7 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
       );
 
       if (deductError || !deductSuccess) {
-        toast({
-          title: t("common.error"),
-          description: "Crediti insufficienti per iniziare una chat",
-          variant: "destructive",
-        });
+        setShowCreditsBanner(true);
         setShowChatConfirmation(false);
         setIsCreatingChat(false);
         return;
@@ -565,6 +559,8 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
         userName={profile.nickname || profile.full_name}
         isLoading={isCreatingChat}
       />
+
+      <InsufficientCreditsBanner isVisible={showCreditsBanner} onClose={() => setShowCreditsBanner(false)} />
     </>
   );
 };
