@@ -553,6 +553,7 @@
     "rechargeOrSubscribe": "Ricarica o Abbonati"
   },
   "support": {
+    "back": "Indietro",
     "title": "Supporto",
     "description": "Ottieni aiuto dal nostro team di supporto",
     "backToDashboard": "Torna alla Dashboard",
