@@ -207,8 +207,8 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
             <div className="flex items-start gap-1">
               <span className="font-medium text-foreground/80">{t("common.gender")}</span>
               <span className="text-muted-foreground">
-                {profile.gender === 'male' ? t("common.male") : 
-                 profile.gender === 'female' ? t("common.female") : 
+                {['male', 'man', 'uomo'].includes(profile.gender.toLowerCase()) ? t("common.male") : 
+                 ['female', 'woman', 'donna'].includes(profile.gender.toLowerCase()) ? t("common.female") : 
                  profile.gender === 'non-binary' ? t("common.nonBinary") :
                  profile.gender === 'transexual' ? t("common.transexual") :
                  profile.gender === 'transgender' ? t("common.transgender") :
