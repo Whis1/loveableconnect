@@ -358,7 +358,7 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
         {profile.favorite_songs && profile.favorite_songs.length > 0 && (
           <div className="pt-3 border-t border-border/50">
             <h4 className="text-xs font-semibold mb-2 flex items-center gap-1.5 text-foreground/70">
-              🎵 Canzoni Preferite
+              🎵 {t("chat.favoriteSongs")}
             </h4>
             <ScrollArea className="w-full">
               <div className="flex gap-2 pb-2">

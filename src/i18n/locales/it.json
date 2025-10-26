@@ -443,7 +443,8 @@
       "yes": "sì",
       "no": "no",
       "thanks": "grazie"
-    }
+    },
+    "favoriteSongs": "Canzoni Preferite"
   },
   "messages": {
     "back": "Indietro",
