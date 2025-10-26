@@ -68,6 +68,7 @@ export const ProfileManager = () => {
   const [chatDialogOpen, setChatDialogOpen] = useState(false);
   const [selectedChatProfile, setSelectedChatProfile] = useState<{ profileId: string; profileNickname: string; userId: string; userNickname: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [likesSearchQuery, setLikesSearchQuery] = useState("");
 
   const getGenderLabel = (gender: string | null) => {
     if (!gender) return "";
@@ -756,14 +757,31 @@ export const ProfileManager = () => {
                           <DialogHeader>
                             <DialogTitle>{t("common.manageLikes")} {profile.nickname}</DialogTitle>
                           </DialogHeader>
-                          <ScrollArea className="h-[500px] pr-4">
+                          <div className="px-6 pb-3">
+                            <div className="relative">
+                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type="text"
+                                placeholder="Cerca per nickname o nome..."
+                                value={likesSearchQuery}
+                                onChange={(e) => setLikesSearchQuery(e.target.value)}
+                                className="pl-9"
+                              />
+                            </div>
+                          </div>
+                          <ScrollArea className="h-[500px] pr-4 px-6">
                             {loadingUsers ? (
                               <p className="text-muted-foreground">{t("common.loadingUsers")}</p>
                             ) : users.length === 0 ? (
                               <p className="text-muted-foreground">{t("common.noUsersAvailable")}</p>
                             ) : (
                               <div className="space-y-2">
-                                {users.map((user) => {
+                                {users
+                                  .filter((user) => 
+                                    user.nickname.toLowerCase().includes(likesSearchQuery.toLowerCase()) ||
+                                    user.full_name.toLowerCase().includes(likesSearchQuery.toLowerCase())
+                                  )
+                                  .map((user) => {
                                   const isLiked = (profileLikes[profile.id] || []).includes(user.id);
                                   return (
                                     <div 
