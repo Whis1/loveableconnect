@@ -14,6 +14,7 @@ import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 interface MatchWithProfile {
   id: string;
   created_at: string;
+  last_message_at: string;
   otherUser: {
     id: string;
     full_name: string;
@@ -64,8 +65,7 @@ const Matches = () => {
           user1_id,
           user2_id
         `)
-        .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`)
-        .order("created_at", { ascending: false });
+        .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`);
 
       // Get hidden matches for current user (only those hidden from matches page)
       const { data: hiddenMatches } = await supabase
@@ -90,7 +90,7 @@ const Matches = () => {
         return;
       }
 
-      // For each match, fetch the other user's profile
+      // For each match, fetch the other user's profile and last message timestamp
       const matchesWithProfiles = await Promise.all(
         visibleMatches.map(async (match) => {
           const otherUserId = match.user1_id === session.user.id 
@@ -103,11 +103,21 @@ const Matches = () => {
             .eq("id", otherUserId)
             .single();
 
+          // Get last message timestamp for sorting
+          const { data: lastMessage } = await supabase
+            .from("messages")
+            .select("created_at")
+            .eq("match_id", match.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
           const translatedBio = profile?.bio ? await translateText(profile.bio) : null;
 
           return {
             id: match.id,
             created_at: match.created_at,
+            last_message_at: lastMessage?.created_at || match.created_at,
             otherUser: profile ? {
               ...profile,
               avatar_url: toPublicAvatarUrl(profile.avatar_url),
@@ -124,6 +134,11 @@ const Matches = () => {
             },
           };
         })
+      );
+
+      // Sort by last message timestamp (most recent first)
+      matchesWithProfiles.sort((a, b) => 
+        new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime()
       );
 
       setMatches(matchesWithProfiles);
@@ -162,6 +177,7 @@ const Matches = () => {
             const matchWithProfile = {
               id: newMatch.id,
               created_at: newMatch.created_at,
+              last_message_at: newMatch.created_at,
               otherUser: profile ? {
                 ...profile,
                 avatar_url: toPublicAvatarUrl(profile.avatar_url),
@@ -199,7 +215,23 @@ const Matches = () => {
           async (payload) => {
             const newMessage = payload.new as any;
             
-            // Find the match for this message
+            // Update last_message_at for the match and move it to top
+            setMatches(prev => {
+              const matchIndex = prev.findIndex(m => m.id === newMessage.match_id);
+              if (matchIndex === -1) return prev;
+              
+              const updatedMatch = {
+                ...prev[matchIndex],
+                last_message_at: newMessage.created_at,
+              };
+              
+              // Remove from current position and add to top
+              const newMatches = [...prev];
+              newMatches.splice(matchIndex, 1);
+              return [updatedMatch, ...newMatches];
+            });
+
+            // Show toast notification
             const match = matchesWithProfiles.find(m => m.id === newMessage.match_id);
             if (!match) return;
 
