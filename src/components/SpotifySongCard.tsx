@@ -115,6 +115,12 @@ export const SpotifySongCard = ({ song, size = "medium", onPlay }: SpotifySongCa
     large: "w-32 h-32"
   };
 
+  const containerWidthClasses = {
+    small: "w-12",
+    medium: "w-20",
+    large: "w-32"
+  };
+
   const textSizeClasses = {
     small: "text-[10px]",
     medium: "text-xs",
@@ -124,7 +130,7 @@ export const SpotifySongCard = ({ song, size = "medium", onPlay }: SpotifySongCa
   const hasPreview = !!song.preview_url;
 
   return (
-    <div className="flex-shrink-0" role="button" tabIndex={0}>
+    <div className={`flex-shrink-0 ${containerWidthClasses[size]}`} role="button" tabIndex={0}>
       <div
         className={`${sizeClasses[size]} rounded-lg overflow-hidden bg-muted relative group cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all`}
         onClick={togglePlay}
