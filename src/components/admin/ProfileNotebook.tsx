@@ -22,6 +22,13 @@ interface Notes {
   hobby: string;
   lavoro: string;
   altro: string;
+  compleanno: string;
+  fumatore: string;
+  piercings: string;
+  tatuaggi: string;
+  colore_occhi: string;
+  colore_capelli: string;
+  peso_altezza: string;
 }
 
 export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: ProfileNotebookProps) => {
@@ -35,6 +42,13 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
     hobby: "",
     lavoro: "",
     altro: "",
+    compleanno: "",
+    fumatore: "",
+    piercings: "",
+    tatuaggi: "",
+    colore_occhi: "",
+    colore_capelli: "",
+    peso_altezza: "",
   });
 
   useEffect(() => {
@@ -61,9 +75,32 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
           hobby: data.notes.hobby || "",
           lavoro: data.notes.lavoro || "",
           altro: data.notes.altro || "",
+          compleanno: data.notes.compleanno || "",
+          fumatore: data.notes.fumatore || "",
+          piercings: data.notes.piercings || "",
+          tatuaggi: data.notes.tatuaggi || "",
+          colore_occhi: data.notes.colore_occhi || "",
+          colore_capelli: data.notes.colore_capelli || "",
+          peso_altezza: data.notes.peso_altezza || "",
         });
       } else {
-        setNotes({ nome: "", eta: "", location: "", relazione: "", figli: "", hobby: "", lavoro: "", altro: "" });
+        setNotes({ 
+          nome: "", 
+          eta: "", 
+          location: "", 
+          relazione: "", 
+          figli: "", 
+          hobby: "", 
+          lavoro: "", 
+          altro: "",
+          compleanno: "",
+          fumatore: "",
+          piercings: "",
+          tatuaggi: "",
+          colore_occhi: "",
+          colore_capelli: "",
+          peso_altezza: "",
+        });
       }
     } catch (error: any) {
       console.error("Error fetching notes:", error);
@@ -188,6 +225,83 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
                 onChange={(e) => handleChange("lavoro", e.target.value)}
                 onBlur={(e) => handleBlur("lavoro", e.target.value)}
                 placeholder="Inserisci lavoro..."
+                className="h-8 text-sm"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Compleanno:</label>
+              <Input
+                value={notes.compleanno}
+                onChange={(e) => handleChange("compleanno", e.target.value)}
+                onBlur={(e) => handleBlur("compleanno", e.target.value)}
+                placeholder="Inserisci data di nascita..."
+                className="h-8 text-sm"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Fumatore:</label>
+              <Input
+                value={notes.fumatore}
+                onChange={(e) => handleChange("fumatore", e.target.value)}
+                onBlur={(e) => handleBlur("fumatore", e.target.value)}
+                placeholder="Sì/No..."
+                className="h-8 text-sm"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Piercings:</label>
+              <Input
+                value={notes.piercings}
+                onChange={(e) => handleChange("piercings", e.target.value)}
+                onBlur={(e) => handleBlur("piercings", e.target.value)}
+                placeholder="Inserisci info piercings..."
+                className="h-8 text-sm"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Tatuaggi:</label>
+              <Input
+                value={notes.tatuaggi}
+                onChange={(e) => handleChange("tatuaggi", e.target.value)}
+                onBlur={(e) => handleBlur("tatuaggi", e.target.value)}
+                placeholder="Inserisci info tatuaggi..."
+                className="h-8 text-sm"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Colore degli occhi:</label>
+              <Input
+                value={notes.colore_occhi}
+                onChange={(e) => handleChange("colore_occhi", e.target.value)}
+                onBlur={(e) => handleBlur("colore_occhi", e.target.value)}
+                placeholder="Inserisci colore occhi..."
+                className="h-8 text-sm"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Colore dei capelli:</label>
+              <Input
+                value={notes.colore_capelli}
+                onChange={(e) => handleChange("colore_capelli", e.target.value)}
+                onBlur={(e) => handleBlur("colore_capelli", e.target.value)}
+                placeholder="Inserisci colore capelli..."
+                className="h-8 text-sm"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Peso e altezza:</label>
+              <Input
+                value={notes.peso_altezza}
+                onChange={(e) => handleChange("peso_altezza", e.target.value)}
+                onBlur={(e) => handleBlur("peso_altezza", e.target.value)}
+                placeholder="Es: 70kg, 175cm..."
                 className="h-8 text-sm"
               />
             </div>

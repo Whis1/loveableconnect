@@ -290,44 +290,65 @@ export type Database = {
       profile_notes: {
         Row: {
           altro: string | null
+          colore_capelli: string | null
+          colore_occhi: string | null
+          compleanno: string | null
           created_at: string | null
           eta: string | null
           figli: string | null
+          fumatore: string | null
           hobby: string | null
           id: string
           lavoro: string | null
           location: string | null
           nome: string | null
+          peso_altezza: string | null
+          piercings: string | null
           profile_id: string
           relazione: string | null
+          tatuaggi: string | null
           updated_at: string | null
         }
         Insert: {
           altro?: string | null
+          colore_capelli?: string | null
+          colore_occhi?: string | null
+          compleanno?: string | null
           created_at?: string | null
           eta?: string | null
           figli?: string | null
+          fumatore?: string | null
           hobby?: string | null
           id?: string
           lavoro?: string | null
           location?: string | null
           nome?: string | null
+          peso_altezza?: string | null
+          piercings?: string | null
           profile_id: string
           relazione?: string | null
+          tatuaggi?: string | null
           updated_at?: string | null
         }
         Update: {
           altro?: string | null
+          colore_capelli?: string | null
+          colore_occhi?: string | null
+          compleanno?: string | null
           created_at?: string | null
           eta?: string | null
           figli?: string | null
+          fumatore?: string | null
           hobby?: string | null
           id?: string
           lavoro?: string | null
           location?: string | null
           nome?: string | null
+          peso_altezza?: string | null
+          piercings?: string | null
           profile_id?: string
           relazione?: string | null
+          tatuaggi?: string | null
           updated_at?: string | null
         }
         Relationships: [
