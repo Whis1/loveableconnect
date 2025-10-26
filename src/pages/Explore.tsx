@@ -144,14 +144,14 @@ const Explore = () => {
             .single();
           
           if (!error && updatedProfile) {
-            // Translate the updated profile before setting it
-            const [translatedProfile] = await translateProfiles([updatedProfile as Profile]);
+            // Update profile without translation for performance
+            const updated = updatedProfile as Profile;
             
             setProfiles(prev => prev.map(p => 
-              p.id === translatedProfile.id ? translatedProfile : p
+              p.id === updated.id ? updated : p
             ));
             setDisplayedProfiles(prev => prev.map(p => 
-              p.id === translatedProfile.id ? translatedProfile : p
+              p.id === updated.id ? updated : p
             ));
           }
         }
@@ -211,10 +211,8 @@ const Explore = () => {
         return dateB - dateA;
       });
 
-      // Pre-translate profiles for better UX
-      const translatedProfiles = await translateProfiles(allProfiles);
-
-      setProfiles(translatedProfiles);
+      // Don't translate all profiles upfront - translate on demand for better performance
+      setProfiles(allProfiles);
       setDisplayedProfiles([]);
       setPage(1);
       setHasMore(true);
@@ -320,10 +318,8 @@ const Explore = () => {
         return dateB - dateA;
       });
 
-      // Pre-translate profiles for better UX
-      const translatedProfiles = await translateProfiles(filteredProfiles);
-
-      setProfiles(translatedProfiles);
+      // Don't translate all profiles upfront - translate on demand for better performance
+      setProfiles(filteredProfiles);
       setDisplayedProfiles([]);
       setPage(1);
       setHasMore(true);
