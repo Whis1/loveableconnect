@@ -92,3 +92,6 @@ verify_jwt = false
 
 [functions.send-confirmation-email]
 verify_jwt = false
+
+[functions.admin-list-all-profiles]
+verify_jwt = false

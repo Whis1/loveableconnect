@@ -800,8 +800,8 @@ export const ProfileManager = () => {
                               <div className="space-y-2">
                                 {(() => {
                                   const filteredUsers = users.filter((user) => 
-                                    user.nickname.toLowerCase().includes(likesSearchQuery.toLowerCase()) ||
-                                    user.full_name.toLowerCase().includes(likesSearchQuery.toLowerCase())
+                                    (user.nickname || '').toLowerCase().includes(likesSearchQuery.toLowerCase()) ||
+                                    (user.full_name || '').toLowerCase().includes(likesSearchQuery.toLowerCase())
                                   );
                                   
                                   if (filteredUsers.length === 0) {
