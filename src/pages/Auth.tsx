@@ -259,9 +259,6 @@ const Auth = () => {
         }}
       />
       
-      <div className="absolute top-4 right-4 z-20">
-        <LanguageSwitcher />
-      </div>
       <Card className="w-full max-w-md relative z-10 backdrop-blur-sm bg-white/95 dark:bg-gray-900/95 shadow-2xl overflow-hidden">
         {/* Background decorative image - full coverage */}
         <div 
