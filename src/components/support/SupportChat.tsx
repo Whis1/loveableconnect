@@ -230,7 +230,7 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
   };
 
   return (
-    <Card className="border-0 shadow-2xl bg-background/95 backdrop-blur-md h-[600px] flex flex-col">
+    <Card className="border-0 shadow-2xl bg-background/95 backdrop-blur-md h-[600px] flex flex-col max-w-2xl mx-auto">
       <CardHeader className="border-b bg-primary/5 pb-4">
         <CardTitle className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -242,9 +242,9 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
           </div>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col p-0">
-        <ScrollArea className="flex-1 px-4 py-6" ref={scrollRef}>
-          <div className="space-y-4">
+      <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
+        <ScrollArea className="flex-1 px-4 py-6">
+          <div ref={scrollRef} className="space-y-4">
             {messages.length === 0 ? (
               <div className="text-center py-12">
                 <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -261,14 +261,14 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
                   className={`flex gap-3 ${msg.is_admin_response ? 'justify-start' : 'justify-end'} animate-in fade-in slide-in-from-bottom-2`}
                 >
                   {msg.is_admin_response && (
-                    <Avatar className="h-9 w-9 border-2 border-primary/20">
+                    <Avatar className="h-9 w-9 border-2 border-primary/20 flex-shrink-0">
                       <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
                         S
                       </AvatarFallback>
                     </Avatar>
                   )}
                   <div
-                    className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
+                    className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm break-words ${
                       msg.is_admin_response
                         ? 'bg-muted rounded-tl-sm'
                         : 'bg-primary text-primary-foreground rounded-tr-sm'
@@ -281,7 +281,7 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
                       <img 
                         src={msg.image_url} 
                         alt="Immagine allegata" 
-                        className="rounded-lg w-full max-h-64 object-cover mb-2 cursor-pointer hover:opacity-90 transition-opacity"
+                        className="rounded-lg max-w-[280px] max-h-64 object-cover mb-2 cursor-pointer hover:opacity-90 transition-opacity"
                         onClick={() => window.open(msg.image_url, '_blank')}
                       />
                     )}
@@ -294,7 +294,7 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
                     </p>
                   </div>
                   {!msg.is_admin_response && (
-                    <Avatar className="h-9 w-9 border-2 border-primary/20">
+                    <Avatar className="h-9 w-9 border-2 border-primary/20 flex-shrink-0">
                       <AvatarFallback className="bg-secondary text-secondary-foreground font-semibold">
                         Tu
                       </AvatarFallback>
