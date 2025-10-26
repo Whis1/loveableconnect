@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { X, MessageCircle, Coins } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
+
 interface ChatConfirmationBannerProps {
   isVisible: boolean;
   onClose: () => void;
@@ -19,6 +21,8 @@ export const ChatConfirmationBanner = ({
   isLoading = false,
   withinDialog = false,
 }: ChatConfirmationBannerProps) => {
+  const { t } = useTranslation();
+  
   if (!isVisible) return null;
 
   const confirmRef = useRef<HTMLButtonElement>(null);
@@ -63,24 +67,23 @@ export const ChatConfirmationBanner = ({
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-xl font-semibold text-foreground">Inizia una Chat</h3>
+            <h3 className="text-xl font-semibold text-foreground">{t("chatConfirmation.title")}</h3>
             <p className="text-muted-foreground">
-              Usa <span className="font-bold text-primary">6 crediti</span> per scrivere direttamente a{" "}
-              <span className="font-semibold text-foreground">{userName}</span>
+              {t("chatConfirmation.description", { credits: 6, userName })}
             </p>
           </div>
 
           <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary">
             <Coins className="h-5 w-5" />
-            <span className="font-semibold">6 crediti</span>
+            <span className="font-semibold">{t("chatConfirmation.creditsAmount", { credits: 6 })}</span>
           </div>
 
           <div className="flex gap-3 w-full pt-2">
             <Button variant="outline" onClick={onClose} className="flex-1" disabled={isLoading}>
-              Annulla
+              {t("chatConfirmation.cancel")}
             </Button>
             <Button ref={confirmRef} onClick={onConfirm} className="flex-1" disabled={isLoading}>
-              {isLoading ? "Caricamento..." : "Conferma"}
+              {isLoading ? t("chatConfirmation.loading") : t("chatConfirmation.confirm")}
             </Button>
           </div>
         </div>

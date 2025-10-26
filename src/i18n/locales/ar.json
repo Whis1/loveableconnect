@@ -129,6 +129,14 @@
     "dailyRenewal": "التجديد اليومي:",
     "unlimitedLikes": "إعجابات غير محدودة"
   },
+  "chatConfirmation": {
+    "title": "بدء محادثة",
+    "description": "استخدم {{credits}} أرصدة للكتابة مباشرة إلى {{userName}}",
+    "creditsAmount": "{{credits}} أرصدة",
+    "cancel": "إلغاء",
+    "confirm": "تأكيد",
+    "loading": "جاري التحميل..."
+  },
   "common": {
     "male": "ذكر",
     "female": "أنثى",

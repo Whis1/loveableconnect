@@ -149,6 +149,14 @@
     "dailyRenewal": "Rinnovo giornaliero:",
     "unlimitedLikes": "Like Illimitati"
   },
+  "chatConfirmation": {
+    "title": "Inizia una Chat",
+    "description": "Usa {{credits}} crediti per scrivere direttamente a {{userName}}",
+    "creditsAmount": "{{credits}} crediti",
+    "cancel": "Annulla",
+    "confirm": "Conferma",
+    "loading": "Caricamento..."
+  },
   "explore": {
     "back": "Indietro",
     "filters": "Filtri",
