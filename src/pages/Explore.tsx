@@ -323,11 +323,6 @@ const Explore = () => {
       setDisplayedProfiles([]);
       setPage(1);
       setHasMore(true);
-      
-      toast({
-        title: t("explore.searchCompleted"),
-        description: `${t("explore.profilesFound", { count: filteredProfiles.length })}`,
-      });
     } catch (error: any) {
       toast({
         title: "Errore",
@@ -496,12 +491,6 @@ const Explore = () => {
         {/* Results Grid */}
         {displayedProfiles.length > 0 ? (
           <>
-            <div className="mb-4">
-              <p className="text-sm text-muted-foreground">
-                {profiles.length} {t("explore.profilesFoundText")}
-              </p>
-            </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
               {displayedProfiles.map((profile) => (
                 <ProfileGridCard
