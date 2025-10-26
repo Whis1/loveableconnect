@@ -24,6 +24,7 @@ import PremiumSuccess from "./pages/PremiumSuccess";
 import Support from "./pages/Support";
 import Admin from "./pages/Admin";
 import AdminArrettu from "./pages/AdminArrettu";
+import AdminProfiles from "./pages/AdminProfiles";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -63,6 +64,7 @@ const App = () => (
             <Route path="/support" element={<Support />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/adminarrettu" element={<AdminArrettu />} />
+            <Route path="/admin/profiles" element={<AdminProfiles />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

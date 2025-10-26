@@ -4,14 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { UserCreditsManager } from "@/components/admin/UserCreditsManager";
-import { ProfileCreator } from "@/components/admin/ProfileCreator";
-import { SupportChatMonitor } from "@/components/admin/SupportChatMonitor";
-import { UserBanManager } from "@/components/admin/UserBanManager";
+import { ProfileManager } from "@/components/admin/ProfileManager";
+import { NotificationMonitor } from "@/components/admin/NotificationMonitor";
 import { Shield, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-export default function AdminArrettu() {
+export default function AdminProfiles() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -32,7 +30,7 @@ export default function AdminArrettu() {
       setIsLoggedIn(true);
       toast({
         title: "Accesso effettuato",
-        description: "Benvenuto nel pannello admin",
+        description: "Benvenuto nel pannello gestione profili",
       });
     } else {
       toast({
@@ -100,10 +98,10 @@ export default function AdminArrettu() {
           <div>
             <h1 className="text-4xl font-bold flex items-center gap-3">
               <Shield className="h-10 w-10 text-primary" />
-              Pannello Admin
+              Gestione Profili e Notifiche
             </h1>
             <p className="text-muted-foreground mt-1">
-              Gestione completa del sistema
+              Gestione profili e notifiche interazioni
             </p>
           </div>
           <Button variant="outline" onClick={handleLogout}>
@@ -112,14 +110,10 @@ export default function AdminArrettu() {
           </Button>
         </div>
 
-        <UserBanManager />
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <UserCreditsManager />
-          <ProfileCreator />
+          <ProfileManager />
+          <NotificationMonitor />
         </div>
-
-        <SupportChatMonitor />
       </div>
     </div>
   );
