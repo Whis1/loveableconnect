@@ -287,6 +287,39 @@ export type Database = {
           },
         ]
       }
+      notification_queue: {
+        Row: {
+          body: string
+          created_at: string | null
+          data: Json | null
+          id: string
+          sent: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          sent?: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          sent?: boolean | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profile_notes: {
         Row: {
           altro: string | null
@@ -471,6 +504,39 @@ export type Database = {
           status?: string
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string | null
+          endpoint: string
+          id: string
+          p256dh: string
+          updated_at: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          p256dh: string
+          updated_at?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          updated_at?: string | null
+          user_agent?: string | null
           user_id?: string
         }
         Relationships: []
