@@ -449,7 +449,7 @@ export const ProfileDialog = ({
                 </div>
                 
                 {/* Profile Badge */}
-                <div className="absolute -top-4 -right-4 w-16 h-16 rounded-2xl shadow-2xl rotate-12 group-hover:rotate-0 transition-transform duration-300 overflow-hidden">
+                <div className="absolute -top-4 -right-4 w-14 h-14 rounded-2xl shadow-2xl rotate-12 group-hover:rotate-0 transition-transform duration-300 overflow-hidden">
                   <img src={profileBadge} alt="Profile Badge" className="w-full h-full object-contain" />
                 </div>
                 
