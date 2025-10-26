@@ -5,7 +5,8 @@ import { useTextTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
-  DialogPortal,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Heart, MessageCircle, MapPin, Sparkles, User, Heart as HeartIcon } from "lucide-react";
@@ -410,7 +411,13 @@ export const ProfileDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 bg-gradient-to-br from-background via-background to-primary/5">
+        <DialogContent 
+          className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 bg-gradient-to-br from-background via-background to-primary/5"
+          onInteractOutside={(e) => { if (showChatConfirmation) e.preventDefault(); }}
+          onEscapeKeyDown={(e) => { if (showChatConfirmation) e.preventDefault(); }}
+        >
+          <DialogTitle className="sr-only">Profilo utente</DialogTitle>
+          <DialogDescription className="sr-only">Dettagli del profilo e azioni</DialogDescription>
           {/* Hero Section with Avatar Rectangle */}
           <div className="relative p-6 bg-gradient-to-br from-primary/20 via-primary/10 to-background overflow-hidden">
             <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIHN0cm9rZT0iY3VycmVudENvbG9yIiBzdHJva2Utb3BhY2l0eT0iLjEiLz48L2c+PC9zdmc+')] opacity-20"></div>
@@ -632,6 +639,8 @@ export const ProfileDialog = ({
       {selectedImage && (
         <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
           <DialogContent className="max-w-4xl w-full p-0 overflow-hidden bg-black/95">
+            <DialogTitle className="sr-only">Immagine profilo</DialogTitle>
+            <DialogDescription className="sr-only">Visualizzazione ingrandita della foto</DialogDescription>
             <div className="relative">
               <img
                 src={selectedImage || ""}
