@@ -153,13 +153,10 @@ export const ProfileManager = () => {
   const fetchUsers = async () => {
     setLoadingUsers(true);
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, nickname, full_name, age, city, avatar_url, bio")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setUsers(data || []);
+      const { data, error } = await supabase.functions.invoke('admin-list-all-profiles');
+      if (error || !data?.success) throw new Error(error?.message || data?.error || 'Failed to load');
+      
+      setUsers((data.profiles || []) as UserProfile[]);
     } catch (error: any) {
       console.error("Error fetching users:", error);
       toast({
