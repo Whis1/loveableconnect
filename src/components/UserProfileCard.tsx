@@ -11,7 +11,6 @@ import { useTextTranslation } from "@/hooks/useTranslation";
 import profileBackground from "@/assets/profile-background.png";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { SpotifySongCard } from "@/components/SpotifySongCard";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Profile {
   id: string;
@@ -283,8 +282,8 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
                 <Music className="h-4 w-4 text-primary" />
                 <p className="text-sm font-semibold">{t("profile.favoriteSongs")}</p>
               </div>
-              <ScrollArea className="w-full whitespace-nowrap">
-                <div className="flex gap-3 pb-2 px-1">
+              <div className="w-full overflow-x-auto">
+                <div className="flex gap-3 pb-2 px-1 min-w-max">
                   {favoriteSongs.map((song: any, index: number) => (
                     <SpotifySongCard
                       key={index}
@@ -300,7 +299,7 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
                     />
                   ))}
                 </div>
-              </ScrollArea>
+              </div>
             </div>
           )}
 
