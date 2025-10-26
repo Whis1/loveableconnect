@@ -125,10 +125,6 @@ const TermsAndConditions = () => {
                       L'Utente potrà esercitare i diritti garantiti dalla Normativa Applicabile in qualsiasi momento, contattando il Titolare con le seguenti modalità.
                     </p>
                     <p>
-                      <strong>Direttamente online:</strong><br />
-                      Contattando il servizio clienti tramite l'apposito form Contatti
-                    </p>
-                    <p>
                       <strong>Tramite Posta:</strong><br />
                       Gli Utenti possono anche contattare il Responsabile della protezione dei dati (RPD o DPO) del Titolare, i cui dati di contatto sono di seguito riportati: e-mail <a href="mailto:loveableconnect@hotmail.com" className="text-primary hover:underline">loveableconnect@hotmail.com</a>
                     </p>
