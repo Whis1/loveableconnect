@@ -58,18 +58,31 @@ export const InsufficientCreditsBanner = ({ isVisible, onClose }: InsufficientCr
             </p>
           </div>
 
-          {/* Button */}
-          <Button
-            onClick={handleNavigate}
-            size="lg"
-            className="w-full relative overflow-hidden group bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
-          >
-            <span className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-            <Sparkles className="h-5 w-5 mr-2 animate-pulse" />
-            <span className="relative font-semibold">
-              {t("credits.rechargeOrSubscribe")}
-            </span>
-          </Button>
+          {/* Buttons */}
+          <div className="flex gap-3">
+            <Button
+              onClick={handleNavigate}
+              size="lg"
+              className="flex-1 relative overflow-hidden group bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              <span className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+              <Coins className="h-5 w-5 mr-2" />
+              <span className="relative font-semibold">
+                Ricarica
+              </span>
+            </Button>
+            <Button
+              onClick={handleNavigate}
+              size="lg"
+              className="flex-1 relative overflow-hidden group bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent/80 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              <span className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+              <Sparkles className="h-5 w-5 mr-2 animate-pulse" />
+              <span className="relative font-semibold">
+                Abbonati
+              </span>
+            </Button>
+          </div>
 
           {/* Close hint */}
           <p className="text-xs text-center text-muted-foreground/60">
