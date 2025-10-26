@@ -283,8 +283,8 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
                 <Music className="h-4 w-4 text-primary" />
                 <p className="text-sm font-semibold">{t("profile.favoriteSongs")}</p>
               </div>
-              <ScrollArea className="w-full">
-                <div className="flex gap-3 pb-2">
+              <ScrollArea className="w-full whitespace-nowrap">
+                <div className="flex gap-3 pb-2 px-1">
                   {favoriteSongs.map((song: any, index: number) => (
                     <SpotifySongCard
                       key={index}
