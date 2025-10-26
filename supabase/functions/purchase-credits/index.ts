@@ -13,14 +13,14 @@ const CREDIT_PACKAGES: Record<string, { price_id: string; credits: number; amoun
     credits: 50,
     amount: 999,
   },
-  credits_75: {
-    price_id: "price_1SIchWK6IHDbrxmEnn9I5Vhf",
-    credits: 75,
+  credits_130: {
+    price_id: "price_1SMT8gK6IHDbrxmEXnAtItze",
+    credits: 130,
     amount: 1999,
   },
-  credits_100: {
-    price_id: "price_1SIchiK6IHDbrxmEZGwUz0U5",
-    credits: 100,
+  credits_220: {
+    price_id: "price_1SMT8xK6IHDbrxmErSyTnBOa",
+    credits: 220,
     amount: 2999,
   },
 };

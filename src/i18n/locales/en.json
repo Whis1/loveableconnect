@@ -484,8 +484,8 @@
     "errorPurchasing": "Unable to start purchase",
     "errorSubscribing": "Unable to start subscription",
     "credits50": "50 Credits",
-    "credits75": "75 Credits",
-    "credits100": "100 Credits"
+    "credits130": "130 Credits",
+    "credits220": "220 Credits"
   },
   "support": {
     "title": "Support",

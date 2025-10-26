@@ -10,33 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { CreditCountdown } from "@/components/CreditCountdown";
 
-const PACKAGES = [
-  {
-    id: "credits_50",
-    name: "50 Crediti",
-    credits: 50,
-    price: "€9,99",
-    priceValue: 999,
-    popular: false,
-  },
-  {
-    id: "credits_75",
-    name: "75 Crediti",
-    credits: 75,
-    price: "€19,99",
-    priceValue: 1999,
-    popular: true,
-  },
-  {
-    id: "credits_100",
-    name: "100 Crediti",
-    credits: 100,
-    price: "€29,99",
-    priceValue: 2999,
-    popular: false,
-  },
-];
-
 const Credits = () => {
   const navigate = useNavigate();
   const { credits, loading } = useCredits();
@@ -54,17 +27,17 @@ const Credits = () => {
       popular: false,
     },
     {
-      id: "credits_75",
-      name: t("credits.credits75"),
-      credits: 75,
+      id: "credits_130",
+      name: t("credits.credits130"),
+      credits: 130,
       price: "€19,99",
       priceValue: 1999,
       popular: true,
     },
     {
-      id: "credits_100",
-      name: t("credits.credits100"),
-      credits: 100,
+      id: "credits_220",
+      name: t("credits.credits220"),
+      credits: 220,
       price: "€29,99",
       priceValue: 2999,
       popular: false,
