@@ -265,8 +265,43 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
                 return (
                   <div
                     key={msg.id}
-                    className={`flex gap-3 ${msg.is_admin_response ? 'justify-start' : 'justify-end'} animate-in fade-in slide-in-from-bottom-2`}
+                    className={`flex gap-3 ${msg.is_admin_response ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2`}
                   >
+                    {!msg.is_admin_response && (
+                      <Avatar className="h-9 w-9 border-2 border-primary/20 flex-shrink-0">
+                        <AvatarFallback className="bg-secondary text-secondary-foreground font-semibold">
+                          {t("support.you")}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                    <div
+                      className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm break-words ${
+                        msg.is_admin_response
+                          ? 'bg-primary text-primary-foreground rounded-tr-sm'
+                          : 'bg-muted rounded-tl-sm'
+                      }`}
+                    >
+                      {msg.is_admin_response && (
+                        <p className="text-xs font-semibold mb-1 opacity-70">
+                          {isAutomaticBotMessage ? 'Bot' : 'Supporto Clienti'}
+                        </p>
+                      )}
+                      {msg.image_url && (
+                        <img 
+                          src={msg.image_url} 
+                          alt="Immagine allegata" 
+                          className="rounded-lg max-w-[280px] max-h-64 object-cover mb-2 cursor-pointer hover:opacity-90 transition-opacity"
+                          onClick={() => window.open(msg.image_url, '_blank')}
+                        />
+                      )}
+                      <p className="text-sm leading-relaxed">{msg.message}</p>
+                      <p className="text-xs opacity-60 mt-1.5">
+                        {new Date(msg.created_at).toLocaleTimeString('it-IT', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
                     {msg.is_admin_response && (
                       <Avatar className="h-9 w-9 border-2 border-primary/20 flex-shrink-0 overflow-hidden">
                         {isAutomaticBotMessage ? (
@@ -278,7 +313,7 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
                             <AvatarImage 
                               src="/images/support-avatar.png" 
                               alt="Supporto Clienti"
-                              className="object-cover w-full h-full scale-150"
+                              className="object-cover w-full h-full"
                             />
                             <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
                               SC
@@ -287,41 +322,6 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
                         )}
                       </Avatar>
                     )}
-                    <div
-                      className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm break-words ${
-                        msg.is_admin_response
-                          ? 'bg-muted rounded-tl-sm'
-                          : 'bg-primary text-primary-foreground rounded-tr-sm'
-                      }`}
-                    >
-                      {msg.is_admin_response && (
-                        <p className="text-xs font-semibold mb-1 opacity-70">
-                          {isAutomaticBotMessage ? 'Bot' : 'Supporto Clienti'}
-                        </p>
-                      )}
-                    {msg.image_url && (
-                      <img 
-                        src={msg.image_url} 
-                        alt="Immagine allegata" 
-                        className="rounded-lg max-w-[280px] max-h-64 object-cover mb-2 cursor-pointer hover:opacity-90 transition-opacity"
-                        onClick={() => window.open(msg.image_url, '_blank')}
-                      />
-                    )}
-                    <p className="text-sm leading-relaxed">{msg.message}</p>
-                    <p className="text-xs opacity-60 mt-1.5">
-                      {new Date(msg.created_at).toLocaleTimeString('it-IT', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
-                  </div>
-                  {!msg.is_admin_response && (
-                    <Avatar className="h-9 w-9 border-2 border-primary/20 flex-shrink-0">
-                      <AvatarFallback className="bg-secondary text-secondary-foreground font-semibold">
-                        {t("support.you")}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
                 </div>
               );
             })
