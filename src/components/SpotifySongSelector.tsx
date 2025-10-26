@@ -146,6 +146,12 @@ export const SpotifySongSelector = ({
         </ScrollArea>
       )}
 
+      {!isSearching && searchQuery.trim() !== "" && searchResults.length === 0 && (
+        <div className="text-center text-sm text-muted-foreground">
+          Nessuna canzone con anteprima trovata per “{searchQuery}”.
+        </div>
+      )}
+
       {selectedSongs.length > 0 && (
         <div className="space-y-2">
           <p className="text-sm font-medium">
