@@ -14,7 +14,6 @@ import { ArrowLeft, Save, Upload, X, Camera } from "lucide-react";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
 import { InterestsAutocomplete } from "@/components/InterestsAutocomplete";
 import { SpotifySongSelector } from "@/components/SpotifySongSelector";
-import { NotificationSettings } from "@/components/NotificationSettings";
 
 interface SpotifySong {
   id: string;
@@ -557,17 +556,6 @@ const ProfileEdit = () => {
                   onSongsChange={setFavoriteSongs}
                   maxSongs={5}
                 />
-              </div>
-
-              {/* Notification Settings */}
-              <div className="space-y-4 pt-6 border-t">
-                <div>
-                  <h3 className="text-lg font-semibold mb-1">🔔 Notifiche Push</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Gestisci le tue preferenze per le notifiche push
-                  </p>
-                </div>
-                <NotificationSettings />
               </div>
 
               <div className="flex gap-3">

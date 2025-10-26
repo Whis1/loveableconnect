@@ -11,7 +11,6 @@ import { useTranslation } from "react-i18next";
 import { CreditsDisplay } from "@/components/CreditsDisplay";
 import { useBanCheck } from "@/hooks/useBanCheck";
 import { DashboardControls } from "@/components/DashboardControls";
-import { NotificationPermissionBanner } from "@/components/NotificationPermissionBanner";
 import loveIcon from "@/assets/love-icon.png";
 
 interface Profile {
@@ -294,7 +293,6 @@ const Dashboard = () => {
       />
       
       <DashboardControls />
-      <NotificationPermissionBanner />
       
       <div className="container mx-auto p-4 max-w-7xl relative z-10">
         {/* Header */}
