@@ -455,6 +455,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          image_url: string | null
           is_admin_response: boolean
           message: string
           read: boolean
@@ -464,6 +465,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          image_url?: string | null
           is_admin_response?: boolean
           message: string
           read?: boolean
@@ -473,6 +475,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          image_url?: string | null
           is_admin_response?: boolean
           message?: string
           read?: boolean

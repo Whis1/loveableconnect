@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, MessageCircle } from "lucide-react";
+import { Send, MessageCircle, Image as ImageIcon, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -16,6 +16,7 @@ interface SupportMessage {
   is_admin_response: boolean;
   created_at: string;
   read: boolean;
+  image_url?: string;
 }
 
 interface SupportChatProps {
@@ -27,7 +28,11 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
   const [messages, setMessages] = useState<SupportMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchMessages();
@@ -79,8 +84,84 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
     }
   };
 
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Errore",
+          description: "L'immagine non può superare i 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePaste = async (event: React.ClipboardEvent) => {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        event.preventDefault();
+        const file = items[i].getAsFile();
+        if (file) {
+          if (file.size > 5 * 1024 * 1024) {
+            toast({
+              title: "Errore",
+              description: "L'immagine non può superare i 5MB",
+              variant: "destructive",
+            });
+            return;
+          }
+          setSelectedImage(file);
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setImagePreview(reader.result as string);
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+    }
+  };
+
+  const removeImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const uploadImage = async (file: File, userId: string): Promise<string | null> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${userId}/${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('support-images')
+      .upload(fileName, file);
+
+    if (uploadError) {
+      console.error('Error uploading image:', uploadError);
+      return null;
+    }
+
+    const { data } = supabase.storage
+      .from('support-images')
+      .getPublicUrl(fileName);
+
+    return data.publicUrl;
+  };
+
   const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() && !selectedImage) return;
 
     setLoading(true);
     try {
@@ -95,14 +176,28 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
       }
 
       const isFirstMessage = messages.length === 0;
+      let imageUrl: string | null = null;
+
+      if (selectedImage) {
+        imageUrl = await uploadImage(selectedImage, user.id);
+        if (!imageUrl) {
+          toast({
+            title: "Errore",
+            description: "Impossibile caricare l'immagine",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
 
       const { error } = await supabase
         .from('support_messages')
         .insert({
           user_id: user.id,
           user_email: userEmail,
-          message: newMessage,
+          message: newMessage || "📷 Immagine",
           is_admin_response: false,
+          image_url: imageUrl,
         });
 
       if (error) throw error;
@@ -122,6 +217,7 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
       }
 
       setNewMessage("");
+      removeImage();
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
@@ -182,6 +278,14 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
                     {msg.is_admin_response && (
                       <p className="text-xs font-semibold mb-1 opacity-70">Supporto</p>
                     )}
+                    {msg.image_url && (
+                      <img 
+                        src={msg.image_url} 
+                        alt="Immagine allegata" 
+                        className="rounded-lg max-w-full mb-2 cursor-pointer hover:opacity-90 transition-opacity"
+                        onClick={() => window.open(msg.image_url, '_blank')}
+                      />
+                    )}
                     <p className="text-sm leading-relaxed">{msg.message}</p>
                     <p className="text-xs opacity-60 mt-1.5">
                       {new Date(msg.created_at).toLocaleTimeString('it-IT', {
@@ -204,20 +308,55 @@ export const SupportChat = ({ userEmail }: SupportChatProps) => {
         </ScrollArea>
 
         <div className="border-t bg-background/50 p-4">
+          {imagePreview && (
+            <div className="mb-3 relative inline-block">
+              <img 
+                src={imagePreview} 
+                alt="Anteprima" 
+                className="max-h-32 rounded-lg border-2 border-primary/20"
+              />
+              <Button
+                size="icon"
+                variant="destructive"
+                className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                onClick={removeImage}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
           <div className="flex gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+              className="hidden"
+            />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={loading}
+              className="rounded-full h-10 w-10 shrink-0"
+            >
+              <ImageIcon className="h-4 w-4" />
+            </Button>
             <Input
+              ref={textareaRef}
               placeholder="Scrivi un messaggio..."
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && !loading && handleSendMessage()}
+              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && !loading && handleSendMessage()}
+              onPaste={handlePaste}
               disabled={loading}
               className="flex-1 rounded-full border-2 focus-visible:ring-primary"
             />
             <Button 
               onClick={handleSendMessage} 
-              disabled={loading || !newMessage.trim()}
+              disabled={loading || (!newMessage.trim() && !selectedImage)}
               size="icon"
-              className="rounded-full h-10 w-10 shadow-md"
+              className="rounded-full h-10 w-10 shadow-md shrink-0"
             >
               <Send className="h-4 w-4" />
             </Button>
