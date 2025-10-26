@@ -8,6 +8,8 @@ import { ProfileManager } from "@/components/admin/ProfileManager";
 import { NotificationMonitor } from "@/components/admin/NotificationMonitor";
 import { Shield, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAdminRole } from "@/hooks/useAdminRole";
 
 export default function AdminProfiles() {
   const navigate = useNavigate();
@@ -15,34 +17,40 @@ export default function AdminProfiles() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
+  const { isAdmin, loading: adminLoading } = useAdminRole();
 
   useEffect(() => {
-    // Check if already logged in
-    const adminSession = sessionStorage.getItem("adminArrettu");
-    if (adminSession === "true") {
-      setIsLoggedIn(true);
-    }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session?.user);
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session?.user);
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
-  const handleLogin = () => {
-    if (nickname === "superadmin2025" && password === "AdminSecure!2025") {
-      sessionStorage.setItem("adminArrettu", "true");
-      setIsLoggedIn(true);
+  const handleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: nickname,
+        password,
+      });
+      if (error) throw error;
       toast({
         title: "Accesso effettuato",
         description: "Benvenuto nel pannello gestione profili",
       });
-    } else {
+    } catch (e: any) {
       toast({
         title: "Errore",
-        description: "Credenziali non valide",
+        description: e.message || "Credenziali non valide",
         variant: "destructive",
       });
     }
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem("adminArrettu");
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setIsLoggedIn(false);
     setNickname("");
     setPassword("");
@@ -64,12 +72,13 @@ export default function AdminProfiles() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="nickname">Nickname</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="nickname"
+                id="email"
+                type="email"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleLogin()}
+                onKeyDown={(e) => e.key === "Enter" && handleLogin()}
               />
             </div>
             <div className="space-y-2">
@@ -91,6 +100,22 @@ export default function AdminProfiles() {
     );
   }
 
+  // Se loggato ma senza ruolo admin
+  if (isLoggedIn && !adminLoading && !isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Permessi insufficienti</CardTitle>
+          </CardHeader>
+          <CardContent>
+            Per accedere al pannello admin il tuo account deve avere il ruolo Admin.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -104,10 +129,15 @@ export default function AdminProfiles() {
               Gestione profili e notifiche interazioni
             </p>
           </div>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="h-5 w-5 mr-2" />
-            Logout
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate("/adminarrettu")}>
+              Pannello Generale
+            </Button>
+            <Button variant="outline" onClick={handleLogout}>
+              <LogOut className="h-5 w-5 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
