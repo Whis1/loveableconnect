@@ -57,7 +57,7 @@ export function UserBanManager() {
         throw new Error(bannedError?.message || bannedRes?.error || 'Failed to load bans');
       }
 
-      const profiles = (profilesRes.profiles || []);
+      const profiles = (profilesRes.profiles || []).filter((p: any) => !p.is_admin_profile);
       const bannedUsers = (bannedRes.bans || []);
 
       // Create map of banned users for quick lookup
