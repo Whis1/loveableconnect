@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { Users, MessageSquare, Save, Upload, X, Image as ImageIcon, Search, Heart } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AdminChatDialog } from "./AdminChatDialog";
+import { InterestsAutocomplete } from "@/components/InterestsAutocomplete";
 
 interface Profile {
   id: string;
@@ -419,14 +420,6 @@ export const ProfileManager = () => {
     }
   };
 
-  const handleInterestsChange = (profileId: string, value: string) => {
-    const interests = value.split(",").map((i) => i.trim()).filter(Boolean);
-    const profile = profiles.find((p) => p.id === profileId);
-    if (profile) {
-      const updated = { ...profile, interests };
-      setProfiles(profiles.map((p) => (p.id === profileId ? updated : p)));
-    }
-  };
 
   const filteredProfiles = profiles.filter((profile) =>
     profile.nickname.toLowerCase().includes(searchQuery.toLowerCase())
@@ -714,11 +707,14 @@ export const ProfileManager = () => {
 
                               {/* Interessi */}
                               <div className="space-y-2">
-                                <Label>Interessi (separati da virgola)</Label>
-                                <Input
-                                  value={profile.interests?.join(", ") || ""}
-                                  onChange={(e) => handleInterestsChange(profile.id, e.target.value)}
-                                  placeholder="Es: Cinema, Sport, Viaggi"
+                                <Label>Interessi (max 4)</Label>
+                                <InterestsAutocomplete
+                                  selectedInterests={profile.interests || []}
+                                  onInterestsChange={(interests) => {
+                                    const updated = { ...profile, interests };
+                                    setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
+                                  }}
+                                  maxInterests={4}
                                 />
                               </div>
 
