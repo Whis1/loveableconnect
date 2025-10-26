@@ -114,35 +114,81 @@ serve(async (req) => {
       const amountEur = (purchase.amount_cents / 100).toFixed(2);
       
       await resend.emails.send({
-        from: "Love App <onboarding@resend.dev>",
+        from: "LoveableConnect <onboarding@resend.dev>",
         to: [user.email!],
-        subject: "💰 Crediti Acquistati con Successo!",
+        subject: "💰 Crediti Acquistati con Successo - LoveableConnect",
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h1 style="color: #9333ea;">💰 Crediti Caricati!</h1>
-            <p>Ciao,</p>
-            <p>I tuoi crediti sono stati aggiunti con successo al tuo account!</p>
-            
-            <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h2 style="margin-top: 0; color: #374151;">Dettagli Acquisto</h2>
-              <p><strong>Crediti Acquistati:</strong> ${purchase.credits_amount}</p>
-              <p><strong>Importo Pagato:</strong> €${amountEur}</p>
-              <p><strong>Nuovo Saldo:</strong> ${userCredits.balance + purchase.credits_amount} crediti</p>
-              <p><strong>ID Transazione:</strong> ${session.payment_intent}</p>
-              <p><strong>Data:</strong> ${new Date().toLocaleDateString('it-IT')}</p>
-            </div>
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="margin: 0; padding: 0; background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);">
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(59, 130, 246, 0.15);">
+              
+              <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 40px 20px; text-align: center;">
+                <div style="font-size: 64px; margin-bottom: 10px;">💰</div>
+                <h1 style="color: white; font-size: 28px; margin: 0; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">Crediti Caricati!</h1>
+                <p style="color: rgba(255,255,255,0.95); margin: 10px 0 0 0; font-size: 16px;">Il tuo acquisto è confermato</p>
+              </div>
 
-            <div style="background: #dbeafe; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 0; color: #1e40af;">
-                💬 Ogni messaggio costa 2 crediti. Con ${purchase.credits_amount} crediti puoi inviare circa ${Math.floor(purchase.credits_amount / 2)} messaggi!
-              </p>
-            </div>
+              <div style="padding: 40px 30px;">
+                <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0 0 25px 0;">
+                  🎉 Ottimo! I tuoi crediti sono stati aggiunti con successo al tuo account!
+                </p>
 
-            <p>Grazie per il tuo acquisto!</p>
-            <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">
-              I crediti non scadono e rimangono disponibili sul tuo account.
-            </p>
-          </div>
+                <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 4px solid #3b82f6;">
+                  <h3 style="color: #1e40af; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">📋 Dettagli Acquisto</h3>
+                  <div style="color: #1e3a8a; font-size: 15px; line-height: 1.8;">
+                    <p style="margin: 8px 0;"><strong>Crediti Acquistati:</strong> <span style="font-size: 24px; color: #3b82f6;">+${purchase.credits_amount}</span></p>
+                    <p style="margin: 8px 0;"><strong>Importo Pagato:</strong> €${amountEur}</p>
+                    <p style="margin: 8px 0;"><strong>Nuovo Saldo:</strong> <span style="color: #16a34a; font-weight: 700;">${userCredits.balance + purchase.credits_amount} crediti</span></p>
+                    <p style="margin: 8px 0; font-size: 12px; opacity: 0.8;"><strong>ID Transazione:</strong> ${session.payment_intent}</p>
+                    <p style="margin: 8px 0; font-size: 12px; opacity: 0.8;"><strong>Data:</strong> ${new Date().toLocaleDateString('it-IT')}</p>
+                  </div>
+                </div>
+
+                <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 25px; border-radius: 12px; margin: 25px 0; text-align: center;">
+                  <div style="font-size: 36px; margin-bottom: 10px;">💬</div>
+                  <p style="margin: 0; color: #92400e; font-size: 16px; font-weight: 600; line-height: 1.6;">
+                    Ogni messaggio costa 2 crediti
+                  </p>
+                  <p style="margin: 10px 0 0 0; color: #78350f; font-size: 20px; font-weight: 700;">
+                    Puoi inviare circa ${Math.floor(purchase.credits_amount / 2)} messaggi!
+                  </p>
+                </div>
+
+                <div style="background: #dcfce7; padding: 20px; border-radius: 12px; margin: 25px 0;">
+                  <div style="text-align: center; margin-bottom: 15px;">
+                    <span style="font-size: 32px;">✅</span>
+                  </div>
+                  <p style="margin: 0; color: #166534; font-size: 15px; line-height: 1.6; text-align: center;">
+                    <strong>I tuoi crediti sono disponibili immediatamente!</strong><br>
+                    <span style="font-size: 14px;">Non scadono mai e rimangono sul tuo account</span>
+                  </p>
+                </div>
+
+                <div style="background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%); padding: 20px; border-radius: 12px; margin: 25px 0; text-align: center; border: 2px dashed #9333ea;">
+                  <p style="margin: 0; color: #6b21a8; font-size: 14px; line-height: 1.6;">
+                    💡 <strong>Suggerimento:</strong> Con l'abbonamento Premium hai crediti illimitati! 👑<br>
+                    <span style="font-size: 13px;">Scopri tutti i vantaggi nella sezione Crediti</span>
+                  </p>
+                </div>
+
+                <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 25px 0 0 0; text-align: center;">
+                  Grazie per il tuo acquisto! 💖
+                </p>
+              </div>
+
+              <div style="background: #f9fafb; padding: 25px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+                <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                  💕 <strong style="color: #ec4899;">LoveableConnect</strong> - Connessioni autentiche, storie vere
+                </p>
+              </div>
+            </div>
+          </body>
+          </html>
         `,
       });
     } catch (emailError) {
