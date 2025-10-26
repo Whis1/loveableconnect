@@ -800,16 +800,19 @@ export const ProfileManager = () => {
                           <ScrollArea className="h-[500px] pr-4 px-6">
                             {loadingUsers ? (
                               <p className="text-muted-foreground">{t("common.loadingUsers")}</p>
-                            ) : users.length === 0 ? (
-                              <p className="text-muted-foreground">{t("common.noUsersAvailable")}</p>
                             ) : (
                               <div className="space-y-2">
-                                {users
-                                  .filter((user) => 
+                                {(() => {
+                                  const filteredUsers = users.filter((user) => 
                                     user.nickname.toLowerCase().includes(likesSearchQuery.toLowerCase()) ||
                                     user.full_name.toLowerCase().includes(likesSearchQuery.toLowerCase())
-                                  )
-                                  .map((user) => {
+                                  );
+                                  
+                                  if (filteredUsers.length === 0) {
+                                    return <p className="text-muted-foreground text-center py-8">Nessun utente trovato</p>;
+                                  }
+                                  
+                                  return filteredUsers.map((user) => {
                                   const isLiked = (profileLikes[profile.id] || []).includes(user.id);
                                   return (
                                     <div 
@@ -864,7 +867,8 @@ export const ProfileManager = () => {
                                       </div>
                                     </div>
                                   );
-                                })}
+                                });
+                                })()}
                               </div>
                             )}
                           </ScrollArea>
