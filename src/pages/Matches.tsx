@@ -279,10 +279,6 @@ const Matches = () => {
     }
 
     setMatches(prev => prev.filter(m => m.id !== matchId));
-    toast({
-      title: t("matches.matchHidden"),
-      description: t("matches.matchHiddenDescription"),
-    });
   };
 
   if (loading) {
