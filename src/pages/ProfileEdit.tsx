@@ -13,6 +13,16 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save, Upload, X, Camera } from "lucide-react";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
 import { InterestsAutocomplete } from "@/components/InterestsAutocomplete";
+import { SpotifySongSelector } from "@/components/SpotifySongSelector";
+
+interface SpotifySong {
+  id: string;
+  name: string;
+  artist: string;
+  album: string;
+  image_url: string | null;
+  preview_url: string | null;
+}
 
 interface Profile {
   id: string;
@@ -29,6 +39,7 @@ interface Profile {
   looking_for: string[] | null;
   relationship_type: string | null;
   relationship_status: string | null;
+  favorite_songs: SpotifySong[] | null;
 }
 
 const ProfileEdit = () => {
@@ -44,6 +55,7 @@ const ProfileEdit = () => {
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [lookingFor, setLookingFor] = useState<string[]>([]);
+  const [favoriteSongs, setFavoriteSongs] = useState<SpotifySong[]>([]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -61,9 +73,24 @@ const ProfileEdit = () => {
         .single();
 
       if (profileData) {
-        setProfile(profileData);
+        setProfile({
+          ...profileData,
+          favorite_songs: null, // Handled separately below
+        });
         setInterests(profileData.interests || []);
         setLookingFor(profileData.looking_for || []);
+        
+        // Parse favorite_songs from Json to SpotifySong[]
+        if (profileData.favorite_songs) {
+          try {
+            const songs = Array.isArray(profileData.favorite_songs) 
+              ? profileData.favorite_songs as unknown as SpotifySong[]
+              : [];
+            setFavoriteSongs(songs);
+          } catch {
+            setFavoriteSongs([]);
+          }
+        }
         
         // Load avatar preview
         if (profileData.avatar_url) {
@@ -211,6 +238,7 @@ const ProfileEdit = () => {
           looking_for: lookingFor.length > 0 ? lookingFor : null,
           relationship_type: profile.relationship_type,
           relationship_status: profile.relationship_status,
+          favorite_songs: favoriteSongs.length > 0 ? JSON.parse(JSON.stringify(favoriteSongs)) : null,
         })
         .eq("id", profile.id);
 
@@ -514,6 +542,19 @@ const ProfileEdit = () => {
                   selectedInterests={interests}
                   onInterestsChange={setInterests}
                   maxInterests={4}
+                />
+              </div>
+
+              {/* Favorite Songs */}
+              <div className="space-y-2">
+                <Label>🎵 Canzoni Preferite (max 5)</Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Aggiungi le tue canzoni preferite da Spotify per far sapere agli altri i tuoi gusti musicali
+                </p>
+                <SpotifySongSelector
+                  selectedSongs={favoriteSongs}
+                  onSongsChange={setFavoriteSongs}
+                  maxSongs={5}
                 />
               </div>
 

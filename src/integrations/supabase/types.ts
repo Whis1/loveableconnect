@@ -347,6 +347,7 @@ export type Database = {
           bio: string | null
           city: string | null
           created_at: string
+          favorite_songs: Json | null
           full_name: string
           gender: string | null
           id: string
@@ -369,6 +370,7 @@ export type Database = {
           bio?: string | null
           city?: string | null
           created_at?: string
+          favorite_songs?: Json | null
           full_name: string
           gender?: string | null
           id: string
@@ -391,6 +393,7 @@ export type Database = {
           bio?: string | null
           city?: string | null
           created_at?: string
+          favorite_songs?: Json | null
           full_name?: string
           gender?: string | null
           id?: string
