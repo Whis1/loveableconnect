@@ -309,17 +309,7 @@ const Dashboard = () => {
               <p className="text-xs text-muted-foreground">{t("dashboard.tagline")}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <CreditsDisplay />
-            <Button 
-              variant="outline" 
-              onClick={handleSignOut}
-              className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-all duration-300"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              {t("dashboard.signOut")}
-            </Button>
-          </div>
+          <CreditsDisplay />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3 mb-8">
