@@ -5,11 +5,12 @@ import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, LogOut, Users, Sparkles, Search, MessageCircle } from "lucide-react";
+import { Heart, Users, Sparkles, Search, MessageCircle } from "lucide-react";
 import { UserProfileCard } from "@/components/UserProfileCard";
 import { useTranslation } from "react-i18next";
 import { CreditsDisplay } from "@/components/CreditsDisplay";
 import { useBanCheck } from "@/hooks/useBanCheck";
+import { DashboardControls } from "@/components/DashboardControls";
 
 interface Profile {
   id: string;
@@ -269,11 +270,6 @@ const Dashboard = () => {
     };
   }, [navigate, toast]);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -294,6 +290,8 @@ const Dashboard = () => {
           backgroundRepeat: 'no-repeat'
         }}
       />
+      
+      <DashboardControls />
       
       <div className="container mx-auto p-4 max-w-7xl relative z-10">
         {/* Header */}
