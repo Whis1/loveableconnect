@@ -40,17 +40,22 @@ Deno.serve(async (req) => {
       .order('created_at', { ascending: false });
     if (error) throw error;
 
-    // Recupera i nickname per gli user_id unici
-    const userIds = [...new Set((messages || []).map((m: any) => m.user_id))];
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, nickname')
-      .in('id', userIds);
+    // Recupera i nickname per gli user_id unici (se presenti)
+    const userIds = [...new Set((messages || []).map((m: any) => m.user_id).filter((id: any) => !!id))];
+    let profiles: any[] = [];
+    if (userIds.length > 0) {
+      const { data: profData, error: profErr } = await supabase
+        .from('profiles')
+        .select('id, nickname')
+        .in('id', userIds);
+      if (profErr) throw profErr;
+      profiles = profData || [];
+    }
 
     // Mappa i nickname ai messaggi
     const messagesWithNicknames = (messages || []).map((msg: any) => ({
       ...msg,
-      profiles: profiles?.find((p: any) => p.id === msg.user_id) || null
+      profiles: profiles.find((p: any) => p.id === msg.user_id) || null
     }));
 
     return new Response(JSON.stringify({ success: true, messages: messagesWithNicknames }), {
