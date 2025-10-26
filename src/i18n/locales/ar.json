@@ -300,6 +300,8 @@
     "back": "رجوع",
     "loading": "جاري التحميل...",
     "loadingProfile": "جاري تحميل الملف الشخصي...",
+    "showProfile": "عرض الملف الشخصي",
+    "hideProfile": "إخفاء الملف الشخصي",
     "messageDeleted": "تم حذف الرسالة",
     "deleteMessage": "حذف الرسالة",
     "typeMessage": "اكتب رسالة...",

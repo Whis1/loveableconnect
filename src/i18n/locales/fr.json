@@ -302,6 +302,8 @@
     "back": "Retour",
     "loading": "Chargement...",
     "loadingProfile": "Chargement du profil...",
+    "showProfile": "Afficher le profil",
+    "hideProfile": "Masquer le profil",
     "messageDeleted": "Message supprimé",
     "deleteMessage": "Supprimer le message",
     "typeMessage": "Écrire un message...",

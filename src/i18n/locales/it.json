@@ -382,6 +382,8 @@
     "back": "Indietro",
     "loading": "Caricamento...",
     "loadingProfile": "Caricamento profilo...",
+    "showProfile": "Mostra profilo",
+    "hideProfile": "Nascondi profilo",
     "messageDeleted": "Messaggio eliminato",
     "deleteMessage": "Elimina messaggio",
     "typeMessage": "Scrivi un messaggio...",

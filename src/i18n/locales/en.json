@@ -321,6 +321,8 @@
     "back": "Back",
     "loading": "Loading...",
     "loadingProfile": "Loading profile...",
+    "showProfile": "Show profile",
+    "hideProfile": "Hide profile",
     "messageDeleted": "Message deleted",
     "deleteMessage": "Delete message",
     "typeMessage": "Type a message...",

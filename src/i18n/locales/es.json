@@ -270,6 +270,8 @@
     "back": "Atrás",
     "loading": "Cargando...",
     "loadingProfile": "Cargando perfil...",
+    "showProfile": "Mostrar perfil",
+    "hideProfile": "Ocultar perfil",
     "writeMessage": "Escribe un mensaje...",
     "creditsInsufficient": "Créditos insuficientes",
     "creditsInsuffficientDescription": "Te has quedado sin créditos. Compra créditos para seguir chateando.",

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Send, Paperclip } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { GifPicker } from "@/components/chat/GifPicker";
@@ -55,6 +55,7 @@ const Chat = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { deductCredits } = useCredits();
   const [showCreditsBanner, setShowCreditsBanner] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -370,18 +371,28 @@ const Chat = () => {
         <Card className="flex-1 flex flex-col overflow-hidden shadow-xl">
           {/* Header with back button */}
           <div className="border-b p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => navigate("/matches")}
-              className="mb-2"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
+            <div className="flex items-center justify-between">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => navigate("/matches")}
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setShowProfile(!showProfile)}
+                className="gap-2"
+              >
+                {showProfile ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                {showProfile ? t("chat.hideProfile") : t("chat.showProfile")}
+              </Button>
+            </div>
           </div>
 
           {/* User Profile Section */}
-          {otherUser && <ChatUserProfile userId={otherUser.id} />}
+          {otherUser && showProfile && <ChatUserProfile userId={otherUser.id} />}
           
           {/* Messages Section */}
           <CardContent className="flex-1 overflow-hidden p-0">

@@ -302,6 +302,8 @@
     "back": "Zurück",
     "loading": "Laden...",
     "loadingProfile": "Profil wird geladen...",
+    "showProfile": "Profil anzeigen",
+    "hideProfile": "Profil ausblenden",
     "messageDeleted": "Nachricht gelöscht",
     "deleteMessage": "Nachricht löschen",
     "typeMessage": "Nachricht schreiben...",
