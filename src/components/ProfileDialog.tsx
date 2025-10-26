@@ -11,6 +11,8 @@ import { Heart, MessageCircle, MapPin, Sparkles, User, Heart as HeartIcon } from
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getGenericLocationPhrase } from "@/lib/utils";
+import { ChatConfirmationBanner } from "./ChatConfirmationBanner";
+import { useCredits } from "@/hooks/useCredits";
 
 interface Profile {
   id: string;
@@ -56,7 +58,10 @@ export const ProfileDialog = ({
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [translatedBio, setTranslatedBio] = useState<string>('');
   const [translatedInterests, setTranslatedInterests] = useState<string[]>([]);
+  const [showChatConfirmation, setShowChatConfirmation] = useState(false);
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
   const { translateText, translateArray } = useTextTranslation();
+  const { credits } = useCredits();
 
   useEffect(() => {
     if (!open || !profileId) return;
@@ -249,7 +254,7 @@ export const ProfileDialog = ({
   };
 
   const handleChat = async () => {
-    // Check for match
+    // Check if there's a match first
     const { data: matchData } = await supabase
       .from("matches")
       .select("*")
@@ -257,14 +262,99 @@ export const ProfileDialog = ({
       .maybeSingle();
 
     if (matchData) {
+      // Navigate to chat
       navigate(`/chat/${matchData.id}`);
       onOpenChange(false);
     } else {
+      // Show chat confirmation banner
+      setShowChatConfirmation(true);
+    }
+  };
+
+  const handleConfirmChat = async () => {
+    if (isCreatingChat) return;
+    
+    setIsCreatingChat(true);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        setIsCreatingChat(false);
+        return;
+      }
+
+      // Verifica crediti sufficienti
+      if (!credits || credits.balance < 6) {
+        toast({
+          title: t("common.error"),
+          description: "Crediti insufficienti per iniziare una chat",
+          variant: "destructive",
+        });
+        setShowChatConfirmation(false);
+        setIsCreatingChat(false);
+        return;
+      }
+
+      // Deduce 6 crediti usando la RPC function
+      const { data: deductSuccess, error: deductError } = await supabase.rpc(
+        "deduct_credits",
+        { _user_id: session.user.id, _amount: 6 }
+      );
+
+      if (deductError || !deductSuccess) {
+        toast({
+          title: t("common.error"),
+          description: "Crediti insufficienti per iniziare una chat",
+          variant: "destructive",
+        });
+        setShowChatConfirmation(false);
+        setIsCreatingChat(false);
+        return;
+      }
+
+      // Crea il match
+      const user1Id = currentUserId < profileId ? currentUserId : profileId;
+      const user2Id = currentUserId < profileId ? profileId : currentUserId;
+
+      const { data: matchData, error: matchError } = await supabase
+        .from('matches')
+        .insert({
+          user1_id: user1Id,
+          user2_id: user2Id,
+        })
+        .select()
+        .single();
+
+      if (matchError) {
+        console.error('Errore creazione match:', matchError);
+        toast({
+          title: t("common.error"),
+          description: "Errore nella creazione della chat",
+          variant: "destructive",
+        });
+        setIsCreatingChat(false);
+        return;
+      }
+
       toast({
-        title: t("chat.matchNotFound"),
-        description: t("chat.requestAccess"),
+        title: "Chat attivata!",
+        description: `Ora puoi chattare con ${profile?.nickname || profile?.full_name}!`,
+      });
+
+      setShowChatConfirmation(false);
+      setIsCreatingChat(false);
+      onOpenChange(false);
+      
+      // Naviga alla chat
+      navigate(`/chat/${matchData.id}`);
+    } catch (error) {
+      console.error('Errore:', error);
+      toast({
+        title: t("common.error"),
+        description: "Si è verificato un errore",
         variant: "destructive",
       });
+      setIsCreatingChat(false);
     }
   };
 
@@ -520,7 +610,7 @@ export const ProfileDialog = ({
                 }}
               >
                 <MessageCircle className="h-5 w-5 mr-2" />
-                Messaggio
+                {t("explore.chatButton")}
               </Button>
             </div>
           </div>
@@ -541,6 +631,14 @@ export const ProfileDialog = ({
           </DialogContent>
         </Dialog>
       )}
+      
+      <ChatConfirmationBanner
+        isVisible={showChatConfirmation}
+        onClose={() => setShowChatConfirmation(false)}
+        onConfirm={handleConfirmChat}
+        userName={profile?.nickname || profile?.full_name}
+        isLoading={isCreatingChat}
+      />
     </>
   );
 };
