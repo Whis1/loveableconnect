@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Heart, MessageCircle, MapPin } from "lucide-react";
@@ -50,6 +50,10 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
   const [translatedBio, setTranslatedBio] = useState<string>('');
   const { consumeLike, likesRemaining, resetAt } = useDailyLikes();
   const { credits } = useCredits();
+
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const hasCheckedRef = useRef(false);
 
   const getGenderLabel = (gender: string | null) => {
     if (!gender) return "";
@@ -117,8 +121,27 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
       .join(", ");
   };
 
+  // Observe visibility to defer heavy checks
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { root: null, rootMargin: '300px', threshold: 0.01 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   // Check if user already liked this profile or has an active match - optimized
   useEffect(() => {
+    if (!isVisible || hasCheckedRef.current) return;
+
     let mounted = true;
     
     const checkLikeAndMatch = async () => {
@@ -165,12 +188,14 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
       }
     };
     
-    checkLikeAndMatch();
+    checkLikeAndMatch().finally(() => {
+      hasCheckedRef.current = true;
+    });
 
     return () => {
       mounted = false;
     };
-  }, [currentUserId, profile.id]);
+  }, [isVisible, currentUserId, profile.id]);
 
   // Use original bio for performance - skip translation
   useEffect(() => {
@@ -371,7 +396,9 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
   return (
     <>
       <div 
+        ref={cardRef}
         className="group relative cursor-pointer"
+        style={{ contentVisibility: 'auto', containIntrinsicSize: '300px 400px' }}
         onClick={handleCardClick}
       >
         {/* Card Container */}
@@ -383,6 +410,7 @@ export const ProfileGridCard = ({ profile, currentUserId, onLike, onMatch }: Pro
                 src={avatarUrl}
                 alt={profile.nickname}
                 loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
             ) : (

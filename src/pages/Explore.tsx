@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,6 +55,7 @@ const Explore = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const scrollTickRef = useRef(false);
   
   const [ageRange, setAgeRange] = useState([18, 90]);
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
@@ -64,7 +65,7 @@ const Explore = () => {
     userName: "",
   });
   
-  const PROFILES_PER_PAGE = 24;
+  const PROFILES_PER_PAGE = 50;
 
   const genderOptions = [
     { value: "male", label: "Uomo" },
@@ -191,7 +192,7 @@ const Explore = () => {
       // Load only first batch of profiles for better initial load
       const { data: profilesData, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select("id, full_name, nickname, bio, age, gender, sexual_orientation, relationship_status, city, avatar_url, looking_for, last_active")
         .neq("id", userId)
         .order("last_active", { ascending: false })
         .limit(50); // Load only 50 profiles initially
@@ -239,19 +240,22 @@ const Explore = () => {
   }, [profiles, displayedProfiles, loadMoreProfiles]);
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (
-        window.innerHeight + document.documentElement.scrollTop
-        >= document.documentElement.offsetHeight - 100
-        && hasMore
-        && !loading
-      ) {
-        loadMoreProfiles();
-      }
+    const onScroll = () => {
+      if (scrollTickRef.current) return;
+      scrollTickRef.current = true;
+      requestAnimationFrame(() => {
+        const nearBottom =
+          window.innerHeight + document.documentElement.scrollTop >=
+          document.documentElement.offsetHeight - 200;
+        if (nearBottom && hasMore && !loading) {
+          loadMoreProfiles();
+        }
+        scrollTickRef.current = false;
+      });
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, [hasMore, loading, loadMoreProfiles]);
 
   const applyFilters = async () => {
@@ -276,7 +280,7 @@ const Explore = () => {
       // Fetch all profiles excluding current user
       let query = supabase
         .from("profiles")
-        .select("*")
+        .select("id, full_name, nickname, bio, age, gender, sexual_orientation, relationship_status, city, avatar_url, looking_for, last_active")
         .neq("id", currentUser);
 
       // Age filter
