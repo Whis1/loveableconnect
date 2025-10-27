@@ -9,6 +9,7 @@ import { ArrowLeft, MessageCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useBanCheck } from "@/hooks/useBanCheck";
+import OnlineIndicator from "@/components/OnlineIndicator";
 
 interface MatchWithMessages {
   id: string;
@@ -246,14 +247,19 @@ const Messages = () => {
                           className="flex items-center gap-4 flex-1 cursor-pointer"
                           onClick={() => navigate(`/chat/${match.id}`)}
                         >
-                        <Avatar className="h-16 w-16">
-                          <AvatarImage src={match.otherUser.avatar_url || undefined} />
-                          <AvatarFallback>
-                            {(match.otherUser.is_admin_profile 
-                              ? match.otherUser.nickname 
-                              : match.otherUser.full_name).charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
+                        <div className="relative">
+                          <Avatar className="h-16 w-16">
+                            <AvatarImage src={match.otherUser.avatar_url || undefined} />
+                            <AvatarFallback>
+                              {(match.otherUser.is_admin_profile 
+                                ? match.otherUser.nickname 
+                                : match.otherUser.full_name).charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="absolute bottom-0 right-0">
+                            <OnlineIndicator userId={match.otherUser.id} size="md" />
+                          </div>
+                        </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
                             <h3 className="font-semibold text-lg truncate">

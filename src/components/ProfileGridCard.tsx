@@ -14,6 +14,7 @@ import { DailyLikesExhaustedBanner } from "./DailyLikesExhaustedBanner";
 import { ChatConfirmationBanner } from "./ChatConfirmationBanner";
 import { SpotifySongCard } from "./SpotifySongCard";
 import { InsufficientCreditsBanner } from "@/components/chat/InsufficientCreditsBanner";
+import OnlineIndicator from "./OnlineIndicator";
 
 interface Profile {
   id: string;
@@ -421,6 +422,11 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
                 </div>
               </div>
             )}
+
+            {/* Online Indicator */}
+            <div className="absolute top-3 left-3">
+              <OnlineIndicator userId={profile.id} size="lg" />
+            </div>
 
             {/* Distance Badge */}
             {profile.distance && (

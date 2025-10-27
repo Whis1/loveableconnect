@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save, Upload, X, Camera, MapPin, AlertCircle } from "lucide-react";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
@@ -38,6 +39,7 @@ interface Profile {
   latitude: number | null;
   longitude: number | null;
   location_locked: boolean | null;
+  show_online_status: boolean | null;
   interests: string[] | null;
   avatar_url: string | null;
   photos: string[] | null;
@@ -628,6 +630,23 @@ const ProfileEdit = () => {
                   selectedInterests={interests}
                   onInterestsChange={setInterests}
                   maxInterests={4}
+                />
+              </div>
+
+              {/* Online Status Toggle */}
+              <div className="flex items-center justify-between space-x-2 p-4 border rounded-lg">
+                <div className="space-y-0.5">
+                  <Label htmlFor="show-online-status" className="text-base">
+                    {t('profile.showOnlineStatus')}
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    {t('profile.showOnlineStatusDescription')}
+                  </p>
+                </div>
+                <Switch
+                  id="show-online-status"
+                  checked={profile.show_online_status ?? true}
+                  onCheckedChange={(checked) => setProfile({ ...profile, show_online_status: checked })}
                 />
               </div>
 

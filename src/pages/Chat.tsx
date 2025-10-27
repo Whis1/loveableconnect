@@ -14,6 +14,8 @@ import { ChatUserProfile } from "@/components/chat/ChatUserProfile";
 import { InsufficientCreditsBanner } from "@/components/chat/InsufficientCreditsBanner";
 import { useCredits } from "@/hooks/useCredits";
 import { useTranslation } from "react-i18next";
+import OnlineIndicator from "@/components/OnlineIndicator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Message {
   id: string;
@@ -355,13 +357,33 @@ const Chat = () => {
           {/* Header with back button */}
           <div className="border-b p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="flex items-center justify-between">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => navigate("/matches")}
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
+              <div className="flex items-center gap-3">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => navigate("/matches")}
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+                {otherUser && (
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={otherUser.avatar_url || undefined} />
+                        <AvatarFallback>
+                          {(otherUser.is_admin_profile ? otherUser.nickname : otherUser.full_name).charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="absolute bottom-0 right-0">
+                        <OnlineIndicator userId={otherUser.id} size="sm" />
+                      </div>
+                    </div>
+                    <span className="font-semibold">
+                      {otherUser.is_admin_profile ? otherUser.nickname : otherUser.full_name}
+                    </span>
+                  </div>
+                )}
+              </div>
               <Button 
                 variant="ghost" 
                 size="sm"

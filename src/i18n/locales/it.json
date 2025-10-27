@@ -109,7 +109,9 @@
     "loading": "Caricamento...",
     "favoriteSongs": "Canzoni Preferite",
     "locationLocked": "⚠️ La location è bloccata. Puoi richiedere una modifica tramite supporto clienti.",
-    "requestLocationChange": "Richiedi Cambio Location"
+    "requestLocationChange": "Richiedi Cambio Location",
+    "showOnlineStatus": "Mostra stato online",
+    "showOnlineStatusDescription": "Permetti ad altri utenti di vedere quando sei online"
   },
   "terms": {
     "link": "Privacy - Termini e condizioni - Cookie",

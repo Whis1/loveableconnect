@@ -417,6 +417,7 @@ export type Database = {
           relationship_status: string | null
           relationship_type: string | null
           sexual_orientation: string | null
+          show_online_status: boolean | null
           updated_at: string
         }
         Insert: {
@@ -441,6 +442,7 @@ export type Database = {
           relationship_status?: string | null
           relationship_type?: string | null
           sexual_orientation?: string | null
+          show_online_status?: boolean | null
           updated_at?: string
         }
         Update: {
@@ -465,6 +467,7 @@ export type Database = {
           relationship_status?: string | null
           relationship_type?: string | null
           sexual_orientation?: string | null
+          show_online_status?: boolean | null
           updated_at?: string
         }
         Relationships: []

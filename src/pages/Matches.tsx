@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useTextTranslation } from "@/hooks/useTranslation";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
+import OnlineIndicator from "@/components/OnlineIndicator";
 
 interface MatchWithProfile {
   id: string;
@@ -320,14 +321,19 @@ const Matches = () => {
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4 flex-1">
-                          <Avatar className="h-16 w-16">
-                            <AvatarImage src={match.otherUser.avatar_url || undefined} />
-                            <AvatarFallback>
-                              {(match.otherUser.is_admin_profile 
-                                ? match.otherUser.nickname 
-                                : match.otherUser.full_name).charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
+                          <div className="relative">
+                            <Avatar className="h-16 w-16">
+                              <AvatarImage src={match.otherUser.avatar_url || undefined} />
+                              <AvatarFallback>
+                                {(match.otherUser.is_admin_profile 
+                                  ? match.otherUser.nickname 
+                                  : match.otherUser.full_name).charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="absolute bottom-0 right-0">
+                              <OnlineIndicator userId={match.otherUser.id} size="md" />
+                            </div>
+                          </div>
                           <div className="flex-1">
                             <h3 className="font-semibold text-lg">
                               {match.otherUser.is_admin_profile 

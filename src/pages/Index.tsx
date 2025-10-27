@@ -21,9 +21,20 @@ const Index = () => {
   useDailyLikes();
 
   useEffect(() => {
+    const updateLastActive = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        await supabase
+          .from('profiles')
+          .update({ last_active: new Date().toISOString() })
+          .eq('id', session.user.id);
+      }
+    };
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setIsAuthenticated(true);
+        updateLastActive();
       } else {
         navigate("/auth");
       }
@@ -33,12 +44,28 @@ const Index = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         setIsAuthenticated(true);
+        updateLastActive();
       } else {
         navigate("/auth");
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Update last_active every minute
+    const activityInterval = setInterval(updateLastActive, 60000);
+
+    // Update on user activity
+    const handleActivity = () => updateLastActive();
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('keydown', handleActivity);
+    window.addEventListener('click', handleActivity);
+
+    return () => {
+      subscription.unsubscribe();
+      clearInterval(activityInterval);
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+      window.removeEventListener('click', handleActivity);
+    };
   }, [navigate]);
 
   if (loading) {
