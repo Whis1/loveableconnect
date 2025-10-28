@@ -1,5 +1,6 @@
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface OnlineIndicatorProps {
   userId: string | null | undefined;
@@ -14,31 +15,40 @@ const OnlineIndicator = ({ userId, className, size = "md" }: OnlineIndicatorProp
   if (!showStatus) return null;
 
   const sizeClasses = {
-    sm: "h-2.5 w-2.5",
-    md: "h-3.5 w-3.5",
-    lg: "h-4 w-4",
+    sm: "h-2 w-2",
+    md: "h-2.5 w-2.5",
+    lg: "h-3 w-3",
   };
 
   return (
-    <div
-      className={cn(
-        "rounded-full flex items-center justify-center",
-        size === "sm" ? "p-0.5" : size === "md" ? "p-1" : "p-1",
-        "bg-background shadow-lg",
-        className
-      )}
-    >
-      <span
-        className={cn(
-          "rounded-full block transition-all duration-300",
-          sizeClasses[size],
-          isOnline 
-            ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse" 
-            : "bg-gray-400 dark:bg-gray-600",
-        )}
-        aria-label={isOnline ? "Online" : "Offline"}
-      />
-    </div>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div
+            className={cn(
+              "rounded-full flex items-center justify-center cursor-pointer",
+              size === "sm" ? "p-0.5" : size === "md" ? "p-0.5" : "p-1",
+              "bg-background shadow-sm",
+              className
+            )}
+          >
+            <span
+              className={cn(
+                "rounded-full block transition-all duration-300",
+                sizeClasses[size],
+                isOnline 
+                  ? "bg-green-500" 
+                  : "bg-gray-400 dark:bg-gray-600",
+              )}
+              aria-label={isOnline ? "Online" : "Offline"}
+            />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{isOnline ? "Online" : "Offline"}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 
