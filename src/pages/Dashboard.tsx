@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import { CreditsDisplay } from "@/components/CreditsDisplay";
 import { useBanCheck } from "@/hooks/useBanCheck";
 import { DashboardControls } from "@/components/DashboardControls";
+import { GeolocationBanner } from "@/components/GeolocationBanner";
 import loveIcon from "@/assets/love-icon.png";
 
 interface Profile {
@@ -40,6 +41,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [matches, setMatches] = useState<any[]>([]);
   const [likesReceived, setLikesReceived] = useState<any[]>([]);
+  const [showGeolocationBanner, setShowGeolocationBanner] = useState(false);
 
   useEffect(() => {
     let matchesChannel: ReturnType<typeof supabase.channel> | null = null;
@@ -271,6 +273,29 @@ const Dashboard = () => {
     };
   }, [navigate, toast]);
 
+  const handleExploreClick = () => {
+    const geolocationEnabled = localStorage.getItem("geolocationEnabled");
+    if (geolocationEnabled === "true") {
+      navigate("/explore");
+    } else {
+      setShowGeolocationBanner(true);
+    }
+  };
+
+  const handleActivateGeolocation = () => {
+    localStorage.setItem("geolocationEnabled", "true");
+    setShowGeolocationBanner(false);
+    toast({
+      title: "Geolocalizzazione attivata",
+      description: "Ora puoi esplorare i profili nelle tue vicinanze",
+    });
+    navigate("/explore");
+  };
+
+  const handleCloseGeolocationBanner = () => {
+    setShowGeolocationBanner(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -392,7 +417,7 @@ const Dashboard = () => {
             <div className="grid gap-4 md:grid-cols-2 animate-fade-in" style={{ animationDelay: '0.3s' }}>
               {/* Discover Card */}
               <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer"
-                onClick={() => navigate("/explore")}
+                onClick={handleExploreClick}
               >
                 {/* Card Background */}
                 <div 
@@ -468,6 +493,14 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Geolocation Banner */}
+      {showGeolocationBanner && (
+        <GeolocationBanner
+          onActivate={handleActivateGeolocation}
+          onClose={handleCloseGeolocationBanner}
+        />
+      )}
     </div>
   );
 };

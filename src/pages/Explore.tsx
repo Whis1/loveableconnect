@@ -114,6 +114,18 @@ const Explore = () => {
         return;
       }
 
+      // Check if geolocation is enabled
+      const geolocationEnabled = localStorage.getItem("geolocationEnabled");
+      if (geolocationEnabled !== "true") {
+        toast({
+          title: "Geolocalizzazione richiesta",
+          description: "Attiva la geolocalizzazione per accedere all'esplorazione profili",
+          variant: "destructive",
+        });
+        navigate("/");
+        return;
+      }
+
       setCurrentUser(session.user.id);
       
       // Load all profiles automatically
