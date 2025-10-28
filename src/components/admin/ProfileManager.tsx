@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import { Users, MessageSquare, Save, Upload, X, Image as ImageIcon, Search, Heart } from "lucide-react";
+import { Users, MessageSquare, Save, Upload, X, Image as ImageIcon, Search, Heart, Link2, Send } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AdminChatDialog } from "./AdminChatDialog";
 import { InterestsAutocomplete } from "@/components/InterestsAutocomplete";
@@ -42,6 +42,7 @@ interface Profile {
   avatar_url: string | null;
   photos: string[] | null;
   favorite_songs?: SpotifySong[] | null;
+  user_images_link?: string | null;
 }
 
 interface Message {
@@ -80,6 +81,7 @@ export const ProfileManager = () => {
   const [selectedChatProfile, setSelectedChatProfile] = useState<{ profileId: string; profileNickname: string; userId: string; userNickname: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [likesSearchQuery, setLikesSearchQuery] = useState("");
+  const [tempImageLinks, setTempImageLinks] = useState<{ [profileId: string]: string }>({});
 
   const getGenderLabel = (gender: string | null) => {
     if (!gender) return "";
@@ -405,6 +407,7 @@ export const ProfileManager = () => {
               looking_for: profile.looking_for,
               interests: profile.interests,
               favorite_songs: profile.favorite_songs ? JSON.parse(JSON.stringify(profile.favorite_songs)) : null,
+              user_images_link: profile.user_images_link,
             }
           },
         });
@@ -421,6 +424,46 @@ export const ProfileManager = () => {
       fetchProfiles();
     } catch (error: any) {
       console.error("Error updating profile:", error);
+      toast({
+        title: "Errore",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSaveImageLink = async (profileId: string) => {
+    const link = tempImageLinks[profileId];
+    if (!link || !link.trim()) {
+      toast({
+        title: "Errore",
+        description: "Inserisci un link valido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-update-profile', {
+        body: {
+          profileId,
+          updates: { user_images_link: link.trim() }
+        },
+      });
+
+      if (error || !data.success) {
+        throw new Error(error?.message || data.error || 'Update failed');
+      }
+
+      toast({
+        title: "Link salvato",
+        description: "Il link alle immagini è stato aggiunto",
+      });
+
+      setTempImageLinks({ ...tempImageLinks, [profileId]: "" });
+      fetchProfiles();
+    } catch (error: any) {
+      console.error("Error saving image link:", error);
       toast({
         title: "Errore",
         description: error.message,
@@ -487,6 +530,47 @@ export const ProfileManager = () => {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
+                    <div className="space-y-4 pt-4">
+                      {/* Link Immagini Utente */}
+                      {profile.user_images_link && (
+                        <div className="flex items-center gap-2">
+                          <Link2 className="h-4 w-4 text-primary" />
+                          <a
+                            href={profile.user_images_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary font-medium hover:underline"
+                          >
+                            Immagini utente
+                          </a>
+                        </div>
+                      )}
+
+                      {/* Input per aggiungere link */}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Aggiungi link immagini utente</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Incolla qui il link..."
+                            value={tempImageLinks[profile.id] || ""}
+                            onChange={(e) => setTempImageLinks({ ...tempImageLinks, [profile.id]: e.target.value })}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                handleSaveImageLink(profile.id);
+                              }
+                            }}
+                          />
+                          <Button
+                            onClick={() => handleSaveImageLink(profile.id)}
+                            size="icon"
+                            variant="default"
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="flex gap-2 pt-4">
                       {/* Dialog Modifica Profilo */}
                       <Dialog>

@@ -419,6 +419,7 @@ export type Database = {
           sexual_orientation: string | null
           show_online_status: boolean | null
           updated_at: string
+          user_images_link: string | null
         }
         Insert: {
           age?: number | null
@@ -444,6 +445,7 @@ export type Database = {
           sexual_orientation?: string | null
           show_online_status?: boolean | null
           updated_at?: string
+          user_images_link?: string | null
         }
         Update: {
           age?: number | null
@@ -469,6 +471,7 @@ export type Database = {
           sexual_orientation?: string | null
           show_online_status?: boolean | null
           updated_at?: string
+          user_images_link?: string | null
         }
         Relationships: []
       }
