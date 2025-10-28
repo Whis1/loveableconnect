@@ -472,6 +472,35 @@ export const ProfileManager = () => {
     }
   };
 
+  const handleDeleteImageLink = async (profileId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-update-profile', {
+        body: {
+          profileId,
+          updates: { user_images_link: null }
+        },
+      });
+
+      if (error || !data.success) {
+        throw new Error(error?.message || data.error || 'Update failed');
+      }
+
+      toast({
+        title: "Link eliminato",
+        description: "Il link alle immagini è stato rimosso",
+      });
+
+      fetchProfiles();
+    } catch (error: any) {
+      console.error("Error deleting image link:", error);
+      toast({
+        title: "Errore",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
 
   const filteredProfiles = profiles.filter((profile) =>
     profile.nickname.toLowerCase().includes(searchQuery.toLowerCase())
@@ -543,6 +572,14 @@ export const ProfileManager = () => {
                           >
                             Immagini utente
                           </a>
+                          <Button
+                            onClick={() => handleDeleteImageLink(profile.id)}
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
                         </div>
                       )}
 
