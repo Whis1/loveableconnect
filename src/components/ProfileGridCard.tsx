@@ -536,39 +536,8 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
               </div>
             </div>
 
-            {/* Favorite Songs */}
-            {profile.favorite_songs && profile.favorite_songs.length > 0 && (
-              <div className="pt-2 border-t border-border/50">
-                <div className="flex items-center gap-1 text-xs font-semibold text-foreground mb-1.5">
-                  🎵 Canzoni Preferite
-                </div>
-                <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-                  {profile.favorite_songs.slice(0, 3).map((song: any, idx: number) => (
-                    <SpotifySongCard
-                      key={idx}
-                      song={song}
-                      size="small"
-                      onPlay={() => {
-                        // Pause all other songs
-                        profile.favorite_songs?.forEach((s: any, i: number) => {
-                          if (i !== idx && (window as any)[`pauseAudio_${s.id}`]) {
-                            (window as any)[`pauseAudio_${s.id}`]();
-                          }
-                        });
-                      }}
-                    />
-                  ))}
-                  {profile.favorite_songs.length > 3 && (
-                    <div className="flex-shrink-0 w-12 h-12 rounded bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground">
-                      +{profile.favorite_songs.length - 3}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
             {/* Action Buttons */}
-            <div className="flex gap-2 pt-1">
+            <div className="flex gap-2 pt-1">{/* ... keep existing code */}
               {!hasLiked && !hasActiveMatch && (
                 <Button
                   variant="outline"

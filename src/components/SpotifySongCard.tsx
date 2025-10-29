@@ -132,7 +132,7 @@ export const SpotifySongCard = ({ song, size = "medium", onPlay }: SpotifySongCa
   return (
     <div className={`flex-shrink-0 ${containerWidthClasses[size]}`} role="button" tabIndex={0}>
       <div
-        className={`${sizeClasses[size]} rounded-lg overflow-hidden bg-muted relative group cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all`}
+        className={`${sizeClasses[size]} rounded-lg bg-muted relative group cursor-pointer hover:shadow-lg hover:shadow-primary/30 transition-all overflow-hidden`}
         onClick={togglePlay}
         title={hasPreview ? `${song.name} - ${song.artist}` : `${song.name} - ${song.artist} (Apri su Spotify)`}
       >
