@@ -390,7 +390,44 @@ export const ProfileDialog = ({
             )}
 
             {/* Relationship Status Section */}
-...
+            <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
+              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                <User className="h-5 w-5 text-primary" />
+                {t('common.relationshipStatus')}
+              </h3>
+              <div className="text-base font-medium">
+                {getRelationshipStatusLabel(profile.relationship_status)}
+              </div>
+            </div>
+
+            {/* Looking For Section */}
+            <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-5 shadow-sm border border-primary/20">
+              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                <User className="h-5 w-5 text-primary" />
+                {t('common.lookingFor')}
+              </h3>
+              <div className="space-y-2">
+                {(profile.looking_for && profile.looking_for.length > 0) || profile.relationship_type ? (
+                  <>
+                    {profile.looking_for && profile.looking_for.length > 0 && (
+                      <div className="text-base font-medium text-primary">
+                        {profile.looking_for.map((item) => getGenderLabel(item)).join(", ")}
+                      </div>
+                    )}
+                    {profile.relationship_type && (
+                      <div className="text-sm text-muted-foreground">
+                        {getRelationshipTypeLabel(profile.relationship_type)}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-base font-medium text-muted-foreground">
+                    {t('common.notSpecified')}
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Interests Section */}
             {profile.interests && profile.interests.length > 0 && (
               <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
