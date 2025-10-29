@@ -196,9 +196,7 @@ const Matches = () => {
             };
 
             setMatches(prev => [matchWithProfile, ...prev]);
-            const displayName = matchWithProfile.otherUser.is_admin_profile 
-              ? matchWithProfile.otherUser.nickname 
-              : matchWithProfile.otherUser.full_name;
+            const displayName = matchWithProfile.otherUser.nickname;
             toast({
               title: t("matches.newMatch"),
               description: `${t("matches.newMatchWith")} ${displayName}!`,
@@ -236,9 +234,7 @@ const Matches = () => {
             const match = matchesWithProfiles.find(m => m.id === newMessage.match_id);
             if (!match) return;
 
-            const displayName = match.otherUser.is_admin_profile 
-              ? match.otherUser.nickname 
-              : match.otherUser.full_name;
+            const displayName = match.otherUser.nickname;
             
             toast({
               title: `Nuovo messaggio da ${displayName}`,
@@ -325,9 +321,7 @@ const Matches = () => {
                             <Avatar className="h-16 w-16">
                               <AvatarImage src={match.otherUser.avatar_url || undefined} />
                               <AvatarFallback>
-                                {(match.otherUser.is_admin_profile 
-                                  ? match.otherUser.nickname 
-                                  : match.otherUser.full_name).charAt(0)}
+                                {match.otherUser.nickname.charAt(0)}
                               </AvatarFallback>
                             </Avatar>
                             <div className="absolute bottom-0 right-0">
@@ -336,9 +330,7 @@ const Matches = () => {
                           </div>
                           <div className="flex-1">
                             <h3 className="font-semibold text-lg">
-                              {match.otherUser.is_admin_profile 
-                                ? match.otherUser.nickname 
-                                : match.otherUser.full_name}
+                              {match.otherUser.nickname}
                             </h3>
                             <p className="text-sm text-muted-foreground">
                               {t("matches.nearYourParts")}
