@@ -33,6 +33,7 @@ interface Profile {
   nickname: string;
   bio: string | null;
   age: number | null;
+  birthdate: string | null;
   gender: string | null;
   sexual_orientation: string | null;
   city: string | null;
@@ -65,6 +66,10 @@ const ProfileEdit = () => {
   const [favoriteSongs, setFavoriteSongs] = useState<SpotifySong[]>([]);
   const [showLocationRequest, setShowLocationRequest] = useState(false);
   const [pendingLocationData, setPendingLocationData] = useState<{ city: string; latitude: number; longitude: number } | null>(null);
+  const [birthDay, setBirthDay] = useState("");
+  const [birthMonth, setBirthMonth] = useState("");
+  const [birthYear, setBirthYear] = useState("");
+  const [requiresCompletion, setRequiresCompletion] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -88,6 +93,14 @@ const ProfileEdit = () => {
         });
         setInterests(profileData.interests || []);
         setLookingFor(profileData.looking_for || []);
+        
+        // Parse birthdate into day, month, year
+        if (profileData.birthdate) {
+          const date = new Date(profileData.birthdate);
+          setBirthDay(date.getDate().toString());
+          setBirthMonth((date.getMonth() + 1).toString());
+          setBirthYear(date.getFullYear().toString());
+        }
         
         // Parse favorite_songs from Json to SpotifySong[]
         if (profileData.favorite_songs) {
@@ -118,6 +131,12 @@ const ProfileEdit = () => {
             return data.publicUrl;
           });
           setPhotoPreviews(urls);
+        }
+        
+        // Check if user needs to complete profile (from Google login)
+        const state = window.history.state?.usr;
+        if (state?.requiresCompletion || !profileData.birthdate || !profileData.city) {
+          setRequiresCompletion(true);
         }
       }
 
@@ -215,6 +234,26 @@ const ProfileEdit = () => {
     
     if (!profile) return;
 
+    // Validate birthdate if required
+    if (requiresCompletion && (!birthDay || !birthMonth || !birthYear)) {
+      toast({
+        title: "Errore",
+        description: "La data di nascita è obbligatoria. Inserisci giorno, mese e anno.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate location if required
+    if (requiresCompletion && !profile.city) {
+      toast({
+        title: "Errore",
+        description: "La posizione è obbligatoria. Inserisci la tua città.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -250,12 +289,18 @@ const ProfileEdit = () => {
         }
       }
 
+      // Prepare birthdate if provided
+      let birthdate = profile.birthdate;
+      if (birthDay && birthMonth && birthYear) {
+        birthdate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
+      }
+
       const { error } = await supabase
         .from("profiles")
         .update({
           nickname: profile.nickname,
           bio: profile.bio,
-          age: profile.age,
+          birthdate: birthdate,
           gender: profile.gender,
           sexual_orientation: profile.sexual_orientation,
           city: profile.city,
@@ -355,6 +400,16 @@ const ProfileEdit = () => {
         <Card>
           <CardHeader>
             <CardTitle>{t('profile.editProfile')}</CardTitle>
+            {requiresCompletion && (
+              <Alert className="mt-4 bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
+                <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                <AlertDescription className="text-amber-800 dark:text-amber-200">
+                  <strong>⚠️ Completa il tuo profilo</strong>
+                  <br />
+                  Inserisci la tua data di nascita per calcolare correttamente la tua età e rendere il tuo profilo visibile agli altri utenti. La location è obbligatoria.
+                </AlertDescription>
+              </Alert>
+            )}
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSave} className="space-y-6">
@@ -481,13 +536,57 @@ const ProfileEdit = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="age">{t('profile.age')}</Label>
-                  <Input
-                    id="age"
-                    type="number"
-                    value={profile.age || ""}
-                    onChange={(e) => setProfile({ ...profile, age: parseInt(e.target.value) || null })}
-                  />
+                  <Label>Data di Nascita</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Select value={birthDay} onValueChange={setBirthDay} required={requiresCompletion}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Giorno" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50 max-h-60">
+                        {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                          <SelectItem key={day} value={day.toString()}>
+                            {day}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    <Select value={birthMonth} onValueChange={setBirthMonth} required={requiresCompletion}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Mese" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50">
+                        <SelectItem value="1">Gennaio</SelectItem>
+                        <SelectItem value="2">Febbraio</SelectItem>
+                        <SelectItem value="3">Marzo</SelectItem>
+                        <SelectItem value="4">Aprile</SelectItem>
+                        <SelectItem value="5">Maggio</SelectItem>
+                        <SelectItem value="6">Giugno</SelectItem>
+                        <SelectItem value="7">Luglio</SelectItem>
+                        <SelectItem value="8">Agosto</SelectItem>
+                        <SelectItem value="9">Settembre</SelectItem>
+                        <SelectItem value="10">Ottobre</SelectItem>
+                        <SelectItem value="11">Novembre</SelectItem>
+                        <SelectItem value="12">Dicembre</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <Select value={birthYear} onValueChange={setBirthYear} required={requiresCompletion}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Anno" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50 max-h-60">
+                        {Array.from({ length: 83 }, (_, i) => new Date().getFullYear() - 18 - i).map(year => (
+                          <SelectItem key={year} value={year.toString()}>
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {requiresCompletion ? "⚠️ Campo obbligatorio - Devi avere almeno 18 anni" : "La tua età viene calcolata automaticamente e si aggiorna ogni anno"}
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -530,7 +629,7 @@ const ProfileEdit = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="city">{t('profile.location')}</Label>
+                  <Label htmlFor="city">{t('profile.location')} {requiresCompletion && <span className="text-destructive">*</span>}</Label>
                   {profile.location_locked ? (
                     <div className="space-y-3">
                       <div className="relative">

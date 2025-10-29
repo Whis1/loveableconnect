@@ -399,6 +399,7 @@ export type Database = {
           age: number | null
           avatar_url: string | null
           bio: string | null
+          birthdate: string | null
           city: string | null
           created_at: string
           favorite_songs: Json | null
@@ -425,6 +426,7 @@ export type Database = {
           age?: number | null
           avatar_url?: string | null
           bio?: string | null
+          birthdate?: string | null
           city?: string | null
           created_at?: string
           favorite_songs?: Json | null
@@ -451,6 +453,7 @@ export type Database = {
           age?: number | null
           avatar_url?: string | null
           bio?: string | null
+          birthdate?: string | null
           city?: string | null
           created_at?: string
           favorite_songs?: Json | null

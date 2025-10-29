@@ -5,6 +5,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper function to calculate age from birthdate
+function calculateAge(birthdate: string): number {
+  const today = new Date();
+  const birth = new Date(birthdate);
+  
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  
+  return age;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -29,6 +44,11 @@ Deno.serve(async (req) => {
     }
 
     console.log(`Updating profile: ${profileId}`, updates);
+
+    // If birthdate is provided, calculate and add age
+    if (updates.birthdate) {
+      updates.age = calculateAge(updates.birthdate);
+    }
 
     const { data, error } = await supabaseAdmin
       .from('profiles')

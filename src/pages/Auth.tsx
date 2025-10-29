@@ -25,7 +25,9 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nickname, setNickname] = useState("");
-  const [age, setAge] = useState("");
+  const [birthDay, setBirthDay] = useState("");
+  const [birthMonth, setBirthMonth] = useState("");
+  const [birthYear, setBirthYear] = useState("");
   const [city, setCity] = useState("");
   const [gender, setGender] = useState("");
   const [sexualOrientation, setSexualOrientation] = useState("");
@@ -47,9 +49,23 @@ const Auth = () => {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
-        navigate("/");
+        // Check if user logged in via Google and needs to complete profile
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("birthdate, city")
+          .eq("id", session.user.id)
+          .maybeSingle();
+        
+        if (profile && (!profile.birthdate || !profile.city)) {
+          // User needs to complete profile
+          navigate("/modifica-profilo", { 
+            state: { requiresCompletion: true } 
+          });
+        } else {
+          navigate("/");
+        }
       }
     });
 
@@ -59,7 +75,7 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password || !nickname || !age || !city || !gender || !sexualOrientation || !relationshipStatus) {
+    if (!email || !password || !nickname || !birthDay || !birthMonth || !birthYear || !city || !gender || !sexualOrientation || !relationshipStatus) {
       toast({
         title: t('auth.errorSignUp'),
         description: t('auth.errorAllFields'),
@@ -68,11 +84,22 @@ const Auth = () => {
       return;
     }
 
-    const ageNum = parseInt(age);
-    if (isNaN(ageNum) || ageNum < 18 || ageNum > 120) {
+    // Costruisci la data di nascita
+    const birthdate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
+    const birthdateObj = new Date(birthdate);
+    
+    // Calcola l'età
+    const today = new Date();
+    let age = today.getFullYear() - birthdateObj.getFullYear();
+    const monthDiff = today.getMonth() - birthdateObj.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdateObj.getDate())) {
+      age--;
+    }
+
+    if (age < 18) {
       toast({
         title: t('auth.errorSignUp'),
-        description: t('auth.errorAge'),
+        description: "Devi avere almeno 18 anni per iscriverti.",
         variant: "destructive",
       });
       return;
@@ -88,7 +115,7 @@ const Auth = () => {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
             nickname,
-            age: ageNum,
+            birthdate,
             city,
             gender,
             sexual_orientation: sexualOrientation,
@@ -413,7 +440,9 @@ const Auth = () => {
                       setEmail("");
                       setPassword("");
                       setNickname("");
-                      setAge("");
+                      setBirthDay("");
+                      setBirthMonth("");
+                      setBirthYear("");
                       setCity("");
                       setGender("");
                       setSexualOrientation("");
@@ -437,17 +466,55 @@ const Auth = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-age">{t('profile.age')}</Label>
-                  <Input
-                    id="signup-age"
-                    type="number"
-                    min="18"
-                    max="120"
-                    placeholder="18"
-                    value={age}
-                    onChange={(e) => setAge(e.target.value)}
-                    required
-                  />
+                  <Label>Data di Nascita</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Select value={birthDay} onValueChange={setBirthDay} required>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Giorno" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50 max-h-60">
+                        {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                          <SelectItem key={day} value={day.toString()}>
+                            {day}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    <Select value={birthMonth} onValueChange={setBirthMonth} required>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Mese" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50">
+                        <SelectItem value="1">Gennaio</SelectItem>
+                        <SelectItem value="2">Febbraio</SelectItem>
+                        <SelectItem value="3">Marzo</SelectItem>
+                        <SelectItem value="4">Aprile</SelectItem>
+                        <SelectItem value="5">Maggio</SelectItem>
+                        <SelectItem value="6">Giugno</SelectItem>
+                        <SelectItem value="7">Luglio</SelectItem>
+                        <SelectItem value="8">Agosto</SelectItem>
+                        <SelectItem value="9">Settembre</SelectItem>
+                        <SelectItem value="10">Ottobre</SelectItem>
+                        <SelectItem value="11">Novembre</SelectItem>
+                        <SelectItem value="12">Dicembre</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <Select value={birthYear} onValueChange={setBirthYear} required>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Anno" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50 max-h-60">
+                        {Array.from({ length: 83 }, (_, i) => new Date().getFullYear() - 18 - i).map(year => (
+                          <SelectItem key={year} value={year.toString()}>
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Devi avere almeno 18 anni</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-city">{t('profile.location')}</Label>
