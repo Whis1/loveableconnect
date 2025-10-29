@@ -152,6 +152,14 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
       open: t('common.openRelationship'),
       'relazione aperta': t('common.openRelationship'),
       'open relationship': t('common.openRelationship'),
+      'prefer-not-say': t('common.preferNotSay'),
+      'prefer_not_say': t('common.preferNotSay'),
+      'preferisco non dirlo': t('common.preferNotSay'),
+      'preferisco_non_dirlo': t('common.preferNotSay'),
+      'not-sure': t('common.notSure'),
+      'not_sure': t('common.notSure'),
+      'not sure': t('common.notSure'),
+      'non specifico': t('common.notSure'),
     };
     return labels[key] || type;
   };
