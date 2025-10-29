@@ -5,15 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Coins, Crown, Heart } from "lucide-react";
+import { Coins, Crown, Heart, Plus } from "lucide-react";
 
 export const UserCreditsManager = () => {
   const { toast } = useToast();
   const [userId, setUserId] = useState("");
   const [creditsAmount, setCreditsAmount] = useState("");
+  const [likesAmount, setLikesAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingPremium, setLoadingPremium] = useState(false);
   const [loadingUnlock, setLoadingUnlock] = useState(false);
+  const [loadingLikes, setLoadingLikes] = useState(false);
 
   const handleAddCredits = async () => {
     if (!userId || !creditsAmount) {
@@ -117,14 +119,35 @@ export const UserCreditsManager = () => {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 24);
 
-      const { error } = await supabase
+      // Check if user already has an unlock
+      const { data: existing } = await supabase
         .from("likes_unlocked")
-        .upsert({ 
-          user_id: userId,
-          expires_at: expiresAt.toISOString()
-        });
+        .select("id")
+        .eq("user_id", userId)
+        .single();
 
-      if (error) throw error;
+      if (existing) {
+        // Update existing record
+        const { error } = await supabase
+          .from("likes_unlocked")
+          .update({ 
+            expires_at: expiresAt.toISOString(),
+            unlocked_at: new Date().toISOString()
+          })
+          .eq("user_id", userId);
+
+        if (error) throw error;
+      } else {
+        // Insert new record
+        const { error } = await supabase
+          .from("likes_unlocked")
+          .insert({ 
+            user_id: userId,
+            expires_at: expiresAt.toISOString()
+          });
+
+        if (error) throw error;
+      }
 
       toast({
         title: "Likes Sbloccati",
@@ -141,6 +164,50 @@ export const UserCreditsManager = () => {
       });
     } finally {
       setLoadingUnlock(false);
+    }
+  };
+
+  const handleAddLikes = async () => {
+    if (!userId || !likesAmount) {
+      toast({
+        title: "Errore",
+        description: "Inserisci user ID e quantità like",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoadingLikes(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-add-likes', {
+        body: { 
+          userId, 
+          likesAmount: parseInt(likesAmount) 
+        }
+      });
+
+      if (error) throw error;
+
+      if (!data.success) {
+        throw new Error(data.error || 'Errore sconosciuto');
+      }
+
+      toast({
+        title: "Like Aggiunti",
+        description: `${likesAmount} like aggiunti (nuovo totale: ${data.newLikesRemaining})`,
+      });
+
+      setUserId("");
+      setLikesAmount("");
+    } catch (error: any) {
+      console.error("Error adding likes:", error);
+      toast({
+        title: "Errore",
+        description: error.message || "Impossibile aggiungere like",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingLikes(false);
     }
   };
 
@@ -162,40 +229,61 @@ export const UserCreditsManager = () => {
             placeholder="UUID dell'utente"
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="credits">Crediti da Aggiungere</Label>
-          <Input
-            id="credits"
-            type="number"
-            value={creditsAmount}
-            onChange={(e) => setCreditsAmount(e.target.value)}
-            placeholder="Es: 100"
-          />
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="credits">Crediti da Aggiungere</Label>
+            <Input
+              id="credits"
+              type="number"
+              value={creditsAmount}
+              onChange={(e) => setCreditsAmount(e.target.value)}
+              placeholder="Es: 100"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="likes">Like da Aggiungere</Label>
+            <Input
+              id="likes"
+              type="number"
+              value={likesAmount}
+              onChange={(e) => setLikesAmount(e.target.value)}
+              placeholder="Es: 10"
+            />
+          </div>
         </div>
-        <div className="grid grid-cols-1 gap-3">
-          <Button onClick={handleAddCredits} disabled={loading} className="w-full">
+        <div className="grid grid-cols-2 gap-3">
+          <Button onClick={handleAddCredits} disabled={loading}>
             <Coins className="h-4 w-4 mr-2" />
             {loading ? "Aggiungendo..." : "Aggiungi Crediti"}
           </Button>
           
           <Button 
-            onClick={handleAssignPremium} 
-            disabled={loadingPremium} 
-            className="w-full"
+            onClick={handleAddLikes} 
+            disabled={loadingLikes}
             variant="secondary"
           >
+            <Plus className="h-4 w-4 mr-2" />
+            {loadingLikes ? "Aggiungendo..." : "Aggiungi Like"}
+          </Button>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3">
+          <Button 
+            onClick={handleAssignPremium} 
+            disabled={loadingPremium} 
+            variant="outline"
+          >
             <Crown className="h-4 w-4 mr-2" />
-            {loadingPremium ? "Assegnando..." : "Assegna Premium (30gg)"}
+            {loadingPremium ? "Assegnando..." : "Premium (30gg)"}
           </Button>
           
           <Button 
             onClick={handleUnlockLikes} 
             disabled={loadingUnlock} 
-            className="w-full"
             variant="outline"
           >
             <Heart className="h-4 w-4 mr-2" />
-            {loadingUnlock ? "Sbloccando..." : "Sblocca Likes (24h)"}
+            {loadingUnlock ? "Sbloccando..." : "Sblocca (24h)"}
           </Button>
         </div>
       </CardContent>
