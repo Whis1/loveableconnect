@@ -371,7 +371,7 @@ const Chat = () => {
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={otherUser.avatar_url || undefined} />
                         <AvatarFallback>
-                          {(otherUser.is_admin_profile ? otherUser.nickname : otherUser.full_name).charAt(0)}
+                          {otherUser.nickname.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="absolute bottom-0 right-0">
@@ -379,7 +379,7 @@ const Chat = () => {
                       </div>
                     </div>
                     <span className="font-semibold">
-                      {otherUser.is_admin_profile ? otherUser.nickname : otherUser.full_name}
+                      {otherUser.nickname}
                     </span>
                   </div>
                 )}
