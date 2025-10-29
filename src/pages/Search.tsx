@@ -19,6 +19,7 @@ interface Profile {
   nickname: string;
   bio: string | null;
   age: number | null;
+  birthdate: string | null;
   gender: string | null;
   city: string | null;
   interests: string[] | null;

@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useTextTranslation } from "@/hooks/useTranslation";
 import { ProfileDialog } from "./ProfileDialog";
-import { getGenericLocationPhrase } from "@/lib/utils";
+import { getGenericLocationPhrase, calculateAge } from "@/lib/utils";
 import { useDailyLikes } from "@/hooks/useDailyLikes";
 import { useCredits } from "@/hooks/useCredits";
 import { DailyLikesExhaustedBanner } from "./DailyLikesExhaustedBanner";
@@ -21,6 +21,7 @@ interface Profile {
   nickname: string;
   full_name: string;
   age: number | null;
+  birthdate: string | null;
   gender: string | null;
   sexual_orientation: string | null;
   relationship_status: string | null;
@@ -443,9 +444,9 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
               <h3 className="text-lg font-bold text-foreground truncate">
                 {profile.nickname}
               </h3>
-              {profile.age && (
+              {profile.birthdate && (
                 <span className="text-base text-muted-foreground font-medium">
-                  {profile.age} {t('userProfile.years')}
+                  {calculateAge(profile.birthdate)} {t('userProfile.years')}
                 </span>
               )}
             </div>

@@ -11,6 +11,7 @@ import { useTextTranslation } from "@/hooks/useTranslation";
 import profileBackground from "@/assets/profile-background.png";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { SpotifySongCard } from "@/components/SpotifySongCard";
+import { calculateAge } from "@/lib/utils";
 
 interface Profile {
   id: string;
@@ -18,6 +19,7 @@ interface Profile {
   nickname: string;
   bio: string | null;
   age: number | null;
+  birthdate: string | null;
   gender: string | null;
   sexual_orientation: string | null;
   city: string | null;
@@ -206,8 +208,10 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
           <div className="space-y-2 w-full">
             <div>
               <h2 className="text-2xl font-bold text-foreground">{profile.nickname}</h2>
-              {profile.age && (
-                <p className="text-sm text-muted-foreground">{profile.age} {t("userProfile.years")}</p>
+              {profile.birthdate && (
+                <p className="text-sm text-muted-foreground">
+                  {calculateAge(profile.birthdate)} {t("userProfile.years")}
+                </p>
               )}
             </div>
 

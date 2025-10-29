@@ -8,6 +8,7 @@ interface Profile {
   nickname: string;
   bio: string | null;
   age: number | null;
+  birthdate: string | null;
   gender: string | null;
   sexual_orientation: string | null;
   relationship_status: string | null;
