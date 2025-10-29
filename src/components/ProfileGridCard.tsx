@@ -61,7 +61,7 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
   const { credits } = useCredits();
 
   const getGenderLabel = (gender: string | null) => {
-    if (!gender) return "";
+    if (!gender) return t('common.notSpecified');
     const key = gender.toLowerCase();
     const genderMap: Record<string, string> = {
       male: t('common.male'),
@@ -82,7 +82,7 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
   };
 
   const getOrientationLabel = (orientation: string | null) => {
-    if (!orientation) return "";
+    if (!orientation) return t('common.notSpecified');
     const key = orientation.toLowerCase();
     const orientationMap: Record<string, string> = {
       heterosexual: t('common.heterosexual'),
@@ -102,17 +102,26 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
   };
 
   const getRelationshipStatusLabel = (status: string | null) => {
-    if (!status) return "";
+    if (!status) return t('common.notSpecified');
     const statusMap: Record<string, string> = {
       single: t('common.single'),
       in_relationship: t('common.inRelationship'),
+      fidanzato: t('common.inRelationship'),
+      fidanzata: t('common.inRelationship'),
+      'fidanzato/a': t('common.inRelationship'),
       married: t('common.married'),
-      divorced: t('common.divorced'),
-      widowed: t('common.widowed'),
-      prefer_not_say: t('common.preferNotSay'),
       sposato: t('common.married'),
+      sposata: t('common.married'),
+      'sposato/a': t('common.married'),
+      divorced: t('common.divorced'),
       divorziato: t('common.divorced'),
+      divorziata: t('common.divorced'),
+      'divorziato/a': t('common.divorced'),
+      widowed: t('common.widowed'),
       vedovo: t('common.widowed'),
+      vedova: t('common.widowed'),
+      'vedovo/a': t('common.widowed'),
+      prefer_not_say: t('common.preferNotSay'),
       preferisco_non_dirlo: t('common.preferNotSay'),
       scoprilo: t('common.notSpecified'),
     };
@@ -120,7 +129,7 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
   };
 
   const getLookingForLabel = (lookingFor: string[] | null) => {
-    if (!lookingFor || lookingFor.length === 0) return "";
+    if (!lookingFor || lookingFor.length === 0) return t('common.notSpecified');
     return lookingFor
       .map((item) => getGenderLabel(item))
       .join(", ");
@@ -467,30 +476,22 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
 
             {/* Gender & Orientation Pills */}
             <div className="flex items-center gap-1.5 flex-wrap">
-              {profile.gender && (
-                <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                  {getGenderLabel(profile.gender)}
-                </span>
-              )}
-              {profile.sexual_orientation && (
-                <span className="px-2 py-0.5 rounded-full bg-secondary/10 text-secondary text-xs font-medium">
-                  {getOrientationLabel(profile.sexual_orientation)}
-                </span>
-              )}
+              <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                {getGenderLabel(profile.gender)}
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-secondary/10 text-secondary text-xs font-medium">
+                {getOrientationLabel(profile.sexual_orientation)}
+              </span>
             </div>
 
             {/* Relationship Status & Looking For */}
             <div className="space-y-1">
-              {profile.relationship_status && (
-                <div className="text-xs text-muted-foreground">
-                  <span className="font-semibold">{t("explore.statusLabel")}</span> {getRelationshipStatusLabel(profile.relationship_status)}
-                </div>
-              )}
-              {profile.looking_for && profile.looking_for.length > 0 && (
-                <div className="text-xs text-muted-foreground">
-                  <span className="font-semibold">{t("explore.lookingForLabel")}</span> {getLookingForLabel(profile.looking_for)}
-                </div>
-              )}
+              <div className="text-xs text-muted-foreground">
+                <span className="font-semibold">{t("explore.statusLabel")}</span> {getRelationshipStatusLabel(profile.relationship_status)}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                <span className="font-semibold">{t("explore.lookingForLabel")}</span> {getLookingForLabel(profile.looking_for)}
+              </div>
             </div>
 
             {/* Favorite Songs */}

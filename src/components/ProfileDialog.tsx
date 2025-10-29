@@ -174,7 +174,8 @@ export const ProfileDialog = ({
     loadTranslations();
   }, [profile?.bio, profile?.interests, profile?.translatedBio, profile?.translatedInterests]);
 
-  const getGenderLabel = (gender: string) => {
+  const getGenderLabel = (gender: string | null | undefined) => {
+    if (!gender) return t('common.notSpecified');
     const key = gender.toLowerCase();
     const labels: Record<string, string> = {
       male: t('common.male'),
@@ -193,7 +194,8 @@ export const ProfileDialog = ({
     return labels[key] || gender;
   };
 
-  const getOrientationLabel = (orientation: string) => {
+  const getOrientationLabel = (orientation: string | null | undefined) => {
+    if (!orientation) return t('common.notSpecified');
     const key = orientation.toLowerCase();
     const labels: Record<string, string> = {
       heterosexual: t('common.heterosexual'),
@@ -211,7 +213,8 @@ export const ProfileDialog = ({
     };
     return labels[key] || orientation;
   };
-  const getRelationshipTypeLabel = (type: string) => {
+  const getRelationshipTypeLabel = (type: string | null | undefined) => {
+    if (!type) return t('common.notSpecified');
     const key = type.toLowerCase();
     const labels: Record<string, string> = {
       serious: t('profile.seriousRelationship'),
@@ -229,17 +232,27 @@ export const ProfileDialog = ({
     return labels[key] || type;
   };
 
-  const getRelationshipStatusLabel = (status: string) => {
+  const getRelationshipStatusLabel = (status: string | null | undefined) => {
+    if (!status) return t('common.notSpecified');
     const key = status.toLowerCase();
     const labels: Record<string, string> = {
       single: t('common.single'),
       sposato: t('common.married'),
+      sposata: t('common.married'),
+      'sposato/a': t('common.married'),
       married: t('common.married'),
       divorced: t('common.divorced'),
       divorziato: t('common.divorced'),
+      divorziata: t('common.divorced'),
+      'divorziato/a': t('common.divorced'),
       widowed: t('common.widowed'),
       vedovo: t('common.widowed'),
+      vedova: t('common.widowed'),
+      'vedovo/a': t('common.widowed'),
       in_relationship: t('common.inRelationship'),
+      fidanzato: t('common.inRelationship'),
+      fidanzata: t('common.inRelationship'),
+      'fidanzato/a': t('common.inRelationship'),
       'in una relazione': t('common.inRelationship'),
       prefer_not_say: t('common.preferNotSay'),
       preferisco_non_dirlo: t('common.preferNotSay'),
@@ -315,18 +328,14 @@ export const ProfileDialog = ({
                     {profile.age} {t('userProfile.years')}
                   </div>
                 )}
-                {profile.gender && (
-                  <div className="px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-500/10 to-blue-600/10 text-blue-600 dark:text-blue-400 font-semibold text-sm">
-                    <User className="h-3.5 w-3.5 inline mr-1" />
-                    {getGenderLabel(profile.gender)}
-                  </div>
-                )}
-                {profile.sexual_orientation && (
-                  <div className="px-4 py-1.5 rounded-full bg-gradient-to-r from-pink-500/10 to-purple-600/10 text-pink-600 dark:text-pink-400 font-semibold text-sm">
-                    <User className="h-3.5 w-3.5 inline mr-1" />
-                    {getOrientationLabel(profile.sexual_orientation)}
-                  </div>
-                )}
+                <div className="px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-500/10 to-blue-600/10 text-blue-600 dark:text-blue-400 font-semibold text-sm">
+                  <User className="h-3.5 w-3.5 inline mr-1" />
+                  {getGenderLabel(profile.gender)}
+                </div>
+                <div className="px-4 py-1.5 rounded-full bg-gradient-to-r from-pink-500/10 to-purple-600/10 text-pink-600 dark:text-pink-400 font-semibold text-sm">
+                  <User className="h-3.5 w-3.5 inline mr-1" />
+                  {getOrientationLabel(profile.sexual_orientation)}
+                </div>
               </div>
 
               {/* Location */}
@@ -350,39 +359,35 @@ export const ProfileDialog = ({
             )}
 
             {/* Relationship Status Section */}
-            {profile.relationship_status && (
-              <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
-                <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                  <User className="h-5 w-5 text-primary" />
-                  {t('common.relationshipStatus')}
-                </h3>
-                <div className="text-base font-medium">
-                  {getRelationshipStatusLabel(profile.relationship_status)}
-                </div>
+            <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
+              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                <User className="h-5 w-5 text-primary" />
+                {t('common.relationshipStatus')}
+              </h3>
+              <div className="text-base font-medium">
+                {getRelationshipStatusLabel(profile.relationship_status)}
               </div>
-            )}
+            </div>
 
             {/* Looking For Section */}
-            {(profile.looking_for && profile.looking_for.length > 0) || profile.relationship_type ? (
-              <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-5 shadow-sm border border-primary/20">
-                <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                  <User className="h-5 w-5 text-primary" />
-                  {t('common.lookingFor')}
-                </h3>
-                <div className="space-y-2">
-                  {profile.looking_for && profile.looking_for.length > 0 && (
-                    <div className="text-base font-medium text-primary">
-                      {profile.looking_for.map((item) => getGenderLabel(item)).join(", ")}
-                    </div>
-                  )}
-                  {profile.relationship_type && (
-                    <div className="text-sm text-muted-foreground">
-                      {getRelationshipTypeLabel(profile.relationship_type)}
-                    </div>
-                  )}
+            <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-5 shadow-sm border border-primary/20">
+              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                <User className="h-5 w-5 text-primary" />
+                {t('common.lookingFor')}
+              </h3>
+              <div className="space-y-2">
+                <div className="text-base font-medium text-primary">
+                  {(profile.looking_for && profile.looking_for.length > 0)
+                    ? profile.looking_for.map((item) => getGenderLabel(item)).join(", ")
+                    : t('common.notSpecified')}
                 </div>
+                {profile.relationship_type && (
+                  <div className="text-sm text-muted-foreground">
+                    {getRelationshipTypeLabel(profile.relationship_type)}
+                  </div>
+                )}
               </div>
-            ) : null}
+            </div>
 
             {/* Interests Section */}
             {profile.interests && profile.interests.length > 0 && (
