@@ -312,8 +312,16 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
         return;
       }
 
-      // Add the like using edge function (in background)
-      const { data: likeData, error: likeError } = await supabase.functions.invoke(
+      // Show immediate feedback
+      if (!creditsUsed) {
+        toast({
+          title: t("search.likeSent"),
+          description: `${t("search.likedProfile")} ${profile.nickname || profile.full_name}`,
+        });
+      }
+
+      // Add the like using edge function (in background - non blocking)
+      supabase.functions.invoke(
         'admin-manage-like',
         {
           body: {
@@ -322,27 +330,22 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
             toUserId: profile.id
           }
         }
-      );
-
-      if (likeError) {
-        // Rollback on error
-        setHasLiked(false);
-        throw likeError;
-      }
-
-      if (likeData?.match_created) {
-        // Match was created!
-        if (onMatch) {
-          onMatch(profile.nickname || profile.full_name);
+      ).then(({ data: likeData, error: likeError }) => {
+        if (likeError) {
+          console.error("Error adding like:", likeError);
+          return;
         }
-      } else {
-        // Just a like, no match - show confirmation toast
-        toast({
-          title: t("search.likeSent"),
-          description: `${t("search.likedProfile")} ${profile.nickname || profile.full_name}`,
-        });
-      }
+
+        if (likeData?.match_created) {
+          // Match was created!
+          if (onMatch) {
+            onMatch(profile.nickname || profile.full_name);
+          }
+        }
+      });
+
     } catch (error: any) {
+      setHasLiked(false);
       toast({
         title: t("common.error"),
         description: error.message,
