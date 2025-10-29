@@ -272,13 +272,16 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
             <div className="flex items-start gap-1">
               <span className="font-medium text-foreground/80">{t("common.relationshipStatus")}</span>
               <span className="text-muted-foreground">
-                {profile.relationship_status === 'single' ? t("common.single") : 
-                 profile.relationship_status === 'in_relationship' ? t("common.inRelationship") :
-                 profile.relationship_status === 'married' ? t("common.married") :
-                 profile.relationship_status === 'divorced' ? t("common.divorced") :
-                 profile.relationship_status === 'widowed' ? t("common.widowed") :
-                 profile.relationship_status === 'prefer_not_say' ? t("common.preferNotSay") :
-                 profile.relationship_status}
+                {(() => {
+                  const status = profile.relationship_status.toLowerCase();
+                  if (status === 'single') return t("common.single");
+                  if (status === 'in_relationship' || status === 'fidanzato' || status === 'fidanzata' || status === 'fidanzato/a') return t("common.inRelationship");
+                  if (status === 'married' || status === 'sposato' || status === 'sposata' || status === 'sposato/a') return t("common.married");
+                  if (status === 'divorced' || status === 'divorziato' || status === 'divorziata' || status === 'divorziato/a') return t("common.divorced");
+                  if (status === 'widowed' || status === 'vedovo' || status === 'vedova' || status === 'vedovo/a') return t("common.widowed");
+                  if (status === 'prefer_not_say' || status === 'preferisco non dirlo') return t("common.preferNotSay");
+                  return profile.relationship_status;
+                })()}
               </span>
             </div>
           )}
