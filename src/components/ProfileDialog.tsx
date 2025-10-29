@@ -8,14 +8,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, MapPin, User, Heart as HeartIcon } from "lucide-react";
+import { MapPin, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { getGenericLocationPhrase } from "@/lib/utils";
-import { ChatConfirmationBanner } from "./ChatConfirmationBanner";
-import { InsufficientCreditsBanner } from "@/components/chat/InsufficientCreditsBanner";
-import { useCredits } from "@/hooks/useCredits";
 import profileBadge from "@/assets/profile-badge.png";
 import { SpotifySongCard } from "./SpotifySongCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -54,23 +49,14 @@ export const ProfileDialog = ({
   open,
   onOpenChange,
 }: ProfileDialogProps) => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
   const { t } = useTranslation();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
-  const [hasLiked, setHasLiked] = useState(false);
-  const [hasActiveMatch, setHasActiveMatch] = useState(false);
-  const [isLiking, setIsLiking] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [translatedBio, setTranslatedBio] = useState<string>('');
   const [translatedInterests, setTranslatedInterests] = useState<string[]>([]);
-  const [showChatConfirmation, setShowChatConfirmation] = useState(false);
-  const [isCreatingChat, setIsCreatingChat] = useState(false);
-  const [showCreditsBanner, setShowCreditsBanner] = useState(false);
   const { translateText, translateArray } = useTextTranslation();
-  const { credits } = useCredits();
 
   useEffect(() => {
     if (!open || !profileId) return;
@@ -111,39 +97,6 @@ export const ProfileDialog = ({
           });
           setPhotoUrls(urls);
         }
-      }
-
-      // Check if already liked
-      const { data: likeData } = await supabase
-        .from("likes")
-        .select("id")
-        .eq("from_user_id", currentUserId)
-        .eq("to_user_id", profileId)
-        .maybeSingle();
-
-      setHasLiked(!!likeData);
-
-      // Check for match
-      const { data: matchData } = await supabase
-        .from("matches")
-        .select("id")
-        .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profileId}),and(user1_id.eq.${profileId},user2_id.eq.${currentUserId})`)
-        .maybeSingle();
-
-      if (matchData) {
-        // Check if match is hidden with 'both'
-        const { data: hiddenData } = await supabase
-          .from("hidden_matches")
-          .select("hidden_from")
-          .eq("match_id", matchData.id)
-          .eq("user_id", currentUserId)
-          .eq("hidden_from", "both")
-          .maybeSingle();
-        
-        // Match is active if it exists and is not hidden with 'both'
-        setHasActiveMatch(!hiddenData);
-      } else {
-        setHasActiveMatch(false);
       }
     };
 
@@ -220,165 +173,6 @@ export const ProfileDialog = ({
     };
     loadTranslations();
   }, [profile?.bio, profile?.interests, profile?.translatedBio, profile?.translatedInterests]);
-
-  const handleLike = async () => {
-    if (isLiking) return;
-    setIsLiking(true);
-
-    try {
-      const { data: existingLike } = await supabase
-        .from("likes")
-        .select("id")
-        .eq("from_user_id", currentUserId)
-        .eq("to_user_id", profileId)
-        .maybeSingle();
-
-      if (existingLike) {
-        // Remove like
-        await supabase.from("likes").delete().eq("id", existingLike.id);
-        setHasLiked(false);
-        toast({
-          title: t("explore.match.title"),
-          description: `${t("explore.match.description", { name: profile?.nickname || profile?.full_name })}`,
-        });
-      } else {
-        // Add like
-        await supabase.from("likes").insert({
-          from_user_id: currentUserId,
-          to_user_id: profileId,
-        });
-        setHasLiked(true);
-
-        // Check for match
-        const { data: matchData } = await supabase
-          .from("matches")
-          .select("*")
-          .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profileId}),and(user1_id.eq.${profileId},user2_id.eq.${currentUserId})`)
-          .maybeSingle();
-
-        if (matchData) {
-          toast({
-            title: t("explore.match.title"),
-            description: t("explore.match.description", { name: profile?.nickname || profile?.full_name }),
-          });
-        } else {
-          toast({
-            title: t("search.likeSent"),
-            description: `${t("search.likedProfile")} ${profile?.nickname || profile?.full_name}`,
-          });
-        }
-      }
-    } catch (error: any) {
-      toast({
-        title: t("common.error"),
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLiking(false);
-    }
-  };
-
-  const handleChat = async () => {
-    // Check if there's a match first
-    const { data: matchData } = await supabase
-      .from("matches")
-      .select("*")
-      .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profileId}),and(user1_id.eq.${profileId},user2_id.eq.${currentUserId})`)
-      .maybeSingle();
-
-    if (matchData) {
-      // Navigate to chat
-      navigate(`/chat/${matchData.id}`);
-      onOpenChange(false);
-    } else {
-      // Show chat confirmation banner
-      setShowChatConfirmation(true);
-    }
-  };
-
-  const handleConfirmChat = async () => {
-    if (isCreatingChat) return;
-    
-    setIsCreatingChat(true);
-    
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        setIsCreatingChat(false);
-        return;
-      }
-
-      // Verifica crediti sufficienti
-      if (!credits || credits.balance < 6) {
-        setShowChatConfirmation(false);
-        setIsCreatingChat(false);
-        setShowCreditsBanner(true);
-        setShowChatConfirmation(false);
-        setIsCreatingChat(false);
-        return;
-      }
-
-      // Deduce 6 crediti usando la RPC function
-      const { data: deductSuccess, error: deductError } = await supabase.rpc(
-        "deduct_credits",
-        { _user_id: session.user.id, _amount: 6 }
-      );
-
-      if (deductError || !deductSuccess) {
-        setShowChatConfirmation(false);
-        setIsCreatingChat(false);
-        setShowCreditsBanner(true);
-        setShowChatConfirmation(false);
-        setIsCreatingChat(false);
-        return;
-      }
-
-      // Crea il match
-      const user1Id = currentUserId < profileId ? currentUserId : profileId;
-      const user2Id = currentUserId < profileId ? profileId : currentUserId;
-
-      const { data: matchData, error: matchError } = await supabase
-        .from('matches')
-        .insert({
-          user1_id: user1Id,
-          user2_id: user2Id,
-        })
-        .select()
-        .single();
-
-      if (matchError) {
-        console.error('Errore creazione match:', matchError);
-        toast({
-          title: t("common.error"),
-          description: "Errore nella creazione della chat",
-          variant: "destructive",
-        });
-        setIsCreatingChat(false);
-        return;
-      }
-
-      toast({
-        title: "Chat attivata!",
-        description: `Ora puoi chattare con ${profile?.nickname || profile?.full_name}!`,
-      });
-
-      setShowChatConfirmation(false);
-      setIsCreatingChat(false);
-      onOpenChange(false);
-      
-      // Naviga alla chat
-      navigate(`/chat/${matchData.id}`);
-    } catch (error) {
-      console.error('Errore:', error);
-      toast({
-        title: t("common.error"),
-        description: "Si è verificato un errore",
-        variant: "destructive",
-      });
-      setIsCreatingChat(false);
-    }
-  };
 
   const getGenderLabel = (gender: string) => {
     const key = gender.toLowerCase();
@@ -462,8 +256,6 @@ export const ProfileDialog = ({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent 
           className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 bg-gradient-to-br from-background via-background to-primary/5"
-          onInteractOutside={(e) => { if (showChatConfirmation) e.preventDefault(); }}
-          onEscapeKeyDown={(e) => { if (showChatConfirmation) e.preventDefault(); }}
         >
           <DialogTitle className="sr-only">Profilo utente</DialogTitle>
           <DialogDescription className="sr-only">Dettagli del profilo e azioni</DialogDescription>
@@ -531,7 +323,7 @@ export const ProfileDialog = ({
                 )}
                 {profile.sexual_orientation && (
                   <div className="px-4 py-1.5 rounded-full bg-gradient-to-r from-pink-500/10 to-purple-600/10 text-pink-600 dark:text-pink-400 font-semibold text-sm">
-                    <HeartIcon className="h-3.5 w-3.5 inline mr-1" />
+                    <User className="h-3.5 w-3.5 inline mr-1" />
                     {getOrientationLabel(profile.sexual_orientation)}
                   </div>
                 )}
@@ -548,7 +340,7 @@ export const ProfileDialog = ({
             {profile.bio && (
               <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
                 <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                  <Heart className="h-5 w-5 text-primary" />
+                  <User className="h-5 w-5 text-primary" />
                   Bio
                 </h3>
                 <p className="text-muted-foreground leading-relaxed italic">
@@ -561,7 +353,7 @@ export const ProfileDialog = ({
             {profile.relationship_status && (
               <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
                 <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                  <Heart className="h-5 w-5 text-primary" />
+                  <User className="h-5 w-5 text-primary" />
                   {t('common.relationshipStatus')}
                 </h3>
                 <div className="text-base font-medium">
@@ -574,7 +366,7 @@ export const ProfileDialog = ({
             {(profile.looking_for && profile.looking_for.length > 0) || profile.relationship_type ? (
               <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-5 shadow-sm border border-primary/20">
                 <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                  <Heart className="h-5 w-5 text-primary" />
+                  <User className="h-5 w-5 text-primary" />
                   {t('common.lookingFor')}
                 </h3>
                 <div className="space-y-2">
@@ -661,51 +453,9 @@ export const ProfileDialog = ({
               </div>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-2">
-              {!hasLiked && !hasActiveMatch && (
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="flex-1 h-14 text-base font-semibold"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleLike();
-                  }}
-                  disabled={isLiking}
-                >
-                  <Heart className="h-5 w-5 mr-2" />
-                  Mi Piace
-                </Button>
-              )}
-              <Button
-                variant="default"
-                size="lg"
-                className={`${hasLiked || hasActiveMatch ? 'w-full' : 'flex-1'} h-14 text-base font-semibold bg-gradient-to-r from-primary to-primary/80`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleChat();
-                }}
-              >
-                <MessageCircle className="h-5 w-5 mr-2" />
-                {t("explore.chatButton")}
-              </Button>
-            </div>
           </div>
         </DialogContent>
       </Dialog>
-      
-      {showChatConfirmation && (
-        <ChatConfirmationBanner
-          isVisible={showChatConfirmation}
-          onClose={() => setShowChatConfirmation(false)}
-          onConfirm={handleConfirmChat}
-          userName={profile?.nickname || profile?.full_name}
-          isLoading={isCreatingChat}
-        />
-      )}
-
-      <InsufficientCreditsBanner isVisible={showCreditsBanner} onClose={() => setShowCreditsBanner(false)} />
 
       {/* Image Viewer Dialog */}
       {selectedImage && (

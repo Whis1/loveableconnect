@@ -230,20 +230,26 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
     
     if (isLiking || hasLiked) return; // Prevent double-click and removing likes
     
+    // OPTIMISTIC UPDATE: Update UI immediately
+    setHasLiked(true);
     setIsLiking(true);
+    onLike(profile.id); // Update parent list immediately
     
     try {
       // Check if can consume a daily like
       const { success, creditsUsed } = await consumeLike(useCredits);
       
       if (!success && !useCredits) {
-        // Show banner to use credits or wait
+        // Rollback optimistic update
+        setHasLiked(false);
         setShowLikesExhausted(true);
         setIsLiking(false);
         return;
       }
       
       if (!success && useCredits) {
+        // Rollback optimistic update
+        setHasLiked(false);
         toast({
           title: t("common.error"),
           description: "Crediti insufficienti",
@@ -253,7 +259,7 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
         return;
       }
 
-      // Add the like using edge function
+      // Add the like using edge function (in background)
       const { data: likeData, error: likeError } = await supabase.functions.invoke(
         'admin-manage-like',
         {
@@ -265,24 +271,24 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
         }
       );
 
-      if (likeError) throw likeError;
+      if (likeError) {
+        // Rollback on error
+        setHasLiked(false);
+        throw likeError;
+      }
 
       if (likeData?.match_created) {
         // Match was created!
-        setHasLiked(true);
         if (onMatch) {
           onMatch(profile.nickname || profile.full_name);
         }
       } else {
-        // Just a like, no match
-        setHasLiked(true);
+        // Just a like, no match - show confirmation toast
         toast({
           title: t("search.likeSent"),
           description: `${t("search.likedProfile")} ${profile.nickname || profile.full_name}`,
         });
       }
-      
-      onLike(profile.id);
     } catch (error: any) {
       toast({
         title: t("common.error"),
