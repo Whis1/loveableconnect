@@ -283,10 +283,9 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
     
     if (isLiking || hasLiked) return; // Prevent double-click and removing likes
     
-    // OPTIMISTIC UPDATE: Update UI immediately
+    // OPTIMISTIC UPDATE: segna localmente ma NON aggiornare la lista globale
     setHasLiked(true);
     setIsLiking(true);
-    onLike(profile.id); // Update parent list immediately
     
     try {
       // Check if can consume a daily like
