@@ -448,7 +448,9 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
             {/* Name and Age */}
             <div className="flex items-baseline gap-2">
               <h3 className="text-lg font-bold text-foreground truncate">
-                {profile.nickname}
+                {profile.nickname.length > 12 
+                  ? `${profile.nickname.substring(0, 12)}...` 
+                  : profile.nickname}
               </h3>
               {profile.birthdate && (
                 <span className="text-base text-muted-foreground font-medium">

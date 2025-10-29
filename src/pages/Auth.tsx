@@ -462,6 +462,7 @@ const Auth = () => {
                     placeholder={t('profile.nickname')}
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
+                    maxLength={18}
                     required
                   />
                 </div>

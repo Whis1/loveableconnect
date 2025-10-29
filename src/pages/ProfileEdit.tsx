@@ -531,6 +531,7 @@ const ProfileEdit = () => {
                     id="nickname"
                     value={profile.nickname}
                     onChange={(e) => setProfile({ ...profile, nickname: e.target.value })}
+                    maxLength={18}
                     required
                   />
                 </div>
