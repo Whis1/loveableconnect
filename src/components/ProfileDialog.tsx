@@ -376,14 +376,22 @@ export const ProfileDialog = ({
                 {t('common.lookingFor')}
               </h3>
               <div className="space-y-2">
-                <div className="text-base font-medium text-primary">
-                  {(profile.looking_for && profile.looking_for.length > 0)
-                    ? profile.looking_for.map((item) => getGenderLabel(item)).join(", ")
-                    : t('common.notSpecified')}
-                </div>
-                {profile.relationship_type && (
-                  <div className="text-sm text-muted-foreground">
-                    {getRelationshipTypeLabel(profile.relationship_type)}
+                {(profile.looking_for && profile.looking_for.length > 0) || profile.relationship_type ? (
+                  <>
+                    {profile.looking_for && profile.looking_for.length > 0 && (
+                      <div className="text-base font-medium text-primary">
+                        {profile.looking_for.map((item) => getGenderLabel(item)).join(", ")}
+                      </div>
+                    )}
+                    {profile.relationship_type && (
+                      <div className="text-sm text-muted-foreground">
+                        {getRelationshipTypeLabel(profile.relationship_type)}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-base font-medium text-muted-foreground">
+                    {t('common.notSpecified')}
                   </div>
                 )}
               </div>

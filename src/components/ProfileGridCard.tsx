@@ -25,6 +25,7 @@ interface Profile {
   gender: string | null;
   sexual_orientation: string | null;
   relationship_status: string | null;
+  relationship_type: string | null;
   looking_for: string[] | null;
   city: string | null;
   avatar_url: string | null;
@@ -128,11 +129,44 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
     return statusMap[status.toLowerCase()] || status;
   };
 
-  const getLookingForLabel = (lookingFor: string[] | null) => {
-    if (!lookingFor || lookingFor.length === 0) return t('common.notSpecified');
-    return lookingFor
-      .map((item) => getGenderLabel(item))
-      .join(", ");
+  const getRelationshipTypeLabel = (type: string | null | undefined) => {
+    if (!type) return '';
+    const key = type.toLowerCase();
+    const labels: Record<string, string> = {
+      serious: t('profile.seriousRelationship'),
+      'relazione seria': t('profile.seriousRelationship'),
+      'serious relationship': t('profile.seriousRelationship'),
+      casual: t('profile.casualDating'),
+      'incontri casuali': t('profile.casualDating'),
+      'casual dating': t('profile.casualDating'),
+      friendship: t('profile.friendship'),
+      amicizia: t('profile.friendship'),
+      open: t('common.openRelationship'),
+      'relazione aperta': t('common.openRelationship'),
+      'open relationship': t('common.openRelationship'),
+    };
+    return labels[key] || type;
+  };
+
+  const getLookingForLabel = (profile: Profile) => {
+    const hasLookingFor = profile.looking_for && profile.looking_for.length > 0;
+    const hasRelationshipType = profile.relationship_type;
+    
+    if (!hasLookingFor && !hasRelationshipType) {
+      return t('common.notSpecified');
+    }
+    
+    const parts: string[] = [];
+    
+    if (hasLookingFor) {
+      parts.push(profile.looking_for!.map((item) => getGenderLabel(item)).join(", "));
+    }
+    
+    if (hasRelationshipType) {
+      parts.push(getRelationshipTypeLabel(profile.relationship_type));
+    }
+    
+    return parts.join(" • ");
   };
 
   // Check if user already liked this profile or has an active match
@@ -490,7 +524,7 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
                 <span className="font-semibold">{t("explore.statusLabel")}</span> {getRelationshipStatusLabel(profile.relationship_status)}
               </div>
               <div className="text-xs text-muted-foreground">
-                <span className="font-semibold">{t("explore.lookingForLabel")}</span> {getLookingForLabel(profile.looking_for)}
+                <span className="font-semibold">{t("explore.lookingForLabel")}</span> {getLookingForLabel(profile)}
               </div>
             </div>
 
