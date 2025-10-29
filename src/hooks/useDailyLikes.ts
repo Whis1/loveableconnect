@@ -122,7 +122,7 @@ export const useDailyLikes = () => {
   };
 
   return {
-    likesRemaining: dailyLikesData?.likesRemaining ?? 13,
+    likesRemaining: dailyLikesData?.likesRemaining ?? 8,
     resetAt: dailyLikesData?.resetAt ?? null,
     isPremium: dailyLikesData?.isPremium ?? false,
     loading,

@@ -41,11 +41,11 @@ export const DailyLikesExhaustedBanner = ({
             </div>
           </div>
           <AlertDialogTitle className="text-center text-xl">
-            13 Like Giornalieri Terminati
+            8 Like Giornalieri Terminati
           </AlertDialogTitle>
           <AlertDialogDescription className="text-center space-y-3">
             <p className="text-base">
-              Hai esaurito i tuoi 13 like giornalieri!
+              Hai esaurito i tuoi 8 like giornalieri!
             </p>
             <div className="bg-muted/50 rounded-lg p-3 space-y-2">
               <p className="text-sm">

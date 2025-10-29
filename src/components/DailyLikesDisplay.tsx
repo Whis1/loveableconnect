@@ -61,9 +61,9 @@ export const DailyLikesDisplay = ({ likesRemaining, isPremium, resetAt, loading 
         className="flex items-center gap-2"
       >
         <Heart className="h-4 w-4 text-primary" />
-        <span className="font-medium">{likesRemaining}/13 Like</span>
+        <span className="font-medium">{likesRemaining}/8 Like</span>
       </Button>
-      {timeRemaining && likesRemaining < 13 && (
+      {timeRemaining && likesRemaining < 8 && (
         <div className="flex items-center gap-1 text-xs text-muted-foreground px-2">
           <Clock className="h-3 w-3" />
           <span>{t("dashboard.dailyRenewal")} {timeRemaining}</span>
