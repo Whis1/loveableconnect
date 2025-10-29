@@ -67,10 +67,12 @@ const Credits = () => {
     }
   };
 
-  const handleSubscribePremium = async () => {
+  const handleSubscribePremium = async (subscriptionType: "monthly" | "weekly" = "monthly") => {
     try {
       setPurchasing(true);
-      const { data, error } = await supabase.functions.invoke("subscribe-premium");
+      const { data, error } = await supabase.functions.invoke("subscribe-premium", {
+        body: { subscription_type: subscriptionType },
+      });
 
       if (error) throw error;
 
@@ -134,54 +136,112 @@ const Credits = () => {
           </CardContent>
         </Card>
 
-        {/* Premium Subscription */}
+        {/* Premium Subscriptions */}
         {!(credits?.is_premium && (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date())) && (
-          <Card className="mb-8 border-2 border-amber-500/50 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Crown className="h-8 w-8 text-amber-500" />
-                  <div>
-                    <CardTitle className="text-2xl">{t("credits.premium")}</CardTitle>
-                    <CardDescription>{t("credits.ultimateExperience")}</CardDescription>
+          <>
+            {/* Monthly Premium */}
+            <Card className="mb-6 border-2 border-amber-500/50 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Crown className="h-8 w-8 text-amber-500" />
+                    <div>
+                      <CardTitle className="text-2xl">{t("credits.premium")}</CardTitle>
+                      <CardDescription>{t("credits.ultimateExperience")}</CardDescription>
+                    </div>
                   </div>
+                  <Badge className="bg-amber-500 text-white">{t("credits.mostPopular")}</Badge>
                 </div>
-                <Badge className="bg-amber-500 text-white">{t("credits.mostPopular")}</Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-3xl font-bold">€99,99{t("credits.perMonth")}</div>
-              <ul className="space-y-2">
-                <li className="flex items-center gap-2">
-                  <Zap className="h-5 w-5 text-amber-500" />
-                  <span>{t("credits.unlimitedMessaging")}</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Heart className="h-5 w-5 text-amber-500" />
-                  <span>Like illimitati giornalieri</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Eye className="h-5 w-5 text-amber-500" />
-                  <span>{t("credits.unlimitedLikes")}</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-amber-500" />
-                  <span>{t("credits.exclusiveBadge")}</span>
-                </li>
-              </ul>
-              <Button
-                onClick={handleSubscribePremium}
-                disabled={purchasing}
-                className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white"
-                size="lg"
-              >
-                {purchasing ? t("credits.processing") : t("credits.becomePremium")}
-              </Button>
-              <p className="text-xs text-muted-foreground text-center">
-                {t("credits.autoRenewal")}
-              </p>
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-3xl font-bold">€99,99{t("credits.perMonth")}</div>
+                <ul className="space-y-2">
+                  <li className="flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-amber-500" />
+                    <span>{t("credits.unlimitedMessaging")}</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Heart className="h-5 w-5 text-amber-500" />
+                    <span>Like illimitati giornalieri</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Eye className="h-5 w-5 text-amber-500" />
+                    <span>{t("credits.unlimitedLikes")}</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-amber-500" />
+                    <span>{t("credits.exclusiveBadge")}</span>
+                  </li>
+                </ul>
+                <Button
+                  onClick={() => handleSubscribePremium("monthly")}
+                  disabled={purchasing}
+                  className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white"
+                  size="lg"
+                >
+                  {purchasing ? t("credits.processing") : t("credits.becomePremium")}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  {t("credits.autoRenewal")}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Weekly Premium */}
+            <Card className="mb-8 border-2 border-purple-500/50 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Zap className="h-8 w-8 text-purple-500" />
+                    <div>
+                      <CardTitle className="text-2xl">Premium Settimanale</CardTitle>
+                      <CardDescription>Prova l'esperienza Premium per 7 giorni</CardDescription>
+                    </div>
+                  </div>
+                  <Badge className="bg-purple-500 text-white">Prova</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-baseline gap-2">
+                  <div className="text-3xl font-bold text-purple-600">€6,99</div>
+                  <div className="text-sm text-muted-foreground line-through">€13,99</div>
+                  <div className="text-sm font-medium">/settimana</div>
+                </div>
+                <div className="text-sm text-purple-600 font-medium">
+                  🎉 Offerta prima settimana! Poi €13,99/settimana
+                </div>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <Coins className="h-4 w-4 text-purple-500" />
+                    <span><strong>40 crediti giornalieri</strong> - reset automatico</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-purple-500" />
+                    <span><strong>30 like al giorno</strong> - più opportunità</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Eye className="h-4 w-4 text-purple-500" />
+                    <span><strong>Visualizza like ricevuti</strong></span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-purple-500" />
+                    <span><strong>5 chat gratis al giorno</strong> senza match</span>
+                  </li>
+                </ul>
+                <Button
+                  onClick={() => handleSubscribePremium("weekly")}
+                  disabled={purchasing}
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                  size="lg"
+                >
+                  {purchasing ? t("credits.processing") : "Inizia Prova Settimanale"}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  Rinnovo automatico. Disdici quando vuoi.
+                </p>
+              </CardContent>
+            </Card>
+          </>
         )}
 
         {/* Credit Packages */}

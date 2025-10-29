@@ -10,6 +10,7 @@ import { ProfileDialog } from "./ProfileDialog";
 import { getGenericLocationPhrase, calculateAge } from "@/lib/utils";
 import { useDailyLikes } from "@/hooks/useDailyLikes";
 import { useCredits } from "@/hooks/useCredits";
+import { useWeeklyFreeChats } from "@/hooks/useWeeklyFreeChats";
 import { DailyLikesExhaustedBanner } from "./DailyLikesExhaustedBanner";
 import { ChatConfirmationBanner } from "./ChatConfirmationBanner";
 import { SpotifySongCard } from "./SpotifySongCard";
@@ -60,6 +61,7 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
   const { translateText } = useTextTranslation();
   const { consumeLike, likesRemaining, resetAt } = useDailyLikes();
   const { credits } = useCredits();
+  const { chatsRemaining, consumeFreeChat } = useWeeklyFreeChats();
 
   const getGenderLabel = (gender: string | null) => {
     if (!gender) return t('common.notSpecified');
@@ -387,28 +389,44 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
         return;
       }
 
-      // Verifica crediti sufficienti
-      if (!credits || credits.balance < 6) {
-        setShowChatConfirmation(false);
-        setShowCreditsBanner(true);
-        setIsCreatingChat(false);
-        return;
+      // Check if user has free chats available (weekly premium)
+      let chatCostCredits = 6;
+      if (chatsRemaining > 0) {
+        // Try to consume a free chat
+        const { success } = await consumeFreeChat();
+        if (success) {
+          chatCostCredits = 0; // No credits needed
+          toast({
+            title: "Chat Gratis Usata!",
+            description: `Chat gratis rimanenti oggi: ${chatsRemaining - 1}`,
+          });
+        }
       }
 
-      // Deduce 6 crediti usando la RPC function
-      const { data: deductSuccess, error: deductError } = await supabase.rpc(
-        "deduct_credits",
-        { _user_id: session.user.id, _amount: 6 }
-      );
+      // If no free chat used, check credits
+      if (chatCostCredits > 0) {
+        if (!credits || credits.balance < chatCostCredits) {
+          setShowChatConfirmation(false);
+          setShowCreditsBanner(true);
+          setIsCreatingChat(false);
+          return;
+        }
 
-      if (deductError || !deductSuccess) {
-        setShowCreditsBanner(true);
-        setShowChatConfirmation(false);
-        setIsCreatingChat(false);
-        return;
+        // Deduct credits
+        const { data: deductSuccess, error: deductError } = await supabase.rpc(
+          "deduct_credits",
+          { _user_id: session.user.id, _amount: chatCostCredits }
+        );
+
+        if (deductError || !deductSuccess) {
+          setShowCreditsBanner(true);
+          setShowChatConfirmation(false);
+          setIsCreatingChat(false);
+          return;
+        }
       }
 
-      // Crea il match
+      // Create match
       const user1Id = currentUserId < profile.id ? currentUserId : profile.id;
       const user2Id = currentUserId < profile.id ? profile.id : currentUserId;
 
@@ -440,7 +458,7 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
       setShowChatConfirmation(false);
       setIsCreatingChat(false);
       
-      // Naviga alla chat
+      // Navigate to chat
       navigate(`/chat/${matchData.id}`);
     } catch (error) {
       console.error('Errore:', error);

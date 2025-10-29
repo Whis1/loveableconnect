@@ -7,7 +7,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const PREMIUM_PRICE_ID = "price_1SIchwK6IHDbrxmEsduuHoTM";
+const PREMIUM_MONTHLY_PRICE_ID = "price_1SIchwK6IHDbrxmEsduuHoTM";
+const PREMIUM_WEEKLY_PRICE_ID = "price_1SNixgK6IHDbrxmEytmu8UU8";
+const WEEKLY_TRIAL_COUPON_ID = "OCFRCIQT";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -25,6 +27,13 @@ serve(async (req) => {
     const { data } = await supabaseClient.auth.getUser(token);
     const user = data.user;
     if (!user?.email) throw new Error("User not authenticated");
+
+    // Get subscription type from request body
+    const { subscription_type = "monthly" } = await req.json().catch(() => ({ subscription_type: "monthly" }));
+
+    if (!["monthly", "weekly"].includes(subscription_type)) {
+      throw new Error("Invalid subscription type");
+    }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
@@ -56,11 +65,21 @@ serve(async (req) => {
       );
     }
 
-    // Create checkout session for subscription
-    const session = await stripe.checkout.sessions.create({
+    // Check if user has already used weekly trial
+    const { data: creditsData } = await supabaseClient
+      .from("user_credits")
+      .select("has_used_weekly_trial")
+      .eq("user_id", user.id)
+      .single();
+
+    const priceId = subscription_type === "weekly" ? PREMIUM_WEEKLY_PRICE_ID : PREMIUM_MONTHLY_PRICE_ID;
+    const hasUsedWeeklyTrial = creditsData?.has_used_weekly_trial || false;
+
+    // Build session config
+    const sessionConfig: any = {
       customer: customerId,
       line_items: [{
-        price: PREMIUM_PRICE_ID,
+        price: priceId,
         quantity: 1,
       }],
       mode: "subscription",
@@ -68,8 +87,19 @@ serve(async (req) => {
       cancel_url: `${req.headers.get("origin")}/credits`,
       metadata: {
         user_id: user.id,
+        subscription_type: subscription_type,
       },
-    });
+    };
+
+    // Apply trial coupon for weekly subscription if not used yet
+    if (subscription_type === "weekly" && !hasUsedWeeklyTrial) {
+      sessionConfig.discounts = [{
+        coupon: WEEKLY_TRIAL_COUPON_ID,
+      }];
+    }
+
+    // Create checkout session for subscription
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     // Update user credits with customer ID
     await supabaseClient

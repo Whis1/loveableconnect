@@ -47,22 +47,47 @@ serve(async (req) => {
     const subscriptionId = session.subscription as string;
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
+    // Determine subscription type from metadata
+    const subscriptionType = session.metadata?.subscription_type || "monthly";
+    const isWeekly = subscriptionType === "weekly";
+
+    // Determine initial credits and likes based on subscription type
+    let initialCredits = 0;
+    let initialLikes = 0;
+    let initialFreeChats = 0;
+
+    if (isWeekly) {
+      initialCredits = 40;
+      initialLikes = 30;
+      initialFreeChats = 5;
+    }
+
     // Update user credits with premium status
+    const updateData: any = {
+      is_premium: true,
+      premium_expires_at: new Date(subscription.current_period_end * 1000).toISOString(),
+      stripe_subscription_id: subscriptionId,
+      subscription_type: subscriptionType,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (isWeekly) {
+      updateData.balance = initialCredits;
+      updateData.daily_likes_remaining = initialLikes;
+      updateData.daily_free_chats_remaining = initialFreeChats;
+      updateData.has_used_weekly_trial = true;
+    }
+
     await supabaseClient
       .from("user_credits")
-      .update({
-        is_premium: true,
-        premium_expires_at: new Date(subscription.current_period_end * 1000).toISOString(),
-        stripe_subscription_id: subscriptionId,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq("user_id", user.id);
 
     // Create purchase record with actual amount from session
     await supabaseClient.from("purchases").insert({
       user_id: user.id,
-      product_type: "premium_monthly",
-      amount_cents: session.amount_total || 9999,
+      product_type: isWeekly ? "premium_weekly" : "premium_monthly",
+      amount_cents: session.amount_total || (isWeekly ? 699 : 9999),
       currency: session.currency || "eur",
       stripe_payment_intent_id: session.payment_intent as string,
       stripe_session_id: session_id,
@@ -106,8 +131,8 @@ serve(async (req) => {
                 <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 4px solid #f59e0b;">
                   <h3 style="color: #92400e; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">📋 Dettagli Abbonamento</h3>
                   <div style="color: #78350f; font-size: 15px; line-height: 1.8;">
-                    <p style="margin: 8px 0;"><strong>Piano:</strong> Premium Mensile 👑</p>
-                    <p style="margin: 8px 0;"><strong>Importo:</strong> €99.99</p>
+                    <p style="margin: 8px 0;"><strong>Piano:</strong> Premium ${isWeekly ? 'Settimanale' : 'Mensile'} 👑</p>
+                    <p style="margin: 8px 0;"><strong>Importo:</strong> €${((session.amount_total || 0) / 100).toFixed(2)}</p>
                     <p style="margin: 8px 0;"><strong>Valido fino:</strong> ${expiryDate.toLocaleDateString('it-IT')}</p>
                     <p style="margin: 8px 0; font-size: 12px; opacity: 0.8;"><strong>ID Pagamento:</strong> ${session.payment_intent}</p>
                   </div>
@@ -116,34 +141,65 @@ serve(async (req) => {
                 <div style="background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 100%); padding: 25px; border-radius: 12px; margin: 25px 0;">
                   <h3 style="color: #9333ea; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">✨ I tuoi Vantaggi Premium</h3>
                   <div style="color: #6b7280; line-height: 1.8;">
-                    <div style="display: flex; align-items: start; margin-bottom: 12px;">
-                      <span style="font-size: 24px; margin-right: 12px;">💬</span>
-                      <div>
-                        <strong style="color: #9333ea;">Crediti Illimitati</strong><br>
-                        <span style="font-size: 14px;">Invia messaggi senza limiti</span>
+                    ${isWeekly ? `
+                      <div style="display: flex; align-items: start; margin-bottom: 12px;">
+                        <span style="font-size: 24px; margin-right: 12px;">💬</span>
+                        <div>
+                          <strong style="color: #9333ea;">40 Crediti Giornalieri</strong><br>
+                          <span style="font-size: 14px;">Reset automatico ogni 24 ore</span>
+                        </div>
                       </div>
-                    </div>
-                    <div style="display: flex; align-items: start; margin-bottom: 12px;">
-                      <span style="font-size: 24px; margin-right: 12px;">❤️</span>
-                      <div>
-                        <strong style="color: #ec4899;">Accesso Completo ai Likes</strong><br>
-                        <span style="font-size: 14px;">Vedi tutti i likes ricevuti</span>
+                      <div style="display: flex; align-items: start; margin-bottom: 12px;">
+                        <span style="font-size: 24px; margin-right: 12px;">❤️</span>
+                        <div>
+                          <strong style="color: #ec4899;">30 Like Giornalieri</strong><br>
+                          <span style="font-size: 14px;">Più opportunità di match ogni giorno</span>
+                        </div>
                       </div>
-                    </div>
-                    <div style="display: flex; align-items: start; margin-bottom: 12px;">
-                      <span style="font-size: 24px; margin-right: 12px;">⭐</span>
-                      <div>
-                        <strong style="color: #f59e0b;">Priorità nella Visualizzazione</strong><br>
-                        <span style="font-size: 14px;">Appari più in alto nei risultati</span>
+                      <div style="display: flex; align-items: start; margin-bottom: 12px;">
+                        <span style="font-size: 24px; margin-right: 12px;">👀</span>
+                        <div>
+                          <strong style="color: #9333ea;">Visualizza Like Ricevuti</strong><br>
+                          <span style="font-size: 14px;">Scopri chi ti ha messo like</span>
+                        </div>
                       </div>
-                    </div>
-                    <div style="display: flex; align-items: start;">
-                      <span style="font-size: 24px; margin-right: 12px;">👑</span>
-                      <div>
-                        <strong style="color: #f59e0b;">Badge Premium</strong><br>
-                        <span style="font-size: 14px;">Spicca con il badge esclusivo</span>
+                      <div style="display: flex; align-items: start;">
+                        <span style="font-size: 24px; margin-right: 12px;">💌</span>
+                        <div>
+                          <strong style="color: #ec4899;">5 Chat Gratis al Giorno</strong><br>
+                          <span style="font-size: 14px;">Scrivi senza match, senza consumare crediti</span>
+                        </div>
                       </div>
-                    </div>
+                    ` : `
+                      <div style="display: flex; align-items: start; margin-bottom: 12px;">
+                        <span style="font-size: 24px; margin-right: 12px;">💬</span>
+                        <div>
+                          <strong style="color: #9333ea;">Crediti Illimitati</strong><br>
+                          <span style="font-size: 14px;">Invia messaggi senza limiti</span>
+                        </div>
+                      </div>
+                      <div style="display: flex; align-items: start; margin-bottom: 12px;">
+                        <span style="font-size: 24px; margin-right: 12px;">❤️</span>
+                        <div>
+                          <strong style="color: #ec4899;">Accesso Completo ai Likes</strong><br>
+                          <span style="font-size: 14px;">Vedi tutti i likes ricevuti</span>
+                        </div>
+                      </div>
+                      <div style="display: flex; align-items: start; margin-bottom: 12px;">
+                        <span style="font-size: 24px; margin-right: 12px;">⭐</span>
+                        <div>
+                          <strong style="color: #f59e0b;">Priorità nella Visualizzazione</strong><br>
+                          <span style="font-size: 14px;">Appari più in alto nei risultati</span>
+                        </div>
+                      </div>
+                      <div style="display: flex; align-items: start;">
+                        <span style="font-size: 24px; margin-right: 12px;">👑</span>
+                        <div>
+                          <strong style="color: #f59e0b;">Badge Premium</strong><br>
+                          <span style="font-size: 14px;">Spicca con il badge esclusivo</span>
+                        </div>
+                      </div>
+                    `}
                   </div>
                 </div>
 

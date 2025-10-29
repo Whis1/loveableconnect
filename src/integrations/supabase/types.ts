@@ -600,14 +600,18 @@ export type Database = {
           balance: number
           created_at: string
           credits_depleted_at: string | null
+          daily_free_chats_remaining: number | null
+          daily_free_chats_reset_at: string | null
           daily_likes_remaining: number
           daily_likes_reset_at: string | null
+          has_used_weekly_trial: boolean | null
           id: string
           is_premium: boolean
           last_daily_reset: string
           premium_expires_at: string | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
+          subscription_type: string | null
           updated_at: string
           user_id: string
         }
@@ -615,14 +619,18 @@ export type Database = {
           balance?: number
           created_at?: string
           credits_depleted_at?: string | null
+          daily_free_chats_remaining?: number | null
+          daily_free_chats_reset_at?: string | null
           daily_likes_remaining?: number
           daily_likes_reset_at?: string | null
+          has_used_weekly_trial?: boolean | null
           id?: string
           is_premium?: boolean
           last_daily_reset?: string
           premium_expires_at?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          subscription_type?: string | null
           updated_at?: string
           user_id: string
         }
@@ -630,14 +638,18 @@ export type Database = {
           balance?: number
           created_at?: string
           credits_depleted_at?: string | null
+          daily_free_chats_remaining?: number | null
+          daily_free_chats_reset_at?: string | null
           daily_likes_remaining?: number
           daily_likes_reset_at?: string | null
+          has_used_weekly_trial?: boolean | null
           id?: string
           is_premium?: boolean
           last_daily_reset?: string
           premium_expires_at?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          subscription_type?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -673,6 +685,13 @@ export type Database = {
         Args: { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
       }
+      check_and_reset_daily_free_chats: {
+        Args: { _user_id: string }
+        Returns: {
+          chats_remaining: number
+          reset_at: string
+        }[]
+      }
       check_and_reset_daily_likes: {
         Args: { _user_id: string }
         Returns: {
@@ -695,6 +714,13 @@ export type Database = {
           credits_used: boolean
           likes_remaining: number
           new_balance: number
+          success: boolean
+        }[]
+      }
+      consume_free_chat: {
+        Args: { _user_id: string }
+        Returns: {
+          chats_remaining: number
           success: boolean
         }[]
       }
