@@ -34,7 +34,7 @@ const fetchCredits = async (): Promise<UserCredits | null> => {
       last_daily_reset: new Date().toISOString(),
       premium_expires_at: null,
       credits_depleted_at: null,
-      daily_likes_remaining: 13,
+      daily_likes_remaining: 8,
       daily_likes_reset_at: null,
     };
   }
