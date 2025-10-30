@@ -31,12 +31,22 @@ Deno.serve(async (req) => {
     console.log(`${action} like: ${fromUserId} -> ${toUserId}`);
 
     if (action === 'add') {
+      // Try insert; if duplicate, treat as success (idempotent)
       const { data, error } = await supabaseAdmin
         .from('likes')
         .insert({ from_user_id: fromUserId, to_user_id: toUserId })
         .select();
 
       if (error) {
+        // Handle unique violation gracefully (already liked)
+        const pgErr = error as any;
+        if (pgErr?.code === '23505') {
+          console.warn('Like already exists, returning success');
+          return new Response(
+            JSON.stringify({ success: true, already_exists: true }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+          );
+        }
         console.error('Insert error:', error);
         throw error;
       }
