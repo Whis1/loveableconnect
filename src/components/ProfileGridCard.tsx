@@ -281,60 +281,65 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
   const handleLike = async (e: React.MouseEvent, useCredits: boolean = false) => {
     e.stopPropagation();
     
-    if (isLiking || hasLiked) return; // Prevent double-click and removing likes
+    if (isLiking || hasLiked) return; // Prevent double-click
 
     setIsLiking(true);
+
+    // 1) Optimistic UI: feedback immediato
+    setHasLiked(true);
+    toast({
+      title: t("search.likeSent"),
+      description: `${t("search.likedProfile")} ${profile.nickname || profile.full_name}`,
+    });
     
     try {
-      // 1) Consuma like (o 2 crediti) PRIMA di procedere
-      const { success, creditsUsed } = await consumeLike(useCredits);
-      
-      if (!success && !useCredits) {
-        setShowLikesExhausted(true);
-        return;
-      }
-      
-      if (!success && useCredits) {
-        toast({
-          title: t("common.error"),
-          description: "Crediti insufficienti",
-          variant: "destructive",
-        });
+      // 2) Consuma like (o 2 crediti)
+      const { success } = await consumeLike(useCredits);
+
+      if (!success) {
+        // Rollback
+        setHasLiked(false);
+        if (!useCredits) {
+          setShowLikesExhausted(true);
+        } else {
+          toast({
+            title: t("common.error"),
+            description: "Crediti insufficienti",
+            variant: "destructive",
+          });
+        }
         return;
       }
 
-      // 2) Inserisci davvero il like e attendi la risposta (evita inconsistenze se si cambia pagina)
-      const { data: likeData, error: likeError } = await supabase.functions.invoke(
-        'admin-manage-like',
-        {
-          body: {
-            action: 'add',
-            fromUserId: currentUserId,
-            toUserId: profile.id
-          }
-        }
-      );
+      // 3) Inserisci davvero il like (diretto su DB per massima velocità)
+      const { error: likeError } = await supabase
+        .from('likes')
+        .insert({ from_user_id: currentUserId, to_user_id: profile.id });
 
       if (likeError) {
-        throw likeError;
+        const pgErr = likeError as unknown as { code?: string };
+        // Ignora duplicati: idempotente
+        if (pgErr?.code !== '23505') {
+          setHasLiked(false);
+          throw likeError;
+        }
       }
 
-      // 3) Aggiorna UI solo dopo inserimento riuscito
-      setHasLiked(true);
+      // Aggiorna stato globale solo dopo successo persistito
       onLike?.(profile.id);
 
-      if (likeData?.match_created) {
-        if (onMatch) {
-          onMatch(profile.nickname || profile.full_name);
-        }
-      } else {
-        toast({
-          title: t("search.likeSent"),
-          description: `${t("search.likedProfile")} ${profile.nickname || profile.full_name}`,
-        });
+      // 4) Verifica match
+      const { data: matchData } = await supabase
+        .from('matches')
+        .select('id')
+        .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profile.id}),and(user1_id.eq.${profile.id},user2_id.eq.${currentUserId})`)
+        .maybeSingle();
+
+      if (matchData && onMatch) {
+        onMatch(profile.nickname || profile.full_name);
       }
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('Errore invio like:', error);
       toast({
         title: t("common.error"),
