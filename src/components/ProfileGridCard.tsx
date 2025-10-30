@@ -278,53 +278,84 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
     ? supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl
     : null;
 
-  const handleLike = async (e: React.MouseEvent) => {
+  const handleLike = async (e: React.MouseEvent, useCredits: boolean = false) => {
     e.stopPropagation();
-    if (isLiking || hasLiked) return;
-
+    
+    if (isLiking || hasLiked) return; // Prevent double-click and removing likes
+    
+    // OPTIMISTIC UPDATE: Update UI immediately
+    setHasLiked(true);
     setIsLiking(true);
-    setHasLiked(true); // feedback immediato
-
+    onLike(profile.id); // Update parent list immediately
+    
     try {
-      // Chiamata atomica: scala 2 crediti e inserisce like
-      const { data, error } = await supabase.rpc('like_with_credits', {
-        _to_user_id: profile.id,
-        _cost: 2,
-      });
-
-      if (error) throw error;
-
-      const result = Array.isArray(data) ? data[0] : data;
-      if (!result?.success) {
-        // rollback
+      // Check if can consume a daily like
+      const { success, creditsUsed } = await consumeLike(useCredits);
+      
+      if (!success && !useCredits) {
+        // Rollback optimistic update
         setHasLiked(false);
-        if (credits?.balance < 2) {
-          toast({ title: t('common.error'), description: 'Crediti insufficienti', variant: 'destructive' });
-        } else {
-          setShowLikesExhausted(true);
-        }
+        setShowLikesExhausted(true);
+        setIsLiking(false);
+        return;
+      }
+      
+      if (!success && useCredits) {
+        // Rollback optimistic update
+        setHasLiked(false);
+        toast({
+          title: t("common.error"),
+          description: "Crediti insufficienti",
+          variant: "destructive",
+        });
+        setIsLiking(false);
         return;
       }
 
-      onLike?.(profile.id);
+      // Add the like using edge function (in background)
+      const { data: likeData, error: likeError } = await supabase.functions.invoke(
+        'admin-manage-like',
+        {
+          body: {
+            action: 'add',
+            fromUserId: currentUserId,
+            toUserId: profile.id
+          }
+        }
+      );
 
-      if (result.match_created && onMatch) {
-        onMatch(profile.nickname || profile.full_name);
-      } else if (!result.already_exists) {
-        toast({ title: t('search.likeSent'), description: `${t('search.likedProfile')} ${profile.nickname || profile.full_name}` });
+      if (likeError) {
+        // Rollback on error
+        setHasLiked(false);
+        throw likeError;
       }
 
-    } catch (err: any) {
-      console.error('Errore like_with_credits:', err);
-      setHasLiked(false);
-      toast({ title: t('common.error'), description: 'Impossibile inviare il like', variant: 'destructive' });
+      if (likeData?.match_created) {
+        // Match was created!
+        if (onMatch) {
+          onMatch(profile.nickname || profile.full_name);
+        }
+      } else {
+        // Just a like, no match - show confirmation toast
+        toast({
+          title: t("search.likeSent"),
+          description: `${t("search.likedProfile")} ${profile.nickname || profile.full_name}`,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: t("common.error"),
+        description: error.message,
+        variant: "destructive",
+      });
     } finally {
       setIsLiking(false);
     }
   };
+
   const handleUseCreditsForLike = async () => {
     setShowLikesExhausted(false);
-    await handleLike({ stopPropagation: () => {} } as React.MouseEvent);
+    await handleLike({ stopPropagation: () => {} } as React.MouseEvent, true);
   };
 
   const handleChat = async (e: React.MouseEvent) => {
