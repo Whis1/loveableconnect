@@ -282,45 +282,29 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
     e.stopPropagation();
     
     if (isLiking || hasLiked) return; // Prevent double-click and removing likes
-    
-    // OPTIMISTIC UPDATE: segna localmente ma NON aggiornare la lista globale
-    setHasLiked(true);
+
     setIsLiking(true);
     
     try {
-      // Check if can consume a daily like
+      // 1) Consuma like (o 2 crediti) PRIMA di procedere
       const { success, creditsUsed } = await consumeLike(useCredits);
       
       if (!success && !useCredits) {
-        // Rollback optimistic update
-        setHasLiked(false);
         setShowLikesExhausted(true);
-        setIsLiking(false);
         return;
       }
       
       if (!success && useCredits) {
-        // Rollback optimistic update
-        setHasLiked(false);
         toast({
           title: t("common.error"),
           description: "Crediti insufficienti",
           variant: "destructive",
         });
-        setIsLiking(false);
         return;
       }
 
-      // Show immediate feedback
-      if (!creditsUsed) {
-        toast({
-          title: t("search.likeSent"),
-          description: `${t("search.likedProfile")} ${profile.nickname || profile.full_name}`,
-        });
-      }
-
-      // Add the like using edge function (in background - non blocking)
-      supabase.functions.invoke(
+      // 2) Inserisci davvero il like e attendi la risposta (evita inconsistenze se si cambia pagina)
+      const { data: likeData, error: likeError } = await supabase.functions.invoke(
         'admin-manage-like',
         {
           body: {
@@ -329,32 +313,38 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
             toUserId: profile.id
           }
         }
-      ).then(({ data: likeData, error: likeError }) => {
-        if (likeError) {
-          console.error("Error adding like:", likeError);
-          return;
-        }
+      );
 
-        if (likeData?.match_created) {
-          // Match was created!
-          if (onMatch) {
-            onMatch(profile.nickname || profile.full_name);
-          }
+      if (likeError) {
+        throw likeError;
+      }
+
+      // 3) Aggiorna UI solo dopo inserimento riuscito
+      setHasLiked(true);
+      onLike?.(profile.id);
+
+      if (likeData?.match_created) {
+        if (onMatch) {
+          onMatch(profile.nickname || profile.full_name);
         }
-      });
+      } else {
+        toast({
+          title: t("search.likeSent"),
+          description: `${t("search.likedProfile")} ${profile.nickname || profile.full_name}`,
+        });
+      }
 
     } catch (error: any) {
-      setHasLiked(false);
+      console.error('Errore invio like:', error);
       toast({
         title: t("common.error"),
-        description: error.message,
+        description: "Impossibile inviare il like. Riprova.",
         variant: "destructive",
       });
     } finally {
       setIsLiking(false);
     }
   };
-
   const handleUseCreditsForLike = async () => {
     setShowLikesExhausted(false);
     await handleLike({ stopPropagation: () => {} } as React.MouseEvent, true);
