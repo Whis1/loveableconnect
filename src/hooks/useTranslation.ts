@@ -144,14 +144,22 @@ export const useTextTranslation = () => {
         body: { text, targetLanguage: currentLanguage }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Translation error:', error);
+        return text;
+      }
+
+      if (data.error) {
+        console.error('Translation service error:', data.error);
+        return text;
+      }
 
       const translatedText = data.translatedText || text;
       translationCache.set(cacheKey, translatedText);
       return translatedText;
     } catch (error) {
       console.error('Translation error:', error);
-      return text; // Return original text on error
+      return text;
     }
   };
 

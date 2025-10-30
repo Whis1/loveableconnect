@@ -50,7 +50,17 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      throw new Error(`AI Gateway error: ${response.statusText}`);
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: 'Translation service requires credits. Please contact support.' }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      console.error('AI Gateway error:', response.status, response.statusText);
+      return new Response(
+        JSON.stringify({ error: `AI Gateway error: ${response.statusText}` }),
+        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const data = await response.json();
