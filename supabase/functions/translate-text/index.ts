@@ -56,6 +56,12 @@ serve(async (req) => {
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: 'Translation service rate limit exceeded. Please try again shortly.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       console.error('AI Gateway error:', response.status, response.statusText);
       return new Response(
         JSON.stringify({ error: `AI Gateway error: ${response.statusText}` }),
