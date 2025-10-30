@@ -129,38 +129,9 @@ export const useTextTranslation = () => {
   const translateText = async (text: string | null | undefined): Promise<string> => {
     if (!text) return '';
     
-    // If text is already in current language or is very short, return as is
-    if (text.length < 3) return text;
-
-    const cacheKey = `${text}_${currentLanguage}`;
-    
-    // Check cache first
-    if (translationCache.has(cacheKey)) {
-      return translationCache.get(cacheKey)!;
-    }
-
-    try {
-      const { data, error } = await supabase.functions.invoke('translate-text', {
-        body: { text, targetLanguage: currentLanguage }
-      });
-
-      if (error) {
-        console.error('Translation error:', error);
-        return text;
-      }
-
-      if (data.error) {
-        console.error('Translation service error:', data.error);
-        return text;
-      }
-
-      const translatedText = data.translatedText || text;
-      translationCache.set(cacheKey, translatedText);
-      return translatedText;
-    } catch (error) {
-      console.error('Translation error:', error);
-      return text;
-    }
+    // Skip translation - return original text
+    // Translation service requires credits
+    return text;
   };
 
   const translateArray = async (items: string[] | null | undefined): Promise<string[]> => {
