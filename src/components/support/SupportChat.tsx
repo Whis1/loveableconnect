@@ -43,25 +43,36 @@ export const SupportChat = ({ userEmail, isLocationChangeRequest, newLocationDat
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [requestSent, setRequestSent] = useState(false);
 
-  // Invia automaticamente la richiesta di cambio location o birthdate al caricamento
-  useEffect(() => {
-    if (isLocationChangeRequest && newLocationData && !requestSent) {
-      setRequestSent(true);
-      // Aspetta che i messaggi vengano caricati
-      setTimeout(() => {
-        sendLocationChangeRequest();
-      }, 500);
-    }
-    if (isBirthdateChangeRequest && newBirthdateData && !requestSent) {
-      setRequestSent(true);
-      // Aspetta che i messaggi vengano caricati
-      setTimeout(() => {
-        sendBirthdateChangeRequest();
-      }, 500);
-    }
-  }, [isLocationChangeRequest, newLocationData, isBirthdateChangeRequest, newBirthdateData, requestSent]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
+  // Inizializza e osserva lo stato di autenticazione per evitare race condition
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (isMounted) setUserId(user?.id ?? null);
+    })();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (isMounted) setUserId(session?.user?.id ?? null);
+    });
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  // Invia automaticamente la richiesta di cambio location o birthdate quando l'utente è pronto
+  useEffect(() => {
+    if (!userId) return; // aspetta che l'auth sia pronta
+    if (!requestSent) {
+      if (isLocationChangeRequest && newLocationData) {
+        sendLocationChangeRequest();
+      } else if (isBirthdateChangeRequest && newBirthdateData) {
+        sendBirthdateChangeRequest();
+      }
+    }
+  }, [userId, isLocationChangeRequest, newLocationData, isBirthdateChangeRequest, newBirthdateData, requestSent]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     fetchMessages();
 
@@ -198,7 +209,7 @@ export const SupportChat = ({ userEmail, isLocationChangeRequest, newLocationDat
         .from('support_messages')
         .insert({
           user_id: user.id,
-          user_email: userEmail,
+          user_email: userEmail || user.email,
           message: messageText,
           is_admin_response: false,
           request_type: 'location_change',
@@ -207,17 +218,18 @@ export const SupportChat = ({ userEmail, isLocationChangeRequest, newLocationDat
         });
 
       if (error) throw error;
+      setRequestSent(true);
 
       // Messaggio automatico di conferma
       setTimeout(async () => {
         await supabase
           .from('support_messages')
-          .insert({
-            user_id: user.id,
-            user_email: userEmail,
-            message: "📍 Grazie per la tua richiesta di cambio location. Il nostro team la esaminerà al più presto e ti farà sapere se potrà essere approvata.",
-            is_admin_response: true,
-          });
+            .insert({
+              user_id: user.id,
+              user_email: userEmail || user.email,
+              message: "📍 Grazie per la tua richiesta di cambio location. Il nostro team la esaminerà al più presto e ti farà sapere se potrà essere approvata.",
+              is_admin_response: true,
+            });
       }, 500);
 
       toast({
@@ -252,7 +264,7 @@ export const SupportChat = ({ userEmail, isLocationChangeRequest, newLocationDat
         .from('support_messages')
         .insert({
           user_id: user.id,
-          user_email: userEmail,
+          user_email: userEmail || user.email,
           message: messageText,
           is_admin_response: false,
           request_type: 'birthdate_change',
@@ -261,17 +273,18 @@ export const SupportChat = ({ userEmail, isLocationChangeRequest, newLocationDat
         });
 
       if (error) throw error;
+      setRequestSent(true);
 
       // Messaggio automatico di conferma
       setTimeout(async () => {
         await supabase
           .from('support_messages')
-          .insert({
-            user_id: user.id,
-            user_email: userEmail,
-            message: "🎂 Grazie per la tua richiesta di cambio data di nascita. Il nostro team la esaminerà al più presto e ti farà sapere se potrà essere approvata.",
-            is_admin_response: true,
-          });
+            .insert({
+              user_id: user.id,
+              user_email: userEmail || user.email,
+              message: "🎂 Grazie per la tua richiesta di cambio data di nascita. Il nostro team la esaminerà al più presto e ti farà sapere se potrà essere approvata.",
+              is_admin_response: true,
+            });
       }, 500);
 
       toast({
