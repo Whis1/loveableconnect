@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
       // Matches involving this admin
       const { data: matches, error: matchesErr } = await supabase
         .from('matches')
-        .select('id, user1_id, user2_id')
+        .select('id, user1_id, user2_id, created_at')
         .or(`user1_id.eq.${adminId},user2_id.eq.${adminId}`)
       if (matchesErr) throw matchesErr
 
@@ -70,7 +70,9 @@ Deno.serve(async (req) => {
           .limit(1)
           .maybeSingle()
         if (lastErr) throw lastErr
-        if (!lastMsg) continue
+        
+        // Se non ci sono messaggi, usa la data del match
+        const lastMessageAt = lastMsg?.created_at || (m as any).created_at
 
         // Unread for admin
         const { count: unreadCount, error: cntErr } = await supabase
@@ -100,7 +102,7 @@ Deno.serve(async (req) => {
           adminProfileId: adminId,
           adminNickname: admin.nickname || 'Admin',
           matchId: m.id as string,
-          lastMessageAt: lastMsg.created_at,
+          lastMessageAt,
           unreadCount: unreadCount || 0,
         })
       }
