@@ -108,8 +108,8 @@ const Credits = () => {
     } catch (error: any) {
       console.error("Error opening customer portal:", error);
       toast({
-        title: t("credits.errorTitle"),
-        description: "Impossibile aprire il portale di gestione",
+        title: "Configurazione richiesta",
+        description: "Il portale di gestione abbonamenti non è ancora stato configurato. Contatta il supporto per assistenza.",
         variant: "destructive",
       });
     } finally {
