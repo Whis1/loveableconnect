@@ -537,7 +537,6 @@ const Auth = () => {
                       <SelectItem value="male">{t('common.male')}</SelectItem>
                       <SelectItem value="female">{t('common.female')}</SelectItem>
                       <SelectItem value="transgender">{t('common.transgender')}</SelectItem>
-                      <SelectItem value="transexual">{t('common.transexual')}</SelectItem>
                       <SelectItem value="genderfluid">{t('common.genderfluid')}</SelectItem>
                       <SelectItem value="non-binary">{t('common.nonBinary')}</SelectItem>
                     </SelectContent>
@@ -554,7 +553,6 @@ const Auth = () => {
                       <SelectItem value="homosexual">{t('common.homosexual')}</SelectItem>
                       <SelectItem value="bisexual">{t('common.bisexual')}</SelectItem>
                       <SelectItem value="pansexual">{t('common.pansexual')}</SelectItem>
-                      <SelectItem value="asexual">{t('common.asexual')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

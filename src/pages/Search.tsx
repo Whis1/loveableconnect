@@ -61,7 +61,6 @@ const Search = () => {
     { value: "male", label: "Uomo" },
     { value: "female", label: "Donna" },
     { value: "transgender", label: "Transgender" },
-    { value: "transexual", label: "Transessuale" },
     { value: "genderfluid", label: "Genderfluid" },
     { value: "non-binary", label: "Non binario" },
   ];
@@ -71,7 +70,6 @@ const Search = () => {
     { value: "homosexual", label: "Omosessuale" },
     { value: "bisexual", label: "Bisessuale" },
     { value: "pansexual", label: "Pansexuale" },
-    { value: "asexual", label: "Asessuale" },
   ];
 
   useEffect(() => {

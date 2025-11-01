@@ -75,7 +75,6 @@ const Explore = () => {
     { value: "male", label: "Uomo" },
     { value: "female", label: "Donna" },
     { value: "transgender", label: "Transgender" },
-    { value: "transexual", label: "Transessuale" },
     { value: "genderfluid", label: "Genderfluid" },
     { value: "non-binary", label: "Non binario" },
   ];
@@ -93,7 +92,6 @@ const Explore = () => {
     "male": ["male", "uomo", "maschio", "man", "m"],
     "female": ["female", "donna", "femmina", "woman", "f"],
     "transgender": ["transgender", "trans"],
-    "transexual": ["transexual", "transessuale", "transsexual", "transex"],
     "genderfluid": ["genderfluid", "gender-fluid", "gender fluid"],
     "non-binary": ["non-binary", "non binary", "nonbinary", "non binario", "enby"],
   };
@@ -103,7 +101,6 @@ const Explore = () => {
     "homosexual": ["homosexual", "omosessuale", "gay", "lesbian", "lesbo"],
     "bisexual": ["bisexual", "bisessuale", "bi"],
     "pansexual": ["pansexual", "pansessuale", "pansexuale", "pan"],
-    "asexual": ["asexual", "asessuale", "ace"],
   };
 
   useEffect(() => {
