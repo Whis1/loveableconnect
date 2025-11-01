@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Medal, Award, ChevronDown, ChevronUp } from "lucide-react";
+import { Trophy, ChevronDown, ChevronUp } from "lucide-react";
 
 interface LeaderboardProfile {
   id: string;
@@ -236,15 +236,50 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
   const getTrophyIcon = (position: number) => {
     switch (position) {
       case 0:
-        return <Trophy className="w-6 h-6 text-yellow-500" fill="currentColor" />;
+        return (
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-yellow-300 via-yellow-500 to-yellow-600 rounded-full blur-sm opacity-75 animate-pulse" />
+            <div className="relative w-10 h-10 bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-600 rounded-full flex items-center justify-center text-2xl shadow-lg border-2 border-yellow-300">
+              🏆
+            </div>
+          </div>
+        );
       case 1:
-        return <Trophy className="w-5 h-5 text-gray-400" fill="currentColor" />;
+        return (
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500 rounded-full blur-sm opacity-60" />
+            <div className="relative w-10 h-10 bg-gradient-to-br from-gray-200 via-gray-300 to-gray-500 rounded-full flex items-center justify-center text-2xl shadow-lg border-2 border-gray-300">
+              🥈
+            </div>
+          </div>
+        );
       case 2:
-        return <Trophy className="w-5 h-5 text-amber-700" fill="currentColor" />;
+        return (
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-amber-600 to-orange-700 rounded-full blur-sm opacity-60" />
+            <div className="relative w-10 h-10 bg-gradient-to-br from-orange-300 via-amber-500 to-orange-600 rounded-full flex items-center justify-center text-2xl shadow-lg border-2 border-orange-400">
+              🥉
+            </div>
+          </div>
+        );
       case 3:
-        return <Medal className="w-5 h-5 text-blue-500" fill="currentColor" />;
+        return (
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 rounded-full blur-sm opacity-50" />
+            <div className="relative w-10 h-10 bg-gradient-to-br from-blue-300 via-blue-400 to-blue-600 rounded-full flex items-center justify-center text-xl shadow-lg border-2 border-blue-300">
+              🎖️
+            </div>
+          </div>
+        );
       case 4:
-        return <Award className="w-5 h-5 text-purple-500" fill="currentColor" />;
+        return (
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-400 via-purple-500 to-purple-600 rounded-full blur-sm opacity-50" />
+            <div className="relative w-10 h-10 bg-gradient-to-br from-purple-300 via-purple-400 to-purple-600 rounded-full flex items-center justify-center text-xl shadow-lg border-2 border-purple-300">
+              🏅
+            </div>
+          </div>
+        );
       default:
         return null;
     }
