@@ -91,6 +91,32 @@ const Credits = () => {
     }
   };
 
+  const handleManageSubscription = async () => {
+    try {
+      setPurchasing(true);
+      const { data, error } = await supabase.functions.invoke("customer-portal");
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, "_blank");
+        toast({
+          title: "Gestione Abbonamento",
+          description: "Stai per essere reindirizzato al portale di gestione",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error opening customer portal:", error);
+      toast({
+        title: t("credits.errorTitle"),
+        description: "Impossibile aprire il portale di gestione",
+        variant: "destructive",
+      });
+    } finally {
+      setPurchasing(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -118,28 +144,64 @@ const Credits = () => {
               <div className="text-center py-4 text-muted-foreground">{t("credits.loading")}</div>
             ) : (credits?.is_premium && (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date())) ? (
               credits.subscription_type === 'monthly' ? (
-                <div className="flex items-center gap-3">
-                  <Crown className="h-8 w-8 text-amber-500" />
-                  <div>
-                    <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                      {t("credits.unlimitedCredits")}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Crown className="h-8 w-8 text-amber-500" />
+                    <div className="flex-1">
+                      <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                        {t("credits.unlimitedCredits")}
+                      </div>
+                      <div className="text-sm text-muted-foreground">{t("credits.premiumSubscriptionActive")}</div>
+                      {credits.premium_expires_at && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Rinnovo: {new Date(credits.premium_expires_at).toLocaleDateString('it-IT')}
+                        </div>
+                      )}
                     </div>
-                    <div className="text-sm text-muted-foreground">{t("credits.premiumSubscriptionActive")}</div>
                   </div>
+                  <Button
+                    onClick={handleManageSubscription}
+                    disabled={purchasing}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {purchasing ? "Caricamento..." : "Gestisci Abbonamento"}
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Puoi disdire il rinnovo automatico in qualsiasi momento dal portale di gestione
+                  </p>
                 </div>
               ) : (
-                <div className="flex items-center gap-3">
-                  <Crown className="h-8 w-8 text-purple-500" />
-                  <div>
-                    <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                      Premium Settimanale Attivo
-                    </div>
-                    <div className="space-y-1 mt-2 text-sm text-muted-foreground">
-                      <div>💰 40 crediti giornalieri (attuale: {credits.balance})</div>
-                      <div>❤️ 30 like giornalieri</div>
-                      <div>👁️ Visualizzazione illimitata dei like ricevuti</div>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Crown className="h-8 w-8 text-purple-500" />
+                    <div className="flex-1">
+                      <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                        Premium Settimanale Attivo
+                      </div>
+                      <div className="space-y-1 mt-2 text-sm text-muted-foreground">
+                        <div>💰 40 crediti giornalieri (attuale: {credits.balance})</div>
+                        <div>❤️ 30 like giornalieri</div>
+                        <div>👁️ Visualizzazione illimitata dei like ricevuti</div>
+                      </div>
+                      {credits.premium_expires_at && (
+                        <div className="text-xs text-muted-foreground mt-2">
+                          Rinnovo: {new Date(credits.premium_expires_at).toLocaleDateString('it-IT')}
+                        </div>
+                      )}
                     </div>
                   </div>
+                  <Button
+                    onClick={handleManageSubscription}
+                    disabled={purchasing}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {purchasing ? "Caricamento..." : "Gestisci Abbonamento"}
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Puoi disdire il rinnovo automatico in qualsiasi momento dal portale di gestione
+                  </p>
                 </div>
               )
             ) : (

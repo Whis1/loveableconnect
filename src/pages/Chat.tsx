@@ -16,6 +16,7 @@ import { ChatUserProfile } from "@/components/chat/ChatUserProfile";
 import { InsufficientCreditsBanner } from "@/components/chat/InsufficientCreditsBanner";
 import { VoicePremiumBanner } from "@/components/chat/VoicePremiumBanner";
 import { ReportUserDialog } from "@/components/chat/ReportUserDialog";
+import { GiftSubscriptionBanner } from "@/components/chat/GiftSubscriptionBanner";
 import { useCredits } from "@/hooks/useCredits";
 import { useTranslation } from "react-i18next";
 import OnlineIndicator from "@/components/OnlineIndicator";
@@ -64,6 +65,7 @@ const Chat = () => {
   const [isBlocked, setIsBlocked] = useState(false);
   const [recordedAudio, setRecordedAudio] = useState<{ blob: Blob; url: string } | null>(null);
   const [giftingSubscription, setGiftingSubscription] = useState(false);
+  const [showGiftBanner, setShowGiftBanner] = useState(false);
 
   // Check for gift payment result in URL params
   useEffect(() => {
@@ -517,7 +519,11 @@ const Chat = () => {
     }
   };
 
-  const handleGiftSubscription = async () => {
+  const handleShowGiftBanner = () => {
+    setShowGiftBanner(true);
+  };
+
+  const handleConfirmGift = async () => {
     if (!otherUser || !currentUser || !matchId) return;
 
     setGiftingSubscription(true);
@@ -532,6 +538,8 @@ const Chat = () => {
       if (error) throw error;
 
       if (data?.url) {
+        // Chiudi il banner prima di aprire Stripe
+        setShowGiftBanner(false);
         window.open(data.url, '_blank');
         toast({
           title: "Pagamento in corso",
@@ -550,6 +558,10 @@ const Chat = () => {
     }
   };
 
+  const handleCancelGift = () => {
+    setShowGiftBanner(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -560,6 +572,14 @@ const Chat = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900">
+      {showGiftBanner && otherUser && (
+        <GiftSubscriptionBanner
+          recipientNickname={otherUser.nickname}
+          onConfirm={handleConfirmGift}
+          onCancel={handleCancelGift}
+          isProcessing={giftingSubscription}
+        />
+      )}
       <InsufficientCreditsBanner 
         isVisible={showCreditsBanner} 
         onClose={() => setShowCreditsBanner(false)} 
@@ -603,7 +623,7 @@ const Chat = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={handleGiftSubscription}
+                      onClick={handleShowGiftBanner}
                       disabled={giftingSubscription}
                       className="text-primary hover:text-primary hover:bg-primary/10"
                       title="Regala abbonamento Premium"
