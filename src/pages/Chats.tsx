@@ -24,6 +24,7 @@ const Chats = () => {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [loading, setLoading] = useState(true);
   const [sessionInfo, setSessionInfo] = useState<any>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
     // Verifica sessione chattors
@@ -33,21 +34,27 @@ const Chats = () => {
       return;
     }
 
+    let cleanup: (() => void) | undefined;
+
     try {
       const parsed = JSON.parse(session);
       setSessionInfo(parsed);
-      fetchConversations();
-      subscribeToUpdates();
+      fetchConversations(false);
+      cleanup = subscribeToUpdates();
     } catch (error) {
       console.error("Sessione non valida:", error);
       sessionStorage.removeItem("chattors_session");
       navigate("/chattors-login");
     }
+
+    return () => {
+      cleanup?.();
+    };
   }, [navigate]);
 
-  const fetchConversations = async () => {
+  const fetchConversations = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
 
       const { data, error } = await supabase.functions.invoke(
         "admin-secondary-get-conversations",
@@ -65,7 +72,8 @@ const Chats = () => {
       console.error("Error fetching conversations:", error);
       toast.error("Errore nel caricamento delle conversazioni");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
+      setInitialLoading(false);
     }
   };
 
@@ -75,12 +83,12 @@ const Chats = () => {
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "INSERT",
           schema: "public",
           table: "messages",
         },
         () => {
-          fetchConversations();
+          fetchConversations(true);
         }
       )
       .subscribe();
@@ -96,7 +104,7 @@ const Chats = () => {
     navigate("/chattors-login");
   };
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
