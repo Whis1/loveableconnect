@@ -68,6 +68,7 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
   const [isMultiCapture, setIsMultiCapture] = useState(false);
   const [capturingPiece, setCapturingPiece] = useState<number | null>(null);
   const gameCompletedRef = useRef(false);
+  const moveCountRef = useRef(0);
 
   useEffect(() => {
     initializeBoard();
@@ -340,6 +341,8 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
       return;
     }
     
+    // Completed a valid move
+    moveCountRef.current += 1;
     setIsPlayerTurn(false);
   };
 
@@ -720,6 +723,12 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     const boardChanged = JSON.stringify(newBoard) !== JSON.stringify(board);
     
     if (!boardChanged) {
+      // Guard against false positives at game start
+      if (moveCountRef.current === 0) {
+        console.warn("Bot has no moves on first turn, switching to player turn to avoid false win.");
+        setIsPlayerTurn(true);
+        return;
+      }
       setGameOver(true);
       setWinner("player");
       gameCompletedRef.current = true; // Mark game as completed normally
@@ -729,6 +738,8 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     }
     
     setBoard(newBoard);
+    // Completed a valid bot move
+    moveCountRef.current += 1;
     
     if (checkWin(newBoard, "black")) {
       setGameOver(true);
