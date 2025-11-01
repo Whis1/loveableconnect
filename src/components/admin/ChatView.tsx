@@ -76,13 +76,16 @@ export const ChatView = ({ conversation, onRefresh, chattorsNickname }: ChatView
   const markAsRead = async () => {
     if (!conversation) return;
 
-    await supabase
-      .from("messages")
-      .update({ read: true })
-      .eq("match_id", conversation.matchId)
-      .eq("receiver_id", conversation.adminProfileId);
-
-    onRefresh();
+    try {
+      const { error } = await supabase.functions.invoke("admin-mark-messages-read", {
+        body: { match_id: conversation.matchId, admin_profile_id: conversation.adminProfileId },
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error("Errore nel segnare come letti:", err);
+    } finally {
+      onRefresh();
+    }
   };
 
   const subscribeToMessages = () => {

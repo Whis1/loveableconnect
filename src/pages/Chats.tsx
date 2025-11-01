@@ -122,6 +122,17 @@ const Chats = () => {
     };
   };
 
+  const handleSelectConversation = (conv: Conversation) => {
+    setSelectedConversation(conv);
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.matchId === conv.matchId && c.userId === conv.userId
+          ? { ...c, unreadCount: 0 }
+          : c
+      )
+    );
+  };
+
   const handleLogout = () => {
     sessionStorage.removeItem("chattors_session");
     toast.success("Disconnesso");
@@ -163,7 +174,7 @@ const Chats = () => {
         <ChatsList
           conversations={conversations}
           selectedConversation={selectedConversation}
-          onSelectConversation={setSelectedConversation}
+          onSelectConversation={handleSelectConversation}
           onRefresh={fetchConversations}
           loading={loading}
         />

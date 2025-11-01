@@ -126,3 +126,6 @@ verify_jwt = false
 [functions.admin-secondary-archive-conversation]
 verify_jwt = false
 
+[functions.admin-mark-messages-read]
+verify_jwt = false
+
