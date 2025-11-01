@@ -12,6 +12,7 @@ import { CreditsDisplay } from "@/components/CreditsDisplay";
 import { useBanCheck } from "@/hooks/useBanCheck";
 import { DashboardControls } from "@/components/DashboardControls";
 import { GeolocationBanner } from "@/components/GeolocationBanner";
+import { InboxDropdown } from "@/components/InboxDropdown";
 import loveIcon from "@/assets/love-icon.png";
 
 interface Profile {
@@ -331,7 +332,10 @@ const Dashboard = () => {
               <p className="text-xs text-muted-foreground">{t("dashboard.tagline")}</p>
             </div>
           </div>
-          <CreditsDisplay />
+          <div className="flex items-center gap-2">
+            <InboxDropdown />
+            <CreditsDisplay />
+          </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3 mb-8">

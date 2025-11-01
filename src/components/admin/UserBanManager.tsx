@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Ban, ShieldCheck, RefreshCw } from "lucide-react";
+import { Search, Ban, ShieldCheck, RefreshCw, Send } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -22,6 +22,8 @@ export function UserBanManager() {
   const [loading, setLoading] = useState(false);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [bannedUsersMap, setBannedUsersMap] = useState<Map<string, any>>(new Map());
+  const [inboxMessage, setInboxMessage] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
 
   useEffect(() => {
     loadAllUsers();
@@ -177,6 +179,44 @@ export function UserBanManager() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSendInboxMessage = async () => {
+    if (!selectedUser || !inboxMessage.trim()) {
+      toast({
+        title: 'Errore',
+        description: 'Inserisci un messaggio da inviare',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSendingMessage(true);
+    try {
+      const { error } = await supabase
+        .from('inbox_messages')
+        .insert({
+          user_id: selectedUser.id,
+          message: inboxMessage.trim(),
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Messaggio inviato',
+        description: `Il messaggio è stato inviato a ${selectedUser.nickname}`,
+      });
+      setInboxMessage('');
+    } catch (error: any) {
+      console.error('Error sending inbox message:', error);
+      toast({
+        title: 'Errore',
+        description: error.message || 'Errore durante l\'invio del messaggio',
+        variant: 'destructive',
+      });
+    } finally {
+      setSendingMessage(false);
     }
   };
 
@@ -489,6 +529,25 @@ export function UserBanManager() {
                           Rimuovi Ban
                         </Button>
                       )}
+                    </div>
+
+                    <div className="space-y-2 border-t pt-3">
+                      <Label htmlFor="inboxMessage">Invia messaggio all'utente</Label>
+                      <Textarea
+                        id="inboxMessage"
+                        placeholder="Scrivi un messaggio da inviare nella inbox dell'utente..."
+                        value={inboxMessage}
+                        onChange={(e) => setInboxMessage(e.target.value)}
+                        rows={3}
+                      />
+                      <Button
+                        onClick={handleSendInboxMessage}
+                        disabled={sendingMessage || !inboxMessage.trim()}
+                        className="w-full"
+                      >
+                        <Send className="h-4 w-4 mr-2" />
+                        {sendingMessage ? 'Invio in corso...' : 'Invia Messaggio Inbox'}
+                      </Button>
                     </div>
                   </div>
                 )}
