@@ -64,18 +64,26 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
 
   const startAnimation = (profileList: Profile[]) => {
     let elapsed = 0;
+    let finalIndex = Math.floor(Math.random() * profileList.length);
+    
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % profileList.length);
+      setCurrentIndex((prev) => {
+        // Negli ultimi secondi, rallenta verso il profilo finale
+        if (elapsed >= searchDuration - 1000) {
+          return finalIndex;
+        }
+        return (prev + 1) % profileList.length;
+      });
       elapsed += 150;
 
       if (elapsed >= searchDuration) {
         clearInterval(interval);
-        // Pick random opponent
-        const randomOpponent =
-          profileList[Math.floor(Math.random() * profileList.length)];
+        
+        // Usa il profilo su cui si è fermata l'animazione
+        const selectedOpponent = profileList[finalIndex];
         
         // Check if opponent is in TOP 5 leaderboard and use that ELO
-        const leaderboardOpponent = getOpponentWithLeaderboardElo(randomOpponent);
+        const leaderboardOpponent = getOpponentWithLeaderboardElo(selectedOpponent);
         
         setTimeout(() => {
           onOpponentFound(leaderboardOpponent);
@@ -123,11 +131,16 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
         <Avatar className="w-20 h-20 border-4 border-primary">
           <AvatarImage 
             src={
-              profiles[currentIndex]?.avatar_url || 
-              (profiles[currentIndex]?.photos && profiles[currentIndex]?.photos.length > 0 
-                ? profiles[currentIndex].photos[0] 
+              profiles[currentIndex]?.avatar_url ||
+              (profiles[currentIndex]?.photos && profiles[currentIndex].photos.length > 0 
+                ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/profile-images/${profiles[currentIndex].photos[0]}`
                 : "")
-            } 
+            }
+            onError={(e) => {
+              // Fallback se l'immagine non carica
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+            }}
           />
           <AvatarFallback>
             {profiles[currentIndex]?.nickname.slice(0, 2).toUpperCase()}
