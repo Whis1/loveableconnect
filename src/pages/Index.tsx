@@ -21,7 +21,16 @@ const Index = () => {
   useDailyLikes();
 
   useEffect(() => {
+    let lastUpdateTime = 0;
+    const UPDATE_THROTTLE = 30000; // Update max once every 30 seconds
+
     const updateLastActive = async () => {
+      const now = Date.now();
+      if (now - lastUpdateTime < UPDATE_THROTTLE) {
+        return; // Skip update if less than 30 seconds since last update
+      }
+      
+      lastUpdateTime = now;
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.id) {
         await supabase
@@ -53,7 +62,7 @@ const Index = () => {
     // Update last_active every minute
     const activityInterval = setInterval(updateLastActive, 60000);
 
-    // Update on user activity
+    // Update on user activity (throttled)
     const handleActivity = () => updateLastActive();
     window.addEventListener('mousemove', handleActivity);
     window.addEventListener('keydown', handleActivity);
