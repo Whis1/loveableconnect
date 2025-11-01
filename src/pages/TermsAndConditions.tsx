@@ -43,7 +43,7 @@ const TermsAndConditions = () => {
                   
                   <div className="space-y-3">
                     <h3 className="text-lg font-semibold">1. Dati raccolti</h3>
-                    <p>LovableConnect raccoglie le seguenti informazioni:</p>
+                    <p>LoveableConnect raccoglie le seguenti informazioni:</p>
                     <ul className="list-disc list-inside space-y-2 pl-4">
                       <li>dati di registrazione (nome, email, età, genere, orientamento);</li>
                       <li>dati di utilizzo (like, messaggi, attività di navigazione);</li>
@@ -81,7 +81,7 @@ const TermsAndConditions = () => {
                     <h3 className="text-lg font-semibold">5. Sicurezza</h3>
                     <p>
                       I dati sono protetti tramite connessioni crittografate e sistemi di sicurezza conformi al GDPR.
-                      LovableConnect non condivide dati personali con terzi senza consenso esplicito.
+                      LoveableConnect non condivide dati personali con terzi senza consenso esplicito.
                     </p>
                   </div>
 
@@ -226,7 +226,7 @@ const TermsAndConditions = () => {
                   <div className="space-y-3">
                     <h3 className="text-lg font-semibold">1. OGGETTO e DEFINIZIONI</h3>
                     <p>
-                      <strong>1.1</strong> Le presenti condizioni generali di contratto (di seguito, le "CONDIZIONI GENERALI") contengono i termini e le condizioni che regolano la fornitura del Servizio LoveableConnect (di seguito anche solo il "Servizio") disponibile sul sito https://lovableconneect.lovable.app e sull'applicazione "LoveableConnect" (di seguito, il "Sito/App"). Le CONDIZIONI GENERALI sono stipulate tra Lei, quale Utente finale dei servizi (di seguito, "Lei" o l'"Utente") Le presenti CONDIZIONI GENERALI disciplinano e regolano il Servizio fornito dalla Società all'Utente per mezzo del Sito/App, annullano qualsiasi disposizione precedente tra le Parti non espressamente citata o allegata e costituiscono l'insieme dei diritti e degli obblighi tra la Società e l'Utente. Il Sito/App si propone di facilitare la comunicazione tra gli Utenti al fine di agevolare la nascita di nuove amicizie.
+                      <strong>1.1</strong> Le presenti condizioni generali di contratto (di seguito, le "CONDIZIONI GENERALI") contengono i termini e le condizioni che regolano la fornitura del Servizio LoveableConnect (di seguito anche solo il "Servizio") disponibile sul sito https://loveableconnect.com/ e sull'applicazione "LoveableConnect" (di seguito, il "Sito/App"). Le CONDIZIONI GENERALI sono stipulate tra Lei, quale Utente finale dei servizi (di seguito, "Lei" o l'"Utente") Le presenti CONDIZIONI GENERALI disciplinano e regolano il Servizio fornito dalla Società all'Utente per mezzo del Sito/App, annullano qualsiasi disposizione precedente tra le Parti non espressamente citata o allegata e costituiscono l'insieme dei diritti e degli obblighi tra la Società e l'Utente. Il Sito/App si propone di facilitare la comunicazione tra gli Utenti al fine di agevolare la nascita di nuove amicizie.
                     </p>
                     <p><strong>1.2</strong> In aggiunta ai termini ed alle parole definiti altrove nelle CONDIZIONI GENERALI, ai fini delle medesime si definiscono:</p>
                     <ul className="list-disc list-inside space-y-2 pl-4">
@@ -262,7 +262,7 @@ const TermsAndConditions = () => {
                   <div className="space-y-3">
                     <h3 className="text-lg font-semibold">4. CREDITI E ABBONAMENTI</h3>
                     <p>
-                      LovableConnect utilizza un sistema di crediti virtuali per accedere a funzionalità aggiuntive, come l'invio di messaggi, invio dei Like, sblocco della chat, messaggi vocali con altri utenti o l'interazione avanzata con altri profili.
+                      LoveableConnect utilizza un sistema di crediti virtuali per accedere a funzionalità aggiuntive, come l'invio di messaggi, invio dei Like, sblocco della chat, messaggi vocali con altri utenti o l'interazione avanzata con altri profili.
                     </p>
                     <p className="font-semibold mt-3">Abbonamento mensile:</p>
                     <p>
@@ -275,19 +275,19 @@ const TermsAndConditions = () => {
                     <p>
                       I crediti si consumano quando si utilizzano le funzionalità premium e si rinnovano secondo le modalità dell'abbonamento o del pacchetto acquistato.
                       Tutti i pagamenti sono gestiti tramite sistemi di pagamento sicuri. Non sono previsti rimborsi una volta che i crediti sono stati utilizzati.
-                      LovableConnect si riserva il diritto di modificare le offerte, i pacchetti o le modalità di abbonamento, informando gli utenti in anticipo.
+                      LoveableConnect si riserva il diritto di modificare le offerte, i pacchetti o le modalità di abbonamento, informando gli utenti in anticipo.
                     </p>
                   </div>
 
                   <div className="space-y-3">
                     <h3 className="text-lg font-semibold">5. LIMITAZIONI DI RESPONSABILITÀ</h3>
                     <p>
-                      LovableConnect non garantisce che i profili siano autentici o che gli utenti rispondano ai messaggi.
+                      LoveableConnect non garantisce che i profili siano autentici o che gli utenti rispondano ai messaggi.
                       Il sito non è responsabile per eventuali comportamenti impropri, truffe o danni causati da altri utenti.
                       Gli utenti sono invitati a mantenere prudenza e rispetto durante le interazioni.
                     </p>
                     <p className="mt-3">
-                      LovableConnect adotta sistemi di verifica automatica e controlli periodici per preservare la community da profili falsi o sospetti. 
+                      LoveableConnect adotta sistemi di verifica automatica e controlli periodici per preservare la community da profili falsi o sospetti. 
                       Gli utenti hanno il dovere di segnalare al servizio di supporto clienti qualsiasi comportamento anomalo o sospetto, o se ritengono che un profilo sia falso.
                     </p>
                     <p>
@@ -303,7 +303,7 @@ const TermsAndConditions = () => {
                   <div className="space-y-3">
                     <h3 className="text-lg font-semibold">6. SOSPENSIONE E CANCELLAZIONE ACCOUNT</h3>
                     <p>
-                      LovableConnect si riserva il diritto di sospendere o eliminare profili che violino i presenti Termini, senza preavviso e senza rimborso di crediti o abbonamenti.
+                      LoveableConnect si riserva il diritto di sospendere o eliminare profili che violino i presenti Termini, senza preavviso e senza rimborso di crediti o abbonamenti.
                     </p>
                   </div>
 
@@ -328,7 +328,7 @@ const TermsAndConditions = () => {
 
                   <div className="space-y-3">
                     <h3 className="text-lg font-semibold">8. ⚖️ DICHIARAZIONE DI RESPONSABILITÀ</h3>
-                    <p>LovableConnect non si assume responsabilità per:</p>
+                    <p>LoveableConnect non si assume responsabilità per:</p>
                     <ul className="list-disc list-inside space-y-2 pl-4">
                       <li>comportamenti o contenuti pubblicati dagli utenti;</li>
                       <li>uso improprio dei servizi o violazioni dei termini;</li>
