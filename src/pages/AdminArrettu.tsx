@@ -9,7 +9,7 @@ import { ProfileCreator } from "@/components/admin/ProfileCreator";
 import { SupportChatMonitor } from "@/components/admin/SupportChatMonitor";
 import { UserBanManager } from "@/components/admin/UserBanManager";
 import { UserReportsMonitor } from "@/components/admin/UserReportsMonitor";
-import { Shield, LogOut } from "lucide-react";
+import { Shield, LogOut, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -20,6 +20,7 @@ export default function AdminArrettu() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
+  const [showSupportChat, setShowSupportChat] = useState(false);
   const { isAdmin, loading: adminLoading } = useAdminRole();
 
   useEffect(() => {
@@ -137,6 +138,13 @@ export default function AdminArrettu() {
             <Button variant="outline" onClick={() => navigate("/admin/profiles")}>
               Profili & Chat
             </Button>
+            <Button 
+              variant={showSupportChat ? "default" : "outline"} 
+              onClick={() => setShowSupportChat(!showSupportChat)}
+            >
+              <MessageSquare className="h-5 w-5 mr-2" />
+              Supporto Clienti
+            </Button>
             <Button variant="outline" onClick={handleLogout}>
               <LogOut className="h-5 w-5 mr-2" />
               Logout
@@ -153,7 +161,7 @@ export default function AdminArrettu() {
           <ProfileCreator />
         </div>
 
-        <SupportChatMonitor />
+        {showSupportChat && <SupportChatMonitor />}
       </div>
     </div>
   );
