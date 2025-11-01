@@ -42,6 +42,8 @@ export const ChatView = ({ conversation, onRefresh }: ChatViewProps) => {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [voicePreview, setVoicePreview] = useState<Blob | null>(null);
+  const [voicePreviewUrl, setVoicePreviewUrl] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -164,15 +166,22 @@ export const ChatView = ({ conversation, onRefresh }: ChatViewProps) => {
     }
   };
 
-  const handleVoiceRecording = async (audioBlob: Blob) => {
-    if (!conversation) return;
+  const handleVoiceRecording = (audioBlob: Blob) => {
+    // Crea URL temporaneo per l'anteprima
+    const url = URL.createObjectURL(audioBlob);
+    setVoicePreview(audioBlob);
+    setVoicePreviewUrl(url);
+  };
+
+  const handleConfirmVoice = async () => {
+    if (!conversation || !voicePreview) return;
 
     try {
       setUploading(true);
       const fileName = `voice_${Date.now()}.webm`;
       const { error: uploadError } = await supabase.storage
         .from("chat-images")
-        .upload(fileName, audioBlob, {
+        .upload(fileName, voicePreview, {
           contentType: "audio/webm",
         });
 
@@ -180,12 +189,23 @@ export const ChatView = ({ conversation, onRefresh }: ChatViewProps) => {
 
       const { data } = supabase.storage.from("chat-images").getPublicUrl(fileName);
       await handleSendMessage("", "voice", data.publicUrl);
+      
+      // Pulisci l'anteprima
+      handleCancelVoice();
     } catch (error) {
       console.error("Error uploading voice:", error);
       toast.error("Errore nel caricamento del messaggio vocale");
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleCancelVoice = () => {
+    if (voicePreviewUrl) {
+      URL.revokeObjectURL(voicePreviewUrl);
+    }
+    setVoicePreview(null);
+    setVoicePreviewUrl(null);
   };
 
   if (!conversation) {
@@ -244,6 +264,33 @@ export const ChatView = ({ conversation, onRefresh }: ChatViewProps) => {
 
         {/* Input Messaggio */}
         <div className="p-4 border-t border-border bg-card/50 backdrop-blur-sm">
+          {/* Anteprima Vocale */}
+          {voicePreview && voicePreviewUrl && (
+            <div className="mb-3 p-3 bg-primary/10 rounded-lg flex items-center gap-3">
+              <audio controls src={voicePreviewUrl} className="flex-1" />
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleConfirmVoice}
+                disabled={uploading}
+              >
+                {uploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleCancelVoice}
+                disabled={uploading}
+              >
+                ✕
+              </Button>
+            </div>
+          )}
+
           <div className="flex gap-2">
             <input
               ref={fileInputRef}
@@ -256,7 +303,7 @@ export const ChatView = ({ conversation, onRefresh }: ChatViewProps) => {
               variant="outline"
               size="icon"
               onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
+              disabled={uploading || !!voicePreview}
             >
               {uploading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -269,7 +316,7 @@ export const ChatView = ({ conversation, onRefresh }: ChatViewProps) => {
             <VoiceRecorder 
               onRecordingComplete={handleVoiceRecording}
               isPremiumMonthly={true}
-              disabled={uploading}
+              disabled={uploading || !!voicePreview}
             />
             <Input
               value={newMessage}
@@ -282,10 +329,11 @@ export const ChatView = ({ conversation, onRefresh }: ChatViewProps) => {
                 }
               }}
               className="flex-1"
+              disabled={!!voicePreview}
             />
             <Button
               onClick={() => handleSendMessage(newMessage)}
-              disabled={!newMessage.trim()}
+              disabled={!newMessage.trim() || !!voicePreview}
             >
               <Send className="h-4 w-4" />
             </Button>
