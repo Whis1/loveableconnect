@@ -108,7 +108,8 @@
     "typeAndEnter": "Type and press Enter to add...",
     "suggested": "Suggested:",
     "maxInterestsNote": "Maximum 6 interests",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "favoriteSongs": "Favorite Songs"
   },
   "terms": {
     "link": "Privacy - Terms and Conditions - Cookies",

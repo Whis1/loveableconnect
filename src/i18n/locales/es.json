@@ -106,7 +106,8 @@
     "typeAndEnter": "Escribe y presiona Enter para agregar...",
     "suggested": "Sugeridos:",
     "maxInterestsNote": "Máximo 6 intereses",
-    "loading": "Cargando..."
+    "loading": "Cargando...",
+    "favoriteSongs": "Canciones Favoritas"
   },
   "terms": {
     "link": "Privacidad - Términos y Condiciones - Cookies",

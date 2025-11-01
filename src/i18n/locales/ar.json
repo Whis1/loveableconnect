@@ -86,7 +86,8 @@
     "save": "حفظ",
     "saving": "جاري الحفظ...",
     "profileUpdated": "تم تحديث الملف الشخصي!",
-    "profileUpdateSuccess": "تم حفظ التغييرات بنجاح"
+    "profileUpdateSuccess": "تم حفظ التغييرات بنجاح",
+    "favoriteSongs": "الأغاني المفضلة"
   },
   "terms": {
     "link": "الخصوصية - الشروط والأحكام - ملفات تعريف الارتباط",
