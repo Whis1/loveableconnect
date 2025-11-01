@@ -5,11 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { UserCreditsManager } from "@/components/admin/UserCreditsManager";
-import { ProfileCreator } from "@/components/admin/ProfileCreator";
-import { SupportChatMonitor } from "@/components/admin/SupportChatMonitor";
 import { UserBanManager } from "@/components/admin/UserBanManager";
 import { UserReportsMonitor } from "@/components/admin/UserReportsMonitor";
-import { Shield, LogOut, MessageSquare } from "lucide-react";
+import { Shield, LogOut, MessageSquare, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -139,6 +137,13 @@ export default function AdminArrettu() {
             </Button>
             <Button 
               variant="outline" 
+              onClick={() => navigate("/admin/create-profile")}
+            >
+              <UserPlus className="h-5 w-5 mr-2" />
+              Creazione Profili
+            </Button>
+            <Button 
+              variant="outline" 
               onClick={() => navigate("/admin/support")}
             >
               <MessageSquare className="h-5 w-5 mr-2" />
@@ -155,10 +160,7 @@ export default function AdminArrettu() {
 
         <UserReportsMonitor />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <UserCreditsManager />
-          <ProfileCreator />
-        </div>
+        <UserCreditsManager />
       </div>
     </div>
   );
