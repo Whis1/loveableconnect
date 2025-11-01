@@ -22,7 +22,9 @@ export const ProfileCreator = () => {
     gender: "",
     sexual_orientation: "",
     relationship_status: "",
-    looking_for: "",
+    relationship_type: "",
+    looking_for: [] as string[],
+    interests: [] as string[],
   });
 
   const handleSeedProfiles = async () => {
@@ -75,7 +77,9 @@ export const ProfileCreator = () => {
         gender: formData.gender || null,
         sexual_orientation: formData.sexual_orientation || null,
         relationship_status: formData.relationship_status || null,
-        looking_for: formData.looking_for ? [formData.looking_for] : null,
+        relationship_type: formData.relationship_type || null,
+        looking_for: formData.looking_for.length > 0 ? formData.looking_for : null,
+        interests: formData.interests.length > 0 ? formData.interests : null,
         is_admin_profile: true,
       }).select();
 
@@ -100,7 +104,9 @@ export const ProfileCreator = () => {
         gender: "",
         sexual_orientation: "",
         relationship_status: "",
-        looking_for: "",
+        relationship_type: "",
+        looking_for: [],
+        interests: [],
       });
 
       setTimeout(() => window.location.reload(), 1000);
@@ -109,6 +115,76 @@ export const ProfileCreator = () => {
       toast({
         title: "Errore",
         description: error.message || "Errore durante la creazione del profilo",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreate50Profiles = async () => {
+    if (!formData.nickname || !formData.full_name) {
+      toast({
+        title: "Errore",
+        description: "Compila almeno nickname e nome completo per creare profili in batch",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const profiles = [];
+      for (let i = 1; i <= 50; i++) {
+        profiles.push({
+          id: crypto.randomUUID(),
+          nickname: `${formData.nickname}${i}`,
+          full_name: `${formData.full_name} ${i}`,
+          age: formData.age ? parseInt(formData.age) : null,
+          bio: formData.bio || null,
+          city: formData.city || null,
+          gender: formData.gender || null,
+          sexual_orientation: formData.sexual_orientation || null,
+          relationship_status: formData.relationship_status || null,
+          relationship_type: formData.relationship_type || null,
+          looking_for: formData.looking_for.length > 0 ? formData.looking_for : null,
+          interests: formData.interests.length > 0 ? formData.interests : null,
+          is_admin_profile: true,
+        });
+      }
+
+      const { error: profileError } = await supabase.from("profiles").insert(profiles);
+
+      if (profileError) {
+        console.error("Batch profile creation error:", profileError);
+        throw profileError;
+      }
+
+      toast({
+        title: "✓ 50 Profili creati",
+        description: "I profili sono stati creati con successo",
+      });
+
+      setFormData({
+        nickname: "",
+        full_name: "",
+        age: "",
+        bio: "",
+        city: "",
+        gender: "",
+        sexual_orientation: "",
+        relationship_status: "",
+        relationship_type: "",
+        looking_for: [],
+        interests: [],
+      });
+
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (error: any) {
+      console.error("Error creating batch profiles:", error);
+      toast({
+        title: "Errore",
+        description: error.message || "Errore durante la creazione dei profili in batch",
         variant: "destructive",
       });
     } finally {
@@ -125,15 +201,26 @@ export const ProfileCreator = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Button 
-          onClick={handleSeedProfiles} 
-          disabled={seedLoading}
-          className="w-full"
-          variant="secondary"
-        >
-          <Users className="h-4 w-4 mr-2" />
-          {seedLoading ? "Caricamento..." : "Carica 50 Profili"}
-        </Button>
+        <div className="grid grid-cols-2 gap-2">
+          <Button 
+            onClick={handleSeedProfiles} 
+            disabled={seedLoading || loading}
+            variant="secondary"
+            className="w-full"
+          >
+            <Users className="h-4 w-4 mr-2" />
+            {seedLoading ? "Caricamento..." : "Carica 50 Casuali"}
+          </Button>
+          <Button 
+            onClick={handleCreate50Profiles} 
+            disabled={loading || seedLoading}
+            variant="outline"
+            className="w-full"
+          >
+            <Users className="h-4 w-4 mr-2" />
+            {loading ? "Creando..." : "Aggiungi 50 con Criteri"}
+          </Button>
+        </div>
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
@@ -232,20 +319,45 @@ export const ProfileCreator = () => {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="looking_for">Cosa cerchi</Label>
-            <Select value={formData.looking_for} onValueChange={(value) => setFormData({ ...formData, looking_for: value })}>
+            <Label htmlFor="relationship_type">Tipo Relazione</Label>
+            <Select value={formData.relationship_type} onValueChange={(value) => setFormData({ ...formData, relationship_type: value })}>
               <SelectTrigger>
-                <SelectValue placeholder="Seleziona cosa cerchi" />
+                <SelectValue placeholder="Seleziona tipo" />
               </SelectTrigger>
               <SelectContent className="bg-background z-50">
-                <SelectItem value="Relazione seria">Relazione seria</SelectItem>
-                <SelectItem value="Incontri casuali">Incontri casuali</SelectItem>
-                <SelectItem value="Amicizia">Amicizia</SelectItem>
-                <SelectItem value="Non specifico">Non specifico</SelectItem>
-                <SelectItem value="Preferisco non dirlo">Preferisco non dirlo</SelectItem>
+                <SelectItem value="monogamous">Monogama</SelectItem>
+                <SelectItem value="non_monogamous">Non monogama</SelectItem>
+                <SelectItem value="open">Aperta</SelectItem>
+                <SelectItem value="polyamorous">Poliamorosa</SelectItem>
               </SelectContent>
             </Select>
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="looking_for">Cosa cerchi (separato da virgole)</Label>
+          <Input
+            id="looking_for"
+            placeholder="Es: Relazione seria, Amicizia, ..."
+            value={formData.looking_for.join(", ")}
+            onChange={(e) => setFormData({ 
+              ...formData, 
+              looking_for: e.target.value.split(",").map(s => s.trim()).filter(s => s) 
+            })}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="interests">Interessi (separati da virgole)</Label>
+          <Input
+            id="interests"
+            placeholder="Es: Cinema, Sport, Viaggi, ..."
+            value={formData.interests.join(", ")}
+            onChange={(e) => setFormData({ 
+              ...formData, 
+              interests: e.target.value.split(",").map(s => s.trim()).filter(s => s) 
+            })}
+          />
         </div>
 
         <div className="space-y-2">
