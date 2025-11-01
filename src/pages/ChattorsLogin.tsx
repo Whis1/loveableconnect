@@ -66,8 +66,13 @@ const ChattorsLogin = () => {
       toast.success("Accesso effettuato");
       navigate("/chattors");
     } catch (error: any) {
-      console.error("Errore login:", error);
-      toast.error(error.message || "Errore durante il login");
+      const message = typeof error?.message === "string" ? error.message : "";
+      if (message.toLowerCase().includes("disattivato")) {
+        toast.error("Il tuo account è disattivato, chiedi a un admin di attivartelo", { duration: 4000 });
+      } else {
+        toast.error("Errore durante il login");
+      }
+      console.warn("Login non riuscito");
     } finally {
       setLoading(false);
     }
