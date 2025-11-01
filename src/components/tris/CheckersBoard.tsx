@@ -305,14 +305,124 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
   };
 
   const makeBotMove = () => {
+    // AI Strategy: Evaluate all moves and pick the best one
+    const evaluateBoard = (boardState: Board, forBlack: boolean): number => {
+      let score = 0;
+      
+      boardState.forEach((piece, idx) => {
+        if (!piece) return;
+        
+        const row = Math.floor(idx / 8);
+        const col = idx % 8;
+        const isBlack = piece.includes("black");
+        const isKing = piece.includes("king");
+        
+        if (isBlack === forBlack) {
+          // Our pieces
+          if (isKing) {
+            score += 30; // Kings are very valuable
+          } else {
+            score += 10; // Normal piece value
+            // Reward advancement toward promotion
+            if (isBlack) {
+              score += (7 - row) * 0.5; // Closer to bottom = better for black
+            }
+          }
+          
+          // Center control bonus (columns 2-5, rows 2-5)
+          if (col >= 2 && col <= 5 && row >= 2 && row <= 5) {
+            score += 2;
+          }
+          
+          // Edge penalty (pieces on edges are more vulnerable)
+          if (col === 0 || col === 7) {
+            score -= 1;
+          }
+        } else {
+          // Opponent pieces (negative value)
+          if (isKing) {
+            score -= 30;
+          } else {
+            score -= 10;
+            if (!isBlack) {
+              score -= row * 0.5; // Penalize opponent advancement
+            }
+          }
+        }
+      });
+      
+      return score;
+    };
+
+    const evaluateMove = (from: number, to: number, boardState: Board, captureCount: number = 0): { score: number; captures: number } => {
+      const newBoard = [...boardState];
+      const piece = newBoard[from];
+      
+      if (!piece) return { score: -1000, captures: 0 };
+      
+      newBoard[to] = piece;
+      newBoard[from] = null;
+      
+      const fromRow = Math.floor(from / 8);
+      const toRow = Math.floor(to / 8);
+      const fromCol = from % 8;
+      const toCol = to % 8;
+      
+      let totalCaptures = captureCount;
+      let isJump = Math.abs(toRow - fromRow) === 2;
+      
+      if (isJump) {
+        totalCaptures++;
+        const jumpedRow = Math.floor((fromRow + toRow) / 2);
+        const jumpedCol = Math.floor((fromCol + toCol) / 2);
+        newBoard[jumpedRow * 8 + jumpedCol] = null;
+        
+        // Check for multi-capture potential
+        const { jumps } = getBotValidMoves(to, newBoard);
+        
+        if (jumps.length > 0) {
+          // Recursively evaluate multi-captures and take the best path
+          let bestMultiCapture = { score: -10000, captures: totalCaptures };
+          
+          for (const nextJump of jumps) {
+            const multiResult = evaluateMove(to, nextJump, newBoard, totalCaptures);
+            if (multiResult.captures > bestMultiCapture.captures || 
+                (multiResult.captures === bestMultiCapture.captures && multiResult.score > bestMultiCapture.score)) {
+              bestMultiCapture = multiResult;
+            }
+          }
+          
+          return bestMultiCapture;
+        }
+      }
+      
+      // King promotion
+      if (piece === "black" && toRow === 7) {
+        newBoard[to] = "black-king";
+      }
+      
+      // Evaluate final board position
+      let positionScore = evaluateBoard(newBoard, true);
+      
+      // Bonus for captures (very important!)
+      positionScore += totalCaptures * 50;
+      
+      // Bonus for promotion potential
+      if (piece === "black" && toRow === 7) {
+        positionScore += 20;
+      } else if (piece === "black" && toRow >= 5) {
+        positionScore += (toRow - 4) * 3; // Reward getting close to promotion
+      }
+      
+      return { score: positionScore, captures: totalCaptures };
+    };
+
     const makeOneBotMove = (currentBoard: Board, currentPos: number | null = null): Board => {
       const blackPieces: number[] = [];
       
       if (currentPos !== null) {
-        // Continue multi-capture from current position
         blackPieces.push(currentPos);
       } else {
-        // Find all black pieces
         currentBoard.forEach((piece, idx) => {
           if (piece && piece.includes("black")) {
             blackPieces.push(idx);
@@ -320,64 +430,77 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
         });
       }
 
-      // Separate jumps from regular moves
-      const jumpMoves: Array<{ from: number; to: number }> = [];
-      const regularMoves: Array<{ from: number; to: number }> = [];
+      const allMoves: Array<{ from: number; to: number; score: number; captures: number; isJump: boolean }> = [];
       
       for (const pos of blackPieces) {
         const { regular, jumps } = getBotValidMoves(pos, currentBoard);
         
-        jumps.forEach(to => jumpMoves.push({ from: pos, to }));
+        // Evaluate jump moves
+        for (const to of jumps) {
+          const evaluation = evaluateMove(pos, to, currentBoard);
+          allMoves.push({ from: pos, to, score: evaluation.score, captures: evaluation.captures, isJump: true });
+        }
+        
+        // Evaluate regular moves only if no jumps available and not in multi-capture
         if (currentPos === null) {
-          regular.forEach(to => regularMoves.push({ from: pos, to }));
+          for (const to of regular) {
+            const evaluation = evaluateMove(pos, to, currentBoard);
+            allMoves.push({ from: pos, to, score: evaluation.score, captures: 0, isJump: false });
+          }
         }
       }
 
-      // MANDATORY: If there are jump moves available, bot MUST take one
-      const availableMoves = jumpMoves.length > 0 ? jumpMoves : regularMoves;
-
-      if (availableMoves.length === 0) {
-        return currentBoard; // No moves available
-      }
-
-      // Pick a random move from available moves
-      const move = availableMoves[Math.floor(Math.random() * availableMoves.length)];
-      const newBoard = [...currentBoard];
-      const piece = newBoard[move.from];
-      
-      if (!piece) {
+      if (allMoves.length === 0) {
         return currentBoard;
       }
+
+      // Find moves with maximum captures
+      const maxCaptures = Math.max(...allMoves.map(m => m.captures));
+      const captureMoves = allMoves.filter(m => m.captures === maxCaptures && maxCaptures > 0);
       
-      newBoard[move.to] = piece;
-      newBoard[move.from] = null;
+      let bestMove;
       
-      // Handle jumps (captures)
-      const fromRow = Math.floor(move.from / 8);
-      const fromCol = move.from % 8;
-      const toRow = Math.floor(move.to / 8);
-      const toCol = move.to % 8;
+      if (captureMoves.length > 0) {
+        // Among moves with max captures, pick the one with best position score
+        bestMove = captureMoves.reduce((best, move) => 
+          move.score > best.score ? move : best
+        );
+      } else {
+        // No captures available - pick move with best position evaluation
+        bestMove = allMoves.reduce((best, move) => 
+          move.score > best.score ? move : best
+        );
+      }
+
+      const newBoard = [...currentBoard];
+      const piece = newBoard[bestMove.from];
       
-      const isJump = Math.abs(toRow - fromRow) === 2;
+      if (!piece) return currentBoard;
       
-      if (isJump) {
-        // Remove captured piece
+      newBoard[bestMove.to] = piece;
+      newBoard[bestMove.from] = null;
+      
+      const fromRow = Math.floor(bestMove.from / 8);
+      const fromCol = bestMove.from % 8;
+      const toRow = Math.floor(bestMove.to / 8);
+      const toCol = bestMove.to % 8;
+      
+      if (bestMove.isJump) {
         const jumpedRow = Math.floor((fromRow + toRow) / 2);
         const jumpedCol = Math.floor((fromCol + toCol) / 2);
         newBoard[jumpedRow * 8 + jumpedCol] = null;
         
-        // Check for more captures (multi-capture)
-        const { jumps } = getBotValidMoves(move.to, newBoard);
+        // Check for continuation of multi-capture
+        const { jumps } = getBotValidMoves(bestMove.to, newBoard);
         
         if (jumps.length > 0) {
-          // Continue capturing recursively
-          return makeOneBotMove(newBoard, move.to);
+          return makeOneBotMove(newBoard, bestMove.to);
         }
       }
       
       // King promotion
       if (piece === "black" && toRow === 7) {
-        newBoard[move.to] = "black-king";
+        newBoard[bestMove.to] = "black-king";
       }
       
       return newBoard;
@@ -385,11 +508,9 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
 
     const newBoard = makeOneBotMove(board);
     
-    // Check if board changed (move was made)
     const boardChanged = JSON.stringify(newBoard) !== JSON.stringify(board);
     
     if (!boardChanged) {
-      // No moves available - player wins
       setGameOver(true);
       setWinner("player");
       updateUserElo(20);
