@@ -23,7 +23,8 @@ Deno.serve(async (req) => {
       receiver_id, 
       content, 
       message_type = 'text', 
-      media_url = null 
+      media_url = null,
+      admin_secondary_nickname = ''
     } = body || {};
 
     // Normalize inputs
@@ -32,6 +33,7 @@ Deno.serve(async (req) => {
     const sReceiverId = typeof receiver_id === 'string' ? receiver_id.trim() : '';
     const sContent = typeof content === 'string' ? content.trim() : '';
     const sMediaUrl = typeof media_url === 'string' ? media_url.trim() : '';
+    const sAdminNick = typeof admin_secondary_nickname === 'string' ? admin_secondary_nickname.trim() : '';
 
     if (!sMatchId || !sSenderId || !sReceiverId || (!sContent && !sMediaUrl)) {
       return new Response(
@@ -64,7 +66,7 @@ Deno.serve(async (req) => {
         content: sContent || '',
         message_type,
         media_url: sMediaUrl || null,
-        admin_sender_nickname: senderProfile.nickname,
+        admin_sender_nickname: sAdminNick || senderProfile.nickname,
       })
       .select()
       .single();

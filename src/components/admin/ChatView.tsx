@@ -143,6 +143,7 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
           content: content || "",
           message_type: type,
           media_url: mediaUrl,
+          admin_secondary_nickname: chattorsNickname,
         },
       });
 
@@ -294,7 +295,7 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
                 timestamp={msg.created_at}
                 senderNickname={
                   msg.sender_id === conversation.adminProfileId 
-                    ? (msg.admin_sender_nickname || chattorsNickname)
+                    ? (msg.admin_sender_nickname || undefined)
                     : undefined
                 }
                 showAdminLabel={true}
