@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -67,12 +67,21 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
   const [opponentElo, setOpponentElo] = useState<number>(1200);
   const [isMultiCapture, setIsMultiCapture] = useState(false);
   const [capturingPiece, setCapturingPiece] = useState<number | null>(null);
+  const gameCompletedRef = useRef(false);
 
   useEffect(() => {
     initializeBoard();
     fetchCurrentUserProfile();
     startBotEmojiSystem();
     setOpponentElo(Math.floor(Math.random() * 601) + 1000);
+
+    // Cleanup: detect game abandonment
+    return () => {
+      if (!gameCompletedRef.current) {
+        // Game was abandoned - apply penalty
+        updateUserElo(-10);
+      }
+    };
   }, []);
 
   const initializeBoard = () => {
@@ -325,6 +334,7 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     if (checkWin(newBoard, "red")) {
       setGameOver(true);
       setWinner("player");
+      gameCompletedRef.current = true; // Mark game as completed normally
       updateUserElo(20);
       onGameEnd("win");
       return;
@@ -712,6 +722,7 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     if (!boardChanged) {
       setGameOver(true);
       setWinner("player");
+      gameCompletedRef.current = true; // Mark game as completed normally
       updateUserElo(20);
       onGameEnd("win");
       return;
@@ -722,6 +733,7 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     if (checkWin(newBoard, "black")) {
       setGameOver(true);
       setWinner("bot");
+      gameCompletedRef.current = true; // Mark game as completed normally
       updateUserElo(-10);
       onGameEnd("lose");
       return;

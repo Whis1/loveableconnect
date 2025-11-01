@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -64,12 +64,21 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
   const [lastOpponentEmoji, setLastOpponentEmoji] = useState<string | null>(null);
   const [userElo, setUserElo] = useState<number>(1200);
   const [opponentElo, setOpponentElo] = useState<number>(1200);
+  const gameCompletedRef = useRef(false);
 
   useEffect(() => {
     fetchCurrentUserProfile();
     startBotEmojiSystem();
     // Generate random ELO for opponent (between 1000 and 1600)
     setOpponentElo(Math.floor(Math.random() * 601) + 1000);
+
+    // Cleanup: detect game abandonment
+    return () => {
+      if (!gameCompletedRef.current) {
+        // Game was abandoned - apply penalty
+        updateUserElo(-10);
+      }
+    };
   }, []);
 
   const startBotEmojiSystem = () => {
@@ -174,6 +183,7 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
     if (win === "X") {
       setGameOver(true);
       setWinner("player");
+      gameCompletedRef.current = true; // Mark game as completed normally
       // Update ELO on win (+20 points)
       updateUserElo(20);
       onGameEnd("win");
@@ -183,6 +193,7 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
     if (isBoardFull(newBoard)) {
       setGameOver(true);
       setWinner("draw");
+      gameCompletedRef.current = true; // Mark game as completed normally
       onGameEnd("draw");
       return;
     }
@@ -229,6 +240,7 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
     if (win === "O") {
       setGameOver(true);
       setWinner("bot");
+      gameCompletedRef.current = true; // Mark game as completed normally
       // Lose: -10 ELO points
       updateUserElo(-10);
       onGameEnd("lose");
@@ -238,6 +250,7 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
     if (isBoardFull(newBoard)) {
       setGameOver(true);
       setWinner("draw");
+      gameCompletedRef.current = true; // Mark game as completed normally
       onGameEnd("draw");
       return;
     }
