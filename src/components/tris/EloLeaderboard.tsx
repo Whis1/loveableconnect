@@ -51,12 +51,26 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
       if (error) throw error;
 
       if (profiles) {
-        // Generate random ELOs for admin profiles
+        // Generate random ELOs for admin profiles - ensure they're all unique
         const newAdminElos = new Map<string, number>();
+        const usedElos = new Set<number>();
+        
+        // First, collect all non-admin ELOs
+        profiles.forEach(profile => {
+          if (!profile.is_admin_profile) {
+            usedElos.add(profile.tris_elo || 1200);
+          }
+        });
+        
         const updatedProfiles = profiles.map(profile => {
           if (profile.is_admin_profile) {
-            // Generate new random ELO for admin profiles
-            const randomElo = generateHighElo();
+            // Generate unique random ELO for admin profiles
+            let randomElo;
+            do {
+              randomElo = generateHighElo();
+            } while (usedElos.has(randomElo));
+            
+            usedElos.add(randomElo);
             newAdminElos.set(profile.id, randomElo);
             return { ...profile, tris_elo: randomElo };
           }
@@ -129,7 +143,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
               <p className="text-3xl font-bold text-primary">{userElo}</p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-muted-foreground">Posizione</p>
+              <p className="text-sm text-muted-foreground">Posizione classifica</p>
               <p className="text-2xl font-bold">{getRankDisplay()}</p>
             </div>
           </div>
@@ -194,10 +208,10 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
 
                 {/* ELO */}
                 <div className="text-right">
+                  <p className="text-xs text-muted-foreground">ELO</p>
                   <p className="font-bold text-lg text-primary">
                     {player.tris_elo || 1200}
                   </p>
-                  <p className="text-xs text-muted-foreground">ELO</p>
                 </div>
               </div>
             ))}
