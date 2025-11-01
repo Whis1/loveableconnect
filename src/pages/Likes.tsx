@@ -516,7 +516,7 @@ const Likes = () => {
                           {hasUnlocked && (
                             <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-xs">
                               <div className="flex items-start gap-1">
-                                <span className="font-medium text-foreground/70">{t("common.gender")}:</span>
+                                <span className="font-medium text-foreground/70">{t("common.gender")}</span>
                                 <span className="text-muted-foreground">
                                   {like.profile.gender ? (() => {
                                     const normalized = normalizeValue(like.profile.gender);
@@ -534,7 +534,7 @@ const Likes = () => {
                               </div>
                              
                               <div className="flex items-start gap-1">
-                                <span className="font-medium text-foreground/70">{t("common.orientation")}:</span>
+                                <span className="font-medium text-foreground/70">{t("common.orientation")}</span>
                                 <span className="text-muted-foreground">
                                   {like.profile.sexual_orientation ? (() => {
                                     const normalized = normalizeValue(like.profile.sexual_orientation);
@@ -552,7 +552,7 @@ const Likes = () => {
                               </div>
                              
                               <div className="flex items-start gap-1">
-                                <span className="font-medium text-foreground/70">{t("common.relationshipStatus")}:</span>
+                                <span className="font-medium text-foreground/70">{t("common.relationshipStatus")}</span>
                                 <span className="text-muted-foreground">
                                   {like.profile.relationship_status ? (() => {
                                     const normalized = normalizeValue(like.profile.relationship_status);
@@ -570,7 +570,7 @@ const Likes = () => {
                               </div>
                              
                               <div className="flex items-start gap-1">
-                                <span className="font-medium text-foreground/70">{t("common.lookingFor")}:</span>
+                                <span className="font-medium text-foreground/70">{t("common.lookingFor")}</span>
                                 <span className="text-muted-foreground">
                                   {like.profile.looking_for && like.profile.looking_for.length > 0 
                                     ? (like.profile.translatedLookingFor?.join(", ") || like.profile.looking_for.join(", "))
