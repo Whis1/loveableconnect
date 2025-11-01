@@ -334,9 +334,31 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
   };
 
   const makeBotMove = () => {
-    // AI Strategy: Evaluate all moves and pick the best one
+    // Advanced AI Strategy with deeper evaluation
     const evaluateBoard = (boardState: Board, forBlack: boolean): number => {
       let score = 0;
+      
+      // Count pieces for endgame detection
+      let ourPieces = 0;
+      let theirPieces = 0;
+      let ourKings = 0;
+      let theirKings = 0;
+      
+      boardState.forEach((piece) => {
+        if (!piece) return;
+        const isBlack = piece.includes("black");
+        const isKing = piece.includes("king");
+        
+        if (isBlack === forBlack) {
+          ourPieces++;
+          if (isKing) ourKings++;
+        } else {
+          theirPieces++;
+          if (isKing) theirKings++;
+        }
+      });
+      
+      const isEndgame = ourPieces + theirPieces <= 8;
       
       boardState.forEach((piece, idx) => {
         if (!piece) return;
@@ -349,36 +371,119 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
         if (isBlack === forBlack) {
           // Our pieces
           if (isKing) {
-            score += 30; // Kings are very valuable
+            score += 50; // Kings are extremely valuable
+            
+            // In endgame, kings should be more aggressive
+            if (isEndgame) {
+              score += 15;
+            }
+            
+            // Kings should control center
+            const centerDist = Math.abs(3.5 - row) + Math.abs(3.5 - col);
+            score += (7 - centerDist) * 2;
           } else {
-            score += 10; // Normal piece value
-            // Reward advancement toward promotion
+            score += 15; // Base piece value
+            
+            // Strong advancement bonus (exponential)
             if (isBlack) {
-              score += (7 - row) * 0.5; // Closer to bottom = better for black
+              const advancement = 7 - row;
+              score += advancement * advancement * 0.8; // Exponential reward
+              
+              // Extra bonus for pieces about to promote
+              if (row === 6) score += 12;
+              if (row === 5) score += 6;
             }
           }
           
-          // Center control bonus (columns 2-5, rows 2-5)
-          if (col >= 2 && col <= 5 && row >= 2 && row <= 5) {
-            score += 2;
+          // Strategic positioning
+          // Strong center control (especially rows 3-4, cols 2-5)
+          if (row >= 3 && row <= 4 && col >= 2 && col <= 5) {
+            score += 5;
+          } else if (row >= 2 && row <= 5 && col >= 2 && col <= 5) {
+            score += 3;
           }
           
-          // Edge penalty (pieces on edges are more vulnerable)
-          if (col === 0 || col === 7) {
-            score -= 1;
+          // Diagonal strength - pieces on long diagonals
+          if ((row + col) % 2 === 1) {
+            if (row === col || row + col === 7) {
+              score += 2;
+            }
           }
+          
+          // Protected pieces bonus
+          const neighbors = [
+            idx - 9, idx - 7, idx + 7, idx + 9
+          ].filter(n => n >= 0 && n < 64);
+          
+          let protectedBy = 0;
+          neighbors.forEach(n => {
+            const neighborPiece = boardState[n];
+            if (neighborPiece && neighborPiece.includes(forBlack ? "black" : "red")) {
+              protectedBy++;
+            }
+          });
+          score += protectedBy * 2;
+          
+          // Back row defense (keep at least 2 pieces in back row early game)
+          if (!isEndgame && isBlack && row === 0) {
+            score += 4;
+          }
+          
+          // Edge penalty (except back row)
+          if ((col === 0 || col === 7) && (isBlack ? row !== 0 : row !== 7)) {
+            score -= 2;
+          }
+          
         } else {
           // Opponent pieces (negative value)
           if (isKing) {
-            score -= 30;
+            score -= 50; // Enemy kings are threats
+            
+            // Extra penalty if they control center
+            const centerDist = Math.abs(3.5 - row) + Math.abs(3.5 - col);
+            score -= (7 - centerDist) * 1.5;
           } else {
-            score -= 10;
+            score -= 15;
+            
+            // Heavily penalize advanced enemy pieces
             if (!isBlack) {
-              score -= row * 0.5; // Penalize opponent advancement
+              const advancement = row;
+              score -= advancement * advancement * 0.8;
+              
+              // Critical threat if about to promote
+              if (row === 1) score -= 12;
+              if (row === 2) score -= 6;
             }
           }
         }
       });
+      
+      // Material advantage bonus
+      const pieceDiff = ourPieces - theirPieces;
+      score += pieceDiff * 20;
+      
+      const kingDiff = ourKings - theirKings;
+      score += kingDiff * 30;
+      
+      // Mobility bonus (check if opponent is trapped)
+      if (theirPieces > 0) {
+        let opponentMobility = 0;
+        boardState.forEach((piece, idx) => {
+          if (piece && piece.includes(forBlack ? "red" : "black")) {
+            const moves = forBlack 
+              ? getValidMoves(idx, boardState)
+              : getBotValidMoves(idx, boardState);
+            opponentMobility += moves.regular.length + moves.jumps.length;
+          }
+        });
+        
+        // If opponent has low mobility, we're in good position
+        if (opponentMobility === 0) {
+          score += 200; // Winning position
+        } else if (opponentMobility < 3) {
+          score += 30; // Opponent is constrained
+        }
+      }
       
       return score;
     };
@@ -404,7 +509,13 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
         totalCaptures++;
         const jumpedRow = Math.floor((fromRow + toRow) / 2);
         const jumpedCol = Math.floor((fromCol + toCol) / 2);
+        const capturedPiece = newBoard[jumpedRow * 8 + jumpedCol];
         newBoard[jumpedRow * 8 + jumpedCol] = null;
+        
+        // Bonus for capturing kings
+        if (capturedPiece && capturedPiece.includes("king")) {
+          totalCaptures += 1; // Count king as 2 captures
+        }
         
         // Check for multi-capture potential
         const { jumps } = getBotValidMoves(to, newBoard);
@@ -433,15 +544,74 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
       // Evaluate final board position
       let positionScore = evaluateBoard(newBoard, true);
       
-      // Bonus for captures (very important!)
-      positionScore += totalCaptures * 50;
+      // Massive bonus for captures!
+      positionScore += totalCaptures * 80;
       
-      // Bonus for promotion potential
+      // Extra bonus for promotion
       if (piece === "black" && toRow === 7) {
-        positionScore += 20;
+        positionScore += 35;
+      } else if (piece === "black" && toRow === 6) {
+        positionScore += 15; // One move from promotion
       } else if (piece === "black" && toRow >= 5) {
-        positionScore += (toRow - 4) * 3; // Reward getting close to promotion
+        positionScore += (toRow - 4) * 5;
       }
+      
+      // Defensive evaluation: check if this move exposes us to capture
+      let exposurePenalty = 0;
+      
+      // Check all possible opponent responses
+      newBoard.forEach((opponentPiece, opponentIdx) => {
+        if (opponentPiece && opponentPiece.includes("red")) {
+          const { jumps } = getValidMoves(opponentIdx, newBoard);
+          
+          // If opponent can capture any of our pieces after this move
+          jumps.forEach(jumpTarget => {
+            const jumpFromRow = Math.floor(opponentIdx / 8);
+            const jumpFromCol = opponentIdx % 8;
+            const jumpToRow = Math.floor(jumpTarget / 8);
+            const jumpToCol = jumpTarget % 8;
+            const capturedRow = Math.floor((jumpFromRow + jumpToRow) / 2);
+            const capturedCol = Math.floor((jumpFromCol + jumpToCol) / 2);
+            const capturedPos = capturedRow * 8 + capturedCol;
+            const capturedPiece = newBoard[capturedPos];
+            
+            if (capturedPiece && capturedPiece.includes("black")) {
+              // We're exposing a piece to capture
+              if (capturedPiece.includes("king")) {
+                exposurePenalty += 40; // Very bad to lose a king
+              } else {
+                exposurePenalty += 20; // Bad to lose a piece
+              }
+              
+              // Extra penalty if it's the piece we just moved
+              if (capturedPos === to) {
+                exposurePenalty += 15;
+              }
+            }
+          });
+        }
+      });
+      
+      positionScore -= exposurePenalty;
+      
+      // Tactical bonus: check if this move creates a trap or fork
+      let tacticalBonus = 0;
+      
+      // After our move, count how many opponent pieces we threaten
+      const { jumps: ourThreats } = getBotValidMoves(to, newBoard);
+      tacticalBonus += ourThreats.length * 10;
+      
+      // Check if we're creating multiple threats (fork)
+      newBoard.forEach((ourPiece, ourIdx) => {
+        if (ourPiece && ourPiece.includes("black") && ourIdx !== to) {
+          const { jumps } = getBotValidMoves(ourIdx, newBoard);
+          if (jumps.length > 0) {
+            tacticalBonus += jumps.length * 3;
+          }
+        }
+      });
+      
+      positionScore += tacticalBonus;
       
       return { score: positionScore, captures: totalCaptures };
     };
