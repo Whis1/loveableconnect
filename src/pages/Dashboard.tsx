@@ -67,6 +67,15 @@ const Dashboard = () => {
         .eq("id", session.user.id)
         .single();
 
+      // Check if profile is incomplete (missing birthdate or location)
+      if (profileData && (!profileData.birthdate || !profileData.city)) {
+        navigate("/modifica-profilo", { 
+          state: { requiresCompletion: true },
+          replace: true
+        });
+        return;
+      }
+
       setProfile(profileData);
 
       // Fetch role

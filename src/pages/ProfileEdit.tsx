@@ -140,7 +140,7 @@ const ProfileEdit = () => {
           setPhotoPreviews(urls);
         }
         
-        // Check if user needs to complete profile (from Google login)
+        // Check if user needs to complete profile (from Google login or navigation state)
         const state = window.history.state?.usr;
         if (state?.requiresCompletion || !profileData.birthdate || !profileData.city) {
           setRequiresCompletion(true);
@@ -165,7 +165,36 @@ const ProfileEdit = () => {
     };
 
     fetchProfile();
-  }, [navigate]);
+
+    // Prevent navigation away when profile completion is required
+    if (requiresCompletion) {
+      const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+        e.preventDefault();
+        e.returnValue = '';
+      };
+
+      const handlePopState = (e: PopStateEvent) => {
+        e.preventDefault();
+        window.history.pushState(null, '', window.location.pathname);
+        toast({
+          title: "Completa il profilo",
+          description: "Devi completare il profilo prima di poter navigare nel sito.",
+          variant: "destructive",
+        });
+      };
+
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      window.addEventListener('popstate', handlePopState);
+      
+      // Push initial state to enable popstate blocking
+      window.history.pushState(null, '', window.location.pathname);
+
+      return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        window.removeEventListener('popstate', handlePopState);
+      };
+    }
+  }, [navigate, requiresCompletion, toast]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -263,6 +292,27 @@ const ProfileEdit = () => {
         variant: "destructive",
       });
       return;
+    }
+
+    // Validate age >= 18 when setting birthdate
+    if (birthDay && birthMonth && birthYear) {
+      const birthdate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
+      const birthdateObj = new Date(birthdate);
+      const today = new Date();
+      let age = today.getFullYear() - birthdateObj.getFullYear();
+      const monthDiff = today.getMonth() - birthdateObj.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdateObj.getDate())) {
+        age--;
+      }
+
+      if (age < 18) {
+        toast({
+          title: "Errore",
+          description: "Devi avere almeno 18 anni per utilizzare questa piattaforma. Per questioni legali, accettiamo solo utenti maggiorenni.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     // Validate location if required
@@ -476,12 +526,14 @@ const ProfileEdit = () => {
       />
       
       <div className="container mx-auto max-w-4xl relative z-10">
-        <div className="mb-4">
-          <Button variant="ghost" onClick={() => navigate("/")}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t('profile.back')}
-          </Button>
-        </div>
+        {!requiresCompletion && (
+          <div className="mb-4">
+            <Button variant="ghost" onClick={() => navigate("/")}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              {t('profile.back')}
+            </Button>
+          </div>
+        )}
 
         <Card>
           <CardHeader>
@@ -490,9 +542,9 @@ const ProfileEdit = () => {
               <Alert className="mt-4 bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
                 <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                 <AlertDescription className="text-amber-800 dark:text-amber-200">
-                  <strong>⚠️ Completa il tuo profilo</strong>
+                  <strong>⚠️ Completa il tuo profilo per continuare</strong>
                   <br />
-                  Inserisci la tua data di nascita per calcolare correttamente la tua età e rendere il tuo profilo visibile agli altri utenti. La location è obbligatoria.
+                  Per questioni legali, devi inserire la tua data di nascita (devi essere maggiorenne) e la tua posizione prima di poter accedere al sito. Non potrai uscire da questa pagina finché non avrai completato questi campi obbligatori.
                 </AlertDescription>
               </Alert>
             )}
