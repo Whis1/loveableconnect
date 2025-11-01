@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
     if (!account.is_active) {
       return new Response(
         JSON.stringify({ success: false, error: 'Account disattivato' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       );
     }
 
