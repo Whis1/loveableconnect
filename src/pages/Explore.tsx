@@ -206,26 +206,28 @@ const Explore = () => {
         )
       );
 
-      // Only load first batch of profiles for fast initial render
-      const INITIAL_LOAD = 50; // Load more than displayed for smooth scrolling
-      
       const { data: profilesData, error } = await supabase
         .from("profiles")
         .select("*")
-        .neq("id", userId)
-        .order("last_active", { ascending: false, nullsFirst: false })
-        .limit(INITIAL_LOAD);
+        .neq("id", userId);
 
       if (error) throw error;
 
       // Filter out profiles with existing matches
       let allProfiles: Profile[] = (profilesData || [])
         .filter(profile => !matchedUserIds.has(profile.id)) as Profile[];
+      
+      // Sort by last active
+      allProfiles.sort((a, b) => {
+        const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
+        const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
+        return dateB - dateA;
+      });
 
       setProfiles(allProfiles);
       setDisplayedProfiles([]);
       setPage(1);
-      setHasMore(allProfiles.length >= INITIAL_LOAD);
+      setHasMore(true);
     } catch (error: any) {
       toast({
         title: "Errore",
