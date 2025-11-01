@@ -85,7 +85,6 @@ const Explore = () => {
     { value: "homosexual", label: "Omosessuale" },
     { value: "bisexual", label: "Bisessuale" },
     { value: "pansexual", label: "Pansessuale" },
-    { value: "asexual", label: "Asessuale" },
   ];
 
   // Map canonical filter values to synonyms actually present in DB (Italian/English variants)
