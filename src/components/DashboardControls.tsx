@@ -21,27 +21,28 @@ export const DashboardControls = () => {
   };
 
   return (
-    <div className="fixed top-4 left-4 z-50 flex items-center gap-2">
+    <div className="fixed top-3 left-3 z-50 flex items-center gap-1.5 md:gap-2">
       <LanguageSwitcher />
       <Button
         variant="outline"
         size="icon"
         onClick={toggleTheme}
         title={theme === "dark" ? "Modalità Sole" : "Modalità Dark"}
+        className="h-9 w-9 md:h-10 md:w-10"
       >
         {theme === "dark" ? (
-          <Sun className="h-5 w-5" />
+          <Sun className="h-4 w-4 md:h-5 md:w-5" />
         ) : (
-          <Moon className="h-5 w-5" />
+          <Moon className="h-4 w-4 md:h-5 md:w-5" />
         )}
       </Button>
       <Button
         variant="outline"
         onClick={handleSignOut}
-        className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-all duration-300"
+        className="h-9 md:h-10 px-2 md:px-4 hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-all duration-300"
       >
-        <LogOut className="h-4 w-4 mr-2" />
-        {t("dashboard.signOut")}
+        <LogOut className="h-4 w-4 md:mr-2" />
+        <span className="hidden md:inline">{t("dashboard.signOut")}</span>
       </Button>
     </div>
   );
