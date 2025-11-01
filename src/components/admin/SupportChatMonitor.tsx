@@ -441,7 +441,7 @@ export const SupportChatMonitor = () => {
                       }`}
                     >
                       <div className="flex items-center gap-2 mb-1">
-                        <User className="h-4 w-4" />
+                        <User className="h-4 w-4 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm truncate">
                             {conv.nickname}
@@ -450,7 +450,7 @@ export const SupportChatMonitor = () => {
                             {conv.user_email}
                           </p>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 flex-shrink-0">
                           {conv.unread_count > 0 && (
                             <span className="bg-primary text-primary-foreground text-xs rounded-full px-2">
                               {conv.unread_count}
@@ -466,7 +466,7 @@ export const SupportChatMonitor = () => {
                           </Button>
                         </div>
                       </div>
-                      <p className="text-xs text-muted-foreground truncate">
+                      <p className="text-xs text-muted-foreground line-clamp-2 break-words max-w-full">
                         {conv.last_message}
                       </p>
                     </div>
