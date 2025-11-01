@@ -278,6 +278,8 @@ export const AdminChatDialog = ({
               profileId={userId} 
               profileName={userNickname}
               isAdmin={false}
+              adminProfileId={adminProfileId}
+              matchId={matchId || ""}
             />
           </div>
 
@@ -374,6 +376,8 @@ export const AdminChatDialog = ({
               profileId={adminProfileId} 
               profileName={adminNickname}
               isAdmin={true}
+              adminProfileId={adminProfileId}
+              matchId={matchId || ""}
             />
           </div>
         </div>

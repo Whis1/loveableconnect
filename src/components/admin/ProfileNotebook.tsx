@@ -11,7 +11,8 @@ interface ProfileNotebookProps {
   profileId: string;
   profileName: string;
   isAdmin?: boolean;
-  adminProfileId?: string;
+  adminProfileId: string;
+  matchId: string;
 }
 
 interface Notes {
@@ -32,7 +33,7 @@ interface Notes {
   peso_altezza: string;
 }
 
-export const ProfileNotebook = ({ profileId, profileName, isAdmin = false, adminProfileId }: ProfileNotebookProps) => {
+export const ProfileNotebook = ({ profileId, profileName, isAdmin = false, adminProfileId, matchId }: ProfileNotebookProps) => {
   const { toast } = useToast();
   const [notes, setNotes] = useState<Notes>({
     nome: "",
@@ -53,15 +54,15 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false, admin
   });
 
   useEffect(() => {
-    if (!profileId) return;
+    if (!profileId || !adminProfileId || !matchId) return;
     fetchNotes();
-  }, [profileId]);
+  }, [profileId, adminProfileId, matchId]);
 
   const fetchNotes = async () => {
-    if (!profileId || !adminProfileId) return;
+    if (!profileId || !adminProfileId || !matchId) return;
     try {
       const { data, error } = await supabase.functions.invoke('admin-profile-notes-get', {
-        body: { profile_id: profileId, admin_profile_id: adminProfileId }
+        body: { profile_id: profileId, admin_profile_id: adminProfileId, match_id: matchId }
       });
 
       if (error) throw error;
@@ -109,14 +110,15 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false, admin
   };
 
   const handleBlur = async (field: keyof Notes, value: string) => {
-    if (!profileId || !adminProfileId) return;
+    if (!profileId || !adminProfileId || !matchId) return;
     try {
-      console.log('Saving note:', { profile_id: profileId, admin_profile_id: adminProfileId, field, value });
+      console.log('Saving note:', { profile_id: profileId, admin_profile_id: adminProfileId, match_id: matchId, field, value });
       
       const { data, error } = await supabase.functions.invoke('admin-profile-notes-upsert', {
         body: {
           profile_id: profileId,
           admin_profile_id: adminProfileId,
+          match_id: matchId,
           field,
           value
         }

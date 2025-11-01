@@ -434,6 +434,7 @@ export type Database = {
           id: string
           lavoro: string | null
           location: string | null
+          match_id: string | null
           nome: string | null
           peso_altezza: string | null
           piercings: string | null
@@ -456,6 +457,7 @@ export type Database = {
           id?: string
           lavoro?: string | null
           location?: string | null
+          match_id?: string | null
           nome?: string | null
           peso_altezza?: string | null
           piercings?: string | null
@@ -478,6 +480,7 @@ export type Database = {
           id?: string
           lavoro?: string | null
           location?: string | null
+          match_id?: string | null
           nome?: string | null
           peso_altezza?: string | null
           piercings?: string | null
@@ -492,6 +495,13 @@ export type Database = {
             columns: ["admin_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_notes_match_fk"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
             referencedColumns: ["id"]
           },
           {

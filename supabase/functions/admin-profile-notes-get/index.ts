@@ -16,11 +16,11 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    const { profile_id, admin_profile_id } = await req.json();
+    const { profile_id, admin_profile_id, match_id } = await req.json();
     
-    if (!profile_id || !admin_profile_id) {
+    if (!profile_id || !admin_profile_id || !match_id) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Missing profile_id or admin_profile_id' }),
+        JSON.stringify({ success: false, error: 'Missing profile_id, admin_profile_id, or match_id' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
@@ -30,6 +30,7 @@ Deno.serve(async (req) => {
       .select('*')
       .eq('profile_id', profile_id)
       .eq('admin_profile_id', admin_profile_id)
+      .eq('match_id', match_id)
       .maybeSingle();
 
     if (error) throw error;

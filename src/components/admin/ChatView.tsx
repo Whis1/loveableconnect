@@ -236,6 +236,7 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
           profileId={conversation.userId}
           profileName={conversation.userNickname}
           adminProfileId={conversation.adminProfileId}
+          matchId={conversation.matchId}
         />
       </div>
 
@@ -362,6 +363,7 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
           profileName={conversation.adminNickname}
           isAdmin
           adminProfileId={currentAdminId || conversation.adminProfileId}
+          matchId={conversation.matchId}
         />
       </div>
     </div>

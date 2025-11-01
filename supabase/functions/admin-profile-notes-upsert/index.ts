@@ -16,21 +16,21 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    const { profile_id, admin_profile_id, field, value } = await req.json();
+    const { profile_id, admin_profile_id, match_id, field, value } = await req.json();
     
-    if (!profile_id || !admin_profile_id || !field) {
+    if (!profile_id || !admin_profile_id || !match_id || !field) {
       return new Response(
         JSON.stringify({ success: false, error: 'Missing required fields' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
-    // Upsert (insert or update) sulla coppia admin_profile_id + profile_id
+    // Upsert (insert or update) sulla tripla admin_profile_id + profile_id + match_id
     const { data, error } = await supabase
       .from('profile_notes')
       .upsert(
-        { profile_id, admin_profile_id, [field]: value },
-        { onConflict: 'profile_id,admin_profile_id', ignoreDuplicates: false }
+        { profile_id, admin_profile_id, match_id, [field]: value },
+        { onConflict: 'profile_id,admin_profile_id,match_id', ignoreDuplicates: false }
       )
       .select()
       .single();
