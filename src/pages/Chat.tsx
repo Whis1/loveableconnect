@@ -13,6 +13,7 @@ import { VoiceRecorder } from "@/components/chat/VoiceRecorder";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ChatUserProfile } from "@/components/chat/ChatUserProfile";
 import { InsufficientCreditsBanner } from "@/components/chat/InsufficientCreditsBanner";
+import { VoicePremiumBanner } from "@/components/chat/VoicePremiumBanner";
 import { ReportUserDialog } from "@/components/chat/ReportUserDialog";
 import { useCredits } from "@/hooks/useCredits";
 import { useTranslation } from "react-i18next";
@@ -57,6 +58,7 @@ const Chat = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { deductCredits, credits } = useCredits();
   const [showCreditsBanner, setShowCreditsBanner] = useState(false);
+  const [showVoicePremiumBanner, setShowVoicePremiumBanner] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
 
@@ -616,6 +618,7 @@ const Chat = () => {
                     onRecordingComplete={handleVoiceRecording}
                     disabled={uploading}
                     isPremiumMonthly={credits?.is_premium && credits.subscription_type === 'monthly'}
+                    onPremiumRequired={() => setShowVoicePremiumBanner(true)}
                   />
                   <Button 
                     type="submit" 
@@ -631,6 +634,11 @@ const Chat = () => {
           </div>
         </Card>
       </div>
+
+      <VoicePremiumBanner 
+        isVisible={showVoicePremiumBanner}
+        onClose={() => setShowVoicePremiumBanner(false)}
+      />
     </div>
   );
 };

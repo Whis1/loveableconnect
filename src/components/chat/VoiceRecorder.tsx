@@ -8,9 +8,10 @@ interface VoiceRecorderProps {
   onRecordingComplete: (audioBlob: Blob) => void;
   disabled?: boolean;
   isPremiumMonthly?: boolean;
+  onPremiumRequired?: () => void;
 }
 
-export const VoiceRecorder = ({ onRecordingComplete, disabled = false, isPremiumMonthly = false }: VoiceRecorderProps) => {
+export const VoiceRecorder = ({ onRecordingComplete, disabled = false, isPremiumMonthly = false, onPremiumRequired }: VoiceRecorderProps) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -19,6 +20,7 @@ export const VoiceRecorder = ({ onRecordingComplete, disabled = false, isPremium
 
   const startRecording = async () => {
     if (!isPremiumMonthly) {
+      onPremiumRequired?.();
       return;
     }
 
@@ -69,7 +71,7 @@ export const VoiceRecorder = ({ onRecordingComplete, disabled = false, isPremium
       size="icon"
       variant={isPremiumMonthly ? "ghost" : "default"}
       onClick={isRecording ? stopRecording : startRecording}
-      disabled={disabled || isProcessing || !isPremiumMonthly}
+      disabled={disabled || isProcessing}
       className={!isPremiumMonthly 
         ? "bg-gradient-to-br from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 border-0 cursor-not-allowed shrink-0 shadow-lg" 
         : "shrink-0"
