@@ -84,10 +84,14 @@ export const usePushNotifications = () => {
       const registration = await navigator.serviceWorker.register('/sw.js');
       await navigator.serviceWorker.ready;
 
-      // Generate VAPID public key (you'll need to generate your own)
-      // For now using a placeholder - in production, generate with web-push npm package
-      const vapidPublicKey = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U';
-      const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
+      // Get VAPID public key from backend
+      const { data: vapidData, error: vapidError } = await supabase.functions.invoke('get-vapid-key');
+      
+      if (vapidError || !vapidData?.publicKey) {
+        throw new Error('Impossibile recuperare la chiave VAPID');
+      }
+
+      const convertedVapidKey = urlBase64ToUint8Array(vapidData.publicKey);
 
       // Subscribe to push notifications
       const subscription = await registration.pushManager.subscribe({

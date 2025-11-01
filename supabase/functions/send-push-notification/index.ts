@@ -6,10 +6,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// VAPID configuration (you'll need to generate your own keys with web-push npm package)
-// For now using placeholder - in production: npx web-push generate-vapid-keys
-const VAPID_PUBLIC_KEY = "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U";
-const VAPID_PRIVATE_KEY = "your-private-key-here"; // Store in Supabase secrets
+// Get VAPID keys from Supabase secrets
+const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY");
+const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY");
 
 interface NotificationPayload {
   title: string;
@@ -30,6 +29,11 @@ serve(async (req) => {
 
   try {
     console.log("🔔 Starting push notification processor...");
+
+    // Validate VAPID keys are configured
+    if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+      throw new Error("VAPID keys not configured in secrets");
+    }
 
     // Get all unsent notifications
     const { data: notifications, error: fetchError } = await supabaseClient
