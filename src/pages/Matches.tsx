@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MessageCircle, Trash2 } from "lucide-react";
+import { ArrowLeft, MessageCircle, Trash2, Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useTextTranslation } from "@/hooks/useTranslation";
@@ -311,38 +311,36 @@ const Matches = () => {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-2 md:space-y-4">
+              <div className="space-y-3 md:space-y-4">
                 {matches.map((match) => (
-                  <Card key={match.id} className="overflow-hidden">
-                    <CardContent className="p-3 md:p-4">
-                      <div className="flex flex-col md:flex-row md:items-center gap-3">
-                        <div className="flex items-center gap-3 flex-1">
+                  <Card key={match.id} className="overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-lg bg-gradient-to-br from-background to-accent/5">
+                    <CardContent className="p-4 md:p-5">
+                      <div className="flex flex-col md:flex-row md:items-center gap-4">
+                        <div className="flex items-center gap-4 flex-1">
                           <div className="relative shrink-0">
-                            <Avatar className="h-14 w-14 md:h-16 md:w-16">
+                            <Avatar className="h-16 w-16 md:h-20 md:w-20 border-4 border-primary/20 shadow-md">
                               <AvatarImage src={match.otherUser.avatar_url || undefined} />
-                              <AvatarFallback>
+                              <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-xl">
                                 {match.otherUser.nickname.charAt(0)}
                               </AvatarFallback>
                             </Avatar>
-                            <div className="absolute bottom-0 right-0">
+                            <div className="absolute -bottom-1 -right-1">
                               <OnlineIndicator userId={match.otherUser.id} size="md" />
+                            </div>
+                            <div className="absolute -top-2 -left-2 bg-primary text-primary-foreground rounded-full p-1.5 shadow-md">
+                              <Heart className="h-3 w-3 md:h-4 md:w-4 fill-current" />
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-base md:text-lg truncate">
+                            <h3 className="font-bold text-lg md:text-xl truncate bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                               {match.otherUser.nickname}
                             </h3>
-                            <p className="text-xs md:text-sm text-muted-foreground">
-                              {t("matches.nearYourParts")}
-                            </p>
-                            {(match.otherUser.translatedBio || match.otherUser.bio) && (
-                              <p className="text-xs md:text-sm text-muted-foreground mt-1 line-clamp-1 md:line-clamp-2">
-                                {match.otherUser.translatedBio || match.otherUser.bio}
-                              </p>
-                            )}
-                            <p className="text-xs text-muted-foreground mt-1 md:mt-2">
-                              {t("matches.matchSince")} {new Date(match.created_at).toLocaleDateString()}
-                            </p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <Badge variant="secondary" className="text-xs">
+                                <Heart className="h-3 w-3 mr-1 fill-current" />
+                                {t("matches.matchSince")} {new Date(match.created_at).toLocaleDateString()}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
                         <div className="flex gap-2 justify-end md:ml-4">
