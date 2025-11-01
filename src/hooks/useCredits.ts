@@ -11,6 +11,7 @@ interface UserCredits {
   credits_depleted_at?: string | null;
   daily_likes_remaining?: number;
   daily_likes_reset_at?: string | null;
+  subscription_type?: string;
 }
 
 const fetchCredits = async (): Promise<UserCredits | null> => {
@@ -19,7 +20,7 @@ const fetchCredits = async (): Promise<UserCredits | null> => {
 
   const { data: existingCredits } = await supabase
     .from("user_credits")
-    .select("balance, is_premium, last_daily_reset, premium_expires_at, credits_depleted_at, daily_likes_remaining, daily_likes_reset_at")
+    .select("balance, is_premium, last_daily_reset, premium_expires_at, credits_depleted_at, daily_likes_remaining, daily_likes_reset_at, subscription_type")
     .eq("user_id", session.user.id)
     .maybeSingle();
 
@@ -36,6 +37,7 @@ const fetchCredits = async (): Promise<UserCredits | null> => {
       credits_depleted_at: null,
       daily_likes_remaining: 8,
       daily_likes_reset_at: null,
+      subscription_type: 'none',
     };
   }
 
@@ -54,6 +56,7 @@ const fetchCredits = async (): Promise<UserCredits | null> => {
       credits_depleted_at: existingCredits.credits_depleted_at,
       daily_likes_remaining: existingCredits.daily_likes_remaining,
       daily_likes_reset_at: existingCredits.daily_likes_reset_at,
+      subscription_type: existingCredits.subscription_type,
     };
   }
 

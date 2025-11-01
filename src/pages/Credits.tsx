@@ -117,15 +117,31 @@ const Credits = () => {
             {loading ? (
               <div className="text-center py-4 text-muted-foreground">{t("credits.loading")}</div>
             ) : (credits?.is_premium && (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date())) ? (
-              <div className="flex items-center gap-3">
-                <Crown className="h-8 w-8 text-amber-500" />
-                <div>
-                  <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                    {t("credits.unlimitedCredits")}
+              credits.subscription_type === 'monthly' ? (
+                <div className="flex items-center gap-3">
+                  <Crown className="h-8 w-8 text-amber-500" />
+                  <div>
+                    <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                      {t("credits.unlimitedCredits")}
+                    </div>
+                    <div className="text-sm text-muted-foreground">{t("credits.premiumSubscriptionActive")}</div>
                   </div>
-                  <div className="text-sm text-muted-foreground">{t("credits.premiumSubscriptionActive")}</div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <Crown className="h-8 w-8 text-purple-500" />
+                  <div>
+                    <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                      Premium Settimanale Attivo
+                    </div>
+                    <div className="space-y-1 mt-2 text-sm text-muted-foreground">
+                      <div>💰 40 crediti giornalieri (attuale: {credits.balance})</div>
+                      <div>❤️ 30 like giornalieri</div>
+                      <div>💬 5 chat gratuite al giorno senza match</div>
+                    </div>
+                  </div>
+                </div>
+              )
             ) : (
               <div>
                 <div className="text-4xl font-bold text-primary mb-2">
