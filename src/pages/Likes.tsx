@@ -512,12 +512,12 @@ const Likes = () => {
                             </p>
                           )}
                           
-                          {/* Info aggiuntive: genere, orientamento, stato, cerca */}
+                          {/* Info aggiuntive: genere, orientamento, cerca, stato */}
                           {hasUnlocked && (
                             <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-xs">
                                {like.profile.gender && (
                                  <div className="flex items-start gap-1">
-                                   <span className="font-medium text-foreground/70">{t("common.gender")}</span>
+                                   <span className="font-medium text-foreground/70">{t("common.gender")}:</span>
                                    <span className="text-muted-foreground">
                                      {(() => {
                                        const normalized = normalizeValue(like.profile.gender);
@@ -537,7 +537,7 @@ const Likes = () => {
                               
                                {like.profile.sexual_orientation && (
                                  <div className="flex items-start gap-1">
-                                   <span className="font-medium text-foreground/70">{t("common.orientation")}</span>
+                                   <span className="font-medium text-foreground/70">{t("common.orientation")}:</span>
                                    <span className="text-muted-foreground">
                                      {(() => {
                                        const normalized = normalizeValue(like.profile.sexual_orientation);
@@ -555,9 +555,18 @@ const Likes = () => {
                                  </div>
                                )}
                               
+                               {like.profile.looking_for && like.profile.looking_for.length > 0 && (
+                                 <div className="flex items-start gap-1">
+                                   <span className="font-medium text-foreground/70">{t("common.lookingFor")}:</span>
+                                   <span className="text-muted-foreground">
+                                     {like.profile.translatedLookingFor?.join(", ") || like.profile.looking_for.join(", ")}
+                                   </span>
+                                 </div>
+                               )}
+                              
                                {like.profile.relationship_status && (
                                  <div className="flex items-start gap-1">
-                                   <span className="font-medium text-foreground/70">{t("common.relationshipStatus")}</span>
+                                   <span className="font-medium text-foreground/70">{t("common.relationshipStatus")}:</span>
                                    <span className="text-muted-foreground">
                                      {(() => {
                                        const normalized = normalizeValue(like.profile.relationship_status);
@@ -571,15 +580,6 @@ const Likes = () => {
                                          default: return like.profile.relationship_status;
                                        }
                                      })()}
-                                   </span>
-                                 </div>
-                               )}
-                              
-                               {like.profile.looking_for && like.profile.looking_for.length > 0 && (
-                                 <div className="flex items-start gap-1">
-                                   <span className="font-medium text-foreground/70">{t("common.lookingFor")}</span>
-                                   <span className="text-muted-foreground">
-                                     {like.profile.translatedLookingFor?.join(", ") || like.profile.looking_for.join(", ")}
                                    </span>
                                  </div>
                                )}
