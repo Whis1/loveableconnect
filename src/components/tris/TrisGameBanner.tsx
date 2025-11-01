@@ -247,9 +247,16 @@ export const TrisGameBanner = () => {
 
   if (gameState === "selecting") {
     return (
-      <Card className="mb-6 p-6 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-        <div className="flex justify-between items-start mb-4">
-          <h3 className="text-xl font-bold">🎮 Scegli il tuo gioco</h3>
+      <Card className="mb-6 p-8 bg-gradient-to-br from-primary/15 via-secondary/10 to-primary/10 border-primary/30 backdrop-blur-sm">
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2">
+              🎮 Scegli il tuo gioco
+            </h3>
+            <p className="text-sm text-muted-foreground max-w-md">
+              Sfida altri utenti e scala la classifica ELO. Ogni vittoria aumenta il tuo punteggio!
+            </p>
+          </div>
           <Button
             variant="ghost"
             size="icon"
@@ -257,27 +264,58 @@ export const TrisGameBanner = () => {
               setGameState("idle");
               setShowBanner(false);
             }}
+            className="hover:bg-primary/10"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </Button>
         </div>
+
+        {/* ELO Explanation */}
+        <div className="mb-6 p-4 rounded-lg bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-primary/20">
+          <div className="flex items-start gap-3">
+            <Trophy className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <h4 className="font-semibold text-sm mb-1 text-primary">Cos&apos;è l&apos;ELO?</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Il sistema ELO misura la tua abilità di gioco. Parti da 1200 punti: vinci per guadagnare +20 ELO, 
+                perdi per scendere di -10. Più alto è il tuo ELO, più sei bravo! 🏆
+              </p>
+            </div>
+          </div>
+        </div>
         
-        <div className="grid grid-cols-2 gap-4">
+        {/* Game Selection */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Button
             onClick={() => handleGameSelect("tris")}
-            className="h-32 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-blue-500/20 to-blue-600/20 hover:from-blue-500/30 hover:to-blue-600/30 border-2 border-blue-500/50"
+            className="h-auto p-6 flex flex-col items-center gap-4 bg-gradient-to-br from-blue-500/20 via-blue-600/15 to-blue-700/20 hover:from-blue-500/30 hover:via-blue-600/25 hover:to-blue-700/30 border-2 border-blue-500/40 hover:border-blue-400/60 transition-all duration-300 hover:scale-105 group relative overflow-hidden"
           >
-            <div className="text-5xl">❌⭕</div>
-            <span className="text-lg font-bold">Tris</span>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+            <div className="text-6xl drop-shadow-lg">❌⭕</div>
+            <div className="text-center z-10">
+              <span className="text-xl font-bold block mb-1">Tris</span>
+              <span className="text-xs text-blue-100/80">Classico gioco strategico</span>
+            </div>
           </Button>
           
           <Button
             onClick={() => handleGameSelect("dama")}
-            className="h-32 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-purple-500/20 to-purple-600/20 hover:from-purple-500/30 hover:to-purple-600/30 border-2 border-purple-500/50"
+            className="h-auto p-6 flex flex-col items-center gap-4 bg-gradient-to-br from-purple-500/20 via-purple-600/15 to-purple-700/20 hover:from-purple-500/30 hover:via-purple-600/25 hover:to-purple-700/30 border-2 border-purple-500/40 hover:border-purple-400/60 transition-all duration-300 hover:scale-105 group relative overflow-hidden"
           >
-            <div className="text-5xl">🎲</div>
-            <span className="text-lg font-bold">Dama</span>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+            <div className="text-6xl drop-shadow-lg">🎲</div>
+            <div className="text-center z-10">
+              <span className="text-xl font-bold block mb-1">Dama</span>
+              <span className="text-xs text-purple-100/80">Sfida l&apos;AI esperta</span>
+            </div>
           </Button>
+        </div>
+
+        {/* Stats Footer */}
+        <div className="mt-6 pt-4 border-t border-primary/20 text-center">
+          <p className="text-xs text-muted-foreground">
+            💎 Vinci per guadagnare crediti e aumentare il tuo ELO!
+          </p>
         </div>
       </Card>
     );
