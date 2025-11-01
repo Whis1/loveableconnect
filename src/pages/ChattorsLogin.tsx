@@ -41,6 +41,14 @@ const ChattorsLogin = () => {
       if (error) throw error;
 
       if (!data.success) {
+        // Gestione account disattivato
+        if (data.error && data.error.toLowerCase().includes("disattivato")) {
+          toast.error("Il tuo account è disattivato, chiedi a un admin di attivartelo", {
+            duration: 4000,
+          });
+          setLoading(false);
+          return;
+        }
         throw new Error(data.error || "Credenziali non valide");
       }
 
