@@ -69,6 +69,9 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
   const [capturingPiece, setCapturingPiece] = useState<number | null>(null);
   const gameCompletedRef = useRef(false);
   const moveCountRef = useRef(0);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const leaveIntentRef = useRef<"reload" | "back" | null>(null);
+  const allowNavigateRef = useRef(false);
 
   useEffect(() => {
     initializeBoard();
@@ -76,8 +79,78 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     startBotEmojiSystem();
     setOpponentElo(Math.floor(Math.random() * 601) + 1000);
 
+    // Mark game as active
+    try {
+      localStorage.setItem("checkers_game_active", "1");
+    } catch {}
+
+    // If a pending penalty was set (e.g. previous reload), apply it once
+    (async () => {
+      try {
+        if (localStorage.getItem("checkers_pending_penalty") === "1") {
+          await updateUserElo(-10);
+          localStorage.removeItem("checkers_pending_penalty");
+        }
+      } catch (e) {
+        console.error("Failed applying pending Checkers penalty:", e);
+      }
+    })();
+
+    // Intercept browser reload (F5 / Ctrl+R / Cmd+R)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (gameCompletedRef.current) return;
+      const isReloadKey =
+        e.key === "F5" || ((e.ctrlKey || e.metaKey) && (e.key === "r" || e.key === "R"));
+      if (isReloadKey) {
+        e.preventDefault();
+        leaveIntentRef.current = "reload";
+        setShowLeaveConfirm(true);
+      }
+    };
+
+    // Intercept back navigation
+    const handlePopState = () => {
+      if (allowNavigateRef.current || gameCompletedRef.current) return;
+      // keep user on page and show confirmation
+      history.pushState(null, "", window.location.href);
+      leaveIntentRef.current = "back";
+      setShowLeaveConfirm(true);
+    };
+
+    // Prepare history blocking
+    history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handlePopState);
+    document.addEventListener("keydown", handleKeyDown);
+
+    // Handle page/tab closing or toolbar reload
+    const handleBeforeUnload = () => {
+      if (!gameCompletedRef.current) {
+        try {
+          localStorage.setItem("checkers_pending_penalty", "1");
+        } catch {}
+        // Best-effort immediate penalty (may not complete before unload)
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session) {
+            supabase
+              .rpc("update_tris_elo", {
+                user_id: session.user.id,
+                elo_change: -10,
+              });
+          }
+        });
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
     // Cleanup: detect game abandonment
     return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("popstate", handlePopState);
+      document.removeEventListener("keydown", handleKeyDown);
+      try {
+        localStorage.removeItem("checkers_game_active");
+      } catch {}
       if (!gameCompletedRef.current) {
         // Game was abandoned - apply penalty
         updateUserElo(-10);
@@ -820,6 +893,30 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     }, 4000);
   };
 
+  const cancelLeave = () => {
+    setShowLeaveConfirm(false);
+    leaveIntentRef.current = null;
+  };
+
+  const confirmLeave = async () => {
+    try {
+      localStorage.setItem("checkers_pending_penalty", "1");
+    } catch {}
+    try {
+      await updateUserElo(-10);
+    } catch (e) {
+      console.error("Failed to apply ELO penalty on leave:", e);
+    }
+
+    setShowLeaveConfirm(false);
+    if (leaveIntentRef.current === "reload") {
+      window.location.reload();
+    } else if (leaveIntentRef.current === "back") {
+      allowNavigateRef.current = true;
+      window.history.back();
+    }
+  };
+
   return (
     <Card className="p-6 bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
       {/* Players Row */}
@@ -958,6 +1055,21 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
           <p className="text-xl font-bold text-destructive">😔 Hai perso!</p>
         )}
       </div>
+
+      {showLeaveConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <Card className="w-[90%] max-w-md p-6 shadow-lg">
+            <h2 className="text-lg font-bold mb-2">Conferma abbandono</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Sicuro di voler ricaricare la pagina, così facendo perderai il tuo ELO sul risultato di sconfitta
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button variant="secondary" onClick={cancelLeave}>Resta</Button>
+              <Button variant="destructive" onClick={confirmLeave}>Abbandona</Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </Card>
   );
 };
