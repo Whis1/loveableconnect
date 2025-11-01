@@ -38,7 +38,8 @@ serve(async (req) => {
       'fr': 'FR',
     };
 
-    const targetLang = languageMap[targetLanguage.toLowerCase()];
+    const baseLang = targetLanguage.split('-')[0].toLowerCase();
+    const targetLang = languageMap[baseLang];
     
     // If language not supported by DeepL, return original text
     if (!targetLang) {
