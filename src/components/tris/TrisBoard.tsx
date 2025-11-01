@@ -75,7 +75,19 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
 
     if (data) {
       setCurrentUserProfile(data);
+      console.log("Current user profile:", data);
     }
+  };
+
+  const getAvatarUrl = (avatarPath: string | null) => {
+    if (!avatarPath) return "";
+    
+    // If it's already a full URL, return as is
+    if (avatarPath.startsWith("http")) return avatarPath;
+    
+    // Otherwise construct the full Supabase Storage URL
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    return `${supabaseUrl}/storage/v1/object/public/profile-images/${avatarPath}`;
   };
 
   useEffect(() => {
@@ -236,7 +248,7 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
         <div className="flex items-center space-x-3 relative">
           <div className="relative">
             <Avatar className="w-14 h-14 border-2 border-primary">
-              <AvatarImage src={currentUserProfile?.avatar_url || ""} />
+              <AvatarImage src={getAvatarUrl(currentUserProfile?.avatar_url)} />
               <AvatarFallback>
                 {currentUserProfile?.nickname.slice(0, 2).toUpperCase() || "Tu"}
               </AvatarFallback>
@@ -271,7 +283,7 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
           </div>
           <div className="relative">
             <Avatar className="w-14 h-14 border-2 border-destructive">
-              <AvatarImage src={opponent.avatar_url || ""} />
+              <AvatarImage src={getAvatarUrl(opponent.avatar_url)} />
               <AvatarFallback>
                 {opponent.nickname.slice(0, 2).toUpperCase()}
               </AvatarFallback>
