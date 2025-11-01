@@ -25,7 +25,10 @@ Deno.serve(async (req) => {
 
     const { data, error } = await supabase
       .from('messages')
-      .select('*')
+      .select(`
+        *,
+        sender:profiles!messages_sender_id_fkey(nickname)
+      `)
       .eq('match_id', match_id)
       .order('created_at', { ascending: true });
 
