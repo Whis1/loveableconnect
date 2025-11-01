@@ -8,6 +8,7 @@ import { UserCreditsManager } from "@/components/admin/UserCreditsManager";
 import { ProfileCreator } from "@/components/admin/ProfileCreator";
 import { SupportChatMonitor } from "@/components/admin/SupportChatMonitor";
 import { UserBanManager } from "@/components/admin/UserBanManager";
+import { UserReportsMonitor } from "@/components/admin/UserReportsMonitor";
 import { Shield, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -144,6 +145,8 @@ export default function AdminArrettu() {
         </div>
 
         <UserBanManager />
+
+        <UserReportsMonitor />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <UserCreditsManager />
