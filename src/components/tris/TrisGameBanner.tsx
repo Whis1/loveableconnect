@@ -19,11 +19,28 @@ export const TrisGameBanner = () => {
   const [opponent, setOpponent] = useState<Profile | null>(null);
   const [gamesPlayed, setGamesPlayed] = useState(0);
   const [nextResetTime, setNextResetTime] = useState<Date | null>(null);
+  const [userCredits, setUserCredits] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
     checkGamesRemaining();
+    fetchUserCredits();
   }, []);
+
+  const fetchUserCredits = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const { data } = await supabase
+      .from("user_credits")
+      .select("balance")
+      .eq("user_id", session.user.id)
+      .single();
+
+    if (data) {
+      setUserCredits(data.balance);
+    }
+  };
 
   const checkGamesRemaining = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -62,7 +79,7 @@ export const TrisGameBanner = () => {
         setGamesPlayed(0);
       } else {
         setGamesPlayed(data.games_played_today);
-        if (data.games_played_today >= 3) {
+        if (data.games_played_today >= 5) {
           const resetDate = new Date(data.last_reset_date);
           resetDate.setDate(resetDate.getDate() + 1);
           setNextResetTime(resetDate);
@@ -71,14 +88,41 @@ export const TrisGameBanner = () => {
     }
   };
 
-  const handleStartGame = () => {
-    if (gamesPlayed >= 3) {
-      toast({
-        title: "Limite raggiunto",
-        description: "Hai esaurito le tue sfide giornaliere!",
-        variant: "destructive",
-      });
-      return;
+  const handleStartGame = async () => {
+    if (gamesPlayed >= 5) {
+      // Check if user has enough credits to play
+      if (userCredits < 2) {
+        toast({
+          title: "Crediti insufficienti",
+          description: "Hai bisogno di 2 crediti per giocare un'altra partita!",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Deduct 2 credits
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data: credits } = await supabase
+        .from("user_credits")
+        .select("balance")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if (credits) {
+        await supabase
+          .from("user_credits")
+          .update({ balance: credits.balance - 2 })
+          .eq("user_id", session.user.id);
+
+        setUserCredits(credits.balance - 2);
+
+        toast({
+          title: "Partita extra",
+          description: "Hai speso 2 crediti per giocare un'altra partita!",
+        });
+      }
     }
     setGameState("searching");
   };
@@ -112,12 +156,14 @@ export const TrisGameBanner = () => {
       if (credits) {
         await supabase
           .from("user_credits")
-          .update({ balance: credits.balance + 5 })
+          .update({ balance: credits.balance + 6 })
           .eq("user_id", session.user.id);
+
+        setUserCredits(credits.balance + 6);
 
         toast({
           title: "🎉 Complimenti!",
-          description: "Hai vinto la sfida e guadagnato +5 crediti!",
+          description: "Hai vinto la sfida e guadagnato +6 crediti!",
         });
       }
     } else if (result === "draw") {
@@ -132,12 +178,15 @@ export const TrisGameBanner = () => {
       });
     }
 
-    // Check if reached limit
-    if (newGamesPlayed >= 3) {
+    // Check if reached free limit
+    if (newGamesPlayed >= 5) {
       const today = new Date();
       today.setDate(today.getDate() + 1);
       setNextResetTime(today);
     }
+
+    // Refresh credits after game
+    await fetchUserCredits();
 
     // Reset game
     setTimeout(() => {
@@ -209,27 +258,36 @@ export const TrisGameBanner = () => {
         </Button>
       </div>
 
-      {gamesPlayed >= 3 ? (
-        <div className="text-center py-4">
-          <p className="text-lg mb-2">Hai esaurito le tue sfide giornaliere!</p>
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
           <p className="text-muted-foreground">
-            Torna tra <span className="font-bold text-primary">{getTimeRemaining()}</span> per giocare di nuovo.
+            Partite gratuite oggi: <span className="font-bold text-primary">{Math.max(0, 5 - gamesPlayed)}</span>/5
+          </p>
+          <p className="text-muted-foreground">
+            Crediti: <span className="font-bold text-primary">{userCredits}</span>
           </p>
         </div>
-      ) : (
-        <div className="space-y-4">
-          <p className="text-muted-foreground">
-            Partite rimanenti oggi: <span className="font-bold text-primary">{3 - gamesPlayed}</span>/3
-          </p>
+
+        {gamesPlayed >= 5 && userCredits < 2 ? (
+          <div className="text-center py-4">
+            <p className="text-lg mb-2">Hai esaurito le tue sfide giornaliere!</p>
+            <p className="text-muted-foreground">
+              Torna tra <span className="font-bold text-primary">{getTimeRemaining()}</span> per giocare di nuovo gratuitamente.
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Oppure ottieni più crediti per continuare a giocare!
+            </p>
+          </div>
+        ) : (
           <Button
             onClick={handleStartGame}
             className="w-full bg-primary hover:bg-primary/90"
           >
             <Trophy className="w-4 h-4 mr-2" />
-            Iniziare a giocare
+            {gamesPlayed >= 5 ? "Gioca con 2 crediti" : "Iniziare a giocare"}
           </Button>
-        </div>
-      )}
+        )}
+      </div>
     </Card>
   );
 };

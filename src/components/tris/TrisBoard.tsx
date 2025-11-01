@@ -368,7 +368,7 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
           </p>
         )}
         {gameOver && winner === "player" && (
-          <p className="text-xl font-bold text-primary">🎉 Hai vinto! +5 crediti</p>
+          <p className="text-xl font-bold text-primary">🎉 Hai vinto! +6 crediti</p>
         )}
         {gameOver && winner === "bot" && (
           <p className="text-xl font-bold text-destructive">😔 Hai perso!</p>
