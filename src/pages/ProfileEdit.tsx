@@ -544,7 +544,7 @@ const ProfileEdit = () => {
                 <AlertDescription className="text-amber-800 dark:text-amber-200">
                   <strong>⚠️ Completa il tuo profilo per continuare</strong>
                   <br />
-                  Per questioni legali, devi inserire la tua data di nascita (devi essere maggiorenne) e la tua posizione prima di poter accedere al sito. Non potrai uscire da questa pagina finché non avrai completato questi campi obbligatori.
+                  Per questioni di tutela e sicurezza, è necessario inserire la propria data di nascita (solo per utenti maggiorenni) e la propria posizione. L'accesso al sito sarà consentito solo dopo aver completato i campi obbligatori.
                 </AlertDescription>
               </Alert>
             )}
