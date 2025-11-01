@@ -409,6 +409,13 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
 
   const handleUseCreditsForLike = async () => {
     setShowLikesExhausted(false);
+    
+    // Check if user has enough credits BEFORE attempting
+    if ((credits?.balance ?? 0) < 2) {
+      setShowCreditsBanner(true);
+      return;
+    }
+    
     await handleLike({ stopPropagation: () => {} } as React.MouseEvent, true);
   };
 
@@ -681,7 +688,6 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
         onOpenChange={setShowLikesExhausted}
         onUseCredits={handleUseCreditsForLike}
         resetAt={resetAt}
-        hasEnoughCredits={(credits?.balance ?? 0) >= 2}
       />
       
       <ChatConfirmationBanner

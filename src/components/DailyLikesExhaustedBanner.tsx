@@ -6,15 +6,13 @@ interface DailyLikesExhaustedBannerProps {
   onOpenChange: (open: boolean) => void;
   onUseCredits: () => void;
   resetAt: string | null;
-  hasEnoughCredits: boolean;
 }
 
 export const DailyLikesExhaustedBanner = ({ 
   open, 
   onOpenChange, 
   onUseCredits,
-  resetAt,
-  hasEnoughCredits 
+  resetAt
 }: DailyLikesExhaustedBannerProps) => {
   const formatTimeRemaining = () => {
     if (!resetAt) return "24 ore";
@@ -51,26 +49,17 @@ export const DailyLikesExhaustedBanner = ({
               <div className="text-sm">
                 <strong>Attendi il rinnovo:</strong> {formatTimeRemaining()}
               </div>
-              {hasEnoughCredits && (
-                <div className="text-sm text-primary">
-                  Oppure usa <strong>2 crediti</strong> per mettere like subito
-                </div>
-              )}
-            </div>
-            {!hasEnoughCredits && (
-              <div className="text-sm text-destructive">
-                Non hai abbastanza crediti. Acquistane di più o attendi il reset giornaliero.
+              <div className="text-sm text-primary">
+                Oppure usa <strong>2 crediti</strong> per mettere like subito
               </div>
-            )}
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="flex-col sm:flex-row gap-2">
           <AlertDialogCancel className="m-0">Attendi Rinnovo</AlertDialogCancel>
-          {hasEnoughCredits && (
-            <AlertDialogAction onClick={onUseCredits} className="m-0">
-              Usa 2 Crediti
-            </AlertDialogAction>
-          )}
+          <AlertDialogAction onClick={onUseCredits} className="m-0">
+            Usa 2 Crediti
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
