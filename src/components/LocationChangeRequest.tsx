@@ -28,7 +28,7 @@ export const LocationChangeRequest = ({ currentCity, onRequestSubmit }: Location
   const handleSubmitRequest = () => {
     if (selectedCity && coordinates) {
       onRequestSubmit(selectedCity, coordinates.lat, coordinates.lng);
-      navigate('/support');
+      // Navigazione gestita dal parent con lo state corretto
     }
   };
 

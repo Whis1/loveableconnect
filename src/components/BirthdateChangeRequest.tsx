@@ -23,7 +23,7 @@ export const BirthdateChangeRequest = ({ currentBirthdate, onRequestSubmit }: Bi
     if (birthDay && birthMonth && birthYear) {
       const newBirthdate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
       onRequestSubmit(newBirthdate);
-      navigate('/support');
+      // Navigazione gestita dal parent con lo state corretto
     }
   };
 
