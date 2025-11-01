@@ -254,7 +254,7 @@ export const TrisGameBanner = () => {
               🎮 Scegli il tuo gioco
             </h3>
             <p className="text-sm text-muted-foreground max-w-md">
-              Sfida altri utenti e scala la classifica ELO. Ogni vittoria aumenta il tuo punteggio!
+              Sfida altri utenti e scala la classifica ELO. Ogni vittoria aumenta il tuo punteggio e ottieni 6 crediti!
             </p>
           </div>
           <Button
@@ -277,8 +277,8 @@ export const TrisGameBanner = () => {
             <div className="flex-1">
               <h4 className="font-semibold text-sm mb-1 text-primary">Cos&apos;è l&apos;ELO?</h4>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Il sistema ELO misura la tua abilità di gioco. Parti da 1200 punti: vinci per guadagnare +20 ELO, 
-                perdi per scendere di -10. Più alto è il tuo ELO, più sei bravo! 🏆
+                Il sistema ELO misura il livello della tua abilità di gioco. Parti da 1200 punti: se vinci acquisisci +20 ELO, 
+                se perdi scendi di -10. Più alto è il tuo ELO, più dimostri la tua bravura! 🏆
               </p>
             </div>
           </div>
