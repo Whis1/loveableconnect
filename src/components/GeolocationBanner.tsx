@@ -17,6 +17,29 @@ export const GeolocationBanner = ({ onActivate, onClose }: GeolocationBannerProp
     setShowConsentStep(true);
   };
 
+  const handleConsentChange = async (checked: boolean) => {
+    setCookieConsent(checked);
+    
+    if (checked) {
+      // Trigger browser geolocation prompt immediately when checkbox is checked
+      if (navigator.geolocation) {
+        try {
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject);
+          });
+          
+          // If user accepts, save and activate
+          localStorage.setItem("geolocationEnabled", "true");
+          localStorage.setItem("geolocationCookieConsent", "accepted");
+          onActivate();
+        } catch (error) {
+          // If user denies or error occurs, uncheck the checkbox
+          setCookieConsent(false);
+        }
+      }
+    }
+  };
+
   const handleFinalActivate = () => {
     if (!cookieConsent) {
       return;
@@ -114,7 +137,7 @@ export const GeolocationBanner = ({ onActivate, onClose }: GeolocationBannerProp
                     <Checkbox
                       id="cookie-consent"
                       checked={cookieConsent}
-                      onCheckedChange={(checked) => setCookieConsent(checked === true)}
+                      onCheckedChange={handleConsentChange}
                       className="h-5 w-5"
                     />
                   </div>
