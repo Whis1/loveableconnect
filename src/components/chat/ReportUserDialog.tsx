@@ -26,7 +26,7 @@ import { useTranslation } from "react-i18next";
 interface ReportUserDialogProps {
   reportedUserId: string;
   reportedUserName: string;
-  matchId: string;
+  matchId?: string;
 }
 
 export const ReportUserDialog = ({
@@ -79,12 +79,14 @@ export const ReportUserDialog = ({
         .insert({
           reporter_id: session.user.id,
           reported_id: reportedUserId,
-          match_id: matchId,
+          match_id: matchId || null,
           report_type: reportType,
           reason: reason || null,
         });
 
       if (reportError) throw reportError;
+
+      console.log("✓ Segnalazione inviata con successo");
 
       toast({
         title: "✓ Segnalazione inviata",
