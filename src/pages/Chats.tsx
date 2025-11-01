@@ -24,7 +24,6 @@ const Chats = () => {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [loading, setLoading] = useState(true);
   const [sessionInfo, setSessionInfo] = useState<any>(null);
-  const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
     // Verifica sessione chattors
@@ -39,6 +38,7 @@ const Chats = () => {
     try {
       const parsed = JSON.parse(session);
       setSessionInfo(parsed);
+      // Avvia fetch in background senza bloccare la UI
       fetchConversations(false);
       cleanup = subscribeToUpdates();
     } catch (error) {
@@ -72,8 +72,7 @@ const Chats = () => {
       console.error("Error fetching conversations:", error);
       toast.error("Errore nel caricamento delle conversazioni");
     } finally {
-      if (!silent) setLoading(false);
-      setInitialLoading(false);
+      setLoading(false);
     }
   };
 
@@ -129,12 +128,9 @@ const Chats = () => {
     navigate("/chattors-login");
   };
 
-  if (initialLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+  // Verifica sessione - se non c'è redirect subito
+  if (!sessionInfo) {
+    return null;
   }
 
   return (
@@ -169,6 +165,7 @@ const Chats = () => {
           selectedConversation={selectedConversation}
           onSelectConversation={setSelectedConversation}
           onRefresh={fetchConversations}
+          loading={loading}
         />
         
         <ChatView

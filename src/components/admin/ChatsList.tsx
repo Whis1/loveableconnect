@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
@@ -25,6 +26,7 @@ interface ChatsListProps {
   selectedConversation: Conversation | null;
   onSelectConversation: (conversation: Conversation) => void;
   onRefresh: () => void;
+  loading?: boolean;
 }
 
 export const ChatsList = ({
@@ -32,6 +34,7 @@ export const ChatsList = ({
   selectedConversation,
   onSelectConversation,
   onRefresh,
+  loading = false,
 }: ChatsListProps) => {
   const getAvatarUrl = (path: string | null) => {
     if (!path) return null;
@@ -68,7 +71,21 @@ export const ChatsList = ({
       </div>
 
       <ScrollArea className="flex-1">
-        {conversations.length === 0 ? (
+        {loading ? (
+          <div className="p-2 space-y-1">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="w-full p-3 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : conversations.length === 0 ? (
           <div className="p-8 text-center">
             <MessageCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
             <p className="text-sm text-muted-foreground">
