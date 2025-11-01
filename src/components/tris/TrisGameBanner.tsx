@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Trophy, X } from "lucide-react";
 import { OpponentSearch } from "./OpponentSearch";
 import { TrisBoard } from "./TrisBoard";
+import { CheckersBoard } from "./CheckersBoard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -15,7 +16,8 @@ interface Profile {
 
 export const TrisGameBanner = () => {
   const [showBanner, setShowBanner] = useState(false);
-  const [gameState, setGameState] = useState<"idle" | "searching" | "playing">("idle");
+  const [gameState, setGameState] = useState<"idle" | "selecting" | "searching" | "playing">("idle");
+  const [selectedGame, setSelectedGame] = useState<"tris" | "dama" | null>(null);
   const [opponent, setOpponent] = useState<Profile | null>(null);
   const [gamesPlayed, setGamesPlayed] = useState(0);
   const [nextResetTime, setNextResetTime] = useState<Date | null>(null);
@@ -124,6 +126,11 @@ export const TrisGameBanner = () => {
         });
       }
     }
+    setGameState("selecting");
+  };
+
+  const handleGameSelect = (game: "tris" | "dama") => {
+    setSelectedGame(game);
     setGameState("searching");
   };
 
@@ -191,6 +198,7 @@ export const TrisGameBanner = () => {
     // Reset game
     setTimeout(() => {
       setGameState("idle");
+      setSelectedGame(null);
       setOpponent(null);
       setShowBanner(false);
     }, 3000);
@@ -237,12 +245,54 @@ export const TrisGameBanner = () => {
     );
   }
 
+  if (gameState === "selecting") {
+    return (
+      <Card className="mb-6 p-6 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+        <div className="flex justify-between items-start mb-4">
+          <h3 className="text-xl font-bold">🎮 Scegli il tuo gioco</h3>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              setGameState("idle");
+              setShowBanner(false);
+            }}
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <Button
+            onClick={() => handleGameSelect("tris")}
+            className="h-32 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-blue-500/20 to-blue-600/20 hover:from-blue-500/30 hover:to-blue-600/30 border-2 border-blue-500/50"
+          >
+            <div className="text-5xl">❌⭕</div>
+            <span className="text-lg font-bold">Tris</span>
+          </Button>
+          
+          <Button
+            onClick={() => handleGameSelect("dama")}
+            className="h-32 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-purple-500/20 to-purple-600/20 hover:from-purple-500/30 hover:to-purple-600/30 border-2 border-purple-500/50"
+          >
+            <div className="text-5xl">🎲</div>
+            <span className="text-lg font-bold">Dama</span>
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
   if (gameState === "searching") {
     return <OpponentSearch onOpponentFound={handleOpponentFound} />;
   }
 
-  if (gameState === "playing" && opponent) {
+  if (gameState === "playing" && opponent && selectedGame === "tris") {
     return <TrisBoard opponent={opponent} onGameEnd={handleGameEnd} />;
+  }
+
+  if (gameState === "playing" && opponent && selectedGame === "dama") {
+    return <CheckersBoard opponent={opponent} onGameEnd={handleGameEnd} />;
   }
 
   return (
@@ -259,14 +309,9 @@ export const TrisGameBanner = () => {
       </div>
 
       <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <p className="text-muted-foreground">
-            Partite gratuite oggi: <span className="font-bold text-primary">{Math.max(0, 5 - gamesPlayed)}</span>/5
-          </p>
-          <p className="text-muted-foreground">
-            Crediti: <span className="font-bold text-primary">{userCredits}</span>
-          </p>
-        </div>
+        <p className="text-muted-foreground text-center">
+          Partite gratuite oggi: <span className="font-bold text-primary">{Math.max(0, 5 - gamesPlayed)}</span>/5
+        </p>
 
         {gamesPlayed >= 5 && userCredits < 2 ? (
           <div className="text-center py-4">
