@@ -74,6 +74,9 @@ const Explore = () => {
   const genderOptions = [
     { value: "male", label: "Uomo" },
     { value: "female", label: "Donna" },
+    { value: "transgender", label: "Transgender" },
+    { value: "transexual", label: "Transessuale" },
+    { value: "genderfluid", label: "Genderfluid" },
     { value: "non-binary", label: "Non binario" },
   ];
 
@@ -82,12 +85,16 @@ const Explore = () => {
     { value: "homosexual", label: "Omosessuale" },
     { value: "bisexual", label: "Bisessuale" },
     { value: "pansexual", label: "Pansessuale" },
+    { value: "asexual", label: "Asessuale" },
   ];
 
   // Map canonical filter values to synonyms actually present in DB (Italian/English variants)
   const genderSynonymsMap: Record<string, string[]> = {
     "male": ["male", "uomo", "maschio", "man", "m"],
     "female": ["female", "donna", "femmina", "woman", "f"],
+    "transgender": ["transgender", "trans"],
+    "transexual": ["transexual", "transessuale", "transsexual", "transex"],
+    "genderfluid": ["genderfluid", "gender-fluid", "gender fluid"],
     "non-binary": ["non-binary", "non binary", "nonbinary", "non binario", "enby"],
   };
 
@@ -96,6 +103,7 @@ const Explore = () => {
     "homosexual": ["homosexual", "omosessuale", "gay", "lesbian", "lesbo"],
     "bisexual": ["bisexual", "bisessuale", "bi"],
     "pansexual": ["pansexual", "pansessuale", "pansexuale", "pan"],
+    "asexual": ["asexual", "asessuale", "ace"],
   };
 
   useEffect(() => {

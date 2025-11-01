@@ -91,6 +91,10 @@ export const ProfileManager = () => {
       uomo: t('common.male'),
       female: t('common.female'),
       donna: t('common.female'),
+      transgender: t('common.transgender'),
+      transexual: t('common.transexual'),
+      transessuale: t('common.transexual'),
+      genderfluid: t('common.genderfluid'),
       "non-binary": t('common.nonBinary'),
       "non binario": t('common.nonBinary'),
       other: t('common.other'),
@@ -111,6 +115,8 @@ export const ProfileManager = () => {
       bisessuale: t('common.bisexual'),
       pansexual: t('common.pansexual'),
       pansessuale: t('common.pansexual'),
+      asexual: t('common.asexual'),
+      asessuale: t('common.asexual'),
       other: t('common.other'),
       altro: t('common.other'),
     };
@@ -748,6 +754,9 @@ export const ProfileManager = () => {
                                     <SelectItem value="male">Uomo</SelectItem>
                                     <SelectItem value="female">Donna</SelectItem>
                                     <SelectItem value="non-binary">Non binario</SelectItem>
+                                    <SelectItem value="genderfluid">Genderfluid</SelectItem>
+                                    <SelectItem value="transexual">Transessuale</SelectItem>
+                                    <SelectItem value="transgender">Transgender</SelectItem>
                                     <SelectItem value="other">Altro</SelectItem>
                                   </SelectContent>
                                 </Select>
@@ -773,6 +782,7 @@ export const ProfileManager = () => {
                                     <SelectItem value="homosexual">Omosessuale</SelectItem>
                                     <SelectItem value="bisexual">Bisessuale</SelectItem>
                                     <SelectItem value="pansexual">Pansessuale</SelectItem>
+                                    <SelectItem value="asexual">Asessuale</SelectItem>
                                     <SelectItem value="other">Altro</SelectItem>
                                   </SelectContent>
                                 </Select>

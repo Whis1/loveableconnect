@@ -192,6 +192,9 @@ export const ProfileCreator = () => {
               <SelectContent>
                 <SelectItem value="male">Uomo</SelectItem>
                 <SelectItem value="female">Donna</SelectItem>
+                <SelectItem value="transgender">Transgender</SelectItem>
+                <SelectItem value="transexual">Transessuale</SelectItem>
+                <SelectItem value="genderfluid">Genderfluid</SelectItem>
                 <SelectItem value="non-binary">Non binario</SelectItem>
               </SelectContent>
             </Select>
@@ -207,6 +210,7 @@ export const ProfileCreator = () => {
                 <SelectItem value="homosexual">Omosessuale</SelectItem>
                 <SelectItem value="bisexual">Bisessuale</SelectItem>
                 <SelectItem value="pansexual">Pansexuale</SelectItem>
+                <SelectItem value="asexual">Asessuale</SelectItem>
               </SelectContent>
             </Select>
           </div>

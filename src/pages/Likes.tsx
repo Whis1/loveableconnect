@@ -47,6 +47,9 @@ const normalizeValue = (value: string | null | undefined): string | null => {
     'male': 'male', 'man': 'male', 'uomo': 'male', 'homme': 'male', 'mann': 'male', 'hombre': 'male',
     'female': 'female', 'woman': 'female', 'donna': 'female', 'femme': 'female', 'frau': 'female', 'mujer': 'female',
     'non-binary': 'non-binary', 'nonbinary': 'non-binary', 'non binario': 'non-binary', 'nicht-binär': 'non-binary',
+    'transexual': 'transexual', 'transessuale': 'transexual', 'transsexuell': 'transexual',
+    'transgender': 'transgender', 'transgenre': 'transgender',
+    'genderfluid': 'genderfluid', 'genre fluide': 'genderfluid'
   };
   
   // Orientation mappings
@@ -55,6 +58,7 @@ const normalizeValue = (value: string | null | undefined): string | null => {
     'homosexual': 'homosexual', 'omosessuale': 'homosexual', 'homosexuel': 'homosexual', 'homosexuell': 'homosexual',
     'bisexual': 'bisexual', 'bisessuale': 'bisexual', 'bisexuel': 'bisexual', 'bisexuell': 'bisexual',
     'pansexual': 'pansexual', 'pansessuale': 'pansexual', 'pansexuel': 'pansexual', 'pansexuell': 'pansexual',
+    'asexual': 'asexual', 'asessuale': 'asexual', 'asexuel': 'asexual', 'asexuell': 'asexual',
     'other': 'other', 'altro': 'other', 'autre': 'other', 'sonstiges': 'other'
   };
   
@@ -175,8 +179,8 @@ const Likes = () => {
             const translatedLookingFor = profile.looking_for ? await translateArray(profile.looking_for) : null;
 
             // Normalize and translate gender, orientation, relationship_type
-            const genderCodes = ['male','female','non-binary'];
-            const orientationCodes = ['heterosexual','homosexual','bisexual','pansexual','other'];
+            const genderCodes = ['male','female','non-binary','transexual','transgender','genderfluid'];
+            const orientationCodes = ['heterosexual','homosexual','bisexual','pansexual','asexual','other'];
             const relationshipTypeCodes = ['serious','casual','friendship','not-sure','prefer-not-say'];
 
             const translatedGender = profile.gender && !genderCodes.includes(profile.gender)
@@ -540,6 +544,7 @@ const Likes = () => {
                                          case 'homosexual': return t("common.homosexual");
                                          case 'bisexual': return t("common.bisexual");
                                          case 'pansexual': return t("common.pansexual");
+                                         case 'asexual': return t("common.asexual");
                                          case 'other': return t("common.other");
                                          default: return like.profile.translatedOrientation || like.profile.sexual_orientation;
                                        }
