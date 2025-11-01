@@ -328,14 +328,14 @@ const Matches = () => {
                             <div className="absolute -bottom-1 -right-1">
                               <OnlineIndicator userId={match.otherUser.id} size="md" />
                             </div>
-                            <div className="absolute top-0 -left-1 rounded-full shadow-md">
-                              <img src={matchHeartIcon} alt="Match" className="h-5 w-5 md:h-6 md:w-6 object-contain" />
-                            </div>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-bold text-lg md:text-xl truncate bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                              {match.otherUser.nickname}
-                            </h3>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-bold text-lg md:text-xl truncate bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                                {match.otherUser.nickname}
+                              </h3>
+                              <img src={matchHeartIcon} alt="Match" className="h-5 w-5 md:h-6 md:w-6 object-contain shrink-0" />
+                            </div>
                             <div className="flex items-center gap-2 mt-2">
                               <Badge variant="secondary" className="text-xs">
                                 <Heart className="h-3 w-3 mr-1 fill-current" />
