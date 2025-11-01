@@ -72,8 +72,26 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
     // Generate random ELO for opponent (between 1000 and 1600)
     setOpponentElo(Math.floor(Math.random() * 601) + 1000);
 
+    // Handle game abandonment on page unload
+    const handleBeforeUnload = () => {
+      if (!gameCompletedRef.current) {
+        // Apply penalty immediately on unload
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session) {
+            supabase.rpc("update_tris_elo", {
+              user_id: session.user.id,
+              elo_change: -10,
+            });
+          }
+        });
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     // Cleanup: detect game abandonment
     return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       if (!gameCompletedRef.current) {
         // Game was abandoned - apply penalty
         updateUserElo(-10);
