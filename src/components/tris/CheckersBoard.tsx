@@ -723,15 +723,10 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     const boardChanged = JSON.stringify(newBoard) !== JSON.stringify(board);
     
     if (!boardChanged) {
-      // Guard against false positives at game start
-      if (moveCountRef.current === 0) {
-        console.warn("Bot has no moves on first turn, switching to player turn to avoid false win.");
-        setIsPlayerTurn(true);
-        return;
-      }
+      // Bot has no valid moves - player wins
       setGameOver(true);
       setWinner("player");
-      gameCompletedRef.current = true; // Mark game as completed normally
+      gameCompletedRef.current = true;
       updateUserElo(20);
       onGameEnd("win");
       return;
