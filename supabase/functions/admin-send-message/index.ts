@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
       media_url = null 
     } = await req.json();
 
-    if (!match_id || !sender_id || !receiver_id || !content) {
+    if (!match_id || !sender_id || !receiver_id || (!content && !media_url)) {
       return new Response(
         JSON.stringify({ success: false, error: 'Missing required fields' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
