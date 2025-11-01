@@ -128,14 +128,29 @@ export const InboxDropdown = () => {
       <Button
         variant="ghost"
         size="icon"
-        className="relative hover:bg-primary/10 transition-colors"
+        className="relative h-12 w-12 rounded-full hover:scale-110 transition-all duration-300 group"
         onClick={handleOpen}
       >
-        <Mail className="h-5 w-5" />
+        <div className="relative">
+          {/* Envelope base with gradient */}
+          <div className="absolute inset-0 bg-gradient-to-br from-pink-400 via-rose-400 to-purple-500 rounded-lg opacity-20 group-hover:opacity-30 transition-opacity blur-sm" />
+          
+          {/* Main icon with heart inside */}
+          <div className="relative">
+            <Mail className="h-6 w-6 text-pink-500 group-hover:text-rose-500 transition-colors" />
+            <Heart className="h-3 w-3 text-rose-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 group-hover:scale-110 transition-transform" fill="currentColor" />
+          </div>
+        </div>
+        
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 h-5 w-5 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse shadow-lg">
-            {unreadCount}
-          </span>
+          <>
+            {/* Pulsing glow effect */}
+            <span className="absolute -top-1 -right-1 h-6 w-6 bg-gradient-to-r from-pink-500 to-rose-500 rounded-full animate-ping opacity-75" />
+            {/* Badge counter */}
+            <span className="absolute -top-1 -right-1 h-6 w-6 bg-gradient-to-r from-pink-500 via-rose-500 to-purple-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg border-2 border-background z-10">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          </>
         )}
       </Button>
 
