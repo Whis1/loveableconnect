@@ -514,7 +514,7 @@ const Likes = () => {
                           
                           {/* Info aggiuntive: genere, orientamento, cerca, stato */}
                           {hasUnlocked && (
-                            <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-xs">
+                            <div className="space-y-1 mt-2 text-xs">
                                {like.profile.gender && (
                                  <div className="flex items-start gap-1">
                                    <span className="font-medium text-foreground/70">{t("common.gender")}:</span>
