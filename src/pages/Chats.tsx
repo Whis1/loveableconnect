@@ -52,7 +52,7 @@ const Chats = () => {
     };
   }, [navigate]);
 
-  const fetchConversations = async (silent = false) => {
+  const fetchConversations = async (silent = true) => {
     try {
       if (!silent) setLoading(true);
 
@@ -67,7 +67,15 @@ const Chats = () => {
         throw new Error(data.error || "Errore nel recupero delle conversazioni");
       }
 
-      setConversations(data.conversations || []);
+      const list = data.conversations || [];
+      setConversations(() => {
+        if (!selectedConversation) return list;
+        return list.map((c: any) =>
+          c.matchId === selectedConversation.matchId && c.userId === selectedConversation.userId
+            ? { ...c, unreadCount: 0 }
+            : c
+        );
+      });
     } catch (error) {
       console.error("Error fetching conversations:", error);
       toast.error("Errore nel caricamento delle conversazioni");

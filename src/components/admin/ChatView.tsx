@@ -49,11 +49,13 @@ export const ChatView = ({ conversation, onRefresh, chattorsNickname }: ChatView
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (conversation) {
-      fetchMessages();
-      markAsRead();
-      subscribeToMessages();
-    }
+    if (!conversation) return;
+    fetchMessages();
+    markAsRead();
+    const unsubscribe = subscribeToMessages();
+    return () => {
+      unsubscribe?.();
+    };
   }, [conversation?.matchId]);
 
   const fetchMessages = async () => {

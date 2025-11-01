@@ -126,7 +126,11 @@ export const ChatsList = ({
                       <span className="font-medium text-sm truncate">
                         {conv.userNickname}
                       </span>
-                      {conv.unreadCount > 0 && (
+                      {conv.unreadCount > 0 &&
+                        !(
+                          selectedConversation?.matchId === conv.matchId &&
+                          selectedConversation?.userId === conv.userId
+                        ) && (
                         <Badge 
                           variant="default" 
                           className="h-5 min-w-[20px] px-1.5 text-xs"
