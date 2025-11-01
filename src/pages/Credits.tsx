@@ -175,7 +175,7 @@ const Credits = () => {
                 <ul className="space-y-2">
                   <li className="flex items-center gap-2">
                     <Zap className="h-5 w-5 text-amber-500" />
-                    <span>{t("credits.unlimitedMessaging")}</span>
+                    <span>{t("credits.unlimitedCredits")}</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Heart className="h-5 w-5 text-amber-500" />
