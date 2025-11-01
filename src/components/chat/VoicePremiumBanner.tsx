@@ -57,7 +57,7 @@ export const VoicePremiumBanner = ({ isVisible, onClose }: VoicePremiumBannerPro
                 L&apos;invio di messaggi vocali è una funzionalità riservata agli utenti PREMIUM.
               </p>
               <p className="text-base text-amber-950 leading-relaxed font-medium mt-2">
-                Per accedere a questa funzione effettua l&apos;Abbonamento PREMIUM mensile.
+                Per accedere a questa funzione effettua l&apos;Abbonamento PREMIUM.
               </p>
             </div>
           </div>
