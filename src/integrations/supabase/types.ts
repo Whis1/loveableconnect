@@ -86,6 +86,27 @@ export type Database = {
         }
         Relationships: []
       }
+      blocked_users: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           amount: number
@@ -685,6 +706,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_reports: {
+        Row: {
+          created_at: string
+          id: string
+          match_id: string | null
+          reason: string | null
+          report_type: string
+          reported_id: string
+          reporter_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          match_id?: string | null
+          reason?: string | null
+          report_type: string
+          reported_id: string
+          reporter_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          match_id?: string | null
+          reason?: string | null
+          report_type?: string
+          reported_id?: string
+          reporter_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -764,6 +815,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_user_blocked: {
+        Args: { _user1_id: string; _user2_id: string }
         Returns: boolean
       }
       like_with_credits: {

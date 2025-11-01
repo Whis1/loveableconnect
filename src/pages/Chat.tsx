@@ -12,6 +12,7 @@ import { GifPicker } from "@/components/chat/GifPicker";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ChatUserProfile } from "@/components/chat/ChatUserProfile";
 import { InsufficientCreditsBanner } from "@/components/chat/InsufficientCreditsBanner";
+import { ReportUserDialog } from "@/components/chat/ReportUserDialog";
 import { useCredits } from "@/hooks/useCredits";
 import { useTranslation } from "react-i18next";
 import OnlineIndicator from "@/components/OnlineIndicator";
@@ -56,9 +57,22 @@ const Chat = () => {
   const { deductCredits } = useCredits();
   const [showCreditsBanner, setShowCreditsBanner] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
 
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    const checkBlockStatus = async (userId: string, otherUserId: string) => {
+      const { data, error } = await supabase
+        .from("blocked_users")
+        .select("id")
+        .or(`and(blocker_id.eq.${userId},blocked_id.eq.${otherUserId}),and(blocker_id.eq.${otherUserId},blocked_id.eq.${userId})`)
+        .maybeSingle();
+
+      if (!error && data) {
+        setIsBlocked(true);
+      }
+    };
 
     const initChat = async () => {
       console.log('[Chat] initChat start', { matchId });
@@ -140,6 +154,9 @@ const Chat = () => {
       };
 
       setOtherUser(profileWithPublicAvatar);
+
+      // Verifica se l'utente è bloccato
+      await checkBlockStatus(session.user.id, otherUserId);
 
       // Fetch messages
       const { data: messagesData } = await supabase
@@ -338,6 +355,14 @@ const Chat = () => {
     }
   };
 
+  const handleBlock = () => {
+    setIsBlocked(true);
+    toast({
+      title: "Utente bloccato",
+      description: "Non potrete più scrivervi messaggi",
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -385,15 +410,25 @@ const Chat = () => {
                   </div>
                 )}
               </div>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => setShowProfile(!showProfile)}
-                className="gap-1 md:gap-2 shrink-0"
-              >
-                {showProfile ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                <span className="hidden sm:inline">{showProfile ? t("chat.hideProfile") : t("chat.showProfile")}</span>
-              </Button>
+              <div className="flex items-center gap-1">
+                {otherUser && matchId && (
+                  <ReportUserDialog
+                    reportedUserId={otherUser.id}
+                    reportedUserName={otherUser.nickname}
+                    matchId={matchId}
+                    onBlock={handleBlock}
+                  />
+                )}
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setShowProfile(!showProfile)}
+                  className="gap-1 md:gap-2 shrink-0"
+                >
+                  {showProfile ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  <span className="hidden sm:inline">{showProfile ? t("chat.hideProfile") : t("chat.showProfile")}</span>
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -431,43 +466,51 @@ const Chat = () => {
 
           {/* Input Section */}
           <div className="border-t p-2 md:p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <form onSubmit={(e) => handleSendMessage(e)}>
-              <div className="flex gap-1 md:gap-2 items-center">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageUpload}
-                />
-                <Button 
-                  type="button"
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  className="shrink-0 h-9 w-9 md:h-10 md:w-10"
-                >
-                  <Paperclip className="h-4 w-4 md:h-5 md:w-5" />
-                </Button>
-                <EmojiPicker onEmojiSelect={handleEmojiSelect} />
-                <GifPicker onGifSelect={handleGifSelect} />
-                <Input
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder={t("chat.writeMessage")}
-                  className="flex-1 text-sm md:text-base"
-                />
-                <Button 
-                  type="submit" 
-                  disabled={!newMessage.trim() || uploading}
-                  className="shrink-0 h-9 w-9 md:h-10 md:w-10"
-                  size="icon"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
+            {isBlocked ? (
+              <div className="text-center py-4">
+                <p className="text-sm text-muted-foreground">
+                  Non puoi più inviare messaggi a questo utente
+                </p>
               </div>
-            </form>
+            ) : (
+              <form onSubmit={(e) => handleSendMessage(e)}>
+                <div className="flex gap-1 md:gap-2 items-center">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                  <Button 
+                    type="button"
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="shrink-0 h-9 w-9 md:h-10 md:w-10"
+                  >
+                    <Paperclip className="h-4 w-4 md:h-5 md:w-5" />
+                  </Button>
+                  <EmojiPicker onEmojiSelect={handleEmojiSelect} />
+                  <GifPicker onGifSelect={handleGifSelect} />
+                  <Input
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder={t("chat.writeMessage")}
+                    className="flex-1 text-sm md:text-base"
+                  />
+                  <Button 
+                    type="submit" 
+                    disabled={!newMessage.trim() || uploading}
+                    className="shrink-0 h-9 w-9 md:h-10 md:w-10"
+                    size="icon"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              </form>
+            )}
           </div>
         </Card>
       </div>
