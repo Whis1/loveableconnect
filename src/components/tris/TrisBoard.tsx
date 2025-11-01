@@ -20,7 +20,7 @@ interface TrisBoardProps {
 type CellValue = "X" | "O" | null;
 type Board = CellValue[];
 
-const EMOJIS = ["😀", "😂", "😍", "🎉", "🔥", "💪", "👍", "😎"];
+const EMOJIS = ["😀", "😂", "😍", "🎉", "🔥", "💪", "👍", "😎", "😢", "😠"];
 
 export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
   const [board, setBoard] = useState<Board>(Array(9).fill(null));
@@ -31,10 +31,37 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
   const [currentUserProfile, setCurrentUserProfile] = useState<Profile | null>(null);
   const [userEmoji, setUserEmoji] = useState<string | null>(null);
   const [opponentEmoji, setOpponentEmoji] = useState<string | null>(null);
+  const [lastOpponentEmoji, setLastOpponentEmoji] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCurrentUserProfile();
+    startBotEmojiSystem();
   }, []);
+
+  const startBotEmojiSystem = () => {
+    const showRandomEmoji = () => {
+      // 30% chance to show emoji
+      if (Math.random() < 0.3 && !gameOver) {
+        const availableEmojis = EMOJIS.filter(e => e !== lastOpponentEmoji);
+        const randomEmoji = availableEmojis[Math.floor(Math.random() * availableEmojis.length)];
+        
+        setOpponentEmoji(randomEmoji);
+        setLastOpponentEmoji(randomEmoji);
+        
+        setTimeout(() => {
+          setOpponentEmoji(null);
+        }, 4000);
+      }
+      
+      // Schedule next check at random interval (5-15 seconds)
+      if (!gameOver) {
+        setTimeout(showRandomEmoji, Math.random() * 10000 + 5000);
+      }
+    };
+    
+    // Start after 3-8 seconds
+    setTimeout(showRandomEmoji, Math.random() * 5000 + 3000);
+  };
 
   const fetchCurrentUserProfile = async () => {
     const { data: { session } } = await supabase.auth.getSession();
