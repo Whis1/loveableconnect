@@ -37,6 +37,17 @@ Deno.serve(async (req) => {
         .select();
 
       if (error) {
+        // Handle duplicate insert idempotently (unique_violation)
+        if ((error as any).code === '23505') {
+          console.warn('Duplicate like - already exists:', { fromUserId, toUserId });
+          return new Response(
+            JSON.stringify({ success: true, already_liked: true }),
+            { 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200 
+            }
+          );
+        }
         console.error('Insert error:', error);
         throw error;
       }

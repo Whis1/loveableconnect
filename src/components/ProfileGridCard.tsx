@@ -289,9 +289,27 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
     onLike(profile.id); // Update parent list immediately
     
     try {
-      // Check if can consume a daily like
+      // 1) Pre-check: avoid consuming likes if already liked
+      const { data: existingLike } = await supabase
+        .from("likes")
+        .select("id")
+        .eq("from_user_id", currentUserId)
+        .eq("to_user_id", profile.id)
+        .maybeSingle();
+
+      if (existingLike) {
+        setHasLiked(true);
+        toast({
+          title: t("search.likeSent"),
+          description: `${t("search.likedProfile")} ${profile.nickname || profile.full_name}`,
+        });
+        setIsLiking(false);
+        return;
+      }
+
+      // 2) Check if can consume a daily like (or credits)
       const { success, creditsUsed } = await consumeLike(useCredits);
-      
+
       if (!success && !useCredits) {
         // Rollback optimistic update
         setHasLiked(false);
@@ -312,7 +330,7 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
         return;
       }
 
-      // Add the like using edge function (in background)
+      // 3) Add the like using edge function (idempotent)
       const { data: likeData, error: likeError } = await supabase.functions.invoke(
         'admin-manage-like',
         {
@@ -325,7 +343,18 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
       );
 
       if (likeError) {
-        // Rollback on error
+        // If duplicate, treat as success (race condition)
+        const msg = (likeError as any)?.message || '';
+        if (msg.includes('duplicate key') || (likeError as any)?.code === '23505') {
+          setHasLiked(true);
+          toast({
+            title: t("search.likeSent"),
+            description: `${t("search.likedProfile")} ${profile.nickname || profile.full_name}`,
+          });
+          setIsLiking(false);
+          return;
+        }
+        // Rollback on other errors
         setHasLiked(false);
         throw likeError;
       }
@@ -336,7 +365,7 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
           onMatch(profile.nickname || profile.full_name);
         }
       } else {
-        // Just a like, no match - show confirmation toast
+        // Just a like or already liked
         toast({
           title: t("search.likeSent"),
           description: `${t("search.likedProfile")} ${profile.nickname || profile.full_name}`,
