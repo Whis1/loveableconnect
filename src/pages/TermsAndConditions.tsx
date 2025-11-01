@@ -559,105 +559,169 @@ const TermsAndConditions = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">2. Tipologie di cookie utilizzati</h3>
-                    <p>LoveableConnect utilizza varie tipologie di cookie, con funzioni differenti:</p>
+                    <h3 className="text-lg font-semibold">2. Cookie e tecnologie di memorizzazione utilizzati da LoveableConnect</h3>
+                    <p>LoveableConnect utilizza le seguenti tecnologie di memorizzazione e cookie:</p>
                     
-                    <div className="overflow-x-auto">
-                      <table className="w-full border-collapse border border-border">
-                        <thead>
-                          <tr className="bg-muted">
-                            <th className="border border-border p-2 text-left">Categoria</th>
-                            <th className="border border-border p-2 text-left">Tipologia</th>
-                            <th className="border border-border p-2 text-left">Finalità</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            <td className="border border-border p-2">Cookie tecnici / necessari</td>
-                            <td className="border border-border p-2">di prima parte</td>
-                            <td className="border border-border p-2">Servono per il funzionamento essenziale del sito: login, navigazione, salvataggio preferenze base (es. lingua), gestione sessioni. Senza questi il sito potrebbe non funzionare correttamente.</td>
-                          </tr>
-                          <tr>
-                            <td className="border border-border p-2">Cookie di preferenza / funzionalità</td>
-                            <td className="border border-border p-2">di prima parte</td>
-                            <td className="border border-border p-2">Permettono di memorizzare le tue preferenze (es. lingua, tema, visualizzazione schermata) per rendere più facile e comoda la navigazione.</td>
-                          </tr>
-                          <tr>
-                            <td className="border border-border p-2">Cookie analitici / statistiche</td>
-                            <td className="border border-border p-2">di terze parti (in alcuni casi)</td>
-                            <td className="border border-border p-2">Raccogliere dati aggregati sull'uso del sito: quante persone visitano, quali pagine sono più usate, da dove arrivano gli utenti, ecc. Dati anonimi, non identificativi delle persone.</td>
-                          </tr>
-                          <tr>
-                            <td className="border border-border p-2">Cookie di profilazione / pubblicità</td>
-                            <td className="border border-border p-2">di terze parti</td>
-                            <td className="border border-border p-2">Utilizzati per mostrarti contenuti o pubblicità che potrebbero interessarti in base al tuo comportamento di navigazione o preferenze. Si attivano solo con il tuo consenso esplicito.</td>
-                          </tr>
-                        </tbody>
-                      </table>
+                    <div className="space-y-4 mt-4">
+                      <div className="border border-border p-4 rounded-lg">
+                        <h4 className="font-semibold text-base mb-2">A. Cookie Tecnici Necessari (non richiedono consenso)</h4>
+                        
+                        <div className="mt-3 space-y-3">
+                          <div>
+                            <p className="font-medium">Cookie di autenticazione Supabase</p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              <strong>Nome:</strong> sb-access-token, sb-refresh-token<br/>
+                              <strong>Finalità:</strong> Gestione dell'autenticazione utente e mantenimento della sessione di login<br/>
+                              <strong>Durata:</strong> Sessione / persistente fino al logout<br/>
+                              <strong>Tipologia:</strong> Cookie tecnico di prima parte
+                            </p>
+                          </div>
+
+                          <div>
+                            <p className="font-medium">Cookie di consenso cookie</p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              <strong>Nome:</strong> cookie-consent<br/>
+                              <strong>Finalità:</strong> Memorizza le preferenze dell'utente riguardo l'uso dei cookie<br/>
+                              <strong>Durata:</strong> 12 mesi<br/>
+                              <strong>Tipologia:</strong> Cookie tecnico di prima parte
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border border-border p-4 rounded-lg">
+                        <h4 className="font-semibold text-base mb-2">B. Memorizzazione Locale (localStorage)</h4>
+                        
+                        <div className="mt-3 space-y-3">
+                          <div>
+                            <p className="font-medium">Preferenze tema</p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              <strong>Nome:</strong> theme<br/>
+                              <strong>Finalità:</strong> Memorizza la preferenza del tema (chiaro/scuro)<br/>
+                              <strong>Durata:</strong> Permanente fino alla cancellazione manuale<br/>
+                              <strong>Tipologia:</strong> Memorizzazione locale
+                            </p>
+                          </div>
+
+                          <div>
+                            <p className="font-medium">Preferenze lingua</p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              <strong>Nome:</strong> i18nextLng<br/>
+                              <strong>Finalità:</strong> Memorizza la lingua selezionata dall'utente (italiano, inglese, tedesco, spagnolo, francese, arabo)<br/>
+                              <strong>Durata:</strong> Permanente fino alla cancellazione manuale<br/>
+                              <strong>Tipologia:</strong> Memorizzazione locale
+                            </p>
+                          </div>
+
+                          <div>
+                            <p className="font-medium">Dati cache applicazione</p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              <strong>Nome:</strong> Vari (react-query cache, profili visualizzati)<br/>
+                              <strong>Finalità:</strong> Migliorare le prestazioni dell'applicazione memorizzando temporaneamente dati già caricati<br/>
+                              <strong>Durata:</strong> Sessione / temporaneo<br/>
+                              <strong>Tipologia:</strong> Memorizzazione locale
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border border-border p-4 rounded-lg">
+                        <h4 className="font-semibold text-base mb-2">C. Service Worker e Notifiche Push</h4>
+                        
+                        <div className="mt-3">
+                          <p className="font-medium">Service Worker</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            <strong>Nome:</strong> sw.js<br/>
+                            <strong>Finalità:</strong> Gestione delle notifiche push e funzionalità offline dell'applicazione<br/>
+                            <strong>Durata:</strong> Fino alla disinstallazione manuale<br/>
+                            <strong>Tipologia:</strong> Tecnologia web necessaria per le notifiche push
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">3. Quali cookie specifici usiamo (esempi)</h3>
-                    <p>Esempi di cookie che potrebbero essere presenti (dipende dalle tecnologie che deciderai di usare):</p>
-                    <ul className="list-disc list-inside pl-4 space-y-2">
-                      <li><strong>"session_id"</strong> — cookie tecnico di sessione per identificarti mentre navighi.</li>
-                      <li><strong>"lang_pref"</strong> — cookie preferenza lingua.</li>
-                      <li><strong>"analytics_tracker"</strong> — cookie analitico di terze parti (per esempio Google Analytics) per comprendere come usi il sito.</li>
-                      <li><strong>"ads_profile"</strong> — cookie di profilazione per personalizzare pubblicità (solo se acconsenti).</li>
+                    <h3 className="text-lg font-semibold">3. Cookie di terze parti</h3>
+                    <p className="font-semibold">LoveableConnect attualmente NON utilizza:</p>
+                    <ul className="list-disc list-inside pl-4 space-y-1 text-muted-foreground">
+                      <li>Cookie di profilazione pubblicitaria</li>
+                      <li>Cookie di tracking analytics di terze parti (Google Analytics, Facebook Pixel, ecc.)</li>
+                      <li>Cookie di social media per tracciamento comportamentale</li>
                     </ul>
+                    <p className="mt-3 text-sm">
+                      Nel caso in cui decidessimo di integrare servizi di terze parti che utilizzano cookie, aggiorneremo questa policy e richiederemo il tuo consenso esplicito.
+                    </p>
                   </div>
 
                   <div className="space-y-3">
                     <h3 className="text-lg font-semibold">4. Gestione del consenso</h3>
                     <p>
-                      Al primo accesso al Sito comparirà un banner che ti informa dell'uso dei cookie. Potrai accettare tutti i cookie, negare quelli non necessari o gestire le preferenze.
+                      Al primo accesso al Sito comparirà un banner che ti informa dell'uso dei cookie. I cookie tecnici necessari (autenticazione, sessione) sono indispensabili per il funzionamento del servizio e non richiedono il tuo consenso esplicito.
                     </p>
                     <p>
-                      Le tue scelte saranno memorizzate tramite un cookie tecnico che ricorda la preferenza.
+                      Le tue scelte riguardo eventuali cookie opzionali saranno memorizzate tramite un cookie tecnico che ricorda la preferenza.
                     </p>
                     <p>
-                      Se cambi idea, puoi modificare le tue preferenze in qualsiasi momento tramite il link "Preferenze Cookie" nel footer del sito.
+                      Puoi gestire le tue preferenze sui cookie anche attraverso le impostazioni del tuo browser.
                     </p>
                   </div>
 
                   <div className="space-y-3">
                     <h3 className="text-lg font-semibold">5. Effetti della disattivazione</h3>
                     <ul className="list-disc list-inside pl-4 space-y-2">
-                      <li>Se disattivi i cookie tecnici, alcune funzionalità potrebbero non funzionare: login, salvataggio preferenze, aree riservate, ecc.</li>
-                      <li>Se disattivi cookie analitici o di profilazione, non saranno raccolti dati di quel tipo su di te, ma il sito rimarrà accessibile.</li>
+                      <li><strong>Cookie di autenticazione:</strong> Se disattivati o cancellati, verrai disconnesso automaticamente e dovrai effettuare nuovamente il login. Il sito non funzionerà correttamente senza questi cookie.</li>
+                      <li><strong>localStorage (tema e lingua):</strong> Se cancellati, le tue preferenze di visualizzazione torneranno ai valori predefiniti.</li>
+                      <li><strong>Service Worker:</strong> Se disattivato, non riceverai notifiche push per nuovi messaggi o match.</li>
                     </ul>
-                  </div>
-
-                  <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">6. Durata dei cookie</h3>
-                    <p>
-                      I cookie tecnici generalmente durano fino alla fine della sessione o per pochi giorni. I cookie persistenti possono restare nel dispositivo per qualche mese o fino al recesso della tua preferenza. I cookie di terze parti seguono le politiche dei rispettivi fornitori.
+                    <p className="mt-3 text-sm font-semibold">
+                      Attenzione: disattivare i cookie necessari renderà impossibile l'utilizzo di LoveableConnect.
                     </p>
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">7. Cookie di terze parti</h3>
-                    <p>Il sito potrebbe includere funzionalità fornite da terzi che usano i propri cookie, ad esempio:</p>
-                    <ul className="list-disc list-inside pl-4 space-y-1">
-                      <li>strumenti di analisi (es. Google Analytics)</li>
-                      <li>social login o pulsanti di condivisione</li>
-                      <li>pubblicità esterna (se presente)</li>
+                    <h3 className="text-lg font-semibold">6. Durata della memorizzazione</h3>
+                    <ul className="list-disc list-inside pl-4 space-y-2">
+                      <li><strong>Cookie di sessione:</strong> Validi fino alla chiusura del browser o logout</li>
+                      <li><strong>Cookie persistenti:</strong> Fino a 12 mesi o fino alla cancellazione manuale</li>
+                      <li><strong>localStorage:</strong> Permanente fino alla cancellazione manuale da parte dell'utente o dall'applicazione</li>
+                      <li><strong>Service Worker:</strong> Permanente fino alla disinstallazione o cancellazione dati del browser</li>
                     </ul>
-                    <p>
-                      Prima di usare queste funzioni, ti consigliamo di leggere le policy privacy / cookie dei terzi; hai sempre il controllo su quali accettare.
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">7. Come gestire i cookie dal browser</h3>
+                    <p>Puoi gestire o eliminare i cookie attraverso le impostazioni del tuo browser:</p>
+                    <ul className="list-disc list-inside pl-4 space-y-1 text-sm">
+                      <li><strong>Chrome:</strong> Impostazioni → Privacy e sicurezza → Cookie e altri dati dei siti</li>
+                      <li><strong>Firefox:</strong> Opzioni → Privacy e sicurezza → Cookie e dati dei siti web</li>
+                      <li><strong>Safari:</strong> Preferenze → Privacy → Gestisci dati siti web</li>
+                      <li><strong>Edge:</strong> Impostazioni → Cookie e autorizzazioni sito → Cookie e dati dei siti</li>
+                    </ul>
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      Nota: la cancellazione dei cookie tecnici ti disconnetterà da LoveableConnect e resetterà le tue preferenze.
                     </p>
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">8. Diritti dell'utente</h3>
+                    <h3 className="text-lg font-semibold">8. Diritti dell'utente e contatti</h3>
                     <p>Hai il diritto di:</p>
                     <ul className="list-disc list-inside pl-4 space-y-2">
-                      <li>richiedere informazioni su quali cookie usiamo;</li>
-                      <li>accettare o rifiutare cookie non necessari;</li>
-                      <li>cancellare cookie dal tuo browser;</li>
-                      <li>esercitare altri diritti relativi alla privacy (accesso, rettifica, cancellazione dei dati personali) secondo la normativa GDPR (ove applicabile).</li>
+                      <li>richiedere informazioni dettagliate su quali cookie e tecnologie utilizziamo;</li>
+                      <li>cancellare cookie e dati di memorizzazione locale dal tuo browser;</li>
+                      <li>disattivare le notifiche push dalle impostazioni del browser;</li>
+                      <li>esercitare tutti i diritti relativi alla privacy previsti dal GDPR (accesso, rettifica, cancellazione, portabilità dei dati personali).</li>
                     </ul>
+                    <p className="mt-4">
+                      Per qualsiasi domanda riguardo questa Cookie Policy o per esercitare i tuoi diritti, contattaci a: <a href="mailto:loveableconnect@hotmail.com" className="text-primary hover:underline font-medium">loveableconnect@hotmail.com</a>
+                    </p>
+                  </div>
+
+                  <div className="mt-6 p-4 bg-muted rounded-lg">
+                    <p className="text-sm">
+                      <strong>Ultimo aggiornamento:</strong> Gennaio 2025<br/>
+                      LoveableConnect si riserva il diritto di modificare questa Cookie Policy in qualsiasi momento. Le modifiche saranno pubblicate su questa pagina con data di aggiornamento.
+                    </p>
                   </div>
                 </div>
               </TabsContent>
