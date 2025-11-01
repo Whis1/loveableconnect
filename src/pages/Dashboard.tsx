@@ -12,6 +12,7 @@ import { CreditsDisplay } from "@/components/CreditsDisplay";
 import { useBanCheck } from "@/hooks/useBanCheck";
 import { DashboardControls } from "@/components/DashboardControls";
 import { GeolocationBanner } from "@/components/GeolocationBanner";
+import { NotificationPermissionBanner } from "@/components/NotificationPermissionBanner";
 import { InboxDropdown } from "@/components/InboxDropdown";
 import loveIcon from "@/assets/love-icon.png";
 
@@ -521,6 +522,9 @@ const Dashboard = () => {
           onClose={handleCloseGeolocationBanner}
         />
       )}
+
+      {/* Notification Permission Banner */}
+      <NotificationPermissionBanner />
     </div>
   );
 };
