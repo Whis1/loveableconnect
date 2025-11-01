@@ -9,7 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserPlus, Users } from "lucide-react";
 import { InterestsAutocomplete } from "@/components/InterestsAutocomplete";
-import { LookingForSelector } from "@/components/admin/LookingForSelector";
 
 export const ProfileCreator = () => {
   const { toast } = useToast();
@@ -23,7 +22,7 @@ export const ProfileCreator = () => {
     gender: "",
     sexual_orientation: "",
     relationship_status: "",
-    looking_for: [] as string[],
+    relationship_type: "",
     interests: [] as string[],
   });
 
@@ -88,7 +87,7 @@ export const ProfileCreator = () => {
         gender: formData.gender || null,
         sexual_orientation: formData.sexual_orientation || null,
         relationship_status: formData.relationship_status || null,
-        looking_for: formData.looking_for.length > 0 ? formData.looking_for : null,
+        relationship_type: formData.relationship_type || null,
         interests: formData.interests.length > 0 ? formData.interests : null,
         is_admin_profile: true,
       }).select();
@@ -113,7 +112,7 @@ export const ProfileCreator = () => {
         gender: "",
         sexual_orientation: "",
         relationship_status: "",
-        looking_for: [],
+        relationship_type: "",
         interests: [],
       });
 
@@ -154,7 +153,7 @@ export const ProfileCreator = () => {
           gender: formData.gender || null,
           sexual_orientation: formData.sexual_orientation || null,
           relationship_status: formData.relationship_status || null,
-          looking_for: formData.looking_for.length > 0 ? formData.looking_for : null,
+          relationship_type: formData.relationship_type || null,
           interests: formData.interests.length > 0 ? formData.interests : null,
           is_admin_profile: true,
         });
@@ -180,7 +179,7 @@ export const ProfileCreator = () => {
         gender: "",
         sexual_orientation: "",
         relationship_status: "",
-        looking_for: [],
+        relationship_type: "",
         interests: [],
       });
 
@@ -309,12 +308,22 @@ export const ProfileCreator = () => {
         </div>
 
         <div className="space-y-2">
-          <Label>Cosa cerchi (max 3)</Label>
-          <LookingForSelector
-            selectedOptions={formData.looking_for}
-            onOptionsChange={(options) => setFormData({ ...formData, looking_for: options })}
-            maxOptions={3}
-          />
+          <Label htmlFor="relationship-type">Cosa cerchi</Label>
+          <Select
+            value={formData.relationship_type}
+            onValueChange={(value) => setFormData({ ...formData, relationship_type: value })}
+          >
+            <SelectTrigger id="relationship-type">
+              <SelectValue placeholder="Seleziona cosa cerchi" />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="serious">Relazione seria</SelectItem>
+              <SelectItem value="casual">Frequentazione</SelectItem>
+              <SelectItem value="friendship">Amicizia</SelectItem>
+              <SelectItem value="not-sure">Non specificato</SelectItem>
+              <SelectItem value="prefer-not-say">Preferisco non dirlo</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">
