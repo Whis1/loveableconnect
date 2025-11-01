@@ -24,6 +24,7 @@ import Support from "./pages/Support";
 import AdminArrettu from "./pages/AdminArrettu";
 import AdminProfiles from "./pages/AdminProfiles";
 import Chats from "./pages/Chats";
+import ChattorsLogin from "./pages/ChattorsLogin";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -62,6 +63,7 @@ const App = () => (
             <Route path="/support" element={<Support />} />
             <Route path="/adminarrettu" element={<AdminArrettu />} />
             <Route path="/admin/profiles" element={<AdminProfiles />} />
+            <Route path="/chattors-login" element={<ChattorsLogin />} />
             <Route path="/chattors" element={<Chats />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

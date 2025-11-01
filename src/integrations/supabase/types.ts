@@ -59,6 +59,36 @@ export type Database = {
           },
         ]
       }
+      admin_secondary_accounts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          last_login: string | null
+          nickname: string
+          password_hash: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          last_login?: string | null
+          nickname: string
+          password_hash: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          last_login?: string | null
+          nickname?: string
+          password_hash?: string
+        }
+        Relationships: []
+      }
       banned_users: {
         Row: {
           banned_at: string

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ProfileManager } from "@/components/admin/ProfileManager";
 import { NotificationMonitor } from "@/components/admin/NotificationMonitor";
+import { SecondaryAccountsManager } from "@/components/admin/SecondaryAccountsManager";
 import { Shield, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -140,9 +141,12 @@ export default function AdminProfiles() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ProfileManager />
-          <NotificationMonitor />
+        <div className="grid grid-cols-1 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <ProfileManager />
+            <NotificationMonitor />
+          </div>
+          <SecondaryAccountsManager />
         </div>
       </div>
     </div>

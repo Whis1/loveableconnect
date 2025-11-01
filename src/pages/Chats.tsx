@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAdminRole } from "@/hooks/useAdminRole";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, LogOut } from "lucide-react";
 import { ChatsList } from "@/components/admin/ChatsList";
 import { ChatView } from "@/components/admin/ChatView";
+import { toast } from "sonner";
 
 interface Conversation {
   userId: string;
@@ -20,22 +20,30 @@ interface Conversation {
 
 const Chats = () => {
   const navigate = useNavigate();
-  const { isAdmin, loading: adminLoading } = useAdminRole();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sessionInfo, setSessionInfo] = useState<any>(null);
 
   useEffect(() => {
-    if (!adminLoading && !isAdmin) {
-      navigate("/");
+    // Verifica sessione chattors
+    const session = sessionStorage.getItem("chattors_session");
+    if (!session) {
+      navigate("/chattors-login");
       return;
     }
 
-    if (isAdmin) {
+    try {
+      const parsed = JSON.parse(session);
+      setSessionInfo(parsed);
       fetchConversations();
       subscribeToUpdates();
+    } catch (error) {
+      console.error("Sessione non valida:", error);
+      sessionStorage.removeItem("chattors_session");
+      navigate("/chattors-login");
     }
-  }, [isAdmin, adminLoading, navigate]);
+  }, [navigate]);
 
   const fetchConversations = async () => {
     try {
@@ -150,7 +158,13 @@ const Chats = () => {
     };
   };
 
-  if (adminLoading || loading) {
+  const handleLogout = () => {
+    sessionStorage.removeItem("chattors_session");
+    toast.success("Disconnesso");
+    navigate("/chattors-login");
+  };
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -161,20 +175,26 @@ const Chats = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/admin/profiles")}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Messaggi Admin</h1>
-            <p className="text-sm text-muted-foreground">
-              Gestisci le conversazioni con gli utenti
-            </p>
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/admin/profiles")}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Messaggi Admin</h1>
+              <p className="text-sm text-muted-foreground">
+                Connesso come: {sessionInfo?.nickname}
+              </p>
+            </div>
           </div>
+          <Button variant="outline" onClick={handleLogout}>
+            <LogOut className="h-4 w-4 mr-2" />
+            Esci
+          </Button>
         </div>
       </header>
 
