@@ -31,9 +31,7 @@ interface Message {
   created_at: string;
   message_type: "text" | "emoji" | "gif" | "image" | "voice";
   media_url: string | null;
-  sender?: {
-    nickname: string;
-  };
+  admin_sender_nickname?: string | null;
 }
 
 interface ChatViewProps {
@@ -296,7 +294,7 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
                 timestamp={msg.created_at}
                 senderNickname={
                   msg.sender_id === conversation.adminProfileId 
-                    ? (msg.sender?.nickname || chattorsNickname)
+                    ? (msg.admin_sender_nickname || chattorsNickname)
                     : undefined
                 }
                 showAdminLabel={true}

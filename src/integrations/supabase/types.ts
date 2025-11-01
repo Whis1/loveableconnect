@@ -337,6 +337,7 @@ export type Database = {
       }
       messages: {
         Row: {
+          admin_sender_nickname: string | null
           content: string
           created_at: string
           id: string
@@ -348,6 +349,7 @@ export type Database = {
           sender_id: string
         }
         Insert: {
+          admin_sender_nickname?: string | null
           content: string
           created_at?: string
           id?: string
@@ -359,6 +361,7 @@ export type Database = {
           sender_id: string
         }
         Update: {
+          admin_sender_nickname?: string | null
           content?: string
           created_at?: string
           id?: string

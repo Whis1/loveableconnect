@@ -40,10 +40,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify sender is an admin profile
+    // Verify sender is an admin profile and get nickname
     const { data: senderProfile, error: senderError } = await supabase
       .from('profiles')
-      .select('is_admin_profile')
+      .select('is_admin_profile, nickname')
       .eq('id', sSenderId)
       .single();
 
@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Insert message
+    // Insert message with admin nickname
     const { data, error } = await supabase
       .from('messages')
       .insert({
@@ -64,6 +64,7 @@ Deno.serve(async (req) => {
         content: sContent || '',
         message_type,
         media_url: sMediaUrl || null,
+        admin_sender_nickname: senderProfile.nickname,
       })
       .select()
       .single();
