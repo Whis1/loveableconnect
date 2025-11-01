@@ -183,7 +183,7 @@ const Credits = () => {
                         <div>💰 40 crediti giornalieri (attuale: {credits.balance})</div>
                         <div>❤️ 30 like giornalieri</div>
                         <div>👁️ Visualizzazione illimitata dei like ricevuti</div>
-                        <div>🎮 Possibilità di sfidare 10 partite giornaliere tra utenti</div>
+                        <div>🎮 Possibilità di disputare 10 partite giornaliere tra utenti</div>
                       </div>
                       {credits.premium_expires_at && (
                         <div className="text-xs text-muted-foreground mt-2">
@@ -326,7 +326,7 @@ const Credits = () => {
                         <path d="M8 12h8"/>
                         <path d="M12 8v8"/>
                       </svg>
-                      <span>🎮 <strong>Possibilità di sfidare 10 partite giornaliere tra utenti</strong></span>
+                      <span>🎮 <strong>Possibilità di disputare 10 partite giornaliere tra utenti</strong></span>
                     </li>
                   </ul>
                   <Button
