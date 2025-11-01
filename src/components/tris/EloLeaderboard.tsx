@@ -77,13 +77,14 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     const needsUpdate = shouldUpdate();
 
     if (persisted && !needsUpdate) {
-      // Use persisted data
+      // Use persisted data WITHOUT modifications
       const elosMap = new Map(Object.entries(persisted.adminElos));
       setAdminElos(elosMap);
-      fetchLeaderboard(false, elosMap);
+      // Build leaderboard directly from persisted data
+      buildLeaderboardFromExistingElos(elosMap);
     } else {
-      // Need fresh data
-      fetchLeaderboard(true);
+      // Time to update: adjust ELOs or generate new ones
+      fetchLeaderboard(!persisted); // true if no persisted data (initial), false if updating
     }
 
     // Set up interval to check for updates every minute
@@ -111,7 +112,47 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     return Math.max(1700, Math.min(2600, newElo));
   };
 
-  const fetchLeaderboard = async (isInitial: boolean = false, existingElos?: Map<string, number>) => {
+  // Build leaderboard from existing ELOs without fetching or modifying
+  const buildLeaderboardFromExistingElos = async (elosMap: Map<string, number>) => {
+    try {
+      const { data: profiles, error } = await supabase
+        .from("profiles")
+        .select("id, nickname, avatar_url, tris_elo, is_admin_profile")
+        .order("tris_elo", { ascending: false });
+
+      if (error) throw error;
+
+      if (profiles) {
+        // Use persisted ELOs for admin profiles, real ELOs for users
+        const updatedProfiles = profiles.map(profile => {
+          if (profile.is_admin_profile && elosMap.has(profile.id)) {
+            return { ...profile, tris_elo: elosMap.get(profile.id)! };
+          }
+          return profile;
+        });
+
+        // Sort by ELO
+        const sortedProfiles = updatedProfiles.sort((a, b) => (b.tris_elo || 1200) - (a.tris_elo || 1200));
+        
+        // Get top 5
+        setTopPlayers(sortedProfiles.slice(0, 5));
+
+        // Find user's rank and ELO
+        if (userId) {
+          const userProfile = sortedProfiles.find(p => p.id === userId);
+          if (userProfile) {
+            setUserElo(userProfile.tris_elo || 1200);
+            const rank = sortedProfiles.findIndex(p => p.id === userId) + 1;
+            setUserRank(rank);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error building leaderboard:", error);
+    }
+  };
+
+  const fetchLeaderboard = async (isInitial: boolean = false) => {
     try {
       // Fetch all profiles with ELO
       const { data: profiles, error } = await supabase
@@ -132,8 +173,8 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
           }
         });
         
-        // Use existing ELOs if provided, otherwise use current state
-        const currentElosMap = existingElos || adminElos;
+        // Use current adminElos state for subsequent updates
+        const currentElosMap = adminElos;
 
         const updatedProfiles = profiles.map(profile => {
           if (profile.is_admin_profile) {
