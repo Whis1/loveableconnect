@@ -663,21 +663,7 @@ const ProfileEdit = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Label>Data di Nascita {requiresCompletion && <span className="text-destructive">*</span>}</Label>
-                    {profile.birthdate_locked && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <AlertCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="max-w-xs">Questa modalità ci aiuta a prevenire i profili falsi.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
-                  </div>
+                  <Label>Data di Nascita {requiresCompletion && <span className="text-destructive">*</span>}</Label>
                   {profile.birthdate_locked ? (
                     <div className="space-y-3">
                       <div className="grid grid-cols-3 gap-2">
