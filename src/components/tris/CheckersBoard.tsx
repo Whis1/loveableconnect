@@ -79,6 +79,30 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     startBotEmojiSystem();
     setOpponentElo(Math.floor(Math.random() * 601) + 1000);
 
+    // Realtime ELO updates
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        channel = supabase
+          .channel('checkers-elo-updates')
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'profiles',
+              filter: `id=eq.${session.user.id}`
+            },
+            (payload: any) => {
+              if (payload.new.tris_elo !== undefined) {
+                setUserElo(payload.new.tris_elo);
+              }
+            }
+          )
+          .subscribe();
+      }
+    });
+
     // Mark game as active
     try {
       localStorage.setItem("checkers_game_active", "1");
@@ -145,6 +169,9 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
 
     // Cleanup: detect game abandonment
     return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
       window.removeEventListener("beforeunload", handleBeforeUnload);
       window.removeEventListener("popstate", handlePopState);
       document.removeEventListener("keydown", handleKeyDown);

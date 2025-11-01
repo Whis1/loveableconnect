@@ -75,6 +75,30 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
     // Generate random ELO for opponent (between 1000 and 1600)
     setOpponentElo(Math.floor(Math.random() * 601) + 1000);
 
+    // Realtime ELO updates
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        channel = supabase
+          .channel('tris-elo-updates')
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'profiles',
+              filter: `id=eq.${session.user.id}`
+            },
+            (payload: any) => {
+              if (payload.new.tris_elo !== undefined) {
+                setUserElo(payload.new.tris_elo);
+              }
+            }
+          )
+          .subscribe();
+      }
+    });
+
     // Mark game as active
     try {
       localStorage.setItem("tris_game_active", "1");
@@ -141,6 +165,9 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
 
     // Cleanup: detect game abandonment
     return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
       window.removeEventListener("beforeunload", handleBeforeUnload);
       window.removeEventListener("popstate", handlePopState);
       document.removeEventListener("keydown", handleKeyDown);
