@@ -17,44 +17,52 @@ serve(async (req) => {
       throw new Error('Text and target language are required');
     }
 
-    const languageNames: Record<string, string> = {
-      en: 'English',
-      it: 'Italian',
-      de: 'German',
-      es: 'Spanish',
-      fr: 'French',
-      ar: 'Arabic',
+    const deeplApiKey = Deno.env.get('DEEPL_API_KEY');
+    if (!deeplApiKey) {
+      throw new Error('DEEPL_API_KEY not configured');
+    }
+
+    // Map language codes to DeepL supported languages
+    const languageMap: Record<string, string> = {
+      'en': 'EN-US',
+      'it': 'IT',
+      'de': 'DE',
+      'es': 'ES',
+      'fr': 'FR',
     };
 
-    const targetLangName = languageNames[targetLanguage] || targetLanguage;
+    const targetLang = languageMap[targetLanguage.toLowerCase()];
+    
+    // If language not supported by DeepL, return original text
+    if (!targetLang) {
+      console.log(`Language ${targetLanguage} not supported by DeepL, returning original text`);
+      return new Response(
+        JSON.stringify({ translatedText: text }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    // Call DeepL API (free tier endpoint)
+    const response = await fetch('https://api-free.deepl.com/v2/translate', {
       method: 'POST',
       headers: {
+        'Authorization': `DeepL-Auth-Key ${deeplApiKey}`,
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          {
-            role: 'system',
-            content: `You are a professional translator. Translate the given text to ${targetLangName}. Return ONLY the translated text, nothing else. Preserve the tone and meaning of the original text.`
-          },
-          {
-            role: 'user',
-            content: text
-          }
-        ],
+        text: [text],
+        target_lang: targetLang,
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`AI Gateway error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('DeepL API error:', response.status, errorText);
+      throw new Error(`DeepL API error: ${response.statusText}`);
     }
 
     const data = await response.json();
-    const translatedText = data.choices[0].message.content.trim();
+    const translatedText = data.translations[0].text;
 
     return new Response(
       JSON.stringify({ translatedText }),
