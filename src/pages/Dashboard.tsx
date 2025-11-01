@@ -61,14 +61,21 @@ const Dashboard = () => {
       setUser(session.user);
 
       // Fetch profile
-      const { data: profileData } = await supabase
+      const { data: profileData, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", session.user.id)
-        .single();
+        .maybeSingle();
+
+      // If profile doesn't exist, redirect to auth
+      if (error || !profileData) {
+        console.error("Profile not found, redirecting to auth");
+        navigate("/auth", { replace: true });
+        return;
+      }
 
       // Check if profile is incomplete (missing birthdate or location)
-      if (profileData && (!profileData.birthdate || !profileData.city)) {
+      if (!profileData.birthdate || !profileData.city) {
         navigate("/modifica-profilo", { 
           state: { requiresCompletion: true },
           replace: true

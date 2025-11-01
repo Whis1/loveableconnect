@@ -51,20 +51,43 @@ const Auth = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
-        // Check if user logged in via Google and needs to complete profile
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("birthdate, city")
-          .eq("id", session.user.id)
-          .maybeSingle();
+        // Wait a moment for profile to be created by trigger
+        await new Promise(resolve => setTimeout(resolve, 500));
         
+        // Check if profile exists
+        let attempts = 0;
+        let profile = null;
+        
+        while (attempts < 5 && !profile) {
+          const { data } = await supabase
+            .from("profiles")
+            .select("birthdate, city")
+            .eq("id", session.user.id)
+            .maybeSingle();
+          
+          profile = data;
+          
+          if (!profile) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+            attempts++;
+          }
+        }
+        
+        // If profile exists but incomplete, redirect to complete it
         if (profile && (!profile.birthdate || !profile.city)) {
-          // User needs to complete profile
           navigate("/modifica-profilo", { 
-            state: { requiresCompletion: true } 
+            state: { requiresCompletion: true },
+            replace: true
           });
+        } else if (profile) {
+          navigate("/", { replace: true });
         } else {
-          navigate("/");
+          // Profile doesn't exist after retries, show error
+          toast({
+            title: "Errore",
+            description: "Errore nella creazione del profilo. Riprova ad accedere.",
+            variant: "destructive",
+          });
         }
       }
     });
