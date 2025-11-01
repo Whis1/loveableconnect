@@ -58,8 +58,8 @@ Deno.serve(async (req) => {
         const otherUserId = (m.user1_id === adminId ? m.user2_id : m.user1_id) as string
         if (!otherUserId) continue
 
-        // Skip archived
-        if (archivedSet.has(`${adminId}-${otherUserId}`)) continue
+        // Check archived status (show if there are unread messages)
+        const isArchived = archivedSet.has(`${adminId}-${otherUserId}`)
 
         // Last message for this match
         const { data: lastMsg, error: lastErr } = await supabase
@@ -82,6 +82,10 @@ Deno.serve(async (req) => {
           .eq('receiver_id', adminId)
           .eq('read', false)
         if (cntErr) throw cntErr
+
+
+        // Archived conversations are included to ensure visibility of new chats
+
 
         // User profile (cache)
         if (!userProfileCache.has(otherUserId)) {
