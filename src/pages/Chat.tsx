@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Send, Paperclip, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, ChevronDown, ChevronUp, Gift } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { GifPicker } from "@/components/chat/GifPicker";
@@ -63,6 +63,58 @@ const Chat = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [recordedAudio, setRecordedAudio] = useState<{ blob: Blob; url: string } | null>(null);
+  const [giftingSubscription, setGiftingSubscription] = useState(false);
+
+  // Check for gift payment result in URL params
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
+    
+    // Verifica automaticamente il regalo se c'è un session_id
+    const verifyGiftPayment = async (sessionId: string) => {
+      try {
+        const { data, error } = await supabase.functions.invoke('verify-gift-subscription', {
+          body: { session_id: sessionId }
+        });
+
+        if (error) throw error;
+
+        if (data?.success) {
+          toast({
+            title: "🎁 Regalo inviato!",
+            description: "L'abbonamento Premium è stato regalato con successo!",
+          });
+        }
+      } catch (error: any) {
+        console.error("Error verifying gift:", error);
+        toast({
+          title: "Errore",
+          description: "Impossibile verificare il pagamento del regalo",
+          variant: "destructive",
+        });
+      } finally {
+        // Remove params from URL
+        urlParams.delete('session_id');
+        urlParams.delete('gift_success');
+        const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+        window.history.replaceState({}, '', newUrl);
+      }
+    };
+
+    if (sessionId && urlParams.get('gift_success') === 'true') {
+      verifyGiftPayment(sessionId);
+    } else if (urlParams.get('gift_cancelled') === 'true') {
+      toast({
+        title: "Regalo annullato",
+        description: "Il pagamento è stato annullato",
+        variant: "destructive",
+      });
+      // Remove the param from URL
+      urlParams.delete('gift_cancelled');
+      const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [toast]);
 
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -465,6 +517,39 @@ const Chat = () => {
     }
   };
 
+  const handleGiftSubscription = async () => {
+    if (!otherUser || !currentUser || !matchId) return;
+
+    setGiftingSubscription(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('gift-subscription', {
+        body: { 
+          recipient_id: otherUser.id,
+          match_id: matchId 
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+        toast({
+          title: "Pagamento in corso",
+          description: `Stai per regalare Premium a ${otherUser.nickname}`,
+        });
+      }
+    } catch (error: any) {
+      console.error("Errore nel regalo abbonamento:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile avviare il regalo dell'abbonamento",
+        variant: "destructive",
+      });
+    } finally {
+      setGiftingSubscription(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -515,6 +600,16 @@ const Chat = () => {
               <div className="flex items-center gap-1">
                 {otherUser && matchId && (
                   <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleGiftSubscription}
+                      disabled={giftingSubscription}
+                      className="text-primary hover:text-primary hover:bg-primary/10"
+                      title="Regala abbonamento Premium"
+                    >
+                      <Gift className="h-5 w-5" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"

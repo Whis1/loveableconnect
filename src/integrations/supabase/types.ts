@@ -604,6 +604,51 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_gifts: {
+        Row: {
+          amount_cents: number
+          completed_at: string | null
+          created_at: string
+          currency: string
+          gifter_id: string
+          id: string
+          recipient_id: string
+          status: string
+          stripe_session_id: string
+          stripe_subscription_id: string | null
+          subscription_type: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          gifter_id: string
+          id?: string
+          recipient_id: string
+          status?: string
+          stripe_session_id: string
+          stripe_subscription_id?: string | null
+          subscription_type?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          gifter_id?: string
+          id?: string
+          recipient_id?: string
+          status?: string
+          stripe_session_id?: string
+          stripe_subscription_id?: string | null
+          subscription_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       support_messages: {
         Row: {
           created_at: string
