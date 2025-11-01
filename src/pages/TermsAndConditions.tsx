@@ -521,11 +521,6 @@ const TermsAndConditions = () => {
                       Se noti attività sospette sul tuo account, come messaggi che non hai inviato o foto che non hai caricato, ci sono alcune cose che puoi fare per assicurarti che il tuo account sia sicuro.
                     </p>
                     
-                    <p className="font-semibold">Accesso con Facebook Login</p>
-                    <p>
-                      Se pensi che qualcuno abbia effettuato un accesso non autorizzato al tuo account Facebook, visita il Centro assistenza di Facebook per un supporto immediato e diretto, oppure contatta il nostro customer care.
-                    </p>
-                    
                     <p className="font-semibold">Accesso tramite Login con E-mail e Password</p>
                     <p>
                       Per mantenere il tuo account al sicuro, ti consigliamo vivamente di non condividere mai questi le credenziali di accesso con nessuno in caso tu ritenga che il tuo account sia stato compromesso contattaci subito.
