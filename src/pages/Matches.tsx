@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import { useTextTranslation } from "@/hooks/useTranslation";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import OnlineIndicator from "@/components/OnlineIndicator";
+import matchHeartIcon from "@/assets/match-heart.png";
 
 interface MatchWithProfile {
   id: string;
@@ -327,8 +328,8 @@ const Matches = () => {
                             <div className="absolute -bottom-1 -right-1">
                               <OnlineIndicator userId={match.otherUser.id} size="md" />
                             </div>
-                            <div className="absolute -top-2 -left-2 bg-primary text-primary-foreground rounded-full p-1.5 shadow-md">
-                              <Heart className="h-3 w-3 md:h-4 md:w-4 fill-current" />
+                            <div className="absolute -top-2 -left-2 rounded-full shadow-md">
+                              <img src={matchHeartIcon} alt="Match" className="h-8 w-8 md:h-10 md:w-10 object-contain" />
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
