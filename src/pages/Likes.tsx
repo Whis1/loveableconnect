@@ -515,72 +515,68 @@ const Likes = () => {
                           {/* Info aggiuntive: genere, orientamento, cerca, stato */}
                           {hasUnlocked && (
                             <div className="space-y-1 mt-2 text-xs">
-                               {like.profile.gender && (
-                                 <div className="flex items-start gap-1">
-                                   <span className="font-medium text-foreground/70">{t("common.gender")}:</span>
-                                   <span className="text-muted-foreground">
-                                     {(() => {
-                                       const normalized = normalizeValue(like.profile.gender);
-                                       switch(normalized) {
-                                         case 'male': return t("common.male");
-                                         case 'female': return t("common.female");
-                                         case 'non-binary': return t("common.nonBinary");
-                                         case 'transexual': return t("common.transexual");
-                                         case 'transgender': return t("common.transgender");
-                                         case 'genderfluid': return t("common.genderfluid");
-                                         default: return like.profile.translatedGender || like.profile.gender;
-                                       }
-                                     })()}
-                                   </span>
-                                 </div>
-                               )}
-                              
-                               {like.profile.sexual_orientation && (
-                                 <div className="flex items-start gap-1">
-                                   <span className="font-medium text-foreground/70">{t("common.orientation")}:</span>
-                                   <span className="text-muted-foreground">
-                                     {(() => {
-                                       const normalized = normalizeValue(like.profile.sexual_orientation);
-                                       switch(normalized) {
-                                         case 'heterosexual': return t("common.heterosexual");
-                                         case 'homosexual': return t("common.homosexual");
-                                         case 'bisexual': return t("common.bisexual");
-                                         case 'pansexual': return t("common.pansexual");
-                                         case 'asexual': return t("common.asexual");
-                                         case 'other': return t("common.other");
-                                         default: return like.profile.translatedOrientation || like.profile.sexual_orientation;
-                                       }
-                                     })()}
-                                   </span>
-                                 </div>
-                               )}
-                              
-                               <div className="flex items-start gap-1">
-                                 <span className="font-medium text-foreground/70">{t("common.lookingFor")}:</span>
-                                 <span className="text-muted-foreground">
-                                   {like.profile.translatedLookingFor?.join(", ") || (like.profile.looking_for && like.profile.looking_for.length > 0 ? like.profile.looking_for.join(", ") : "—")}
-                                 </span>
-                               </div>
-                              
-                               {like.profile.relationship_status && (
-                                 <div className="flex items-start gap-1">
-                                   <span className="font-medium text-foreground/70">{t("common.relationshipStatus")}:</span>
-                                   <span className="text-muted-foreground">
-                                     {(() => {
-                                       const normalized = normalizeValue(like.profile.relationship_status);
-                                       switch(normalized) {
-                                         case 'single': return t("common.single");
-                                         case 'in_relationship': return t("common.inRelationship");
-                                         case 'married': return t("common.married");
-                                         case 'divorced': return t("common.divorced");
-                                         case 'widowed': return t("common.widowed");
-                                         case 'prefer_not_say': return t("common.preferNotSay");
-                                         default: return like.profile.relationship_status;
-                                       }
-                                     })()}
-                                   </span>
-                                 </div>
-                               )}
+                              <div className="flex items-start gap-1">
+                                <span className="font-medium text-foreground/70">{t("common.gender")}:</span>
+                                <span className="text-muted-foreground">
+                                  {like.profile.gender ? (() => {
+                                    const normalized = normalizeValue(like.profile.gender);
+                                    switch(normalized) {
+                                      case 'male': return t("common.male");
+                                      case 'female': return t("common.female");
+                                      case 'non-binary': return t("common.nonBinary");
+                                      case 'transexual': return t("common.transexual");
+                                      case 'transgender': return t("common.transgender");
+                                      case 'genderfluid': return t("common.genderfluid");
+                                      default: return like.profile.translatedGender || like.profile.gender;
+                                    }
+                                  })() : "Non specificato"}
+                                </span>
+                              </div>
+                             
+                              <div className="flex items-start gap-1">
+                                <span className="font-medium text-foreground/70">{t("common.orientation")}:</span>
+                                <span className="text-muted-foreground">
+                                  {like.profile.sexual_orientation ? (() => {
+                                    const normalized = normalizeValue(like.profile.sexual_orientation);
+                                    switch(normalized) {
+                                      case 'heterosexual': return t("common.heterosexual");
+                                      case 'homosexual': return t("common.homosexual");
+                                      case 'bisexual': return t("common.bisexual");
+                                      case 'pansexual': return t("common.pansexual");
+                                      case 'asexual': return t("common.asexual");
+                                      case 'other': return t("common.other");
+                                      default: return like.profile.translatedOrientation || like.profile.sexual_orientation;
+                                    }
+                                  })() : "Non specificato"}
+                                </span>
+                              </div>
+                             
+                              <div className="flex items-start gap-1">
+                                <span className="font-medium text-foreground/70">{t("common.lookingFor")}:</span>
+                                <span className="text-muted-foreground">
+                                  {like.profile.looking_for && like.profile.looking_for.length > 0 
+                                    ? (like.profile.translatedLookingFor?.join(", ") || like.profile.looking_for.join(", "))
+                                    : "Non specificato"}
+                                </span>
+                              </div>
+                             
+                              <div className="flex items-start gap-1">
+                                <span className="font-medium text-foreground/70">{t("common.relationshipStatus")}:</span>
+                                <span className="text-muted-foreground">
+                                  {like.profile.relationship_status ? (() => {
+                                    const normalized = normalizeValue(like.profile.relationship_status);
+                                    switch(normalized) {
+                                      case 'single': return t("common.single");
+                                      case 'in_relationship': return t("common.inRelationship");
+                                      case 'married': return t("common.married");
+                                      case 'divorced': return t("common.divorced");
+                                      case 'widowed': return t("common.widowed");
+                                      case 'prefer_not_say': return t("common.preferNotSay");
+                                      default: return like.profile.relationship_status;
+                                    }
+                                  })() : "Non specificato"}
+                                </span>
+                              </div>
                             </div>
                           )}
                           
