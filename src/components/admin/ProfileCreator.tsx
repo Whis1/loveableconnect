@@ -15,17 +15,13 @@ export const ProfileCreator = () => {
   const [seedLoading, setSeedLoading] = useState(false);
   const [formData, setFormData] = useState({
     nickname: "",
-    full_name: "",
     age: "",
     birthdate: "",
     bio: "",
-    city: "",
     gender: "",
     sexual_orientation: "",
     relationship_status: "",
-    relationship_type: "",
     looking_for: [] as string[],
-    interests: [] as string[],
   });
 
   // Calcola automaticamente birthdate quando cambia l'età
@@ -65,10 +61,10 @@ export const ProfileCreator = () => {
   };
 
   const handleCreateProfile = async () => {
-    if (!formData.nickname || !formData.full_name) {
+    if (!formData.nickname) {
       toast({
         title: "Errore",
-        description: "Inserisci almeno nickname e nome completo",
+        description: "Inserisci almeno il nickname",
         variant: "destructive",
       });
       return;
@@ -82,17 +78,14 @@ export const ProfileCreator = () => {
       const { data, error: profileError } = await supabase.from("profiles").insert({
         id: profileId,
         nickname: formData.nickname,
-        full_name: formData.full_name,
+        full_name: formData.nickname,
         age: formData.age ? parseInt(formData.age) : null,
         birthdate: formData.birthdate || null,
         bio: formData.bio || null,
-        city: formData.city || null,
         gender: formData.gender || null,
         sexual_orientation: formData.sexual_orientation || null,
         relationship_status: formData.relationship_status || null,
-        relationship_type: formData.relationship_type || null,
         looking_for: formData.looking_for.length > 0 ? formData.looking_for : null,
-        interests: formData.interests.length > 0 ? formData.interests : null,
         is_admin_profile: true,
       }).select();
 
@@ -110,17 +103,13 @@ export const ProfileCreator = () => {
 
       setFormData({
         nickname: "",
-        full_name: "",
         age: "",
         birthdate: "",
         bio: "",
-        city: "",
         gender: "",
         sexual_orientation: "",
         relationship_status: "",
-        relationship_type: "",
         looking_for: [],
-        interests: [],
       });
 
       setTimeout(() => window.location.reload(), 1000);
@@ -137,10 +126,10 @@ export const ProfileCreator = () => {
   };
 
   const handleCreate50Profiles = async () => {
-    if (!formData.nickname || !formData.full_name) {
+    if (!formData.nickname) {
       toast({
         title: "Errore",
-        description: "Compila almeno nickname e nome completo per creare profili in batch",
+        description: "Compila almeno il nickname per creare profili in batch",
         variant: "destructive",
       });
       return;
@@ -153,17 +142,14 @@ export const ProfileCreator = () => {
         profiles.push({
           id: crypto.randomUUID(),
           nickname: `${formData.nickname}${i}`,
-          full_name: `${formData.full_name} ${i}`,
+          full_name: `${formData.nickname}${i}`,
           age: formData.age ? parseInt(formData.age) : null,
           birthdate: formData.birthdate || null,
           bio: formData.bio || null,
-          city: formData.city || null,
           gender: formData.gender || null,
           sexual_orientation: formData.sexual_orientation || null,
           relationship_status: formData.relationship_status || null,
-          relationship_type: formData.relationship_type || null,
           looking_for: formData.looking_for.length > 0 ? formData.looking_for : null,
-          interests: formData.interests.length > 0 ? formData.interests : null,
           is_admin_profile: true,
         });
       }
@@ -182,17 +168,13 @@ export const ProfileCreator = () => {
 
       setFormData({
         nickname: "",
-        full_name: "",
         age: "",
         birthdate: "",
         bio: "",
-        city: "",
         gender: "",
         sexual_orientation: "",
         relationship_status: "",
-        relationship_type: "",
         looking_for: [],
-        interests: [],
       });
 
       setTimeout(() => window.location.reload(), 1500);
@@ -246,48 +228,28 @@ export const ProfileCreator = () => {
             <span className="bg-background px-2 text-muted-foreground">oppure crea manualmente</span>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="nickname">Nickname *</Label>
-            <Input
-              id="nickname"
-              value={formData.nickname}
-              onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="full_name">Nome Completo *</Label>
-            <Input
-              id="full_name"
-              value={formData.full_name}
-              onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-            />
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="nickname">Nickname *</Label>
+          <Input
+            id="nickname"
+            value={formData.nickname}
+            onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
+          />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="age">Età (calcola data di nascita automaticamente)</Label>
-            <Input
-              id="age"
-              type="number"
-              value={formData.age}
-              onChange={(e) => handleAgeChange(e.target.value)}
-            />
-            {formData.birthdate && (
-              <p className="text-xs text-muted-foreground">
-                Data di nascita calcolata: {new Date(formData.birthdate).toLocaleDateString('it-IT')}
-              </p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="city">Città</Label>
-            <Input
-              id="city"
-              value={formData.city}
-              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-            />
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="age">Età (calcola data di nascita automaticamente)</Label>
+          <Input
+            id="age"
+            type="number"
+            value={formData.age}
+            onChange={(e) => handleAgeChange(e.target.value)}
+          />
+          {formData.birthdate && (
+            <p className="text-xs text-muted-foreground">
+              Data di nascita calcolata: {new Date(formData.birthdate).toLocaleDateString('it-IT')}
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -322,37 +284,21 @@ export const ProfileCreator = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="relationship_status">Stato Relazione</Label>
-            <Select value={formData.relationship_status} onValueChange={(value) => setFormData({ ...formData, relationship_status: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Seleziona stato" />
-              </SelectTrigger>
-              <SelectContent className="bg-background z-50">
-                <SelectItem value="single">Single</SelectItem>
-                <SelectItem value="in_relationship">In una relazione</SelectItem>
-                <SelectItem value="married">Sposato/a</SelectItem>
-                <SelectItem value="divorced">Divorziato/a</SelectItem>
-                <SelectItem value="widowed">Vedovo/a</SelectItem>
-                <SelectItem value="prefer_not_say">Preferisco non dirlo</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="relationship_type">Tipo Relazione</Label>
-            <Select value={formData.relationship_type} onValueChange={(value) => setFormData({ ...formData, relationship_type: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Seleziona tipo" />
-              </SelectTrigger>
-              <SelectContent className="bg-background z-50">
-                <SelectItem value="monogamous">Monogama</SelectItem>
-                <SelectItem value="non_monogamous">Non monogama</SelectItem>
-                <SelectItem value="open">Aperta</SelectItem>
-                <SelectItem value="polyamorous">Poliamorosa</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="relationship_status">Stato Relazione</Label>
+          <Select value={formData.relationship_status} onValueChange={(value) => setFormData({ ...formData, relationship_status: value })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Seleziona stato" />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="single">Single</SelectItem>
+              <SelectItem value="in_relationship">In una relazione</SelectItem>
+              <SelectItem value="married">Sposato/a</SelectItem>
+              <SelectItem value="divorced">Divorziato/a</SelectItem>
+              <SelectItem value="widowed">Vedovo/a</SelectItem>
+              <SelectItem value="prefer_not_say">Preferisco non dirlo</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">
@@ -364,19 +310,6 @@ export const ProfileCreator = () => {
             onChange={(e) => setFormData({ 
               ...formData, 
               looking_for: e.target.value.split(",").map(s => s.trim()).filter(s => s) 
-            })}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="interests">Interessi (separati da virgole)</Label>
-          <Input
-            id="interests"
-            placeholder="Es: Cinema, Sport, Viaggi, ..."
-            value={formData.interests.join(", ")}
-            onChange={(e) => setFormData({ 
-              ...formData, 
-              interests: e.target.value.split(",").map(s => s.trim()).filter(s => s) 
             })}
           />
         </div>
