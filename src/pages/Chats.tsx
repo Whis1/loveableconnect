@@ -307,6 +307,7 @@ const Chats = () => {
         
         <ChatView
           conversation={selectedConversation}
+          currentAdminId={sessionInfo?.adminProfileId}
           onRefresh={fetchConversations}
           chattorsNickname={sessionInfo?.nickname}
         />

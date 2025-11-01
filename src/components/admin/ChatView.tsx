@@ -34,11 +34,12 @@ interface Message {
 
 interface ChatViewProps {
   conversation: Conversation | null;
+  currentAdminId?: string;
   onRefresh: () => void;
   chattorsNickname?: string;
 }
 
-export const ChatView = ({ conversation, onRefresh, chattorsNickname }: ChatViewProps) => {
+export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNickname }: ChatViewProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -360,7 +361,7 @@ export const ChatView = ({ conversation, onRefresh, chattorsNickname }: ChatView
           profileId={conversation.adminProfileId}
           profileName={conversation.adminNickname}
           isAdmin
-          adminProfileId={conversation.adminProfileId}
+          adminProfileId={currentAdminId || conversation.adminProfileId}
         />
       </div>
     </div>
