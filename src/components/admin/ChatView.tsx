@@ -49,7 +49,7 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
   const [voicePreviewUrl, setVoicePreviewUrl] = useState<string | null>(null);
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [showAdminProfile, setShowAdminProfile] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -64,9 +64,7 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
 
   // Autoscroll quando cambiano i messaggi o la conversazione
   useEffect(() => {
-    if (messages.length > 0) {
-      setTimeout(scrollToBottom, 200);
-    }
+    scrollToBottom();
   }, [messages, conversation?.matchId]);
 
   const fetchMessages = async () => {
@@ -129,9 +127,7 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
   };
 
   const scrollToBottom = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   const handleSendMessage = async (content: string, type: "text" | "emoji" | "gif" | "image" | "voice" = "text", mediaUrl: string | null = null) => {
@@ -280,7 +276,7 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
         </div>
 
         {/* Messaggi */}
-        <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+        <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
             {messages.map((msg) => (
               <MessageBubble
@@ -303,6 +299,7 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
                 showAdminLabel={true}
               />
             ))}
+            <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
 
