@@ -736,6 +736,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      like_with_credits: {
+        Args: { _cost?: number; _to_user_id: string }
+        Returns: {
+          already_exists: boolean
+          match_created: boolean
+          new_balance: number
+          success: boolean
+        }[]
+      }
       reset_daily_credits: { Args: never; Returns: undefined }
       unlock_location_for_user: {
         Args: { p_user_id: string }
