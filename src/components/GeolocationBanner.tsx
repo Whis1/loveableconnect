@@ -13,31 +13,26 @@ export const GeolocationBanner = ({ onActivate, onClose }: GeolocationBannerProp
   const [cookieConsent, setCookieConsent] = useState(false);
   const [showConsentStep, setShowConsentStep] = useState(false);
 
-  const handleInitialActivate = () => {
-    setShowConsentStep(true);
-  };
-
-  const handleConsentChange = async (checked: boolean) => {
-    setCookieConsent(checked);
-    
-    if (checked) {
-      // Trigger browser geolocation prompt immediately when checkbox is checked
-      if (navigator.geolocation) {
-        try {
-          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject);
-          });
-          
-          // If user accepts, save and activate
-          localStorage.setItem("geolocationEnabled", "true");
-          localStorage.setItem("geolocationCookieConsent", "accepted");
-          onActivate();
-        } catch (error) {
-          // If user denies or error occurs, uncheck the checkbox
-          setCookieConsent(false);
-        }
+  const handleInitialActivate = async () => {
+    // Trigger browser geolocation prompt first
+    if (navigator.geolocation) {
+      try {
+        await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject);
+        });
+        
+        // If user accepts browser prompt, show consent step
+        setShowConsentStep(true);
+      } catch (error) {
+        // User denied browser permission - close banner or show error
+        console.error("Geolocation permission denied");
+        onClose();
       }
     }
+  };
+
+  const handleConsentChange = (checked: boolean) => {
+    setCookieConsent(checked);
   };
 
   const handleFinalActivate = () => {
@@ -45,7 +40,7 @@ export const GeolocationBanner = ({ onActivate, onClose }: GeolocationBannerProp
       return;
     }
     
-    // Save both geolocation and cookie consent
+    // Save cookie consent (geolocation already granted at browser level)
     localStorage.setItem("geolocationEnabled", "true");
     localStorage.setItem("geolocationCookieConsent", "accepted");
     onActivate();
