@@ -314,8 +314,7 @@ export const TrisGameBanner = () => {
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
             <div className="text-6xl drop-shadow-lg">❌⭕</div>
             <div className="text-center z-10">
-              <span className="text-xl font-bold block mb-1">Tris</span>
-              <span className="text-xs text-blue-100/80">Classico gioco strategico</span>
+              <span className="text-xl font-bold block">Tris</span>
             </div>
           </Button>
           
@@ -326,8 +325,7 @@ export const TrisGameBanner = () => {
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
             <div className="text-6xl drop-shadow-lg">🎲</div>
             <div className="text-center z-10">
-              <span className="text-xl font-bold block mb-1">Dama</span>
-              <span className="text-xs text-purple-100/80">Sfida l&apos;AI esperta</span>
+              <span className="text-xl font-bold block">Dama</span>
             </div>
           </Button>
         </div>
