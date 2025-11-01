@@ -312,6 +312,7 @@ const ProfileEdit = () => {
           latitude: profile.latitude,
           longitude: profile.longitude,
           location_locked: profile.city && !profile.location_locked ? true : profile.location_locked,
+          birthdate_locked: birthdate && !profile.birthdate_locked ? true : profile.birthdate_locked,
           interests: interests.length > 0 ? interests : null,
           avatar_url: avatarPath,
           photos: photosPaths.length > 0 ? photosPaths : null,
