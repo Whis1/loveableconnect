@@ -320,7 +320,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         >
           <div className="flex items-center gap-2">
             <Trophy className="w-5 h-5 text-primary" />
-            <h4 className="font-bold text-lg">Classifica ELO</h4>
+            <h4 className="font-bold text-lg">Classifica ELO - TOP 5</h4>
           </div>
           {isOpen ? (
             <ChevronUp className="w-5 h-5 text-primary" />
