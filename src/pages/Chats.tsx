@@ -36,6 +36,19 @@ const Chats = () => {
       console.error("Persistenza keepInList fallita:", e);
     }
   };
+  // Dati persistiti per le conversazioni fissate
+  const storageDataKeyRef = useRef<string>("keep_conversations_data_default");
+  const keepDataRef = useRef<Record<string, Conversation>>({});
+  const persistKeepData = () => {
+    try {
+      localStorage.setItem(
+        storageDataKeyRef.current,
+        JSON.stringify(keepDataRef.current)
+      );
+    } catch (e) {
+      console.error("Persistenza keepData fallita:", e);
+    }
+  };
 
   useEffect(() => {
     // Verifica sessione chattors
@@ -50,8 +63,9 @@ const Chats = () => {
     try {
       const parsed = JSON.parse(session);
       setSessionInfo(parsed);
-      // Inizializza storage key e carica le conversazioni fissate da localStorage
+      // Inizializza storage keys e carica le conversazioni fissate da localStorage
       storageKeyRef.current = `keep_conversations_${parsed?.nickname || 'default'}`;
+      storageDataKeyRef.current = `keep_conversations_data_${parsed?.nickname || 'default'}`;
       try {
         const saved = JSON.parse(localStorage.getItem(storageKeyRef.current) || '[]');
         if (Array.isArray(saved)) {
@@ -59,6 +73,22 @@ const Chats = () => {
         }
       } catch (e) {
         console.error('Errore caricamento conversazioni fissate:', e);
+      }
+      try {
+        const savedDataRaw = localStorage.getItem(storageDataKeyRef.current) || '{}';
+        const savedData = JSON.parse(savedDataRaw);
+        if (savedData && typeof savedData === 'object') {
+          keepDataRef.current = savedData;
+        }
+      } catch (e) {
+        console.error('Errore caricamento dati conversazioni fissate:', e);
+      }
+      // Mostra subito le conversazioni fissate salvate in locale
+      const initial = Object.values(keepDataRef.current || {});
+      if (initial.length > 0) {
+        setConversations(
+          initial.sort((a: any, b: any) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime())
+        );
       }
       // Avvia fetch in background senza bloccare la UI
       fetchConversations(false);
@@ -101,19 +131,37 @@ const Chats = () => {
       const sorted = [...list].sort(
         (a: any, b: any) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
       );
-      // Aggiungi tutte le conversazioni arrivate dal server al set persistente
+      // Aggiungi tutte le conversazioni arrivate dal server al set e ai dati persistenti
       const keep = keepInListRef.current;
-      sorted.forEach((c: any) => keep.add(`${c.matchId}-${c.userId}`));
+      const keepData = keepDataRef.current;
+      sorted.forEach((c: any) => {
+        const key = `${c.matchId}-${c.userId}`;
+        keep.add(key);
+        keepData[key] = c;
+      });
       persistKeepSet();
+      persistKeepData();
        setConversations((prev) => {
          const keepSet = keepInListRef.current;
          // Parti dalle conversazioni dal server
          let result = [...sorted];
          
-         // Per ogni conversazione "da mantenere", se non è già in sorted, aggiungila prendendola dallo stato precedente
+         // Per ogni conversazione "da mantenere", se non è già in result, aggiungila
          const resultKeys = new Set(result.map((c: any) => `${c.matchId}-${c.userId}`));
          const toAdd: Conversation[] = [];
          
+         // Aggiungi dal data persistito (localStorage)
+         for (const key of keepSet) {
+           if (!resultKeys.has(key)) {
+             const pinned = keepDataRef.current[key];
+             if (pinned) {
+               toAdd.push({ ...pinned, unreadCount: 0 });
+               resultKeys.add(key);
+             }
+           }
+         }
+         
+         // Backfill anche dallo stato precedente nel caso manchino dati persistiti
          prev.forEach((c) => {
            const key = `${c.matchId}-${c.userId}`;
            if (keepSet.has(key) && !resultKeys.has(key)) {
@@ -184,6 +232,8 @@ const Chats = () => {
     const key = `${conv.matchId}-${conv.userId}`;
     keepInListRef.current.add(key);
     persistKeepSet();
+    keepDataRef.current[key] = conv;
+    persistKeepData();
     setConversations((prev) =>
       prev.map((c) =>
         c.matchId === conv.matchId && c.userId === conv.userId
@@ -241,6 +291,8 @@ const Chats = () => {
             const key = `${conv.matchId}-${conv.userId}`;
             keepInListRef.current.delete(key);
             persistKeepSet();
+            delete keepDataRef.current[key];
+            persistKeepData();
             
             if (
               selectedConversation &&
