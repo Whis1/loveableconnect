@@ -9,6 +9,7 @@ import { ArrowLeft, Send, Paperclip, ChevronDown, ChevronUp } from "lucide-react
 import { useToast } from "@/hooks/use-toast";
 import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { GifPicker } from "@/components/chat/GifPicker";
+import { VoiceRecorder } from "@/components/chat/VoiceRecorder";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ChatUserProfile } from "@/components/chat/ChatUserProfile";
 import { InsufficientCreditsBanner } from "@/components/chat/InsufficientCreditsBanner";
@@ -24,7 +25,7 @@ interface Message {
   sender_id: string;
   receiver_id: string;
   content: string;
-  message_type: 'text' | 'image' | 'emoji' | 'gif';
+  message_type: 'text' | 'image' | 'emoji' | 'gif' | 'voice';
   media_url: string | null;
   created_at: string;
   read: boolean;
@@ -54,7 +55,7 @@ const Chat = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { deductCredits } = useCredits();
+  const { deductCredits, credits } = useCredits();
   const [showCreditsBanner, setShowCreditsBanner] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
@@ -243,7 +244,7 @@ const Chat = () => {
 
   const handleSendMessage = async (
     e?: React.FormEvent, 
-    messageType: 'text' | 'emoji' | 'gif' | 'image' = 'text',
+    messageType: 'text' | 'emoji' | 'gif' | 'image' | 'voice' = 'text',
     mediaUrl: string | null = null,
     content?: string
   ) => {
@@ -352,6 +353,43 @@ const Chat = () => {
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleVoiceRecording = async (audioBlob: Blob) => {
+    if (!currentUser) return;
+
+    setUploading(true);
+    try {
+      const fileName = `${currentUser}/${Date.now()}.webm`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('chat-images')
+        .upload(fileName, audioBlob, {
+          contentType: 'audio/webm'
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('chat-images')
+        .getPublicUrl(fileName);
+
+      await handleSendMessage(undefined, 'voice', data.publicUrl, '🎤 Messaggio vocale');
+      
+      toast({
+        title: "Messaggio vocale inviato",
+        description: "Il messaggio vocale è stato inviato con successo",
+      });
+    } catch (error: any) {
+      console.error("Error uploading voice message:", error);
+      toast({
+        title: t("chat.error"),
+        description: "Impossibile inviare il messaggio vocale",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -568,6 +606,11 @@ const Chat = () => {
                   </Button>
                   <EmojiPicker onEmojiSelect={handleEmojiSelect} />
                   <GifPicker onGifSelect={handleGifSelect} />
+                  <VoiceRecorder 
+                    onRecordingComplete={handleVoiceRecording}
+                    disabled={uploading}
+                    isPremiumMonthly={credits?.is_premium && credits.subscription_type === 'monthly'}
+                  />
                   <Input
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}

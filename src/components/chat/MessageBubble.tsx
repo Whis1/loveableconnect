@@ -4,7 +4,7 @@ import { User } from "lucide-react";
 
 interface MessageBubbleProps {
   content: string;
-  messageType: 'text' | 'image' | 'emoji' | 'gif';
+  messageType: 'text' | 'image' | 'emoji' | 'gif' | 'voice';
   mediaUrl: string | null;
   isOwn: boolean;
   timestamp: string;
@@ -44,6 +44,18 @@ export const MessageBubble = ({
           </ImageDialog>
         ) : (
           <p className="break-words whitespace-pre-wrap">{content || (messageType === 'gif' ? 'GIF' : 'Immagine')}</p>
+        );
+      
+      case 'voice':
+        return mediaUrl ? (
+          <div className="flex items-center gap-2">
+            <audio controls className="max-w-xs">
+              <source src={mediaUrl} type="audio/webm" />
+              Il tuo browser non supporta l'audio.
+            </audio>
+          </div>
+        ) : (
+          <p className="break-words whitespace-pre-wrap">🎤 Messaggio vocale</p>
         );
       
       default:
