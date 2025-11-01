@@ -494,16 +494,18 @@ const Likes = () => {
                               {hasUnlocked ? (like.profile.nickname?.charAt(0) || like.profile.full_name.charAt(0)) : '?'}
                             </AvatarFallback>
                           </Avatar>
-                          {hasUnlocked && (
-                            <div className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 shadow-lg">
-                              <Heart className="h-3 w-3 text-white fill-white" />
-                            </div>
-                          )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-bold text-xl mb-1">
-                            {hasUnlocked ? like.profile.nickname : '???'}
-                          </h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-bold text-xl truncate bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                              {hasUnlocked ? like.profile.nickname : '???'}
+                            </h3>
+                            {hasUnlocked && (
+                              <div className="p-1.5 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 shadow-lg shrink-0">
+                                <Heart className="h-3 w-3 text-white fill-white" />
+                              </div>
+                            )}
+                          </div>
                           {hasUnlocked && like.profile.age && (
                             <p className="text-sm text-muted-foreground font-medium">
                               {like.profile.age} {t("common.years")}
@@ -588,20 +590,6 @@ const Likes = () => {
                             <p className="text-sm text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
                               {like.profile.translatedBio}
                             </p>
-                          )}
-                          {hasUnlocked && like.profile.translatedInterests && like.profile.translatedInterests.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 mt-3">
-                              {like.profile.translatedInterests.slice(0, 4).map((interest, index) => (
-                                <Badge key={index} variant="secondary" className="text-xs px-2.5 py-0.5 bg-primary/10 text-primary border-none">
-                                  {interest}
-                                </Badge>
-                              ))}
-                              {like.profile.translatedInterests.length > 4 && (
-                                <Badge variant="secondary" className="text-xs px-2 py-0.5 bg-muted">
-                                  +{like.profile.translatedInterests.length - 4}
-                                </Badge>
-                              )}
-                            </div>
                           )}
                           <p className="text-xs text-muted-foreground/70 mt-3 flex items-center gap-1">
                             <Sparkles className="h-3 w-3" />
