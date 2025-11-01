@@ -544,7 +544,7 @@ const ProfileEdit = () => {
                 <AlertDescription className="text-amber-800 dark:text-amber-200">
                   <strong>⚠️ Completa il tuo profilo per continuare</strong>
                   <br />
-                  Per questioni di tutela e sicurezza, è necessario inserire la propria data di nascita (solo per utenti maggiorenni) e la propria posizione. L'accesso al sito sarà consentito solo dopo aver completato i campi obbligatori.
+                  Per questioni di tutela e sicurezza, è necessario inserire la propria data di nascita (solo per utenti maggiorenni) e la propria posizione prima di accedere al sito. L'accesso sarà consentito solo dopo aver completato i campi obbligatori. Alla fine della compilazione, clicca sul pulsante "Salva" per proseguire e poter navigare sul sito. Grazie per la comprensione, ti auguriamo una piacevole permanenza su LoveableConnect!
                 </AlertDescription>
               </Alert>
             )}
