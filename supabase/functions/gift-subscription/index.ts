@@ -78,8 +78,8 @@ serve(async (req) => {
       logStep("No existing customer");
     }
 
-    // Price ID per Premium Mensile (299.99 EUR)
-    const priceId = "price_1SOTACK6IHDbrxmEbYsyQs3G";
+    // Price ID per Regalo Premium Mensile (299.99 EUR) - include messaggi vocali
+    const priceId = "price_1SOdt0K6IHDbrxmEur0p7hKi";
 
     // Crea sessione checkout con metadata per tracciare il regalo
     const origin = req.headers.get("origin") || "http://localhost:5173";
