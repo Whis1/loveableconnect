@@ -52,6 +52,14 @@ const Chats = () => {
     };
   }, [navigate]);
 
+  // Polling di backup ogni 3s per garantire aggiornamento quasi realtime
+  useEffect(() => {
+    const session = sessionStorage.getItem("chattors_session");
+    if (!session) return;
+    const id = setInterval(() => fetchConversations(true), 3000);
+    return () => clearInterval(id);
+  }, []);
+
   const fetchConversations = async (silent = true) => {
     try {
       if (!silent) setLoading(true);

@@ -42,7 +42,8 @@ Deno.serve(async (req) => {
     if (adminsErr) throw adminsErr
 
     const userProfileCache = new Map<string, { nickname: string; avatar_url: string | null }>()
-    const conversations: Conversation[] = []
+    const allConversations: Conversation[] = []
+    const filteredConversations: Conversation[] = []
 
     for (const admin of admins || []) {
       const adminId = admin.id as string
@@ -71,7 +72,6 @@ Deno.serve(async (req) => {
           .maybeSingle()
         if (lastErr) throw lastErr
         
-        // Se non ci sono messaggi, usa la data del match
         const lastMessageAt = lastMsg?.created_at || (m as any).created_at
 
         // Unread count for admin
@@ -82,9 +82,6 @@ Deno.serve(async (req) => {
           .eq('receiver_id', adminId)
           .eq('read', false)
         if (cntErr) throw cntErr
-
-        // Skip archived conversations that have no unread messages
-        if (isArchived && (unreadCount || 0) === 0) continue
 
         // User profile (cache)
         if (!userProfileCache.has(otherUserId)) {
@@ -98,7 +95,7 @@ Deno.serve(async (req) => {
         }
         const u = userProfileCache.get(otherUserId)!
 
-        conversations.push({
+        const conv: Conversation = {
           userId: otherUserId,
           userNickname: u.nickname,
           userAvatar: u.avatar_url,
@@ -107,16 +104,23 @@ Deno.serve(async (req) => {
           matchId: m.id as string,
           lastMessageAt,
           unreadCount: unreadCount || 0,
-        })
+        }
+
+        allConversations.push(conv)
+        // Skip archived conversations that have no unread messages (default view)
+        if (!(isArchived && (unreadCount || 0) === 0)) {
+          filteredConversations.push(conv)
+        }
       }
     }
 
-    conversations.sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime())
+    const output: Conversation[] = (filteredConversations.length > 0 ? filteredConversations : allConversations)
+    output.sort((a: Conversation, b: Conversation) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime())
 
-    console.log(`Conversazioni (messages) recuperate: ${conversations.length}`)
+    console.log(`Conversazioni (messages) recuperate: ${output.length}`)
 
     return new Response(
-      JSON.stringify({ success: true, conversations }),
+      JSON.stringify({ success: true, conversations: output }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
   } catch (error) {
