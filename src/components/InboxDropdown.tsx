@@ -132,14 +132,11 @@ export const InboxDropdown = () => {
         onClick={handleOpen}
       >
         <div className="relative">
-          {/* Envelope base with gradient */}
+          {/* Glow effect */}
           <div className="absolute inset-0 bg-gradient-to-br from-pink-400 via-rose-400 to-purple-500 rounded-lg opacity-20 group-hover:opacity-30 transition-opacity blur-sm" />
           
-          {/* Main icon with heart inside */}
-          <div className="relative">
-            <Mail className="h-6 w-6 text-pink-500 group-hover:text-rose-500 transition-colors" />
-            <Heart className="h-3 w-3 text-rose-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 group-hover:scale-110 transition-transform" fill="currentColor" />
-          </div>
+          {/* Mail icon */}
+          <Mail className="h-6 w-6 text-pink-500 group-hover:text-rose-500 transition-colors relative z-10" />
         </div>
         
         {unreadCount > 0 && (
