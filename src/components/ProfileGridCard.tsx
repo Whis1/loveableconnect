@@ -283,10 +283,16 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
     
     if (isLiking || hasLiked) return; // Prevent double-click and removing likes
     
+    // 1) INSTANT CHECK: Show banner immediately if no likes left and not using credits
+    if (!useCredits && likesRemaining <= 0) {
+      setShowLikesExhausted(true);
+      return;
+    }
+    
     setIsLiking(true);
     
     try {
-      // 1) Pre-check: avoid consuming likes if already liked
+      // 2) Pre-check: avoid consuming likes if already liked
       const { data: existingLike } = await supabase
         .from("likes")
         .select("id")
@@ -304,7 +310,7 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
         return;
       }
 
-      // 2) If using credits path, do it atomically in the DB (deduct + like)
+      // 3) If using credits path, do it atomically in the DB (deduct + like)
       if (useCredits) {
         const { data: likeResult, error: likeFnError } = await supabase.rpc(
           'like_with_credits',
@@ -339,14 +345,7 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
         return;
       }
 
-      // 3) Daily-like path: show banner if no likes left before consuming
-      if (likesRemaining <= 0) {
-        setShowLikesExhausted(true);
-        setIsLiking(false);
-        return;
-      }
-
-      // 4) Try to consume a daily like
+      // 4) Try to consume a daily like (already checked above)
       const { success } = await consumeLike(false);
 
       if (!success) {
