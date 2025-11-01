@@ -46,10 +46,19 @@ export const ReportUserDialog = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const reportTypes = [
-    { value: "violence", label: "Violenza" },
-    { value: "hate_speech", label: "Incitamento all'odio" },
-    { value: "fake_profile", label: "Presunto profilo fake" },
-    { value: "other", label: "Altro" },
+    { value: "fake_profile", label: "Profilo falso / sospetto (fake)" },
+    { value: "scam_money", label: "Truffa / Richiesta soldi" },
+    { value: "spam", label: "Spam / Contenuti non richiesti" },
+    { value: "explicit_sexual", label: "Contenuti sessuali espliciti / Pornografia" },
+    { value: "inappropriate_nudity", label: "Nudità inappropriata" },
+    { value: "harassment_stalking", label: "Molestie / Stalking" },
+    { value: "threats_violence", label: "Minacce o violenza" },
+    { value: "hate_discrimination", label: "Incitamento all'odio / Discriminazione" },
+    { value: "suspected_minor", label: "Sospetto minorenne" },
+    { value: "privacy_violation", label: "Violazione della privacy / condivisione contenuti privati" },
+    { value: "impersonation", label: "Impersonificazione / Falso nome" },
+    { value: "paid_meetings", label: "Richiesta di incontri a pagamento / escort" },
+    { value: "other", label: "Altro (specifica nei dettagli aggiuntivi)" },
   ];
 
   const handleSubmit = async () => {
