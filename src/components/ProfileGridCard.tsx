@@ -182,7 +182,7 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
   // Check if user already liked this profile or has an active match
   useEffect(() => {
     const checkLikeAndMatch = async () => {
-      // Se abbiamo già i like pre-caricati, usali
+      // Se abbiamo già i like pre-caricati, usali (fast path)
       if (likedProfileIds) {
         setHasLiked(likedProfileIds.has(profile.id));
       } else {
@@ -197,7 +197,7 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
         setHasLiked(!!likeData);
       }
 
-      // Check for match
+      // Check for match - OPTIMIZED: check both match existence and hidden status
       const { data: matchData } = await supabase
         .from("matches")
         .select("id")
@@ -214,7 +214,6 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
           .eq("hidden_from", "both")
           .maybeSingle();
         
-        // Match is active if it exists and is not hidden with 'both'
         setHasActiveMatch(!hiddenData);
       } else {
         setHasActiveMatch(false);

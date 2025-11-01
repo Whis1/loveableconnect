@@ -44,23 +44,23 @@ export const DailyLikesExhaustedBanner = ({
             Like Giornalieri Terminati
           </AlertDialogTitle>
           <AlertDialogDescription className="text-center space-y-3">
-            <p className="text-base">
+            <div className="text-base">
               Hai esaurito i tuoi like giornalieri!
-            </p>
+            </div>
             <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-              <p className="text-sm">
+              <div className="text-sm">
                 <strong>Attendi il rinnovo:</strong> {formatTimeRemaining()}
-              </p>
+              </div>
               {hasEnoughCredits && (
-                <p className="text-sm text-primary">
+                <div className="text-sm text-primary">
                   Oppure usa <strong>2 crediti</strong> per mettere like subito
-                </p>
+                </div>
               )}
             </div>
             {!hasEnoughCredits && (
-              <p className="text-sm text-destructive">
+              <div className="text-sm text-destructive">
                 Non hai abbastanza crediti. Acquistane di più o attendi il reset giornaliero.
-              </p>
+              </div>
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
