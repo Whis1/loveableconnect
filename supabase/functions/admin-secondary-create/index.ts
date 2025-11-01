@@ -1,10 +1,42 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Hash password usando Web Crypto API (supportato in Edge Functions)
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    data,
+    'PBKDF2',
+    false,
+    ['deriveBits']
+  );
+  
+  const hashBuffer = await crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      salt: salt,
+      iterations: 100000,
+      hash: 'SHA-256'
+    },
+    keyMaterial,
+    256
+  );
+  
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const saltArray = Array.from(salt);
+  
+  // Combina salt e hash in un singolo string base64
+  const combined = saltArray.concat(hashArray);
+  return btoa(String.fromCharCode(...combined));
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -79,7 +111,7 @@ Deno.serve(async (req) => {
     }
 
     // Hash della password
-    const passwordHash = await bcrypt.hash(password);
+    const passwordHash = await hashPassword(password);
 
     // Inserisci account
     const { data, error } = await supabase
@@ -110,8 +142,9 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error('Errore creazione account secondario:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: errorMessage }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }

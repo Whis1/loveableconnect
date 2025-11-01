@@ -1,10 +1,59 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Verifica password usando Web Crypto API (supportato in Edge Functions)
+async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    
+    // Decodifica hash base64
+    const combined = atob(storedHash);
+    const combinedArray = Array.from(combined).map(c => c.charCodeAt(0));
+    
+    // Estrai salt (primi 16 bytes) e hash (resto)
+    const salt = new Uint8Array(combinedArray.slice(0, 16));
+    const storedHashArray = combinedArray.slice(16);
+    
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw',
+      data,
+      'PBKDF2',
+      false,
+      ['deriveBits']
+    );
+    
+    const hashBuffer = await crypto.subtle.deriveBits(
+      {
+        name: 'PBKDF2',
+        salt: salt,
+        iterations: 100000,
+        hash: 'SHA-256'
+      },
+      keyMaterial,
+      256
+    );
+    
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    
+    // Confronto costante nel tempo
+    if (hashArray.length !== storedHashArray.length) return false;
+    
+    let diff = 0;
+    for (let i = 0; i < hashArray.length; i++) {
+      diff |= hashArray[i] ^ storedHashArray[i];
+    }
+    
+    return diff === 0;
+  } catch (error) {
+    console.error('Errore verifica password:', error);
+    return false;
+  }
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -55,7 +104,7 @@ Deno.serve(async (req) => {
     }
 
     // Verifica password
-    const isPasswordValid = await bcrypt.compare(password, account.password_hash);
+    const isPasswordValid = await verifyPassword(password, account.password_hash);
 
     if (!isPasswordValid) {
       return new Response(
