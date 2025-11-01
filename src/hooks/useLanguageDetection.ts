@@ -24,7 +24,7 @@ export const useLanguageDetection = () => {
 
         if (data?.language) {
           console.log('Auto-detected language:', data.language, 'from country:', data.country);
-          await i18n.changeLanguage(data.language);
+          await i18n.changeLanguage((data.language as string).toLowerCase().split('-')[0]);
         }
       } catch (error) {
         console.error('Failed to detect language:', error);

@@ -85,7 +85,15 @@ const INTEREST_REVERSE_MAP: Record<string, string> = {
 
 export const useTextTranslation = () => {
   const { i18n, t: originalT } = useI18nTranslation();
-  const currentLanguage = i18n.language || 'it';
+
+  // Normalize language codes like en-US -> en, it-IT -> it
+  const normalizeLanguage = (lng?: string) => {
+    if (!lng) return 'it';
+    const base = lng.toLowerCase().split('-')[0];
+    return base;
+  };
+
+  const currentLanguage = normalizeLanguage(i18n.language);
   const [, forceUpdate] = useState({});
 
   // Funzione core per tradurre con DeepL
