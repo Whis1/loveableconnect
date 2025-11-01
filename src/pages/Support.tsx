@@ -13,7 +13,9 @@ const Support = () => {
   const [userEmail, setUserEmail] = useState("");
   const locationState = location.state as { 
     isLocationChangeRequest?: boolean; 
-    newLocationData?: { city: string; latitude: number; longitude: number } 
+    newLocationData?: { city: string; latitude: number; longitude: number };
+    isBirthdateChangeRequest?: boolean;
+    newBirthdateData?: { birthdate: string };
   } | null;
 
   useEffect(() => {
@@ -56,6 +58,8 @@ const Support = () => {
               userEmail={userEmail} 
               isLocationChangeRequest={locationState?.isLocationChangeRequest}
               newLocationData={locationState?.newLocationData}
+              isBirthdateChangeRequest={locationState?.isBirthdateChangeRequest}
+              newBirthdateData={locationState?.newBirthdateData}
             />
           </div>
         </div>

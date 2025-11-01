@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, MessageCircle, Image as ImageIcon, X, Bot, Headphones, MapPin } from "lucide-react";
+import { Send, MessageCircle, Image as ImageIcon, X, Bot, Headphones, MapPin, Calendar } from "lucide-react";
 import { AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -28,9 +28,11 @@ interface SupportChatProps {
   userEmail: string;
   isLocationChangeRequest?: boolean;
   newLocationData?: { city: string; latitude: number; longitude: number };
+  isBirthdateChangeRequest?: boolean;
+  newBirthdateData?: { birthdate: string };
 }
 
-export const SupportChat = ({ userEmail, isLocationChangeRequest, newLocationData }: SupportChatProps) => {
+export const SupportChat = ({ userEmail, isLocationChangeRequest, newLocationData, isBirthdateChangeRequest, newBirthdateData }: SupportChatProps) => {
   const { toast } = useToast();
   const { t } = useTranslation();
   const [messages, setMessages] = useState<SupportMessage[]>([]);
@@ -41,7 +43,7 @@ export const SupportChat = ({ userEmail, isLocationChangeRequest, newLocationDat
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [requestSent, setRequestSent] = useState(false);
 
-  // Invia automaticamente la richiesta di cambio location al caricamento
+  // Invia automaticamente la richiesta di cambio location o birthdate al caricamento
   useEffect(() => {
     if (isLocationChangeRequest && newLocationData && !requestSent) {
       setRequestSent(true);
@@ -50,7 +52,14 @@ export const SupportChat = ({ userEmail, isLocationChangeRequest, newLocationDat
         sendLocationChangeRequest();
       }, 500);
     }
-  }, [isLocationChangeRequest, newLocationData, requestSent]);
+    if (isBirthdateChangeRequest && newBirthdateData && !requestSent) {
+      setRequestSent(true);
+      // Aspetta che i messaggi vengano caricati
+      setTimeout(() => {
+        sendBirthdateChangeRequest();
+      }, 500);
+    }
+  }, [isLocationChangeRequest, newLocationData, isBirthdateChangeRequest, newBirthdateData, requestSent]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -220,6 +229,60 @@ export const SupportChat = ({ userEmail, isLocationChangeRequest, newLocationDat
       fetchMessages();
     } catch (error) {
       console.error('Error sending location request:', error);
+      toast({
+        title: "Errore",
+        description: "Impossibile inviare la richiesta",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sendBirthdateChangeRequest = async () => {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !newBirthdateData) return;
+
+      const formattedDate = new Date(newBirthdateData.birthdate).toLocaleDateString('it-IT');
+      const messageText = `🎂 Richiesta cambio data di nascita\n\nVorrei cambiare la mia data di nascita in: ${formattedDate}`;
+
+      const { error } = await supabase
+        .from('support_messages')
+        .insert({
+          user_id: user.id,
+          user_email: userEmail,
+          message: messageText,
+          is_admin_response: false,
+          request_type: 'birthdate_change',
+          request_status: 'pending',
+          request_data: newBirthdateData,
+        });
+
+      if (error) throw error;
+
+      // Messaggio automatico di conferma
+      setTimeout(async () => {
+        await supabase
+          .from('support_messages')
+          .insert({
+            user_id: user.id,
+            user_email: userEmail,
+            message: "🎂 Grazie per la tua richiesta di cambio data di nascita. Il nostro team la esaminerà al più presto e ti farà sapere se potrà essere approvata.",
+            is_admin_response: true,
+          });
+      }, 500);
+
+      toast({
+        title: "✅ Richiesta inviata",
+        description: `Richiesta di cambio data di nascita a "${formattedDate}" inviata con successo`,
+      });
+
+      // Refresh dei messaggi
+      fetchMessages();
+    } catch (error) {
+      console.error('Error sending birthdate request:', error);
       toast({
         title: "Errore",
         description: "Impossibile inviare la richiesta",
@@ -428,6 +491,56 @@ export const SupportChat = ({ userEmail, isLocationChangeRequest, newLocationDat
                               </p>
                               {msg.request_status === 'pending' && (
                                 <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
+                                  Il supporto clienti esaminerà la tua richiesta al più presto.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Banner per richiesta cambio data di nascita dell'utente */}
+                    {msg.request_type === 'birthdate_change' && !msg.is_admin_response && (
+                      <div className="ml-12 mt-2 mb-4">
+                        <div className={`p-4 rounded-lg border-2 ${
+                          msg.request_status === 'pending' 
+                            ? 'bg-purple-50 dark:bg-purple-950 border-purple-300 dark:border-purple-700' 
+                            : msg.request_status === 'approved'
+                            ? 'bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700'
+                            : 'bg-red-50 dark:bg-red-950 border-red-300 dark:border-red-700'
+                        }`}>
+                          <div className="flex items-start gap-3">
+                            <Calendar className={`h-5 w-5 mt-0.5 ${
+                              msg.request_status === 'pending'
+                                ? 'text-purple-600 dark:text-purple-400'
+                                : msg.request_status === 'approved'
+                                ? 'text-green-600 dark:text-green-400'
+                                : 'text-red-600 dark:text-red-400'
+                            }`} />
+                            <div className="flex-1">
+                              <p className={`font-semibold text-sm mb-1 ${
+                                msg.request_status === 'pending'
+                                  ? 'text-purple-900 dark:text-purple-100'
+                                  : msg.request_status === 'approved'
+                                  ? 'text-green-900 dark:text-green-100'
+                                  : 'text-red-900 dark:text-red-100'
+                              }`}>
+                                {msg.request_status === 'pending' && '⏳ Richiesta in attesa'}
+                                {msg.request_status === 'approved' && '✅ Richiesta approvata!'}
+                                {msg.request_status === 'rejected' && '❌ Richiesta rifiutata'}
+                              </p>
+                              <p className={`text-sm ${
+                                msg.request_status === 'pending'
+                                  ? 'text-purple-800 dark:text-purple-200'
+                                  : msg.request_status === 'approved'
+                                  ? 'text-green-800 dark:text-green-200'
+                                  : 'text-red-800 dark:text-red-200'
+                              }`}>
+                                Nuova data di nascita: <strong>{msg.request_data?.birthdate && new Date(msg.request_data.birthdate).toLocaleDateString('it-IT')}</strong>
+                              </p>
+                              {msg.request_status === 'pending' && (
+                                <p className="text-xs text-purple-700 dark:text-purple-300 mt-2">
                                   Il supporto clienti esaminerà la tua richiesta al più presto.
                                 </p>
                               )}
