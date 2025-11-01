@@ -80,19 +80,20 @@ const Chats = () => {
       const sorted = [...list].sort(
         (a: any, b: any) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
       );
-       setConversations(() => {
+       setConversations((prev) => {
          const keepSet = keepInListRef.current;
          // Parti dalle conversazioni dal server
          let result = [...sorted];
          
-         // Per ogni conversazione "da mantenere", se non è già in sorted, aggiungila
-         const sortedKeys = new Set(sorted.map((c: any) => `${c.matchId}-${c.userId}`));
+         // Per ogni conversazione "da mantenere", se non è già in sorted, aggiungila prendendola dallo stato precedente
+         const resultKeys = new Set(result.map((c: any) => `${c.matchId}-${c.userId}`));
          const toAdd: Conversation[] = [];
          
-         conversations.forEach((c) => {
+         prev.forEach((c) => {
            const key = `${c.matchId}-${c.userId}`;
-           if (keepSet.has(key) && !sortedKeys.has(key)) {
+           if (keepSet.has(key) && !resultKeys.has(key)) {
              toAdd.push({ ...c, unreadCount: 0 });
+             resultKeys.add(key);
            }
          });
          
