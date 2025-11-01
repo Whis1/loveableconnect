@@ -22,14 +22,15 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
   const [userRank, setUserRank] = useState<number | null>(null);
   const [adminElos, setAdminElos] = useState<Map<string, number>>(new Map());
   const [isOpen, setIsOpen] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   useEffect(() => {
-    fetchLeaderboard();
+    fetchLeaderboard(true); // Initial load - generate new ELOs
     
-    // Update admin ELOs every 10-15 minutes
-    const updateInterval = Math.floor(Math.random() * 5 * 60 * 1000) + 10 * 60 * 1000; // 10-15 minutes
+    // Update admin ELOs every 20-25 minutes
+    const updateInterval = Math.floor(Math.random() * 5 * 60 * 1000) + 20 * 60 * 1000; // 20-25 minutes
     const interval = setInterval(() => {
-      fetchLeaderboard();
+      fetchLeaderboard(false); // Subsequent updates - adjust existing ELOs
     }, updateInterval);
     
     return () => clearInterval(interval);
@@ -40,7 +41,17 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     return Math.floor(Math.random() * 700) + 1800;
   };
 
-  const fetchLeaderboard = async () => {
+  const adjustElo = (currentElo: number): number => {
+    // Simulate ELO changes: ±5 to ±15 points
+    const change = Math.floor(Math.random() * 11) + 5; // 5-15
+    const isIncrease = Math.random() > 0.5;
+    const newElo = isIncrease ? currentElo + change : currentElo - change;
+    
+    // Keep ELO in reasonable bounds (1700-2600)
+    return Math.max(1700, Math.min(2600, newElo));
+  };
+
+  const fetchLeaderboard = async (isInitial: boolean = false) => {
     try {
       // Fetch all profiles with ELO
       const { data: profiles, error } = await supabase
@@ -51,7 +62,6 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
       if (error) throw error;
 
       if (profiles) {
-        // Generate random ELOs for admin profiles - ensure they're all unique
         const newAdminElos = new Map<string, number>();
         const usedElos = new Set<number>();
         
@@ -64,20 +74,30 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         
         const updatedProfiles = profiles.map(profile => {
           if (profile.is_admin_profile) {
-            // Generate unique random ELO for admin profiles
-            let randomElo;
-            do {
-              randomElo = generateHighElo();
-            } while (usedElos.has(randomElo));
+            let newElo: number;
             
-            usedElos.add(randomElo);
-            newAdminElos.set(profile.id, randomElo);
-            return { ...profile, tris_elo: randomElo };
+            if (isInitial || !adminElos.has(profile.id)) {
+              // Initial load or new profile: generate completely new ELO
+              do {
+                newElo = generateHighElo();
+              } while (usedElos.has(newElo));
+            } else {
+              // Subsequent update: adjust existing ELO to simulate games played
+              const currentElo = adminElos.get(profile.id) || generateHighElo();
+              do {
+                newElo = adjustElo(currentElo);
+              } while (usedElos.has(newElo));
+            }
+            
+            usedElos.add(newElo);
+            newAdminElos.set(profile.id, newElo);
+            return { ...profile, tris_elo: newElo };
           }
           return profile;
         });
 
         setAdminElos(newAdminElos);
+        setLastUpdate(new Date());
 
         // Sort by ELO after updating admin profiles
         const sortedProfiles = updatedProfiles.sort((a, b) => (b.tris_elo || 1200) - (a.tris_elo || 1200));
