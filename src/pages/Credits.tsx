@@ -179,7 +179,7 @@ const Credits = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <Heart className="h-5 w-5 text-amber-500" />
-                    <span>Like illimitati giornalieri</span>
+                    <span>Like illimitati</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Eye className="h-5 w-5 text-amber-500" />
