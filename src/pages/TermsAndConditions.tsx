@@ -37,9 +37,64 @@ const TermsAndConditions = () => {
                 <TabsTrigger value="cookies">{t('terms.cookies')}</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="privacy" className="space-y-6 mt-6 text-sm">
+              <TabsContent value="privacy" className="space-y-6 mt-6 text-sm max-h-[600px] overflow-y-auto">
                 <div className="space-y-4">
-                  <h2 className="text-2xl font-bold">INFORMATIVA PRIVACY CONTATTI</h2>
+                  <h2 className="text-2xl font-bold">🔒 INFORMATIVA SULLA PRIVACY</h2>
+                  
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">1. Dati raccolti</h3>
+                    <p>LovableConnect raccoglie le seguenti informazioni:</p>
+                    <ul className="list-disc list-inside space-y-2 pl-4">
+                      <li>dati di registrazione (nome, email, età, genere, orientamento);</li>
+                      <li>dati di utilizzo (like, messaggi, attività di navigazione);</li>
+                      <li>immagini e descrizioni del profilo.</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">2. Finalità del trattamento</h3>
+                    <p>I dati vengono trattati per:</p>
+                    <ul className="list-disc list-inside space-y-2 pl-4">
+                      <li>permettere la creazione e la gestione del profilo utente;</li>
+                      <li>consentire l'interazione con altri utenti;</li>
+                      <li>gestire abbonamenti e crediti;</li>
+                      <li>migliorare l'esperienza del servizio.</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">3. Base giuridica</h3>
+                    <p>
+                      Il trattamento si basa sul consenso dell'utente, espresso al momento della registrazione e dell'accettazione dei presenti termini.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">4. Conservazione dei dati</h3>
+                    <p>
+                      I dati vengono conservati fino alla cancellazione dell'account o richiesta di eliminazione.
+                      L'utente può in qualsiasi momento chiedere la cancellazione dei propri dati scrivendo a: <a href="mailto:loveableconnect@hotmail.com" className="text-primary hover:underline">loveableconnect@hotmail.com</a>
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">5. Sicurezza</h3>
+                    <p>
+                      I dati sono protetti tramite connessioni crittografate e sistemi di sicurezza conformi al GDPR.
+                      LovableConnect non condivide dati personali con terzi senza consenso esplicito.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">6. Dati vocali</h3>
+                    <p>
+                      Per la funzione di messaggi vocali, LoveableConnect tratta dati audio (voce) e metadati associati (ID utente, durata, data di invio).
+                      I dati vengono conservati in forma sicura per il solo tempo necessario alla fruizione del servizio e possono essere rimossi su richiesta o al termine del periodo di conservazione.
+                      L'utente, utilizzando la funzione, acconsente espressamente al trattamento di tali dati per fini di comunicazione tra utenti.
+                    </p>
+                  </div>
+
+                  <h2 className="text-2xl font-bold mt-8">INFORMATIVA PRIVACY CONTATTI</h2>
                   
                   <div className="space-y-3">
                     <h3 className="text-lg font-semibold">COME CONTATTARCI?</h3>
@@ -162,6 +217,13 @@ const TermsAndConditions = () => {
                   <h2 className="text-2xl font-bold">Termini e Condizioni di Servizio</h2>
                   
                   <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">Introduzione</h3>
+                    <p>
+                      LoveableConnect è una piattaforma di socializzazione e incontri online che consente agli utenti di creare profili, interagire e comunicare tra loro. L'utilizzo del sito implica l'accettazione integrale dei presenti Termini e Condizioni.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
                     <h3 className="text-lg font-semibold">1. OGGETTO e DEFINIZIONI</h3>
                     <p>
                       <strong>1.1</strong> Le presenti condizioni generali di contratto (di seguito, le "CONDIZIONI GENERALI") contengono i termini e le condizioni che regolano la fornitura del Servizio LoveableConnect (di seguito anche solo il "Servizio") disponibile sul sito https://lovableconneect.lovable.app e sull'applicazione "LoveableConnect" (di seguito, il "Sito/App"). Le CONDIZIONI GENERALI sono stipulate tra Lei, quale Utente finale dei servizi (di seguito, "Lei" o l'"Utente") Le presenti CONDIZIONI GENERALI disciplinano e regolano il Servizio fornito dalla Società all'Utente per mezzo del Sito/App, annullano qualsiasi disposizione precedente tra le Parti non espressamente citata o allegata e costituiscono l'insieme dei diritti e degli obblighi tra la Società e l'Utente. Il Sito/App si propone di facilitare la comunicazione tra gli Utenti al fine di agevolare la nascita di nuove amicizie.
@@ -181,7 +243,104 @@ const TermsAndConditions = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">2. CONCLUSIONE DEL CONTRATTO</h3>
+                    <h3 className="text-lg font-semibold">2. REQUISITI PER L'UTILIZZO</h3>
+                    <p>
+                      L'accesso è consentito esclusivamente a utenti di età pari o superiore a 18 anni.
+                      L'utente è responsabile della veridicità delle informazioni fornite al momento della registrazione.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">3. CONTENUTI CARICATI DAGLI UTENTI</h3>
+                    <p>
+                      Gli utenti possono caricare immagini e descrizioni sul proprio profilo. 
+                      All'interno possono essere presenti immagini personali, profili che includono nudità o di natura sensuale, purché non contengano nudità esplicita, atti sessuali, contenuti offensivi, discriminatori o violenti. 
+                      LoveableConnect si riserva il diritto di rimuovere o oscurare contenuti che violino queste regole o la legge vigente.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">4. CREDITI E ABBONAMENTI</h3>
+                    <p>
+                      LovableConnect utilizza un sistema di crediti virtuali per accedere a funzionalità aggiuntive, come l'invio di messaggi, invio dei Like, sblocco della chat, messaggi vocali con altri utenti o l'interazione avanzata con altri profili.
+                    </p>
+                    <p className="font-semibold mt-3">Abbonamento mensile:</p>
+                    <p>
+                      Include crediti illimitati, possibilità di inviare messaggi senza limitazioni, mettere like illimitati, vedere i like ricevuti, messaggi vocali, e sblocco della chat diretto con altri utenti.
+                    </p>
+                    <p className="font-semibold mt-3">Pacchetti e abbonamenti:</p>
+                    <p>
+                      L'acquisto di crediti o di un abbonamento consente di accedere a funzionalità extra, come l'invio di messaggi a utenti con cui non si è ancora fatto match e la possibilità di interagire più liberamente con i profili presenti sulla piattaforma.
+                    </p>
+                    <p>
+                      I crediti si consumano quando si utilizzano le funzionalità premium e si rinnovano secondo le modalità dell'abbonamento o del pacchetto acquistato.
+                      Tutti i pagamenti sono gestiti tramite sistemi di pagamento sicuri. Non sono previsti rimborsi una volta che i crediti sono stati utilizzati.
+                      LovableConnect si riserva il diritto di modificare le offerte, i pacchetti o le modalità di abbonamento, informando gli utenti in anticipo.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">5. LIMITAZIONI DI RESPONSABILITÀ</h3>
+                    <p>
+                      LovableConnect non garantisce che i profili siano autentici o che gli utenti rispondano ai messaggi.
+                      Il sito non è responsabile per eventuali comportamenti impropri, truffe o danni causati da altri utenti.
+                      Gli utenti sono invitati a mantenere prudenza e rispetto durante le interazioni.
+                    </p>
+                    <p className="mt-3">
+                      LovableConnect adotta sistemi di verifica automatica e controlli periodici per preservare la community da profili falsi o sospetti. 
+                      Gli utenti hanno il dovere di segnalare al servizio di supporto clienti qualsiasi comportamento anomalo o sospetto, o se ritengono che un profilo sia falso.
+                    </p>
+                    <p>
+                      Il team di supporto clienti si impegna a indagare immediatamente sulle segnalazioni ricevute, analizzando l'attività e i contenuti dell'account segnalato.
+                    </p>
+                    <p className="font-semibold mt-3">Attenzione alle segnalazioni improprie:</p>
+                    <p>
+                      Si invita tuttavia a non abusare della funzione di segnalazione: non devono essere segnalati profili per motivi personali, rifiuti o mancata corrispondenza di interesse.
+                      Le segnalazioni infondate o diffamatorie possono comportare la sospensione dell'account segnalante, poiché la diffamazione è un reato perseguibile per legge.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">6. SOSPENSIONE E CANCELLAZIONE ACCOUNT</h3>
+                    <p>
+                      LovableConnect si riserva il diritto di sospendere o eliminare profili che violino i presenti Termini, senza preavviso e senza rimborso di crediti o abbonamenti.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">7. MESSAGGI VOCALI IN CHAT</h3>
+                    <p>
+                      LoveableConnect offre una funzionalità di messaggi vocali disponibile esclusivamente per gli utenti con abbonamento attivo.
+                      Utilizzando questa funzione, l'utente accetta che i messaggi vocali vengano trasmessi e temporaneamente archiviati sui server di LoveableConnect per garantire la consegna e la sicurezza della comunicazione.
+                    </p>
+                    <p className="font-semibold mt-3">I messaggi vocali:</p>
+                    <ul className="list-disc list-inside space-y-2 pl-4">
+                      <li>Sono accessibili solo ai partecipanti alla conversazione.</li>
+                      <li>Possono essere rimossi automaticamente dopo un periodo di tempo determinato o su segnalazione.</li>
+                      <li>Non devono contenere linguaggio offensivo, contenuti sessuali espliciti, incitamento all'odio o violazioni della privacy di terzi.</li>
+                      <li>Possono essere analizzati in caso di segnalazioni per violazioni dei Termini di Servizio.</li>
+                    </ul>
+                    <p className="mt-3">
+                      LoveableConnect non è responsabile per l'uso improprio dei messaggi vocali da parte degli utenti.
+                      L'uso della funzione implica accettazione piena di queste condizioni.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">8. ⚖️ DICHIARAZIONE DI RESPONSABILITÀ</h3>
+                    <p>LovableConnect non si assume responsabilità per:</p>
+                    <ul className="list-disc list-inside space-y-2 pl-4">
+                      <li>comportamenti o contenuti pubblicati dagli utenti;</li>
+                      <li>uso improprio dei servizi o violazioni dei termini;</li>
+                      <li>danni derivanti da interazioni online o offline con altri membri.</li>
+                    </ul>
+                    <p className="mt-3">
+                      L'utente è pienamente responsabile delle informazioni che decide di rendere pubbliche e dei propri comportamenti sulla piattaforma.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">9. CONCLUSIONE DEL CONTRATTO</h3>
                     <p>
                       La informiamo che premendo il pulsante "Iscriviti" in fase di registrazione del Sito/App o, comunque, utilizzando il Servizio, Lei dichiara di aver letto ed espressamente accetta le presenti CONDIZIONI GENERALI. La registrazione a LoveableConnect e l'utilizzo del Servizio (fatto salvo che per i servizi disponibili esclusivamente a pagamento, i quali richiedono la sottoscrizione di un Abbonamento o un pagamento On-Demand) sono completamente gratuiti (salvi i costi per le apparecchiature – computer, applicazioni e mezzi di telecomunicazione – e i costi di connessione alla rete Internet, che sono a carico dell'Utente sulla base delle condizioni economiche stabilite dal proprio operatore).
                     </p>
@@ -191,7 +350,7 @@ const TermsAndConditions = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">3. I SERVIZI DI LOVEABLECONNECT</h3>
+                    <h3 className="text-lg font-semibold">10. I SERVIZI DI LOVEABLECONNECT</h3>
                     <p>
                       <strong>3.1</strong> L'Utente nel completare il Profilo in fase di registrazione, inserisce il Territorio, il genere (Maschile/Femmine/altro) di Utenti che sta cercando, il nickname con cui apparirà sul Sito/App, indica la propria età e poi convalida il proprio Profilo tramite la ricezione di una e-mail e relativa conferma.
                     </p>
@@ -221,7 +380,7 @@ const TermsAndConditions = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">4. DICHIARAZIONI E GARANZIE DELL'UTENTE</h3>
+                    <h3 className="text-lg font-semibold">11. DICHIARAZIONI E GARANZIE DELL'UTENTE</h3>
                     <p>L'Utente dichiara e garantisce:</p>
                     <ul className="list-disc list-inside space-y-2 pl-4">
                       <li>di aver letto e compreso le CONDIZIONI GENERALI;</li>
@@ -235,7 +394,7 @@ const TermsAndConditions = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">5. RESPONSABILITÀ</h3>
+                    <h3 className="text-lg font-semibold">12. RESPONSABILITÀ</h3>
                     <p><strong>5.1</strong> L'Utente riconosce ed espressamente accetta che:</p>
                     <ul className="list-disc list-inside space-y-2 pl-4">
                       <li>il Sito/App mette in contatto gli Utenti e permette loro di conoscersi e la Società non agisce in alcun modo in relazione ai Servizi a disposizione sul Sito/App;</li>
@@ -250,21 +409,21 @@ const TermsAndConditions = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">6. PRIVACY</h3>
+                    <h3 className="text-lg font-semibold">13. PRIVACY</h3>
                     <p>
                       La Società rispetta e tutela la privacy dei propri Utenti. La Società tratta i dati personali dell'Utente esclusivamente con le modalità e per le finalità indicate nell'Informativa Privacy. In particolare, la Società non tratterà i dati dell'Utente con finalità di marketing e/o invio di comunicazioni commerciali e/o vendita diretta senza avere ottenuto il suo previo espresso consenso.
                     </p>
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">7. CESSIONE</h3>
+                    <h3 className="text-lg font-semibold">14. CESSIONE</h3>
                     <p>
                       L'Utente non potrà cedere né in tutto né in parte le presenti CONDIZIONI GENERALI a terzi. La Società potrà in qualsiasi momento cedere in tutto in parte le presenti CONDIZIONI GENERALI a terzi.
                     </p>
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">8. DURATA e SOPRAVVIVENZA DI CLAUSOLE</h3>
+                    <h3 className="text-lg font-semibold">15. DURATA e SOPRAVVIVENZA DI CLAUSOLE</h3>
                     <p>
                       <strong>8.1</strong> Le presenti CONDIZIONI GENERALI hanno efficacia a partire dalla Data di Efficacia, rimarranno in vigore per il periodo di 1 (uno) anno da tale data e saranno automaticamente rinnovate per periodi successivi di un anno ciascuno, salvo che una Parte comunichi all'altra Parte a mezzo di raccomandata a/r la sua intenzione di non rinnovare le CONDIZIONI GENERALI almeno 30 (trenta) giorni dalla scadenza di ciascun rinnovo.
                     </p>
@@ -274,7 +433,7 @@ const TermsAndConditions = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">9. RECESSO</h3>
+                    <h3 className="text-lg font-semibold">16. RECESSO</h3>
                     <p>
                       Fatto salvo quanto previsto all'articolo 3.8, ciascuna Parte potrà recedere dalle presenti CONDIZIONI GENERALI in qualsiasi momento, tramite semplice comunicazione scritta all'altra Parte con preavviso di almeno 5 (cinque) giorni. Resta inteso che, anche in caso di recesso, La Società si riserva il diritto di cancellare o sospendere il Profilo dell'Utente.
                     </p>
@@ -284,7 +443,7 @@ const TermsAndConditions = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">10. RISOLUZIONE</h3>
+                    <h3 className="text-lg font-semibold">17. RISOLUZIONE</h3>
                     <p>
                       Fatto salvo quanto previsto altrove all'interno delle presenti CONDIZIONI GENERALI, in caso di violazione degli articoli 3.2, 3.3, 3.5, 4 e 7 delle presenti CONDIZIONI GENERALI da parte dell'Utente, ai sensi dell'art. 1456 cod. civ., la Società si riserva il diritto di sospenderne il Profilo dell'Utente e, se del caso, di risolvere di diritto le CONDIZIONI GENERALI, a fronte della semplice comunicazione (via e-mail o in-app) di volersi avvalere della presente clausola.
                     </p>
@@ -294,7 +453,7 @@ const TermsAndConditions = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">11. LEGGE APPLICABILE E FORO COMPETENTE</h3>
+                    <h3 className="text-lg font-semibold">18. LEGGE APPLICABILE E FORO COMPETENTE</h3>
                     <p>
                       <strong>11.1</strong> Le presenti CONDIZIONI GENERALI sono interamente disciplinate dalla legge italiana.
                     </p>
@@ -304,8 +463,11 @@ const TermsAndConditions = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">12. MODIFICHE</h3>
+                    <h3 className="text-lg font-semibold">19. MODIFICHE AI TERMINI</h3>
                     <p>
+                      I presenti Termini possono essere aggiornati in qualsiasi momento. Gli utenti verranno informati in caso di modifiche sostanziali.
+                    </p>
+                    <p className="mt-3">
                       La Società si riserva il diritto di aggiornare o modificare in qualsiasi momento le presenti CONDIZIONI GENERALI, nel caso in cui tali aggiornamento o modifiche si rendano necessari per adeguare il Servizio a disposizioni di legge o di regolamento o delle policy o condizioni App Store e Play Store sopravvenute, per implementare misure di sicurezza che si rendano necessarie per ottimizzare la fornitura del Servizio o per migliorare le caratteristiche del Servizio.
                     </p>
                     <p>
@@ -317,7 +479,7 @@ const TermsAndConditions = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">13. CLAUSOLE GENERALI</h3>
+                    <h3 className="text-lg font-semibold">20. CLAUSOLE GENERALI</h3>
                     <p>
                       <strong>13.1</strong> L'eventuale tolleranza da parte della Società verso comportamenti dell'Utente posti in essere in violazione di una qualunque disposizione delle CONDIZIONI GENERALI non costituisce rinuncia ai diritti derivanti dalla disposizione violata, né al diritto di esigere il corretto adempimento di tutte le disposizioni delle CONDIZIONI GENERALI stesse.
                     </p>
@@ -339,7 +501,7 @@ const TermsAndConditions = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">14. CLAUSOLE VESSATORIE</h3>
+                    <h3 className="text-lg font-semibold">21. CLAUSOLE VESSATORIE</h3>
                     <p>
                       L'Utente riconosce ed accetta che alcuni paragrafi delle CONDIZIONI GENERALI contengono alcune previsioni vessatorie, tra cui i punti di seguito elencati e che pertanto, dovrà accettarle espressamente in sede di iscrizione, ai sensi degli articoli 1341 e 1342 del Codice Civile:
                     </p>
@@ -352,7 +514,7 @@ const TermsAndConditions = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">15. SICUREZZA E PRIVACY</h3>
+                    <h3 className="text-lg font-semibold">22. SICUREZZA E PRIVACY</h3>
                     
                     <h4 className="font-semibold mt-4">Pensi che il tuo account sia stato compromesso?</h4>
                     <p>
