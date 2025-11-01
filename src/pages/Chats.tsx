@@ -25,6 +25,17 @@ const Chats = () => {
   const [loading, setLoading] = useState(true);
   const [sessionInfo, setSessionInfo] = useState<any>(null);
   const keepInListRef = useRef<Set<string>>(new Set());
+  const storageKeyRef = useRef<string>("keep_conversations_default");
+  const persistKeepSet = () => {
+    try {
+      localStorage.setItem(
+        storageKeyRef.current,
+        JSON.stringify(Array.from(keepInListRef.current))
+      );
+    } catch (e) {
+      console.error("Persistenza keepInList fallita:", e);
+    }
+  };
 
   useEffect(() => {
     // Verifica sessione chattors
@@ -39,6 +50,16 @@ const Chats = () => {
     try {
       const parsed = JSON.parse(session);
       setSessionInfo(parsed);
+      // Inizializza storage key e carica le conversazioni fissate da localStorage
+      storageKeyRef.current = `keep_conversations_${parsed?.nickname || 'default'}`;
+      try {
+        const saved = JSON.parse(localStorage.getItem(storageKeyRef.current) || '[]');
+        if (Array.isArray(saved)) {
+          keepInListRef.current = new Set(saved);
+        }
+      } catch (e) {
+        console.error('Errore caricamento conversazioni fissate:', e);
+      }
       // Avvia fetch in background senza bloccare la UI
       fetchConversations(false);
       cleanup = subscribeToUpdates();
@@ -80,6 +101,10 @@ const Chats = () => {
       const sorted = [...list].sort(
         (a: any, b: any) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
       );
+      // Aggiungi tutte le conversazioni arrivate dal server al set persistente
+      const keep = keepInListRef.current;
+      sorted.forEach((c: any) => keep.add(`${c.matchId}-${c.userId}`));
+      persistKeepSet();
        setConversations((prev) => {
          const keepSet = keepInListRef.current;
          // Parti dalle conversazioni dal server
@@ -158,6 +183,7 @@ const Chats = () => {
     // Aggiungi questa conversazione al set di quelle da mantenere in lista
     const key = `${conv.matchId}-${conv.userId}`;
     keepInListRef.current.add(key);
+    persistKeepSet();
     setConversations((prev) =>
       prev.map((c) =>
         c.matchId === conv.matchId && c.userId === conv.userId
@@ -214,6 +240,7 @@ const Chats = () => {
             // Rimuovi la conversazione dal set delle "da mantenere"
             const key = `${conv.matchId}-${conv.userId}`;
             keepInListRef.current.delete(key);
+            persistKeepSet();
             
             if (
               selectedConversation &&
