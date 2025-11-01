@@ -38,8 +38,8 @@ export const CreditsDisplay = () => {
     (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date());
 
   const isMonthlyPremium = isPremiumValid && credits.subscription_type === 'monthly';
-  const isWeeklyPremium = isPremiumValid && credits.subscription_type === 'weekly';
 
+  // Solo il mensile mostra il badge "Premium" senza crediti
   if (isMonthlyPremium) {
     return (
       <Button
@@ -49,19 +49,6 @@ export const CreditsDisplay = () => {
       >
         <Crown className="h-4 w-4 text-amber-500" />
         <span className="font-medium text-amber-600 dark:text-amber-400">Premium</span>
-      </Button>
-    );
-  }
-
-  if (isWeeklyPremium) {
-    return (
-      <Button
-        variant="outline"
-        onClick={() => navigate("/credits")}
-        className="flex items-center gap-2 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/20 hover:bg-purple-500/20"
-      >
-        <Crown className="h-4 w-4 text-purple-500" />
-        <span className="font-medium text-purple-600 dark:text-purple-400">Premium 7gg</span>
       </Button>
     );
   }
