@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useBanCheck } from "@/hooks/useBanCheck";
-import { ArrowLeft, MapPin, Filter, RotateCcw, Search as SearchIcon } from "lucide-react";
+import { ArrowLeft, MapPin, Filter, RotateCcw, Search as SearchIcon, Heart, MessageCircle } from "lucide-react";
 import { ProfileGridCard } from "@/components/ProfileGridCard";
 import { MatchBanner } from "@/components/MatchBanner";
 import { useTextTranslation } from "@/hooks/useTranslation";
@@ -423,73 +423,111 @@ const Explore = () => {
 
         {/* Filters Panel */}
         {showFilters && (
-          <Card className="mb-6 shadow-lg">
-            <CardContent className="pt-6 space-y-6">
+          <Card className="mb-6 shadow-2xl border-0 bg-gradient-to-br from-white/95 via-pink-50/90 to-purple-50/90 dark:from-gray-800/95 dark:via-purple-900/80 dark:to-indigo-900/80 backdrop-blur-sm animate-fade-in">
+            <CardContent className="pt-6 space-y-8">
               {/* Age Filter */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">{t("explore.ageTitle")}: {ageRange[0]} - {ageRange[1]} {t("explore.yearsOld")}</Label>
-                <Slider
-                  value={ageRange}
-                  onValueChange={setAgeRange}
-                  min={18}
-                  max={90}
-                  step={1}
-                  className="w-full"
-                />
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 text-white shadow-lg">
+                    <MapPin className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <Label className="text-base font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
+                      {t("explore.ageTitle")}
+                    </Label>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      {ageRange[0]} - {ageRange[1]} {t("explore.yearsOld")}
+                    </p>
+                  </div>
+                </div>
+                <div className="px-2">
+                  <Slider
+                    value={ageRange}
+                    onValueChange={setAgeRange}
+                    min={18}
+                    max={90}
+                    step={1}
+                    className="w-full"
+                  />
+                </div>
               </div>
 
               {/* Gender Filter */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">{t("explore.genderTitle")}</Label>
-                <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 text-white shadow-lg">
+                    <Heart className="h-4 w-4" />
+                  </div>
+                  <Label className="text-base font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                    {t("explore.genderTitle")}
+                  </Label>
+                </div>
+                <div className="flex flex-wrap gap-2">
                   {genderOptions.map((option) => (
-                    <div key={option.value} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={option.value}
-                        checked={selectedGenders.includes(option.value)}
-                        onCheckedChange={() => toggleGender(option.value)}
-                      />
-                      <label
-                        htmlFor={option.value}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        {option.label}
-                      </label>
-                    </div>
+                    <button
+                      key={option.value}
+                      onClick={() => toggleGender(option.value)}
+                      className={`
+                        px-4 py-2.5 rounded-full font-medium text-sm transition-all duration-300 transform hover:scale-105 shadow-md
+                        ${selectedGenders.includes(option.value)
+                          ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg shadow-pink-500/50 ring-2 ring-pink-300 dark:ring-pink-700'
+                          : 'bg-white/80 dark:bg-gray-700/80 text-gray-700 dark:text-gray-200 hover:bg-pink-50 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600'
+                        }
+                      `}
+                    >
+                      {option.label}
+                    </button>
                   ))}
                 </div>
               </div>
 
               {/* Sexual Orientation Filter */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">{t("explore.orientationTitle")}</Label>
-                <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-gradient-to-br from-indigo-500 to-blue-500 text-white shadow-lg">
+                    <MessageCircle className="h-4 w-4" />
+                  </div>
+                  <Label className="text-base font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
+                    {t("explore.orientationTitle")}
+                  </Label>
+                </div>
+                <div className="flex flex-wrap gap-2">
                   {orientationOptions.map((option) => (
-                    <div key={option.value} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`orientation-${option.value}`}
-                        checked={selectedOrientations.includes(option.value)}
-                        onCheckedChange={() => toggleOrientation(option.value)}
-                      />
-                      <label
-                        htmlFor={`orientation-${option.value}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        {option.label}
-                      </label>
-                    </div>
+                    <button
+                      key={option.value}
+                      onClick={() => toggleOrientation(option.value)}
+                      className={`
+                        px-4 py-2.5 rounded-full font-medium text-sm transition-all duration-300 transform hover:scale-105 shadow-md
+                        ${selectedOrientations.includes(option.value)
+                          ? 'bg-gradient-to-r from-indigo-500 to-blue-500 text-white shadow-lg shadow-indigo-500/50 ring-2 ring-indigo-300 dark:ring-indigo-700'
+                          : 'bg-white/80 dark:bg-gray-700/80 text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600'
+                        }
+                      `}
+                    >
+                      {option.label}
+                    </button>
                   ))}
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 pt-4 border-t">
-                <Button onClick={applyFilters} className="flex-1" size="lg" disabled={loading}>
-                  <SearchIcon className="h-4 w-4 mr-2" />
+              <div className="flex gap-3 pt-6 border-t border-gray-200/50 dark:border-gray-700/50">
+                <Button 
+                  onClick={applyFilters} 
+                  className="flex-1 h-12 bg-gradient-to-r from-pink-500 via-rose-500 to-purple-500 hover:from-pink-600 hover:via-rose-600 hover:to-purple-600 text-white font-bold shadow-xl shadow-pink-500/50 transition-all duration-300 transform hover:scale-[1.02]" 
+                  size="lg" 
+                  disabled={loading}
+                >
+                  <SearchIcon className="h-5 w-5 mr-2" />
                   {t("explore.searchButton")}
                 </Button>
-                <Button onClick={resetFilters} variant="outline" size="lg">
-                  <RotateCcw className="h-4 w-4 mr-2" />
+                <Button 
+                  onClick={resetFilters} 
+                  variant="outline" 
+                  size="lg"
+                  className="px-6 h-12 border-2 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 font-semibold transition-all duration-300 transform hover:scale-[1.02]"
+                >
+                  <RotateCcw className="h-5 w-5 mr-2" />
                   {t("explore.resetFilters")}
                 </Button>
               </div>
