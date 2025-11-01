@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ const Chats = () => {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [loading, setLoading] = useState(true);
   const [sessionInfo, setSessionInfo] = useState<any>(null);
+  const selectedRef = useRef<Conversation | null>(null);
 
   useEffect(() => {
     // Verifica sessione chattors
@@ -80,20 +81,19 @@ const Chats = () => {
         (a: any, b: any) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
       );
        setConversations(() => {
-         if (!selectedConversation) return sorted;
+         const currentSelected = selectedRef.current;
+         if (!currentSelected) return sorted;
          // Mantieni in lista la conversazione selezionata anche se non arriva dal server (es. archiviata con 0 non letti)
          const exists = sorted.some(
-           (c: any) =>
-             c.matchId === selectedConversation.matchId &&
-             c.userId === selectedConversation.userId
+           (c: any) => c.matchId === currentSelected.matchId && c.userId === currentSelected.userId
          );
          const merged = exists
            ? sorted.map((c: any) =>
-               c.matchId === selectedConversation.matchId && c.userId === selectedConversation.userId
+               c.matchId === currentSelected.matchId && c.userId === currentSelected.userId
                  ? { ...c, unreadCount: 0 }
                  : c
              )
-           : [{ ...selectedConversation, unreadCount: 0 }, ...sorted];
+           : [{ ...currentSelected, unreadCount: 0 }, ...sorted];
          return merged.sort(
            (a: any, b: any) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
          );
@@ -141,6 +141,7 @@ const Chats = () => {
 
   const handleSelectConversation = (conv: Conversation) => {
     setSelectedConversation(conv);
+    selectedRef.current = conv;
     setConversations((prev) =>
       prev.map((c) =>
         c.matchId === conv.matchId && c.userId === conv.userId
@@ -200,6 +201,7 @@ const Chats = () => {
               selectedConversation.userId === conv.userId
             ) {
               setSelectedConversation(null);
+              selectedRef.current = null;
             }
           }}
           loading={loading}
