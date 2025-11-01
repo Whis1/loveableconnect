@@ -10,6 +10,7 @@ interface Profile {
   id: string;
   nickname: string;
   avatar_url: string | null;
+  tris_elo?: number;
 }
 
 interface TrisBoardProps {
@@ -32,10 +33,14 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
   const [userEmoji, setUserEmoji] = useState<string | null>(null);
   const [opponentEmoji, setOpponentEmoji] = useState<string | null>(null);
   const [lastOpponentEmoji, setLastOpponentEmoji] = useState<string | null>(null);
+  const [userElo, setUserElo] = useState<number>(1200);
+  const [opponentElo, setOpponentElo] = useState<number>(1200);
 
   useEffect(() => {
     fetchCurrentUserProfile();
     startBotEmojiSystem();
+    // Generate random ELO for opponent (between 1000 and 1600)
+    setOpponentElo(Math.floor(Math.random() * 601) + 1000);
   }, []);
 
   const startBotEmojiSystem = () => {
@@ -69,12 +74,13 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
 
     const { data } = await supabase
       .from("profiles")
-      .select("id, nickname, avatar_url")
+      .select("id, nickname, avatar_url, tris_elo")
       .eq("id", session.user.id)
       .single();
 
     if (data) {
       setCurrentUserProfile(data);
+      setUserElo(data.tris_elo || 1200);
       console.log("Current user profile:", data);
     }
   };
@@ -137,6 +143,8 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
     if (win === "X") {
       setGameOver(true);
       setWinner("player");
+      // Update ELO on win (+20 points)
+      updateUserElo(20);
       onGameEnd("win");
       return;
     }
@@ -190,6 +198,8 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
     if (win === "O") {
       setGameOver(true);
       setWinner("bot");
+      // Lose: -10 ELO points
+      updateUserElo(-10);
       onGameEnd("lose");
       return;
     }
@@ -230,6 +240,23 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
     return -1;
   };
 
+  const updateUserElo = async (eloChange: number) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    try {
+      await supabase.rpc("update_tris_elo", {
+        user_id: session.user.id,
+        elo_change: eloChange,
+      });
+
+      // Update local state
+      setUserElo((prev) => Math.max(0, prev + eloChange));
+    } catch (error) {
+      console.error("Error updating ELO:", error);
+    }
+  };
+
   const handleEmojiClick = (emoji: string) => {
     setUserEmoji(emoji);
     setShowEmoji(false);
@@ -261,7 +288,8 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
           </div>
           <div>
             <p className="font-bold">{currentUserProfile?.nickname || "Tu"}</p>
-            <p className="text-xs text-muted-foreground">Giocatore</p>
+            <p className="text-xs text-muted-foreground">Tu</p>
+            <p className="text-xs font-semibold text-primary">ELO: {userElo}</p>
           </div>
         </div>
 
@@ -280,6 +308,7 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
           <div>
             <p className="font-bold text-right">{opponent.nickname}</p>
             <p className="text-xs text-muted-foreground text-right">Sfidante</p>
+            <p className="text-xs font-semibold text-destructive text-right">ELO: {opponentElo}</p>
           </div>
           <div className="relative">
             <Avatar className="w-14 h-14 border-2 border-destructive">

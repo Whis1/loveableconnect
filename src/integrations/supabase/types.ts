@@ -466,6 +466,7 @@ export type Database = {
           relationship_type: string | null
           sexual_orientation: string | null
           show_online_status: boolean | null
+          tris_elo: number | null
           updated_at: string
           user_images_link: string | null
         }
@@ -495,6 +496,7 @@ export type Database = {
           relationship_type?: string | null
           sexual_orientation?: string | null
           show_online_status?: boolean | null
+          tris_elo?: number | null
           updated_at?: string
           user_images_link?: string | null
         }
@@ -524,6 +526,7 @@ export type Database = {
           relationship_type?: string | null
           sexual_orientation?: string | null
           show_online_status?: boolean | null
+          tris_elo?: number | null
           updated_at?: string
           user_images_link?: string | null
         }
@@ -918,6 +921,10 @@ export type Database = {
       }
       unlock_location_for_user: {
         Args: { p_user_id: string }
+        Returns: undefined
+      }
+      update_tris_elo: {
+        Args: { elo_change: number; user_id: string }
         Returns: undefined
       }
     }
