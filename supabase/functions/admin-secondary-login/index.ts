@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
     if (!account) {
       return new Response(
         JSON.stringify({ success: false, error: 'Credenziali non valide' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       );
     }
 
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
     if (!isPasswordValid) {
       return new Response(
         JSON.stringify({ success: false, error: 'Credenziali non valide' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       );
     }
 
