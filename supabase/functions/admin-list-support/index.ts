@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     console.log('admin-list-support: Fetching all recent messages');
     const { data: messages, error } = await supabase
       .from('support_messages')
-      .select('id, user_id, message, is_admin, created_at')
+      .select('id, user_id, message, is_admin_response, created_at')
       .order('created_at', { ascending: false })
       .limit(50);
     
