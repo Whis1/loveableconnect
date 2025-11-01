@@ -60,6 +60,7 @@ const Explore = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [showGeoLoader, setShowGeoLoader] = useState(true);
   
   const [ageRange, setAgeRange] = useState([18, 90]);
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
@@ -132,6 +133,11 @@ const Explore = () => {
       await loadAllProfiles(session.user.id);
       
       setLoading(false);
+      
+      // Show geolocation loader for 3 seconds
+      setTimeout(() => {
+        setShowGeoLoader(false);
+      }, 3000);
     };
 
     initializeExplore();
@@ -390,6 +396,38 @@ const Explore = () => {
 
   return (
     <div className="min-h-screen relative bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-4">
+      {/* Geolocation Loader */}
+      {showGeoLoader && (
+        <div className="fixed inset-0 z-[100] bg-gradient-to-br from-pink-100 via-purple-100 to-indigo-100 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 flex items-center justify-center animate-fade-in">
+          <div className="text-center space-y-6">
+            {/* Spinning Circle */}
+            <div className="relative w-24 h-24 mx-auto">
+              <div className="absolute inset-0 rounded-full border-4 border-pink-200 dark:border-pink-800"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-pink-500 border-r-purple-500 animate-spin"></div>
+              <div className="absolute inset-2 rounded-full border-4 border-transparent border-t-purple-500 border-r-indigo-500 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1s' }}></div>
+              <MapPin className="absolute inset-0 m-auto h-8 w-8 text-pink-500 animate-pulse" />
+            </div>
+            
+            {/* Text */}
+            <div className="space-y-2">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent animate-pulse">
+                Geolocalizzando profili
+              </h2>
+              <p className="text-lg text-muted-foreground animate-pulse">
+                nelle tue vicinanze...
+              </p>
+            </div>
+            
+            {/* Decorative dots */}
+            <div className="flex justify-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-pink-500 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+              <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: '150ms' }}></div>
+              <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {matchBanner.show && (
         <MatchBanner
           matchedUserName={matchBanner.userName}
