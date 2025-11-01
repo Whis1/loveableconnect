@@ -8,10 +8,18 @@ interface Profile {
   id: string;
   nickname: string;
   avatar_url: string | null;
+  tris_elo?: number;
 }
 
 interface OpponentSearchProps {
   onOpponentFound: (opponent: Profile) => void;
+}
+
+const STORAGE_KEY = 'elo_leaderboard_data';
+
+interface StoredLeaderboardData {
+  adminElos: Record<string, number>;
+  lastUpdate: string;
 }
 
 export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
@@ -43,7 +51,7 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
 
     const { data: adminProfiles } = await supabase
       .from("profiles")
-      .select("id, nickname, avatar_url")
+      .select("id, nickname, avatar_url, tris_elo")
       .eq("is_admin_profile", true)
       .not("id", "in", `(${matchedIds.join(",") || "null"})`);
 
@@ -64,11 +72,37 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
         // Pick random opponent
         const randomOpponent =
           profileList[Math.floor(Math.random() * profileList.length)];
+        
+        // Check if opponent is in TOP 5 leaderboard and use that ELO
+        const leaderboardOpponent = getOpponentWithLeaderboardElo(randomOpponent);
+        
         setTimeout(() => {
-          onOpponentFound(randomOpponent);
+          onOpponentFound(leaderboardOpponent);
         }, 500);
       }
     }, 150);
+  };
+
+  const getOpponentWithLeaderboardElo = (opponent: Profile): Profile => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const data: StoredLeaderboardData = JSON.parse(stored);
+        // If this opponent has an ELO in the leaderboard, use that instead
+        if (data.adminElos[opponent.id]) {
+          console.log(`Using leaderboard ELO ${data.adminElos[opponent.id]} for ${opponent.nickname} (DB ELO: ${opponent.tris_elo})`);
+          return {
+            ...opponent,
+            tris_elo: data.adminElos[opponent.id]
+          };
+        }
+      }
+    } catch (error) {
+      console.error("Error reading leaderboard data:", error);
+    }
+    
+    // Fallback to database ELO
+    return opponent;
   };
 
   if (profiles.length === 0) {
