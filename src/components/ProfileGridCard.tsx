@@ -280,9 +280,9 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
   const handleLike = async (e: React.MouseEvent, useCredits: boolean = false) => {
     e.stopPropagation();
     
-    if (isLiking || hasLiked) return; // Prevent double-click and removing likes
+    if (isLiking || hasLiked) return;
     
-    // 1) INSTANT CHECK: Show banner immediately if no likes left and not using credits
+    // Instant check: show banner if no likes and not using credits
     if (!useCredits && likesRemaining <= 0) {
       setShowLikesExhausted(true);
       return;
@@ -291,25 +291,7 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
     setIsLiking(true);
     
     try {
-      // 2) Pre-check: avoid consuming likes if already liked
-      const { data: existingLike } = await supabase
-        .from("likes")
-        .select("id")
-        .eq("from_user_id", currentUserId)
-        .eq("to_user_id", profile.id)
-        .maybeSingle();
-
-      if (existingLike) {
-        setHasLiked(true);
-        toast({
-          title: t("search.likeSent"),
-          description: `${t("search.likedProfile")} ${profile.nickname || profile.full_name}`,
-        });
-        setIsLiking(false);
-        return;
-      }
-
-      // 3) If using credits path, do it atomically in the DB (deduct + like)
+      // Credits path: atomic deduct + like
       if (useCredits) {
         const { data: likeResult, error: likeFnError } = await supabase.rpc(
           'like_with_credits',
@@ -317,21 +299,21 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
         );
 
         if (likeFnError) {
-          setIsLiking(false);
           toast({ title: t('common.error'), description: likeFnError.message, variant: 'destructive' });
+          setIsLiking(false);
           return;
         }
 
-        const result = Array.isArray(likeResult) ? likeResult[0] : likeResult; // handle table return
+        const result = Array.isArray(likeResult) ? likeResult[0] : likeResult;
         if (!result?.success) {
-          // Not enough credits
           setShowCreditsBanner(true);
           setIsLiking(false);
           return;
         }
 
-        // Success (already or newly liked)
+        // Success
         setHasLiked(true);
+        setIsLiking(false);
         if (result.match_created && onMatch) {
           onMatch(profile.nickname || profile.full_name);
         } else {
@@ -340,11 +322,10 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
             description: `${t('search.likedProfile')} ${profile.nickname || profile.full_name}`,
           });
         }
-        setIsLiking(false);
         return;
       }
 
-      // 4) Try to consume a daily like (already checked above)
+      // Daily like path: consume like first
       const { success } = await consumeLike(false);
 
       if (!success) {
@@ -353,9 +334,7 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
         return;
       }
 
-      // 5) After successful consumption, update UI and proceed
-
-      // 3) Add the like using edge function (idempotent)
+      // Add the like (idempotent edge function)
       const { data: likeData, error: likeError } = await supabase.functions.invoke(
         'admin-manage-like',
         {
@@ -368,42 +347,39 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
       );
 
       if (likeError) {
-        // If duplicate, treat as success (race condition)
         const msg = (likeError as any)?.message || '';
         if (msg.includes('duplicate key') || (likeError as any)?.code === '23505') {
+          // Duplicate = already liked, treat as success
           setHasLiked(true);
+          setIsLiking(false);
           toast({
             title: t("search.likeSent"),
             description: `${t("search.likedProfile")} ${profile.nickname || profile.full_name}`,
           });
-          setIsLiking(false);
           return;
         }
-        // Rollback on other errors
-        setHasLiked(false);
         throw likeError;
       }
 
-      if (likeData?.match_created) {
-        // Match was created!
-        if (onMatch) {
-          onMatch(profile.nickname || profile.full_name);
-        }
+      // Success: update UI immediately
+      setHasLiked(true);
+      setIsLiking(false);
+      
+      if (likeData?.match_created && onMatch) {
+        onMatch(profile.nickname || profile.full_name);
       } else {
-        // Just a like or already liked
         toast({
           title: t("search.likeSent"),
           description: `${t("search.likedProfile")} ${profile.nickname || profile.full_name}`,
         });
       }
     } catch (error: any) {
+      setIsLiking(false);
       toast({
         title: t("common.error"),
         description: error.message,
         variant: "destructive",
       });
-    } finally {
-      setIsLiking(false);
     }
   };
 
