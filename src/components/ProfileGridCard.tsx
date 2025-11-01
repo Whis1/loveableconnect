@@ -324,8 +324,8 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
 
         const result = Array.isArray(likeResult) ? likeResult[0] : likeResult; // handle table return
         if (!result?.success) {
-          // Not enough credits or other issue
-          setShowLikesExhausted(true);
+          // Not enough credits
+          setShowCreditsBanner(true);
           setIsLiking(false);
           return;
         }
