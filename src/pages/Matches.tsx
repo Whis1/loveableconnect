@@ -296,7 +296,7 @@ const Matches = () => {
           </Button>
         </div>
 
-        <Card>
+        <Card className="bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/images/app-background.png')" }}>
           <CardHeader className="p-3 md:p-6">
             <CardTitle className="text-xl md:text-2xl">{t("matches.title")}</CardTitle>
           </CardHeader>
