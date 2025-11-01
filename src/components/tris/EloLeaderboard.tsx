@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Medal, Award } from "lucide-react";
+import { Trophy, Medal, Award, ChevronDown, ChevronUp } from "lucide-react";
 
 interface LeaderboardProfile {
   id: string;
@@ -21,6 +21,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
   const [userElo, setUserElo] = useState<number>(1200);
   const [userRank, setUserRank] = useState<number | null>(null);
   const [adminElos, setAdminElos] = useState<Map<string, number>>(new Map());
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     fetchLeaderboard();
@@ -135,66 +136,73 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         </Card>
       )}
 
-      {/* Leaderboard */}
-      <Card className="p-4 bg-gradient-to-br from-primary/10 to-secondary/10 border-primary/20">
-        <div className="flex items-center gap-2 mb-4">
-          <Trophy className="w-5 h-5 text-primary" />
-          <h4 className="font-bold text-lg">Top 5 Giocatori</h4>
-        </div>
-        
-        <div className="space-y-3">
-          {topPlayers.map((player, index) => (
-            <div
-              key={player.id}
-              className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
-                player.id === userId
-                  ? "bg-primary/20 border-2 border-primary"
-                  : "bg-background/50 hover:bg-background/80"
-              }`}
-            >
-              {/* Rank and Trophy */}
-              <div className="flex items-center justify-center w-10">
-                {getTrophyIcon(index)}
+      {/* Leaderboard - Collapsible */}
+      <Card className="bg-gradient-to-br from-primary/10 to-secondary/10 border-primary/20">
+        {/* Header - Clickable */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full p-4 flex items-center justify-between hover:bg-primary/5 transition-colors rounded-t-lg"
+        >
+          <div className="flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-primary" />
+            <h4 className="font-bold text-lg">Classifica ELO</h4>
+          </div>
+          {isOpen ? (
+            <ChevronUp className="w-5 h-5 text-primary" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-primary" />
+          )}
+        </button>
+
+        {/* Collapsible Content */}
+        {isOpen && (
+          <div className="p-4 pt-0 space-y-3">
+            {topPlayers.map((player, index) => (
+              <div
+                key={player.id}
+                className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                  player.id === userId
+                    ? "bg-primary/20 border-2 border-primary"
+                    : "bg-background/50 hover:bg-background/80"
+                }`}
+              >
+                {/* Rank and Trophy */}
+                <div className="flex items-center justify-center w-10">
+                  {getTrophyIcon(index)}
+                </div>
+
+                {/* Avatar */}
+                <Avatar className="w-10 h-10 border-2 border-primary/50">
+                  <AvatarImage src={getAvatarUrl(player.avatar_url)} />
+                  <AvatarFallback>
+                    {player.nickname.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+
+                {/* Name */}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold truncate">
+                    {player.nickname}
+                    {player.id === userId && (
+                      <span className="text-xs text-primary ml-2">(Tu)</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    #{index + 1} in classifica
+                  </p>
+                </div>
+
+                {/* ELO */}
+                <div className="text-right">
+                  <p className="font-bold text-lg text-primary">
+                    {player.tris_elo || 1200}
+                  </p>
+                  <p className="text-xs text-muted-foreground">ELO</p>
+                </div>
               </div>
-
-              {/* Avatar */}
-              <Avatar className="w-10 h-10 border-2 border-primary/50">
-                <AvatarImage src={getAvatarUrl(player.avatar_url)} />
-                <AvatarFallback>
-                  {player.nickname.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-
-              {/* Name */}
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold truncate">
-                  {player.nickname}
-                  {player.id === userId && (
-                    <span className="text-xs text-primary ml-2">(Tu)</span>
-                  )}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  #{index + 1} in classifica
-                </p>
-              </div>
-
-              {/* ELO */}
-              <div className="text-right">
-                <p className="font-bold text-lg text-primary">
-                  {player.tris_elo || 1200}
-                </p>
-                <p className="text-xs text-muted-foreground">ELO</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Footer Note */}
-        <div className="mt-4 pt-3 border-t border-primary/20">
-          <p className="text-xs text-center text-muted-foreground">
-            🔄 La classifica si aggiorna ogni 10-15 minuti
-          </p>
-        </div>
+            ))}
+          </div>
+        )}
       </Card>
     </div>
   );
