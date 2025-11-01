@@ -130,7 +130,7 @@ export const ReportUserDialog = ({
           title="Segnala utente"
         >
           <div className="relative">
-            <AlertTriangle className="h-5 w-5" fill="currentColor" />
+            <AlertTriangle className="h-5 w-5" />
           </div>
         </Button>
       </DialogTrigger>
