@@ -14,6 +14,7 @@ export const UserCreditsManager = () => {
   const [likesAmount, setLikesAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingPremium, setLoadingPremium] = useState(false);
+  const [loadingWeeklyPremium, setLoadingWeeklyPremium] = useState(false);
   const [loadingUnlock, setLoadingUnlock] = useState(false);
   const [loadingLikes, setLoadingLikes] = useState(false);
 
@@ -80,14 +81,17 @@ export const UserCreditsManager = () => {
         .from("user_credits")
         .update({ 
           is_premium: true,
-          premium_expires_at: expiresAt.toISOString()
+          subscription_type: 'monthly',
+          premium_expires_at: expiresAt.toISOString(),
+          balance: 999,
+          daily_likes_remaining: 999,
         })
         .eq("user_id", userId);
 
       if (error) throw error;
 
       toast({
-        title: "Premium Assegnato",
+        title: "Premium Mensile Assegnato",
         description: "Abbonamento premium di 30 giorni assegnato",
       });
 
@@ -101,6 +105,53 @@ export const UserCreditsManager = () => {
       });
     } finally {
       setLoadingPremium(false);
+    }
+  };
+
+  const handleAssignWeeklyPremium = async () => {
+    if (!userId) {
+      toast({
+        title: "Errore",
+        description: "Inserisci user ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoadingWeeklyPremium(true);
+    try {
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+
+      const { error } = await supabase
+        .from("user_credits")
+        .update({ 
+          is_premium: true,
+          subscription_type: 'weekly',
+          premium_expires_at: expiresAt.toISOString(),
+          balance: 40,
+          daily_likes_remaining: 30,
+          daily_free_chats_remaining: 5,
+        })
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Premium Settimanale Assegnato",
+        description: "Abbonamento premium di 7 giorni assegnato",
+      });
+
+      setUserId("");
+    } catch (error: any) {
+      console.error("Error assigning weekly premium:", error);
+      toast({
+        title: "Errore",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingWeeklyPremium(false);
     }
   };
 
@@ -267,7 +318,7 @@ export const UserCreditsManager = () => {
           </Button>
         </div>
         
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <Button 
             onClick={handleAssignPremium} 
             disabled={loadingPremium} 
@@ -275,6 +326,15 @@ export const UserCreditsManager = () => {
           >
             <Crown className="h-4 w-4 mr-2" />
             {loadingPremium ? "Assegnando..." : "Premium (30gg)"}
+          </Button>
+          
+          <Button 
+            onClick={handleAssignWeeklyPremium} 
+            disabled={loadingWeeklyPremium} 
+            variant="outline"
+          >
+            <Crown className="h-4 w-4 mr-2" />
+            {loadingWeeklyPremium ? "Assegnando..." : "Premium (7gg)"}
           </Button>
           
           <Button 
