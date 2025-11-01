@@ -97,9 +97,6 @@ serve(async (req) => {
       mode: "subscription",
       success_url: `${origin}${chatPath}?gift_success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}${chatPath}?gift_cancelled=true`,
-      custom_text: {
-        submit: { message: `Regalo Abbonamento mensile a ${recipientProfile.nickname}` }
-      },
       metadata: {
         gift_recipient_id: recipient_id,
         gift_recipient_name: recipientProfile.nickname,
