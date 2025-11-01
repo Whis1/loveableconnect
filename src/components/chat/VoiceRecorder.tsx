@@ -67,20 +67,20 @@ export const VoiceRecorder = ({ onRecordingComplete, disabled = false, isPremium
     <Button
       type="button"
       size="icon"
-      variant={isPremiumMonthly ? "ghost" : "outline"}
+      variant={isPremiumMonthly ? "ghost" : "default"}
       onClick={isRecording ? stopRecording : startRecording}
       disabled={disabled || isProcessing || !isPremiumMonthly}
       className={!isPremiumMonthly 
-        ? "border-2 border-amber-500 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 hover:from-amber-100 hover:to-yellow-100 dark:hover:from-amber-950/30 dark:hover:to-yellow-950/30 cursor-not-allowed shrink-0" 
+        ? "bg-gradient-to-br from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 border-0 cursor-not-allowed shrink-0 shadow-lg" 
         : "shrink-0"
       }
     >
       {isProcessing ? (
-        <Loader2 className="h-5 w-5 animate-spin" />
+        <Loader2 className="h-5 w-5 animate-spin text-white" />
       ) : isRecording ? (
         <Square className="h-5 w-5 text-destructive" />
       ) : (
-        <Mic className={!isPremiumMonthly ? "h-5 w-5 text-amber-600 dark:text-amber-400" : "h-5 w-5"} />
+        <Mic className={!isPremiumMonthly ? "h-5 w-5 text-white" : "h-5 w-5"} />
       )}
     </Button>
   );
