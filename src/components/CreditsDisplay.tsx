@@ -53,12 +53,15 @@ export const CreditsDisplay = () => {
     );
   }
 
+  const isWeeklyPremium = isPremiumValid && credits.subscription_type === 'weekly';
+  
+  // Determina il target balance in base al tipo di abbonamento
+  const targetBalance = isWeeklyPremium ? 40 : 16;
+  
   const showCountdown = 
-    credits.balance < 26 && 
+    credits.balance < targetBalance && 
     credits.credits_depleted_at !== null && 
     credits.credits_depleted_at !== undefined;
-
-  const isWeeklyPremium = isPremiumValid && credits.subscription_type === 'weekly';
 
   return (
     <div className="flex flex-col lg:flex-row gap-2">
