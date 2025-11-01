@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { BookOpen } from "lucide-react";
+import { BookOpen, ExternalLink } from "lucide-react";
 
 interface ProfileNotebookProps {
   profileId: string;
@@ -35,6 +36,7 @@ interface Notes {
 
 export const ProfileNotebook = ({ profileId, profileName, isAdmin = false, adminProfileId, matchId }: ProfileNotebookProps) => {
   const { toast } = useToast();
+  const [userImagesLink, setUserImagesLink] = useState<string | null>(null);
   const [notes, setNotes] = useState<Notes>({
     nome: "",
     eta: "",
@@ -56,7 +58,25 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false, admin
   useEffect(() => {
     if (!profileId || !adminProfileId || !matchId) return;
     fetchNotes();
-  }, [profileId, adminProfileId, matchId]);
+    if (isAdmin) {
+      fetchUserImagesLink();
+    }
+  }, [profileId, adminProfileId, matchId, isAdmin]);
+
+  const fetchUserImagesLink = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_images_link")
+        .eq("id", profileId)
+        .single();
+
+      if (error) throw error;
+      setUserImagesLink(data?.user_images_link || null);
+    } catch (err) {
+      console.error("Error fetching user images link:", err);
+    }
+  };
 
   const fetchNotes = async () => {
     if (!profileId || !adminProfileId || !matchId) return;
@@ -154,9 +174,22 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false, admin
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="pb-3 shrink-0">
-        <CardTitle className="flex items-center gap-2 text-sm">
-          <BookOpen className="h-4 w-4" />
-          Note {isAdmin ? "Admin" : "Utente"}: {profileName}
+        <CardTitle className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4" />
+            Note {isAdmin ? "Admin" : "Utente"}: {profileName}
+          </div>
+          {isAdmin && userImagesLink && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => window.open(userImagesLink, "_blank")}
+            >
+              <ExternalLink className="h-3 w-3 mr-1" />
+              Link immagini
+            </Button>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 min-h-0 p-0">

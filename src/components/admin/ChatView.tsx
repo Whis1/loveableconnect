@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ProfileNotebook } from "./ProfileNotebook";
-import { Send, ImagePlus, Loader2, MessageSquare } from "lucide-react";
+import { ProfileDialog } from "@/components/ProfileDialog";
+import { Send, ImagePlus, Loader2, MessageSquare, Info } from "lucide-react";
 import { toast } from "sonner";
 import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { GifPicker } from "@/components/chat/GifPicker";
@@ -46,6 +47,8 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
   const [uploading, setUploading] = useState(false);
   const [voicePreview, setVoicePreview] = useState<Blob | null>(null);
   const [voicePreviewUrl, setVoicePreviewUrl] = useState<string | null>(null);
+  const [showUserProfile, setShowUserProfile] = useState(false);
+  const [showAdminProfile, setShowAdminProfile] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -58,6 +61,13 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
       unsubscribe?.();
     };
   }, [conversation?.matchId]);
+
+  // Autoscroll quando cambiano i messaggi o la conversazione
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(scrollToBottom, 200);
+    }
+  }, [messages, conversation?.matchId]);
 
   const fetchMessages = async () => {
     if (!conversation) return;
@@ -229,6 +239,7 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
   }
 
   return (
+    <>
     <div className="flex-1 flex">
       {/* Notebook Utente - Sinistra */}
       <div className="hidden lg:block w-64 border-r border-border bg-card/20">
@@ -244,10 +255,28 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
       <div className="flex-1 flex flex-col bg-background/50">
         {/* Header */}
         <div className="p-4 border-b border-border bg-card/50 backdrop-blur-sm">
-          <h3 className="font-semibold text-lg">{conversation.userNickname}</h3>
-          <p className="text-sm text-muted-foreground">
-            Conversazione con Admin {conversation.adminNickname}
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-lg">{conversation.userNickname}</h3>
+              <button
+                onClick={() => setShowUserProfile(true)}
+                className="text-xs text-primary hover:underline flex items-center gap-1 mt-0.5"
+              >
+                <Info className="h-3 w-3" />
+                Info profilo
+              </button>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Admin {conversation.adminNickname}</p>
+              <button
+                onClick={() => setShowAdminProfile(true)}
+                className="text-xs text-primary hover:underline flex items-center gap-1 justify-end mt-0.5"
+              >
+                <Info className="h-3 w-3" />
+                Info profilo
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Messaggi */}
@@ -367,5 +396,20 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
         />
       </div>
     </div>
+
+    {/* Profile Dialogs */}
+    <ProfileDialog
+      profileId={conversation.userId}
+      currentUserId={currentAdminId || conversation.adminProfileId}
+      open={showUserProfile}
+      onOpenChange={setShowUserProfile}
+    />
+    <ProfileDialog
+      profileId={conversation.adminProfileId}
+      currentUserId={currentAdminId || conversation.adminProfileId}
+      open={showAdminProfile}
+      onOpenChange={setShowAdminProfile}
+    />
+    </>
   );
 };
