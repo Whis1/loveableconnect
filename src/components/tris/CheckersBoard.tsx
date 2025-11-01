@@ -919,7 +919,18 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
       <div className="text-center">
         {!gameOver && (
           <p className="text-lg font-semibold">
-            {isPlayerTurn ? "🎮 Il tuo turno" : "⏳ Turno dell'avversario..."}
+            {isPlayerTurn ? (
+              <>
+                🎮 Il tuo turno
+                {getAllPlayerMoves().hasJumps && (
+                  <span className="block text-yellow-500 font-bold animate-pulse">
+                    Sei obbligato a mangiare
+                  </span>
+                )}
+              </>
+            ) : (
+              "⏳ Turno dell'avversario..."
+            )}
           </p>
         )}
         {gameOver && winner === "player" && (
