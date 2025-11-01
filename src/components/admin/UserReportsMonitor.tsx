@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertTriangle, User, Mail, Calendar } from "lucide-react";
+import { AlertTriangle, User, Mail, Calendar, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
+import { useToast } from "@/hooks/use-toast";
 
 interface UserReport {
   id: string;
@@ -55,6 +57,8 @@ const reportTypeBadgeColor: Record<string, string> = {
 export const UserReportsMonitor = () => {
   const [reports, setReports] = useState<UserReport[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchReports();
@@ -140,6 +144,35 @@ export const UserReportsMonitor = () => {
     }
   };
 
+  const handleDeleteReport = async (reportId: string) => {
+    try {
+      setDeletingId(reportId);
+      
+      const { error } = await supabase
+        .from("user_reports")
+        .delete()
+        .eq("id", reportId);
+
+      if (error) throw error;
+
+      setReports((prev) => prev.filter((r) => r.id !== reportId));
+      
+      toast({
+        title: "✓ Segnalazione eliminata",
+        description: "La segnalazione è stata rimossa con successo",
+      });
+    } catch (error) {
+      console.error("Errore nell'eliminazione:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile eliminare la segnalazione",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -169,7 +202,7 @@ export const UserReportsMonitor = () => {
                 <Card key={report.id} className="border-l-4 border-l-destructive">
                   <CardContent className="pt-6">
                     <div className="space-y-4">
-                      {/* Header con tipo di segnalazione */}
+                      {/* Header con tipo di segnalazione e pulsante elimina */}
                       <div className="flex items-start justify-between gap-2">
                         <Badge
                           className={`${
@@ -179,11 +212,23 @@ export const UserReportsMonitor = () => {
                         >
                           {reportTypeLabels[report.report_type] || report.report_type}
                         </Badge>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Calendar className="h-3 w-3" />
-                          {format(new Date(report.created_at), "dd MMM yyyy HH:mm", {
-                            locale: it,
-                          })}
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Calendar className="h-3 w-3" />
+                            {format(new Date(report.created_at), "dd MMM yyyy HH:mm", {
+                              locale: it,
+                            })}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteReport(report.id)}
+                            disabled={deletingId === report.id}
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            title="Elimina segnalazione"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
 
