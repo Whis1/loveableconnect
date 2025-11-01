@@ -555,14 +555,12 @@ const Likes = () => {
                                  </div>
                                )}
                               
-                               {like.profile.looking_for && like.profile.looking_for.length > 0 && (
-                                 <div className="flex items-start gap-1">
-                                   <span className="font-medium text-foreground/70">{t("common.lookingFor")}:</span>
-                                   <span className="text-muted-foreground">
-                                     {like.profile.translatedLookingFor?.join(", ") || like.profile.looking_for.join(", ")}
-                                   </span>
-                                 </div>
-                               )}
+                               <div className="flex items-start gap-1">
+                                 <span className="font-medium text-foreground/70">{t("common.lookingFor")}:</span>
+                                 <span className="text-muted-foreground">
+                                   {like.profile.translatedLookingFor?.join(", ") || (like.profile.looking_for && like.profile.looking_for.length > 0 ? like.profile.looking_for.join(", ") : "—")}
+                                 </span>
+                               </div>
                               
                                {like.profile.relationship_status && (
                                  <div className="flex items-start gap-1">
