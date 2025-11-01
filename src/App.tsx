@@ -23,6 +23,7 @@ import PremiumSuccess from "./pages/PremiumSuccess";
 import Support from "./pages/Support";
 import AdminArrettu from "./pages/AdminArrettu";
 import AdminProfiles from "./pages/AdminProfiles";
+import AdminSupport from "./pages/AdminSupport";
 import Chats from "./pages/Chats";
 import ChattorsLogin from "./pages/ChattorsLogin";
 
@@ -63,6 +64,7 @@ const App = () => (
             <Route path="/support" element={<Support />} />
             <Route path="/adminarrettu" element={<AdminArrettu />} />
             <Route path="/admin/profiles" element={<AdminProfiles />} />
+            <Route path="/admin/support" element={<AdminSupport />} />
             <Route path="/chattors-login" element={<ChattorsLogin />} />
             <Route path="/chattors" element={<Chats />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -20,7 +20,6 @@ export default function AdminArrettu() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
-  const [showSupportChat, setShowSupportChat] = useState(false);
   const { isAdmin, loading: adminLoading } = useAdminRole();
 
   useEffect(() => {
@@ -139,8 +138,8 @@ export default function AdminArrettu() {
               Profili & Chat
             </Button>
             <Button 
-              variant={showSupportChat ? "default" : "outline"} 
-              onClick={() => setShowSupportChat(!showSupportChat)}
+              variant="outline" 
+              onClick={() => navigate("/admin/support")}
             >
               <MessageSquare className="h-5 w-5 mr-2" />
               Supporto Clienti
@@ -160,8 +159,6 @@ export default function AdminArrettu() {
           <UserCreditsManager />
           <ProfileCreator />
         </div>
-
-        {showSupportChat && <SupportChatMonitor />}
       </div>
     </div>
   );
