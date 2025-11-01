@@ -15,6 +15,7 @@ import { MatchBanner } from "@/components/MatchBanner";
 import { useTextTranslation } from "@/hooks/useTranslation";
 import { useLikes } from "@/hooks/useLikes";
 import { useProfiles } from "@/hooks/useProfiles";
+import { TrisGameBanner } from "@/components/tris/TrisGameBanner";
 
 interface Profile {
   id: string;
@@ -575,6 +576,9 @@ const Explore = () => {
               </CardContent>
             </Card>
           )}
+
+          {/* Tris Game Banner */}
+          <TrisGameBanner />
 
           {/* Results Grid */}
           {displayedProfiles.length > 0 ? (
