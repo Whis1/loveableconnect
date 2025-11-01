@@ -76,7 +76,7 @@ export const GeolocationBanner = ({ onActivate, onClose }: GeolocationBannerProp
                 onClick={handleInitialActivate}
                 className="w-full h-11 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg font-semibold transition-all duration-300 transform hover:scale-[1.02]"
               >
-                Continua →
+                Continua
               </Button>
             </>
           ) : (
