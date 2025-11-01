@@ -74,11 +74,11 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Cerca l'account per nickname
+    // Cerca l'account per nickname (case-insensitive)
     const { data: account, error: findError } = await supabase
       .from('admin_secondary_accounts')
       .select('id, nickname, password_hash, is_active')
-      .eq('nickname', nickname)
+      .ilike('nickname', nickname)
       .maybeSingle();
 
     if (findError) {
