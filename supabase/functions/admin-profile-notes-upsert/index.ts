@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
       .from('profile_notes')
       .upsert(
         { profile_id, admin_profile_id, [field]: value },
-        { onConflict: 'admin_profile_id,profile_id' }
+        { onConflict: 'profile_id,admin_profile_id', ignoreDuplicates: false }
       )
       .select()
       .single();
