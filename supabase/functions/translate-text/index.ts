@@ -49,13 +49,13 @@ serve(async (req) => {
       );
     }
 
-    // Retry logic for network errors
+    // Retry logic for network errors with shorter timeout
     let lastError: Error | null = null;
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
         // Call DeepL API with timeout
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
         const response = await fetch('https://api-free.deepl.com/v2/translate', {
           method: 'POST',
@@ -68,18 +68,22 @@ serve(async (req) => {
             target_lang: targetLang,
           }),
           signal: controller.signal,
+        }).catch(fetchError => {
+          // Catch connection errors at fetch level
+          clearTimeout(timeoutId);
+          throw fetchError;
         });
 
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-          const errorText = await response.text();
+          const errorText = await response.text().catch(() => 'Unable to read error');
           console.error(`DeepL API error (attempt ${attempt}):`, response.status, errorText);
           throw new Error(`DeepL API error: ${response.statusText}`);
         }
 
-        const data = await response.json();
-        const translatedText = data.translations[0].text;
+        const data = await response.json().catch(() => ({ translations: [{ text }] }));
+        const translatedText = data.translations?.[0]?.text || text;
 
         return new Response(
           JSON.stringify({ translatedText }),
@@ -91,7 +95,7 @@ serve(async (req) => {
         
         // If not last attempt, wait before retry
         if (attempt < 2) {
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
     }
