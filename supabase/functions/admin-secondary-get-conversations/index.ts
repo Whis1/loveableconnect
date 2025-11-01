@@ -82,8 +82,8 @@ Deno.serve(async (req) => {
           .eq('read', false)
         if (cntErr) throw cntErr
 
-        // Skip archived conversations that have no unread messages
-        if (isArchived && (unreadCount || 0) === 0) continue
+        // Skip ALL archived conversations (they should only reappear if explicitly unarchived)
+        if (isArchived) continue
 
         // User profile (cache)
         if (!userProfileCache.has(otherUserId)) {
