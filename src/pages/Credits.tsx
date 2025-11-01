@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Coins, Crown, Zap, Shield, Eye, Heart, Gamepad2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useTranslation } from "react-i18next";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const Credits = () => {
   const navigate = useNavigate();

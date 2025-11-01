@@ -7,7 +7,7 @@ const getTranslationCache = (): Map<string, string> => {
   if (typeof window === 'undefined') return new Map();
   
   try {
-    const cached = sessionStorage.getItem('deepl_translation_cache');
+    const cached = sessionStorage.getItem('deepl_translation_cache_v2');
     if (cached) {
       return new Map(JSON.parse(cached));
     }
@@ -21,7 +21,7 @@ const saveTranslationCache = (cache: Map<string, string>) => {
   if (typeof window === 'undefined') return;
   
   try {
-    sessionStorage.setItem('deepl_translation_cache', JSON.stringify(Array.from(cache.entries())));
+    sessionStorage.setItem('deepl_translation_cache_v2', JSON.stringify(Array.from(cache.entries())));
   } catch (e) {
     console.error('Error saving translation cache:', e);
   }
@@ -128,50 +128,73 @@ export const useTextTranslation = () => {
     }
   }, []);
 
-  // Hook personalizzato t() che traduce tutto automaticamente
+  // Hook personalizzato t() con DeepL + fallback robusti
   const t = useCallback((key: string, options?: any): string => {
-    // Se lingua italiana o araba, usa traduzioni statiche
-    if (currentLanguage === 'it') {
-      return String(originalT(key, options));
+    const target = currentLanguage;
+
+    const getStatic = (lng: string) => String(originalT(key, { ...options, lng }));
+
+    // Arabic uses static JSON only
+    if (target === 'ar') {
+      const ar = getStatic('ar');
+      const it = getStatic('it');
+      return ar || it;
     }
 
-    if (currentLanguage === 'ar') {
-      // Arabo usa file JSON statico (DeepL non supporta arabo)
-      const arabicTranslation = originalT(key, { ...options, lng: 'ar' });
-      const italianFallback = originalT(key, { ...options, lng: 'it' });
-      return String(arabicTranslation || italianFallback);
-    }
-
-    // Per altre lingue: traduci dal testo italiano con DeepL
-    const italianText = String(originalT(key, { ...options, lng: 'it' }));
-    
-    // Sostituisci interpolazioni nel testo italiano
-    let processedText = italianText;
-    if (options) {
+    // Helper: apply interpolation replacements to a raw string
+    const applyInterpolations = (text: string) => {
+      if (!options) return text;
+      let out = text;
       Object.keys(options).forEach(optKey => {
         if (optKey !== 'lng') {
           const placeholder = `{{${optKey}}}`;
           const replacement = String(options[optKey]);
-          processedText = processedText.replace(new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'), replacement);
+          out = out.replace(new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'), replacement);
         }
       });
+      return out;
+    };
+
+    // Italian: show static Italian without falling back to English
+    if (target === 'it') {
+      const italianRes = (i18n as any).getResource?.('it', 'translation', key);
+      const italianRaw = typeof italianRes === 'string' ? italianRes : getStatic('it');
+      return applyInterpolations(String(italianRaw));
     }
 
-    const cacheKey = `${currentLanguage}:${processedText}`;
-    
-    // Se già tradotto, ritorna subito
+    // Other languages: use Italian (or English if Italian missing) as source
+    const italianRes = (i18n as any).getResource?.('it', 'translation', key);
+    const sourceRaw = (typeof italianRes === 'string' ? italianRes : (getStatic('it') || getStatic('en')));
+    const processedText = applyInterpolations(String(sourceRaw));
+
+    const cacheKey = `${target}:${processedText}`;
     if (translationCache.has(cacheKey)) {
       return translationCache.get(cacheKey)!;
     }
 
-    // Avvia traduzione asincrona e ritorna italiano temporaneamente
-    translateWithDeepL(processedText, currentLanguage).then(() => {
-      // Forza re-render componente
+    // Prefer static translation immediately if available to avoid flashes and quota issues
+    const staticLocal = getStatic(target);
+    if (staticLocal && staticLocal !== key && staticLocal !== processedText) {
+      translationCache.set(cacheKey, staticLocal);
+      saveTranslationCache(translationCache);
+      return staticLocal;
+    }
+
+    // Fallback to DeepL; if quota exceeded or unchanged, fallback to static
+    translateWithDeepL(processedText, target).then((deeplText) => {
+      let finalText = deeplText;
+      if (!deeplText || deeplText === processedText) {
+        const staticAfter = getStatic(target);
+        if (staticAfter && staticAfter !== key) finalText = staticAfter;
+      }
+      translationCache.set(cacheKey, finalText);
+      saveTranslationCache(translationCache);
       forceUpdate({});
     });
 
-    return processedText; // Ritorna italiano temporaneamente
-  }, [currentLanguage, originalT, translateWithDeepL]);
+    // Return best immediate option
+    return staticLocal && staticLocal !== key ? staticLocal : processedText;
+  }, [currentLanguage, originalT, translateWithDeepL, i18n]);
 
   // Funzione per tradurre singolo testo (compatibilità retroattiva)
   const translateText = useCallback(async (text: string | null | undefined): Promise<string> => {
