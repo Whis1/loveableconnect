@@ -573,6 +573,102 @@ const ProfileEdit = () => {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="relationship-type">{t('profile.whatLookingFor')}</Label>
+                  <Select
+                    value={profile.relationship_type || ""}
+                    onValueChange={(value) => setProfile({ ...profile, relationship_type: value })}
+                  >
+                    <SelectTrigger id="relationship-type">
+                      <SelectValue placeholder={t('profile.selectStatus')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="serious">{t('profile.seriousRelationship')}</SelectItem>
+                      <SelectItem value="casual">{t('profile.casualDating')}</SelectItem>
+                      <SelectItem value="friendship">{t('profile.friendship')}</SelectItem>
+                      <SelectItem value="not-sure">{t('profile.notSpecified')}</SelectItem>
+                      <SelectItem value="prefer-not-say">{t('profile.preferNotToSay')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="gender">{t('profile.gender')}</Label>
+                  <Select
+                    value={profile.gender || ""}
+                    onValueChange={(value) => setProfile({ ...profile, gender: value })}
+                  >
+                    <SelectTrigger id="gender">
+                      <SelectValue placeholder={t('common.selectGender')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">{t('common.male')}</SelectItem>
+                      <SelectItem value="female">{t('common.female')}</SelectItem>
+                      <SelectItem value="transgender">{t('common.transgender')}</SelectItem>
+                      <SelectItem value="transexual">{t('common.transexual')}</SelectItem>
+                      <SelectItem value="genderfluid">{t('common.genderfluid')}</SelectItem>
+                      <SelectItem value="non-binary">{t('common.nonBinary')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="sexual-orientation">{t('common.sexualOrientation')}</Label>
+                  <Select
+                    value={profile.sexual_orientation || ""}
+                    onValueChange={(value) => setProfile({ ...profile, sexual_orientation: value })}
+                  >
+                    <SelectTrigger id="sexual-orientation">
+                      <SelectValue placeholder={t('common.selectOrientation')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="heterosexual">{t('common.heterosexual')}</SelectItem>
+                      <SelectItem value="homosexual">{t('common.homosexual')}</SelectItem>
+                      <SelectItem value="bisexual">{t('common.bisexual')}</SelectItem>
+                      <SelectItem value="pansexual">{t('common.pansexual')}</SelectItem>
+                      <SelectItem value="asexual">{t('common.asexual')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="city">{t('profile.location')} {requiresCompletion && <span className="text-destructive">*</span>}</Label>
+                  {profile.location_locked ? (
+                    <div className="space-y-3">
+                      <div className="relative">
+                        <Input
+                          value={profile.city || ""}
+                          disabled
+                          className="bg-muted cursor-not-allowed pr-10"
+                        />
+                        <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <Alert className="bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
+                        <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        <AlertDescription className="text-amber-800 dark:text-amber-200 text-sm">
+                          {t('profile.locationLocked')}
+                        </AlertDescription>
+                      </Alert>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowLocationRequest(true)}
+                        className="w-full"
+                      >
+                        <MapPin className="h-4 w-4 mr-2" />
+                        {t('profile.requestLocationChange')}
+                      </Button>
+                    </div>
+                  ) : (
+                    <PlacesAutocomplete
+                      value={profile.city || ""}
+                      onChange={handleCityChange}
+                      placeholder={t('profile.locationPlaceholder')}
+                      id="city"
+                    />
+                  )}
+                </div>
+
+                <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Label>Data di Nascita {requiresCompletion && <span className="text-destructive">*</span>}</Label>
                     {profile.birthdate_locked && (
@@ -683,106 +779,7 @@ const ProfileEdit = () => {
                     </>
                   )}
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="gender">{t('profile.gender')}</Label>
-                  <Select
-                    value={profile.gender || ""}
-                    onValueChange={(value) => setProfile({ ...profile, gender: value })}
-                  >
-                    <SelectTrigger id="gender">
-                      <SelectValue placeholder={t('common.selectGender')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">{t('common.male')}</SelectItem>
-                      <SelectItem value="female">{t('common.female')}</SelectItem>
-                      <SelectItem value="transgender">{t('common.transgender')}</SelectItem>
-                      <SelectItem value="transexual">{t('common.transexual')}</SelectItem>
-                      <SelectItem value="genderfluid">{t('common.genderfluid')}</SelectItem>
-                      <SelectItem value="non-binary">{t('common.nonBinary')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="sexual-orientation">{t('common.sexualOrientation')}</Label>
-                  <Select
-                    value={profile.sexual_orientation || ""}
-                    onValueChange={(value) => setProfile({ ...profile, sexual_orientation: value })}
-                  >
-                    <SelectTrigger id="sexual-orientation">
-                      <SelectValue placeholder={t('common.selectOrientation')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="heterosexual">{t('common.heterosexual')}</SelectItem>
-                      <SelectItem value="homosexual">{t('common.homosexual')}</SelectItem>
-                      <SelectItem value="bisexual">{t('common.bisexual')}</SelectItem>
-                      <SelectItem value="pansexual">{t('common.pansexual')}</SelectItem>
-                      <SelectItem value="asexual">{t('common.asexual')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="city">{t('profile.location')} {requiresCompletion && <span className="text-destructive">*</span>}</Label>
-                  {profile.location_locked ? (
-                    <div className="space-y-3">
-                      <div className="relative">
-                        <Input
-                          value={profile.city || ""}
-                          disabled
-                          className="bg-muted cursor-not-allowed pr-10"
-                        />
-                        <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <Alert className="bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
-                        <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                        <AlertDescription className="text-amber-800 dark:text-amber-200 text-sm">
-                          {t('profile.locationLocked')}
-                        </AlertDescription>
-                      </Alert>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setShowLocationRequest(true)}
-                        className="w-full"
-                      >
-                        <MapPin className="h-4 w-4 mr-2" />
-                        {t('profile.requestLocationChange')}
-                      </Button>
-                    </div>
-                  ) : (
-                    <PlacesAutocomplete
-                      value={profile.city || ""}
-                      onChange={handleCityChange}
-                      placeholder={t('profile.locationPlaceholder')}
-                      id="city"
-                    />
-                  )}
-                </div>
               </div>
-
-              {/* Relationship Type */}
-              <div className="space-y-2">
-                <Label htmlFor="relationship-type">{t('profile.whatLookingFor')}</Label>
-                <Select
-                  value={profile.relationship_type || ""}
-                  onValueChange={(value) => setProfile({ ...profile, relationship_type: value })}
-                >
-                  <SelectTrigger id="relationship-type">
-                    <SelectValue placeholder={t('profile.selectStatus')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="serious">{t('profile.seriousRelationship')}</SelectItem>
-                    <SelectItem value="casual">{t('profile.casualDating')}</SelectItem>
-                    <SelectItem value="friendship">{t('profile.friendship')}</SelectItem>
-                    <SelectItem value="not-sure">{t('profile.notSpecified')}</SelectItem>
-                    <SelectItem value="prefer-not-say">{t('profile.preferNotToSay')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              
 
               {/* Relationship Status */}
               <div className="space-y-2">
