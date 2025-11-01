@@ -135,6 +135,7 @@ const Chats = () => {
           conversations={conversations}
           selectedConversation={selectedConversation}
           onSelectConversation={setSelectedConversation}
+          onRefresh={fetchConversations}
         />
         
         <ChatView

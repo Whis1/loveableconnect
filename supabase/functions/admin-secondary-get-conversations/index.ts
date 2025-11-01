@@ -1,111 +1,125 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+}
+
+type Conversation = {
+  userId: string
+  userNickname: string
+  userAvatar: string | null
+  adminProfileId: string
+  adminNickname: string
+  matchId: string
+  lastMessageAt: string
+  unreadCount: number
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Ottieni tutte le notifiche di tipo messaggio
-    const { data: notifications, error: notifError } = await supabase
-      .from('admin_notifications')
-      .select('admin_profile_id, user_id, created_at')
-      .eq('interaction_type', 'message')
-      .order('created_at', { ascending: false });
+    // Exclude archived conversations
+    const { data: archivedRows, error: archErr } = await supabase
+      .from('admin_archived_conversations')
+      .select('admin_profile_id, user_id')
+    if (archErr) throw archErr
 
-    if (notifError) throw notifError;
+    const archivedSet = new Set<string>((archivedRows || []).map(r => `${r.admin_profile_id}-${r.user_id}`))
 
-    // Raggruppa per conversazioni uniche
-    const uniqueConversations = new Map<string, any>();
-    
-    for (const notif of notifications || []) {
-      const key = `${notif.admin_profile_id}-${notif.user_id}`;
-      if (!uniqueConversations.has(key)) {
-        uniqueConversations.set(key, notif);
+    // Get all admin profiles
+    const { data: admins, error: adminsErr } = await supabase
+      .from('profiles')
+      .select('id, nickname')
+      .eq('is_admin_profile', true)
+    if (adminsErr) throw adminsErr
+
+    const userProfileCache = new Map<string, { nickname: string; avatar_url: string | null }>()
+    const conversations: Conversation[] = []
+
+    for (const admin of admins || []) {
+      const adminId = admin.id as string
+
+      // Matches involving this admin
+      const { data: matches, error: matchesErr } = await supabase
+        .from('matches')
+        .select('id, user1_id, user2_id')
+        .or(`user1_id.eq.${adminId},user2_id.eq.${adminId}`)
+      if (matchesErr) throw matchesErr
+
+      for (const m of matches || []) {
+        const otherUserId = (m.user1_id === adminId ? m.user2_id : m.user1_id) as string
+        if (!otherUserId) continue
+
+        // Skip archived
+        if (archivedSet.has(`${adminId}-${otherUserId}`)) continue
+
+        // Last message for this match
+        const { data: lastMsg, error: lastErr } = await supabase
+          .from('messages')
+          .select('created_at')
+          .eq('match_id', m.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        if (lastErr) throw lastErr
+        if (!lastMsg) continue
+
+        // Unread for admin
+        const { count: unreadCount, error: cntErr } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('match_id', m.id)
+          .eq('receiver_id', adminId)
+          .eq('read', false)
+        if (cntErr) throw cntErr
+
+        // User profile (cache)
+        if (!userProfileCache.has(otherUserId)) {
+          const { data: uProf, error: uErr } = await supabase
+            .from('profiles')
+            .select('nickname, avatar_url')
+            .eq('id', otherUserId)
+            .single()
+          if (uErr) throw uErr
+          userProfileCache.set(otherUserId, { nickname: uProf?.nickname || 'Utente', avatar_url: uProf?.avatar_url || null })
+        }
+        const u = userProfileCache.get(otherUserId)!
+
+        conversations.push({
+          userId: otherUserId,
+          userNickname: u.nickname,
+          userAvatar: u.avatar_url,
+          adminProfileId: adminId,
+          adminNickname: admin.nickname || 'Admin',
+          matchId: m.id as string,
+          lastMessageAt: lastMsg.created_at,
+          unreadCount: unreadCount || 0,
+        })
       }
     }
 
-    // Carica i dettagli di ogni conversazione
-    const conversationsData = [];
+    conversations.sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime())
 
-    for (const notif of uniqueConversations.values()) {
-      // Ottieni il match tra admin profile e user
-      const { data: matches } = await supabase
-        .from('matches')
-        .select('id, user1_id, user2_id')
-        .or(`and(user1_id.eq.${notif.admin_profile_id},user2_id.eq.${notif.user_id}),and(user1_id.eq.${notif.user_id},user2_id.eq.${notif.admin_profile_id})`);
-
-      if (!matches || matches.length === 0) continue;
-      const match = matches[0];
-
-      // Ottieni i profili
-      const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('nickname, avatar_url')
-        .eq('id', notif.user_id)
-        .single();
-
-      const { data: adminProfile } = await supabase
-        .from('profiles')
-        .select('nickname')
-        .eq('id', notif.admin_profile_id)
-        .single();
-
-      // Conta messaggi non letti
-      const { count } = await supabase
-        .from('messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('match_id', match.id)
-        .eq('receiver_id', notif.admin_profile_id)
-        .eq('read', false);
-
-      // Ottieni ultimo messaggio
-      const { data: lastMessage } = await supabase
-        .from('messages')
-        .select('created_at')
-        .eq('match_id', match.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      conversationsData.push({
-        userId: notif.user_id,
-        userNickname: userProfile?.nickname || 'Utente',
-        userAvatar: userProfile?.avatar_url || null,
-        adminProfileId: notif.admin_profile_id,
-        adminNickname: adminProfile?.nickname || 'Admin',
-        matchId: match.id,
-        lastMessageAt: lastMessage?.created_at || notif.created_at,
-        unreadCount: count || 0,
-      });
-    }
-
-    // Ordina per ultimo messaggio
-    conversationsData.sort((a, b) => 
-      new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
-    );
-
-    console.log(`Conversazioni recuperate: ${conversationsData.length}`);
+    console.log(`Conversazioni (messages) recuperate: ${conversations.length}`)
 
     return new Response(
-      JSON.stringify({ success: true, conversations: conversationsData }),
+      JSON.stringify({ success: true, conversations }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-    );
+    )
   } catch (error) {
-    console.error('Errore recupero conversazioni:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+    console.error('Errore recupero conversazioni (messages):', error)
+    const message = error instanceof Error ? error.message : 'Errore sconosciuto'
     return new Response(
-      JSON.stringify({ success: false, error: errorMessage }),
+      JSON.stringify({ success: false, error: message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
+    )
   }
-});
+})

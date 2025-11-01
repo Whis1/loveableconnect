@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_archived_conversations: {
+        Row: {
+          admin_profile_id: string
+          archived_at: string
+          id: string
+          match_id: string
+          user_id: string
+        }
+        Insert: {
+          admin_profile_id: string
+          archived_at?: string
+          id?: string
+          match_id: string
+          user_id: string
+        }
+        Update: {
+          admin_profile_id?: string
+          archived_at?: string
+          id?: string
+          match_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_notifications: {
         Row: {
           admin_profile_id: string

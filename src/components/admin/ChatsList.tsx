@@ -4,8 +4,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
-import { MessageCircle } from "lucide-react";
+import { Archive, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface Conversation {
   userId: string;
@@ -22,18 +24,35 @@ interface ChatsListProps {
   conversations: Conversation[];
   selectedConversation: Conversation | null;
   onSelectConversation: (conversation: Conversation) => void;
+  onRefresh: () => void;
 }
 
 export const ChatsList = ({
   conversations,
   selectedConversation,
   onSelectConversation,
+  onRefresh,
 }: ChatsListProps) => {
   const getAvatarUrl = (path: string | null) => {
     if (!path) return null;
     if (path.startsWith('http')) return path;
     const { data } = supabase.storage.from('profile-images').getPublicUrl(path);
     return data.publicUrl;
+  };
+
+  const handleArchive = async (conv: Conversation, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    try {
+      const { error } = await supabase.functions.invoke('admin-secondary-archive-conversation', {
+        body: { adminProfileId: conv.adminProfileId, userId: conv.userId, action: 'archive' },
+      });
+      if (error) throw error;
+      toast.success('Conversazione archiviata');
+      onRefresh();
+    } catch (err) {
+      console.error('Errore archiviazione:', err);
+      toast.error("Errore durante l'archiviazione");
+    }
   };
 
   return (
@@ -96,12 +115,23 @@ export const ChatsList = ({
                       <span className="text-xs text-muted-foreground truncate">
                         Admin: {conv.adminNickname}
                       </span>
-                      <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        {formatDistanceToNow(new Date(conv.lastMessageAt), {
-                          addSuffix: true,
-                          locale: it,
-                        })}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {formatDistanceToNow(new Date(conv.lastMessageAt), {
+                            addSuffix: true,
+                            locale: it,
+                          })}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={(e) => handleArchive(conv, e)}
+                          aria-label="Archivia conversazione"
+                        >
+                          <Archive className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>

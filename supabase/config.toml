@@ -123,3 +123,6 @@ verify_jwt = false
 [functions.admin-secondary-get-conversations]
 verify_jwt = false
 
+[functions.admin-secondary-archive-conversation]
+verify_jwt = false
+
