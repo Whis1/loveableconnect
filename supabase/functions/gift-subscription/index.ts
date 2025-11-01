@@ -38,15 +38,29 @@ serve(async (req) => {
     logStep("Recipient ID received", { recipient_id, match_id });
 
     // Verifica che il destinatario esista
+    logStep("Attempting to fetch recipient profile", { recipient_id });
     const { data: recipientProfile, error: recipientError } = await supabaseClient
       .from("profiles")
       .select("id, nickname, full_name")
       .eq("id", recipient_id)
-      .single();
+      .maybeSingle();
 
-    if (recipientError || !recipientProfile) {
-      throw new Error("Recipient not found");
+    logStep("Query result", { 
+      hasData: !!recipientProfile, 
+      hasError: !!recipientError,
+      errorDetails: recipientError ? JSON.stringify(recipientError) : null 
+    });
+
+    if (recipientError) {
+      logStep("ERROR querying recipient", { error: recipientError });
+      throw new Error(`Database error: ${recipientError.message}`);
     }
+
+    if (!recipientProfile) {
+      logStep("ERROR recipient profile not found", { recipient_id });
+      throw new Error(`Recipient not found with ID: ${recipient_id}`);
+    }
+    
     logStep("Recipient found", { recipientNickname: recipientProfile.nickname });
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
