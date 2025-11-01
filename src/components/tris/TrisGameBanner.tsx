@@ -5,6 +5,7 @@ import { Trophy, X } from "lucide-react";
 import { OpponentSearch } from "./OpponentSearch";
 import { TrisBoard } from "./TrisBoard";
 import { CheckersBoard } from "./CheckersBoard";
+import { EloLeaderboard } from "./EloLeaderboard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -24,7 +25,18 @@ export const TrisGameBanner = () => {
   const [userCredits, setUserCredits] = useState(0);
   const [isPremium, setIsPremium] = useState(false);
   const [subscriptionType, setSubscriptionType] = useState<string>('none');
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setCurrentUserId(session.user.id);
+      }
+    };
+    fetchUserId();
+  }, []);
 
   useEffect(() => {
     checkGamesRemaining();
@@ -289,6 +301,11 @@ export const TrisGameBanner = () => {
           >
             <X className="w-5 h-5" />
           </Button>
+        </div>
+
+        {/* ELO Leaderboard */}
+        <div className="mb-6">
+          <EloLeaderboard userId={currentUserId || undefined} />
         </div>
 
         {/* ELO Explanation */}
