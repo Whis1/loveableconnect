@@ -10,8 +10,11 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let originalText = '';
+  
   try {
     const { text, targetLanguage } = await req.json();
+    originalText = text || '';
     
     if (!text || !targetLanguage) {
       throw new Error('Text and target language are required');
@@ -19,7 +22,11 @@ serve(async (req) => {
 
     const deeplApiKey = Deno.env.get('DEEPL_API_KEY');
     if (!deeplApiKey) {
-      throw new Error('DEEPL_API_KEY not configured');
+      console.warn('DEEPL_API_KEY not configured, returning original text');
+      return new Response(
+        JSON.stringify({ translatedText: text }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Map language codes to DeepL supported languages
@@ -42,38 +49,65 @@ serve(async (req) => {
       );
     }
 
-    // Call DeepL API (free tier endpoint)
-    const response = await fetch('https://api-free.deepl.com/v2/translate', {
-      method: 'POST',
-      headers: {
-        'Authorization': `DeepL-Auth-Key ${deeplApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        text: [text],
-        target_lang: targetLang,
-      }),
-    });
+    // Retry logic for network errors
+    let lastError: Error | null = null;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        // Call DeepL API with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('DeepL API error:', response.status, errorText);
-      throw new Error(`DeepL API error: ${response.statusText}`);
+        const response = await fetch('https://api-free.deepl.com/v2/translate', {
+          method: 'POST',
+          headers: {
+            'Authorization': `DeepL-Auth-Key ${deeplApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text: [text],
+            target_lang: targetLang,
+          }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`DeepL API error (attempt ${attempt}):`, response.status, errorText);
+          throw new Error(`DeepL API error: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const translatedText = data.translations[0].text;
+
+        return new Response(
+          JSON.stringify({ translatedText }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error('Unknown error');
+        console.error(`DeepL attempt ${attempt} failed:`, lastError.message);
+        
+        // If not last attempt, wait before retry
+        if (attempt < 2) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
     }
 
-    const data = await response.json();
-    const translatedText = data.translations[0].text;
-
+    // All retries failed - return original text instead of error
+    console.warn('DeepL translation failed after retries, returning original text:', lastError?.message);
     return new Response(
-      JSON.stringify({ translatedText }),
+      JSON.stringify({ translatedText: text }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Translation error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    // Always return original text on error instead of failing
     return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ translatedText: originalText }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
