@@ -92,6 +92,7 @@ serve(async (req) => {
         {
           price: priceId,
           quantity: 1,
+          description: `Regalo Abbonamento mensile a ${recipientProfile.nickname}`,
         },
       ],
       mode: "subscription",
@@ -99,6 +100,7 @@ serve(async (req) => {
       cancel_url: `${origin}${chatPath}?gift_cancelled=true`,
       metadata: {
         gift_recipient_id: recipient_id,
+        gift_recipient_name: recipientProfile.nickname,
         gift_sender_id: user.id,
         is_gift: "true",
       },
