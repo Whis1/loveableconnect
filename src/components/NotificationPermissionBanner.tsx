@@ -73,12 +73,6 @@ export const NotificationPermissionBanner = () => {
                 </Button>
               </div>
 
-              <div className="flex items-center gap-2 px-3 py-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                <span className="inline-block w-2 h-2 rounded-full bg-green-600 dark:bg-green-400 animate-pulse" />
-                <span className="text-sm font-medium text-green-800 dark:text-green-200">
-                  Funziona su desktop e mobile
-                </span>
-              </div>
             </div>
           </div>
         </div>
