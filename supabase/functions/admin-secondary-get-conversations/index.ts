@@ -42,8 +42,7 @@ Deno.serve(async (req) => {
     if (adminsErr) throw adminsErr
 
     const userProfileCache = new Map<string, { nickname: string; avatar_url: string | null }>()
-    const allConversations: Conversation[] = []
-    const filteredConversations: Conversation[] = []
+    const conversations: Conversation[] = []
 
     for (const admin of admins || []) {
       const adminId = admin.id as string
@@ -83,6 +82,9 @@ Deno.serve(async (req) => {
           .eq('read', false)
         if (cntErr) throw cntErr
 
+        // Skip archived conversations that have no unread messages
+        if (isArchived && (unreadCount || 0) === 0) continue
+
         // User profile (cache)
         if (!userProfileCache.has(otherUserId)) {
           const { data: uProf, error: uErr } = await supabase
@@ -95,7 +97,7 @@ Deno.serve(async (req) => {
         }
         const u = userProfileCache.get(otherUserId)!
 
-        const conv: Conversation = {
+        conversations.push({
           userId: otherUserId,
           userNickname: u.nickname,
           userAvatar: u.avatar_url,
@@ -104,23 +106,16 @@ Deno.serve(async (req) => {
           matchId: m.id as string,
           lastMessageAt,
           unreadCount: unreadCount || 0,
-        }
-
-        allConversations.push(conv)
-        // Skip archived conversations that have no unread messages (default view)
-        if (!(isArchived && (unreadCount || 0) === 0)) {
-          filteredConversations.push(conv)
-        }
+        })
       }
     }
 
-    const output: Conversation[] = (filteredConversations.length > 0 ? filteredConversations : allConversations)
-    output.sort((a: Conversation, b: Conversation) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime())
+    conversations.sort((a: Conversation, b: Conversation) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime())
 
-    console.log(`Conversazioni (messages) recuperate: ${output.length}`)
+    console.log(`Conversazioni (messages) recuperate: ${conversations.length}`)
 
     return new Response(
-      JSON.stringify({ success: true, conversations: output }),
+      JSON.stringify({ success: true, conversations }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
   } catch (error) {
