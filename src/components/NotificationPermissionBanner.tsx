@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Bell, BellOff, X } from 'lucide-react';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export const NotificationPermissionBanner = () => {
+  const { t } = useTranslation();
   const [showBanner, setShowBanner] = useState(false);
   const { permission, isSupported, isSubscribed, isLoading, subscribe } = usePushNotifications();
 
@@ -38,13 +40,13 @@ export const NotificationPermissionBanner = () => {
               <Bell className="h-7 w-7 text-white" />
             </div>
 
-            <div className="flex-1 space-y-4">
+              <div className="flex-1 space-y-4">
               <div>
                 <h3 className="font-bold text-xl text-gray-900 dark:text-white mb-2">
-                  🔔 Attiva le Notifiche Push
+                  🔔 {t("banners.notificationPermission.title")}
                 </h3>
                 <p className="text-base text-gray-700 dark:text-gray-200 leading-relaxed">
-                  Non perderti mai più un messaggio, like o match! Ricevi notifiche istantanee anche quando il browser è chiuso.
+                  {t("banners.notificationPermission.description")}
                 </p>
               </div>
 
@@ -58,7 +60,7 @@ export const NotificationPermissionBanner = () => {
                   <span className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                   <Bell className="h-5 w-5 mr-2" />
                   <span className="relative">
-                    {isLoading ? 'Attivazione...' : 'Attiva Notifiche'}
+                    {isLoading ? t("banners.notificationPermission.enabling") : t("banners.notificationPermission.enable")}
                   </span>
                 </Button>
 
@@ -69,7 +71,7 @@ export const NotificationPermissionBanner = () => {
                   className="font-semibold border-2 bg-white/50 dark:bg-gray-800/50 text-gray-800 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800"
                 >
                   <BellOff className="h-5 w-5 mr-2" />
-                  Non ora
+                  {t("banners.notificationPermission.notNow")}
                 </Button>
               </div>
 

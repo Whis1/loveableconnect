@@ -1,6 +1,7 @@
 import { Gift, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface GiftSubscriptionBannerProps {
   recipientNickname: string;
@@ -15,6 +16,8 @@ export const GiftSubscriptionBanner = ({
   onCancel,
   isProcessing = false,
 }: GiftSubscriptionBannerProps) => {
+  const { t } = useTranslation();
+  
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
       <Card className="relative w-full max-w-md mx-4 p-6 shadow-2xl border-2 border-primary/20">
@@ -35,38 +38,33 @@ export const GiftSubscriptionBanner = ({
 
           <div className="space-y-2">
             <h3 className="text-xl font-bold text-foreground">
-              Regala Premium
+              {t("banners.giftSubscription.title")}
             </h3>
             <p className="text-sm text-muted-foreground">
-              Regala l'abbonamento mensile a{" "}
-              <span className="font-semibold text-primary">
-                {recipientNickname}
-              </span>{" "}
-              per{" "}
-              <span className="font-bold text-foreground">299,99 euro al mese</span>
+              {t("banners.giftSubscription.description", { recipientNickname })}
             </p>
           </div>
 
           <div className="bg-muted/50 rounded-lg p-4 w-full space-y-2 text-left text-sm">
-            <p className="font-medium text-foreground">Cosa include:</p>
+            <p className="font-medium text-foreground">{t("banners.giftSubscription.whatIncludes")}</p>
             <ul className="space-y-1 text-muted-foreground">
               <li className="flex items-center gap-2">
                 <span className="text-primary">✓</span>
-                Crediti illimitati per messaggi
+                {t("banners.giftSubscription.unlimitedCredits")}
               </li>
               <li className="flex items-center gap-2">
                 <span className="text-primary">✓</span>
-                Visualizzazione like ricevuti gratis
+                {t("banners.giftSubscription.unlimitedLikes")}
               </li>
               <li className="flex items-center gap-2">
                 <span className="text-primary">✓</span>
-                Badge Premium esclusivo
+                {t("banners.giftSubscription.premiumBadge")}
               </li>
             </ul>
           </div>
 
           <p className="text-xs text-muted-foreground">
-            Potrai disdire il rinnovo automatico in qualsiasi momento
+            {t("banners.giftSubscription.cancelAnytime")}
           </p>
 
           <div className="flex gap-3 w-full">
@@ -76,7 +74,7 @@ export const GiftSubscriptionBanner = ({
               disabled={isProcessing}
               className="flex-1"
             >
-              Annulla
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={onConfirm}
@@ -86,12 +84,12 @@ export const GiftSubscriptionBanner = ({
               {isProcessing ? (
                 <>
                   <span className="animate-spin mr-2">⏳</span>
-                  Elaborazione...
+                  {t("banners.giftSubscription.processing")}
                 </>
               ) : (
                 <>
                   <Gift className="h-4 w-4 mr-2" />
-                  Regala
+                  {t("banners.giftSubscription.gift")}
                 </>
               )}
             </Button>

@@ -1,5 +1,6 @@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Clock, Heart } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface DailyLikesExhaustedBannerProps {
   open: boolean;
@@ -14,13 +15,15 @@ export const DailyLikesExhaustedBanner = ({
   onUseCredits,
   resetAt
 }: DailyLikesExhaustedBannerProps) => {
+  const { t } = useTranslation();
+  
   const formatTimeRemaining = () => {
-    if (!resetAt) return "24 ore";
+    if (!resetAt) return t("banners.dailyLikesExhausted.hours24");
     const now = new Date();
     const reset = new Date(resetAt);
     const diff = reset.getTime() - now.getTime();
     
-    if (diff <= 0) return "a breve";
+    if (diff <= 0) return t("banners.dailyLikesExhausted.soon");
     
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -39,18 +42,18 @@ export const DailyLikesExhaustedBanner = ({
             </div>
           </div>
           <AlertDialogTitle className="text-center text-2xl font-semibold">
-            Like Giornalieri Terminati
+            {t("banners.dailyLikesExhausted.title")}
           </AlertDialogTitle>
           <AlertDialogDescription className="text-center space-y-4 pt-2">
             <div className="text-base text-foreground">
-              Hai esaurito i tuoi like giornalieri!
+              {t("banners.dailyLikesExhausted.description")}
             </div>
             <div className="bg-muted/50 rounded-lg p-4 space-y-3">
               <div className="text-sm">
-                <strong>Attendi il rinnovo:</strong> {formatTimeRemaining()}
+                <strong>{t("banners.dailyLikesExhausted.waitRenewal")}:</strong> {formatTimeRemaining()}
               </div>
               <div className="text-sm text-primary font-medium">
-                Oppure usa <strong>2 crediti</strong> per mettere like subito
+                {t("banners.dailyLikesExhausted.useCredits")}
               </div>
             </div>
           </AlertDialogDescription>
@@ -58,10 +61,10 @@ export const DailyLikesExhaustedBanner = ({
         <AlertDialogFooter className="flex-col gap-3 sm:gap-3 mt-2">
           <div className="flex flex-col sm:flex-row gap-3 w-full">
             <AlertDialogCancel className="flex-1 m-0">
-              Attendi Rinnovo
+              {t("banners.dailyLikesExhausted.waitButton")}
             </AlertDialogCancel>
             <AlertDialogAction onClick={onUseCredits} className="flex-1 m-0">
-              Usa 2 Crediti
+              {t("banners.dailyLikesExhausted.useCreditsButton")}
             </AlertDialogAction>
           </div>
         </AlertDialogFooter>

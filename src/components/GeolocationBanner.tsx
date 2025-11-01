@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MapPin, X, Cookie, Shield } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface GeolocationBannerProps {
   onActivate: () => void;
@@ -10,6 +11,7 @@ interface GeolocationBannerProps {
 }
 
 export const GeolocationBanner = ({ onActivate, onClose }: GeolocationBannerProps) => {
+  const { t } = useTranslation();
   const [cookieConsent, setCookieConsent] = useState(false);
   const [showConsentStep, setShowConsentStep] = useState(false);
 
@@ -57,10 +59,10 @@ export const GeolocationBanner = ({ onActivate, onClose }: GeolocationBannerProp
               </div>
               <div className="flex-1">
                 <h3 className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-2">
-                  📍 Geolocalizzazione Richiesta
+                  📍 {t("banners.geolocation.title")}
                 </h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Per scoprire persone nelle tue vicinanze, abbiamo bisogno di accedere alla tua posizione.
+                  {t("banners.geolocation.description")}
                 </p>
               </div>
             </div>
@@ -80,11 +82,11 @@ export const GeolocationBanner = ({ onActivate, onClose }: GeolocationBannerProp
                 <div className="flex items-start gap-3">
                   <Shield className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
                   <div>
-                    <h4 className="font-semibold text-sm mb-1">Cosa faremo con la tua posizione?</h4>
+                    <h4 className="font-semibold text-sm mb-1">{t("banners.geolocation.whatWeDo")}</h4>
                     <ul className="text-xs text-muted-foreground space-y-1">
-                      <li>• Mostrare profili vicini a te</li>
-                      <li>• Calcolare la distanza tra te e gli altri utenti</li>
-                      <li>• Migliorare i suggerimenti di match</li>
+                      <li>• {t("banners.geolocation.showNearby")}</li>
+                      <li>• {t("banners.geolocation.calculateDistance")}</li>
+                      <li>• {t("banners.geolocation.improveMatches")}</li>
                     </ul>
                   </div>
                 </div>
@@ -94,7 +96,7 @@ export const GeolocationBanner = ({ onActivate, onClose }: GeolocationBannerProp
                 onClick={handleInitialActivate}
                 className="w-full h-11 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg font-semibold transition-all duration-300 transform hover:scale-[1.02]"
               >
-                Continua
+                {t("banners.geolocation.continue")}
               </Button>
             </>
           ) : (
@@ -105,18 +107,16 @@ export const GeolocationBanner = ({ onActivate, onClose }: GeolocationBannerProp
                     <Cookie className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
                       <h4 className="font-semibold text-sm mb-2 text-amber-900 dark:text-amber-100">
-                        🍪 Consenso Cookie Necessario
+                        🍪 {t("banners.geolocation.cookieConsent")}
                       </h4>
                       <p className="text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
-                        Per memorizzare le tue preferenze di geolocalizzazione e offrirti un'esperienza migliore, 
-                        utilizziamo cookie tecnici essenziali. Questi dati vengono salvati solo sul tuo dispositivo 
-                        e non vengono condivisi con terze parti.{" "}
+                        {t("banners.geolocation.cookieDescription")}{" "}
                         <a 
                           href="/terms" 
                           target="_blank"
                           className="text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
                         >
-                          Leggi l'informativa
+                          {t("banners.geolocation.readPolicy")}
                         </a>
                       </p>
                     </div>
@@ -127,7 +127,7 @@ export const GeolocationBanner = ({ onActivate, onClose }: GeolocationBannerProp
                       htmlFor="cookie-consent"
                       className="text-sm font-medium cursor-pointer text-amber-900 dark:text-amber-100 flex items-center gap-2"
                     >
-                      Consenti →
+                      {t("banners.geolocation.allow")}
                     </label>
                     <Checkbox
                       id="cookie-consent"
@@ -145,14 +145,14 @@ export const GeolocationBanner = ({ onActivate, onClose }: GeolocationBannerProp
                   variant="outline"
                   className="flex-1 h-11 border-2 border-gray-300 dark:border-gray-600"
                 >
-                  ← Indietro
+                  ← {t("common.back")}
                 </Button>
                 <Button
                   onClick={handleFinalActivate}
                   disabled={!cookieConsent}
                   className="flex-1 h-11 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg font-semibold transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                  ✓ Attiva Geolocalizzazione
+                  ✓ {t("banners.geolocation.activate")}
                 </Button>
               </div>
             </>

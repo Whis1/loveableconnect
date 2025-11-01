@@ -1,209 +1,247 @@
-import { useState, useEffect } from 'react';
 import { useTranslation as useI18nTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
+import { useCallback, useState } from 'react';
 
-const translationCache = new Map<string, string>();
-
-// Reverse mapping for interests from any language back to keys
-const INTEREST_REVERSE_MAP: Record<string, string> = {
-  // English
-  'soccer': 'soccer', 'football': 'soccer', 'tennis': 'tennis', 'basketball': 'basketball',
-  'volleyball': 'volleyball', 'swimming': 'swimming', 'running': 'running',
-  'cycling': 'cycling', 'yoga': 'yoga', 'pilates': 'pilates', 'gym': 'gym',
-  'fitness': 'fitness', 'crossfit': 'crossfit', 'climbing': 'climbing',
-  'surf': 'surf', 'surfing': 'surf', 'snowboard': 'snowboard', 'skiing': 'skiing',
-  'skating': 'skating', 'dancing': 'dancing', 'dance': 'dancing',
-  'martial arts': 'martialArts', 'boxing': 'boxing', 'rugby': 'rugby',
-  'golf': 'golf', 'hiking': 'hiking', 'trekking': 'trekking', 'art': 'art',
-  'painting': 'painting', 'drawing': 'drawing', 'sculpture': 'sculpture',
-  'photography': 'photography', 'cinema': 'cinema', 'movies': 'movies',
-  'theatre': 'theatre', 'theater': 'theatre', 'music': 'music',
-  'concerts': 'concerts', 'festivals': 'festivals', 'museums': 'museums',
-  'exhibitions': 'exhibitions', 'architecture': 'architecture', 'design': 'design',
-  'literature': 'literature', 'poetry': 'poetry', 'writing': 'writing',
-  'calligraphy': 'calligraphy', 'comics': 'comics', 'manga': 'manga',
-  'anime': 'anime', 'netflix': 'netflix', 'tv series': 'tvSeries',
-  'documentaries': 'documentaries', 'gaming': 'gaming', 'video games': 'videoGames',
-  'playstation': 'playstation', 'xbox': 'xbox', 'nintendo': 'nintendo',
-  'pc gaming': 'pcGaming', 'streaming': 'streaming', 'youtube': 'youtube',
-  'podcasts': 'podcasts', 'audiobooks': 'audiobooks', 'karaoke': 'karaoke',
-  'escape room': 'escapeRoom', 'board games': 'boardGames',
-  'rock': 'rock', 'pop': 'pop', 'jazz': 'jazz', 'classical': 'classical',
-  'hip hop': 'hipHop', 'rap': 'rap', 'reggae': 'reggae', 'metal': 'metal',
-  'indie': 'indie', 'electronic': 'electronic', 'house': 'house',
-  'techno': 'techno', 'blues': 'blues', 'folk': 'folk', 'country': 'country',
-  'r&b': 'rnb', 'soul': 'soul', 'play guitar': 'playGuitar', 'guitar': 'playGuitar',
-  'piano': 'piano', 'drums': 'drums', 'dj': 'dj', 'singing': 'singing',
-  'travel': 'travel', 'backpacking': 'backpacking', 'camping': 'camping',
-  'adventure': 'adventure', 'exploring': 'exploring', 'road trip': 'roadTrip',
-  'flights': 'flights', 'cruises': 'cruises', 'beach': 'beach',
-  'mountains': 'mountains', 'nature': 'nature', 'wildlife': 'wildlife',
-  'safari': 'safari', 'diving': 'diving', 'snorkeling': 'snorkeling',
-  'skydiving': 'skydiving', 'cooking': 'cooking', 'baking': 'baking',
-  'pastry': 'pastry', 'wine': 'wine', 'beer': 'beer', 'cocktails': 'cocktails',
-  'coffee': 'coffee', 'tea': 'tea', 'restaurants': 'restaurants',
-  'street food': 'streetFood', 'food tour': 'foodTour', 'vegan': 'vegan',
-  'vegetarian': 'vegetarian', 'sushi': 'sushi', 'pizza': 'pizza',
-  'gourmet': 'gourmet', 'tastings': 'tastings', 'fashion': 'fashion',
-  'shopping': 'shopping', 'makeup': 'makeup', 'make-up': 'makeup',
-  'skincare': 'skincare', 'wellness': 'wellness', 'meditation': 'meditation',
-  'mindfulness': 'mindfulness', 'sustainability': 'sustainability',
-  'ecology': 'ecology', 'volunteering': 'volunteering', 'charity': 'charity',
-  'gardening': 'gardening', 'plants': 'plants', 'animals': 'animals',
-  'dogs': 'dogs', 'cats': 'cats', 'horse riding': 'horseRiding',
-  'fishing': 'fishing', 'hunting': 'hunting', 'technology': 'technology',
-  'programming': 'programming', 'coding': 'coding', 'ai': 'ai',
-  'robotics': 'robotics', 'astronomy': 'astronomy', 'physics': 'physics',
-  'chemistry': 'chemistry', 'biology': 'biology', 'science': 'science',
-  'innovation': 'innovation', 'startups': 'startups', 'crypto': 'crypto',
-  'nft': 'nft', 'virtual reality': 'vr', 'vr': 'vr', 'socializing': 'socializing',
-  'parties': 'parties', 'nightlife': 'nightlife', 'clubs': 'clubs',
-  'bars': 'bars', 'aperitifs': 'aperitifs', 'brunch': 'brunch',
-  'networking': 'networking', 'events': 'events', 'community': 'community',
-  'politics': 'politics', 'activism': 'activism', 'debates': 'debates',
-  'diy': 'diy', 'modeling': 'modeling', 'collecting': 'collecting',
-  'antiques': 'antiques', 'vintage': 'vintage', 'crafts': 'crafts',
-  'crochet': 'crochet', 'embroidery': 'embroidery', 'woodworking': 'woodworking',
-  'ceramics': 'ceramics', 'origami': 'origami', 'scrapbooking': 'scrapbooking',
-  'psychology': 'psychology', 'philosophy': 'philosophy',
-  'spirituality': 'spirituality', 'astrology': 'astrology', 'tarot': 'tarot',
-  'personal growth': 'personalGrowth', 'self-improvement': 'selfImprovement',
-  'coaching': 'coaching', 'therapy': 'therapy', 'reading': 'reading',
-  'books': 'books', 'journalism': 'journalism', 'cars': 'cars',
-  'motorcycles': 'motorcycles', 'mechanics': 'mechanics', 'tuning': 'tuning',
-  'formula 1': 'formula1', 'motogp': 'motoGP', 'rally': 'rally', 'karting': 'karting', 'vintage cars': 'vintageCars',
+// Cache globale persistente per traduzioni (usa sessionStorage)
+const getTranslationCache = (): Map<string, string> => {
+  if (typeof window === 'undefined') return new Map();
   
+  try {
+    const cached = sessionStorage.getItem('deepl_translation_cache');
+    if (cached) {
+      return new Map(JSON.parse(cached));
+    }
+  } catch (e) {
+    console.error('Error loading translation cache:', e);
+  }
+  return new Map();
+};
+
+const saveTranslationCache = (cache: Map<string, string>) => {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    sessionStorage.setItem('deepl_translation_cache', JSON.stringify(Array.from(cache.entries())));
+  } catch (e) {
+    console.error('Error saving translation cache:', e);
+  }
+};
+
+let translationCache = getTranslationCache();
+
+// Mappa inversa per interessi comuni (ottimizzazione)
+const INTEREST_REVERSE_MAP: Record<string, string> = {
   // Italian
-  'calcio': 'soccer', 'basket': 'basketball', 'pallavolo': 'volleyball',
-  'nuoto': 'swimming', 'corsa': 'running', 'ciclismo': 'cycling',
-  'palestra': 'gym', 'arrampicata': 'climbing', 'sci': 'skiing',
-  'pattinaggio': 'skating', 'danza': 'dancing', 'arti marziali': 'martialArts',
-  'boxe': 'boxing', 'escursionismo': 'hiking',
-  'pittura': 'painting', 'disegno': 'drawing',
-  'scultura': 'sculpture', 'fotografia': 'photography',
-  'teatro': 'theatre', 'musica': 'music', 'concerti': 'concerts', 'festival': 'festivals',
-  'musei': 'museums', 'mostre': 'exhibitions', 'architettura': 'architecture',
-  'letteratura': 'literature', 'poesia': 'poetry',
-  'scrittura': 'writing', 'calligrafia': 'calligraphy', 'fumetti': 'comics',
-  'serie tv': 'tvSeries', 'film': 'movies', 'documentari': 'documentaries',
-  'videogiochi': 'videoGames', 'audiolibri': 'audiobooks',
-  'classica': 'classical', 'elettronica': 'electronic',
-  'suonare chitarra': 'playGuitar', 'pianoforte': 'piano',
-  'batteria': 'drums', 'canto': 'singing', 'viaggi': 'travel',
-  'campeggio': 'camping', 'avventura': 'adventure',
-  'esplorare': 'exploring', 'voli': 'flights',
-  'crociere': 'cruises', 'spiaggia': 'beach', 'montagna': 'mountains',
-  'natura': 'nature', 'immersioni': 'diving', 'paracadutismo': 'skydiving',
-  'cucina': 'cooking', 'cucinare': 'cooking',
-  'pasticceria': 'pastry', 'vino': 'wine', 'birra': 'beer', 'cocktail': 'cocktails',
-  'caffè': 'coffee', 'tè': 'tea', 'ristoranti': 'restaurants',
-  'vegano': 'vegan', 'vegetariano': 'vegetarian',
-  'degustazioni': 'tastings', 'moda': 'fashion',
-  'meditazione': 'meditation', 'sostenibilità': 'sustainability', 'ecologia': 'ecology',
-  'volontariato': 'volunteering', 'beneficenza': 'charity',
-  'giardinaggio': 'gardening', 'piante': 'plants', 'animali': 'animals',
-  'cani': 'dogs', 'gatti': 'cats', 'equitazione': 'horseRiding',
-  'pesca': 'fishing', 'caccia': 'hunting', 'tecnologia': 'technology',
-  'programmazione': 'programming', 'ia': 'ai',
-  'robotica': 'robotics', 'astronomia': 'astronomy', 'fisica': 'physics',
-  'chimica': 'chemistry', 'biologia': 'biology', 'scienza': 'science',
-  'innovazione': 'innovation', 'startup': 'startups', 'realtà virtuale': 'vr',
-  'socializzare': 'socializing', 'feste': 'parties', 'discoteche': 'clubs',
-  'bar': 'bars', 'aperitivi': 'aperitifs', 'eventi': 'events',
-  'politica': 'politics', 'attivismo': 'activism', 'dibattiti': 'debates',
-  'bricolage': 'diy', 'fai da te': 'diy', 'modellismo': 'modeling',
-  'collezionismo': 'collecting', 'antiquariato': 'antiques', 'artigianato': 'crafts',
-  'uncinetto': 'crochet', 'ricamo': 'embroidery',
-  'lavorazione legno': 'woodworking', 'ceramica': 'ceramics',
-  'psicologia': 'psychology', 'filosofia': 'philosophy',
-  'spiritualità': 'spirituality', 'astrologia': 'astrology', 'tarocchi': 'tarot',
-  'crescita personale': 'personalGrowth', 'lettura': 'reading', 'libri': 'books',
-  'giornalismo': 'journalism', 'auto': 'cars', 'moto': 'motorcycles',
-  'meccanica': 'mechanics', "auto d'epoca": 'vintageCars',
+  'calcio': 'soccer',
+  'pallacanestro': 'basketball',
+  'pallavolo': 'volleyball',
+  'nuoto': 'swimming',
+  'corsa': 'running',
+  'ciclismo': 'cycling',
+  'palestra': 'gym',
+  'danza': 'dancing',
+  'musica': 'music',
+  'lettura': 'reading',
+  'viaggi': 'travel',
+  'fotografia': 'photography',
+  'cucina': 'cooking',
+  'arte': 'art',
+  'teatro': 'theatre',
+  'videogiochi': 'gaming',
+  'tecnologia': 'technology',
+  'moda': 'fashion',
+  'giardinaggio': 'gardening',
+  'animali': 'animals',
+  'volontariato': 'volunteering',
+  'meditazione': 'meditation',
+  'escursionismo': 'hiking',
+  'campeggio': 'camping',
+  'pesca': 'fishing',
+  // English
+  'soccer': 'soccer',
+  'football': 'soccer',
+  'basketball': 'basketball',
+  'tennis': 'tennis',
+  'swimming': 'swimming',
+  'running': 'running',
+  'gym': 'gym',
+  'dance': 'dancing',
+  'movies': 'movies',
+  'reading': 'reading',
+  'travel': 'travel',
+  'photography': 'photography',
+  'cooking': 'cooking',
+  'theater': 'theatre',
+  'gaming': 'gaming',
+  'technology': 'technology',
+  'fashion': 'fashion',
+  'gardening': 'gardening',
+  'pets': 'animals',
+  'volunteering': 'volunteering',
+  'hiking': 'hiking',
+  'camping': 'camping',
+  'fishing': 'fishing',
 };
 
 export const useTextTranslation = () => {
-  const { i18n, t } = useI18nTranslation();
-  const currentLanguage = i18n.language;
+  const { i18n, t: originalT } = useI18nTranslation();
+  const currentLanguage = i18n.language || 'it';
+  const [, forceUpdate] = useState({});
 
-  const translateText = async (text: string | null | undefined): Promise<string> => {
-    if (!text) return '';
+  // Funzione core per tradurre con DeepL
+  const translateWithDeepL = useCallback(async (text: string, targetLang: string): Promise<string> => {
+    const cacheKey = `${targetLang}:${text}`;
     
-    // If text is already in current language or is very short, return as is
-    if (text.length < 3) return text;
-
-    const cacheKey = `${text}_${currentLanguage}`;
-    
-    // Check cache first
+    // Controlla cache
     if (translationCache.has(cacheKey)) {
       return translationCache.get(cacheKey)!;
     }
 
     try {
       const { data, error } = await supabase.functions.invoke('translate-text', {
-        body: { text, targetLanguage: currentLanguage }
+        body: { 
+          text, 
+          targetLanguage: targetLang 
+        }
       });
 
-      if (error) throw error;
-
-      const translatedText = data.translatedText || text;
-      translationCache.set(cacheKey, translatedText);
-      return translatedText;
+      if (error) {
+        console.error('DeepL translation error:', error);
+        return text;
+      }
+      
+      const translated = data?.translatedText || text;
+      translationCache.set(cacheKey, translated);
+      saveTranslationCache(translationCache);
+      return translated;
     } catch (error) {
       console.error('Translation error:', error);
-      return text; // Return original text on error
+      return text;
     }
-  };
+  }, []);
 
-  const translateArray = async (items: string[] | null | undefined): Promise<string[]> => {
-    if (!items || items.length === 0) return [];
+  // Hook personalizzato t() che traduce tutto automaticamente
+  const t = useCallback((key: string, options?: any): string => {
+    // Se lingua italiana o araba, usa traduzioni statiche
+    if (currentLanguage === 'it') {
+      return String(originalT(key, options));
+    }
+
+    if (currentLanguage === 'ar') {
+      // Arabo usa file JSON statico (DeepL non supporta arabo)
+      const arabicTranslation = originalT(key, { ...options, lng: 'ar' });
+      const italianFallback = originalT(key, { ...options, lng: 'it' });
+      return String(arabicTranslation || italianFallback);
+    }
+
+    // Per altre lingue: traduci dal testo italiano con DeepL
+    const italianText = String(originalT(key, { ...options, lng: 'it' }));
     
-    // Try to translate interests using the reverse map first
-    const translations = items.map(item => {
-      const normalized = item.toLowerCase().trim();
-      const key = INTEREST_REVERSE_MAP[normalized];
-      if (key) {
-        return t(`interests.${key}`, item);
-      }
-      return item;
+    // Sostituisci interpolazioni nel testo italiano
+    let processedText = italianText;
+    if (options) {
+      Object.keys(options).forEach(optKey => {
+        if (optKey !== 'lng') {
+          const placeholder = `{{${optKey}}}`;
+          const replacement = String(options[optKey]);
+          processedText = processedText.replace(new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'), replacement);
+        }
+      });
+    }
+
+    const cacheKey = `${currentLanguage}:${processedText}`;
+    
+    // Se già tradotto, ritorna subito
+    if (translationCache.has(cacheKey)) {
+      return translationCache.get(cacheKey)!;
+    }
+
+    // Avvia traduzione asincrona e ritorna italiano temporaneamente
+    translateWithDeepL(processedText, currentLanguage).then(() => {
+      // Forza re-render componente
+      forceUpdate({});
     });
-    
-    // If no translations found via map, fallback to API translation
-    const hasUntranslated = translations.some((trans, idx) => trans === items[idx]);
-    if (hasUntranslated) {
-      const apiTranslations = await Promise.all(
-        items.map((item, idx) => {
-          if (translations[idx] === item) {
-            return translateText(item);
+
+    return processedText; // Ritorna italiano temporaneamente
+  }, [currentLanguage, originalT, translateWithDeepL]);
+
+  // Funzione per tradurre singolo testo (compatibilità retroattiva)
+  const translateText = useCallback(async (text: string | null | undefined): Promise<string> => {
+    if (!text || currentLanguage === 'it' || currentLanguage === 'ar') {
+      return text || '';
+    }
+    return translateWithDeepL(text, currentLanguage);
+  }, [currentLanguage, translateWithDeepL]);
+
+  // Funzione per tradurre array (per interessi)
+  const translateArray = useCallback(async (items: string[] | null | undefined): Promise<string[]> => {
+    if (!items || items.length === 0 || currentLanguage === 'it' || currentLanguage === 'ar') {
+      return items || [];
+    }
+
+    try {
+      // Traduci tutti gli items
+      const translatedItems = await Promise.all(
+        items.map(async (item) => {
+          const normalizedItem = item.toLowerCase().trim();
+          if (INTEREST_REVERSE_MAP[normalizedItem]) {
+            return item; // Interesse noto, mantieni originale
           }
-          return Promise.resolve(translations[idx]);
+          return translateWithDeepL(item, currentLanguage);
         })
       );
-      return apiTranslations;
+
+      return translatedItems;
+    } catch (error) {
+      console.error('Translation error:', error);
+      return items;
     }
-    
-    return translations;
+  }, [currentLanguage, translateWithDeepL]);
+
+  // Funzione per tradurre profili (batch)
+  const translateProfiles = useCallback(async (profiles: any[]): Promise<any[]> => {
+    if (!profiles || profiles.length === 0 || currentLanguage === 'it' || currentLanguage === 'ar') {
+      return profiles;
+    }
+
+    try {
+      const translated = await Promise.all(
+        profiles.map(async (profile) => {
+          const [translatedBio, translatedInterests] = await Promise.all([
+            profile.bio ? translateWithDeepL(profile.bio, currentLanguage) : null,
+            profile.interests ? translateArray(profile.interests) : null
+          ]);
+
+          return {
+            ...profile,
+            translatedBio,
+            translatedInterests,
+          };
+        })
+      );
+
+      return translated;
+    } catch (error) {
+      console.error('Error translating profiles:', error);
+      return profiles;
+    }
+  }, [currentLanguage, translateArray, translateWithDeepL]);
+
+  return {
+    t, // Nuovo t() con traduzione automatica DeepL
+    translateText,
+    translateArray,
+    translateProfiles,
+    currentLanguage,
+    i18n
   };
+};
 
-  // Batch translate profiles for better performance
-  const translateProfiles = async (profiles: any[]): Promise<any[]> => {
-    const translatedProfiles = await Promise.all(
-      profiles.map(async (profile) => {
-        const [translatedBio, translatedInterests] = await Promise.all([
-          profile.bio ? translateText(profile.bio) : null,
-          profile.interests ? translateArray(profile.interests) : null
-        ]);
-
-        return {
-          ...profile,
-          translatedBio,
-          translatedInterests
-        };
-      })
-    );
-
-    return translatedProfiles;
+// Hook compatibilità per componenti esistenti che usano solo t()
+export const useTranslation = () => {
+  const translation = useTextTranslation();
+  return {
+    t: translation.t,
+    i18n: translation.i18n
   };
-
-  return { translateText, translateArray, translateProfiles, currentLanguage };
 };
