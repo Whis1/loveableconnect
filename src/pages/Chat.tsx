@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { GifPicker } from "@/components/chat/GifPicker";
 import { VoiceRecorder } from "@/components/chat/VoiceRecorder";
+import { VoicePreview } from "@/components/chat/VoicePreview";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ChatUserProfile } from "@/components/chat/ChatUserProfile";
 import { InsufficientCreditsBanner } from "@/components/chat/InsufficientCreditsBanner";
@@ -61,6 +62,7 @@ const Chat = () => {
   const [showVoicePremiumBanner, setShowVoicePremiumBanner] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [recordedAudio, setRecordedAudio] = useState<{ blob: Blob; url: string } | null>(null);
 
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -359,7 +361,13 @@ const Chat = () => {
   };
 
   const handleVoiceRecording = async (audioBlob: Blob) => {
-    if (!currentUser) return;
+    // Create a URL for preview
+    const audioUrl = URL.createObjectURL(audioBlob);
+    setRecordedAudio({ blob: audioBlob, url: audioUrl });
+  };
+
+  const handleSendVoiceMessage = async () => {
+    if (!currentUser || !recordedAudio) return;
 
     setUploading(true);
     try {
@@ -367,7 +375,7 @@ const Chat = () => {
       
       const { error: uploadError } = await supabase.storage
         .from('chat-images')
-        .upload(fileName, audioBlob, {
+        .upload(fileName, recordedAudio.blob, {
           contentType: 'audio/webm'
         });
 
@@ -378,6 +386,10 @@ const Chat = () => {
         .getPublicUrl(fileName);
 
       await handleSendMessage(undefined, 'voice', data.publicUrl, '🎤 Messaggio vocale');
+      
+      // Clean up
+      URL.revokeObjectURL(recordedAudio.url);
+      setRecordedAudio(null);
       
       toast({
         title: "Messaggio vocale inviato",
@@ -392,6 +404,13 @@ const Chat = () => {
       });
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDeleteVoiceMessage = () => {
+    if (recordedAudio) {
+      URL.revokeObjectURL(recordedAudio.url);
+      setRecordedAudio(null);
     }
   };
 
@@ -579,7 +598,14 @@ const Chat = () => {
           </CardContent>
 
           {/* Input Section */}
-          <div className="border-t p-2 md:p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="border-t p-2 md:p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 space-y-2">
+            {recordedAudio && (
+              <VoicePreview
+                audioUrl={recordedAudio.url}
+                onSend={handleSendVoiceMessage}
+                onDelete={handleDeleteVoiceMessage}
+              />
+            )}
             {isBlocked ? (
               <div className="text-center py-4">
                 <p className="text-sm text-muted-foreground">
@@ -601,7 +627,7 @@ const Chat = () => {
                     variant="ghost" 
                     size="icon"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
+                    disabled={uploading || !!recordedAudio}
                     className="shrink-0 h-9 w-9 md:h-10 md:w-10"
                   >
                     <Paperclip className="h-4 w-4 md:h-5 md:w-5" />
@@ -613,16 +639,17 @@ const Chat = () => {
                     onChange={(e) => setNewMessage(e.target.value)}
                     placeholder={t("chat.writeMessage")}
                     className="flex-1 text-sm md:text-base"
+                    disabled={!!recordedAudio}
                   />
                   <VoiceRecorder 
                     onRecordingComplete={handleVoiceRecording}
-                    disabled={uploading}
+                    disabled={uploading || !!recordedAudio}
                     isPremiumMonthly={credits?.is_premium && credits.subscription_type === 'monthly'}
                     onPremiumRequired={() => setShowVoicePremiumBanner(true)}
                   />
                   <Button 
                     type="submit" 
-                    disabled={!newMessage.trim() || uploading}
+                    disabled={!newMessage.trim() || uploading || !!recordedAudio}
                     className="shrink-0 h-9 w-9 md:h-10 md:w-10"
                     size="icon"
                   >

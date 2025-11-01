@@ -16,6 +16,7 @@ export const VoiceRecorder = ({ onRecordingComplete, disabled = false, isPremium
   const [isProcessing, setIsProcessing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
   const { toast } = useToast();
 
   const startRecording = async () => {
@@ -26,6 +27,7 @@ export const VoiceRecorder = ({ onRecordingComplete, disabled = false, isPremium
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
@@ -43,7 +45,10 @@ export const VoiceRecorder = ({ onRecordingComplete, disabled = false, isPremium
         setIsProcessing(false);
         
         // Stop all tracks
-        stream.getTracks().forEach(track => track.stop());
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
       };
 
       mediaRecorder.start();
@@ -69,20 +74,17 @@ export const VoiceRecorder = ({ onRecordingComplete, disabled = false, isPremium
     <Button
       type="button"
       size="icon"
-      variant={isPremiumMonthly ? "ghost" : "default"}
+      variant="default"
       onClick={isRecording ? stopRecording : startRecording}
-      disabled={disabled || isProcessing}
-      className={!isPremiumMonthly 
-        ? "bg-gradient-to-br from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 border-0 cursor-not-allowed shrink-0 shadow-lg" 
-        : "shrink-0"
-      }
+      disabled={disabled || isProcessing || !isPremiumMonthly}
+      className="bg-gradient-to-br from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 border-0 shrink-0 shadow-lg"
     >
       {isProcessing ? (
         <Loader2 className="h-6 w-6 animate-spin text-white" />
       ) : isRecording ? (
-        <Square className="h-6 w-6 text-destructive" />
+        <Square className="h-6 w-6 text-white fill-white" />
       ) : (
-        <Mic className={!isPremiumMonthly ? "h-6 w-6 text-white" : "h-5 w-5"} />
+        <Mic className="h-6 w-6 text-white" />
       )}
     </Button>
   );
