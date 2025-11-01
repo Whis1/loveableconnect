@@ -279,19 +279,24 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
 
   const handleLike = async (e: React.MouseEvent, useCredits: boolean = false) => {
     e.stopPropagation();
-    
-    if (isLiking || hasLiked) return;
-    
-    // Instant check: show banner if no likes and not using credits
+
+    // Evita doppi click: se è già piaciuto, esci subito
+    if (hasLiked) return;
+
+    // Controllo immediato: banner se niente like giornalieri e non si usano crediti
     if (!useCredits && likesRemaining <= 0) {
       setShowLikesExhausted(true);
       return;
     }
-    
+
+    // Aggiornamento ottimistico: nasconde subito il pulsante "Mi piace"
+    setHasLiked(true);
     setIsLiking(true);
-    
+
+    let showedBanner = false;
+
     try {
-      // Credits path: atomic deduct + like
+      // Percorso con crediti: detrazione + like atomici lato DB
       if (useCredits) {
         const { data: likeResult, error: likeFnError } = await supabase.rpc(
           'like_with_credits',
@@ -299,21 +304,18 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
         );
 
         if (likeFnError) {
-          toast({ title: t('common.error'), description: likeFnError.message, variant: 'destructive' });
-          setIsLiking(false);
-          return;
+          throw likeFnError;
         }
 
         const result = Array.isArray(likeResult) ? likeResult[0] : likeResult;
         if (!result?.success) {
+          // Crediti insufficienti
           setShowCreditsBanner(true);
-          setIsLiking(false);
-          return;
+          showedBanner = true;
+          throw new Error('Not enough credits');
         }
 
-        // Success
-        setHasLiked(true);
-        setIsLiking(false);
+        // Successo
         if (result.match_created && onMatch) {
           onMatch(profile.nickname || profile.full_name);
         } else {
@@ -325,16 +327,15 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
         return;
       }
 
-      // Daily like path: consume like first
+      // Percorso like giornalieri
       const { success } = await consumeLike(false);
-
       if (!success) {
         setShowLikesExhausted(true);
-        setIsLiking(false);
-        return;
+        showedBanner = true;
+        throw new Error('No daily likes');
       }
 
-      // Add the like (idempotent edge function)
+      // Inserisci il like (idempotente)
       const { data: likeData, error: likeError } = await supabase.functions.invoke(
         'admin-manage-like',
         {
@@ -349,37 +350,36 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
       if (likeError) {
         const msg = (likeError as any)?.message || '';
         if (msg.includes('duplicate key') || (likeError as any)?.code === '23505') {
-          // Duplicate = already liked, treat as success
-          setHasLiked(true);
-          setIsLiking(false);
+          // Già piaciuto: lascia stato ottimistico
           toast({
-            title: t("search.likeSent"),
-            description: `${t("search.likedProfile")} ${profile.nickname || profile.full_name}`,
+            title: t('search.likeSent'),
+            description: `${t('search.likedProfile')} ${profile.nickname || profile.full_name}`,
           });
           return;
         }
         throw likeError;
       }
 
-      // Success: update UI immediately
-      setHasLiked(true);
-      setIsLiking(false);
-      
       if (likeData?.match_created && onMatch) {
         onMatch(profile.nickname || profile.full_name);
       } else {
         toast({
-          title: t("search.likeSent"),
-          description: `${t("search.likedProfile")} ${profile.nickname || profile.full_name}`,
+          title: t('search.likeSent'),
+          description: `${t('search.likedProfile')} ${profile.nickname || profile.full_name}`,
         });
       }
     } catch (error: any) {
+      // Rollback dello stato ottimistico solo in caso di errore reale
+      setHasLiked(false);
+      if (!showedBanner) {
+        toast({
+          title: t('common.error'),
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
+    } finally {
       setIsLiking(false);
-      toast({
-        title: t("common.error"),
-        description: error.message,
-        variant: "destructive",
-      });
     }
   };
 
