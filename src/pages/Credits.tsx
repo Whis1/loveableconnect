@@ -137,7 +137,7 @@ const Credits = () => {
                     <div className="space-y-1 mt-2 text-sm text-muted-foreground">
                       <div>💰 40 crediti giornalieri (attuale: {credits.balance})</div>
                       <div>❤️ 30 like giornalieri</div>
-                      <div>💬 5 chat gratuite al giorno senza match</div>
+                      <div>👁️ Visualizzazione illimitata dei like ricevuti</div>
                     </div>
                   </div>
                 </div>
