@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Exclude archived conversations
+    // Get archived conversations
     const { data: archivedRows, error: archErr } = await supabase
       .from('admin_archived_conversations')
       .select('admin_profile_id, user_id')
@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
         const otherUserId = (m.user1_id === adminId ? m.user2_id : m.user1_id) as string
         if (!otherUserId) continue
 
-        // Check archived status (show if there are unread messages)
+        // Check if archived
         const isArchived = archivedSet.has(`${adminId}-${otherUserId}`)
 
         // Last message for this match
@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
         // Se non ci sono messaggi, usa la data del match
         const lastMessageAt = lastMsg?.created_at || (m as any).created_at
 
-        // Unread for admin
+        // Unread count for admin
         const { count: unreadCount, error: cntErr } = await supabase
           .from('messages')
           .select('*', { count: 'exact', head: true })
@@ -83,9 +83,8 @@ Deno.serve(async (req) => {
           .eq('read', false)
         if (cntErr) throw cntErr
 
-
-        // Archived conversations are included to ensure visibility of new chats
-
+        // Skip archived conversations that have no unread messages
+        if (isArchived && (unreadCount || 0) === 0) continue
 
         // User profile (cache)
         if (!userProfileCache.has(otherUserId)) {
