@@ -354,9 +354,11 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
 
   useEffect(() => {
     if (!isPlayerTurn && !gameOver) {
+      // Random delay between 4-8 seconds for more realistic gameplay
+      const delay = Math.random() * 4000 + 4000;
       setTimeout(() => {
         makeBotMove();
-      }, 800);
+      }, delay);
     }
   }, [isPlayerTurn, gameOver]);
 
