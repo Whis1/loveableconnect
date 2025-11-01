@@ -340,7 +340,7 @@ export const TrisGameBanner = () => {
             className="h-auto p-6 flex flex-col items-center gap-4 bg-gradient-to-br from-purple-500/20 via-purple-600/15 to-purple-700/20 hover:from-purple-500/30 hover:via-purple-600/25 hover:to-purple-700/30 border-2 border-purple-500/40 hover:border-purple-400/60 transition-all duration-300 hover:scale-105 group relative overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-            <div className="text-6xl drop-shadow-lg">🎲</div>
+            <div className="text-6xl drop-shadow-lg">🔴⚫</div>
             <div className="text-center z-10">
               <span className="text-xl font-bold block">Dama</span>
             </div>
