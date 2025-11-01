@@ -73,7 +73,15 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     fetchCurrentUserProfile();
     startBotEmojiSystem();
     setOpponentElo(Math.floor(Math.random() * 601) + 1000);
-  }, []);
+
+    // Cleanup function: detect game abandonment
+    return () => {
+      if (!gameOver) {
+        // Player abandoned the game - apply penalty
+        updateUserElo(-10);
+      }
+    };
+  }, [gameOver]);
 
   const initializeBoard = () => {
     const newBoard: Board = Array(64).fill(null);
