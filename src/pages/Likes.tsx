@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import { useTextTranslation } from "@/hooks/useTranslation";
 import { MatchBanner } from "@/components/MatchBanner";
 import likesHeartIcon from "@/assets/likes-heart-icon.png";
+import likesBackground from "@/assets/likes-background.png";
 
 interface LikeWithProfile {
   id: string;
@@ -475,7 +476,8 @@ const Likes = () => {
                 {likes.map((like) => (
                   <Card 
                     key={like.id} 
-                    className={`overflow-hidden transition-all duration-300 hover:shadow-xl border-0 bg-gradient-to-br from-background to-muted/20 ${!hasUnlocked ? 'relative' : ''}`}
+                    className={`overflow-hidden transition-all duration-300 hover:shadow-xl border-0 bg-cover bg-center ${!hasUnlocked ? 'relative' : ''}`}
+                    style={{ backgroundImage: `url(${likesBackground})` }}
                   >
                     {!hasUnlocked && (
                       <div className="absolute inset-0 backdrop-blur-md bg-background/40 z-10 flex items-center justify-center">
@@ -484,7 +486,7 @@ const Likes = () => {
                         </div>
                       </div>
                     )}
-                    <CardContent className="p-5">
+                    <CardContent className="p-5 bg-background/80 backdrop-blur-sm">
                       <div className="flex items-center gap-4">
                         <div className="relative">
                           <Avatar className="h-20 w-20 ring-2 ring-primary/20 shadow-lg">
