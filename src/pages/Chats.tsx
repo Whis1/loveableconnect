@@ -88,6 +88,7 @@ const Chats = () => {
           table: "messages",
         },
         () => {
+          // Nuovo messaggio - aggiorna conversazioni
           fetchConversations(true);
         }
       )
@@ -99,7 +100,19 @@ const Chats = () => {
           table: "messages",
         },
         () => {
-          // Aggiorna quando i messaggi vengono letti
+          // Messaggio letto - aggiorna contatori
+          fetchConversations(true);
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "matches",
+        },
+        () => {
+          // Nuovo match - potrebbe essere una nuova conversazione admin
           fetchConversations(true);
         }
       )
