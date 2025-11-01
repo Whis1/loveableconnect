@@ -762,7 +762,7 @@ const ProfileEdit = () => {
                   value={profile.relationship_status || ""}
                   onValueChange={(value) => setProfile({ ...profile, relationship_status: value })}
                 >
-                  <SelectTrigger id="relationship-status">
+                  <SelectTrigger id="relationship-status" className="max-w-xs">
                     <SelectValue placeholder={t('profile.selectStatus')} />
                   </SelectTrigger>
                   <SelectContent>
