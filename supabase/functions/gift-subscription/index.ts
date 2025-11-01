@@ -92,7 +92,6 @@ serve(async (req) => {
         {
           price: priceId,
           quantity: 1,
-          description: `Regalo Abbonamento mensile a ${recipientProfile.nickname}`,
         },
       ],
       mode: "subscription",
