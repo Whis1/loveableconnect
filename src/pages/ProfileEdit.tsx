@@ -899,6 +899,10 @@ const ProfileEdit = () => {
               {/* Account Deletion Section */}
               <div className="mt-8 pt-8 border-t border-destructive/20">
                 <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Questa azione è permanente e non può essere annullata. Tutti i tuoi dati verranno eliminati definitivamente dopo l'approvazione del supporto.
+                  </p>
+
                   {deletionRequested ? (
                     <Alert className="border-orange-500 bg-orange-50 dark:bg-orange-950">
                       <AlertCircle className="h-4 w-4 text-orange-600" />
