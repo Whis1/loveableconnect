@@ -625,7 +625,6 @@ const ProfileEdit = () => {
                       <SelectItem value="homosexual">{t('common.homosexual')}</SelectItem>
                       <SelectItem value="bisexual">{t('common.bisexual')}</SelectItem>
                       <SelectItem value="pansexual">{t('common.pansexual')}</SelectItem>
-                      <SelectItem value="asexual">{t('common.asexual')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

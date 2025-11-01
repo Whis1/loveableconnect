@@ -75,8 +75,8 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
         const translatedLookingFor = data.looking_for ? await translateArray(data.looking_for) : null;
 
         // Normalize possible localized stored values for gender/orientation/relationship_type
-        const genderCodes = ['male','female','non-binary','transexual','transgender','genderfluid'];
-        const orientationCodes = ['heterosexual','homosexual','bisexual','pansexual','asexual','other'];
+        const genderCodes = ['male','female','non-binary'];
+        const orientationCodes = ['heterosexual','homosexual','bisexual','pansexual','other'];
         const relationshipTypeCodes = ['serious','casual','friendship','not-sure','prefer-not-say'];
 
         const translatedGender = data.gender && !genderCodes.includes(data.gender)
@@ -130,8 +130,8 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
           const translatedBio = newProfile.bio ? await translateText(newProfile.bio) : null;
           const translatedInterests = newProfile.interests ? await translateArray(newProfile.interests) : null;
           const translatedLookingFor = newProfile.looking_for ? await translateArray(newProfile.looking_for) : null;
-          const genderCodes = ['male','female','non-binary','transexual','transgender','genderfluid'];
-          const orientationCodes = ['heterosexual','homosexual','bisexual','pansexual','asexual','other'];
+          const genderCodes = ['male','female','non-binary'];
+          const orientationCodes = ['heterosexual','homosexual','bisexual','pansexual','other'];
           const relationshipTypeCodes = ['serious','casual','friendship','not-sure','prefer-not-say'];
           const translatedGender = newProfile.gender && !genderCodes.includes(newProfile.gender)
             ? await translateText(newProfile.gender)
@@ -295,7 +295,6 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
                    profile.sexual_orientation === 'homosexual' ? t("common.homosexual") :
                    profile.sexual_orientation === 'bisexual' ? t("common.bisexual") :
                    profile.sexual_orientation === 'pansexual' ? t("common.pansexual") :
-                   profile.sexual_orientation === 'asexual' ? t("common.asexual") :
                    profile.sexual_orientation === 'other' ? t("common.other") :
                    (profile.translatedOrientation || profile.sexual_orientation))
                 : t("common.notSpecified")}
