@@ -585,9 +585,11 @@ const ProfileEdit = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {requiresCompletion ? "⚠️ Campo obbligatorio - Devi avere almeno 18 anni" : "La tua età viene calcolata automaticamente e si aggiorna ogni anno"}
-                  </p>
+                  {requiresCompletion && (
+                    <p className="text-xs text-muted-foreground">
+                      ⚠️ Campo obbligatorio - Devi avere almeno 18 anni
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
