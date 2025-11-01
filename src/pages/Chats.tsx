@@ -91,6 +91,18 @@ const Chats = () => {
           fetchConversations(true);
         }
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "messages",
+        },
+        () => {
+          // Aggiorna quando i messaggi vengono letti
+          fetchConversations(true);
+        }
+      )
       .subscribe();
 
     return () => {
