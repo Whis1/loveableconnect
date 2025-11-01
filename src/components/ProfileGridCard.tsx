@@ -304,35 +304,58 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
         return;
       }
 
-      // 2) Check if there are likes available BEFORE consuming
-      if (!useCredits && likesRemaining <= 0) {
+      // 2) If using credits path, do it atomically in the DB (deduct + like)
+      if (useCredits) {
+        const { data: likeResult, error: likeFnError } = await supabase.rpc(
+          'like_with_credits',
+          { _to_user_id: profile.id, _cost: 2 }
+        );
+
+        if (likeFnError) {
+          setIsLiking(false);
+          toast({ title: t('common.error'), description: likeFnError.message, variant: 'destructive' });
+          return;
+        }
+
+        const result = Array.isArray(likeResult) ? likeResult[0] : likeResult; // handle table return
+        if (!result?.success) {
+          // Not enough credits or other issue
+          setShowLikesExhausted(true);
+          setIsLiking(false);
+          return;
+        }
+
+        // Success (already or newly liked)
+        setHasLiked(true);
+        if (result.match_created && onMatch) {
+          onMatch(profile.nickname || profile.full_name);
+        } else {
+          toast({
+            title: t('search.likeSent'),
+            description: `${t('search.likedProfile')} ${profile.nickname || profile.full_name}`,
+          });
+        }
+        setIsLiking(false);
+        return;
+      }
+
+      // 3) Daily-like path: show banner if no likes left before consuming
+      if (likesRemaining <= 0) {
         setShowLikesExhausted(true);
         setIsLiking(false);
         return;
       }
 
-      // 3) Try to consume a daily like (or credits)
-      const { success, creditsUsed } = await consumeLike(useCredits);
+      // 4) Try to consume a daily like
+      const { success } = await consumeLike(false);
 
-      if (!success && !useCredits) {
+      if (!success) {
         setShowLikesExhausted(true);
         setIsLiking(false);
         return;
       }
-      
-      if (!success && useCredits) {
-        toast({
-          title: t("common.error"),
-          description: "Crediti insufficienti",
-          variant: "destructive",
-        });
-        setIsLiking(false);
-        return;
-      }
 
-      // 4) OPTIMISTIC UPDATE: Update UI only after successful consumption
-      setHasLiked(true);
-      onLike(profile.id);
+      // 5) After successful consumption, update UI and proceed
 
       // 3) Add the like using edge function (idempotent)
       const { data: likeData, error: likeError } = await supabase.functions.invoke(
@@ -422,57 +445,48 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
         return;
       }
 
-      // Check if user has free chats available (weekly premium)
-      let chatCostCredits = 6;
-      if (chatsRemaining > 0) {
-        // Try to consume a free chat
-        const { success } = await consumeFreeChat();
-        if (success) {
-          chatCostCredits = 0; // No credits needed
-          toast({
-            title: "Chat Gratis Usata!",
-            description: `Chat gratis rimanenti oggi: ${chatsRemaining - 1}`,
-          });
-        }
+      // 1) Check if a match already exists (no charge)
+      const { data: existingMatch } = await supabase
+        .from("matches")
+        .select("*")
+        .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profile.id}),and(user1_id.eq.${profile.id},user2_id.eq.${currentUserId})`)
+        .maybeSingle();
+
+      if (existingMatch) {
+        setShowChatConfirmation(false);
+        setIsCreatingChat(false);
+        navigate(`/chat/${existingMatch.id}`);
+        return;
       }
 
-      // If no free chat used, check credits
-      if (chatCostCredits > 0) {
-        if (!credits || credits.balance < chatCostCredits) {
-          setShowChatConfirmation(false);
-          setShowCreditsBanner(true);
-          setIsCreatingChat(false);
-          return;
-        }
-
-        // Deduct credits
-        const { data: deductSuccess, error: deductError } = await supabase.rpc(
-          "deduct_credits",
-          { _user_id: session.user.id, _amount: chatCostCredits }
-        );
-
-        if (deductError || !deductSuccess) {
-          setShowCreditsBanner(true);
-          setShowChatConfirmation(false);
-          setIsCreatingChat(false);
-          return;
-        }
-      }
-
-      // Create match
+      // 2) Try to create the match FIRST
       const user1Id = currentUserId < profile.id ? currentUserId : profile.id;
       const user2Id = currentUserId < profile.id ? profile.id : currentUserId;
 
+      let createdMatchId: string | null = null;
       const { data: matchData, error: matchError } = await supabase
         .from('matches')
-        .insert({
-          user1_id: user1Id,
-          user2_id: user2Id,
-        })
+        .insert({ user1_id: user1Id, user2_id: user2Id })
         .select()
         .single();
 
       if (matchError) {
+        const code = (matchError as any)?.code;
+        // Unique violation: fetch existing and proceed without charging
+        if (code === '23505') {
+          const { data: m } = await supabase
+            .from("matches")
+            .select("*")
+            .or(`and(user1_id.eq.${user1Id},user2_id.eq.${user2Id}),and(user1_id.eq.${user2Id},user2_id.eq.${user1Id})`)
+            .maybeSingle();
+          if (m) {
+            setShowChatConfirmation(false);
+            setIsCreatingChat(false);
+            navigate(`/chat/${m.id}`);
+            return;
+          }
+        }
+        // Other errors
         console.error('Errore creazione match:', matchError);
         toast({
           title: t("common.error"),
@@ -481,6 +495,50 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
         });
         setIsCreatingChat(false);
         return;
+      } else {
+        createdMatchId = matchData.id as string;
+      }
+
+      // 3) Handle cost AFTER ensuring match exists
+      let chatCostCredits = 6;
+      if (chatsRemaining > 0) {
+        const { success } = await consumeFreeChat();
+        if (success) {
+          chatCostCredits = 0; // No credits needed
+          toast({
+            title: "Chat Gratis Usata!",
+            description: `Chat gratis rimanenti oggi: ${Math.max(0, chatsRemaining - 1)}`,
+          });
+        }
+      }
+
+      if (chatCostCredits > 0) {
+        // If not enough credits, rollback the created match and show banner
+        if (!credits || credits.balance < chatCostCredits) {
+          if (createdMatchId) {
+            await supabase.from('matches').delete().eq('id', createdMatchId);
+          }
+          setShowChatConfirmation(false);
+          setShowCreditsBanner(true);
+          setIsCreatingChat(false);
+          return;
+        }
+
+        const { data: deductSuccess, error: deductError } = await supabase.rpc(
+          'deduct_credits',
+          { _user_id: session.user.id, _amount: chatCostCredits }
+        );
+
+        if (deductError || !deductSuccess) {
+          // Rollback match to avoid granting chat for free
+          if (createdMatchId) {
+            await supabase.from('matches').delete().eq('id', createdMatchId);
+          }
+          setShowCreditsBanner(true);
+          setShowChatConfirmation(false);
+          setIsCreatingChat(false);
+          return;
+        }
       }
 
       toast({
@@ -490,9 +548,7 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
 
       setShowChatConfirmation(false);
       setIsCreatingChat(false);
-      
-      // Navigate to chat
-      navigate(`/chat/${matchData.id}`);
+      navigate(`/chat/${createdMatchId}`);
     } catch (error) {
       console.error('Errore:', error);
       toast({
