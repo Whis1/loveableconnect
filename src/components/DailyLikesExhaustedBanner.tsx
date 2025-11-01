@@ -41,15 +41,15 @@ export const DailyLikesExhaustedBanner = ({
             </div>
           </div>
           <AlertDialogTitle className="text-center text-xl">
-            8 Like Giornalieri Terminati
+            Like Giornalieri Terminati
           </AlertDialogTitle>
           <AlertDialogDescription className="text-center space-y-3">
             <p className="text-base">
-              Hai esaurito i tuoi 8 like giornalieri!
+              Hai esaurito i tuoi like giornalieri!
             </p>
             <div className="bg-muted/50 rounded-lg p-3 space-y-2">
               <p className="text-sm">
-                <strong>Prossimo aggiornamento:</strong> {formatTimeRemaining()}
+                <strong>Attendi il rinnovo:</strong> {formatTimeRemaining()}
               </p>
               {hasEnoughCredits && (
                 <p className="text-sm text-primary">
@@ -65,7 +65,7 @@ export const DailyLikesExhaustedBanner = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-          <AlertDialogCancel className="m-0">Aspetta Reset</AlertDialogCancel>
+          <AlertDialogCancel className="m-0">Attendi Rinnovo</AlertDialogCancel>
           {hasEnoughCredits && (
             <AlertDialogAction onClick={onUseCredits} className="m-0">
               Usa 2 Crediti

@@ -283,10 +283,7 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
     
     if (isLiking || hasLiked) return; // Prevent double-click and removing likes
     
-    // OPTIMISTIC UPDATE: Update UI immediately
-    setHasLiked(true);
     setIsLiking(true);
-    onLike(profile.id); // Update parent list immediately
     
     try {
       // 1) Pre-check: avoid consuming likes if already liked
@@ -307,20 +304,23 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
         return;
       }
 
-      // 2) Check if can consume a daily like (or credits)
+      // 2) Check if there are likes available BEFORE consuming
+      if (!useCredits && likesRemaining <= 0) {
+        setShowLikesExhausted(true);
+        setIsLiking(false);
+        return;
+      }
+
+      // 3) Try to consume a daily like (or credits)
       const { success, creditsUsed } = await consumeLike(useCredits);
 
       if (!success && !useCredits) {
-        // Rollback optimistic update
-        setHasLiked(false);
         setShowLikesExhausted(true);
         setIsLiking(false);
         return;
       }
       
       if (!success && useCredits) {
-        // Rollback optimistic update
-        setHasLiked(false);
         toast({
           title: t("common.error"),
           description: "Crediti insufficienti",
@@ -329,6 +329,10 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
         setIsLiking(false);
         return;
       }
+
+      // 4) OPTIMISTIC UPDATE: Update UI only after successful consumption
+      setHasLiked(true);
+      onLike(profile.id);
 
       // 3) Add the like using edge function (idempotent)
       const { data: likeData, error: likeError } = await supabase.functions.invoke(
