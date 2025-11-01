@@ -83,41 +83,40 @@ export const GeolocationBanner = ({ onActivate, onClose }: GeolocationBannerProp
             <>
               <div className="space-y-4 mb-6">
                 <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-3 mb-4">
                     <Cookie className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
                       <h4 className="font-semibold text-sm mb-2 text-amber-900 dark:text-amber-100">
                         🍪 Consenso Cookie Necessario
                       </h4>
-                      <p className="text-xs text-amber-800 dark:text-amber-200 leading-relaxed mb-3">
+                      <p className="text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
                         Per memorizzare le tue preferenze di geolocalizzazione e offrirti un'esperienza migliore, 
                         utilizziamo cookie tecnici essenziali. Questi dati vengono salvati solo sul tuo dispositivo 
-                        e non vengono condivisi con terze parti.
-                      </p>
-                      
-                      <div className="flex items-start space-x-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-md border border-amber-300 dark:border-amber-700">
-                        <Checkbox
-                          id="cookie-consent"
-                          checked={cookieConsent}
-                          onCheckedChange={(checked) => setCookieConsent(checked === true)}
-                          className="mt-0.5"
-                        />
-                        <label
-                          htmlFor="cookie-consent"
-                          className="text-xs leading-relaxed cursor-pointer text-gray-700 dark:text-gray-300"
+                        e non vengono condivisi con terze parti.{" "}
+                        <a 
+                          href="/terms" 
+                          target="_blank"
+                          className="text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
                         >
-                          Accetto l'utilizzo di cookie tecnici per salvare le mie preferenze di geolocalizzazione 
-                          e migliorare la mia esperienza su LoveableConnect. 
-                          <a 
-                            href="/terms" 
-                            target="_blank"
-                            className="text-emerald-600 dark:text-emerald-400 hover:underline font-medium ml-1"
-                          >
-                            Leggi l'informativa
-                          </a>
-                        </label>
-                      </div>
+                          Leggi l'informativa
+                        </a>
+                      </p>
                     </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-amber-200 dark:border-amber-800">
+                    <label
+                      htmlFor="cookie-consent"
+                      className="text-sm font-medium cursor-pointer text-amber-900 dark:text-amber-100 flex items-center gap-2"
+                    >
+                      Consenti →
+                    </label>
+                    <Checkbox
+                      id="cookie-consent"
+                      checked={cookieConsent}
+                      onCheckedChange={(checked) => setCookieConsent(checked === true)}
+                      className="h-5 w-5"
+                    />
                   </div>
                 </div>
               </div>
