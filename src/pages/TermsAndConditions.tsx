@@ -94,6 +94,30 @@ const TermsAndConditions = () => {
                     </p>
                   </div>
 
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">7. Trattamento dati per regali di abbonamento</h3>
+                    <p>
+                      Nel caso di utilizzo della funzione "Regala abbonamento", LoveableConnect raccoglie e tratta i dati personali di entrambe le parti coinvolte:
+                    </p>
+                    <ul className="list-disc list-inside space-y-2 pl-4">
+                      <li>mittente (utente che effettua il regalo)</li>
+                      <li>destinatario (utente che riceve l'abbonamento)</li>
+                    </ul>
+                    <p className="mt-3">
+                      I dati trattati includono identificativi utente, data dell'operazione, importo, tipo di abbonamento e informazioni di transazione.
+                      Tali dati sono utilizzati esclusivamente per:
+                    </p>
+                    <ul className="list-disc list-inside space-y-2 pl-4">
+                      <li>elaborare e consegnare l'abbonamento al destinatario;</li>
+                      <li>adempiere agli obblighi fiscali e contabili;</li>
+                      <li>prevenire abusi o attività fraudolente.</li>
+                    </ul>
+                    <p className="mt-3">
+                      Nessuna informazione finanziaria (come i dati della carta) viene condivisa tra utenti.
+                      LoveableConnect non consente ai destinatari di risalire ai dettagli del metodo di pagamento del mittente.
+                    </p>
+                  </div>
+
                   <h2 className="text-2xl font-bold mt-8">INFORMATIVA PRIVACY CONTATTI</h2>
                   
                   <div className="space-y-3">
@@ -276,6 +300,24 @@ const TermsAndConditions = () => {
                       I crediti si consumano quando si utilizzano le funzionalità premium e si rinnovano secondo le modalità dell'abbonamento o del pacchetto acquistato.
                       Tutti i pagamenti sono gestiti tramite sistemi di pagamento sicuri. Non sono previsti rimborsi una volta che i crediti sono stati utilizzati.
                       LoveableConnect si riserva il diritto di modificare le offerte, i pacchetti o le modalità di abbonamento, informando gli utenti in anticipo.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">4.1 Regalo abbonamenti</h3>
+                    <p>
+                      LoveableConnect offre la possibilità agli utenti di regalare un abbonamento mensile ad altri utenti tramite l'apposita icona "Regala".
+                      Il pagamento dell'abbonamento è a carico dell'utente che effettua il regalo ("mittente"), mentre il beneficio viene assegnato automaticamente all'account destinatario selezionato.
+                    </p>
+                    <p className="font-semibold mt-3">L'acquisto di un abbonamento come regalo:</p>
+                    <ul className="list-disc list-inside space-y-2 pl-4">
+                      <li>è vincolante e non rimborsabile, anche se il destinatario non utilizza il servizio o rifiuta il regalo;</li>
+                      <li>comporta la registrazione delle informazioni relative all'operazione (ID utente mittente, destinatario, data e importo);</li>
+                      <li>non può essere revocato una volta completato il pagamento;</li>
+                      <li>in caso di profilo admin o speciale, il pagamento segue comunque le regole standard di transazione.</li>
+                    </ul>
+                    <p className="mt-3">
+                      LoveableConnect si riserva il diritto di annullare o sospendere i regali in caso di frode, abusi o violazioni dei Termini di Servizio.
                     </p>
                   </div>
 
