@@ -283,10 +283,10 @@ const Dashboard = () => {
   };
 
   const handleActivateGeolocation = () => {
-    localStorage.setItem("geolocationEnabled", "true");
+    // The GeolocationBanner component now handles saving to localStorage
     setShowGeolocationBanner(false);
     toast({
-      title: "Geolocalizzazione attivata",
+      title: "✓ Geolocalizzazione attivata",
       description: "Ora puoi esplorare i profili nelle tue vicinanze",
     });
     navigate("/explore");

@@ -112,12 +112,14 @@ const Explore = () => {
         return;
       }
 
-      // Check if geolocation is enabled
+      // Check if geolocation is enabled and cookie consent is given
       const geolocationEnabled = localStorage.getItem("geolocationEnabled");
-      if (geolocationEnabled !== "true") {
+      const cookieConsent = localStorage.getItem("geolocationCookieConsent");
+      
+      if (geolocationEnabled !== "true" || cookieConsent !== "accepted") {
         toast({
           title: "Geolocalizzazione richiesta",
-          description: "Attiva la geolocalizzazione per accedere all'esplorazione profili",
+          description: "Attiva la geolocalizzazione e accetta i cookie per accedere all'esplorazione profili",
           variant: "destructive",
         });
         navigate("/");
