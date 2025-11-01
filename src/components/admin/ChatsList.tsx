@@ -78,11 +78,19 @@ export const ChatsList = ({
         ) : (
           <div className="p-2 space-y-1">
             {conversations.map((conv) => (
-              <button
+              <div
                 key={`${conv.matchId}-${conv.userId}`}
                 onClick={() => onSelectConversation(conv)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onSelectConversation(conv);
+                  }
+                }}
                 className={cn(
-                  "w-full p-3 rounded-lg text-left transition-all hover:bg-accent/50",
+                  "w-full p-3 rounded-lg text-left transition-all hover:bg-accent/50 cursor-pointer",
                   selectedConversation?.matchId === conv.matchId &&
                     selectedConversation?.userId === conv.userId &&
                     "bg-accent border border-primary/20"
@@ -135,7 +143,7 @@ export const ChatsList = ({
                     </div>
                   </div>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         )}
