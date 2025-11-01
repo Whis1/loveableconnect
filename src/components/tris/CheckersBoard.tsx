@@ -902,14 +902,17 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
   };
 
   useEffect(() => {
-    if (!isPlayerTurn && !gameOver) {
+    // Only allow bot to move if board is initialized (has pieces)
+    const boardHasPieces = board.some(cell => cell !== null);
+    
+    if (!isPlayerTurn && !gameOver && boardHasPieces) {
       // Random delay between 4-8 seconds for more realistic gameplay
       const delay = Math.random() * 4000 + 4000;
       setTimeout(() => {
         makeBotMove();
       }, delay);
     }
-  }, [isPlayerTurn, gameOver]);
+  }, [isPlayerTurn, gameOver, board]);
 
   const handleEmojiClick = (emoji: string) => {
     setUserEmoji(emoji);
