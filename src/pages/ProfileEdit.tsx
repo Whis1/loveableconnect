@@ -19,6 +19,7 @@ import { LocationChangeRequest } from "@/components/LocationChangeRequest";
 import { BirthdateChangeRequest } from "@/components/BirthdateChangeRequest";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface SpotifySong {
   id: string;
@@ -75,6 +76,7 @@ const ProfileEdit = () => {
   const [birthMonth, setBirthMonth] = useState("");
   const [birthYear, setBirthYear] = useState("");
   const [requiresCompletion, setRequiresCompletion] = useState(false);
+  const [deletionRequested, setDeletionRequested] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -142,6 +144,20 @@ const ProfileEdit = () => {
         const state = window.history.state?.usr;
         if (state?.requiresCompletion || !profileData.birthdate || !profileData.city) {
           setRequiresCompletion(true);
+        }
+        
+        // Check if there's a pending account deletion request
+        const { data: supportMessages } = await supabase
+          .from('support_messages')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .eq('request_type', 'account_deletion')
+          .eq('request_status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(1);
+        
+        if (supportMessages && supportMessages.length > 0) {
+          setDeletionRequested(true);
         }
       }
 
@@ -339,6 +355,40 @@ const ProfileEdit = () => {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleRequestAccountDeletion = async () => {
+    if (!profile) return;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { error } = await supabase
+        .from('support_messages')
+        .insert({
+          user_id: session.user.id,
+          user_email: session.user.email || '',
+          message: '⚠️ Richiesta di eliminazione account',
+          is_admin_response: false,
+          request_type: 'account_deletion',
+          request_status: 'pending',
+        });
+
+      if (error) throw error;
+
+      setDeletionRequested(true);
+      toast({
+        title: "Richiesta inviata",
+        description: "La tua richiesta di eliminazione account è stata inviata al supporto. Riceverai una conferma via email.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Errore",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -844,6 +894,65 @@ const ProfileEdit = () => {
                   <Save className="h-4 w-4 mr-2" />
                   {saving ? t('profile.saving') : t('profile.save')}
                 </Button>
+              </div>
+
+              {/* Account Deletion Section */}
+              <div className="mt-8 pt-8 border-t border-destructive/20">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold text-destructive">Zona Pericolosa</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Questa azione è permanente e non può essere annullata. Tutti i tuoi dati verranno eliminati definitivamente dopo l'approvazione del supporto.
+                    </p>
+                  </div>
+
+                  {deletionRequested ? (
+                    <Alert className="border-orange-500 bg-orange-50 dark:bg-orange-950">
+                      <AlertCircle className="h-4 w-4 text-orange-600" />
+                      <AlertDescription className="text-orange-800 dark:text-orange-200">
+                        <strong>Richiesta in elaborazione</strong><br />
+                        La tua richiesta di eliminazione account è in attesa di approvazione dal supporto. Riceverai una notifica via email quando verrà elaborata.
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" type="button">
+                          <X className="h-4 w-4 mr-2" />
+                          Richiedi Eliminazione Account
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Sei assolutamente sicuro?</AlertDialogTitle>
+                          <AlertDialogDescription className="space-y-3">
+                            <p>
+                              Questa azione richiederà l'approvazione del supporto clienti. Una volta approvata, il tuo account verrà eliminato definitivamente e:
+                            </p>
+                            <ul className="list-disc pl-6 space-y-1">
+                              <li>Perderai tutti i tuoi dati personali</li>
+                              <li>Tutti i tuoi messaggi verranno eliminati</li>
+                              <li>Perderai tutti i tuoi match</li>
+                              <li>Non potrai recuperare il tuo account</li>
+                            </ul>
+                            <p className="text-destructive font-semibold">
+                              Questa operazione è irreversibile!
+                            </p>
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Annulla</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleRequestAccountDeletion}
+                            className="bg-destructive hover:bg-destructive/90"
+                          >
+                            Conferma Richiesta
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </div>
               </div>
             </form>
           </CardContent>

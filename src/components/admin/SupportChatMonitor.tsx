@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, MessageCircle, User, Trash2, MapPin, Check, X, Calendar } from "lucide-react";
+import { Send, MessageCircle, User, Trash2, MapPin, Check, X, Calendar, UserX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -361,6 +361,77 @@ export const SupportChatMonitor = () => {
     }
   };
 
+  const handleApproveAccountDeletion = async (msg: SupportMessage) => {
+    setLoading(true);
+    try {
+      // Call edge function to delete account
+      const { data, error } = await supabase.functions.invoke('admin-delete-account', {
+        body: { userId: msg.user_id, requestId: msg.id },
+      });
+
+      if (error || !data?.success) {
+        throw new Error(error?.message || data?.error || 'Failed to delete account');
+      }
+
+      toast({
+        title: "Account eliminato",
+        description: "L'account utente è stato eliminato con successo",
+      });
+
+      // Ricarica le conversazioni (quella eliminata non sarà più presente)
+      fetchConversations();
+      setSelectedUserId(null);
+    } catch (error: any) {
+      console.error('Error deleting account:', error);
+      toast({
+        title: "Errore",
+        description: error.message || "Impossibile eliminare l'account",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRejectAccountDeletion = async (msg: SupportMessage) => {
+    setLoading(true);
+    try {
+      // Aggiorna lo stato della richiesta
+      const { error: msgError } = await supabase
+        .from('support_messages')
+        .update({ request_status: 'rejected' })
+        .eq('id', msg.id);
+
+      if (msgError) throw msgError;
+
+      // Invia messaggio di rifiuto
+      await supabase
+        .from('support_messages')
+        .insert({
+          user_id: msg.user_id,
+          user_email: msg.user_email,
+          message: `❌ La tua richiesta di eliminazione account è stata rifiutata. Per maggiori informazioni contatta il supporto.`,
+          is_admin_response: true,
+        });
+
+      toast({
+        title: "Richiesta rifiutata",
+        description: "L'utente è stato informato",
+      });
+
+      fetchMessages(msg.user_id);
+    } catch (error) {
+      console.error('Error rejecting account deletion:', error);
+      toast({
+        title: "Errore",
+        description: "Impossibile rifiutare la richiesta",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedUserId) return;
 
@@ -657,6 +728,79 @@ export const SupportChatMonitor = () => {
                                   : 'text-red-900 dark:text-red-100'
                               }`}>
                                 {msg.request_status === 'approved' ? '✅ Richiesta approvata' : '❌ Richiesta rifiutata'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Banner per richiesta eliminazione account - solo per messaggi non admin */}
+                        {msg.request_type === 'account_deletion' && !msg.is_admin_response && msg.request_status === 'pending' && (
+                          <div className="mt-3 mb-4 ml-11">
+                            <div className="p-4 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950 dark:to-orange-950 rounded-xl border-2 border-red-400 dark:border-red-700 shadow-md">
+                              <div className="flex items-center gap-3 mb-3">
+                                <div className="h-10 w-10 rounded-full bg-red-600 flex items-center justify-center">
+                                  <UserX className="h-5 w-5 text-white" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-bold text-red-900 dark:text-red-100 text-base">
+                                    ⚠️ Richiesta Eliminazione Account
+                                  </p>
+                                  <p className="text-sm text-red-700 dark:text-red-300">
+                                    L'utente desidera eliminare definitivamente il proprio account
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              <div className="bg-white/50 dark:bg-black/20 rounded-lg p-3 mb-3">
+                                <p className="text-sm text-red-800 dark:text-red-200 mb-2">
+                                  <span className="font-semibold">⚠️ ATTENZIONE:</span>
+                                </p>
+                                <ul className="text-sm text-red-700 dark:text-red-300 space-y-1 ml-4 list-disc">
+                                  <li>Questa azione è irreversibile</li>
+                                  <li>Tutti i dati dell'utente verranno eliminati</li>
+                                  <li>Messaggi, match e profilo saranno rimossi</li>
+                                </ul>
+                              </div>
+                              
+                              <div className="flex gap-3">
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleApproveAccountDeletion(msg)}
+                                  disabled={loading}
+                                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold shadow-md"
+                                >
+                                  <Check className="h-4 w-4 mr-2" />
+                                  ✅ Approva Eliminazione
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleRejectAccountDeletion(msg)}
+                                  disabled={loading}
+                                  className="flex-1 font-semibold shadow-md"
+                                >
+                                  <X className="h-4 w-4 mr-2" />
+                                  ❌ Rifiuta
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Mostra stato per richieste account deletion approvate/rifiutate */}
+                        {msg.request_type === 'account_deletion' && !msg.is_admin_response && msg.request_status !== 'pending' && (
+                          <div className="mt-2 mb-3 ml-11">
+                            <div className={`p-3 rounded-lg border ${
+                              msg.request_status === 'approved'
+                                ? 'bg-red-50 dark:bg-red-950 border-red-300 dark:border-red-700'
+                                : 'bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700'
+                            }`}>
+                              <p className={`text-sm font-semibold ${
+                                msg.request_status === 'approved'
+                                  ? 'text-red-900 dark:text-red-100'
+                                  : 'text-green-900 dark:text-green-100'
+                              }`}>
+                                {msg.request_status === 'approved' ? '✅ Account eliminato' : '❌ Richiesta rifiutata'}
                               </p>
                             </div>
                           </div>
