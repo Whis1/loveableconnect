@@ -16,24 +16,84 @@ interface EloLeaderboardProps {
   userId?: string;
 }
 
+const STORAGE_KEY = 'elo_leaderboard_data';
+const UPDATE_INTERVAL = 20 * 60 * 1000; // 20 minutes in milliseconds
+
+interface StoredLeaderboardData {
+  adminElos: Record<string, number>;
+  lastUpdate: string;
+}
+
 export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
   const [topPlayers, setTopPlayers] = useState<LeaderboardProfile[]>([]);
   const [userElo, setUserElo] = useState<number>(1200);
   const [userRank, setUserRank] = useState<number | null>(null);
   const [adminElos, setAdminElos] = useState<Map<string, number>>(new Map());
   const [isOpen, setIsOpen] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+
+  // Load persisted data from localStorage
+  const loadPersistedData = (): StoredLeaderboardData | null => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (error) {
+      console.error("Error loading persisted leaderboard data:", error);
+    }
+    return null;
+  };
+
+  // Save data to localStorage
+  const savePersistedData = (adminElosMap: Map<string, number>) => {
+    try {
+      const data: StoredLeaderboardData = {
+        adminElos: Object.fromEntries(adminElosMap),
+        lastUpdate: new Date().toISOString(),
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (error) {
+      console.error("Error saving persisted leaderboard data:", error);
+    }
+  };
+
+  // Check if update is needed based on time
+  const shouldUpdate = (): boolean => {
+    const persisted = loadPersistedData();
+    if (!persisted) return true; // No data, need initial load
+
+    const lastUpdateTime = new Date(persisted.lastUpdate).getTime();
+    const now = new Date().getTime();
+    const timeSinceUpdate = now - lastUpdateTime;
+
+    // Add 5 minutes random variance (20-25 minutes total)
+    const randomVariance = Math.random() * 5 * 60 * 1000;
+    return timeSinceUpdate > (UPDATE_INTERVAL + randomVariance);
+  };
 
   useEffect(() => {
-    fetchLeaderboard(true); // Initial load - generate new ELOs
+    // Load persisted data or fetch new data
+    const persisted = loadPersistedData();
+    const needsUpdate = shouldUpdate();
+
+    if (persisted && !needsUpdate) {
+      // Use persisted data
+      const elosMap = new Map(Object.entries(persisted.adminElos));
+      setAdminElos(elosMap);
+      fetchLeaderboard(false, elosMap);
+    } else {
+      // Need fresh data
+      fetchLeaderboard(true);
+    }
+
+    // Set up interval to check for updates every minute
+    const checkInterval = setInterval(() => {
+      if (shouldUpdate()) {
+        fetchLeaderboard(false); // Adjust existing ELOs
+      }
+    }, 60 * 1000); // Check every minute
     
-    // Update admin ELOs every 20-25 minutes
-    const updateInterval = Math.floor(Math.random() * 5 * 60 * 1000) + 20 * 60 * 1000; // 20-25 minutes
-    const interval = setInterval(() => {
-      fetchLeaderboard(false); // Subsequent updates - adjust existing ELOs
-    }, updateInterval);
-    
-    return () => clearInterval(interval);
+    return () => clearInterval(checkInterval);
   }, [userId]);
 
   const generateHighElo = () => {
@@ -51,7 +111,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     return Math.max(1700, Math.min(2600, newElo));
   };
 
-  const fetchLeaderboard = async (isInitial: boolean = false) => {
+  const fetchLeaderboard = async (isInitial: boolean = false, existingElos?: Map<string, number>) => {
     try {
       // Fetch all profiles with ELO
       const { data: profiles, error } = await supabase
@@ -72,18 +132,21 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
           }
         });
         
+        // Use existing ELOs if provided, otherwise use current state
+        const currentElosMap = existingElos || adminElos;
+
         const updatedProfiles = profiles.map(profile => {
           if (profile.is_admin_profile) {
             let newElo: number;
             
-            if (isInitial || !adminElos.has(profile.id)) {
+            if (isInitial || !currentElosMap.has(profile.id)) {
               // Initial load or new profile: generate completely new ELO
               do {
                 newElo = generateHighElo();
               } while (usedElos.has(newElo));
             } else {
               // Subsequent update: adjust existing ELO to simulate games played
-              const currentElo = adminElos.get(profile.id) || generateHighElo();
+              const currentElo = currentElosMap.get(profile.id) || generateHighElo();
               do {
                 newElo = adjustElo(currentElo);
               } while (usedElos.has(newElo));
@@ -97,7 +160,9 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         });
 
         setAdminElos(newAdminElos);
-        setLastUpdate(new Date());
+        
+        // Save to localStorage
+        savePersistedData(newAdminElos);
 
         // Sort by ELO after updating admin profiles
         const sortedProfiles = updatedProfiles.sort((a, b) => (b.tris_elo || 1200) - (a.tris_elo || 1200));
