@@ -18,8 +18,8 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [searchDuration] = useState(
-    Math.floor(Math.random() * 3000) + 4000
-  ); // 4-7 secondi
+    Math.floor(Math.random() * 8000) + 7000
+  ); // 7-15 secondi
 
   useEffect(() => {
     fetchProfiles();
