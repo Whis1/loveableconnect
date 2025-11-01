@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useTextTranslation } from "@/hooks/useTranslation";
 import { MatchBanner } from "@/components/MatchBanner";
+import likesHeartIcon from "@/assets/likes-heart-icon.png";
 
 interface LikeWithProfile {
   id: string;
@@ -425,7 +426,7 @@ const Likes = () => {
           <CardHeader className="space-y-1 pb-4">
             <CardTitle className="text-3xl font-bold flex items-center gap-3">
               <div className="p-2 rounded-xl bg-gradient-to-br from-pink-500/20 to-purple-500/20">
-                <Heart className="h-7 w-7 text-pink-500 fill-pink-500/20" />
+                <img src={likesHeartIcon} alt="Likes" className="h-7 w-7 object-contain" />
               </div>
               {t("likes.title")}
             </CardTitle>
@@ -501,9 +502,7 @@ const Likes = () => {
                               {hasUnlocked ? like.profile.nickname : '???'}
                             </h3>
                             {hasUnlocked && (
-                              <div className="p-1.5 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 shadow-lg shrink-0">
-                                <Heart className="h-3 w-3 text-white fill-white" />
-                              </div>
+                              <img src={likesHeartIcon} alt="Like" className="h-5 w-5 md:h-6 md:w-6 object-contain shrink-0" />
                             )}
                           </div>
                           {hasUnlocked && like.profile.age && (
