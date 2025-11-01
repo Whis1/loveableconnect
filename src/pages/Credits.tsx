@@ -241,10 +241,6 @@ const Credits = () => {
                       <Eye className="h-4 w-4 text-purple-500" />
                       <span><strong>Visualizza like ricevuti</strong></span>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-purple-500" />
-                      <span><strong>5 chat gratis al giorno</strong> senza match</span>
-                    </li>
                   </ul>
                   <Button
                     onClick={() => handleSubscribePremium("weekly")}
