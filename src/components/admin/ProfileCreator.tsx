@@ -17,6 +17,7 @@ export const ProfileCreator = () => {
     nickname: "",
     full_name: "",
     age: "",
+    birthdate: "",
     bio: "",
     city: "",
     gender: "",
@@ -26,6 +27,17 @@ export const ProfileCreator = () => {
     looking_for: [] as string[],
     interests: [] as string[],
   });
+
+  // Calcola automaticamente birthdate quando cambia l'età
+  const handleAgeChange = (age: string) => {
+    let birthdate = "";
+    if (age && parseInt(age) > 0) {
+      const currentYear = new Date().getFullYear();
+      const birthYear = currentYear - parseInt(age);
+      birthdate = `${birthYear}-01-01`;
+    }
+    setFormData({ ...formData, age, birthdate });
+  };
 
   const handleSeedProfiles = async () => {
     setSeedLoading(true);
@@ -72,6 +84,7 @@ export const ProfileCreator = () => {
         nickname: formData.nickname,
         full_name: formData.full_name,
         age: formData.age ? parseInt(formData.age) : null,
+        birthdate: formData.birthdate || null,
         bio: formData.bio || null,
         city: formData.city || null,
         gender: formData.gender || null,
@@ -99,6 +112,7 @@ export const ProfileCreator = () => {
         nickname: "",
         full_name: "",
         age: "",
+        birthdate: "",
         bio: "",
         city: "",
         gender: "",
@@ -141,6 +155,7 @@ export const ProfileCreator = () => {
           nickname: `${formData.nickname}${i}`,
           full_name: `${formData.full_name} ${i}`,
           age: formData.age ? parseInt(formData.age) : null,
+          birthdate: formData.birthdate || null,
           bio: formData.bio || null,
           city: formData.city || null,
           gender: formData.gender || null,
@@ -169,6 +184,7 @@ export const ProfileCreator = () => {
         nickname: "",
         full_name: "",
         age: "",
+        birthdate: "",
         bio: "",
         city: "",
         gender: "",
@@ -251,13 +267,18 @@ export const ProfileCreator = () => {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="age">Età</Label>
+            <Label htmlFor="age">Età (calcola data di nascita automaticamente)</Label>
             <Input
               id="age"
               type="number"
               value={formData.age}
-              onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+              onChange={(e) => handleAgeChange(e.target.value)}
             />
+            {formData.birthdate && (
+              <p className="text-xs text-muted-foreground">
+                Data di nascita calcolata: {new Date(formData.birthdate).toLocaleDateString('it-IT')}
+              </p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="city">Città</Label>
