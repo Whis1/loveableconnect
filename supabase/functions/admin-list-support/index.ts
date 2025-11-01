@@ -11,6 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
+    console.log('admin-list-support: Starting request');
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -18,39 +19,61 @@ Deno.serve(async (req) => {
     let body: { userId?: string } = {};
     try {
       body = await req.json();
-    } catch (_) {}
+    } catch (_) {
+      console.log('admin-list-support: No body or invalid JSON');
+    }
 
     if (body.userId) {
+      console.log('admin-list-support: Fetching messages for user', body.userId);
       const { data, error } = await supabase
         .from('support_messages')
         .select('*')
         .eq('user_id', body.userId)
         .order('created_at', { ascending: true })
-        .limit(100);
-      if (error) throw error;
+        .limit(50);
+      if (error) {
+        console.error('admin-list-support: Error fetching user messages', error);
+        throw error;
+      }
+      console.log('admin-list-support: Successfully fetched', data?.length || 0, 'messages');
       return new Response(JSON.stringify({ success: true, messages: data || [] }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       });
     }
 
-    // Recupera solo gli ultimi 200 messaggi per evitare timeout
+    // Recupera solo gli ultimi 50 messaggi per evitare timeout
+    console.log('admin-list-support: Fetching all recent messages');
     const { data: messages, error } = await supabase
       .from('support_messages')
-      .select('*')
+      .select('id, user_id, message, is_admin, created_at')
       .order('created_at', { ascending: false })
-      .limit(200);
-    if (error) throw error;
+      .limit(50);
+    
+    if (error) {
+      console.error('admin-list-support: Error fetching messages', error);
+      throw error;
+    }
+    console.log('admin-list-support: Fetched', messages?.length || 0, 'messages');
 
-    // Recupera i nickname per gli user_id unici (se presenti)
-    const userIds = [...new Set((messages || []).map((m: any) => m.user_id).filter((id: any) => !!id))];
+    // Recupera i nickname per gli user_id unici (massimo 20)
+    const userIds = [...new Set((messages || []).map((m: any) => m.user_id).filter((id: any) => !!id))].slice(0, 20);
+    console.log('admin-list-support: Found', userIds.length, 'unique user IDs');
+    
     let profiles: any[] = [];
-    if (userIds.length > 0 && userIds.length < 100) {
-      const { data: profData } = await supabase
+    if (userIds.length > 0) {
+      console.log('admin-list-support: Fetching profiles');
+      const { data: profData, error: profError } = await supabase
         .from('profiles')
         .select('id, nickname')
         .in('id', userIds);
-      profiles = profData || [];
+      
+      if (profError) {
+        console.error('admin-list-support: Error fetching profiles', profError);
+      } else {
+        profiles = profData || [];
+        console.log('admin-list-support: Fetched', profiles.length, 'profiles');
+      }
     }
 
     // Mappa i nickname ai messaggi
@@ -59,12 +82,13 @@ Deno.serve(async (req) => {
       profiles: profiles.find((p: any) => p.id === msg.user_id) || { nickname: 'N/A' }
     }));
 
+    console.log('admin-list-support: Request completed successfully');
     return new Response(JSON.stringify({ success: true, messages: messagesWithNicknames }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
   } catch (error) {
-    console.error('admin-list-support error', error);
+    console.error('admin-list-support error:', error);
     const msg = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({ success: false, error: msg }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
