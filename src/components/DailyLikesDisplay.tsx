@@ -1,7 +1,7 @@
 import { Heart, Crown, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface DailyLikesDisplayProps {
   likesRemaining: number;

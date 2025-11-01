@@ -8,7 +8,7 @@ import { Send, MessageCircle, Image as ImageIcon, X, Bot, Headphones, MapPin, Ca
 import { AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useTranslation } from "react-i18next";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface SupportMessage {
   id: string;

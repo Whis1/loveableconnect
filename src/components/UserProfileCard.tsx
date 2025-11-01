@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Edit, MapPin, Heart, Music } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { useTranslation } from "@/hooks/useTranslation";
 import { useTextTranslation } from "@/hooks/useTranslation";
 import profileBackground from "@/assets/profile-background.png";
 import { useAdminRole } from "@/hooks/useAdminRole";

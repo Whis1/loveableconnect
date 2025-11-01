@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { User, Heart, MapPin } from "lucide-react";
 import { ImageDialog } from "@/components/ImageDialog";
 import { getGenericLocationPhrase } from "@/lib/utils";
-import { useTranslation } from "react-i18next";
+import { useTranslation } from "@/hooks/useTranslation";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useTextTranslation } from "@/hooks/useTranslation";

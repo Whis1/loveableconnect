@@ -3,7 +3,7 @@ import { useDailyLikes } from "@/hooks/useDailyLikes";
 import { Button } from "@/components/ui/button";
 import { Coins, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import { useTranslation } from "@/hooks/useTranslation";
 import { CreditCountdown } from "@/components/CreditCountdown";
 import { DailyLikesDisplay } from "@/components/DailyLikesDisplay";
 
