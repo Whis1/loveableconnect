@@ -390,11 +390,6 @@ const Chat = () => {
       // Clean up
       URL.revokeObjectURL(recordedAudio.url);
       setRecordedAudio(null);
-      
-      toast({
-        title: "Messaggio vocale inviato",
-        description: "Il messaggio vocale è stato inviato con successo",
-      });
     } catch (error: any) {
       console.error("Error uploading voice message:", error);
       toast({
