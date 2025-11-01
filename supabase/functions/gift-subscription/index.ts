@@ -97,6 +97,15 @@ serve(async (req) => {
       mode: "subscription",
       success_url: `${origin}${chatPath}?gift_success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}${chatPath}?gift_cancelled=true`,
+      subscription_data: {
+        description: `Regalo Abbonamento Premium Mensile a ${recipientProfile.nickname}`,
+        metadata: {
+          gift_recipient_id: recipient_id,
+          gift_recipient_name: recipientProfile.nickname,
+          gift_sender_id: user.id,
+          is_gift: "true",
+        }
+      },
       metadata: {
         gift_recipient_id: recipient_id,
         gift_recipient_name: recipientProfile.nickname,
