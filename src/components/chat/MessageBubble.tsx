@@ -86,10 +86,14 @@ export const MessageBubble = ({
             isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
           }`}
         >
-          {new Date(timestamp).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
+          {new Date(timestamp).toLocaleString('it-IT', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: false
+          }).replace(',', '')}
         </p>
       </div>
     </div>
