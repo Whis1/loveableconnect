@@ -9,6 +9,7 @@ import { Send, ImagePlus, Loader2, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { GifPicker } from "@/components/chat/GifPicker";
+import { VoiceRecorder } from "@/components/chat/VoiceRecorder";
 
 interface Conversation {
   userId: string;
@@ -56,7 +57,6 @@ export const ChatView = ({ conversation, onRefresh }: ChatViewProps) => {
     if (!conversation) return;
 
     try {
-      setLoading(true);
       const { data, error } = await supabase.functions.invoke("admin-list-messages", {
         body: { match_id: conversation.matchId },
       });
@@ -67,8 +67,6 @@ export const ChatView = ({ conversation, onRefresh }: ChatViewProps) => {
     } catch (error) {
       console.error("Error fetching messages:", error);
       toast.error("Errore nel caricamento dei messaggi");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -92,13 +90,15 @@ export const ChatView = ({ conversation, onRefresh }: ChatViewProps) => {
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "INSERT",
           schema: "public",
           table: "messages",
           filter: `match_id=eq.${conversation.matchId}`,
         },
-        () => {
-          fetchMessages();
+        (payload) => {
+          const newMsg = payload.new as Message;
+          setMessages((prev) => [...prev, newMsg]);
+          setTimeout(scrollToBottom, 100);
           markAsRead();
         }
       )
@@ -164,6 +164,30 @@ export const ChatView = ({ conversation, onRefresh }: ChatViewProps) => {
     }
   };
 
+  const handleVoiceRecording = async (audioBlob: Blob) => {
+    if (!conversation) return;
+
+    try {
+      setUploading(true);
+      const fileName = `voice_${Date.now()}.webm`;
+      const { error: uploadError } = await supabase.storage
+        .from("chat-images")
+        .upload(fileName, audioBlob, {
+          contentType: "audio/webm",
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from("chat-images").getPublicUrl(fileName);
+      await handleSendMessage("", "voice", data.publicUrl);
+    } catch (error) {
+      console.error("Error uploading voice:", error);
+      toast.error("Errore nel caricamento del messaggio vocale");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (!conversation) {
     return (
       <div className="flex-1 flex items-center justify-center bg-background/50">
@@ -199,29 +223,23 @@ export const ChatView = ({ conversation, onRefresh }: ChatViewProps) => {
 
         {/* Messaggi */}
         <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {messages.map((msg) => (
-                <MessageBubble
-                  key={msg.id}
-                  content={msg.content}
-                  messageType={msg.message_type}
-                  mediaUrl={msg.media_url}
-                  isOwn={msg.sender_id === conversation.adminProfileId}
-                  senderAvatarUrl={
-                    msg.sender_id === conversation.userId
-                      ? conversation.userAvatar
-                      : null
-                  }
-                  timestamp={msg.created_at}
-                />
-              ))}
-            </div>
-          )}
+          <div className="space-y-4">
+            {messages.map((msg) => (
+              <MessageBubble
+                key={msg.id}
+                content={msg.content}
+                messageType={msg.message_type}
+                mediaUrl={msg.media_url}
+                isOwn={msg.sender_id === conversation.adminProfileId}
+                senderAvatarUrl={
+                  msg.sender_id === conversation.userId
+                    ? conversation.userAvatar
+                    : null
+                }
+                timestamp={msg.created_at}
+              />
+            ))}
+          </div>
         </ScrollArea>
 
         {/* Input Messaggio */}
@@ -248,6 +266,11 @@ export const ChatView = ({ conversation, onRefresh }: ChatViewProps) => {
             </Button>
             <EmojiPicker onEmojiSelect={(emoji) => handleSendMessage(emoji, "emoji")} />
             <GifPicker onGifSelect={(url) => handleSendMessage("", "gif", url)} />
+            <VoiceRecorder 
+              onRecordingComplete={handleVoiceRecording}
+              isPremiumMonthly={true}
+              disabled={uploading}
+            />
             <Input
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
