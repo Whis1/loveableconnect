@@ -135,12 +135,6 @@ export const ProfileManager = () => {
       if (error || !data?.success) throw new Error(error?.message || data?.error || 'Failed to load');
       const profilesData = (data.profiles || []) as Profile[];
       setProfiles(profilesData);
-      
-      if (profilesData.length > 0) {
-        for (const profile of profilesData) {
-          await fetchProfileLikes(profile.id);
-        }
-      }
     } catch (error: any) {
       console.error("Error fetching profiles:", error);
       toast({
@@ -541,7 +535,17 @@ export const ProfileManager = () => {
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[600px] pr-4">
-            <Accordion type="single" collapsible className="space-y-2">
+            <Accordion 
+              type="single" 
+              collapsible 
+              className="space-y-2"
+              onValueChange={(value) => {
+                // Carica i likes solo quando l'accordion viene espanso
+                if (value && !profileLikes[value]) {
+                  fetchProfileLikes(value);
+                }
+              }}
+            >
               {filteredProfiles.map((profile) => (
                 <AccordionItem key={profile.id} value={profile.id} className="border rounded-lg px-4">
                   <AccordionTrigger className="hover:no-underline">
