@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Mic, X, Sparkles } from "lucide-react";
+import { Mic, Sparkles } from "lucide-react";
 
 interface VoicePremiumBannerProps {
   isVisible: boolean;
@@ -34,16 +34,8 @@ export const VoicePremiumBanner = ({ isVisible, onClose }: VoicePremiumBannerPro
         {/* Decorative elements */}
         <div className="absolute -top-2 -right-2 w-20 h-20 bg-yellow-300 rounded-full opacity-30 blur-xl" />
         <div className="absolute -bottom-2 -left-2 w-16 h-16 bg-amber-300 rounded-full opacity-30 blur-xl" />
-        
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 p-1 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
-        >
-          <X className="h-4 w-4 text-amber-900" />
-        </button>
 
-        <div className="relative p-6 space-y-4">
+        <div className="relative p-6 space-y-5">
           {/* Icon */}
           <div className="flex justify-center">
             <div className="relative">
@@ -56,14 +48,18 @@ export const VoicePremiumBanner = ({ isVisible, onClose }: VoicePremiumBannerPro
           </div>
 
           {/* Title and message */}
-          <div className="text-center space-y-2">
-            <h3 className="text-xl font-bold text-amber-900">
+          <div className="text-center space-y-3">
+            <h3 className="text-2xl font-bold text-amber-900">
               Funzionalità PREMIUM
             </h3>
-            <p className="text-sm text-amber-900/90 leading-relaxed">
-              L'invio di messaggi vocali è una funzionalità riservata agli utenti PREMIUM. 
-              Per accedere a questa funzione effettua l'Abbonamento PREMIUM mensile.
-            </p>
+            <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 shadow-inner">
+              <p className="text-base text-amber-950 leading-relaxed font-medium">
+                L&apos;invio di messaggi vocali è una funzionalità riservata agli utenti PREMIUM.
+              </p>
+              <p className="text-base text-amber-950 leading-relaxed font-medium mt-2">
+                Per accedere a questa funzione effettua l&apos;Abbonamento PREMIUM mensile.
+              </p>
+            </div>
           </div>
 
           {/* Buttons */}
