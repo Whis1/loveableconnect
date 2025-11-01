@@ -183,6 +183,7 @@ const Credits = () => {
                         <div>💰 40 crediti giornalieri (attuale: {credits.balance})</div>
                         <div>❤️ 30 like giornalieri</div>
                         <div>👁️ Visualizzazione illimitata dei like ricevuti</div>
+                        <div>🎮 10 partite di gioco al giorno</div>
                       </div>
                       {credits.premium_expires_at && (
                         <div className="text-xs text-muted-foreground mt-2">
@@ -259,6 +260,14 @@ const Credits = () => {
                     </svg>
                     <span>Accesso ai messaggi vocali nelle chat con gli utenti</span>
                   </li>
+                  <li className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-amber-500">
+                      <rect width="18" height="18" x="3" y="3" rx="2"/>
+                      <path d="M8 12h8"/>
+                      <path d="M12 8v8"/>
+                    </svg>
+                    <span>Giochi illimitati (Tris e Dama)</span>
+                  </li>
                 </ul>
                 <Button
                   onClick={() => handleSubscribePremium("monthly")}
@@ -310,6 +319,14 @@ const Credits = () => {
                     <li className="flex items-center gap-2">
                       <Eye className="h-4 w-4 text-purple-500" />
                       <span><strong>Visualizza like ricevuti</strong></span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-purple-500">
+                        <rect width="18" height="18" x="3" y="3" rx="2"/>
+                        <path d="M8 12h8"/>
+                        <path d="M12 8v8"/>
+                      </svg>
+                      <span><strong>10 partite di gioco al giorno</strong> (Tris e Dama)</span>
                     </li>
                   </ul>
                   <Button
