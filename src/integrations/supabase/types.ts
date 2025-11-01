@@ -421,6 +421,7 @@ export type Database = {
       }
       profile_notes: {
         Row: {
+          admin_profile_id: string | null
           altro: string | null
           colore_capelli: string | null
           colore_occhi: string | null
@@ -442,6 +443,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          admin_profile_id?: string | null
           altro?: string | null
           colore_capelli?: string | null
           colore_occhi?: string | null
@@ -463,6 +465,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          admin_profile_id?: string | null
           altro?: string | null
           colore_capelli?: string | null
           colore_occhi?: string | null
@@ -485,9 +488,16 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "profile_notes_admin_profile_id_fkey"
+            columns: ["admin_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "profile_notes_profile_id_fkey"
             columns: ["profile_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },

@@ -11,6 +11,7 @@ interface ProfileNotebookProps {
   profileId: string;
   profileName: string;
   isAdmin?: boolean;
+  adminProfileId?: string;
 }
 
 interface Notes {
@@ -31,7 +32,7 @@ interface Notes {
   peso_altezza: string;
 }
 
-export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: ProfileNotebookProps) => {
+export const ProfileNotebook = ({ profileId, profileName, isAdmin = false, adminProfileId }: ProfileNotebookProps) => {
   const { toast } = useToast();
   const [notes, setNotes] = useState<Notes>({
     nome: "",
@@ -57,10 +58,10 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
   }, [profileId]);
 
   const fetchNotes = async () => {
-    if (!profileId) return;
+    if (!profileId || !adminProfileId) return;
     try {
       const { data, error } = await supabase.functions.invoke('admin-profile-notes-get', {
-        body: { profile_id: profileId }
+        body: { profile_id: profileId, admin_profile_id: adminProfileId }
       });
 
       if (error) throw error;
@@ -108,13 +109,14 @@ export const ProfileNotebook = ({ profileId, profileName, isAdmin = false }: Pro
   };
 
   const handleBlur = async (field: keyof Notes, value: string) => {
-    if (!profileId) return;
+    if (!profileId || !adminProfileId) return;
     try {
-      console.log('Saving note:', { profile_id: profileId, field, value });
+      console.log('Saving note:', { profile_id: profileId, admin_profile_id: adminProfileId, field, value });
       
       const { data, error } = await supabase.functions.invoke('admin-profile-notes-upsert', {
         body: {
           profile_id: profileId,
+          admin_profile_id: adminProfileId,
           field,
           value
         }
