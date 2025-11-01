@@ -75,7 +75,7 @@ const Auth = () => {
         
         // If profile exists but incomplete, redirect to complete it
         if (profile && (!profile.birthdate || !profile.city)) {
-          navigate("/modifica-profilo", { 
+          navigate("/profile/edit", { 
             state: { requiresCompletion: true },
             replace: true
           });

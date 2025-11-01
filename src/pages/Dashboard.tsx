@@ -76,7 +76,7 @@ const Dashboard = () => {
 
       // Check if profile is incomplete (missing birthdate or location)
       if (!profileData.birthdate || !profileData.city) {
-        navigate("/modifica-profilo", { 
+        navigate("/profile/edit", { 
           state: { requiresCompletion: true },
           replace: true
         });
