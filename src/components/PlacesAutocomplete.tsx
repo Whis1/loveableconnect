@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
@@ -35,6 +35,7 @@ export const PlacesAutocomplete = ({
   const [suggestions, setSuggestions] = useState<Array<{ label: string; lat: number; lon: number }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSelecting, setIsSelecting] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
@@ -55,7 +56,7 @@ export const PlacesAutocomplete = ({
           `q=${encodeURIComponent(value)}&` +
           `format=json&` +
           `addressdetails=1&` +
-          `limit=5`,
+          `limit=8`,
           {
             headers: {
               'Accept-Language': i18n.language,
@@ -90,14 +91,16 @@ export const PlacesAutocomplete = ({
           );
 
         setSuggestions(formattedSuggestions);
-        setShowSuggestions(true);
+        if (formattedSuggestions.length > 0) {
+          setShowSuggestions(true);
+        }
       } catch (error) {
         console.error("Errore nel recupero delle città:", error);
         setSuggestions([]);
       } finally {
         setIsLoading(false);
       }
-    }, 300);
+    }, 150);
 
     return () => {
       if (timeoutRef.current) {
@@ -106,6 +109,13 @@ export const PlacesAutocomplete = ({
     };
   }, [value, i18n.language]);
 
+  const handleSelect = useCallback((suggestion: { label: string; lat: number; lon: number }) => {
+    setIsSelecting(true);
+    onChange(suggestion.label, suggestion.lat, suggestion.lon);
+    setShowSuggestions(false);
+    setTimeout(() => setIsSelecting(false), 100);
+  }, [onChange]);
+
   return (
     <div className="relative">
       <Input
@@ -113,10 +123,24 @@ export const PlacesAutocomplete = ({
         type="text"
         placeholder={placeholder}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+        onChange={(e) => {
+          onChange(e.target.value);
+          if (e.target.value.length >= 2) {
+            setShowSuggestions(true);
+          }
+        }}
+        onFocus={() => {
+          if (suggestions.length > 0 && value.length >= 2) {
+            setShowSuggestions(true);
+          }
+        }}
+        onBlur={() => {
+          if (!isSelecting) {
+            setTimeout(() => setShowSuggestions(false), 300);
+          }
+        }}
         required={required}
+        autoComplete="off"
       />
       {showSuggestions && suggestions.length > 0 && (
         <div className="absolute top-full left-0 right-0 z-50 mt-1">
@@ -129,11 +153,11 @@ export const PlacesAutocomplete = ({
                   {suggestions.map((suggestion) => (
                     <CommandItem
                       key={suggestion.label}
-                      onSelect={() => {
-                        onChange(suggestion.label, suggestion.lat, suggestion.lon);
-                        setShowSuggestions(false);
+                      onMouseDown={(e) => {
+                        e.preventDefault(); // Previeni il blur
+                        handleSelect(suggestion);
                       }}
-                      className="cursor-pointer"
+                      className="cursor-pointer hover:bg-accent"
                     >
                       {suggestion.label}
                     </CommandItem>
