@@ -512,7 +512,7 @@ const Likes = () => {
                             </p>
                           )}
                           
-                          {/* Info aggiuntive: genere, orientamento, cerca, stato */}
+                          {/* Info aggiuntive: genere, orientamento, stato, cerca */}
                           {hasUnlocked && (
                             <div className="space-y-1 mt-2 text-xs">
                               <div className="flex items-start gap-1">
@@ -552,15 +552,6 @@ const Likes = () => {
                               </div>
                              
                               <div className="flex items-start gap-1">
-                                <span className="font-medium text-foreground/70">{t("common.lookingFor")}:</span>
-                                <span className="text-muted-foreground">
-                                  {like.profile.looking_for && like.profile.looking_for.length > 0 
-                                    ? (like.profile.translatedLookingFor?.join(", ") || like.profile.looking_for.join(", "))
-                                    : "Non specificato"}
-                                </span>
-                              </div>
-                             
-                              <div className="flex items-start gap-1">
                                 <span className="font-medium text-foreground/70">{t("common.relationshipStatus")}:</span>
                                 <span className="text-muted-foreground">
                                   {like.profile.relationship_status ? (() => {
@@ -575,6 +566,15 @@ const Likes = () => {
                                       default: return like.profile.relationship_status;
                                     }
                                   })() : "Non specificato"}
+                                </span>
+                              </div>
+                             
+                              <div className="flex items-start gap-1">
+                                <span className="font-medium text-foreground/70">{t("common.lookingFor")}:</span>
+                                <span className="text-muted-foreground">
+                                  {like.profile.looking_for && like.profile.looking_for.length > 0 
+                                    ? (like.profile.translatedLookingFor?.join(", ") || like.profile.looking_for.join(", "))
+                                    : "Non specificato"}
                                 </span>
                               </div>
                             </div>
