@@ -281,7 +281,7 @@ const Credits = () => {
                   <div className="text-3xl font-bold">{pkg.price}</div>
                   <Button
                     onClick={() => handlePurchaseCredits(pkg.id)}
-                    disabled={purchasing || credits?.is_premium}
+                    disabled={purchasing || (credits?.is_premium && credits.subscription_type === 'monthly')}
                     className="w-full"
                     variant={pkg.popular ? "default" : "outline"}
                   >

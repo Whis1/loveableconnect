@@ -58,6 +58,8 @@ export const CreditsDisplay = () => {
     credits.credits_depleted_at !== null && 
     credits.credits_depleted_at !== undefined;
 
+  const isWeeklyPremium = isPremiumValid && credits.subscription_type === 'weekly';
+
   return (
     <div className="flex flex-col lg:flex-row gap-2">
       {/* Daily Likes Display */}
@@ -74,10 +76,15 @@ export const CreditsDisplay = () => {
         <Button
           variant="outline"
           onClick={() => navigate("/credits")}
-          className="flex items-center gap-2"
+          className={`flex items-center gap-2 ${
+            isWeeklyPremium ? 'bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/20 hover:bg-purple-500/20' : ''
+          }`}
         >
-          <Coins className="h-4 w-4 text-primary" />
-          <span className="font-medium">{credits.balance} {t("dashboard.credits")}</span>
+          {isWeeklyPremium && <Crown className="h-4 w-4 text-purple-500" />}
+          <Coins className={`h-4 w-4 ${isWeeklyPremium ? 'text-purple-500' : 'text-primary'}`} />
+          <span className={`font-medium ${isWeeklyPremium ? 'text-purple-600 dark:text-purple-400' : ''}`}>
+            {credits.balance} {t("dashboard.credits")}
+          </span>
         </Button>
         {showCountdown && (
           <div className="text-xs px-2">
