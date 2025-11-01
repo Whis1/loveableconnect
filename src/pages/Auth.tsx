@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
 import { useLanguageDetection } from "@/hooks/useLanguageDetection";
 import { CookieBanner } from "@/components/CookieBanner";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import authHeartBg from "@/assets/auth-heart-background.png";
 import authLogo from "@/assets/auth-logo.png";
 
@@ -296,6 +297,9 @@ const Auth = () => {
   return (
     <>
       {showCookieBanner && <CookieBanner onConsent={() => setShowCookieBanner(false)} />}
+      <div className="fixed top-4 right-4 z-50">
+        <LanguageSwitcher />
+      </div>
       <div className="min-h-screen flex items-center justify-center p-4 relative bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-950 dark:via-purple-950 dark:to-indigo-950">
       {/* Background Image */}
       <div 
