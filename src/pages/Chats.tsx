@@ -24,7 +24,7 @@ const Chats = () => {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [loading, setLoading] = useState(true);
   const [sessionInfo, setSessionInfo] = useState<any>(null);
-  const selectedRef = useRef<Conversation | null>(null);
+  const keepInListRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     // Verifica sessione chattors
@@ -81,20 +81,33 @@ const Chats = () => {
         (a: any, b: any) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
       );
        setConversations(() => {
-         const currentSelected = selectedRef.current;
-         if (!currentSelected) return sorted;
-         // Mantieni in lista la conversazione selezionata anche se non arriva dal server (es. archiviata con 0 non letti)
-         const exists = sorted.some(
-           (c: any) => c.matchId === currentSelected.matchId && c.userId === currentSelected.userId
-         );
-         const merged = exists
-           ? sorted.map((c: any) =>
-               c.matchId === currentSelected.matchId && c.userId === currentSelected.userId
-                 ? { ...c, unreadCount: 0 }
-                 : c
-             )
-           : [{ ...currentSelected, unreadCount: 0 }, ...sorted];
-         return merged.sort(
+         const keepSet = keepInListRef.current;
+         // Parti dalle conversazioni dal server
+         let result = [...sorted];
+         
+         // Per ogni conversazione "da mantenere", se non è già in sorted, aggiungila
+         const sortedKeys = new Set(sorted.map((c: any) => `${c.matchId}-${c.userId}`));
+         const toAdd: Conversation[] = [];
+         
+         conversations.forEach((c) => {
+           const key = `${c.matchId}-${c.userId}`;
+           if (keepSet.has(key) && !sortedKeys.has(key)) {
+             toAdd.push({ ...c, unreadCount: 0 });
+           }
+         });
+         
+         result = [...toAdd, ...result];
+         
+         // Marca come letta la conversazione selezionata
+         if (selectedConversation) {
+           result = result.map((c: any) =>
+             c.matchId === selectedConversation.matchId && c.userId === selectedConversation.userId
+               ? { ...c, unreadCount: 0 }
+               : c
+           );
+         }
+         
+         return result.sort(
            (a: any, b: any) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
          );
        });
@@ -141,7 +154,9 @@ const Chats = () => {
 
   const handleSelectConversation = (conv: Conversation) => {
     setSelectedConversation(conv);
-    selectedRef.current = conv;
+    // Aggiungi questa conversazione al set di quelle da mantenere in lista
+    const key = `${conv.matchId}-${conv.userId}`;
+    keepInListRef.current.add(key);
     setConversations((prev) =>
       prev.map((c) =>
         c.matchId === conv.matchId && c.userId === conv.userId
@@ -195,13 +210,16 @@ const Chats = () => {
           onSelectConversation={handleSelectConversation}
           onRefresh={fetchConversations}
           onArchived={(conv) => {
+            // Rimuovi la conversazione dal set delle "da mantenere"
+            const key = `${conv.matchId}-${conv.userId}`;
+            keepInListRef.current.delete(key);
+            
             if (
               selectedConversation &&
               selectedConversation.matchId === conv.matchId &&
               selectedConversation.userId === conv.userId
             ) {
               setSelectedConversation(null);
-              selectedRef.current = null;
             }
           }}
           loading={loading}
