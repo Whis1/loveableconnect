@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Coins, Crown, Zap, Shield, Eye, Heart, Gamepad2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useTranslation } from "@/hooks/useTranslation";
+import { useTranslation } from "react-i18next";
 
 const Credits = () => {
   const navigate = useNavigate();
@@ -154,7 +154,7 @@ const Credits = () => {
                       <div className="text-sm text-muted-foreground">{t("credits.premiumSubscriptionActive")}</div>
                       {credits.premium_expires_at && (
                         <div className="text-xs text-muted-foreground mt-1">
-                          {t("credits.renewalDate")}: {new Date(credits.premium_expires_at).toLocaleDateString('it-IT')}
+                          Rinnovo: {new Date(credits.premium_expires_at).toLocaleDateString('it-IT')}
                         </div>
                       )}
                     </div>
@@ -165,10 +165,10 @@ const Credits = () => {
                     variant="outline"
                     className="w-full"
                   >
-                    {purchasing ? t("credits.loading") : t("credits.manageSubscription")}
+                    {purchasing ? "Caricamento..." : "Gestisci Abbonamento"}
                   </Button>
                   <p className="text-xs text-muted-foreground text-center">
-                    {t("credits.cancelAnytime")}
+                    Puoi disdire il rinnovo automatico in qualsiasi momento dal portale di gestione
                   </p>
                 </div>
               ) : (
@@ -177,17 +177,17 @@ const Credits = () => {
                     <Crown className="h-8 w-8 text-purple-500" />
                     <div className="flex-1">
                       <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                        {t("credits.weeklyPremiumActive")}
+                        Premium Settimanale Attivo
                       </div>
                       <div className="space-y-1 mt-2 text-sm text-muted-foreground">
-                        <div>💰 40 {t("credits.dailyCredits")} ({t("credits.currentBalance")}: {credits.balance})</div>
-                        <div>❤️ 30 {t("credits.dailyLikes")}</div>
-                        <div>👁️ {t("credits.unlimitedLikesView")}</div>
-                        <div>🎮 {t("credits.dailyGames")}</div>
+                        <div>💰 40 crediti giornalieri (attuale: {credits.balance})</div>
+                        <div>❤️ 30 like giornalieri</div>
+                        <div>👁️ Visualizzazione illimitata dei like ricevuti</div>
+                        <div>🎮 Possibilità di disputare 10 partite giornaliere tra utenti</div>
                       </div>
                       {credits.premium_expires_at && (
                         <div className="text-xs text-muted-foreground mt-2">
-                          {t("credits.renewalDate")}: {new Date(credits.premium_expires_at).toLocaleDateString('it-IT')}
+                          Rinnovo: {new Date(credits.premium_expires_at).toLocaleDateString('it-IT')}
                         </div>
                       )}
                     </div>
@@ -198,10 +198,10 @@ const Credits = () => {
                     variant="outline"
                     className="w-full"
                   >
-                    {purchasing ? t("credits.loading") : t("credits.manageSubscription")}
+                    {purchasing ? "Caricamento..." : "Gestisci Abbonamento"}
                   </Button>
                   <p className="text-xs text-muted-foreground text-center">
-                    {t("credits.cancelAnytime")}
+                    Puoi disdire il rinnovo automatico in qualsiasi momento dal portale di gestione
                   </p>
                 </div>
               )
@@ -242,7 +242,7 @@ const Credits = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <Heart className="h-5 w-5 text-amber-500" />
-                    <span>{t("credits.unlimitedLikesDaily")}</span>
+                    <span>Like illimitati</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Eye className="h-5 w-5 text-amber-500" />
@@ -258,11 +258,11 @@ const Credits = () => {
                       <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
                       <line x1="12" x2="12" y1="19" y2="22"/>
                     </svg>
-                    <span>{t("credits.voiceMessages")}</span>
+                    <span>Accesso ai messaggi vocali nelle chat con gli utenti</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Gamepad2 className="h-5 w-5 text-amber-500" />
-                    <span>{t("credits.unlimitedGames")}</span>
+                    <span>Sfide tra utenti illimitate</span>
                   </li>
                 </ul>
                 <Button
@@ -287,34 +287,34 @@ const Credits = () => {
                     <div className="flex items-center gap-3">
                       <Zap className="h-8 w-8 text-purple-500" />
                       <div>
-                        <CardTitle className="text-2xl">{t("credits.weeklyPremium")}</CardTitle>
-                        <CardDescription>{t("credits.weeklyPremiumDescription")}</CardDescription>
+                        <CardTitle className="text-2xl">Premium Settimanale</CardTitle>
+                        <CardDescription>Prova l'esperienza Premium per 7 giorni</CardDescription>
                       </div>
                     </div>
-                    <Badge className="bg-purple-500 text-white">{t("credits.trial")}</Badge>
+                    <Badge className="bg-purple-500 text-white">Prova</Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-baseline gap-2">
                     <div className="text-3xl font-bold text-purple-600">€6,99</div>
                     <div className="text-sm text-muted-foreground line-through">€13,99</div>
-                    <div className="text-sm font-medium">{t("credits.perWeek")}</div>
+                    <div className="text-sm font-medium">/settimana</div>
                   </div>
                   <div className="text-sm text-purple-600 font-medium">
-                    🎉 {t("credits.firstWeekOffer")}
+                    🎉 Offerta prima settimana! Poi €13,99/settimana
                   </div>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-center gap-2">
                       <Coins className="h-4 w-4 text-purple-500" />
-                      <span><strong>40 {t("credits.dailyCreditsReset")}</strong></span>
+                      <span><strong>40 crediti giornalieri</strong> - reset automatico</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Heart className="h-4 w-4 text-purple-500" />
-                      <span><strong>30 {t("credits.dailyLikesOpportunities")}</strong></span>
+                      <span><strong>30 like al giorno</strong> - più opportunità</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Eye className="h-4 w-4 text-purple-500" />
-                      <span><strong>{t("credits.viewReceivedLikes")}</strong></span>
+                      <span><strong>Visualizza like ricevuti</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-purple-500">
@@ -322,7 +322,7 @@ const Credits = () => {
                         <path d="M8 12h8"/>
                         <path d="M12 8v8"/>
                       </svg>
-                      <span>🎮 <strong>{t("credits.dailyGamesBonus")}</strong></span>
+                      <span>🎮 <strong>Possibilità di disputare 10 partite giornaliere tra utenti</strong></span>
                     </li>
                   </ul>
                   <Button
@@ -331,10 +331,10 @@ const Credits = () => {
                     className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
                     size="lg"
                   >
-                    {purchasing ? t("credits.processing") : t("credits.startWeeklyTrial")}
+                    {purchasing ? t("credits.processing") : "Inizia Prova Settimanale"}
                   </Button>
                   <p className="text-xs text-muted-foreground text-center">
-                    {t("credits.automaticRenewal")}
+                    Rinnovo automatico. Disdici quando vuoi.
                   </p>
                 </CardContent>
               </Card>

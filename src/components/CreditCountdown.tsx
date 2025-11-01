@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Clock } from "lucide-react";
-import { useTranslation } from "@/hooks/useTranslation";
+import { useTranslation } from "react-i18next";
 
 interface CreditCountdownProps {
   creditsDepletedAt: string;

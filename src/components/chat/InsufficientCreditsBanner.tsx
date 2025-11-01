@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Coins, Sparkles } from "lucide-react";
-import { useTranslation } from "@/hooks/useTranslation";
+import { useTranslation } from "react-i18next";
 
 interface InsufficientCreditsBannerProps {
   isVisible: boolean;
@@ -67,7 +67,7 @@ export const InsufficientCreditsBanner = ({ isVisible, onClose }: InsufficientCr
             <span className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-300" />
             <Coins className="h-5 w-5 mr-2" />
             <span className="relative font-semibold">
-              {t("banners.insufficientCredits.buttonText")}
+              Ricarica o Abbonati
             </span>
           </Button>
 

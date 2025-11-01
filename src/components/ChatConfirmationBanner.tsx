@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { X, MessageCircle, Coins } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useEffect, useRef } from "react";
-import { useTranslation } from "@/hooks/useTranslation";
+import { useTranslation } from "react-i18next";
 
 interface ChatConfirmationBannerProps {
   isVisible: boolean;

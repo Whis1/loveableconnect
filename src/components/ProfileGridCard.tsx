@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Heart, MessageCircle, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useTranslation } from "@/hooks/useTranslation";
+import { useTranslation } from "react-i18next";
 import { useTextTranslation } from "@/hooks/useTranslation";
 import { ProfileDialog } from "./ProfileDialog";
 import { getGenericLocationPhrase, calculateAge } from "@/lib/utils";

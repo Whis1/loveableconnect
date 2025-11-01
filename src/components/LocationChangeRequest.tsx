@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, MessageCircle, AlertCircle } from "lucide-react";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
-import { useTranslation } from "@/hooks/useTranslation";
+import { useTranslation } from "react-i18next";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface LocationChangeRequestProps {

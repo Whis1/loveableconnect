@@ -18,7 +18,7 @@ import { VoicePremiumBanner } from "@/components/chat/VoicePremiumBanner";
 import { ReportUserDialog } from "@/components/chat/ReportUserDialog";
 import { GiftSubscriptionBanner } from "@/components/chat/GiftSubscriptionBanner";
 import { useCredits } from "@/hooks/useCredits";
-import { useTranslation } from "@/hooks/useTranslation";
+import { useTranslation } from "react-i18next";
 import OnlineIndicator from "@/components/OnlineIndicator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 

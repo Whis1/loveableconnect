@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useTranslation } from '@/hooks/useTranslation';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useLanguageDetection = () => {
@@ -24,7 +24,7 @@ export const useLanguageDetection = () => {
 
         if (data?.language) {
           console.log('Auto-detected language:', data.language, 'from country:', data.country);
-          await i18n.changeLanguage((data.language as string).toLowerCase().split('-')[0]);
+          await i18n.changeLanguage(data.language);
         }
       } catch (error) {
         console.error('Failed to detect language:', error);

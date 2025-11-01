@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTranslation } from "@/hooks/useTranslation";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,8 +85,8 @@ const Auth = () => {
         } else {
           // Profile doesn't exist after retries, show error
           toast({
-            title: t('auth.errorCreatingProfile'),
-            description: t('auth.errorCreatingProfileDesc'),
+            title: "Errore",
+            description: "Errore nella creazione del profilo. Riprova ad accedere.",
             variant: "destructive",
           });
         }
@@ -123,7 +123,7 @@ const Auth = () => {
     if (age < 18) {
       toast({
         title: t('auth.errorSignUp'),
-        description: t('auth.ageRequirement'),
+        description: "Devi avere almeno 18 anni per iscriverti.",
         variant: "destructive",
       });
       return;
@@ -154,8 +154,8 @@ const Auth = () => {
         // Profilo e crediti vengono creati automaticamente dal trigger lato backend
         setEmailSent(true);
         toast({
-          title: t('auth.confirmationEmailSent'),
-          description: t('auth.confirmationEmailDesc'),
+          title: "📧 Email di Conferma Inviata",
+          description: "Controlla la tua casella email per confermare l'account prima di fare login.",
         });
       }
     } catch (error: any) {
@@ -230,8 +230,8 @@ const Auth = () => {
         // Check if error is due to unconfirmed email
         if (error.message.includes("Email not confirmed")) {
           toast({
-            title: t('auth.emailNotConfirmed'),
-            description: t('auth.emailNotConfirmedDesc'),
+            title: "⚠️ Email Non Confermata",
+            description: "Devi confermare il tuo indirizzo email prima di poter accedere. Controlla la tua casella di posta.",
             variant: "destructive",
           });
           setLoading(false);
@@ -252,8 +252,8 @@ const Auth = () => {
           // User is banned, force logout
           await supabase.auth.signOut();
           toast({
-            title: t('auth.accountBanned'),
-            description: t('auth.accountBannedDesc'),
+            title: "Account Bannato",
+            description: "Il tuo account è stato sospeso. Contatta il supporto per maggiori informazioni.",
             variant: "destructive",
           });
           return;
@@ -421,7 +421,7 @@ const Auth = () => {
                         fill="#EA4335"
                       />
                     </svg>
-                    {t('auth.googleSignIn')}
+                    Accedi con Google
                   </Button>
                   
                   <Button 
@@ -446,18 +446,18 @@ const Auth = () => {
                       </svg>
                     </div>
                   </div>
-                  <h3 className="text-xl font-semibold">{t('auth.checkYourEmail')}</h3>
+                  <h3 className="text-xl font-semibold">📧 Controlla la tua Email!</h3>
                   <p className="text-muted-foreground">
-                    {t('auth.emailConfirmationSent')} <strong>{email}</strong>
+                    Ti abbiamo inviato un'email di conferma a <strong>{email}</strong>
                   </p>
                   <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
                     <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                      {t('auth.mustConfirmEmail')}
+                      ⚠️ Devi cliccare sul link nell'email per confermare il tuo account prima di poter accedere.
                     </p>
                   </div>
                   <div className="space-y-2 text-sm text-muted-foreground">
-                    <p>{t('auth.checkSpam')}</p>
-                    <p>{t('auth.linkExpires')}</p>
+                    <p>📍 Controlla anche nella cartella spam/posta indesiderata</p>
+                    <p>⏰ Il link scadrà tra 24 ore</p>
                   </div>
                   <Button 
                     variant="outline" 
@@ -476,7 +476,7 @@ const Auth = () => {
                       setRelationshipStatus("");
                     }}
                   >
-                    {t('auth.backToRegistration')}
+                    ← Torna alla registrazione
                   </Button>
                 </div>
               ) : (

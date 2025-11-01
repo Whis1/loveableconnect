@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Heart, Users, Sparkles, Search, MessageCircle } from "lucide-react";
 import { UserProfileCard } from "@/components/UserProfileCard";
-import { useTranslation } from "@/hooks/useTranslation";
+import { useTranslation } from "react-i18next";
 import { CreditsDisplay } from "@/components/CreditsDisplay";
 import { useBanCheck } from "@/hooks/useBanCheck";
 import { DashboardControls } from "@/components/DashboardControls";

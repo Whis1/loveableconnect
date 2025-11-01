@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
-import { useTranslation } from "@/hooks/useTranslation";
+import { useTranslation } from "react-i18next";
 import matchHeartIcon from "@/assets/match-heart.png";
 
 interface MatchBannerProps {
