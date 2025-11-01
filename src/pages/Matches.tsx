@@ -328,7 +328,7 @@ const Matches = () => {
                             <div className="absolute -bottom-1 -right-1">
                               <OnlineIndicator userId={match.otherUser.id} size="md" />
                             </div>
-                            <div className="absolute -top-1 -left-1 rounded-full shadow-md">
+                            <div className="absolute top-0 -left-1 rounded-full shadow-md">
                               <img src={matchHeartIcon} alt="Match" className="h-5 w-5 md:h-6 md:w-6 object-contain" />
                             </div>
                           </div>
