@@ -129,11 +129,12 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     }
   };
 
-  const getValidMoves = (position: number): number[] => {
+  const getValidMoves = (position: number): { regular: number[]; jumps: number[] } => {
     const piece = board[position];
-    if (!piece || !piece.includes("red")) return [];
+    if (!piece || !piece.includes("red")) return { regular: [], jumps: [] };
 
-    const moves: number[] = [];
+    const regular: number[] = [];
+    const jumps: number[] = [];
     const row = Math.floor(position / 8);
     const col = position % 8;
     const isKing = piece === "red-king";
@@ -150,13 +151,13 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
           if (newCol >= 0 && newCol < 8) {
             const newPos = newRow * 8 + newCol;
             if (board[newPos] === null) {
-              moves.push(newPos);
+              regular.push(newPos);
             }
           }
         }
       }
       
-      // Jump moves
+      // Jump moves (captures)
       const jumpRow = row + dir * 2;
       if (jumpRow >= 0 && jumpRow < 8) {
         for (const dc of [-1, 1]) {
@@ -167,14 +168,34 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
             const middlePiece = board[middlePos];
             
             if (board[jumpPos] === null && middlePiece && middlePiece.includes("black")) {
-              moves.push(jumpPos);
+              jumps.push(jumpPos);
             }
           }
         }
       }
     }
 
-    return moves;
+    return { regular, jumps };
+  };
+
+  const getAllPlayerMoves = (): { hasJumps: boolean; moves: Array<{ from: number; to: number; isJump: boolean }> } => {
+    const allMoves: Array<{ from: number; to: number; isJump: boolean }> = [];
+    let hasAnyJumps = false;
+
+    board.forEach((piece, idx) => {
+      if (piece && piece.includes("red")) {
+        const { regular, jumps } = getValidMoves(idx);
+        
+        if (jumps.length > 0) {
+          hasAnyJumps = true;
+          jumps.forEach(to => allMoves.push({ from: idx, to, isJump: true }));
+        }
+        
+        regular.forEach(to => allMoves.push({ from: idx, to, isJump: false }));
+      }
+    });
+
+    return { hasJumps: hasAnyJumps, moves: allMoves };
   };
 
   const handleSquareClick = (index: number) => {
@@ -183,8 +204,14 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     if (selectedSquare === null) {
       // Select piece
       if (board[index] && board[index]!.includes("red")) {
+        const { regular, jumps } = getValidMoves(index);
+        const { hasJumps } = getAllPlayerMoves();
+        
+        // If there are jumps available anywhere, only show jumps for this piece
+        const movesToShow = hasJumps ? jumps : [...regular, ...jumps];
+        
         setSelectedSquare(index);
-        setValidMoves(getValidMoves(index));
+        setValidMoves(movesToShow);
       }
     } else {
       // Move piece
@@ -240,7 +267,6 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
   };
 
   const makeBotMove = () => {
-    // Simple AI: find all possible moves and pick one randomly
     const blackPieces: number[] = [];
     board.forEach((piece, idx) => {
       if (piece && piece.includes("black")) {
@@ -248,16 +274,22 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
       }
     });
 
-    let allMoves: Array<{ from: number; to: number }> = [];
+    // Separate jumps from regular moves
+    const jumpMoves: Array<{ from: number; to: number }> = [];
+    const regularMoves: Array<{ from: number; to: number }> = [];
     
     for (const pos of blackPieces) {
-      const moves = getBotValidMoves(pos);
-      moves.forEach(move => {
-        allMoves.push({ from: pos, to: move });
-      });
+      const { regular, jumps } = getBotValidMoves(pos);
+      
+      jumps.forEach(to => jumpMoves.push({ from: pos, to }));
+      regular.forEach(to => regularMoves.push({ from: pos, to }));
     }
 
-    if (allMoves.length === 0) {
+    // MANDATORY: If there are jump moves available, bot MUST take one
+    const availableMoves = jumpMoves.length > 0 ? jumpMoves : regularMoves;
+
+    if (availableMoves.length === 0) {
+      // No moves available - player wins
       setGameOver(true);
       setWinner("player");
       updateUserElo(20);
@@ -265,22 +297,30 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
       return;
     }
 
-    const move = allMoves[Math.floor(Math.random() * allMoves.length)];
+    // Pick a random move from available moves
+    const move = availableMoves[Math.floor(Math.random() * availableMoves.length)];
     const newBoard = [...board];
     const piece = newBoard[move.from];
+    
+    if (!piece) {
+      console.error("Bot tried to move non-existent piece");
+      setIsPlayerTurn(true);
+      return;
+    }
     
     newBoard[move.to] = piece;
     newBoard[move.from] = null;
     
-    // Handle jumps
+    // Handle jumps (captures)
     const fromRow = Math.floor(move.from / 8);
     const fromCol = move.from % 8;
     const toRow = Math.floor(move.to / 8);
     const toCol = move.to % 8;
     
     if (Math.abs(toRow - fromRow) === 2) {
-      const jumpedRow = (fromRow + toRow) / 2;
-      const jumpedCol = (fromCol + toCol) / 2;
+      // Remove captured piece
+      const jumpedRow = Math.floor((fromRow + toRow) / 2);
+      const jumpedCol = Math.floor((fromCol + toCol) / 2);
       newBoard[jumpedRow * 8 + jumpedCol] = null;
     }
     
@@ -302,11 +342,12 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     setIsPlayerTurn(true);
   };
 
-  const getBotValidMoves = (position: number): number[] => {
+  const getBotValidMoves = (position: number): { regular: number[]; jumps: number[] } => {
     const piece = board[position];
-    if (!piece || !piece.includes("black")) return [];
+    if (!piece || !piece.includes("black")) return { regular: [], jumps: [] };
 
-    const moves: number[] = [];
+    const regular: number[] = [];
+    const jumps: number[] = [];
     const row = Math.floor(position / 8);
     const col = position % 8;
     const isKing = piece === "black-king";
@@ -314,6 +355,7 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     const directions = isKing ? [-1, 1] : [1];
     
     for (const dir of directions) {
+      // Regular moves
       const newRow = row + dir;
       if (newRow >= 0 && newRow < 8) {
         for (const dc of [-1, 1]) {
@@ -321,12 +363,13 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
           if (newCol >= 0 && newCol < 8) {
             const newPos = newRow * 8 + newCol;
             if (board[newPos] === null) {
-              moves.push(newPos);
+              regular.push(newPos);
             }
           }
         }
       }
       
+      // Jump moves (captures)
       const jumpRow = row + dir * 2;
       if (jumpRow >= 0 && jumpRow < 8) {
         for (const dc of [-1, 1]) {
@@ -337,14 +380,14 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
             const middlePiece = board[middlePos];
             
             if (board[jumpPos] === null && middlePiece && middlePiece.includes("red")) {
-              moves.push(jumpPos);
+              jumps.push(jumpPos);
             }
           }
         }
       }
     }
 
-    return moves;
+    return { regular, jumps };
   };
 
   const checkWin = (currentBoard: Board, color: string): boolean => {
