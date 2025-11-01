@@ -928,18 +928,12 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          // Time's up - current player loses
-          setGameOver(true);
-          gameCompletedRef.current = true;
-          if (isPlayerTurn) {
-            setWinner("bot");
-            updateUserElo(-10);
-            onGameEnd("lose");
-          } else {
-            setWinner("player");
-            updateUserElo(20);
-            onGameEnd("win");
-          }
+          // Tempo scaduto: passa il turno senza assegnare la vittoria
+          setIsMultiCapture(false);
+          setCapturingPiece(null);
+          setSelectedSquare(null);
+          setValidMoves([]);
+          setIsPlayerTurn((prevTurn) => !prevTurn);
           return 0;
         }
         return prev - 1;
