@@ -916,7 +916,7 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
       
       return () => clearTimeout(timeout);
     }
-  }, [isPlayerTurn, gameOver]);
+  }, [isPlayerTurn, gameOver, board]);
 
   // Timer countdown effect
   useEffect(() => {
