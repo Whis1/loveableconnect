@@ -606,16 +606,16 @@ const Chat = () => {
                   </Button>
                   <EmojiPicker onEmojiSelect={handleEmojiSelect} />
                   <GifPicker onGifSelect={handleGifSelect} />
-                  <VoiceRecorder 
-                    onRecordingComplete={handleVoiceRecording}
-                    disabled={uploading}
-                    isPremiumMonthly={credits?.is_premium && credits.subscription_type === 'monthly'}
-                  />
                   <Input
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     placeholder={t("chat.writeMessage")}
                     className="flex-1 text-sm md:text-base"
+                  />
+                  <VoiceRecorder 
+                    onRecordingComplete={handleVoiceRecording}
+                    disabled={uploading}
+                    isPremiumMonthly={credits?.is_premium && credits.subscription_type === 'monthly'}
                   />
                   <Button 
                     type="submit" 

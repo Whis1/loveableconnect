@@ -63,21 +63,24 @@ export const VoiceRecorder = ({ onRecordingComplete, disabled = false, isPremium
     }
   };
 
-  const button = (
+  const buttonContent = (
     <Button
       type="button"
       size="icon"
-      variant="ghost"
+      variant={isPremiumMonthly ? "ghost" : "outline"}
       onClick={isRecording ? stopRecording : startRecording}
       disabled={disabled || isProcessing || !isPremiumMonthly}
-      className={!isPremiumMonthly ? "opacity-50 cursor-not-allowed" : ""}
+      className={!isPremiumMonthly 
+        ? "border-2 border-amber-500 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 hover:from-amber-100 hover:to-yellow-100 dark:hover:from-amber-950/30 dark:hover:to-yellow-950/30 cursor-not-allowed shrink-0" 
+        : "shrink-0"
+      }
     >
       {isProcessing ? (
         <Loader2 className="h-5 w-5 animate-spin" />
       ) : isRecording ? (
         <Square className="h-5 w-5 text-destructive" />
       ) : (
-        <Mic className="h-5 w-5" />
+        <Mic className={!isPremiumMonthly ? "h-5 w-5 text-amber-600 dark:text-amber-400" : "h-5 w-5"} />
       )}
     </Button>
   );
@@ -87,7 +90,7 @@ export const VoiceRecorder = ({ onRecordingComplete, disabled = false, isPremium
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            {button}
+            {buttonContent}
           </TooltipTrigger>
           <TooltipContent>
             <p>Messaggio vocale inviabile solo tramite l'Abbonamento PREMIUM</p>
@@ -97,5 +100,5 @@ export const VoiceRecorder = ({ onRecordingComplete, disabled = false, isPremium
     );
   }
 
-  return button;
+  return buttonContent;
 };
