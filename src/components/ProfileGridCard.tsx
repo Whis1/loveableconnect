@@ -280,107 +280,89 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
   const handleLike = async (e: React.MouseEvent, useCredits: boolean = false) => {
     e.stopPropagation();
 
-    // Evita doppi click: se è già piaciuto, esci subito
     if (hasLiked) return;
 
-    // Controllo immediato: banner se niente like giornalieri e non si usano crediti
+    // Check istantaneo: niente like? banner subito
     if (!useCredits && likesRemaining <= 0) {
       setShowLikesExhausted(true);
       return;
     }
 
-    // Aggiornamento ottimistico: nasconde subito il pulsante "Mi piace"
+    // TUTTO ISTANTANEO: aggiorna UI + mostra notifica subito
     setHasLiked(true);
-    setIsLiking(true);
+    toast({
+      title: t('search.likeSent'),
+      description: `${t('search.likedProfile')} ${profile.nickname || profile.full_name}`,
+    });
 
-    let showedBanner = false;
+    // Fire backend in background - non blocca l'UI
+    (async () => {
+      try {
+        if (useCredits) {
+          const { data: likeResult, error: likeFnError } = await supabase.rpc(
+            'like_with_credits',
+            { _to_user_id: profile.id, _cost: 2 }
+          );
 
-    try {
-      // Percorso con crediti: detrazione + like atomici lato DB
-      if (useCredits) {
-        const { data: likeResult, error: likeFnError } = await supabase.rpc(
-          'like_with_credits',
-          { _to_user_id: profile.id, _cost: 2 }
-        );
+          if (likeFnError) throw likeFnError;
 
-        if (likeFnError) {
-          throw likeFnError;
-        }
-
-        const result = Array.isArray(likeResult) ? likeResult[0] : likeResult;
-        if (!result?.success) {
-          // Crediti insufficienti
-          setShowCreditsBanner(true);
-          showedBanner = true;
-          throw new Error('Not enough credits');
-        }
-
-        // Successo
-        if (result.match_created && onMatch) {
-          onMatch(profile.nickname || profile.full_name);
-        } else {
-          toast({
-            title: t('search.likeSent'),
-            description: `${t('search.likedProfile')} ${profile.nickname || profile.full_name}`,
-          });
-        }
-        return;
-      }
-
-      // Percorso like giornalieri
-      const { success } = await consumeLike(false);
-      if (!success) {
-        setShowLikesExhausted(true);
-        showedBanner = true;
-        throw new Error('No daily likes');
-      }
-
-      // Inserisci il like (idempotente)
-      const { data: likeData, error: likeError } = await supabase.functions.invoke(
-        'admin-manage-like',
-        {
-          body: {
-            action: 'add',
-            fromUserId: currentUserId,
-            toUserId: profile.id
+          const result = Array.isArray(likeResult) ? likeResult[0] : likeResult;
+          if (!result?.success) {
+            // Rollback: non aveva crediti
+            setHasLiked(false);
+            setShowCreditsBanner(true);
+            return;
           }
-        }
-      );
 
-      if (likeError) {
-        const msg = (likeError as any)?.message || '';
-        if (msg.includes('duplicate key') || (likeError as any)?.code === '23505') {
-          // Già piaciuto: lascia stato ottimistico
-          toast({
-            title: t('search.likeSent'),
-            description: `${t('search.likedProfile')} ${profile.nickname || profile.full_name}`,
-          });
+          // Match? notifica
+          if (result.match_created && onMatch) {
+            onMatch(profile.nickname || profile.full_name);
+          }
           return;
         }
-        throw likeError;
-      }
 
-      if (likeData?.match_created && onMatch) {
-        onMatch(profile.nickname || profile.full_name);
-      } else {
-        toast({
-          title: t('search.likeSent'),
-          description: `${t('search.likedProfile')} ${profile.nickname || profile.full_name}`,
-        });
-      }
-    } catch (error: any) {
-      // Rollback dello stato ottimistico solo in caso di errore reale
-      setHasLiked(false);
-      if (!showedBanner) {
+        // Like giornalieri
+        const { success } = await consumeLike(false);
+        if (!success) {
+          setHasLiked(false);
+          setShowLikesExhausted(true);
+          return;
+        }
+
+        const { data: likeData, error: likeError } = await supabase.functions.invoke(
+          'admin-manage-like',
+          {
+            body: {
+              action: 'add',
+              fromUserId: currentUserId,
+              toUserId: profile.id
+            }
+          }
+        );
+
+        if (likeError) {
+          const msg = (likeError as any)?.message || '';
+          // Duplicate = già piaciuto, ok
+          if (msg.includes('duplicate key') || (likeError as any)?.code === '23505') {
+            return;
+          }
+          throw likeError;
+        }
+
+        // Match? notifica
+        if (likeData?.match_created && onMatch) {
+          onMatch(profile.nickname || profile.full_name);
+        }
+      } catch (error: any) {
+        // Rollback completo su errore
+        setHasLiked(false);
         toast({
           title: t('common.error'),
           description: error.message,
           variant: 'destructive',
         });
       }
-    } finally {
-      setIsLiking(false);
-    }
+    })();
   };
 
   const handleUseCreditsForLike = async () => {
