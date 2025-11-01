@@ -161,6 +161,7 @@ const Chats = () => {
         <ChatView
           conversation={selectedConversation}
           onRefresh={fetchConversations}
+          chattorsNickname={sessionInfo?.nickname}
         />
       </div>
     </div>

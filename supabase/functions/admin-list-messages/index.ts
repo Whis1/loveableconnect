@@ -25,26 +25,14 @@ Deno.serve(async (req) => {
 
     const { data, error } = await supabase
       .from('messages')
-      .select(`
-        *,
-        sender_profile:profiles!messages_sender_id_fkey(nickname, is_admin_profile)
-      `)
+      .select('*')
       .eq('match_id', match_id)
       .order('created_at', { ascending: true });
 
     if (error) throw error;
 
-    // Trasforma i dati per includere sender_nickname solo se è admin
-    const messages = (data || []).map(msg => ({
-      ...msg,
-      sender_nickname: msg.sender_profile?.is_admin_profile 
-        ? msg.sender_profile.nickname 
-        : null,
-      sender_profile: undefined // Rimuovi l'oggetto annidato
-    }));
-
     return new Response(
-      JSON.stringify({ success: true, messages }),
+      JSON.stringify({ success: true, messages: data || [] }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
   } catch (error) {
