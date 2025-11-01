@@ -38,19 +38,14 @@ Deno.serve(async (req) => {
     const conversationsData = [];
 
     for (const notif of uniqueConversations.values()) {
-      // Ottieni il match
+      // Ottieni il match tra admin profile e user
       const { data: matches } = await supabase
         .from('matches')
-        .select('id')
-        .or(`user1_id.eq.${notif.admin_profile_id},user2_id.eq.${notif.admin_profile_id}`)
-        .or(`user1_id.eq.${notif.user_id},user2_id.eq.${notif.user_id}`);
+        .select('id, user1_id, user2_id')
+        .or(`and(user1_id.eq.${notif.admin_profile_id},user2_id.eq.${notif.user_id}),and(user1_id.eq.${notif.user_id},user2_id.eq.${notif.admin_profile_id})`);
 
-      const match = matches?.find(m => 
-        (m as any).user1_id === notif.admin_profile_id || 
-        (m as any).user2_id === notif.admin_profile_id
-      );
-
-      if (!match) continue;
+      if (!matches || matches.length === 0) continue;
+      const match = matches[0];
 
       // Ottieni i profili
       const { data: userProfile } = await supabase
