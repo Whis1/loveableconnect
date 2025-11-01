@@ -805,6 +805,15 @@ export type Database = {
           success: boolean
         }[]
       }
+      create_user_report: {
+        Args: {
+          _match_id: string
+          _reason: string
+          _report_type: string
+          _reported_id: string
+        }
+        Returns: string
+      }
       deduct_credits: {
         Args: { _amount: number; _user_id: string }
         Returns: boolean

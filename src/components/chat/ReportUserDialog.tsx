@@ -71,22 +71,32 @@ export const ReportUserDialog = ({
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      if (!session) {
+        toast({
+          title: "Errore",
+          description: "Devi essere autenticato per segnalare",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      // Crea la segnalazione
-      const { error: reportError } = await supabase
-        .from("user_reports")
-        .insert({
-          reporter_id: session.user.id,
-          reported_id: reportedUserId,
-          match_id: matchId || null,
-          report_type: reportType,
-          reason: reason || null,
+      console.log('Invio segnalazione:', { reportedUserId, matchId, reportType, reason });
+
+      // Usa la funzione RPC per creare la segnalazione in modo sicuro
+      const { data, error: reportError } = await supabase
+        .rpc('create_user_report', {
+          _reported_id: reportedUserId,
+          _match_id: matchId || null,
+          _report_type: reportType,
+          _reason: reason || ''
         });
 
-      if (reportError) throw reportError;
+      if (reportError) {
+        console.error('Errore dettagliato segnalazione:', reportError);
+        throw reportError;
+      }
 
-      console.log("✓ Segnalazione inviata con successo");
+      console.log('✓ Segnalazione creata con successo, ID:', data);
 
       toast({
         title: "✓ Segnalazione inviata",
@@ -100,7 +110,7 @@ export const ReportUserDialog = ({
       console.error("Errore nella segnalazione:", error);
       toast({
         title: "Errore",
-        description: "Impossibile inviare la segnalazione",
+        description: error.message || "Impossibile inviare la segnalazione",
         variant: "destructive",
       });
     } finally {
