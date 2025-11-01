@@ -22,6 +22,8 @@ export const TrisGameBanner = () => {
   const [gamesPlayed, setGamesPlayed] = useState(0);
   const [nextResetTime, setNextResetTime] = useState<Date | null>(null);
   const [userCredits, setUserCredits] = useState(0);
+  const [isPremium, setIsPremium] = useState(false);
+  const [subscriptionType, setSubscriptionType] = useState<string>('none');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -35,13 +37,22 @@ export const TrisGameBanner = () => {
 
     const { data } = await supabase
       .from("user_credits")
-      .select("balance")
+      .select("balance, is_premium, subscription_type")
       .eq("user_id", session.user.id)
       .single();
 
     if (data) {
       setUserCredits(data.balance);
+      setIsPremium(data.is_premium || false);
+      setSubscriptionType(data.subscription_type || 'none');
     }
+  };
+
+  // Calcola il limite di partite in base all'abbonamento
+  const getGameLimit = () => {
+    if (isPremium && subscriptionType === 'monthly') return 999; // Illimitato
+    if (isPremium && subscriptionType === 'weekly') return 10;
+    return 5; // Free
   };
 
   const checkGamesRemaining = async () => {
@@ -81,7 +92,8 @@ export const TrisGameBanner = () => {
         setGamesPlayed(0);
       } else {
         setGamesPlayed(data.games_played_today);
-        if (data.games_played_today >= 5) {
+        const limit = getGameLimit();
+        if (data.games_played_today >= limit) {
           const resetDate = new Date(data.last_reset_date);
           resetDate.setDate(resetDate.getDate() + 1);
           setNextResetTime(resetDate);
@@ -91,7 +103,15 @@ export const TrisGameBanner = () => {
   };
 
   const handleStartGame = async () => {
-    if (gamesPlayed >= 5) {
+    const limit = getGameLimit();
+    
+    // Monthly premium ha giochi illimitati
+    if (isPremium && subscriptionType === 'monthly') {
+      setGameState("selecting");
+      return;
+    }
+
+    if (gamesPlayed >= limit) {
       // Check if user has enough credits to play
       if (userCredits < 2) {
         toast({
@@ -186,7 +206,8 @@ export const TrisGameBanner = () => {
     }
 
     // Check if reached free limit
-    if (newGamesPlayed >= 5) {
+    const limit = getGameLimit();
+    if (newGamesPlayed >= limit && !(isPremium && subscriptionType === 'monthly')) {
       const today = new Date();
       today.setDate(today.getDate() + 1);
       setNextResetTime(today);
@@ -347,11 +368,20 @@ export const TrisGameBanner = () => {
       </div>
 
       <div className="space-y-4">
-        <p className="text-muted-foreground text-center">
-          Partite gratuite oggi: <span className="font-bold text-primary">{Math.max(0, 5 - gamesPlayed)}</span>/5
-        </p>
+        {isPremium && subscriptionType === 'monthly' ? (
+          <p className="text-muted-foreground text-center">
+            🌟 <span className="font-bold text-primary">Giochi illimitati</span> con il tuo abbonamento Premium Mensile!
+          </p>
+        ) : (
+          <p className="text-muted-foreground text-center">
+            Partite gratuite oggi: <span className="font-bold text-primary">{Math.max(0, getGameLimit() - gamesPlayed)}</span>/{getGameLimit()}
+            {isPremium && subscriptionType === 'weekly' && (
+              <span className="block text-xs mt-1">✨ Bonus Premium Settimanale</span>
+            )}
+          </p>
+        )}
 
-        {gamesPlayed >= 5 && userCredits < 2 ? (
+        {gamesPlayed >= getGameLimit() && userCredits < 2 && !(isPremium && subscriptionType === 'monthly') ? (
           <div className="text-center py-4">
             <p className="text-lg mb-2">Hai esaurito le tue sfide giornaliere!</p>
             <p className="text-muted-foreground">
@@ -367,7 +397,9 @@ export const TrisGameBanner = () => {
             className="w-full bg-primary hover:bg-primary/90"
           >
             <Trophy className="w-4 h-4 mr-2" />
-            {gamesPlayed >= 5 ? "Gioca con 2 crediti" : "Iniziare a giocare"}
+            {gamesPlayed >= getGameLimit() && !(isPremium && subscriptionType === 'monthly') 
+              ? "Gioca con 2 crediti" 
+              : "Iniziare a giocare"}
           </Button>
         )}
       </div>
