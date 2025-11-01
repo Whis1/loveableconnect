@@ -70,8 +70,9 @@ export const useCredits = () => {
   const { data: credits, isLoading: loading } = useQuery({
     queryKey: ["user-credits"],
     queryFn: fetchCredits,
-    staleTime: 30 * 1000, // 30 secondi - i crediti cambiano spesso
-    refetchInterval: 60 * 1000, // Ricontrolla ogni minuto
+    staleTime: 0, // Sempre aggiornato
+    refetchInterval: 5 * 1000, // Ricontrolla ogni 5 secondi per reattività immediata
+    refetchOnWindowFocus: true, // Aggiorna quando torna il focus
   });
 
   // Realtime updates
