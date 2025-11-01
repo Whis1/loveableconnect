@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { X as XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Profile {
   id: string;
@@ -27,6 +28,28 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
   const [gameOver, setGameOver] = useState(false);
   const [winner, setWinner] = useState<"player" | "bot" | "draw" | null>(null);
   const [showEmoji, setShowEmoji] = useState(false);
+  const [currentUserProfile, setCurrentUserProfile] = useState<Profile | null>(null);
+  const [userEmoji, setUserEmoji] = useState<string | null>(null);
+  const [opponentEmoji, setOpponentEmoji] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchCurrentUserProfile();
+  }, []);
+
+  const fetchCurrentUserProfile = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, nickname, avatar_url")
+      .eq("id", session.user.id)
+      .single();
+
+    if (data) {
+      setCurrentUserProfile(data);
+    }
+  };
 
   useEffect(() => {
     if (!isPlayerTurn && !gameOver) {
@@ -169,34 +192,70 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
   };
 
   const handleEmojiClick = (emoji: string) => {
-    // Just for visual feedback
-    console.log("Emoji sent:", emoji);
+    setUserEmoji(emoji);
     setShowEmoji(false);
+    
+    // Remove emoji after 4 seconds
+    setTimeout(() => {
+      setUserEmoji(null);
+    }, 4000);
   };
 
   return (
     <Card className="p-6 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+      {/* Players Row */}
       <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center space-x-3">
-          <Avatar className="w-12 h-12 border-2 border-primary">
-            <AvatarImage src={opponent.avatar_url || ""} />
-            <AvatarFallback>
-              {opponent.nickname.slice(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+        {/* Current User - Left */}
+        <div className="flex items-center space-x-3 relative">
+          <div className="relative">
+            <Avatar className="w-14 h-14 border-2 border-primary">
+              <AvatarImage src={currentUserProfile?.avatar_url || ""} />
+              <AvatarFallback>
+                {currentUserProfile?.nickname.slice(0, 2).toUpperCase() || "Tu"}
+              </AvatarFallback>
+            </Avatar>
+            {userEmoji && (
+              <div className="absolute -right-8 top-1/2 -translate-y-1/2 text-3xl animate-bounce">
+                {userEmoji}
+              </div>
+            )}
+          </div>
           <div>
-            <p className="font-bold">{opponent.nickname}</p>
-            <p className="text-xs text-muted-foreground">Sfidante</p>
+            <p className="font-bold">{currentUserProfile?.nickname || "Tu"}</p>
+            <p className="text-xs text-muted-foreground">Giocatore</p>
           </div>
         </div>
 
+        {/* Emoji Button */}
         <Button
           variant="outline"
           size="sm"
           onClick={() => setShowEmoji(!showEmoji)}
+          className="shrink-0"
         >
-          😊 Emoji
+          😊
         </Button>
+
+        {/* Opponent - Right */}
+        <div className="flex items-center space-x-3 relative">
+          <div>
+            <p className="font-bold text-right">{opponent.nickname}</p>
+            <p className="text-xs text-muted-foreground text-right">Sfidante</p>
+          </div>
+          <div className="relative">
+            <Avatar className="w-14 h-14 border-2 border-destructive">
+              <AvatarImage src={opponent.avatar_url || ""} />
+              <AvatarFallback>
+                {opponent.nickname.slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            {opponentEmoji && (
+              <div className="absolute -left-8 top-1/2 -translate-y-1/2 text-3xl animate-bounce">
+                {opponentEmoji}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {showEmoji && (
