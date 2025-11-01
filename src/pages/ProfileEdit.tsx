@@ -11,12 +11,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Upload, X, Camera, MapPin, AlertCircle } from "lucide-react";
+import { ArrowLeft, Save, Upload, X, Camera, MapPin, AlertCircle, Calendar } from "lucide-react";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
 import { InterestsAutocomplete } from "@/components/InterestsAutocomplete";
 import { SpotifySongSelector } from "@/components/SpotifySongSelector";
 import { LocationChangeRequest } from "@/components/LocationChangeRequest";
+import { BirthdateChangeRequest } from "@/components/BirthdateChangeRequest";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface SpotifySong {
   id: string;
@@ -40,6 +42,7 @@ interface Profile {
   latitude: number | null;
   longitude: number | null;
   location_locked: boolean | null;
+  birthdate_locked: boolean | null;
   show_online_status: boolean | null;
   interests: string[] | null;
   avatar_url: string | null;
@@ -65,7 +68,9 @@ const ProfileEdit = () => {
   const [lookingFor, setLookingFor] = useState<string[]>([]);
   const [favoriteSongs, setFavoriteSongs] = useState<SpotifySong[]>([]);
   const [showLocationRequest, setShowLocationRequest] = useState(false);
+  const [showBirthdateRequest, setShowBirthdateRequest] = useState(false);
   const [pendingLocationData, setPendingLocationData] = useState<{ city: string; latitude: number; longitude: number } | null>(null);
+  const [pendingBirthdateData, setPendingBirthdateData] = useState<string | null>(null);
   const [birthDay, setBirthDay] = useState("");
   const [birthMonth, setBirthMonth] = useState("");
   const [birthYear, setBirthYear] = useState("");
@@ -346,6 +351,36 @@ const ProfileEdit = () => {
 
   if (!profile) return null;
 
+  if (showBirthdateRequest) {
+    return (
+      <div className="min-h-screen relative bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-4">
+        <div 
+          className="fixed inset-0 z-0 opacity-15 dark:opacity-25" 
+          style={{
+            backgroundImage: 'url(/images/love-background.png)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
+          }}
+        />
+        <div className="container mx-auto max-w-4xl relative z-10 py-8">
+          <BirthdateChangeRequest
+            currentBirthdate={profile.birthdate || undefined}
+            onRequestSubmit={(birthdate) => {
+              // La richiesta viene inviata tramite il supporto
+              navigate('/support', { 
+                state: { 
+                  isBirthdateChangeRequest: true,
+                  newBirthdateData: { birthdate }
+                }
+              });
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
   if (showLocationRequest) {
     return (
       <div className="min-h-screen relative bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-4">
@@ -537,58 +572,114 @@ const ProfileEdit = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Data di Nascita</Label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Select value={birthDay} onValueChange={setBirthDay} required={requiresCompletion}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Giorno" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-background z-50 max-h-60">
-                        {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                          <SelectItem key={day} value={day.toString()}>
-                            {day}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    
-                    <Select value={birthMonth} onValueChange={setBirthMonth} required={requiresCompletion}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Mese" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-background z-50">
-                        <SelectItem value="1">Gennaio</SelectItem>
-                        <SelectItem value="2">Febbraio</SelectItem>
-                        <SelectItem value="3">Marzo</SelectItem>
-                        <SelectItem value="4">Aprile</SelectItem>
-                        <SelectItem value="5">Maggio</SelectItem>
-                        <SelectItem value="6">Giugno</SelectItem>
-                        <SelectItem value="7">Luglio</SelectItem>
-                        <SelectItem value="8">Agosto</SelectItem>
-                        <SelectItem value="9">Settembre</SelectItem>
-                        <SelectItem value="10">Ottobre</SelectItem>
-                        <SelectItem value="11">Novembre</SelectItem>
-                        <SelectItem value="12">Dicembre</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    
-                    <Select value={birthYear} onValueChange={setBirthYear} required={requiresCompletion}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Anno" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-background z-50 max-h-60">
-                        {Array.from({ length: 83 }, (_, i) => new Date().getFullYear() - 18 - i).map(year => (
-                          <SelectItem key={year} value={year.toString()}>
-                            {year}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="flex items-center gap-2">
+                    <Label>Data di Nascita {requiresCompletion && <span className="text-destructive">*</span>}</Label>
+                    {profile.birthdate_locked && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <AlertCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">Questa modalità ci aiuta a prevenire i profili falsi.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                   </div>
-                  {requiresCompletion && (
-                    <p className="text-xs text-muted-foreground">
-                      ⚠️ Campo obbligatorio - Devi avere almeno 18 anni
-                    </p>
+                  {profile.birthdate_locked ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-3 gap-2">
+                        <Input
+                          value={birthDay || ""}
+                          disabled
+                          className="bg-muted cursor-not-allowed"
+                          placeholder="Giorno"
+                        />
+                        <Input
+                          value={birthMonth ? ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'][parseInt(birthMonth) - 1] : ""}
+                          disabled
+                          className="bg-muted cursor-not-allowed"
+                          placeholder="Mese"
+                        />
+                        <Input
+                          value={birthYear || ""}
+                          disabled
+                          className="bg-muted cursor-not-allowed"
+                          placeholder="Anno"
+                        />
+                      </div>
+                      <Alert className="bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
+                        <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        <AlertDescription className="text-amber-800 dark:text-amber-200 text-sm">
+                          La tua data di nascita è bloccata per motivi di sicurezza. Puoi richiedere una modifica tramite il supporto clienti.
+                        </AlertDescription>
+                      </Alert>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowBirthdateRequest(true)}
+                        className="w-full"
+                      >
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Richiedi Cambio Data di Nascita
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-3 gap-2">
+                        <Select value={birthDay} onValueChange={setBirthDay} required={requiresCompletion}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Giorno" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background z-50 max-h-60">
+                            {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                              <SelectItem key={day} value={day.toString()}>
+                                {day}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        
+                        <Select value={birthMonth} onValueChange={setBirthMonth} required={requiresCompletion}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Mese" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background z-50">
+                            <SelectItem value="1">Gennaio</SelectItem>
+                            <SelectItem value="2">Febbraio</SelectItem>
+                            <SelectItem value="3">Marzo</SelectItem>
+                            <SelectItem value="4">Aprile</SelectItem>
+                            <SelectItem value="5">Maggio</SelectItem>
+                            <SelectItem value="6">Giugno</SelectItem>
+                            <SelectItem value="7">Luglio</SelectItem>
+                            <SelectItem value="8">Agosto</SelectItem>
+                            <SelectItem value="9">Settembre</SelectItem>
+                            <SelectItem value="10">Ottobre</SelectItem>
+                            <SelectItem value="11">Novembre</SelectItem>
+                            <SelectItem value="12">Dicembre</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        
+                        <Select value={birthYear} onValueChange={setBirthYear} required={requiresCompletion}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Anno" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background z-50 max-h-60">
+                            {Array.from({ length: 83 }, (_, i) => new Date().getFullYear() - 18 - i).map(year => (
+                              <SelectItem key={year} value={year.toString()}>
+                                {year}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {requiresCompletion && (
+                        <p className="text-xs text-muted-foreground">
+                          ⚠️ Campo obbligatorio - Devi avere almeno 18 anni
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
 

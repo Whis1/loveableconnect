@@ -400,6 +400,7 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           birthdate: string | null
+          birthdate_locked: boolean | null
           city: string | null
           created_at: string
           favorite_songs: Json | null
@@ -427,6 +428,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           birthdate?: string | null
+          birthdate_locked?: boolean | null
           city?: string | null
           created_at?: string
           favorite_songs?: Json | null
@@ -454,6 +456,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           birthdate?: string | null
+          birthdate_locked?: boolean | null
           city?: string | null
           created_at?: string
           favorite_songs?: Json | null
@@ -746,6 +749,10 @@ export type Database = {
         }[]
       }
       reset_daily_credits: { Args: never; Returns: undefined }
+      unlock_birthdate_for_user: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       unlock_location_for_user: {
         Args: { p_user_id: string }
         Returns: undefined
