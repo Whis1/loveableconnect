@@ -55,7 +55,7 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
   const [board, setBoard] = useState<Board>([]);
   const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
   const [validMoves, setValidMoves] = useState<number[]>([]);
-  const [isPlayerTurn, setIsPlayerTurn] = useState(true);
+  const [isPlayerTurn, setIsPlayerTurn] = useState(Math.random() > 0.5); // Random start
   const [gameOver, setGameOver] = useState(false);
   const [winner, setWinner] = useState<"player" | "bot" | "draw" | null>(null);
   const [showEmoji, setShowEmoji] = useState(false);

@@ -54,7 +54,7 @@ const EMOJIS = [
 
 export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
   const [board, setBoard] = useState<Board>(Array(9).fill(null));
-  const [isPlayerTurn, setIsPlayerTurn] = useState(true);
+  const [isPlayerTurn, setIsPlayerTurn] = useState(Math.random() > 0.5); // Random start
   const [gameOver, setGameOver] = useState(false);
   const [winner, setWinner] = useState<"player" | "bot" | "draw" | null>(null);
   const [showEmoji, setShowEmoji] = useState(false);
