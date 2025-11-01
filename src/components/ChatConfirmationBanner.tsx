@@ -51,7 +51,7 @@ export const ChatConfirmationBanner = ({
       <div
         role="dialog"
         aria-modal="true"
-        className="bg-card border border-border rounded-lg shadow-lg max-w-md w-full p-6 relative animate-in fade-in zoom-in duration-200 pointer-events-auto"
+        className="bg-card border border-border rounded-lg shadow-lg max-w-md w-full p-6 relative animate-in fade-in zoom-in duration-75 pointer-events-auto"
         onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
       >

@@ -15,15 +15,15 @@ export const MatchBanner = ({ matchedUserName, onClose }: MatchBannerProps) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(false);
-      setTimeout(onClose, 300); // Wait for fade out animation
-    }, 4000);
+      setTimeout(onClose, 100); // Fast fade out
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [onClose]);
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ${
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-100 ${
         isVisible ? "opacity-100" : "opacity-0"
       }`}
       style={{ pointerEvents: "none" }}

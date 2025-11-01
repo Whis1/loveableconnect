@@ -31,8 +31,8 @@ export const InsufficientCreditsBanner = ({ isVisible, onClose }: InsufficientCr
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
-      <Card className="relative max-w-md w-full p-8 bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-800 dark:via-purple-900/50 dark:to-indigo-900/50 border-2 border-primary/20 shadow-2xl animate-in zoom-in-95 duration-300">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-100">
+      <Card className="relative max-w-md w-full p-8 bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-800 dark:via-purple-900/50 dark:to-indigo-900/50 border-2 border-primary/20 shadow-2xl animate-in zoom-in-95 duration-100">
         {/* Decorative elements */}
         <div className="absolute -top-4 -right-4 w-24 h-24 bg-primary/10 rounded-full blur-2xl animate-pulse" />
         <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-accent/10 rounded-full blur-2xl animate-pulse delay-75" />
@@ -50,7 +50,7 @@ export const InsufficientCreditsBanner = ({ isVisible, onClose }: InsufficientCr
 
           {/* Text */}
           <div className="text-center space-y-2">
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-in slide-in-from-top-2 duration-500">
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-in slide-in-from-top-2 duration-100">
               {t("chat.creditsInsufficient")}
             </h3>
             <p className="text-muted-foreground text-sm">
@@ -62,9 +62,9 @@ export const InsufficientCreditsBanner = ({ isVisible, onClose }: InsufficientCr
           <Button
             onClick={handleNavigate}
             size="lg"
-            className="w-full relative overflow-hidden group bg-gradient-to-r from-primary via-accent to-primary hover:from-primary/90 hover:via-accent/90 hover:to-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
+            className="w-full relative overflow-hidden group bg-gradient-to-r from-primary via-accent to-primary hover:from-primary/90 hover:via-accent/90 hover:to-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-150"
           >
-            <span className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+            <span className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-300" />
             <Coins className="h-5 w-5 mr-2" />
             <span className="relative font-semibold">
               Ricarica o Abbonati
