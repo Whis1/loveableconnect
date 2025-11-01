@@ -16,8 +16,8 @@ export const CookieBanner = ({ onConsent }: CookieBannerProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-      <Card className="max-w-3xl w-full bg-gradient-to-br from-white via-pink-50/50 to-purple-50/50 dark:from-gray-900 dark:via-pink-950/30 dark:to-purple-950/30 border-2 border-pink-200 dark:border-pink-800 shadow-2xl animate-scale-in">
+    <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-end justify-center p-4 animate-fade-in">
+      <Card className="max-w-3xl w-full bg-gradient-to-br from-white via-pink-50/50 to-purple-50/50 dark:from-gray-900 dark:via-pink-950/30 dark:to-purple-950/30 border-2 border-pink-200 dark:border-pink-800 shadow-2xl animate-slide-in-bottom">
         <div className="p-6">
           <div className="flex items-start gap-4 mb-4">
             <div className="p-3 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl shadow-lg flex-shrink-0">
