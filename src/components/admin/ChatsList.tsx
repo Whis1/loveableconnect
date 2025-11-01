@@ -26,6 +26,7 @@ interface ChatsListProps {
   selectedConversation: Conversation | null;
   onSelectConversation: (conversation: Conversation) => void;
   onRefresh: () => void;
+  onArchived?: (conversation: Conversation) => void;
   loading?: boolean;
 }
 
@@ -34,6 +35,7 @@ export const ChatsList = ({
   selectedConversation,
   onSelectConversation,
   onRefresh,
+  onArchived,
   loading = false,
 }: ChatsListProps) => {
   const getAvatarUrl = (path: string | null) => {
@@ -51,6 +53,7 @@ export const ChatsList = ({
       });
       if (error) throw error;
       toast.success('Conversazione archiviata');
+      onArchived?.(conv);
       onRefresh();
     } catch (err) {
       console.error('Errore archiviazione:', err);

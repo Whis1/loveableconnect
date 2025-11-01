@@ -79,14 +79,25 @@ const Chats = () => {
       const sorted = [...list].sort(
         (a: any, b: any) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
       );
-      setConversations(() => {
-        if (!selectedConversation) return sorted;
-        return sorted.map((c: any) =>
-          c.matchId === selectedConversation.matchId && c.userId === selectedConversation.userId
-            ? { ...c, unreadCount: 0 }
-            : c
-        );
-      });
+       setConversations(() => {
+         if (!selectedConversation) return sorted;
+         // Mantieni in lista la conversazione selezionata anche se non arriva dal server (es. archiviata con 0 non letti)
+         const exists = sorted.some(
+           (c: any) =>
+             c.matchId === selectedConversation.matchId &&
+             c.userId === selectedConversation.userId
+         );
+         const merged = exists
+           ? sorted.map((c: any) =>
+               c.matchId === selectedConversation.matchId && c.userId === selectedConversation.userId
+                 ? { ...c, unreadCount: 0 }
+                 : c
+             )
+           : [{ ...selectedConversation, unreadCount: 0 }, ...sorted];
+         return merged.sort(
+           (a: any, b: any) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
+         );
+       });
     } catch (error) {
       console.error("Error fetching conversations:", error);
       toast.error("Errore nel caricamento delle conversazioni");
@@ -182,6 +193,15 @@ const Chats = () => {
           selectedConversation={selectedConversation}
           onSelectConversation={handleSelectConversation}
           onRefresh={fetchConversations}
+          onArchived={(conv) => {
+            if (
+              selectedConversation &&
+              selectedConversation.matchId === conv.matchId &&
+              selectedConversation.userId === conv.userId
+            ) {
+              setSelectedConversation(null);
+            }
+          }}
           loading={loading}
         />
         
