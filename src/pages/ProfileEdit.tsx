@@ -642,12 +642,6 @@ const ProfileEdit = () => {
                         />
                         <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       </div>
-                      <Alert className="bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
-                        <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                        <AlertDescription className="text-amber-800 dark:text-amber-200 text-sm">
-                          {t('profile.locationLocked')}
-                        </AlertDescription>
-                      </Alert>
                       <Button
                         type="button"
                         variant="outline"
@@ -706,12 +700,6 @@ const ProfileEdit = () => {
                           placeholder="Anno"
                         />
                       </div>
-                      <Alert className="bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
-                        <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                        <AlertDescription className="text-amber-800 dark:text-amber-200 text-sm">
-                          La tua data di nascita è bloccata per motivi di sicurezza. Puoi richiedere una modifica tramite il supporto clienti.
-                        </AlertDescription>
-                      </Alert>
                       <Button
                         type="button"
                         variant="outline"
