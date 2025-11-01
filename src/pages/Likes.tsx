@@ -27,11 +27,13 @@ interface LikeWithProfile {
     sexual_orientation: string | null;
     relationship_status: string | null;
     relationship_type: string | null;
+    looking_for: string[] | null;
     translatedBio?: string | null;
     translatedInterests?: string[] | null;
     translatedGender?: string | null;
     translatedOrientation?: string | null;
     translatedRelationshipType?: string | null;
+    translatedLookingFor?: string[] | null;
   };
 }
 
@@ -60,6 +62,16 @@ const normalizeValue = (value: string | null | undefined): string | null => {
     'other': 'other', 'altro': 'other', 'autre': 'other', 'sonstiges': 'other'
   };
   
+  // Relationship status mappings
+  const relationshipStatusMap: Record<string, string> = {
+    'single': 'single', 'singolo': 'single', 'célibataire': 'single', 'ledig': 'single',
+    'in relationship': 'in_relationship', 'in_relationship': 'in_relationship', 'in una relazione': 'in_relationship',
+    'married': 'married', 'sposato': 'married', 'marié': 'married', 'verheiratet': 'married',
+    'divorced': 'divorced', 'divorziato': 'divorced', 'divorcé': 'divorced', 'geschieden': 'divorced',
+    'widowed': 'widowed', 'vedovo': 'widowed', 'veuf': 'widowed', 'verwitwet': 'widowed',
+    'prefer not say': 'prefer_not_say', 'prefer_not_say': 'prefer_not_say', 'preferisco non dire': 'prefer_not_say'
+  };
+  
   // Relationship type mappings
   const relationshipMap: Record<string, string> = {
     'serious': 'serious', 'seria': 'serious', 'sérieuse': 'serious', 'ernsthafte': 'serious',
@@ -69,7 +81,7 @@ const normalizeValue = (value: string | null | undefined): string | null => {
   };
   
   // Try all mappings
-  return genderMap[normalized] || orientationMap[normalized] || relationshipMap[normalized] || null;
+  return genderMap[normalized] || orientationMap[normalized] || relationshipStatusMap[normalized] || relationshipMap[normalized] || null;
 };
 
 const toPublicAvatarUrl = (path: string | null) => {
@@ -156,7 +168,7 @@ const Likes = () => {
         (likesData || []).map(async (like) => {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("id, full_name, nickname, avatar_url, bio, age, interests, gender, sexual_orientation, relationship_status, relationship_type")
+            .select("id, full_name, nickname, avatar_url, bio, age, interests, gender, sexual_orientation, relationship_status, relationship_type, looking_for")
             .eq("id", like.from_user_id)
             .single();
 
@@ -164,6 +176,7 @@ const Likes = () => {
             // Translate bio and interests
             const translatedBio = profile.bio ? await translateText(profile.bio) : null;
             const translatedInterests = profile.interests ? await translateArray(profile.interests) : null;
+            const translatedLookingFor = profile.looking_for ? await translateArray(profile.looking_for) : null;
 
             // Normalize and translate gender, orientation, relationship_type
             const genderCodes = ['male','female','non-binary','transexual','transgender','genderfluid'];
@@ -192,6 +205,7 @@ const Likes = () => {
                 translatedGender,
                 translatedOrientation,
                 translatedRelationshipType,
+                translatedLookingFor,
               },
             };
           }
@@ -212,6 +226,7 @@ const Likes = () => {
               sexual_orientation: null,
               relationship_status: null,
               relationship_type: null,
+              looking_for: null,
             },
           };
         })
@@ -558,21 +573,11 @@ const Likes = () => {
                                  </div>
                                )}
                               
-                               {like.profile.relationship_type && (
+                               {like.profile.looking_for && like.profile.looking_for.length > 0 && (
                                  <div className="flex items-start gap-1">
                                    <span className="font-medium text-foreground/70">{t("common.lookingFor")}</span>
                                    <span className="text-muted-foreground">
-                                     {(() => {
-                                       const normalized = normalizeValue(like.profile.relationship_type);
-                                       switch(normalized) {
-                                         case 'serious': return t("common.seriousRelationship");
-                                         case 'casual': return t("common.casualDating");
-                                         case 'friendship': return t("common.friendship");
-                                         case 'not-sure': return t("common.notSure");
-                                         case 'prefer-not-say': return t("common.preferNotSay");
-                                         default: return like.profile.translatedRelationshipType || like.profile.relationship_type;
-                                       }
-                                     })()}
+                                     {like.profile.translatedLookingFor?.join(", ") || like.profile.looking_for.join(", ")}
                                    </span>
                                  </div>
                                )}
