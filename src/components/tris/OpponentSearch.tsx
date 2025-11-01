@@ -131,16 +131,12 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
         <Avatar className="w-20 h-20 border-4 border-primary">
           <AvatarImage 
             src={
-              profiles[currentIndex]?.avatar_url ||
-              (profiles[currentIndex]?.photos && profiles[currentIndex].photos.length > 0 
-                ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/profile-images/${profiles[currentIndex].photos[0]}`
-                : "")
+              profiles[currentIndex]?.avatar_url
+                ? supabase.storage.from('profile-images').getPublicUrl(profiles[currentIndex].avatar_url).data.publicUrl
+                : (profiles[currentIndex]?.photos && profiles[currentIndex].photos.length > 0 
+                    ? supabase.storage.from('profile-images').getPublicUrl(profiles[currentIndex].photos[0]).data.publicUrl
+                    : "")
             }
-            onError={(e) => {
-              // Fallback se l'immagine non carica
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-            }}
           />
           <AvatarFallback>
             {profiles[currentIndex]?.nickname.slice(0, 2).toUpperCase()}
