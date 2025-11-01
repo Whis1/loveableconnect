@@ -22,7 +22,7 @@ export const useOnlineStatus = (userId: string | null | undefined) => {
       // Fetch profile to check if user wants to show status and if they're an admin
       const { data: profile } = await supabase
         .from('profiles')
-        .select('show_online_status, is_admin_profile, last_active')
+        .select('show_online_status, is_admin_profile, last_active, manual_online_status')
         .eq('id', userId)
         .single();
 
@@ -31,7 +31,16 @@ export const useOnlineStatus = (userId: string | null | undefined) => {
         return;
       }
 
-      // Admin profiles are always online
+      // Check if manual_online_status is set (not null) - this takes priority
+      if (profile.manual_online_status !== null) {
+        setStatus({ 
+          isOnline: profile.manual_online_status, 
+          showStatus: profile.show_online_status ?? true 
+        });
+        return;
+      }
+
+      // Admin profiles are always online (when manual status is not set)
       if (profile.is_admin_profile) {
         setStatus({ isOnline: true, showStatus: true });
         return;

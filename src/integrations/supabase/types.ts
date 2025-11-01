@@ -414,6 +414,7 @@ export type Database = {
           location_locked: boolean | null
           longitude: number | null
           looking_for: string[] | null
+          manual_online_status: boolean | null
           nickname: string
           photos: string[] | null
           relationship_status: string | null
@@ -442,6 +443,7 @@ export type Database = {
           location_locked?: boolean | null
           longitude?: number | null
           looking_for?: string[] | null
+          manual_online_status?: boolean | null
           nickname: string
           photos?: string[] | null
           relationship_status?: string | null
@@ -470,6 +472,7 @@ export type Database = {
           location_locked?: boolean | null
           longitude?: number | null
           looking_for?: string[] | null
+          manual_online_status?: boolean | null
           nickname?: string
           photos?: string[] | null
           relationship_status?: string | null

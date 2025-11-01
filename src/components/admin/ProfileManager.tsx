@@ -43,6 +43,7 @@ interface Profile {
   photos: string[] | null;
   favorite_songs?: SpotifySong[] | null;
   user_images_link?: string | null;
+  manual_online_status?: boolean | null;
 }
 
 interface Message {
@@ -408,6 +409,7 @@ export const ProfileManager = () => {
               interests: profile.interests,
               favorite_songs: profile.favorite_songs ? JSON.parse(JSON.stringify(profile.favorite_songs)) : null,
               user_images_link: profile.user_images_link,
+              manual_online_status: profile.manual_online_status,
             }
           },
         });
@@ -876,6 +878,45 @@ export const ProfileManager = () => {
                                   rows={3}
                                   placeholder="Scrivi qualcosa su di te..."
                                 />
+                              </div>
+
+                              {/* Stato Online Manuale */}
+                              <div className="space-y-3 p-4 border rounded-lg bg-muted/50">
+                                <Label className="text-base font-semibold">Stato Online</Label>
+                                <div className="space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <div className="space-y-1">
+                                      <p className="text-sm font-medium">Modalità Automatica</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        Stato online basato sull'ultima attività
+                                      </p>
+                                    </div>
+                                    <Switch
+                                      checked={profile.manual_online_status === null}
+                                      onCheckedChange={(checked) => {
+                                        const updated = { ...profile, manual_online_status: checked ? null : false };
+                                        setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
+                                      }}
+                                    />
+                                  </div>
+                                  {profile.manual_online_status !== null && (
+                                    <div className="flex items-center justify-between pt-2 border-t">
+                                      <div className="space-y-1">
+                                        <p className="text-sm font-medium">Forza Online</p>
+                                        <p className="text-xs text-muted-foreground">
+                                          {profile.manual_online_status ? "Il profilo appare online" : "Il profilo appare offline"}
+                                        </p>
+                                      </div>
+                                      <Switch
+                                        checked={profile.manual_online_status === true}
+                                        onCheckedChange={(checked) => {
+                                          const updated = { ...profile, manual_online_status: checked };
+                                          setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
+                                        }}
+                                      />
+                                    </div>
+                                  )}
+                                </div>
                               </div>
 
                               {/* Pulsante Salva */}
