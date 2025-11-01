@@ -352,23 +352,24 @@ const Chat = () => {
         isVisible={showCreditsBanner} 
         onClose={() => setShowCreditsBanner(false)} 
       />
-      <div className="container mx-auto max-w-2xl h-screen flex flex-col">
+      <div className="container mx-auto max-w-2xl h-screen flex flex-col p-2 md:p-4">
         <Card className="flex-1 flex flex-col overflow-hidden shadow-xl">
           {/* Header with back button */}
-          <div className="border-b p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="border-b p-3 md:p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
                 <Button 
                   variant="ghost" 
                   size="icon" 
                   onClick={() => navigate("/matches")}
+                  className="shrink-0 h-9 w-9 md:h-10 md:w-10"
                 >
-                  <ArrowLeft className="h-5 w-5" />
+                  <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
                 </Button>
                 {otherUser && (
-                  <div className="flex items-center gap-2">
-                    <div className="relative">
-                      <Avatar className="h-10 w-10">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <div className="relative shrink-0">
+                      <Avatar className="h-9 w-9 md:h-10 md:w-10">
                         <AvatarImage src={otherUser.avatar_url || undefined} />
                         <AvatarFallback>
                           {otherUser.nickname.charAt(0)}
@@ -378,7 +379,7 @@ const Chat = () => {
                         <OnlineIndicator userId={otherUser.id} size="sm" />
                       </div>
                     </div>
-                    <span className="font-semibold">
+                    <span className="font-semibold text-sm md:text-base truncate">
                       {otherUser.nickname}
                     </span>
                   </div>
@@ -388,10 +389,10 @@ const Chat = () => {
                 variant="ghost" 
                 size="sm"
                 onClick={() => setShowProfile(!showProfile)}
-                className="gap-2"
+                className="gap-1 md:gap-2 shrink-0"
               >
                 {showProfile ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                {showProfile ? t("chat.hideProfile") : t("chat.showProfile")}
+                <span className="hidden sm:inline">{showProfile ? t("chat.hideProfile") : t("chat.showProfile")}</span>
               </Button>
             </div>
           </div>
@@ -401,8 +402,8 @@ const Chat = () => {
           
           {/* Messages Section */}
           <CardContent className="flex-1 overflow-hidden p-0">
-            <ScrollArea className="h-full p-6">
-              <div className="space-y-4">
+            <ScrollArea className="h-full p-3 md:p-6">
+              <div className="space-y-3 md:space-y-4">
                 {messages.map((message) => {
                   const isOwn = message.sender_id === currentUser;
                   const senderAvatar = isOwn ? myAvatar : otherUser?.avatar_url || null;
@@ -429,9 +430,9 @@ const Chat = () => {
           </CardContent>
 
           {/* Input Section */}
-          <div className="border-t p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="border-t p-2 md:p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <form onSubmit={(e) => handleSendMessage(e)}>
-              <div className="flex gap-2 items-center">
+              <div className="flex gap-1 md:gap-2 items-center">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -445,9 +446,9 @@ const Chat = () => {
                   size="icon"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
-                  className="shrink-0"
+                  className="shrink-0 h-9 w-9 md:h-10 md:w-10"
                 >
-                  <Paperclip className="h-5 w-5" />
+                  <Paperclip className="h-4 w-4 md:h-5 md:w-5" />
                 </Button>
                 <EmojiPicker onEmojiSelect={handleEmojiSelect} />
                 <GifPicker onGifSelect={handleGifSelect} />
@@ -455,12 +456,13 @@ const Chat = () => {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder={t("chat.writeMessage")}
-                  className="flex-1"
+                  className="flex-1 text-sm md:text-base"
                 />
                 <Button 
                   type="submit" 
                   disabled={!newMessage.trim() || uploading}
-                  className="shrink-0"
+                  className="shrink-0 h-9 w-9 md:h-10 md:w-10"
+                  size="icon"
                 >
                   <Send className="h-4 w-4" />
                 </Button>

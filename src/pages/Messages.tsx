@@ -210,45 +210,45 @@ const Messages = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-2 md:p-4">
       <div className="container mx-auto max-w-4xl">
-        <div className="mb-4">
-          <Button variant="ghost" onClick={() => navigate("/")}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
+        <div className="mb-3 md:mb-4">
+          <Button variant="ghost" onClick={() => navigate("/")} size="sm">
+            <ArrowLeft className="h-4 w-4 mr-1 md:mr-2" />
             {t("messages.back")}
           </Button>
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">{t("messages.title")}</CardTitle>
+          <CardHeader className="p-3 md:p-6">
+            <CardTitle className="text-xl md:text-2xl">{t("messages.title")}</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-2 md:p-6">
             {matches.length === 0 ? (
-              <div className="text-center py-12">
-                <MessageCircle className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground mb-4">
+              <div className="text-center py-8 md:py-12">
+                <MessageCircle className="h-12 w-12 md:h-16 md:w-16 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground mb-4 text-sm md:text-base">
                   {t("messages.noMessages")}
                 </p>
-                <Button onClick={() => navigate("/matches")}>
+                <Button onClick={() => navigate("/matches")} size="sm">
                   {t("messages.viewMatches")}
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-2 md:space-y-4">
                 {matches.map((match) => (
                   <Card 
                     key={match.id} 
                     className="overflow-hidden hover:shadow-md transition-shadow"
                   >
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-4">
+                    <CardContent className="p-3 md:p-4">
+                      <div className="flex items-center gap-3">
                         <div 
-                          className="flex items-center gap-4 flex-1 cursor-pointer"
+                          className="flex items-center gap-3 flex-1 cursor-pointer min-w-0"
                           onClick={() => navigate(`/chat/${match.id}`)}
                         >
-                        <div className="relative">
-                          <Avatar className="h-16 w-16">
+                        <div className="relative shrink-0">
+                          <Avatar className="h-12 w-12 md:h-16 md:w-16">
                             <AvatarImage src={match.otherUser.avatar_url || undefined} />
                             <AvatarFallback>
                               {(match.otherUser.is_admin_profile 
@@ -262,23 +262,23 @@ const Messages = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <h3 className="font-semibold text-lg truncate">
+                            <h3 className="font-semibold text-base md:text-lg truncate">
                               {match.otherUser.is_admin_profile 
                                 ? match.otherUser.nickname 
                                 : match.otherUser.full_name}
                             </h3>
                             {match.unreadCount > 0 && (
-                              <Badge variant="default" className="ml-2">
+                              <Badge variant="default" className="ml-2 text-xs">
                                 {match.unreadCount}
                               </Badge>
                             )}
                           </div>
                           {match.lastMessage && (
                             <>
-                              <p className={`text-sm truncate ${match.unreadCount > 0 ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
+                              <p className={`text-xs md:text-sm truncate ${match.unreadCount > 0 ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
                                 {match.lastMessage.content}
                               </p>
-                              <p className="text-xs text-muted-foreground mt-1">
+                              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
                                 {new Date(match.lastMessage.created_at).toLocaleString()}
                               </p>
                             </>
@@ -289,7 +289,7 @@ const Messages = () => {
                           variant="ghost"
                           size="icon"
                           onClick={(e) => handleHideConversation(match.id, e)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0 h-9 w-9 md:h-10 md:w-10"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

@@ -395,7 +395,7 @@ const Explore = () => {
 
 
   return (
-    <div className="min-h-screen relative bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-4">
+    <div className="min-h-screen relative bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-2 md:p-4">
       {/* Geolocation Loader */}
       {showGeoLoader && (
         <div className="fixed inset-0 z-[100] bg-gradient-to-br from-pink-100 via-purple-100 to-indigo-100 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 flex items-center justify-center animate-fade-in">
@@ -448,17 +448,18 @@ const Explore = () => {
       
       {!showGeoLoader && (
         <div className="container mx-auto max-w-7xl relative z-10">
-          <div className="mb-4 flex justify-between items-center">
-            <Button variant="ghost" onClick={() => navigate("/")}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              {t("explore.back")}
+          <div className="mb-3 md:mb-4 flex justify-between items-center gap-2">
+            <Button variant="ghost" onClick={() => navigate("/")} size="sm">
+              <ArrowLeft className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">{t("explore.back")}</span>
             </Button>
             <Button 
               variant="outline" 
               onClick={() => setShowFilters(!showFilters)}
+              size="sm"
             >
-              <Filter className="h-4 w-4 mr-2" />
-              {t("explore.filters")}
+              <Filter className="h-4 w-4 md:mr-2" />
+              <span className="hidden sm:inline">{t("explore.filters")}</span>
             </Button>
           </div>
 
@@ -579,7 +580,7 @@ const Explore = () => {
           {/* Results Grid */}
           {displayedProfiles.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-6">
                 {displayedProfiles.map((profile) => (
                   <ProfileGridCard
                     key={profile.id}
@@ -593,18 +594,19 @@ const Explore = () => {
               </div>
 
               {loading && (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">{t("explore.loading")}</p>
+                <div className="text-center py-6 md:py-8">
+                  <p className="text-muted-foreground text-sm md:text-base">{t("explore.loading")}</p>
                 </div>
               )}
 
               {!hasMore && displayedProfiles.length > 0 && (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">{t("explore.noMoreToShow")}</p>
+                <div className="text-center py-6 md:py-8">
+                  <p className="text-muted-foreground text-sm md:text-base">{t("explore.noMoreToShow")}</p>
                   <Button 
                     onClick={() => navigate("/")} 
                     variant="outline" 
-                    className="mt-4"
+                    size="sm"
+                    className="mt-3 md:mt-4"
                   >
                     {t("explore.backToDashboard")}
                   </Button>
@@ -613,9 +615,9 @@ const Explore = () => {
             </>
           ) : (
             !loading && (
-              <Card className="text-center p-12">
-                <h2 className="text-2xl font-bold mb-4">{t("explore.startSearchTitle")}</h2>
-                <p className="text-muted-foreground mb-6">
+              <Card className="text-center p-6 md:p-12">
+                <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">{t("explore.startSearchTitle")}</h2>
+                <p className="text-sm md:text-base text-muted-foreground mb-4 md:mb-6">
                   {t("explore.startSearchDescription")}
                 </p>
               </Card>
