@@ -18,7 +18,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,21 +27,18 @@ interface ReportUserDialogProps {
   reportedUserId: string;
   reportedUserName: string;
   matchId: string;
-  onBlock: () => void;
 }
 
 export const ReportUserDialog = ({
   reportedUserId,
   reportedUserName,
   matchId,
-  onBlock,
 }: ReportUserDialogProps) => {
   const { toast } = useToast();
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [reportType, setReportType] = useState<string>("");
   const [reason, setReason] = useState("");
-  const [blockUser, setBlockUser] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const reportTypes = [
@@ -90,33 +86,14 @@ export const ReportUserDialog = ({
 
       if (reportError) throw reportError;
 
-      // Blocca l'utente se richiesto
-      if (blockUser) {
-        const { error: blockError } = await supabase
-          .from("blocked_users")
-          .insert({
-            blocker_id: session.user.id,
-            blocked_id: reportedUserId,
-          });
-
-        if (blockError && blockError.code !== "23505") { // Ignora errore se già bloccato
-          throw blockError;
-        }
-
-        onBlock();
-      }
-
       toast({
         title: "✓ Segnalazione inviata",
-        description: blockUser 
-          ? `Hai segnalato e bloccato ${reportedUserName}`
-          : `Hai segnalato ${reportedUserName}`,
+        description: `Hai segnalato ${reportedUserName}`,
       });
 
       setOpen(false);
       setReportType("");
       setReason("");
-      setBlockUser(false);
     } catch (error: any) {
       console.error("Errore nella segnalazione:", error);
       toast({
@@ -181,25 +158,6 @@ export const ReportUserDialog = ({
               className="resize-none"
               rows={4}
             />
-          </div>
-
-          <div className="flex items-start space-x-2 rounded-lg border p-4 bg-destructive/5 border-destructive/20">
-            <Checkbox
-              id="block"
-              checked={blockUser}
-              onCheckedChange={(checked) => setBlockUser(checked as boolean)}
-            />
-            <div className="space-y-1">
-              <Label
-                htmlFor="block"
-                className="text-sm font-medium leading-none cursor-pointer"
-              >
-                Blocca questo utente
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Non potrete più scrivervi messaggi e non vedrete più i vostri profili
-              </p>
-            </div>
           </div>
         </div>
 

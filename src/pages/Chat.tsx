@@ -355,12 +355,60 @@ const Chat = () => {
     }
   };
 
-  const handleBlock = () => {
-    setIsBlocked(true);
-    toast({
-      title: "Utente bloccato",
-      description: "Non potrete più scrivervi messaggi",
-    });
+  const handleBlock = async () => {
+    if (!currentUser || !otherUser) return;
+    
+    try {
+      const { error } = await supabase
+        .from("blocked_users")
+        .insert({
+          blocker_id: currentUser,
+          blocked_id: otherUser.id,
+        });
+
+      if (error && error.code !== "23505") {
+        throw error;
+      }
+
+      setIsBlocked(true);
+      toast({
+        title: "Utente bloccato",
+        description: "Non potrete più scrivervi messaggi",
+      });
+    } catch (error: any) {
+      console.error("Errore nel blocco:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile bloccare l'utente",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUnblock = async () => {
+    if (!currentUser || !otherUser) return;
+    
+    try {
+      const { error } = await supabase
+        .from("blocked_users")
+        .delete()
+        .or(`and(blocker_id.eq.${currentUser},blocked_id.eq.${otherUser.id}),and(blocker_id.eq.${otherUser.id},blocked_id.eq.${currentUser})`);
+
+      if (error) throw error;
+
+      setIsBlocked(false);
+      toast({
+        title: "Utente sbloccato",
+        description: "Potete scrivervi nuovamente messaggi",
+      });
+    } catch (error: any) {
+      console.error("Errore nello sblocco:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile sbloccare l'utente",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
@@ -412,12 +460,38 @@ const Chat = () => {
               </div>
               <div className="flex items-center gap-1">
                 {otherUser && matchId && (
-                  <ReportUserDialog
-                    reportedUserId={otherUser.id}
-                    reportedUserName={otherUser.nickname}
-                    matchId={matchId}
-                    onBlock={handleBlock}
-                  />
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={isBlocked ? handleUnblock : handleBlock}
+                      className={isBlocked ? "text-green-600 hover:text-green-600 hover:bg-green-100 dark:hover:bg-green-900" : "text-destructive hover:text-destructive hover:bg-destructive/10"}
+                      title={isBlocked ? "Sblocca utente" : "Blocca utente"}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                        {isBlocked ? (
+                          <>
+                            <rect x="5" y="11" width="14" height="10" rx="2" ry="2"/>
+                            <path d="M12 16v1"/>
+                            <path d="M12 13v1"/>
+                            <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+                          </>
+                        ) : (
+                          <>
+                            <rect x="5" y="11" width="14" height="10" rx="2" ry="2"/>
+                            <path d="M12 16v1"/>
+                            <path d="M12 13v1"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                          </>
+                        )}
+                      </svg>
+                    </Button>
+                    <ReportUserDialog
+                      reportedUserId={otherUser.id}
+                      reportedUserName={otherUser.nickname}
+                      matchId={matchId}
+                    />
+                  </>
                 )}
                 <Button 
                   variant="ghost" 
