@@ -8,6 +8,7 @@ interface Profile {
   id: string;
   nickname: string;
   avatar_url: string | null;
+  photos: string[] | null;
   tris_elo?: number;
 }
 
@@ -51,7 +52,7 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
 
     const { data: adminProfiles } = await supabase
       .from("profiles")
-      .select("id, nickname, avatar_url, tris_elo")
+      .select("id, nickname, avatar_url, photos, tris_elo")
       .eq("is_admin_profile", true)
       .not("id", "in", `(${matchedIds.join(",") || "null"})`);
 
@@ -120,7 +121,14 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
       <h3 className="text-xl font-bold mb-4">🔍 Ricerca sfidante...</h3>
       <div className="flex justify-center items-center space-x-4 animate-pulse">
         <Avatar className="w-20 h-20 border-4 border-primary">
-          <AvatarImage src={profiles[currentIndex]?.avatar_url || ""} />
+          <AvatarImage 
+            src={
+              profiles[currentIndex]?.avatar_url || 
+              (profiles[currentIndex]?.photos && profiles[currentIndex]?.photos.length > 0 
+                ? profiles[currentIndex].photos[0] 
+                : "")
+            } 
+          />
           <AvatarFallback>
             {profiles[currentIndex]?.nickname.slice(0, 2).toUpperCase()}
           </AvatarFallback>
