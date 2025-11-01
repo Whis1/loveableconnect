@@ -63,6 +63,7 @@ Deno.serve(async (req) => {
         purchases: purchases || [],
         auth_created_at: authUser.user.created_at,
         auth_provider: authUser.user.app_metadata.provider || 'email',
+        auth_email: authUser.user.email || null,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );

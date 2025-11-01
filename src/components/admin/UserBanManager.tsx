@@ -371,6 +371,10 @@ export function UserBanManager() {
                           <span className="font-medium">{selectedUser.city || "N/A"}</span>
                         </div>
                         <div className="col-span-2">
+                          <span className="text-muted-foreground">Email:</span>{" "}
+                          <span className="font-medium break-all">{userDetails?.auth_email || "N/A"}</span>
+                        </div>
+                        <div className="col-span-2">
                           <span className="text-muted-foreground">Registrato il:</span>{" "}
                           <span className="font-medium">
                             {userDetails?.auth_created_at 
