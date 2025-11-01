@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import matchHeartIcon from "@/assets/match-heart.png";
 
 interface MatchBannerProps {
   matchedUserName: string;
@@ -15,7 +16,7 @@ export const MatchBanner = ({ matchedUserName, onClose }: MatchBannerProps) => {
     const timer = setTimeout(() => {
       setIsVisible(false);
       setTimeout(onClose, 300); // Wait for fade out animation
-    }, 3000);
+    }, 4000);
 
     return () => clearTimeout(timer);
   }, [onClose]);
@@ -64,12 +65,12 @@ export const MatchBanner = ({ matchedUserName, onClose }: MatchBannerProps) => {
           <div className="relative z-10">
             <div className="mb-4 flex justify-center">
               <div className="p-4 bg-white/20 rounded-full backdrop-blur-sm animate-pulse">
-                <Heart className="h-12 w-12 text-white" fill="white" />
+                <img src={matchHeartIcon} alt="Match" className="h-16 w-16" />
               </div>
             </div>
 
-            <h2 className="text-3xl font-black text-white mb-2 drop-shadow-lg">
-              🎉 {t("explore.match.title")}
+            <h2 className="text-4xl font-black text-white mb-2 drop-shadow-lg">
+              MATCH!
             </h2>
             
             <p className="text-xl text-white font-semibold drop-shadow-md">
