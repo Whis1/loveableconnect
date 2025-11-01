@@ -36,6 +36,8 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
   const [lastOpponentEmoji, setLastOpponentEmoji] = useState<string | null>(null);
   const [userElo, setUserElo] = useState<number>(1200);
   const [opponentElo, setOpponentElo] = useState<number>(1200);
+  const [isMultiCapture, setIsMultiCapture] = useState(false);
+  const [capturingPiece, setCapturingPiece] = useState<number | null>(null);
 
   useEffect(() => {
     initializeBoard();
@@ -129,8 +131,8 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     }
   };
 
-  const getValidMoves = (position: number): { regular: number[]; jumps: number[] } => {
-    const piece = board[position];
+  const getValidMoves = (position: number, currentBoard: Board = board): { regular: number[]; jumps: number[] } => {
+    const piece = currentBoard[position];
     if (!piece || !piece.includes("red")) return { regular: [], jumps: [] };
 
     const regular: number[] = [];
@@ -143,21 +145,23 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     const directions = isKing ? [-1, 1] : [-1];
     
     for (const dir of directions) {
-      // Regular moves
-      const newRow = row + dir;
-      if (newRow >= 0 && newRow < 8) {
-        for (const dc of [-1, 1]) {
-          const newCol = col + dc;
-          if (newCol >= 0 && newCol < 8) {
-            const newPos = newRow * 8 + newCol;
-            if (board[newPos] === null) {
-              regular.push(newPos);
+      // Regular moves (only if not in multi-capture mode)
+      if (!isMultiCapture) {
+        const newRow = row + dir;
+        if (newRow >= 0 && newRow < 8) {
+          for (const dc of [-1, 1]) {
+            const newCol = col + dc;
+            if (newCol >= 0 && newCol < 8) {
+              const newPos = newRow * 8 + newCol;
+              if (currentBoard[newPos] === null) {
+                regular.push(newPos);
+              }
             }
           }
         }
       }
       
-      // Jump moves (captures)
+      // Jump moves (captures) - always check
       const jumpRow = row + dir * 2;
       if (jumpRow >= 0 && jumpRow < 8) {
         for (const dc of [-1, 1]) {
@@ -165,9 +169,9 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
           if (jumpCol >= 0 && jumpCol < 8) {
             const jumpPos = jumpRow * 8 + jumpCol;
             const middlePos = (row + dir) * 8 + (col + dc);
-            const middlePiece = board[middlePos];
+            const middlePiece = currentBoard[middlePos];
             
-            if (board[jumpPos] === null && middlePiece && middlePiece.includes("black")) {
+            if (currentBoard[jumpPos] === null && middlePiece && middlePiece.includes("black")) {
               jumps.push(jumpPos);
             }
           }
@@ -201,6 +205,18 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
   const handleSquareClick = (index: number) => {
     if (!isPlayerTurn || gameOver) return;
 
+    // If in multi-capture mode, only the capturing piece can be selected
+    if (isMultiCapture && capturingPiece !== null) {
+      if (selectedSquare === null && index === capturingPiece) {
+        setSelectedSquare(index);
+        const { jumps } = getValidMoves(index);
+        setValidMoves(jumps);
+      } else if (selectedSquare !== null && validMoves.includes(index)) {
+        makeMove(selectedSquare, index, true);
+      }
+      return;
+    }
+
     if (selectedSquare === null) {
       // Select piece
       if (board[index] && board[index]!.includes("red")) {
@@ -216,9 +232,11 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     } else {
       // Move piece
       if (validMoves.includes(index)) {
-        makeMove(selectedSquare, index);
-        setSelectedSquare(null);
-        setValidMoves([]);
+        const fromRow = Math.floor(selectedSquare / 8);
+        const toRow = Math.floor(index / 8);
+        const isJump = Math.abs(toRow - fromRow) === 2;
+        
+        makeMove(selectedSquare, index, isJump);
       } else {
         setSelectedSquare(null);
         setValidMoves([]);
@@ -226,7 +244,7 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     }
   };
 
-  const makeMove = (from: number, to: number) => {
+  const makeMove = (from: number, to: number, isJump: boolean) => {
     const newBoard = [...board];
     const piece = newBoard[from];
     
@@ -240,10 +258,10 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     const toRow = Math.floor(to / 8);
     const toCol = to % 8;
     
-    if (Math.abs(toRow - fromRow) === 2) {
+    if (isJump) {
       // Remove jumped piece
-      const jumpedRow = (fromRow + toRow) / 2;
-      const jumpedCol = (fromCol + toCol) / 2;
+      const jumpedRow = Math.floor((fromRow + toRow) / 2);
+      const jumpedCol = Math.floor((fromCol + toCol) / 2);
       newBoard[jumpedRow * 8 + jumpedCol] = null;
     }
     
@@ -253,6 +271,26 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     }
     
     setBoard(newBoard);
+    
+    // Check for multiple captures
+    if (isJump) {
+      const { jumps } = getValidMoves(to, newBoard);
+      
+      if (jumps.length > 0) {
+        // More captures available - continue multi-capture
+        setIsMultiCapture(true);
+        setCapturingPiece(to);
+        setSelectedSquare(to);
+        setValidMoves(jumps);
+        return;
+      }
+    }
+    
+    // No more captures - end turn
+    setIsMultiCapture(false);
+    setCapturingPiece(null);
+    setSelectedSquare(null);
+    setValidMoves([]);
     
     // Check win condition
     if (checkWin(newBoard, "red")) {
@@ -267,66 +305,96 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
   };
 
   const makeBotMove = () => {
-    const blackPieces: number[] = [];
-    board.forEach((piece, idx) => {
-      if (piece && piece.includes("black")) {
-        blackPieces.push(idx);
-      }
-    });
-
-    // Separate jumps from regular moves
-    const jumpMoves: Array<{ from: number; to: number }> = [];
-    const regularMoves: Array<{ from: number; to: number }> = [];
-    
-    for (const pos of blackPieces) {
-      const { regular, jumps } = getBotValidMoves(pos);
+    const makeOneBotMove = (currentBoard: Board, currentPos: number | null = null): Board => {
+      const blackPieces: number[] = [];
       
-      jumps.forEach(to => jumpMoves.push({ from: pos, to }));
-      regular.forEach(to => regularMoves.push({ from: pos, to }));
-    }
+      if (currentPos !== null) {
+        // Continue multi-capture from current position
+        blackPieces.push(currentPos);
+      } else {
+        // Find all black pieces
+        currentBoard.forEach((piece, idx) => {
+          if (piece && piece.includes("black")) {
+            blackPieces.push(idx);
+          }
+        });
+      }
 
-    // MANDATORY: If there are jump moves available, bot MUST take one
-    const availableMoves = jumpMoves.length > 0 ? jumpMoves : regularMoves;
+      // Separate jumps from regular moves
+      const jumpMoves: Array<{ from: number; to: number }> = [];
+      const regularMoves: Array<{ from: number; to: number }> = [];
+      
+      for (const pos of blackPieces) {
+        const { regular, jumps } = getBotValidMoves(pos, currentBoard);
+        
+        jumps.forEach(to => jumpMoves.push({ from: pos, to }));
+        if (currentPos === null) {
+          regular.forEach(to => regularMoves.push({ from: pos, to }));
+        }
+      }
 
-    if (availableMoves.length === 0) {
+      // MANDATORY: If there are jump moves available, bot MUST take one
+      const availableMoves = jumpMoves.length > 0 ? jumpMoves : regularMoves;
+
+      if (availableMoves.length === 0) {
+        return currentBoard; // No moves available
+      }
+
+      // Pick a random move from available moves
+      const move = availableMoves[Math.floor(Math.random() * availableMoves.length)];
+      const newBoard = [...currentBoard];
+      const piece = newBoard[move.from];
+      
+      if (!piece) {
+        return currentBoard;
+      }
+      
+      newBoard[move.to] = piece;
+      newBoard[move.from] = null;
+      
+      // Handle jumps (captures)
+      const fromRow = Math.floor(move.from / 8);
+      const fromCol = move.from % 8;
+      const toRow = Math.floor(move.to / 8);
+      const toCol = move.to % 8;
+      
+      const isJump = Math.abs(toRow - fromRow) === 2;
+      
+      if (isJump) {
+        // Remove captured piece
+        const jumpedRow = Math.floor((fromRow + toRow) / 2);
+        const jumpedCol = Math.floor((fromCol + toCol) / 2);
+        newBoard[jumpedRow * 8 + jumpedCol] = null;
+        
+        // Check for more captures (multi-capture)
+        const { jumps } = getBotValidMoves(move.to, newBoard);
+        
+        if (jumps.length > 0) {
+          // Continue capturing recursively
+          return makeOneBotMove(newBoard, move.to);
+        }
+      }
+      
+      // King promotion
+      if (piece === "black" && toRow === 7) {
+        newBoard[move.to] = "black-king";
+      }
+      
+      return newBoard;
+    };
+
+    const newBoard = makeOneBotMove(board);
+    
+    // Check if board changed (move was made)
+    const boardChanged = JSON.stringify(newBoard) !== JSON.stringify(board);
+    
+    if (!boardChanged) {
       // No moves available - player wins
       setGameOver(true);
       setWinner("player");
       updateUserElo(20);
       onGameEnd("win");
       return;
-    }
-
-    // Pick a random move from available moves
-    const move = availableMoves[Math.floor(Math.random() * availableMoves.length)];
-    const newBoard = [...board];
-    const piece = newBoard[move.from];
-    
-    if (!piece) {
-      console.error("Bot tried to move non-existent piece");
-      setIsPlayerTurn(true);
-      return;
-    }
-    
-    newBoard[move.to] = piece;
-    newBoard[move.from] = null;
-    
-    // Handle jumps (captures)
-    const fromRow = Math.floor(move.from / 8);
-    const fromCol = move.from % 8;
-    const toRow = Math.floor(move.to / 8);
-    const toCol = move.to % 8;
-    
-    if (Math.abs(toRow - fromRow) === 2) {
-      // Remove captured piece
-      const jumpedRow = Math.floor((fromRow + toRow) / 2);
-      const jumpedCol = Math.floor((fromCol + toCol) / 2);
-      newBoard[jumpedRow * 8 + jumpedCol] = null;
-    }
-    
-    // King promotion
-    if (piece === "black" && toRow === 7) {
-      newBoard[move.to] = "black-king";
     }
     
     setBoard(newBoard);
@@ -342,8 +410,8 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     setIsPlayerTurn(true);
   };
 
-  const getBotValidMoves = (position: number): { regular: number[]; jumps: number[] } => {
-    const piece = board[position];
+  const getBotValidMoves = (position: number, currentBoard: Board = board): { regular: number[]; jumps: number[] } => {
+    const piece = currentBoard[position];
     if (!piece || !piece.includes("black")) return { regular: [], jumps: [] };
 
     const regular: number[] = [];
@@ -362,7 +430,7 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
           const newCol = col + dc;
           if (newCol >= 0 && newCol < 8) {
             const newPos = newRow * 8 + newCol;
-            if (board[newPos] === null) {
+            if (currentBoard[newPos] === null) {
               regular.push(newPos);
             }
           }
@@ -377,9 +445,9 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
           if (jumpCol >= 0 && jumpCol < 8) {
             const jumpPos = jumpRow * 8 + jumpCol;
             const middlePos = (row + dir) * 8 + (col + dc);
-            const middlePiece = board[middlePos];
+            const middlePiece = currentBoard[middlePos];
             
-            if (board[jumpPos] === null && middlePiece && middlePiece.includes("red")) {
+            if (currentBoard[jumpPos] === null && middlePiece && middlePiece.includes("red")) {
               jumps.push(jumpPos);
             }
           }
