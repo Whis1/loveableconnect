@@ -32,6 +32,7 @@ interface Message {
   media_url: string | null;
   created_at: string;
   read: boolean;
+  admin_sender_nickname?: string | null;
 }
 
 export const AdminChatDialog = ({
@@ -320,6 +321,12 @@ export const AdminChatDialog = ({
                           receiverId={message.receiver_id}
                           matchId={message.match_id}
                           senderAvatarUrl={senderAvatar}
+                          senderNickname={
+                            message.sender_id === adminProfileId 
+                              ? (message.admin_sender_nickname || undefined)
+                              : undefined
+                          }
+                          showAdminLabel={true}
                         />
                       );
                     })}
