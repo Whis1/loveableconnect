@@ -68,9 +68,12 @@ const Chats = () => {
       }
 
       const list = data.conversations || [];
+      const sorted = [...list].sort(
+        (a: any, b: any) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
+      );
       setConversations(() => {
-        if (!selectedConversation) return list;
-        return list.map((c: any) =>
+        if (!selectedConversation) return sorted;
+        return sorted.map((c: any) =>
           c.matchId === selectedConversation.matchId && c.userId === selectedConversation.userId
             ? { ...c, unreadCount: 0 }
             : c
@@ -90,24 +93,12 @@ const Chats = () => {
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*",
           schema: "public",
           table: "messages",
         },
         () => {
-          // Nuovo messaggio - aggiorna conversazioni
-          fetchConversations(true);
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "messages",
-        },
-        () => {
-          // Messaggio letto - aggiorna contatori
+          // Nuovo messaggio o lettura: aggiorna lista e ordinamento
           fetchConversations(true);
         }
       )
@@ -119,7 +110,6 @@ const Chats = () => {
           table: "matches",
         },
         () => {
-          // Nuovo match - potrebbe essere una nuova conversazione admin
           fetchConversations(true);
         }
       )

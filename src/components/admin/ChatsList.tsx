@@ -145,12 +145,6 @@ export const ChatsList = ({
                         Admin: {conv.adminNickname}
                       </span>
                       <div className="flex items-center gap-1">
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {formatDistanceToNow(new Date(conv.lastMessageAt), {
-                            addSuffix: true,
-                            locale: it,
-                          })}
-                        </span>
                         <Button
                           variant="ghost"
                           size="icon"
