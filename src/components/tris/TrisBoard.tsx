@@ -64,6 +64,7 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
   const [lastOpponentEmoji, setLastOpponentEmoji] = useState<string | null>(null);
   const [userElo, setUserElo] = useState<number>(1200);
   const [opponentElo, setOpponentElo] = useState<number>(1200);
+  const [timeLeft, setTimeLeft] = useState<number>(30);
   const gameCompletedRef = useRef(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const leaveIntentRef = useRef<"reload" | "back" | null>(null);
@@ -233,6 +234,37 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     return `${supabaseUrl}/storage/v1/object/public/profile-images/${avatarPath}`;
   };
+
+  // Timer countdown effect
+  useEffect(() => {
+    if (gameOver) return;
+
+    setTimeLeft(30); // Reset timer when turn changes
+    
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          // Time's up - current player loses
+          setGameOver(true);
+          gameCompletedRef.current = true;
+          if (isPlayerTurn) {
+            setWinner("bot");
+            updateUserElo(-10);
+            onGameEnd("lose");
+          } else {
+            setWinner("player");
+            updateUserElo(20);
+            onGameEnd("win");
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isPlayerTurn, gameOver]);
 
   useEffect(() => {
     if (!isPlayerTurn && !gameOver) {
@@ -531,9 +563,20 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
 
       <div className="text-center">
         {!gameOver && (
-          <p className="text-lg font-semibold">
-            {isPlayerTurn ? "🎮 Il tuo turno" : "⏳ Turno dell'avversario..."}
-          </p>
+          <div className="space-y-2">
+            <p className="text-lg font-semibold">
+              {isPlayerTurn ? "🎮 Il tuo turno" : "⏳ Turno dell'avversario..."}
+            </p>
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-sm text-muted-foreground">Tempo rimanente:</span>
+              <span className={cn(
+                "text-2xl font-bold tabular-nums",
+                timeLeft <= 10 ? "text-destructive animate-pulse" : "text-primary"
+              )}>
+                {timeLeft}s
+              </span>
+            </div>
+          </div>
         )}
         {gameOver && winner === "player" && (
           <p className="text-xl font-bold text-primary">🎉 Hai vinto! +6 crediti</p>
