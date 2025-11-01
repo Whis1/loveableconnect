@@ -313,7 +313,18 @@ export function UserBanManager() {
                         </div>
                         <div>
                           <span className="text-muted-foreground">Genere:</span>{" "}
-                          <span className="font-medium">{selectedUser.gender || "N/A"}</span>
+                          <span className="font-medium capitalize">
+                            {selectedUser.gender === 'male' ? 'Maschio' : 
+                             selectedUser.gender === 'female' ? 'Femmina' : 'N/A'}
+                          </span>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-muted-foreground">Orientamento:</span>{" "}
+                          <span className="font-medium capitalize">
+                            {selectedUser.sexual_orientation === 'heterosexual' ? 'Eterosessuale' :
+                             selectedUser.sexual_orientation === 'homosexual' ? 'Omosessuale' :
+                             selectedUser.sexual_orientation === 'bisexual' ? 'Bisessuale' : 'N/A'}
+                          </span>
                         </div>
                         <div className="col-span-2">
                           <span className="text-muted-foreground">Città:</span>{" "}
