@@ -154,7 +154,7 @@ const Credits = () => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="text-3xl font-bold">€99,99{t("credits.perMonth")}</div>
+                <div className="text-3xl font-bold">€299,99{t("credits.perMonth")}</div>
                 <ul className="space-y-2">
                   <li className="flex items-center gap-2">
                     <Zap className="h-5 w-5 text-amber-500" />
