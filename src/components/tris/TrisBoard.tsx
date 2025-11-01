@@ -70,15 +70,7 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
     startBotEmojiSystem();
     // Generate random ELO for opponent (between 1000 and 1600)
     setOpponentElo(Math.floor(Math.random() * 601) + 1000);
-
-    // Cleanup function: detect game abandonment
-    return () => {
-      if (!gameOver) {
-        // Player abandoned the game - apply penalty
-        updateUserElo(-10);
-      }
-    };
-  }, [gameOver]);
+  }, []);
 
   const startBotEmojiSystem = () => {
     const showRandomEmoji = () => {
