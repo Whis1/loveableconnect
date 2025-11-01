@@ -16,9 +16,11 @@ export function UserBanManager() {
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [userDetails, setUserDetails] = useState<any>(null);
   const [isBanned, setIsBanned] = useState(false);
   const [banReason, setBanReason] = useState("");
   const [loading, setLoading] = useState(false);
+  const [detailsLoading, setDetailsLoading] = useState(false);
   const [bannedUsersMap, setBannedUsersMap] = useState<Map<string, any>>(new Map());
 
   useEffect(() => {
@@ -81,11 +83,35 @@ export function UserBanManager() {
     }
   };
 
-  const selectUser = (user: any) => {
+  const selectUser = async (user: any) => {
     setSelectedUser(user);
     const banData = bannedUsersMap.get(user.id);
     setIsBanned(!!banData);
     setBanReason(banData?.reason || "");
+    
+    // Load detailed user info
+    setDetailsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-get-user-details', {
+        body: { user_id: user.id },
+      });
+
+      if (error || !data?.success) {
+        throw new Error(error?.message || data?.error || 'Errore nel caricamento dei dettagli');
+      }
+
+      setUserDetails(data);
+    } catch (error: any) {
+      console.error('Error loading user details:', error);
+      toast({
+        title: 'Errore',
+        description: error.message || 'Errore nel caricamento dei dettagli utente',
+        variant: 'destructive',
+      });
+      setUserDetails(null);
+    } finally {
+      setDetailsLoading(false);
+    }
   };
 
 
@@ -246,92 +272,215 @@ export function UserBanManager() {
             <Label>Dettagli utente</Label>
             {selectedUser ? (
               <div className="h-[500px] border rounded-lg p-4 bg-muted/30 overflow-auto">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-20 w-20">
-                      <AvatarImage src={selectedUser.avatar_url} />
-                      <AvatarFallback>
-                        {selectedUser.nickname.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-xl">
-                        {selectedUser.nickname}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {selectedUser.full_name}
-                      </p>
-                      <p className="text-xs text-muted-foreground font-mono mt-1">
-                        ID: {selectedUser.id}
-                      </p>
+                {detailsLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-muted-foreground">Caricamento dettagli...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-20 w-20">
+                        <AvatarImage src={selectedUser.avatar_url} />
+                        <AvatarFallback className="text-2xl">
+                          {selectedUser.nickname.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-xl">
+                          {selectedUser.nickname}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {selectedUser.full_name}
+                        </p>
+                        <p className="text-xs text-muted-foreground font-mono mt-1">
+                          ID: {selectedUser.id}
+                        </p>
+                      </div>
+                      {isBanned && (
+                        <div className="flex flex-col items-center gap-1 text-destructive">
+                          <Ban className="h-8 w-8" />
+                          <span className="font-semibold text-xs">BANNATO</span>
+                        </div>
+                      )}
                     </div>
-                    {isBanned && (
-                      <div className="flex flex-col items-center gap-1 text-destructive">
-                        <Ban className="h-8 w-8" />
-                        <span className="font-semibold text-xs">BANNATO</span>
+
+                    <div className="space-y-3 border-t pt-3">
+                      <h4 className="font-semibold text-sm">Informazioni Base</h4>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Età:</span>{" "}
+                          <span className="font-medium">{selectedUser.age || "N/A"}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Genere:</span>{" "}
+                          <span className="font-medium">{selectedUser.gender || "N/A"}</span>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-muted-foreground">Città:</span>{" "}
+                          <span className="font-medium">{selectedUser.city || "N/A"}</span>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-muted-foreground">Registrato il:</span>{" "}
+                          <span className="font-medium">
+                            {userDetails?.auth_created_at 
+                              ? new Date(userDetails.auth_created_at).toLocaleString("it-IT", {
+                                  dateStyle: "medium",
+                                  timeStyle: "short"
+                                })
+                              : "N/A"}
+                          </span>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-muted-foreground">Metodo:</span>{" "}
+                          <span className="font-medium">
+                            {userDetails?.auth_provider === "google" ? "Google" : "Registrazione Standard"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {userDetails?.credits && (
+                      <div className="space-y-3 border-t pt-3">
+                        <h4 className="font-semibold text-sm">Abbonamento e Crediti</h4>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Status:</span>
+                            <span className={`font-medium ${userDetails.credits.is_premium ? 'text-primary' : ''}`}>
+                              {userDetails.credits.is_premium ? '⭐ Premium' : 'Free'}
+                            </span>
+                          </div>
+                          {userDetails.credits.is_premium && (
+                            <>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Tipo:</span>
+                                <span className="font-medium capitalize">
+                                  {userDetails.credits.subscription_type === 'monthly' ? 'Mensile' : 
+                                   userDetails.credits.subscription_type === 'weekly' ? 'Settimanale' : 'N/A'}
+                                </span>
+                              </div>
+                              {userDetails.credits.premium_expires_at && (
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Scadenza:</span>
+                                  <span className="font-medium">
+                                    {new Date(userDetails.credits.premium_expires_at).toLocaleString("it-IT", {
+                                      dateStyle: "medium",
+                                      timeStyle: "short"
+                                    })}
+                                  </span>
+                                </div>
+                              )}
+                              {userDetails.credits.premium_expires_at && (() => {
+                                const now = new Date();
+                                const expiry = new Date(userDetails.credits.premium_expires_at);
+                                const diff = expiry.getTime() - now.getTime();
+                                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                
+                                return (
+                                  <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Tempo rimanente:</span>
+                                    <span className="font-medium">
+                                      {diff > 0 
+                                        ? `${days}g ${hours}h ${minutes}m`
+                                        : 'Scaduto'}
+                                    </span>
+                                  </div>
+                                );
+                              })()}
+                            </>
+                          )}
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Crediti:</span>
+                            <span className="font-medium">{userDetails.credits.balance || 0}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Like giornalieri:</span>
+                            <span className="font-medium">{userDetails.credits.daily_likes_remaining || 0}</span>
+                          </div>
+                        </div>
                       </div>
                     )}
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Età:</span>{" "}
-                      {selectedUser.age || "N/A"}
+                    {userDetails?.purchases && userDetails.purchases.length > 0 && (
+                      <div className="space-y-3 border-t pt-3">
+                        <h4 className="font-semibold text-sm">Cronologia Acquisti ({userDetails.purchases.length})</h4>
+                        <ScrollArea className="h-[150px]">
+                          <div className="space-y-2">
+                            {userDetails.purchases.map((purchase: any) => (
+                              <div key={purchase.id} className="p-2 bg-background rounded-lg text-xs space-y-1">
+                                <div className="flex justify-between">
+                                  <span className="font-medium">
+                                    {purchase.product_type === 'premium' ? '⭐ Abbonamento Premium' : 
+                                     purchase.product_type === 'credits' ? '💎 Crediti' : 
+                                     purchase.product_type}
+                                  </span>
+                                  <span className={`font-semibold ${
+                                    purchase.status === 'completed' ? 'text-green-500' : 
+                                    purchase.status === 'pending' ? 'text-yellow-500' : 
+                                    'text-muted-foreground'
+                                  }`}>
+                                    {purchase.status === 'completed' ? '✓' : 
+                                     purchase.status === 'pending' ? '⏳' : '✗'}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between text-muted-foreground">
+                                  <span>
+                                    {new Date(purchase.created_at).toLocaleDateString("it-IT")}
+                                  </span>
+                                  <span className="font-medium">
+                                    €{(purchase.amount_cents / 100).toFixed(2)}
+                                  </span>
+                                </div>
+                                {purchase.credits_amount && (
+                                  <div className="text-muted-foreground">
+                                    {purchase.credits_amount} crediti
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      </div>
+                    )}
+
+                    <div className="space-y-2 border-t pt-3">
+                      <Label htmlFor="reason">Motivo del ban</Label>
+                      <Textarea
+                        id="reason"
+                        placeholder="Inserisci il motivo del ban..."
+                        value={banReason}
+                        onChange={(e) => setBanReason(e.target.value)}
+                        disabled={isBanned}
+                        rows={3}
+                      />
                     </div>
-                    <div>
-                      <span className="text-muted-foreground">Genere:</span>{" "}
-                      {selectedUser.gender || "N/A"}
-                    </div>
-                    <div className="col-span-2">
-                      <span className="text-muted-foreground">Città:</span>{" "}
-                      {selectedUser.city || "N/A"}
-                    </div>
-                    <div className="col-span-2">
-                      <span className="text-muted-foreground">
-                        Registrato il:
-                      </span>{" "}
-                      {new Date(selectedUser.created_at).toLocaleDateString(
-                        "it-IT"
+
+                    <div className="flex gap-2">
+                      {!isBanned ? (
+                        <Button
+                          onClick={handleBanUser}
+                          disabled={loading}
+                          variant="destructive"
+                          className="flex-1"
+                        >
+                          <Ban className="h-4 w-4 mr-2" />
+                          Banna Utente
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={handleUnbanUser}
+                          disabled={loading}
+                          variant="default"
+                          className="flex-1"
+                        >
+                          <ShieldCheck className="h-4 w-4 mr-2" />
+                          Rimuovi Ban
+                        </Button>
                       )}
                     </div>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="reason">Motivo del ban</Label>
-                    <Textarea
-                      id="reason"
-                      placeholder="Inserisci il motivo del ban..."
-                      value={banReason}
-                      onChange={(e) => setBanReason(e.target.value)}
-                      disabled={isBanned}
-                      rows={4}
-                    />
-                  </div>
-
-                  <div className="flex gap-2">
-                    {!isBanned ? (
-                      <Button
-                        onClick={handleBanUser}
-                        disabled={loading}
-                        variant="destructive"
-                        className="flex-1"
-                      >
-                        <Ban className="h-4 w-4 mr-2" />
-                        Banna Utente
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={handleUnbanUser}
-                        disabled={loading}
-                        variant="default"
-                        className="flex-1"
-                      >
-                        <ShieldCheck className="h-4 w-4 mr-2" />
-                        Rimuovi Ban
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                )}
               </div>
             ) : (
               <div className="h-[500px] border rounded-lg flex items-center justify-center text-muted-foreground">
