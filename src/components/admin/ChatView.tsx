@@ -30,6 +30,7 @@ interface Message {
   created_at: string;
   message_type: "text" | "emoji" | "gif" | "image" | "voice";
   media_url: string | null;
+  sender_nickname?: string | null;
 }
 
 interface ChatViewProps {
@@ -97,9 +98,24 @@ export const ChatView = ({ conversation, onRefresh }: ChatViewProps) => {
           table: "messages",
           filter: `match_id=eq.${conversation.matchId}`,
         },
-        (payload) => {
+        async (payload) => {
           const newMsg = payload.new as Message;
-          setMessages((prev) => [...prev, newMsg]);
+          
+          // Recupera il nickname del sender se è admin
+          const { data: senderProfile } = await supabase
+            .from('profiles')
+            .select('nickname, is_admin_profile')
+            .eq('id', newMsg.sender_id)
+            .single();
+
+          const msgWithNickname = {
+            ...newMsg,
+            sender_nickname: senderProfile?.is_admin_profile 
+              ? senderProfile.nickname 
+              : null
+          };
+
+          setMessages((prev) => [...prev, msgWithNickname]);
           setTimeout(scrollToBottom, 100);
           markAsRead();
         }
@@ -257,6 +273,8 @@ export const ChatView = ({ conversation, onRefresh }: ChatViewProps) => {
                     : null
                 }
                 timestamp={msg.created_at}
+                senderNickname={msg.sender_nickname || undefined}
+                showAdminLabel={true}
               />
             ))}
           </div>

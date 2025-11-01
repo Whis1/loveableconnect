@@ -13,6 +13,8 @@ interface MessageBubbleProps {
   receiverId?: string;
   matchId?: string;
   senderAvatarUrl?: string | null;
+  senderNickname?: string;
+  showAdminLabel?: boolean;
 }
 
 export const MessageBubble = ({ 
@@ -25,7 +27,9 @@ export const MessageBubble = ({
   senderId,
   receiverId,
   matchId,
-  senderAvatarUrl
+  senderAvatarUrl,
+  senderNickname,
+  showAdminLabel = false
 }: MessageBubbleProps) => {
   const renderContent = () => {
     switch (messageType) {
@@ -94,6 +98,11 @@ export const MessageBubble = ({
             minute: '2-digit',
             hour12: false
           }).replace(',', '')}
+          {showAdminLabel && senderNickname && (
+            <span className="ml-2 font-medium">
+              • {senderNickname}
+            </span>
+          )}
         </p>
       </div>
     </div>
