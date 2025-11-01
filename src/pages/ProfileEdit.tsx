@@ -630,89 +630,76 @@ const ProfileEdit = () => {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="city">{t('profile.location')} {requiresCompletion && <span className="text-destructive">*</span>}</Label>
-                  {profile.location_locked ? (
-                    <div className="space-y-3">
-                      <div className="relative">
-                        <Input
-                          value={profile.city || ""}
-                          disabled
-                          className="bg-muted cursor-not-allowed pr-10"
-                        />
-                        <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="city">{t('profile.location')} {requiresCompletion && <span className="text-destructive">*</span>}</Label>
+                    {profile.location_locked ? (
+                      <div className="space-y-3">
+                        <div className="relative">
+                          <Input
+                            value={profile.city || ""}
+                            disabled
+                            className="bg-muted cursor-not-allowed pr-10"
+                          />
+                          <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setShowLocationRequest(true)}
+                          className="w-full"
+                        >
+                          <MapPin className="h-4 w-4 mr-2" />
+                          {t('profile.requestLocationChange')}
+                        </Button>
                       </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setShowLocationRequest(true)}
-                        className="w-full"
-                      >
-                        <MapPin className="h-4 w-4 mr-2" />
-                        {t('profile.requestLocationChange')}
-                      </Button>
-                    </div>
-                  ) : (
-                    <PlacesAutocomplete
-                      value={profile.city || ""}
-                      onChange={handleCityChange}
-                      placeholder={t('profile.locationPlaceholder')}
-                      id="city"
-                    />
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Label>Data di Nascita {requiresCompletion && <span className="text-destructive">*</span>}</Label>
-                    {profile.birthdate_locked && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <AlertCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="max-w-xs">Questa modalità ci aiuta a prevenire i profili falsi.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                    ) : (
+                      <PlacesAutocomplete
+                        value={profile.city || ""}
+                        onChange={handleCityChange}
+                        placeholder={t('profile.locationPlaceholder')}
+                        id="city"
+                      />
                     )}
                   </div>
-                  {profile.birthdate_locked ? (
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-3 gap-2">
-                        <Input
-                          value={birthDay || ""}
-                          disabled
-                          className="bg-muted cursor-not-allowed"
-                          placeholder="Giorno"
-                        />
-                        <Input
-                          value={birthMonth ? ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'][parseInt(birthMonth) - 1] : ""}
-                          disabled
-                          className="bg-muted cursor-not-allowed"
-                          placeholder="Mese"
-                        />
-                        <Input
-                          value={birthYear || ""}
-                          disabled
-                          className="bg-muted cursor-not-allowed"
-                          placeholder="Anno"
-                        />
+
+                  <div className="space-y-2">
+                    <Label>Data di Nascita {requiresCompletion && <span className="text-destructive">*</span>}</Label>
+                    {profile.birthdate_locked ? (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-3 gap-2">
+                          <Input
+                            value={birthDay || ""}
+                            disabled
+                            className="bg-muted cursor-not-allowed"
+                            placeholder="Giorno"
+                          />
+                          <Input
+                            value={birthMonth ? ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'][parseInt(birthMonth) - 1] : ""}
+                            disabled
+                            className="bg-muted cursor-not-allowed"
+                            placeholder="Mese"
+                          />
+                          <Input
+                            value={birthYear || ""}
+                            disabled
+                            className="bg-muted cursor-not-allowed"
+                            placeholder="Anno"
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setShowBirthdateRequest(true)}
+                          className="w-full"
+                        >
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Richiedi Cambio Data di Nascita
+                        </Button>
                       </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setShowBirthdateRequest(true)}
-                        className="w-full"
-                      >
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Richiedi Cambio Data di Nascita
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="grid grid-cols-3 gap-2">
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-3 gap-2">
                         <Select value={birthDay} onValueChange={setBirthDay} required={requiresCompletion}>
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="Giorno" />
@@ -768,6 +755,7 @@ const ProfileEdit = () => {
                   )}
                 </div>
               </div>
+            </div>
 
               {/* Relationship Status */}
               <div className="space-y-2">
