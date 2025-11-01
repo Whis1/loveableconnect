@@ -71,7 +71,7 @@ export const VoiceRecorder = ({ onRecordingComplete, disabled = false, isPremium
       onClick={isRecording ? stopRecording : startRecording}
       disabled={disabled || isProcessing || !isPremiumMonthly}
       className={!isPremiumMonthly 
-        ? "bg-gradient-to-br from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 border-0 cursor-not-allowed shrink-0 shadow-lg h-11 w-11" 
+        ? "bg-gradient-to-br from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 border-0 cursor-not-allowed shrink-0 shadow-lg" 
         : "shrink-0"
       }
     >
