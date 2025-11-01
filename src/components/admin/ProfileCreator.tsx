@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserPlus, Users } from "lucide-react";
+import { InterestsAutocomplete } from "@/components/InterestsAutocomplete";
+import { LookingForSelector } from "@/components/admin/LookingForSelector";
 
 export const ProfileCreator = () => {
   const { toast } = useToast();
@@ -22,6 +24,7 @@ export const ProfileCreator = () => {
     sexual_orientation: "",
     relationship_status: "",
     looking_for: [] as string[],
+    interests: [] as string[],
   });
 
   // Calcola automaticamente birthdate quando cambia l'età
@@ -86,6 +89,7 @@ export const ProfileCreator = () => {
         sexual_orientation: formData.sexual_orientation || null,
         relationship_status: formData.relationship_status || null,
         looking_for: formData.looking_for.length > 0 ? formData.looking_for : null,
+        interests: formData.interests.length > 0 ? formData.interests : null,
         is_admin_profile: true,
       }).select();
 
@@ -110,6 +114,7 @@ export const ProfileCreator = () => {
         sexual_orientation: "",
         relationship_status: "",
         looking_for: [],
+        interests: [],
       });
 
       setTimeout(() => window.location.reload(), 1000);
@@ -150,6 +155,7 @@ export const ProfileCreator = () => {
           sexual_orientation: formData.sexual_orientation || null,
           relationship_status: formData.relationship_status || null,
           looking_for: formData.looking_for.length > 0 ? formData.looking_for : null,
+          interests: formData.interests.length > 0 ? formData.interests : null,
           is_admin_profile: true,
         });
       }
@@ -175,6 +181,7 @@ export const ProfileCreator = () => {
         sexual_orientation: "",
         relationship_status: "",
         looking_for: [],
+        interests: [],
       });
 
       setTimeout(() => window.location.reload(), 1500);
@@ -302,15 +309,20 @@ export const ProfileCreator = () => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="looking_for">Cosa cerchi (separato da virgole)</Label>
-          <Input
-            id="looking_for"
-            placeholder="Es: Relazione seria, Amicizia, ..."
-            value={formData.looking_for.join(", ")}
-            onChange={(e) => setFormData({ 
-              ...formData, 
-              looking_for: e.target.value.split(",").map(s => s.trim()).filter(s => s) 
-            })}
+          <Label>Cosa cerchi (max 3)</Label>
+          <LookingForSelector
+            selectedOptions={formData.looking_for}
+            onOptionsChange={(options) => setFormData({ ...formData, looking_for: options })}
+            maxOptions={3}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Interessi (max 4)</Label>
+          <InterestsAutocomplete
+            selectedInterests={formData.interests}
+            onInterestsChange={(interests) => setFormData({ ...formData, interests })}
+            maxInterests={4}
           />
         </div>
 
