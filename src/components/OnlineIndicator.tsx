@@ -27,7 +27,7 @@ const OnlineIndicator = ({ userId, className, size = "md" }: OnlineIndicatorProp
           <div
             className={cn(
               "rounded-full flex items-center justify-center cursor-pointer",
-              size === "sm" ? "p-0.5" : size === "md" ? "p-0.5" : "p-1",
+              size === "sm" ? "p-[1px]" : size === "md" ? "p-[1px]" : "p-[2px]",
               "bg-background shadow-sm",
               className
             )}
