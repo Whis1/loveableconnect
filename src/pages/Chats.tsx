@@ -49,89 +49,21 @@ const Chats = () => {
     try {
       setLoading(true);
 
-      // Ottieni tutte le notifiche di tipo messaggio
-      const { data: notifications, error: notifError } = await supabase
-        .from("admin_notifications")
-        .select("admin_profile_id, user_id")
-        .eq("interaction_type", "message")
-        .order("created_at", { ascending: false });
-
-      if (notifError) throw notifError;
-
-      // Raggruppa per conversazioni uniche
-      const uniqueConversations = new Map<string, any>();
-      
-      for (const notif of notifications || []) {
-        const key = `${notif.admin_profile_id}-${notif.user_id}`;
-        if (!uniqueConversations.has(key)) {
-          uniqueConversations.set(key, notif);
-        }
-      }
-
-      // Carica i dettagli di ogni conversazione
-      const conversationsData: Conversation[] = [];
-
-      for (const notif of uniqueConversations.values()) {
-        // Ottieni il match
-        const { data: match } = await supabase
-          .from("matches")
-          .select("id")
-          .or(`user1_id.eq.${notif.admin_profile_id},user2_id.eq.${notif.admin_profile_id}`)
-          .or(`user1_id.eq.${notif.user_id},user2_id.eq.${notif.user_id}`)
-          .maybeSingle();
-
-        if (!match) continue;
-
-        // Ottieni i profili
-        const { data: userProfile } = await supabase
-          .from("profiles")
-          .select("nickname, avatar_url")
-          .eq("id", notif.user_id)
-          .single();
-
-        const { data: adminProfile } = await supabase
-          .from("profiles")
-          .select("nickname")
-          .eq("id", notif.admin_profile_id)
-          .single();
-
-        // Conta messaggi non letti
-        const { count } = await supabase
-          .from("messages")
-          .select("*", { count: "exact", head: true })
-          .eq("match_id", match.id)
-          .eq("receiver_id", notif.admin_profile_id)
-          .eq("read", false);
-
-        // Ottieni ultimo messaggio
-        const { data: lastMessage } = await supabase
-          .from("messages")
-          .select("created_at")
-          .eq("match_id", match.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        conversationsData.push({
-          userId: notif.user_id,
-          userNickname: userProfile?.nickname || "Utente",
-          userAvatar: userProfile?.avatar_url || null,
-          adminProfileId: notif.admin_profile_id,
-          adminNickname: adminProfile?.nickname || "Admin",
-          matchId: match.id,
-          lastMessageAt: lastMessage?.created_at || new Date().toISOString(),
-          unreadCount: count || 0,
-        });
-      }
-
-      // Ordina per ultimo messaggio
-      conversationsData.sort((a, b) => 
-        new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
+      const { data, error } = await supabase.functions.invoke(
+        "admin-secondary-get-conversations",
+        { body: {} }
       );
 
-      setConversations(conversationsData);
+      if (error) throw error;
+
+      if (!data.success) {
+        throw new Error(data.error || "Errore nel recupero delle conversazioni");
+      }
+
+      setConversations(data.conversations || []);
     } catch (error) {
       console.error("Error fetching conversations:", error);
+      toast.error("Errore nel caricamento delle conversazioni");
     } finally {
       setLoading(false);
     }

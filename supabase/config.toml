@@ -114,3 +114,12 @@ verify_jwt = false
 [functions.check-subscription-expiry]
 verify_jwt = false
 
+[functions.admin-secondary-create]
+verify_jwt = false
+
+[functions.admin-secondary-login]
+verify_jwt = false
+
+[functions.admin-secondary-get-conversations]
+verify_jwt = false
+
