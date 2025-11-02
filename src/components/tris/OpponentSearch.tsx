@@ -26,58 +26,24 @@ interface StoredLeaderboardData {
 export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchDuration] = useState(
-    Math.floor(Math.random() * 3000) + 2000
-  ); // 2-5 secondi
+    Math.floor(Math.random() * 2000) + 3000
+  ); // 3-5 secondi
 
   useEffect(() => {
     fetchProfiles();
   }, []);
 
   const fetchProfiles = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setIsLoading(false);
-        return;
-      }
+    // Fetch ALL admin profiles - sono bot, sempre disponibili
+    const { data: adminProfiles } = await supabase
+      .from("profiles")
+      .select("id, nickname, avatar_url, photos, tris_elo")
+      .eq("is_admin_profile", true);
 
-      // Fetch admin profiles that user hasn't matched with
-      const { data: matches } = await supabase
-        .from("matches")
-        .select("user1_id, user2_id")
-        .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`);
-
-      const matchedIds = matches
-        ? matches.map((m) =>
-            m.user1_id === session.user.id ? m.user2_id : m.user1_id
-          )
-        : [];
-
-      const { data: adminProfiles, error } = await supabase
-        .from("profiles")
-        .select("id, nickname, avatar_url, photos, tris_elo")
-        .eq("is_admin_profile", true)
-        .not("id", "in", `(${matchedIds.join(",") || "null"})`);
-
-      if (error) {
-        console.error("Error fetching profiles:", error);
-        setIsLoading(false);
-        return;
-      }
-
-      if (adminProfiles && adminProfiles.length > 0) {
-        setProfiles(adminProfiles);
-        setIsLoading(false);
-        startAnimation(adminProfiles);
-      } else {
-        // Nessun profilo disponibile
-        setIsLoading(false);
-      }
-    } catch (error) {
-      console.error("Error in fetchProfiles:", error);
-      setIsLoading(false);
+    if (adminProfiles && adminProfiles.length > 0) {
+      setProfiles(adminProfiles);
+      startAnimation(adminProfiles);
     }
   };
 
@@ -133,10 +99,10 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
     return opponent;
   };
 
-  if (isLoading || profiles.length === 0) {
+  if (profiles.length === 0) {
     return (
       <Card className="p-8 text-center">
-        <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+        <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
         <p>Ricerca sfidanti in corso...</p>
       </Card>
     );
