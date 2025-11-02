@@ -20,7 +20,9 @@ export const VoiceRecorder = ({ onRecordingComplete, disabled = false, isPremium
   const { toast } = useToast();
 
   const startRecording = async () => {
+    console.log('🎤 Start recording - isPremiumMonthly:', isPremiumMonthly);
     if (!isPremiumMonthly) {
+      console.log('🎤 Not premium - calling onPremiumRequired');
       onPremiumRequired?.();
       return;
     }

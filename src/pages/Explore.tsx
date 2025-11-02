@@ -382,6 +382,7 @@ const Explore = () => {
   };
 
   const handleMatch = (userName: string) => {
+    console.log('🎉 MATCH! Showing banner for:', userName);
     setMatchBanner({ show: true, userName });
   };
 
