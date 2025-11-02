@@ -130,6 +130,8 @@ const Chat = () => {
 
       if (!error && data) {
         setIsBlocked(true);
+      } else {
+        setIsBlocked(false);
       }
     };
 
@@ -270,6 +272,19 @@ const Chat = () => {
             }
           }
         )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "blocked_users",
+          },
+          async (payload) => {
+            console.log('[Chat] Block status changed:', payload);
+            // Ricontrolla lo stato del blocco ogni volta che cambia la tabella
+            await checkBlockStatus(session.user.id, otherUserId);
+          }
+        )
         .subscribe((status) => {
           console.log('[Chat] Channel status:', status);
         });
@@ -310,6 +325,16 @@ const Chat = () => {
     
     const messageContent = content || newMessage.trim();
     if (!messageContent || !currentUser || !otherUser || !matchId) return;
+
+    // CRITICAL: Blocca l'invio se l'utente è bloccato
+    if (isBlocked) {
+      toast({
+        title: "Impossibile inviare",
+        description: "Non puoi inviare messaggi a questo utente perché uno di voi ha bloccato l'altro",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Check and deduct credits before sending
     const hasCredits = await deductCredits();
@@ -717,10 +742,15 @@ const Chat = () => {
               />
             )}
             {isBlocked ? (
-              <div className="text-center py-4">
-                <p className="text-sm text-muted-foreground">
-                  Non puoi più inviare messaggi a questo utente
-                </p>
+              <div className="text-center py-6 px-4">
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 max-w-md mx-auto">
+                  <p className="text-sm font-semibold text-destructive mb-1">
+                    ⛔ Chat bloccata
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Non puoi inviare messaggi perché uno di voi ha bloccato l'altro
+                  </p>
+                </div>
               </div>
             ) : (
               <form onSubmit={(e) => handleSendMessage(e)}>
