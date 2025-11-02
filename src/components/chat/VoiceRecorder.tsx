@@ -78,7 +78,7 @@ export const VoiceRecorder = ({ onRecordingComplete, disabled = false, isPremium
       size="icon"
       variant="default"
       onClick={isRecording ? stopRecording : startRecording}
-      disabled={disabled || isProcessing || !isPremiumMonthly}
+      disabled={disabled || isProcessing}
       className="bg-gradient-to-br from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 border-0 shrink-0 shadow-lg"
     >
       {isProcessing ? (
