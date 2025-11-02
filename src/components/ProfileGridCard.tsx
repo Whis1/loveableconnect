@@ -349,8 +349,12 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
           throw likeError;
         }
 
-        // Match? notifica
-        if (likeData?.match_created && onMatch) {
+        console.log('Like response:', likeData);
+
+        // Match? notifica - controlla sia likeData che likeData.data
+        const matchCreated = likeData?.match_created || (likeData as any)?.data?.match_created;
+        if (matchCreated && onMatch) {
+          console.log('Match created! Showing banner for:', profile.nickname || profile.full_name);
           onMatch(profile.nickname || profile.full_name);
         }
       } catch (error: any) {
