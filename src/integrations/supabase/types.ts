@@ -979,7 +979,7 @@ export type Database = {
         Returns: boolean
       }
       is_user_blocked: {
-        Args: { _user1_id: string; _user2_id: string }
+        Args: { user1_id: string; user2_id: string }
         Returns: boolean
       }
       like_with_credits: {
