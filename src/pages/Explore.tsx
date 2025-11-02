@@ -190,10 +190,46 @@ const Explore = () => {
       )
       .subscribe();
 
+    // Realtime subscription for new matches - show banner immediately
+    const matchChannel = supabase
+      .channel('new-matches')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'matches'
+        },
+        async (payload) => {
+          console.log('🎉 New match detected:', payload);
+          const newMatch = payload.new as any;
+          
+          // Check if this match involves the current user
+          if (currentUser && (newMatch.user1_id === currentUser || newMatch.user2_id === currentUser)) {
+            const otherUserId = newMatch.user1_id === currentUser ? newMatch.user2_id : newMatch.user1_id;
+            
+            // Fetch the other user's profile to show their name
+            const { data: otherUserProfile } = await supabase
+              .from('profiles')
+              .select('nickname, full_name')
+              .eq('id', otherUserId)
+              .single();
+            
+            if (otherUserProfile) {
+              const userName = otherUserProfile.nickname || otherUserProfile.full_name;
+              console.log('🎉 Showing match banner for:', userName);
+              handleMatch(userName);
+            }
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(matchChannel);
     };
-  }, [navigate]);
+  }, [navigate, currentUser]);
 
   const loadAllProfiles = async (userId: string) => {
     setLoading(true);

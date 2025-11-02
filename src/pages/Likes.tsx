@@ -332,8 +332,47 @@ const Likes = () => {
       )
       .subscribe();
 
+    // Realtime subscription for new matches - show banner immediately
+    const matchChannel = supabase
+      .channel('likes-new-matches')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'matches'
+        },
+        async (payload) => {
+          console.log('🎉 New match detected in Likes:', payload);
+          const newMatch = payload.new as any;
+          
+          // Check if this match involves the current user
+          if (currentUserId && (newMatch.user1_id === currentUserId || newMatch.user2_id === currentUserId)) {
+            const otherUserId = newMatch.user1_id === currentUserId ? newMatch.user2_id : newMatch.user1_id;
+            
+            // Fetch the other user's profile to show their name
+            const { data: otherUserProfile } = await supabase
+              .from('profiles')
+              .select('nickname, full_name')
+              .eq('id', otherUserId)
+              .single();
+            
+            if (otherUserProfile) {
+              const userName = otherUserProfile.nickname || otherUserProfile.full_name;
+              console.log('🎉 Showing match banner for:', userName);
+              setMatchBanner({ show: true, userName });
+              
+              // Remove the like from the list since it's now a match
+              setLikes(prev => prev.filter(like => like.from_user_id !== otherUserId));
+            }
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(likesDeleteChannel);
+      supabase.removeChannel(matchChannel);
     };
   }, [toast, currentUserId, t]);
 
