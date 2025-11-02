@@ -15,21 +15,21 @@ export const MatchBanner = ({ matchedUserName, onClose }: MatchBannerProps) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(false);
-      setTimeout(onClose, 100); // Fast fade out
-    }, 3000);
+      setTimeout(onClose, 300);
+    }, 5000);
 
     return () => clearTimeout(timer);
   }, [onClose]);
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-100 ${
+      className={`fixed inset-0 z-[200] flex items-center justify-center p-4 transition-opacity duration-300 ${
         isVisible ? "opacity-100" : "opacity-0"
       }`}
       style={{ pointerEvents: "none" }}
     >
       <div
-        className="relative overflow-hidden rounded-2xl shadow-2xl max-w-md w-full animate-bounce-in"
+        className="relative overflow-hidden rounded-3xl shadow-2xl max-w-2xl w-full animate-bounce-in"
         style={{
           background: "linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #6366f1 100%)",
         }}
@@ -43,18 +43,18 @@ export const MatchBanner = ({ matchedUserName, onClose }: MatchBannerProps) => {
           }}
         />
 
-        <div className="relative p-8 text-center">
+        <div className="relative p-12 text-center">
           {/* Hearts Animation */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {[...Array(6)].map((_, i) => (
+            {[...Array(8)].map((_, i) => (
               <Heart
                 key={i}
                 className="absolute text-white animate-float-heart"
                 style={{
                   left: `${Math.random() * 80 + 10}%`,
-                  animationDelay: `${i * 0.3}s`,
-                  opacity: 0.3,
-                  fontSize: `${Math.random() * 20 + 15}px`,
+                  animationDelay: `${i * 0.2}s`,
+                  opacity: 0.4,
+                  fontSize: `${Math.random() * 30 + 20}px`,
                 }}
                 fill="white"
               />
@@ -63,17 +63,17 @@ export const MatchBanner = ({ matchedUserName, onClose }: MatchBannerProps) => {
 
           {/* Main Content */}
           <div className="relative z-10">
-            <div className="mb-4 flex justify-center">
-              <div className="p-4 bg-white/20 rounded-full backdrop-blur-sm animate-pulse">
-                <img src={matchHeartIcon} alt="Match" className="h-16 w-16" />
+            <div className="mb-6 flex justify-center">
+              <div className="p-6 bg-white/20 rounded-full backdrop-blur-sm animate-pulse">
+                <img src={matchHeartIcon} alt="Match" className="h-24 w-24" />
               </div>
             </div>
 
-            <h2 className="text-4xl font-black text-white mb-2 drop-shadow-lg">
+            <h2 className="text-6xl font-black text-white mb-4 drop-shadow-lg">
               MATCH!
             </h2>
             
-            <p className="text-xl text-white font-semibold drop-shadow-md">
+            <p className="text-2xl text-white font-semibold drop-shadow-md">
               {t("explore.match.description", { name: matchedUserName })}
             </p>
           </div>
