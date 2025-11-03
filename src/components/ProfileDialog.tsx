@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { MapPin, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getGenericLocationPhrase } from "@/lib/utils";
+import { getGenericLocationPhrase, calculateAge } from "@/lib/utils";
 import profileBadge from "@/assets/profile-badge.png";
 import { SpotifySongCard } from "./SpotifySongCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -22,6 +22,7 @@ interface Profile {
   nickname: string;
   bio: string | null;
   age: number | null;
+  birthdate: string | null;
   gender: string | null;
   city: string | null;
   interests: string[] | null;
@@ -331,9 +332,9 @@ export const ProfileDialog = ({
               
               {/* Age, Gender, Orientation Pills */}
               <div className="flex items-center justify-center gap-2 flex-wrap">
-                {profile.age && (
+                {calculateAge(profile.birthdate) && (
                   <div className="px-4 py-1.5 rounded-full bg-primary/10 text-primary font-semibold text-sm">
-                    {profile.age} {t('userProfile.years')}
+                    {calculateAge(profile.birthdate)} {t('userProfile.years')}
                   </div>
                 )}
                 <div className="px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-500/10 to-blue-600/10 text-blue-600 dark:text-blue-400 font-semibold text-sm">
