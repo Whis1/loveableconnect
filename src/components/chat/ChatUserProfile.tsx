@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { User, Heart, MapPin } from "lucide-react";
 import { ImageDialog } from "@/components/ImageDialog";
-import { getGenericLocationPhrase, calculateAge } from "@/lib/utils";
+import { getGenericLocationPhrase } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -206,10 +206,10 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
           <div className="flex-1">
             <h3 className="text-xl font-bold mb-1">{profile.nickname}</h3>
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              {calculateAge(profile.birthdate) && (
+              {profile.age && (
                 <span className="flex items-center gap-1">
                   <User className="h-3 w-3" />
-                  {calculateAge(profile.birthdate)} {t("chat.years")}
+                  {profile.age} {t("chat.years")}
                 </span>
               )}
               <span className="flex items-center gap-1">
