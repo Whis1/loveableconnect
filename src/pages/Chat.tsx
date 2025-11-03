@@ -17,6 +17,7 @@ import { InsufficientCreditsBanner } from "@/components/chat/InsufficientCredits
 import { VoicePremiumBanner } from "@/components/chat/VoicePremiumBanner";
 import { ReportUserDialog } from "@/components/chat/ReportUserDialog";
 import { GiftSubscriptionBanner } from "@/components/chat/GiftSubscriptionBanner";
+import { MessageSuggestions } from "@/components/chat/MessageSuggestions";
 import { useCredits } from "@/hooks/useCredits";
 import { useTranslation } from "react-i18next";
 import OnlineIndicator from "@/components/OnlineIndicator";
@@ -66,6 +67,8 @@ const Chat = () => {
   const [recordedAudio, setRecordedAudio] = useState<{ blob: Blob; url: string } | null>(null);
   const [giftingSubscription, setGiftingSubscription] = useState(false);
   const [showGiftBanner, setShowGiftBanner] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(true);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
   // Check for gift payment result in URL params
   useEffect(() => {
@@ -336,6 +339,10 @@ const Chat = () => {
       return;
     }
 
+    // Nascondi i suggerimenti quando l'utente invia un messaggio
+    setShowSuggestions(false);
+    setHasUserInteracted(true);
+
     // Check and deduct credits before sending
     const hasCredits = await deductCredits();
     if (!hasCredits) {
@@ -587,6 +594,20 @@ const Chat = () => {
     setShowGiftBanner(false);
   };
 
+  const handleSuggestionSelect = (suggestion: string) => {
+    // Invia il messaggio suggerito
+    handleSendMessage(undefined, 'text', null, suggestion);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value);
+    // Nascondi i suggerimenti quando l'utente inizia a scrivere
+    if (e.target.value && !hasUserInteracted) {
+      setShowSuggestions(false);
+      setHasUserInteracted(true);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -707,6 +728,16 @@ const Chat = () => {
           <CardContent className="flex-1 overflow-hidden p-0">
             <ScrollArea className="h-full p-3 md:p-6">
               <div className="space-y-3 md:space-y-4">
+                {/* Message Suggestions - shown only for first message */}
+                {showSuggestions && messages.length === 0 && !hasUserInteracted && !isBlocked && (
+                  <MessageSuggestions
+                    onSuggestionSelect={handleSuggestionSelect}
+                    onDismiss={() => {
+                      setShowSuggestions(false);
+                      setHasUserInteracted(true);
+                    }}
+                  />
+                )}
                 {messages.map((message) => {
                   const isOwn = message.sender_id === currentUser;
                   const senderAvatar = isOwn ? myAvatar : otherUser?.avatar_url || null;
@@ -776,7 +807,7 @@ const Chat = () => {
                   <GifPicker onGifSelect={handleGifSelect} />
                   <Input
                     value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
+                    onChange={handleInputChange}
                     placeholder={t("chat.writeMessage")}
                     className="flex-1 text-sm md:text-base"
                     disabled={!!recordedAudio}
