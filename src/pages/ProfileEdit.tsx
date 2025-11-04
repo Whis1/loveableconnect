@@ -77,6 +77,7 @@ const ProfileEdit = () => {
   const [birthYear, setBirthYear] = useState("");
   const [requiresCompletion, setRequiresCompletion] = useState(false);
   const [deletionRequested, setDeletionRequested] = useState(false);
+  const [userCredits, setUserCredits] = useState<{ subscription_type: string } | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -85,6 +86,17 @@ const ProfileEdit = () => {
       if (!session) {
         navigate("/auth");
         return;
+      }
+
+      // Fetch user credits to check subscription
+      const { data: creditsData } = await supabase
+        .from("user_credits")
+        .select("subscription_type")
+        .eq("user_id", session.user.id)
+        .single();
+      
+      if (creditsData) {
+        setUserCredits(creditsData);
       }
 
       const { data: profileData } = await supabase
@@ -898,22 +910,24 @@ const ProfileEdit = () => {
                 />
               </div>
 
-              {/* Online Status Toggle */}
-              <div className="flex items-center justify-between space-x-2 p-4 border rounded-lg">
-                <div className="space-y-0.5">
-                  <Label htmlFor="show-online-status" className="text-base">
-                    {t('profile.showOnlineStatus')}
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    {t('profile.showOnlineStatusDescription')}
-                  </p>
+              {/* Online Status Toggle - Only for monthly subscribers */}
+              {userCredits?.subscription_type === 'monthly' && (
+                <div className="flex items-center justify-between space-x-2 p-4 border rounded-lg">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="show-online-status" className="text-base">
+                      {t('profile.showOnlineStatus')}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {t('profile.showOnlineStatusDescription')}
+                    </p>
+                  </div>
+                  <Switch
+                    id="show-online-status"
+                    checked={profile.show_online_status ?? true}
+                    onCheckedChange={(checked) => setProfile({ ...profile, show_online_status: checked })}
+                  />
                 </div>
-                <Switch
-                  id="show-online-status"
-                  checked={profile.show_online_status ?? true}
-                  onCheckedChange={(checked) => setProfile({ ...profile, show_online_status: checked })}
-                />
-              </div>
+              )}
 
               {/* Favorite Songs */}
               <div className="space-y-2">

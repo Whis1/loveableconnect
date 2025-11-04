@@ -8,6 +8,7 @@ const corsHeaders = {
 };
 
 const PREMIUM_MONTHLY_PRICE_ID = "price_1SPYDwK6IHDbrxmEMvlzFCAZ";
+const STANDARD_MONTHLY_PRICE_ID = "price_1SPYGEK6IHDbrxmEzOUcxEW9";
 const PREMIUM_WEEKLY_PRICE_ID = "price_1SNixgK6IHDbrxmEytmu8UU8";
 const WEEKLY_TRIAL_COUPON_ID = "OCFRCIQT";
 
@@ -28,11 +29,15 @@ serve(async (req) => {
     const user = data.user;
     if (!user?.email) throw new Error("User not authenticated");
 
-    // Get subscription type from request body
-    const { subscription_type = "monthly" } = await req.json().catch(() => ({ subscription_type: "monthly" }));
+    // Get subscription type and tier from request body
+    const { subscription_type = "monthly", tier = "premium" } = await req.json().catch(() => ({ subscription_type: "monthly", tier: "premium" }));
 
     if (!["monthly", "weekly"].includes(subscription_type)) {
       throw new Error("Invalid subscription type");
+    }
+    
+    if (subscription_type === "monthly" && !["premium", "standard"].includes(tier)) {
+      throw new Error("Invalid subscription tier");
     }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -72,7 +77,12 @@ serve(async (req) => {
       .eq("user_id", user.id)
       .single();
 
-    const priceId = subscription_type === "weekly" ? PREMIUM_WEEKLY_PRICE_ID : PREMIUM_MONTHLY_PRICE_ID;
+    let priceId: string;
+    if (subscription_type === "weekly") {
+      priceId = PREMIUM_WEEKLY_PRICE_ID;
+    } else {
+      priceId = tier === "standard" ? STANDARD_MONTHLY_PRICE_ID : PREMIUM_MONTHLY_PRICE_ID;
+    }
     const hasUsedWeeklyTrial = creditsData?.has_used_weekly_trial || false;
 
     // Build session config
@@ -88,6 +98,7 @@ serve(async (req) => {
       metadata: {
         user_id: user.id,
         subscription_type: subscription_type,
+        tier: subscription_type === "monthly" ? tier : "none",
       },
     };
 

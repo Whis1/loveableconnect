@@ -67,11 +67,11 @@ const Credits = () => {
     }
   };
 
-  const handleSubscribePremium = async (subscriptionType: "monthly" | "weekly" = "monthly") => {
+  const handleSubscribePremium = async (subscriptionType: "monthly" | "weekly" = "monthly", tier: "premium" | "standard" = "premium") => {
     try {
       setPurchasing(true);
       const { data, error } = await supabase.functions.invoke("subscribe-premium", {
-        body: { subscription_type: subscriptionType },
+        body: { subscription_type: subscriptionType, tier: tier },
       });
 
       if (error) throw error;
@@ -274,12 +274,67 @@ const Credits = () => {
                   </li>
                 </ul>
                 <Button
-                  onClick={() => handleSubscribePremium("monthly")}
+                  onClick={() => handleSubscribePremium("monthly", "premium")}
                   disabled={purchasing}
                   className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white"
                   size="lg"
                 >
                   {purchasing ? t("credits.processing") : t("credits.becomePremium")}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  {t("credits.autoRenewal")}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Standard Monthly */}
+            <Card className="mb-6 border-2 border-blue-500/50 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Crown className="h-8 w-8 text-blue-500" />
+                    <div>
+                      <CardTitle className="text-2xl">Premium Standard</CardTitle>
+                      <CardDescription>Funzionalità avanzate a un prezzo accessibile</CardDescription>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-3xl font-bold">€69,99{t("credits.perMonth")}</div>
+                <ul className="space-y-2">
+                  <li className="flex items-center gap-2">
+                    <Coins className="h-5 w-5 text-blue-500" />
+                    <span><strong>70 crediti giornalieri</strong> - reset automatico</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Heart className="h-5 w-5 text-blue-500" />
+                    <span><strong>40 like al giorno</strong></span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Eye className="h-5 w-5 text-blue-500" />
+                    <span><strong>Visualizzazione Like illimitata</strong></span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Gamepad2 className="h-5 w-5 text-blue-500" />
+                    <span><strong>20 partite giornaliere</strong> tra utenti</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-blue-500" />
+                    <span>Accesso al sistema di disattivazione/attivazione dello stato online del profilo</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Crown className="h-5 w-5 text-blue-500" />
+                    <span>Posizione prioritaria nella bacheca: sempre tra i primi profili mostrati</span>
+                  </li>
+                </ul>
+                <Button
+                  onClick={() => handleSubscribePremium("monthly", "standard")}
+                  disabled={purchasing}
+                  className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
+                  size="lg"
+                >
+                  {purchasing ? t("credits.processing") : "Diventa Premium Standard"}
                 </Button>
                 <p className="text-xs text-muted-foreground text-center">
                   {t("credits.autoRenewal")}
