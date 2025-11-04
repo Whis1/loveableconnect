@@ -234,7 +234,7 @@ const Credits = () => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="text-3xl font-bold">€299,99{t("credits.perMonth")}</div>
+                <div className="text-3xl font-bold">€399,99{t("credits.perMonth")}</div>
                 <ul className="space-y-2">
                   <li className="flex items-center gap-2">
                     <Zap className="h-5 w-5 text-amber-500" />
@@ -246,11 +246,11 @@ const Credits = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <Eye className="h-5 w-5 text-amber-500" />
-                    <span>{t("credits.unlimitedLikes")}</span>
+                    <span>Visualizzazione Like illimitata</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Shield className="h-5 w-5 text-amber-500" />
-                    <span>{t("credits.exclusiveBadge")}</span>
+                    <Zap className="h-5 w-5 text-amber-500" />
+                    <span>Sblocco Chat con nuovi profili Illimitato</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-amber-500">
@@ -261,8 +261,16 @@ const Credits = () => {
                     <span>Accesso ai messaggi vocali nelle chat con gli utenti</span>
                   </li>
                   <li className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-amber-500" />
+                    <span>Accesso al sistema di disattivazione/attivazione dello stato online del profilo</span>
+                  </li>
+                  <li className="flex items-center gap-2">
                     <Gamepad2 className="h-5 w-5 text-amber-500" />
                     <span>Sfide tra utenti illimitate</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Crown className="h-5 w-5 text-amber-500" />
+                    <span>Posizione prioritaria nella bacheca: sempre tra i primi profili mostrati</span>
                   </li>
                 </ul>
                 <Button
@@ -310,19 +318,11 @@ const Credits = () => {
                     </li>
                     <li className="flex items-center gap-2">
                       <Heart className="h-4 w-4 text-purple-500" />
-                      <span><strong>30 like al giorno</strong> - più opportunità</span>
+                      <span><strong>30 like al giorno</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Eye className="h-4 w-4 text-purple-500" />
-                      <span><strong>Visualizza like ricevuti</strong></span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-purple-500">
-                        <rect width="18" height="18" x="3" y="3" rx="2"/>
-                        <path d="M8 12h8"/>
-                        <path d="M12 8v8"/>
-                      </svg>
-                      <span>🎮 <strong>Possibilità di disputare 10 partite giornaliere tra utenti</strong></span>
+                      <Gamepad2 className="h-4 w-4 text-purple-500" />
+                      <span><strong>Possibilità di disputare 10 partite giornaliere tra utenti</strong></span>
                     </li>
                   </ul>
                   <Button
