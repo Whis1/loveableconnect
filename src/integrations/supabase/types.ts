@@ -974,6 +974,13 @@ export type Database = {
         Returns: boolean
       }
       deduct_message_credits: { Args: { _user_id: string }; Returns: boolean }
+      get_subscription_types: {
+        Args: { profile_ids: string[] }
+        Returns: {
+          subscription_type: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

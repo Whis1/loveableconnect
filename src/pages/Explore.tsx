@@ -258,24 +258,18 @@ const Explore = () => {
       let allProfiles: Profile[] = (profilesData || [])
         .filter(profile => !matchedUserIds.has(profile.id)) as Profile[];
       
-      // Fetch user_credits for all profiles to determine subscription status
+      // Fetch subscription types via RPC (bypasses RLS safely)
       const profileIds = allProfiles.map(p => p.id);
-      const { data: creditsData } = await supabase
-        .from("user_credits")
-        .select("user_id, subscription_type, is_premium")
-        .in("user_id", profileIds);
-      
-      const creditsMap = new Map(
-        (creditsData || []).map(c => [c.user_id, c])
-      );
+      const { data: subsData } = await supabase.rpc('get_subscription_types', { profile_ids: profileIds });
+      const creditsMap = new Map<string, string>((subsData || []).map((c: any) => [c.user_id, c.subscription_type]));
       
       // Sort profiles: monthly subscribers first, then by last_active
       allProfiles.sort((a, b) => {
-        const aCredits = creditsMap.get(a.id);
-        const bCredits = creditsMap.get(b.id);
+        const aSub = creditsMap.get(a.id);
+        const bSub = creditsMap.get(b.id);
         
-        const aIsMonthly = aCredits?.is_premium && aCredits?.subscription_type === 'monthly';
-        const bIsMonthly = bCredits?.is_premium && bCredits?.subscription_type === 'monthly';
+        const aIsMonthly = aSub === 'monthly';
+        const bIsMonthly = bSub === 'monthly';
         
         // Monthly subscribers first
         if (aIsMonthly && !bIsMonthly) return -1;
@@ -386,24 +380,18 @@ const Explore = () => {
       let filteredProfiles: Profile[] = (profilesData || [])
         .filter(profile => !matchedUserIds.has(profile.id)) as Profile[];
 
-      // Fetch user_credits for all profiles to determine subscription status
+      // Fetch subscription types via RPC (bypasses RLS safely)
       const profileIds = filteredProfiles.map(p => p.id);
-      const { data: creditsData } = await supabase
-        .from("user_credits")
-        .select("user_id, subscription_type, is_premium")
-        .in("user_id", profileIds);
-      
-      const creditsMap = new Map(
-        (creditsData || []).map(c => [c.user_id, c])
-      );
+      const { data: subsData } = await supabase.rpc('get_subscription_types', { profile_ids: profileIds });
+      const creditsMap = new Map<string, string>((subsData || []).map((c: any) => [c.user_id, c.subscription_type]));
       
       // Sort profiles: monthly subscribers first, then by last_active
       filteredProfiles.sort((a, b) => {
-        const aCredits = creditsMap.get(a.id);
-        const bCredits = creditsMap.get(b.id);
+        const aSub = creditsMap.get(a.id);
+        const bSub = creditsMap.get(b.id);
         
-        const aIsMonthly = aCredits?.is_premium && aCredits?.subscription_type === 'monthly';
-        const bIsMonthly = bCredits?.is_premium && bCredits?.subscription_type === 'monthly';
+        const aIsMonthly = aSub === 'monthly';
+        const bIsMonthly = bSub === 'monthly';
         
         // Monthly subscribers first
         if (aIsMonthly && !bIsMonthly) return -1;
