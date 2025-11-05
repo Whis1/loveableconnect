@@ -47,8 +47,9 @@ serve(async (req) => {
     const subscriptionId = session.subscription as string;
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
-    // Determine subscription type from metadata
+    // Determine subscription type and tier from metadata
     const subscriptionType = session.metadata?.subscription_type || "monthly";
+    const tier = session.metadata?.tier || "premium";
     const isWeekly = subscriptionType === "weekly";
 
     // Determine initial credits and likes based on subscription type
@@ -60,6 +61,10 @@ serve(async (req) => {
       initialCredits = 40;
       initialLikes = 30;
       initialFreeChats = 5;
+    } else if (subscriptionType === "monthly" && tier === "standard") {
+      initialCredits = 70;
+      initialLikes = 40;
+      initialFreeChats = 0;
     }
 
     // Update user credits with premium status
@@ -68,6 +73,7 @@ serve(async (req) => {
       premium_expires_at: new Date(subscription.current_period_end * 1000).toISOString(),
       stripe_subscription_id: subscriptionId,
       subscription_type: subscriptionType,
+      premium_tier: subscriptionType === "monthly" ? tier : "none",
       updated_at: new Date().toISOString(),
     };
 
@@ -76,6 +82,9 @@ serve(async (req) => {
       updateData.daily_likes_remaining = initialLikes;
       updateData.daily_free_chats_remaining = initialFreeChats;
       updateData.has_used_weekly_trial = true;
+    } else if (subscriptionType === "monthly" && tier === "standard") {
+      updateData.balance = initialCredits;
+      updateData.daily_likes_remaining = initialLikes;
     }
 
     await supabaseClient
@@ -84,10 +93,17 @@ serve(async (req) => {
       .eq("user_id", user.id);
 
     // Create purchase record with actual amount from session
+    let productType = "premium_monthly";
+    if (isWeekly) {
+      productType = "premium_weekly";
+    } else if (subscriptionType === "monthly" && tier === "standard") {
+      productType = "standard_monthly";
+    }
+    
     await supabaseClient.from("purchases").insert({
       user_id: user.id,
-      product_type: isWeekly ? "premium_weekly" : "premium_monthly",
-      amount_cents: session.amount_total || (isWeekly ? 699 : 9999),
+      product_type: productType,
+      amount_cents: session.amount_total || (isWeekly ? 699 : (tier === "standard" ? 6999 : 39999)),
       currency: session.currency || "eur",
       stripe_payment_intent_id: session.payment_intent as string,
       stripe_session_id: session_id,
