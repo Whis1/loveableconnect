@@ -386,8 +386,30 @@ const Explore = () => {
       let filteredProfiles: Profile[] = (profilesData || [])
         .filter(profile => !matchedUserIds.has(profile.id)) as Profile[];
 
-      // Sort by last active
+      // Fetch user_credits for all profiles to determine subscription status
+      const profileIds = filteredProfiles.map(p => p.id);
+      const { data: creditsData } = await supabase
+        .from("user_credits")
+        .select("user_id, subscription_type, is_premium")
+        .in("user_id", profileIds);
+      
+      const creditsMap = new Map(
+        (creditsData || []).map(c => [c.user_id, c])
+      );
+      
+      // Sort profiles: monthly subscribers first, then by last_active
       filteredProfiles.sort((a, b) => {
+        const aCredits = creditsMap.get(a.id);
+        const bCredits = creditsMap.get(b.id);
+        
+        const aIsMonthly = aCredits?.is_premium && aCredits?.subscription_type === 'monthly';
+        const bIsMonthly = bCredits?.is_premium && bCredits?.subscription_type === 'monthly';
+        
+        // Monthly subscribers first
+        if (aIsMonthly && !bIsMonthly) return -1;
+        if (!aIsMonthly && bIsMonthly) return 1;
+        
+        // Then sort by last active
         const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
         const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
         return dateB - dateA;
