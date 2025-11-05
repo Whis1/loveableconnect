@@ -36,6 +36,7 @@ interface Profile {
   latitude: number | null;
   longitude: number | null;
   last_active: string | null;
+  is_admin_profile: boolean;
   distance?: number;
   translatedBio?: string | null;
   translatedInterests?: string[] | null;
@@ -263,17 +264,20 @@ const Explore = () => {
       const { data: subsData } = await supabase.rpc('get_subscription_types', { profile_ids: profileIds });
       const creditsMap = new Map<string, string>((subsData || []).map((c: any) => [c.user_id, c.subscription_type]));
       
-      // Sort profiles: monthly subscribers first, then by last_active
+      // Sort profiles: monthly subscribers first, then admin profiles, then by last_active
       allProfiles.sort((a, b) => {
         const aSub = creditsMap.get(a.id);
         const bSub = creditsMap.get(b.id);
         
-        const aIsMonthly = aSub === 'monthly';
-        const bIsMonthly = bSub === 'monthly';
+        const rank = (p: Profile, sub?: string) => {
+          if (sub === 'monthly') return 0; // monthly subscribers first
+          if (p.is_admin_profile) return 1; // then admin profiles
+          return 2; // then everyone else (standard + weekly)
+        };
         
-        // Monthly subscribers first
-        if (aIsMonthly && !bIsMonthly) return -1;
-        if (!aIsMonthly && bIsMonthly) return 1;
+        const rA = rank(a, aSub);
+        const rB = rank(b, bSub);
+        if (rA !== rB) return rA - rB;
         
         // Then sort by last active
         const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
@@ -385,17 +389,20 @@ const Explore = () => {
       const { data: subsData } = await supabase.rpc('get_subscription_types', { profile_ids: profileIds });
       const creditsMap = new Map<string, string>((subsData || []).map((c: any) => [c.user_id, c.subscription_type]));
       
-      // Sort profiles: monthly subscribers first, then by last_active
+      // Sort profiles: monthly subscribers first, then admin profiles, then by last_active
       filteredProfiles.sort((a, b) => {
         const aSub = creditsMap.get(a.id);
         const bSub = creditsMap.get(b.id);
         
-        const aIsMonthly = aSub === 'monthly';
-        const bIsMonthly = bSub === 'monthly';
+        const rank = (p: Profile, sub?: string) => {
+          if (sub === 'monthly') return 0; // monthly subscribers first
+          if (p.is_admin_profile) return 1; // then admin profiles
+          return 2; // then everyone else (standard + weekly)
+        };
         
-        // Monthly subscribers first
-        if (aIsMonthly && !bIsMonthly) return -1;
-        if (!aIsMonthly && bIsMonthly) return 1;
+        const rA = rank(a, aSub);
+        const rB = rank(b, bSub);
+        if (rA !== rB) return rA - rB;
         
         // Then sort by last active
         const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
