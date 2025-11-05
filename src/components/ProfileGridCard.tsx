@@ -467,8 +467,21 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
       }
 
       // 3) Handle cost AFTER ensuring match exists
+      // Check if user has premium tier (€399.99) - they get free chats
+      const { data: userCreditsData } = await supabase
+        .from("user_credits")
+        .select("subscription_type, premium_tier")
+        .eq("user_id", session.user.id)
+        .single();
+      
+      const hasPremiumTier = userCreditsData?.subscription_type === 'monthly' && userCreditsData?.premium_tier === 'premium';
+      
       let chatCostCredits = 6;
-      if (chatsRemaining > 0) {
+      
+      if (hasPremiumTier) {
+        // Premium tier users get unlimited free chats
+        chatCostCredits = 0;
+      } else if (chatsRemaining > 0) {
         const { success } = await consumeFreeChat();
         if (success) {
           chatCostCredits = 0; // No credits needed
