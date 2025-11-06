@@ -23,7 +23,6 @@ const Index = () => {
       if (now - lastUpdateTime < UPDATE_THROTTLE) {
         return; // Skip update if less than 30 seconds since last update
       }
-      
       lastUpdateTime = now;
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.id) {
@@ -34,30 +33,44 @@ const Index = () => {
       }
     };
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setIsAuthenticated(true);
-        updateLastActive();
-      } else {
-        navigate("/auth");
-      }
-      setLoading(false);
-    });
-
+    // 1) Listen to auth state changes FIRST to avoid race conditions
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         setIsAuthenticated(true);
-        updateLastActive();
+        // Defer side-effects to avoid blocking the callback
+        setTimeout(() => {
+          updateLastActive();
+        }, 0);
       } else {
-        navigate("/auth");
+        setIsAuthenticated(false);
+        navigate('/auth');
       }
+      // Ensure we clear loading state on any auth event
+      setLoading(false);
     });
 
+    // 2) Then check for an existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setIsAuthenticated(true);
+        setTimeout(() => {
+          updateLastActive();
+        }, 0);
+      } else {
+        setIsAuthenticated(false);
+        navigate('/auth');
+      }
+      setLoading(false);
+    }).catch(() => setLoading(false));
+
+    // Safety net: never keep the spinner forever
+    const loadingTimeout = setTimeout(() => setLoading(false), 4000);
+
     // Update last_active every minute
-    const activityInterval = setInterval(updateLastActive, 60000);
+    const activityInterval = setInterval(() => setTimeout(updateLastActive, 0), 60000);
 
     // Update on user activity (throttled)
-    const handleActivity = () => updateLastActive();
+    const handleActivity = () => setTimeout(updateLastActive, 0);
     window.addEventListener('mousemove', handleActivity);
     window.addEventListener('keydown', handleActivity);
     window.addEventListener('click', handleActivity);
@@ -65,6 +78,7 @@ const Index = () => {
     return () => {
       subscription.unsubscribe();
       clearInterval(activityInterval);
+      clearTimeout(loadingTimeout);
       window.removeEventListener('mousemove', handleActivity);
       window.removeEventListener('keydown', handleActivity);
       window.removeEventListener('click', handleActivity);
