@@ -120,17 +120,18 @@ const Likes = () => {
 
       setCurrentUserId(session.user.id);
 
-      // Check if user is premium
+      // Check if user has monthly subscription (only monthly users can see likes for free)
       const { data: creditsData } = await supabase
         .from("user_credits")
-        .select("is_premium, premium_expires_at")
+        .select("is_premium, premium_expires_at, subscription_type")
         .eq("user_id", session.user.id)
         .maybeSingle();
 
-      const userIsPremium = creditsData?.is_premium && 
+      const hasMonthlySubscription = creditsData?.is_premium && 
+        creditsData?.subscription_type === 'monthly' &&
         (!creditsData.premium_expires_at || new Date(creditsData.premium_expires_at) > new Date());
 
-      setIsPremium(!!userIsPremium);
+      setIsPremium(!!hasMonthlySubscription);
 
       // Check if user has unlocked likes (or is premium)
       const { data: unlockData } = await supabase
@@ -143,8 +144,8 @@ const Likes = () => {
       const unlockIsValid = unlockData && 
         (!unlockData.expires_at || new Date(unlockData.expires_at) > new Date());
 
-      // User has access if premium OR has valid unlock
-      setHasUnlocked(!!userIsPremium || !!unlockIsValid);
+      // User has access if monthly subscriber OR has valid unlock
+      setHasUnlocked(!!hasMonthlySubscription || !!unlockIsValid);
       setCheckingUnlock(false);
 
       // Fetch likes
