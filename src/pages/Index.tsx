@@ -14,12 +14,6 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Pre-carica tutti i dati necessari
-  useProfiles();
-  useLikes();
-  useCredits();
-  useDailyLikes();
-
   useEffect(() => {
     let lastUpdateTime = 0;
     const UPDATE_THROTTLE = 30000; // Update max once every 30 seconds
@@ -88,6 +82,17 @@ const Index = () => {
   if (!isAuthenticated) {
     return null;
   }
+
+  return <AuthenticatedApp />;
+};
+
+// Componente che carica i dati solo dopo l'autenticazione
+const AuthenticatedApp = () => {
+  // Pre-carica tutti i dati necessari solo dopo l'autenticazione
+  useProfiles();
+  useLikes();
+  useCredits();
+  useDailyLikes();
 
   return <Dashboard />;
 };

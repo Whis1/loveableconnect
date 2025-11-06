@@ -271,7 +271,7 @@ const Explore = () => {
         
         const rank = (p: Profile, sub?: string) => {
           if (sub === 'monthly') return 0; // monthly subscribers first
-          if (p.is_admin_profile) return 1; // then admin profiles
+          if (p.is_admin_profile === true) return 1; // then admin profiles
           return 2; // then everyone else (standard + weekly)
         };
         
@@ -396,7 +396,7 @@ const Explore = () => {
         
         const rank = (p: Profile, sub?: string) => {
           if (sub === 'monthly') return 0; // monthly subscribers first
-          if (p.is_admin_profile) return 1; // then admin profiles
+          if (p.is_admin_profile === true) return 1; // then admin profiles
           return 2; // then everyone else (standard + weekly)
         };
         
