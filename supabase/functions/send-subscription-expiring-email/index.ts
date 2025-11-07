@@ -46,91 +46,89 @@ serve(async (req) => {
     await resend.emails.send({
       from: "LoveableConnect 💕 <noreply@loveableconnect.com>",
       to: [user.email],
-      subject: "⏰ Il tuo abbonamento sta per scadere",
+      subject: `⏰ Il tuo abbonamento ${planName} scade tra ${daysRemaining} giorni`,
       html: `
         <!DOCTYPE html>
         <html lang="it">
-        <head>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <title>Abbonamento in scadenza</title>
-        </head>
-        <body style="margin:0; padding:0; background:linear-gradient(135deg,#fde2e4,#f3e8ff); font-family:'Segoe UI',Roboto,Arial,sans-serif;">
-          <div style="max-width:600px; margin:40px auto; background:white; border-radius:20px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.1);">
-            
-            <!-- HEADER -->
-            <div style="background:linear-gradient(135deg,#ec4899,#9333ea); padding:40px 20px; text-align:center;">
-              <div style="font-size:48px;">⏰</div>
-              <h1 style="color:white; margin:10px 0 0; font-size:32px;">Abbonamento in Scadenza</h1>
-            </div>
-
-            <!-- BODY -->
-            <div style="padding:40px 30px;">
-              <h2 style="color:#9333ea; font-size:24px; margin-bottom:15px;">Non perdere i tuoi vantaggi! 👑</h2>
-              <p style="color:#374151; font-size:16px; line-height:1.6;">
-                Il tuo abbonamento <strong style="color:#ec4899;">${planName}</strong> sta per scadere!
-              </p>
-
-              <!-- EXPIRY INFO -->
-              <div style="background:linear-gradient(135deg,#fff7ed,#ffedd5); padding:25px; border-radius:12px; border-left:4px solid #f97316; margin:25px 0;">
-                <p style="margin:0; color:#92400e; font-size:16px; line-height:1.6;">
-                  ⏰ <strong>Scadenza:</strong> ${expiryDate}<br>
-                  📅 <strong>Giorni rimanenti:</strong> ${daysRemaining}
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="margin:0; padding:0; background:linear-gradient(135deg,#fde2e4,#f3e8ff); font-family:'Segoe UI',Roboto,Arial,sans-serif;">
+            <div style="max-width:600px; margin:40px auto; background:white; border-radius:20px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.1);">
+              
+              <!-- HEADER -->
+              <div style="background:linear-gradient(135deg,#ec4899,#9333ea); padding:40px 20px; text-align:center;">
+                <img src="https://tcmhvrlsaggyuukdscue.supabase.co/storage/v1/object/public/images/loveable-logo.png" alt="LoveableConnect" style="width:120px; height:120px; margin-bottom:20px; border-radius:50%; border:4px solid rgba(255,255,255,0.3); box-shadow:0 8px 32px rgba(0,0,0,0.2);" />
+                <div style="font-size:60px; margin-bottom:10px;">⏰</div>
+                <h1 style="color:white; margin:10px 0 0; font-size:32px; font-weight:800;">Abbonamento in Scadenza</h1>
+                <p style="color:rgba(255,255,255,0.95); font-size:16px; margin-top:10px;">Il tuo Premium sta per terminare</p>
+              </div>
+              
+              <!-- BODY -->
+              <div style="padding:40px 30px;">
+                <h2 style="color:#9333ea; font-size:24px; margin-bottom:15px; font-weight:700;">Ciao! 👋</h2>
+                <p style="color:#374151; font-size:16px; line-height:1.6;">
+                  Volevamo ricordarti che il tuo abbonamento <strong style="color:#ec4899;">${planName}</strong> scadrà tra <strong style="color:#ef4444;">${daysRemaining} giorni</strong>.
                 </p>
-              </div>
-
-              <p style="color:#374151; font-size:16px; line-height:1.6;">
-                Rinnova ora per continuare a goderti tutti i vantaggi Premium:
-              </p>
-
-              <!-- FEATURES -->
-              <div style="background:linear-gradient(135deg,#f3e8ff,#fce7f3); padding:25px; border-radius:12px; margin-top:25px;">
-                <h3 style="color:#9333ea; margin-bottom:10px; font-size:18px;">✨ Vantaggi Premium:</h3>
-                <ul style="color:#4b5563; font-size:15px; line-height:1.8; margin:0; padding-left:20px;">
-                  ${subscriptionType === 'monthly' ? `
-                    <li>💬 Messaggi illimitati senza costi aggiuntivi</li>
-                    <li>❤️ Like illimitati ogni giorno</li>
-                    <li>✨ Profilo in evidenza nei risultati di ricerca</li>
-                    <li>🎯 Filtri di ricerca avanzati</li>
-                  ` : `
-                    <li>💬 40 crediti messaggi al giorno</li>
-                    <li>❤️ 30 like al giorno</li>
-                    <li>✨ Profilo in evidenza nei risultati</li>
-                    <li>🎁 5 conversazioni gratuite al giorno</li>
-                  `}
-                </ul>
-              </div>
-
-              <!-- BUTTON -->
-              <div style="text-align:center; margin:35px 0;">
-                <a href="${supabaseUrl.replace('https://', 'https://').replace('.supabase.co', '')}/credits"
-                   style="background:linear-gradient(135deg,#ec4899,#9333ea);
-                          color:white;
-                          padding:16px 40px;
-                          border-radius:12px;
-                          font-weight:700;
-                          text-decoration:none;
-                          font-size:17px;
-                          box-shadow:0 5px 20px rgba(147,51,234,0.3);">
-                  👑 Rinnova Ora
-                </a>
-              </div>
-
-              <!-- INFO BOX -->
-              <div style="background:#f9fafb; padding:20px; border-radius:12px; border-left:4px solid #9333ea;">
-                <p style="margin:0; color:#6b7280; font-size:14px; line-height:1.5;">
-                  💡 Il rinnovo è automatico se hai attivato l'abbonamento ricorrente. Altrimenti, rinnova manualmente per non perdere i vantaggi!
+                
+                <p style="color:#374151; font-size:16px; line-height:1.6; margin-top:20px;">
+                  Data di scadenza: <strong>${expiryDate}</strong>
                 </p>
+                
+                <!-- URGENCY BOX -->
+                <div style="background:linear-gradient(135deg,#fff7ed,#ffedd5); padding:20px; border-radius:12px; margin:25px 0; border-left:5px solid #f97316; text-align:center;">
+                  <p style="margin:0; color:#92400e; font-size:16px; line-height:1.6;">
+                    <strong>🔥 Non perdere l'accesso alle funzionalità Premium!</strong><br/>
+                    <span style="font-size:14px;">Rinnova ora e continua a goderti tutti i vantaggi!</span>
+                  </p>
+                </div>
+                
+                <!-- BUTTON -->
+                <div style="text-align:center; margin:35px 0;">
+                  <a href="${supabaseUrl.replace('.supabase.co', '')}/credits" 
+                     style="display:inline-block;
+                            background:linear-gradient(135deg,#ec4899,#9333ea);
+                            color:white;
+                            padding:18px 45px;
+                            border-radius:16px;
+                            font-weight:700;
+                            text-decoration:none;
+                            font-size:18px;
+                            box-shadow:0 8px 30px rgba(147,51,234,0.4);
+                            border:2px solid rgba(255,255,255,0.2);">
+                    💎 Rinnova Adesso
+                  </a>
+                </div>
+                
+                <!-- BENEFITS -->
+                <div style="background:linear-gradient(135deg,#f3e8ff,#fce7f3); padding:25px; border-radius:16px; margin-top:30px; border:2px solid rgba(236,72,153,0.1);">
+                  <h3 style="color:#9333ea; margin-bottom:15px; font-size:18px; font-weight:700;">✨ Cosa perderai senza Premium:</h3>
+                  <ul style="color:#4b5563; font-size:14px; line-height:2; margin:0; padding-left:0; list-style:none;">
+                    <li>💬 <strong>Messaggi illimitati</strong> con tutti i tuoi match</li>
+                    <li>👁️ <strong>Visualizza chi ti ha messo like</strong> prima di ricambiare</li>
+                    <li>🎯 <strong>Filtri di ricerca avanzati</strong> per trovare la persona perfetta</li>
+                    <li>✨ <strong>Maggiore visibilità</strong> nei risultati di ricerca</li>
+                    <li>🎮 <strong>Accesso completo</strong> a tutti i giochi e funzioni</li>
+                  </ul>
+                </div>
+                
+                <!-- REASSURANCE -->
+                <div style="background:#f9fafb; padding:20px; border-radius:12px; margin-top:25px; border:1px solid #e5e7eb;">
+                  <p style="margin:0; color:#6b7280; font-size:14px; line-height:1.6; text-align:center;">
+                    💡 <strong>Rinnova ora</strong> e continua senza interruzioni la tua esperienza premium su LoveableConnect!
+                  </p>
+                </div>
+              </div>
+              
+              <!-- FOOTER -->
+              <div style="background:linear-gradient(135deg,#fafafa,#f3f4f6); padding:25px; text-align:center; border-top:2px solid #e5e7eb;">
+                <p style="color:#6b7280; font-size:14px; margin:5px 0; font-weight:600;">💕 LoveableConnect</p>
+                <p style="color:#9ca3af; font-size:12px; margin:5px 0;">Dove nascono legami autentici</p>
+                <p style="color:#9ca3af; font-size:12px; margin-top:15px;">Hai domande? Contatta il nostro supporto!</p>
               </div>
             </div>
-
-            <!-- FOOTER -->
-            <div style="background:#fafafa; padding:20px; text-align:center; border-top:1px solid #e5e7eb;">
-              <p style="color:#9ca3af; font-size:12px;">💕 LoveableConnect – Dove nascono legami autentici</p>
-            </div>
-
-          </div>
-        </body>
+          </body>
         </html>
       `,
     });

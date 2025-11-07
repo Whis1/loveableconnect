@@ -54,157 +54,94 @@ const handler = async (req: Request): Promise<Response> => {
     const resetUrl = linkData.properties.action_link;
 
     const emailResponse = await resend.emails.send({
-      from: "Arrettu <onboarding@resend.dev>",
+      from: "LoveableConnect 💕 <noreply@loveableconnect.com>",
       to: [email],
-      subject: "🔐 Reimposta la tua Password - Arrettu",
+      subject: "🔐 Reimposta la tua Password - LoveableConnect",
       html: `
         <!DOCTYPE html>
-        <html>
+        <html lang="it">
           <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-              body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
-                line-height: 1.6;
-                color: #333;
-                background: linear-gradient(135deg, #fce7f3 0%, #e9d5ff 50%, #ddd6fe 100%);
-                margin: 0;
-                padding: 20px;
-              }
-              .container {
-                max-width: 600px;
-                margin: 0 auto;
-                background: white;
-                border-radius: 16px;
-                overflow: hidden;
-                box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-              }
-              .header {
-                background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%);
-                padding: 40px 20px;
-                text-align: center;
-              }
-              .logo {
-                font-size: 48px;
-                margin-bottom: 10px;
-              }
-              .header h1 {
-                color: white;
-                margin: 0;
-                font-size: 28px;
-                font-weight: 700;
-              }
-              .content {
-                padding: 40px 30px;
-              }
-              .content h2 {
-                color: #1f2937;
-                font-size: 24px;
-                margin-bottom: 20px;
-              }
-              .content p {
-                color: #6b7280;
-                margin-bottom: 20px;
-                font-size: 16px;
-              }
-              .button-container {
-                text-align: center;
-                margin: 35px 0;
-              }
-              .button {
-                display: inline-block;
-                padding: 16px 40px;
-                background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%);
-                color: white;
-                text-decoration: none;
-                border-radius: 12px;
-                font-weight: 600;
-                font-size: 16px;
-                box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
-                transition: transform 0.2s;
-              }
-              .button:hover {
-                transform: translateY(-2px);
-              }
-              .info-box {
-                background: #fef3c7;
-                border-left: 4px solid #f59e0b;
-                padding: 16px;
-                margin: 25px 0;
-                border-radius: 8px;
-              }
-              .info-box p {
-                margin: 0;
-                color: #92400e;
-                font-size: 14px;
-              }
-              .warning-box {
-                background: #fee2e2;
-                border-left: 4px solid #ef4444;
-                padding: 16px;
-                margin: 25px 0;
-                border-radius: 8px;
-              }
-              .warning-box p {
-                margin: 0;
-                color: #991b1b;
-                font-size: 14px;
-              }
-              .footer {
-                background: #f9fafb;
-                padding: 30px;
-                text-align: center;
-                border-top: 1px solid #e5e7eb;
-              }
-              .footer p {
-                color: #9ca3af;
-                font-size: 14px;
-                margin: 5px 0;
-              }
-              .emoji {
-                font-size: 24px;
-                margin-right: 8px;
-              }
-            </style>
           </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <div class="logo">💘</div>
-                <h1>Arrettu - Reset Password</h1>
+          <body style="margin:0; padding:0; background:linear-gradient(135deg,#fde2e4,#f3e8ff); font-family:'Segoe UI',Roboto,Arial,sans-serif;">
+            <div style="max-width:600px; margin:40px auto; background:white; border-radius:20px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.1);">
+              
+              <!-- HEADER -->
+              <div style="background:linear-gradient(135deg,#ec4899,#9333ea); padding:40px 20px; text-align:center;">
+                <img src="https://tcmhvrlsaggyuukdscue.supabase.co/storage/v1/object/public/images/loveable-logo.png" alt="LoveableConnect" style="width:120px; height:120px; margin-bottom:20px; border-radius:50%; border:4px solid rgba(255,255,255,0.3); box-shadow:0 8px 32px rgba(0,0,0,0.2);" />
+                <h1 style="color:white; margin:10px 0 0; font-size:32px; font-weight:800;">Reset Password</h1>
+                <p style="color:rgba(255,255,255,0.95); font-size:16px; margin-top:10px;">🔐 Recupera l'accesso al tuo account</p>
               </div>
               
-              <div class="content">
-                <h2>🔐 Richiesta Reset Password</h2>
-                <p>Ciao! Abbiamo ricevuto una richiesta per reimpostare la password del tuo account Arrettu.</p>
+              <!-- BODY -->
+              <div style="padding:40px 30px;">
+                <h2 style="color:#9333ea; font-size:24px; margin-bottom:15px; font-weight:700;">Richiesta Reset Password 🔑</h2>
+                <p style="color:#374151; font-size:16px; line-height:1.6;">
+                  Ciao! Abbiamo ricevuto una richiesta per reimpostare la password del tuo account <strong style="color:#ec4899;">LoveableConnect</strong>.
+                </p>
                 
-                <p>Clicca sul pulsante qui sotto per creare una nuova password:</p>
+                <p style="color:#374151; font-size:16px; line-height:1.6; margin-top:20px;">
+                  Clicca sul pulsante qui sotto per creare una nuova password sicura:
+                </p>
                 
-                <div class="button-container">
-                  <a href="${resetUrl}" class="button">
-                    Reimposta Password
+                <!-- BUTTON -->
+                <div style="text-align:center; margin:35px 0;">
+                  <a href="${resetUrl}" 
+                     style="display:inline-block;
+                            background:linear-gradient(135deg,#ec4899,#9333ea);
+                            color:white;
+                            padding:18px 45px;
+                            border-radius:16px;
+                            font-weight:700;
+                            text-decoration:none;
+                            font-size:18px;
+                            box-shadow:0 8px 30px rgba(147,51,234,0.4);
+                            border:2px solid rgba(255,255,255,0.2);">
+                    🔓 Reimposta Password
                   </a>
                 </div>
                 
-                <div class="info-box">
-                  <p><span class="emoji">⏰</span><strong>Importante:</strong> Questo link è valido per 2 ore.</p>
+                <!-- INFO BOX -->
+                <div style="background:linear-gradient(135deg,#fff7ed,#ffedd5); padding:20px; border-radius:12px; border-left:5px solid #f97316; margin-top:30px;">
+                  <p style="margin:0; color:#92400e; font-size:14px; line-height:1.5;">
+                    <strong>⏰ Importante:</strong> Questo link è valido per <strong>2 ore</strong>. Dopo scadrà per motivi di sicurezza.
+                  </p>
                 </div>
                 
-                <div class="warning-box">
-                  <p><span class="emoji">🚨</span><strong>Non hai richiesto tu questo reset?</strong> Ignora questa email, la tua password rimarrà invariata e il tuo account è al sicuro.</p>
+                <!-- WARNING BOX -->
+                <div style="background:linear-gradient(135deg,#fee2e2,#fecaca); padding:20px; border-radius:12px; border-left:5px solid #ef4444; margin-top:20px;">
+                  <p style="margin:0; color:#991b1b; font-size:14px; line-height:1.5;">
+                    <strong>🚨 Non hai richiesto tu questo reset?</strong><br/>
+                    Ignora questa email in sicurezza. La tua password rimarrà invariata e il tuo account è protetto.
+                  </p>
                 </div>
                 
-                <p style="margin-top: 30px; color: #9ca3af; font-size: 14px;">
-                  Se il pulsante non funziona, copia e incolla questo link nel tuo browser:<br>
-                  <a href="${resetUrl}" style="color: #a855f7; word-break: break-all;">${resetUrl}</a>
-                </p>
+                <!-- SECURITY TIPS -->
+                <div style="background:linear-gradient(135deg,#f3e8ff,#fce7f3); padding:25px; border-radius:16px; margin-top:30px; border:2px solid rgba(236,72,153,0.1);">
+                  <h3 style="color:#9333ea; margin-bottom:15px; font-size:18px; font-weight:700;">🛡️ Suggerimenti per la sicurezza:</h3>
+                  <ul style="color:#4b5563; font-size:14px; line-height:1.8; margin:0; padding-left:0; list-style:none;">
+                    <li>🔒 Usa una password lunga e complessa</li>
+                    <li>🎲 Combina lettere maiuscole, minuscole, numeri e simboli</li>
+                    <li>🚫 Non riutilizzare password di altri siti</li>
+                    <li>📝 Considera l'uso di un password manager</li>
+                  </ul>
+                </div>
+                
+                <!-- ALTERNATE LINK -->
+                <div style="margin-top:30px; background:#f9fafb; padding:18px; border-radius:12px; border:1px solid #e5e7eb;">
+                  <p style="color:#6b7280; font-size:13px; line-height:1.6; margin:0 0 8px 0;">
+                    <strong>Il pulsante non funziona?</strong> Copia e incolla questo link nel tuo browser:
+                  </p>
+                  <a href="${resetUrl}" style="color:#9333ea; font-size:12px; word-break:break-all; font-weight:600;">${resetUrl}</a>
+                </div>
               </div>
               
-              <div class="footer">
-                <p><strong>💘 Arrettu</strong></p>
-                <p>La tua app per incontrare persone speciali</p>
-                <p style="margin-top: 20px;">Hai bisogno di aiuto? Contatta il nostro supporto</p>
+              <!-- FOOTER -->
+              <div style="background:linear-gradient(135deg,#fafafa,#f3f4f6); padding:25px; text-align:center; border-top:2px solid #e5e7eb;">
+                <p style="color:#6b7280; font-size:14px; margin:5px 0; font-weight:600;">💕 LoveableConnect</p>
+                <p style="color:#9ca3af; font-size:12px; margin:5px 0;">La tua app per incontrare persone speciali</p>
+                <p style="color:#9ca3af; font-size:12px; margin-top:15px;">Hai bisogno di aiuto? Contatta il nostro supporto</p>
               </div>
             </div>
           </body>

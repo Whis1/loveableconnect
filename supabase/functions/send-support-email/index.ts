@@ -24,50 +24,66 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Sending support email from:", userEmail);
 
     const emailResponse = await resend.emails.send({
-      from: `LoveableConnect Support <onboarding@resend.dev>`,
+      from: "LoveableConnect Support 💕 <onboarding@resend.dev>",
       replyTo: userEmail,
       to: ["loovableconnect@hotmail.com"],
-      subject: `💬 Richiesta Supporto da ${userEmail}`,
+      subject: `🆘 Nuovo messaggio di supporto da ${userEmail}`,
       html: `
         <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        </head>
-        <body style="margin: 0; padding: 0; background: #f9fafb;">
-          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
-            
-            <div style="background: linear-gradient(135deg, #ec4899 0%, #9333ea 100%); padding: 30px 20px; text-align: center;">
-              <div style="font-size: 36px; margin-bottom: 8px;">💬</div>
-              <h1 style="color: white; font-size: 24px; margin: 0; font-weight: 700;">Nuova Richiesta Supporto</h1>
-            </div>
-
-            <div style="padding: 30px;">
-              <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                <p style="margin: 0; color: #374151; font-size: 14px;"><strong>Da:</strong></p>
-                <p style="margin: 5px 0 0 0; color: #ec4899; font-size: 16px; font-weight: 600;">${userEmail}</p>
+        <html lang="it">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="margin:0; padding:0; background:linear-gradient(135deg,#fde2e4,#f3e8ff); font-family:'Segoe UI',Roboto,Arial,sans-serif;">
+            <div style="max-width:600px; margin:40px auto; background:white; border-radius:20px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.1);">
+              
+              <!-- HEADER -->
+              <div style="background:linear-gradient(135deg,#ec4899,#9333ea); padding:40px 20px; text-align:center;">
+                <img src="https://tcmhvrlsaggyuukdscue.supabase.co/storage/v1/object/public/images/loveable-logo.png" alt="LoveableConnect" style="width:120px; height:120px; margin-bottom:20px; border-radius:50%; border:4px solid rgba(255,255,255,0.3); box-shadow:0 8px 32px rgba(0,0,0,0.2);" />
+                <div style="font-size:60px; margin-bottom:10px;">🆘</div>
+                <h1 style="color:white; margin:10px 0 0; font-size:32px; font-weight:800;">Richiesta Supporto</h1>
+                <p style="color:rgba(255,255,255,0.95); font-size:16px; margin-top:10px;">Nuovo messaggio dall'utente</p>
               </div>
-
-              <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 20px; border-radius: 8px; border-left: 4px solid #f59e0b;">
-                <p style="margin: 0 0 10px 0; color: #92400e; font-size: 14px; font-weight: 600;">Messaggio:</p>
-                <p style="margin: 0; color: #78350f; font-size: 15px; line-height: 1.6; white-space: pre-wrap;">${message}</p>
+              
+              <!-- BODY -->
+              <div style="padding:40px 30px;">
+                <h2 style="color:#9333ea; font-size:24px; margin-bottom:15px; font-weight:700;">Dettagli Utente 👤</h2>
+                
+                <!-- USER INFO -->
+                <div style="background:linear-gradient(135deg,#f3e8ff,#fce7f3); padding:20px; border-radius:12px; margin:20px 0; border:2px solid rgba(236,72,153,0.1);">
+                  <p style="margin:0 0 10px 0; color:#4b5563; font-size:15px;">
+                    <strong style="color:#9333ea;">Email:</strong> ${userEmail}
+                  </p>
+                  <p style="margin:0; color:#4b5563; font-size:14px;">
+                    <strong style="color:#9333ea;">Data:</strong> ${new Date().toLocaleString('it-IT')}
+                  </p>
+                </div>
+                
+                <h3 style="color:#9333ea; font-size:20px; margin:25px 0 15px 0; font-weight:700;">💬 Messaggio:</h3>
+                
+                <!-- MESSAGE -->
+                <div style="background:#f9fafb; padding:25px; border-radius:12px; border-left:5px solid #ec4899;">
+                  <p style="margin:0; color:#374151; font-size:15px; line-height:1.8; white-space:pre-wrap;">
+                    ${message}
+                  </p>
+                </div>
+                
+                <!-- ACTION REQUIRED -->
+                <div style="background:linear-gradient(135deg,#fff7ed,#ffedd5); padding:20px; border-radius:12px; margin-top:25px; border:2px solid rgba(249,115,22,0.2); text-align:center;">
+                  <p style="margin:0; color:#92400e; font-size:14px; line-height:1.6;">
+                    <strong>⚡ Azione richiesta:</strong> Rispondi all'utente il prima possibile per fornire assistenza!
+                  </p>
+                </div>
               </div>
-
-              <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-                <p style="margin: 0; color: #6b7280; font-size: 13px;">
-                  <strong>Rispondi a:</strong> <a href="mailto:${userEmail}" style="color: #9333ea; text-decoration: none;">${userEmail}</a>
-                </p>
+              
+              <!-- FOOTER -->
+              <div style="background:linear-gradient(135deg,#fafafa,#f3f4f6); padding:25px; text-align:center; border-top:2px solid #e5e7eb;">
+                <p style="color:#6b7280; font-size:14px; margin:5px 0; font-weight:600;">💕 LoveableConnect Support Team</p>
+                <p style="color:#9ca3af; font-size:12px; margin:5px 0;">Sistema di gestione richieste utenti</p>
               </div>
             </div>
-
-            <div style="background: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
-              <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-                💕 <strong style="color: #ec4899;">LoveableConnect</strong> Support System
-              </p>
-            </div>
-          </div>
-        </body>
+          </body>
         </html>
       `,
     });
