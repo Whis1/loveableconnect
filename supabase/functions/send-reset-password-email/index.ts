@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -10,8 +11,6 @@ const corsHeaders = {
 
 interface ResetPasswordEmailRequest {
   email: string;
-  token: string;
-  token_hash: string;
   redirect_to: string;
 }
 
@@ -21,10 +20,38 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, token_hash, redirect_to }: ResetPasswordEmailRequest = await req.json();
+    const { email, redirect_to }: ResetPasswordEmailRequest = await req.json();
     
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const resetUrl = `${supabaseUrl}/auth/v1/verify?token=${token_hash}&type=recovery&redirect_to=${redirect_to}`;
+    if (!email || !redirect_to) {
+      throw new Error("Email e redirect_to sono obbligatori.");
+    }
+
+    // Create Supabase admin client to generate reset link
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+
+    // Generate password reset link
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'recovery',
+      email: email,
+      options: {
+        redirectTo: redirect_to
+      }
+    });
+
+    if (linkError) {
+      throw new Error(`Failed to generate reset link: ${linkError.message}`);
+    }
+
+    const resetUrl = linkData.properties.action_link;
 
     const emailResponse = await resend.emails.send({
       from: "Arrettu <onboarding@resend.dev>",

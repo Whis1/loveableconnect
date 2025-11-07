@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,12 +13,35 @@ serve(async (req) => {
   }
 
   try {
-    const { email, confirmationUrl, nickname } = await req.json();
+    const { email, nickname } = await req.json();
 
-    if (!email || !confirmationUrl) {
-      throw new Error("Email e link di conferma sono obbligatori.");
+    if (!email) {
+      throw new Error("Email è obbligatoria.");
     }
 
+    // Create Supabase admin client to generate confirmation link
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+
+    // Generate email confirmation link
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'signup',
+      email: email,
+    });
+
+    if (linkError) {
+      throw new Error(`Failed to generate confirmation link: ${linkError.message}`);
+    }
+
+    const confirmationUrl = linkData.properties.action_link;
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
     await resend.emails.send({
