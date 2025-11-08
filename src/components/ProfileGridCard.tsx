@@ -288,12 +288,28 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
       return;
     }
 
+    // CONTROLLO ISTANTANEO MATCH: verifica se l'altro ha già messo like
+    const { data: reciprocalLike } = await supabase
+      .from("likes")
+      .select("id")
+      .eq("from_user_id", profile.id)
+      .eq("to_user_id", currentUserId)
+      .maybeSingle();
+
+    const willBeMatch = !!reciprocalLike;
+
     // TUTTO ISTANTANEO: aggiorna UI + mostra notifica subito
     setHasLiked(true);
-    toast({
-      title: t('search.likeSent'),
-      description: `${t('search.likedProfile')} ${profile.nickname || profile.full_name}`,
-    });
+    
+    // Se sarà un match, mostra il banner IMMEDIATAMENTE
+    if (willBeMatch && onMatch) {
+      onMatch(profile.nickname || profile.full_name);
+    } else {
+      toast({
+        title: t('search.likeSent'),
+        description: `${t('search.likedProfile')} ${profile.nickname || profile.full_name}`,
+      });
+    }
 
     // Fire backend in background - non blocca l'UI
     (async () => {
@@ -312,11 +328,6 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
             setHasLiked(false);
             setShowCreditsBanner(true);
             return;
-          }
-
-          // Match? notifica
-          if (result.match_created && onMatch) {
-            onMatch(profile.nickname || profile.full_name);
           }
           return;
         }
@@ -347,15 +358,6 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
             return;
           }
           throw likeError;
-        }
-
-        console.log('Like response:', likeData);
-
-        // Match? notifica - controlla sia likeData che likeData.data
-        const matchCreated = likeData?.match_created || (likeData as any)?.data?.match_created;
-        if (matchCreated && onMatch) {
-          console.log('Match created! Showing banner for:', profile.nickname || profile.full_name);
-          onMatch(profile.nickname || profile.full_name);
         }
       } catch (error: any) {
         // Rollback completo su errore
