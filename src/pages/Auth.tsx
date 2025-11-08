@@ -151,18 +151,6 @@ const Auth = () => {
       if (error) throw error;
 
       if (data.user) {
-        // Call our custom confirmation email edge function
-        try {
-          await supabase.functions.invoke('send-confirmation-email', {
-            body: {
-              email,
-              nickname: nickname
-            }
-          });
-        } catch (emailError) {
-          console.error('Error sending confirmation email:', emailError);
-        }
-
         setEmailSent(true);
         toast({
           title: "📧 Email di Conferma Inviata",
@@ -195,12 +183,8 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      // Call our custom reset password email edge function
-      const { error } = await supabase.functions.invoke('send-reset-password-email', {
-        body: {
-          email,
-          redirect_to: `${window.location.origin}/reset-password`
-        }
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) throw error;
