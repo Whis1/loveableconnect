@@ -1,20 +1,89 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import webpush from "https://esm.sh/web-push@3.6.7?target=deno";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Get VAPID keys from Supabase secrets
+// VAPID configuration
 const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY");
 const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY");
+const CONTACT_EMAIL = "mailto:support@loveableconnect.app";
 
-interface NotificationPayload {
-  title: string;
-  body: string;
-  type: string;
-  data?: Record<string, any>;
+if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+  console.error("VAPID keys not configured");
+}
+
+// Configure web-push
+webpush.setVapidDetails(CONTACT_EMAIL, VAPID_PUBLIC_KEY || "", VAPID_PRIVATE_KEY || "");
+
+// Supabase client with service role
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+interface IncomingPayload {
+  user_id?: string;
+  title?: string;
+  body?: string;
+  data?: Record<string, unknown> | null;
+  notification_id?: string;
+}
+
+async function sendToUser(
+  userId: string,
+  payload: { title: string; body: string; data?: Record<string, unknown> | null },
+  notificationId?: string
+) {
+  // Fetch subscriptions
+  const { data: subs, error } = await supabase
+    .from("push_subscriptions")
+    .select("id, endpoint, p256dh, auth")
+    .eq("user_id", userId);
+
+  if (error) throw error;
+
+  let sentCount = 0;
+  let failedCount = 0;
+
+  const webPayload = JSON.stringify({
+    title: payload.title || "LoveableConnect",
+    body: payload.body || "Hai una nuova notifica",
+    data: payload.data || { url: "/" },
+  });
+
+  for (const sub of subs || []) {
+    const subscription = {
+      endpoint: sub.endpoint,
+      keys: { p256dh: sub.p256dh, auth: sub.auth },
+    } as any;
+
+    try {
+      await webpush.sendNotification(subscription, webPayload, { TTL: 60 });
+      sentCount++;
+    } catch (err: any) {
+      failedCount++;
+      const status = err?.statusCode ?? err?.status ?? 0;
+      // Remove invalid subscriptions
+      if (status === 404 || status === 410) {
+        await supabase.from("push_subscriptions").delete().eq("id", sub.id);
+      }
+      console.error("Push error for sub", sub.id, err?.message || err);
+    }
+  }
+
+  // Mark queue item as sent if provided
+  if (notificationId) {
+    try {
+      await supabase.from("notification_queue").update({ sent: true }).eq("id", notificationId);
+    } catch (e) {
+      console.warn("Failed to mark notification as sent:", e);
+    }
+  }
+
+  return { sentCount, failedCount };
 }
 
 serve(async (req) => {
@@ -22,146 +91,76 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-  );
-
   try {
-    console.log("🔔 Starting push notification processor...");
-
-    // Validate VAPID keys are configured
+    // Validate VAPID
     if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
-      throw new Error("VAPID keys not configured in secrets");
-    }
-
-    // Get all unsent notifications
-    const { data: notifications, error: fetchError } = await supabaseClient
-      .from("notification_queue")
-      .select("*")
-      .eq("sent", false)
-      .order("created_at", { ascending: true })
-      .limit(100);
-
-    if (fetchError) {
-      console.error("Error fetching notifications:", fetchError);
-      throw fetchError;
-    }
-
-    if (!notifications || notifications.length === 0) {
-      console.log("No notifications to send");
-      return new Response(JSON.stringify({ sent: 0 }), {
+      return new Response(JSON.stringify({ ok: false, error: "VAPID keys missing" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
+        status: 500,
       });
     }
 
-    console.log(`Found ${notifications.length} notifications to send`);
+    const contentType = req.headers.get("content-type") || "";
+    let body: IncomingPayload | null = null;
 
-    let sentCount = 0;
-    let failedCount = 0;
-
-    // Process each notification
-    for (const notification of notifications) {
+    if (contentType.includes("application/json")) {
       try {
-        // Get user's push subscriptions
-        const { data: subscriptions } = await supabaseClient
-          .from("push_subscriptions")
-          .select("*")
-          .eq("user_id", notification.user_id);
-
-        if (!subscriptions || subscriptions.length === 0) {
-          console.log(`No subscriptions found for user ${notification.user_id}`);
-          // Mark as sent even if no subscriptions (avoid retry loop)
-          await supabaseClient
-            .from("notification_queue")
-            .update({ sent: true })
-            .eq("id", notification.id);
-          continue;
-        }
-
-        console.log(`Sending to ${subscriptions.length} subscription(s) for user ${notification.user_id}`);
-
-        // Send to each subscription
-        for (const subscription of subscriptions) {
-          try {
-            const payload: NotificationPayload = {
-              title: notification.title,
-              body: notification.body,
-              type: notification.type,
-              data: notification.data
-            };
-
-            // Here you would use web-push library to send the notification
-            // For now, we'll use a simplified approach with fetch
-            // In production, use web-push npm package or a service like OneSignal
-
-            console.log(`Sending notification to endpoint: ${subscription.endpoint.substring(0, 50)}...`);
-            
-            // This is a placeholder - in production you need web-push library
-            // or a push notification service to properly sign and send
-            const pushResponse = await fetch(subscription.endpoint, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'TTL': '86400' // 24 hours
-              },
-              body: JSON.stringify(payload)
-            });
-
-            if (!pushResponse.ok) {
-              console.error(`Failed to send push: ${pushResponse.status} ${pushResponse.statusText}`);
-              
-              // If subscription is no longer valid, remove it
-              if (pushResponse.status === 410 || pushResponse.status === 404) {
-                await supabaseClient
-                  .from("push_subscriptions")
-                  .delete()
-                  .eq("id", subscription.id);
-                console.log(`Removed invalid subscription ${subscription.id}`);
-              }
-            } else {
-              console.log(`✅ Notification sent successfully`);
-              sentCount++;
-            }
-
-          } catch (pushError) {
-            console.error(`Error sending to subscription ${subscription.id}:`, pushError);
-            failedCount++;
-          }
-        }
-
-        // Mark notification as sent
-        await supabaseClient
-          .from("notification_queue")
-          .update({ sent: true })
-          .eq("id", notification.id);
-
-      } catch (notificationError) {
-        console.error(`Error processing notification ${notification.id}:`, notificationError);
-        failedCount++;
+        body = await req.json();
+      } catch (_) {
+        body = null;
       }
     }
 
-    console.log(`✅ Push notification processor completed: ${sentCount} sent, ${failedCount} failed`);
+    // Mode 1: invoked by DB trigger with single payload
+    if (body?.user_id && (body.title || body.body)) {
+      const { sentCount, failedCount } = await sendToUser(
+        body.user_id,
+        {
+          title: body.title || "LoveableConnect",
+          body: body.body || "Hai una nuova notifica",
+          data: body.data || { url: "/" },
+        },
+        body.notification_id
+      );
+
+      return new Response(
+        JSON.stringify({ ok: true, sent: sentCount, failed: failedCount, mode: "single" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Mode 2: fallback batch processor (manual invocations)
+    const { data: queue, error: qError } = await supabase
+      .from("notification_queue")
+      .select("id, user_id, title, body, data")
+      .eq("sent", false)
+      .order("created_at", { ascending: true })
+      .limit(50);
+
+    if (qError) throw qError;
+
+    let totalSent = 0;
+    let totalFailed = 0;
+
+    for (const item of queue || []) {
+      const { sentCount, failedCount } = await sendToUser(
+        item.user_id,
+        { title: item.title, body: item.body, data: item.data || { url: "/" } },
+        item.id
+      );
+      totalSent += sentCount;
+      totalFailed += failedCount;
+    }
 
     return new Response(
-      JSON.stringify({ 
-        sent: sentCount,
-        failed: failedCount,
-        processed: notifications.length
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
+      JSON.stringify({ ok: true, processed: (queue || []).length, sent: totalSent, failed: totalFailed, mode: "batch" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
-    console.error("Error in send-push-notification:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+  } catch (e: any) {
+    console.error("send-push-notification error:", e);
+    return new Response(
+      JSON.stringify({ ok: false, error: e?.message || String(e) }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+    );
   }
 });
