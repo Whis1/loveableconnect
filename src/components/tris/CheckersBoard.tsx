@@ -734,8 +734,10 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
       const blackPieces: number[] = [];
       
       if (currentPos !== null) {
+        // Multi-capture mode: only the current capturing piece can move
         blackPieces.push(currentPos);
       } else {
+        // Normal mode: check all black pieces
         currentBoard.forEach((piece, idx) => {
           if (piece && piece.includes("black")) {
             blackPieces.push(idx);
@@ -745,17 +747,23 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
 
       const allMoves: Array<{ from: number; to: number; score: number; captures: number; isJump: boolean }> = [];
       
+      // First, check if there are any jump moves available
+      let hasJumps = false;
+      
       for (const pos of blackPieces) {
         const { regular, jumps } = getBotValidMoves(pos, currentBoard);
         
-        // Evaluate jump moves
+        // Evaluate jump moves (captures) - these are MANDATORY if available
         for (const to of jumps) {
+          hasJumps = true;
           const evaluation = evaluateMove(pos, to, currentBoard);
           allMoves.push({ from: pos, to, score: evaluation.score, captures: evaluation.captures, isJump: true });
         }
         
-        // Evaluate regular moves only if no jumps available and not in multi-capture
-        if (currentPos === null) {
+        // Evaluate regular moves ONLY if:
+        // 1. We're not in multi-capture mode (currentPos === null)
+        // 2. AND there are no jumps available from ANY piece
+        if (currentPos === null && !hasJumps) {
           for (const to of regular) {
             const evaluation = evaluateMove(pos, to, currentBoard);
             allMoves.push({ from: pos, to, score: evaluation.score, captures: 0, isJump: false });
@@ -763,7 +771,10 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
         }
       }
 
+      // If no valid moves found, return unchanged board
+      // This should trigger the "bot has no moves" logic in the caller
       if (allMoves.length === 0) {
+        console.log("Bot has no valid moves available");
         return currentBoard;
       }
 
@@ -798,20 +809,59 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
       const toRow = Math.floor(bestMove.to / 8);
       const toCol = bestMove.to % 8;
       
+      // Verify move distance is valid (1 square for regular, 2 for jump)
+      const rowDiff = Math.abs(toRow - fromRow);
+      const colDiff = Math.abs(toCol - fromCol);
+      
+      // Sanity check: all moves must be diagonal (equal row and col distance)
+      if (rowDiff !== colDiff) {
+        console.error("Invalid move: not diagonal", { from: bestMove.from, to: bestMove.to });
+        return currentBoard;
+      }
+      
+      // Sanity check: moves must be either 1 square (regular) or 2 squares (jump)
+      if (rowDiff !== 1 && rowDiff !== 2) {
+        console.error("Invalid move distance:", rowDiff, "squares", { from: bestMove.from, to: bestMove.to });
+        return currentBoard;
+      }
+      
       if (bestMove.isJump) {
+        // Verify this is actually a 2-square jump
+        if (rowDiff !== 2) {
+          console.error("Jump move must be 2 squares", { from: bestMove.from, to: bestMove.to });
+          return currentBoard;
+        }
+        
+        // Remove the captured piece (must be in the middle square)
         const jumpedRow = Math.floor((fromRow + toRow) / 2);
         const jumpedCol = Math.floor((fromCol + toCol) / 2);
-        newBoard[jumpedRow * 8 + jumpedCol] = null;
+        const jumpedPos = jumpedRow * 8 + jumpedCol;
+        
+        // Verify there's actually an opponent piece to capture
+        const jumpedPiece = newBoard[jumpedPos];
+        if (!jumpedPiece || !jumpedPiece.includes("red")) {
+          console.error("No opponent piece to capture at", jumpedPos);
+          return currentBoard;
+        }
+        
+        newBoard[jumpedPos] = null;
         
         // Check for continuation of multi-capture
         const { jumps } = getBotValidMoves(bestMove.to, newBoard);
         
         if (jumps.length > 0) {
+          // Recursively continue the multi-capture sequence
           return makeOneBotMove(newBoard, bestMove.to);
+        }
+      } else {
+        // Regular move must be exactly 1 square
+        if (rowDiff !== 1) {
+          console.error("Regular move must be 1 square", { from: bestMove.from, to: bestMove.to });
+          return currentBoard;
         }
       }
       
-      // King promotion
+      // King promotion (bot reaches the opposite end)
       if (piece === "black" && toRow === 7) {
         newBoard[bestMove.to] = "black-king";
       }
@@ -859,16 +909,21 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     const col = position % 8;
     const isKing = piece === "black-king";
 
+    // Bot moves downward (increasing row), kings can move both ways
     const directions = isKing ? [-1, 1] : [1];
     
     for (const dir of directions) {
-      // Regular moves
+      // Regular moves - MUST be exactly 1 diagonal square
       const newRow = row + dir;
       if (newRow >= 0 && newRow < 8) {
+        // Check both diagonal directions (left and right)
         for (const dc of [-1, 1]) {
           const newCol = col + dc;
+          // Verify move is within bounds and exactly 1 square diagonally
           if (newCol >= 0 && newCol < 8) {
             const newPos = newRow * 8 + newCol;
+            // Move is valid ONLY if destination is empty
+            // (no need to check path since it's only 1 square)
             if (currentBoard[newPos] === null) {
               regular.push(newPos);
             }
@@ -876,17 +931,28 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
         }
       }
       
-      // Jump moves (captures)
+      // Jump moves (captures) - MUST be exactly 2 diagonal squares
       const jumpRow = row + dir * 2;
       if (jumpRow >= 0 && jumpRow < 8) {
         for (const dc of [-1, 1]) {
           const jumpCol = col + dc * 2;
+          // Verify jump is within bounds and exactly 2 squares diagonally
           if (jumpCol >= 0 && jumpCol < 8) {
             const jumpPos = jumpRow * 8 + jumpCol;
-            const middlePos = (row + dir) * 8 + (col + dc);
+            // Calculate the middle position (must have opponent piece)
+            const middleRow = row + dir;
+            const middleCol = col + dc;
+            const middlePos = middleRow * 8 + middleCol;
             const middlePiece = currentBoard[middlePos];
             
-            if (currentBoard[jumpPos] === null && middlePiece && middlePiece.includes("red")) {
+            // Jump is valid ONLY if:
+            // 1. Destination square is empty
+            // 2. Middle square has an OPPONENT piece (red)
+            // 3. Middle square does NOT have own piece (black)
+            if (currentBoard[jumpPos] === null && 
+                middlePiece && 
+                middlePiece.includes("red") &&
+                !middlePiece.includes("black")) {
               jumps.push(jumpPos);
             }
           }
