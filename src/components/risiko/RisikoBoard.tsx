@@ -490,7 +490,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
   const troopCardAmount = getTroopCardAmount(blueCount);
 
   // Emoji system
-  const availableEmojis = ['😊', '😎', '🔥', '💪', '👍', '😂', '🎉', '⚔️', '🏆', '💀', '😤', '🤔'];
+  const availableEmojis = ['😊', '😎', '🔥', '💪', '👍', '😂', '🎉', '⚔️', '🏆', '💀', '😤', '🤔', '😈', '😇', '💦', '🥲', '😢', '😭', '💣', '🪖'];
 
   const handleEmojiClick = (emoji: string) => {
     setUserEmoji(emoji);
