@@ -217,21 +217,24 @@ export const RisikoMap = ({
             />
             
             
-            {/* Territory name - centered and scaled to fit */}
-            <text
-              x={territory.x}
-              y={territory.y - territory.size * 0.15}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              className="text-[7px] font-semibold pointer-events-none"
-              style={{ 
-                fill: '#22c55e',
-                textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                fontSize: `${Math.max(6, territory.size / 8)}px`
-              }}
-            >
-              {territory.name}
-            </text>
+            {/* Territory name - centered and scaled to fit - nascosto per territori coperti */}
+            {/* Nascondi nomi per territori che stanno sotto altri (circa 1 su 2) */}
+            {parseInt(territory.id.substring(1)) % 2 === 0 && (
+              <text
+                x={territory.x}
+                y={territory.y - territory.size * 0.15}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="text-[7px] font-semibold pointer-events-none"
+                style={{ 
+                  fill: '#22c55e',
+                  textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                  fontSize: `${Math.max(6, territory.size / 8)}px`
+                }}
+              >
+                {territory.name}
+              </text>
+            )}
             
             {/* Troops icon and count - icon bigger and above number */}
             {territory.troops > 0 && (
