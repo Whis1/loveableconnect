@@ -259,7 +259,7 @@ export const RisikoMap = ({
                 {/* Number circle below the icon */}
                 <circle
                   cx={territory.x}
-                  cy={territory.y + territory.size * 0.45}
+                  cy={territory.y + territory.size * 0.25}
                   r={13}
                   fill={getTroopColor(territory.owner)}
                   stroke="#fff"
@@ -267,7 +267,7 @@ export const RisikoMap = ({
                 />
                 <text
                   x={territory.x}
-                  y={territory.y + territory.size * 0.45}
+                  y={territory.y + territory.size * 0.25}
                   textAnchor="middle"
                   dominantBaseline="central"
                   className="text-sm font-bold fill-white pointer-events-none"
