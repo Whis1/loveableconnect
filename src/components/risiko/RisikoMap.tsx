@@ -131,9 +131,9 @@ export const RisikoMap = ({
             const dy = territory.y - neighbor.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
-            // Mostra stradine SOLO per collegamenti molto distanti
-            // Soglia alta per massima compattezza
-            if (distance < 300) return null;
+            // Mostra stradine SOLO per collegamenti estremamente distanti
+            // Soglia altissima per massima compattezza visiva
+            if (distance < 350) return null;
             
             const isLongDistance = distance > 450; // Collegamenti intercontinentali
             
