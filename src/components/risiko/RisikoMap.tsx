@@ -163,10 +163,10 @@ export const RisikoMap = ({
                 y1={territory.y}
                 x2={neighbor.x}
                 y2={neighbor.y}
-                stroke="#4a5a3a"
-                strokeWidth={2}
-                strokeDasharray="5,5"
-                opacity={0.5}
+                stroke="#8B7355"
+                strokeWidth={3}
+                strokeDasharray="8,4"
+                opacity={0.7}
               />
             );
           })
@@ -218,41 +218,41 @@ export const RisikoMap = ({
             {/* Territory name - centered and scaled to fit */}
             <text
               x={territory.x}
-              y={territory.y}
+              y={territory.y - territory.size * 0.15}
               textAnchor="middle"
               dominantBaseline="middle"
               className="text-[9px] font-bold fill-white pointer-events-none"
               style={{ 
                 textShadow: '1px 1px 3px rgba(0,0,0,0.9)',
-                fontSize: `${Math.max(7, territory.size / 6)}px`
+                fontSize: `${Math.max(8, territory.size / 5.5)}px`
               }}
             >
               {territory.name}
             </text>
             
-            {/* Troops icon and count */}
+            {/* Troops icon and count - positioned inside territory */}
             {territory.troops > 0 && (
               <g className={arrivedTroops?.territoryId === territory.id ? 'animate-scale-in' : ''}>
                 <image
                   href={troopsIcon}
-                  x={territory.x - 16}
-                  y={territory.y + 12}
-                  width={32}
-                  height={32}
+                  x={territory.x - 14}
+                  y={territory.y + territory.size * 0.15}
+                  width={28}
+                  height={28}
                   style={{ filter: `drop-shadow(0 2px 4px rgba(0,0,0,0.5))` }}
                   opacity={0.9}
                 />
                 <circle
                   cx={territory.x}
-                  cy={territory.y + 48}
-                  r={11}
+                  cy={territory.y + territory.size * 0.5}
+                  r={10}
                   fill={getTroopColor(territory.owner)}
                   stroke="#fff"
                   strokeWidth={2}
                 />
                 <text
                   x={territory.x}
-                  y={territory.y + 48}
+                  y={territory.y + territory.size * 0.5}
                   textAnchor="middle"
                   dominantBaseline="central"
                   className="text-xs font-bold fill-white pointer-events-none"
