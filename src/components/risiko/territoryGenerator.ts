@@ -204,47 +204,73 @@ export const generateTerritories = (): Territory[] => {
     });
   });
   
-  // Collegamenti tra territori - mappa unica con solo 4 collegamenti distanti con stradine
+  // Collegamenti tra territori - tutti i collegamenti devono essere completi e bidirezionali
   const connections: [number, number[]][] = [
-    // Nord America (0-9) - tutti attaccati
-    [0, [1, 4, 5]], [1, [0, 2, 5, 6]], [2, [1, 3, 6, 7]], [3, [2, 7]],
-    [4, [0, 5, 8]], [5, [0, 1, 4, 6, 8, 9]], [6, [1, 2, 5, 7, 9]], [7, [2, 3, 6]],
-    [8, [4, 5, 9]], [9, [5, 6, 8, 10, 11, 18]], // Collegato a Sud America ed Europa
+    // Nord America (0-9) - tutti attaccati tra loro
+    [0, [1, 4, 5]], 
+    [1, [0, 2, 4, 5, 6]], 
+    [2, [1, 3, 5, 6, 7]], 
+    [3, [2, 6, 7, 36]], // Collegato ad Asia
+    [4, [0, 1, 5, 8, 9]], 
+    [5, [0, 1, 2, 4, 6, 8, 9]], 
+    [6, [1, 2, 3, 5, 7, 9, 18]], // Collegato ad Europa
+    [7, [2, 3, 6]], 
+    [8, [4, 5, 9, 10]], // Collegato a Sud America
+    [9, [4, 5, 6, 8, 10, 11, 18]], // Collegato a Sud America ed Europa
     
-    // Sud America (10-17) - attaccato a Nord America
-    [10, [9, 11, 13, 14]], [11, [9, 10, 12, 14, 15]],
-    [12, [11, 15, 17]], [13, [10, 14, 16]], [14, [10, 11, 13, 15, 16]],
-    [15, [11, 12, 14, 17]], [16, [13, 14]], [17, [12, 15]],
+    // Sud America (10-17) - tutti collegati tra loro e a Nord America
+    [10, [8, 9, 11, 13, 14]], 
+    [11, [9, 10, 12, 14, 15]], 
+    [12, [11, 15, 17]], 
+    [13, [10, 14, 16]], 
+    [14, [10, 11, 13, 15, 16]], 
+    [15, [11, 12, 14, 16, 17]], 
+    [16, [13, 14, 15, 17]], 
+    [17, [12, 15, 16, 35]], // Collegato ad Africa
     
-    // Europa (18-26) - attaccata a Nord America e Africa
-    [18, [9, 19, 22, 23]], [19, [18, 20, 23, 24]], [20, [19, 21, 24, 25]], [21, [20, 25, 36]], // Collegata ad Asia
-    [22, [18, 23, 26, 27]], [23, [18, 19, 22, 24, 26]], [24, [19, 20, 23, 25, 26]],
-    [25, [20, 21, 24]], [26, [22, 23, 24, 27, 28]], // Collegata ad Africa
+    // Europa (18-26) - tutti collegati tra loro, a Nord America e Africa
+    [18, [6, 9, 19, 22, 23]], 
+    [19, [18, 20, 22, 23, 24]], 
+    [20, [19, 21, 23, 24, 25]], 
+    [21, [20, 24, 25, 36]], // Collegato ad Asia
+    [22, [18, 19, 23, 26, 27]], 
+    [23, [18, 19, 20, 22, 24, 26]], 
+    [24, [19, 20, 21, 23, 25, 26]], 
+    [25, [20, 21, 24, 26]], 
+    [26, [22, 23, 24, 25, 27, 28]], // Collegato ad Africa
     
-    // Africa (27-35) - attaccata a Europa
-    [27, [22, 26, 28, 31, 32]], [28, [26, 27, 29, 32, 33]], [29, [28, 33, 36]], // Collegata ad Asia
-    [30, [31, 34]], [31, [27, 30, 32, 34, 35]], [32, [27, 28, 31, 33, 35]],
-    [33, [28, 29, 32, 35]], [34, [30, 31, 35]], [35, [31, 32, 33, 34]],
+    // Africa (27-35) - tutti collegati tra loro, a Europa
+    [27, [22, 26, 28, 30, 31, 32]], 
+    [28, [26, 27, 29, 31, 32, 33]], 
+    [29, [28, 32, 33, 36]], // Collegato ad Asia
+    [30, [27, 31, 34, 53]], // Collegato a Oceania
+    [31, [27, 28, 30, 32, 34, 35]], 
+    [32, [27, 28, 29, 31, 33, 35]], 
+    [33, [28, 29, 32, 34, 35]], 
+    [34, [30, 31, 33, 35]], 
+    [35, [17, 31, 32, 33, 34]], // Collegato a Sud America
     
-    // Asia (36-47) - attaccata a Europa e Africa
-    [36, [21, 29, 37, 40, 41]], [37, [36, 38, 41, 42]], [38, [37, 39, 42, 43]], [39, [38, 43]],
-    [40, [36, 41, 44, 45]], [41, [36, 37, 40, 42, 45, 46]], [42, [37, 38, 41, 43, 46, 47]],
-    [43, [38, 39, 42, 47]], [44, [40, 45]], [45, [40, 41, 44, 46]],
-    [46, [41, 42, 45, 47, 48]], [47, [42, 43, 46, 48]], // Collegata a Oceania con stradina
+    // Asia (36-47) - tutti collegati tra loro, a Europa e Africa
+    [36, [3, 21, 29, 37, 40, 41]], 
+    [37, [36, 38, 40, 41, 42]], 
+    [38, [37, 39, 41, 42, 43]], 
+    [39, [38, 42, 43]], 
+    [40, [36, 37, 41, 44, 45]], 
+    [41, [36, 37, 38, 40, 42, 44, 45, 46]], 
+    [42, [37, 38, 39, 41, 43, 46, 47]], 
+    [43, [38, 39, 42, 47]], 
+    [44, [40, 41, 45, 48]], 
+    [45, [40, 41, 44, 46, 48]], 
+    [46, [41, 42, 45, 47, 48, 49]], 
+    [47, [42, 43, 46, 49]], 
     
-    // Oceania (48-53) - collegata ad Asia con stradina
-    [48, [46, 47, 49, 51]], [49, [48, 50, 51, 52]],
-    [50, [49, 52, 53]], [51, [48, 49, 52]],
-    [52, [49, 50, 51, 53]], [53, [50, 52]],
-    
-    // 4 COLLEGAMENTI CON STRADINE (distanti):
-    // 1. Nord America (3) -> Asia (36) - Stretto di Bering
-    [3, [36]],
-    // 2. Sud America (17) -> Africa (35) - Atlantico Sud  
-    [17, [35]],
-    // 3. Africa (30) -> Oceania (53) - Oceano Indiano
-    [30, [53]],
-    // 4. Nord America (0) -> Europa (18) - Atlantico Nord (già collegato tramite territorio 9)
+    // Oceania (48-53) - tutti collegati tra loro e ad Asia
+    [48, [44, 45, 46, 49, 51, 52]], 
+    [49, [46, 47, 48, 50, 51, 52]], 
+    [50, [49, 51, 52, 53]], 
+    [51, [48, 49, 50, 52]], 
+    [52, [48, 49, 50, 51, 53]], 
+    [53, [30, 50, 52]], // Collegato ad Africa
   ];
   
   connections.forEach(([territoryIndex, neighborIndices]) => {
