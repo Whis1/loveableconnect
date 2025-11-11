@@ -93,32 +93,34 @@ const getContinentShape = (continentId: number, centerX: number, centerY: number
   return shapes[continentId] || shapes[0];
 };
 
-// Genera una forma di territorio organica e irregolare tipo continente
-const generateTerritoryPath = (centerX: number, centerY: number, size: number, seed: number): string => {
+// Genera una forma di territorio con seed FISSO per avere sempre la stessa forma
+const generateTerritoryPath = (centerX: number, centerY: number, size: number, territoryIndex: number): string => {
   const points: [number, number][] = [];
-  const numPoints = 12; // Più punti per forme più complesse
+  const numPoints = 12;
+  
+  // Usa l'indice del territorio come seed fisso invece di un seed variabile
+  const fixedSeed = territoryIndex * 0.0185; // Seed deterministico basato sull'indice
   
   for (let i = 0; i < numPoints; i++) {
     const angle = (i / numPoints) * Math.PI * 2;
-    // Variazioni più pronunciate per forme irregolari tipo coste
-    const radiusVariation = 0.6 + Math.sin(seed * 137 + i * 5.7) * 0.35 + Math.cos(seed * 73 + i * 3.3) * 0.15;
-    const angleJitter = (Math.sin(seed * 191 + i * 7.1) * 0.15);
+    // Variazioni fisse basate sull'indice del territorio
+    const radiusVariation = 0.6 + Math.sin(fixedSeed * 137 + i * 5.7) * 0.35 + Math.cos(fixedSeed * 73 + i * 3.3) * 0.15;
+    const angleJitter = (Math.sin(fixedSeed * 191 + i * 7.1) * 0.15);
     
     const x = centerX + Math.cos(angle + angleJitter) * size * radiusVariation;
-    const y = centerY + Math.sin(angle + angleJitter) * size * radiusVariation * 0.95; // Leggermente più piatto
+    const y = centerY + Math.sin(angle + angleJitter) * size * radiusVariation * 0.95;
     points.push([x, y]);
   }
   
-  // Usa curve di Bezier per forme più morbide tipo geografiche
+  // Usa curve di Bezier per forme morbide
   let path = `M ${points[0][0]} ${points[0][1]}`;
   for (let i = 0; i < points.length; i++) {
     const current = points[i];
     const next = points[(i + 1) % points.length];
-    const nextNext = points[(i + 2) % points.length];
     
-    // Punto di controllo per curva morbida
-    const cpX = (next[0] + current[0]) / 2 + (Math.sin(seed * 113 + i) * size * 0.1);
-    const cpY = (next[1] + current[1]) / 2 + (Math.cos(seed * 97 + i) * size * 0.1);
+    // Punto di controllo fisso per curva morbida
+    const cpX = (next[0] + current[0]) / 2 + (Math.sin(fixedSeed * 113 + i) * size * 0.1);
+    const cpY = (next[1] + current[1]) / 2 + (Math.cos(fixedSeed * 97 + i) * size * 0.1);
     
     path += ` Q ${cpX} ${cpY}, ${next[0]} ${next[1]}`;
   }
@@ -181,12 +183,12 @@ export const generateTerritories = (): Territory[] => {
     { x: 900, y: 595, size: 62 }, { x: 1010, y: 600, size: 65 }, { x: 1115, y: 595, size: 62 }
   ];
 
-  // Genera i 54 territori con le posizioni definite
+  // Genera i 54 territori con le posizioni FISSE definite
   continentLayouts.forEach((layout, index) => {
     const id = `t${index}`;
-    const seed = index / 54;
     
-    const path = generateTerritoryPath(layout.x, layout.y, layout.size, seed);
+    // Usa l'indice come seed per generare SEMPRE la stessa forma
+    const path = generateTerritoryPath(layout.x, layout.y, layout.size, index);
     
     territories.push({
       id,
