@@ -1,17 +1,23 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { X, ShoppingCart } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useCredits } from "@/hooks/useCredits";
 import bannersData from "@/data/banners.json";
 
 export const AdBanner = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { credits, loading } = useCredits();
   const [isVisible, setIsVisible] = useState(false);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [shouldShowAds, setShouldShowAds] = useState(true);
   const [banners, setBanners] = useState<string[]>(bannersData.banners);
+
+  // Hide ads on auth page
+  if (location.pathname === '/auth') {
+    return null;
+  }
 
   // Load banners from localStorage if available
   useEffect(() => {
