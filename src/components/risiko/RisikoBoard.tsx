@@ -400,6 +400,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
               src={`https://tcmhvrlsaggyuukdscue.supabase.co/storage/v1/object/public/avatars/${userProfile?.avatar_url}`}
               alt={userProfile?.nickname}
               className="w-12 h-12 rounded-full border-2 border-blue-500 object-cover"
+              style={{ objectFit: 'cover', objectPosition: 'center' }}
             />
             {gameState.currentPlayer === 'blue' && (
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full animate-pulse" />
@@ -415,7 +416,11 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
 
         {/* VS and Timer */}
         <div className="flex flex-col items-center gap-2">
-          <div className="text-3xl font-bold">⚔️ VS ⚔️</div>
+          <div className="text-3xl font-bold flex items-center gap-2">
+            <span>⚔️</span>
+            <span>VS</span>
+            <span>⚔️</span>
+          </div>
           <Badge variant="outline" className="text-sm px-3 py-1">
             ⏱️ {gameState.turnTimeLeft}s
           </Badge>
@@ -438,6 +443,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
               src={`https://tcmhvrlsaggyuukdscue.supabase.co/storage/v1/object/public/avatars/${opponentProfile?.avatar_url}`}
               alt={opponentProfile?.nickname}
               className="w-12 h-12 rounded-full border-2 border-red-500 object-cover"
+              style={{ objectFit: 'cover', objectPosition: 'center' }}
             />
             {gameState.currentPlayer === 'red' && (
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-pulse" />
