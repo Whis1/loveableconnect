@@ -350,28 +350,28 @@ export const RisikoMap = ({
                 {/* Icon positioned above the number circle */}
                 <image
                   href={troopsIcon}
-                  x={territory.x - 24}
-                  y={territory.y - territory.size * 0.45}
-                  width={48}
-                  height={48}
+                  x={territory.x - 32}
+                  y={territory.y - territory.size * 0.5}
+                  width={64}
+                  height={64}
                   style={{ filter: `drop-shadow(0 3px 6px rgba(0,0,0,0.7))` }}
                   opacity={0.95}
                 />
                 {/* Number circle below the icon */}
                 <circle
                   cx={territory.x}
-                  cy={territory.y + territory.size * 0.1}
-                  r={13}
+                  cy={territory.y + territory.size * 0.12}
+                  r={16}
                   fill={getTroopColor(territory.owner)}
                   stroke="#fff"
-                  strokeWidth={2.5}
+                  strokeWidth={3}
                 />
                 <text
                   x={territory.x}
-                  y={territory.y + territory.size * 0.1}
+                  y={territory.y + territory.size * 0.12}
                   textAnchor="middle"
                   dominantBaseline="central"
-                  className="text-sm font-bold fill-white pointer-events-none"
+                  className="text-base font-bold fill-white pointer-events-none"
                 >
                   {territory.troops}
                 </text>
@@ -385,27 +385,27 @@ export const RisikoMap = ({
           <g className="animate-pulse">
             <image
               href={troopsIcon}
-              x={animatingTroops.x - 30}
-              y={animatingTroops.y - 50}
-              width={60}
-              height={60}
+              x={animatingTroops.x - 40}
+              y={animatingTroops.y - 60}
+              width={80}
+              height={80}
               style={{ filter: `drop-shadow(0 5px 10px rgba(0,0,0,0.8))` }}
               opacity={0.9}
             />
             <circle
               cx={animatingTroops.x}
-              cy={animatingTroops.y + 35}
-              r={16}
+              cy={animatingTroops.y + 40}
+              r={20}
               fill="#fbbf24"
               stroke="#fff"
-              strokeWidth={3}
+              strokeWidth={3.5}
             />
             <text
               x={animatingTroops.x}
-              y={animatingTroops.y + 35}
+              y={animatingTroops.y + 40}
               textAnchor="middle"
               dominantBaseline="central"
-              className="text-base font-bold fill-white pointer-events-none"
+              className="text-lg font-bold fill-white pointer-events-none"
             >
               {animatingTroops.count}
             </text>
