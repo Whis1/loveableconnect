@@ -1,0 +1,99 @@
+import { Territory } from "./territoryGenerator";
+
+interface RisikoMapProps {
+  territories: Territory[];
+  selectedTerritory: string | null;
+  boostedTerritories: string[];
+  onTerritoryClick: (id: string) => void;
+  disabled: boolean;
+}
+
+export const RisikoMap = ({
+  territories,
+  selectedTerritory,
+  boostedTerritories,
+  onTerritoryClick,
+  disabled
+}: RisikoMapProps) => {
+  const getColor = (territory: Territory) => {
+    if (!territory.owner) return '#6b7280';
+    return territory.owner === 'blue' ? '#3b82f6' : '#ef4444';
+  };
+
+  const getStrokeColor = (territory: Territory) => {
+    if (selectedTerritory === territory.id) return '#fbbf24';
+    if (boostedTerritories.includes(territory.id)) return '#10b981';
+    return '#1f2937';
+  };
+
+  return (
+    <div className="w-full h-full bg-background rounded-lg border-2 border-border overflow-hidden">
+      <svg
+        viewBox="0 0 1200 800"
+        className="w-full h-full"
+        style={{ background: 'linear-gradient(to bottom, #0f172a, #1e293b)' }}
+      >
+        {/* Render territories */}
+        {territories.map((territory) => (
+          <g key={territory.id}>
+            {/* Territory path */}
+            <path
+              d={territory.path}
+              fill={getColor(territory)}
+              stroke={getStrokeColor(territory)}
+              strokeWidth={selectedTerritory === territory.id ? 4 : 2}
+              className={`transition-all ${!disabled ? 'cursor-pointer hover:opacity-80' : 'cursor-not-allowed'}`}
+              onClick={() => !disabled && onTerritoryClick(territory.id)}
+              opacity={territory.troops === 0 ? 0.5 : 1}
+            />
+            
+            {/* Troops count */}
+            {territory.troops > 0 && (
+              <g>
+                <circle
+                  cx={territory.x}
+                  cy={territory.y}
+                  r={20}
+                  fill="rgba(0,0,0,0.7)"
+                  stroke="#fff"
+                  strokeWidth={2}
+                />
+                <text
+                  x={territory.x}
+                  y={territory.y}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  className="text-lg font-bold fill-white pointer-events-none"
+                >
+                  {territory.troops}
+                </text>
+              </g>
+            )}
+
+            {/* Boost indicator */}
+            {boostedTerritories.includes(territory.id) && (
+              <g>
+                <circle
+                  cx={territory.x + 25}
+                  cy={territory.y - 25}
+                  r={12}
+                  fill="#10b981"
+                  className="animate-pulse"
+                />
+                <text
+                  x={territory.x + 25}
+                  y={territory.y - 25}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  className="text-sm font-bold fill-white pointer-events-none"
+                >
+                  ⚡
+                </text>
+              </g>
+            )}
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+};

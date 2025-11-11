@@ -5,6 +5,7 @@ import { Trophy, X } from "lucide-react";
 import { OpponentSearch } from "./OpponentSearch";
 import { TrisBoard } from "./TrisBoard";
 import { CheckersBoard } from "./CheckersBoard";
+import { RisikoBoard } from "../risiko/RisikoBoard";
 import { EloLeaderboard } from "./EloLeaderboard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -19,8 +20,9 @@ interface Profile {
 export const TrisGameBanner = () => {
   const [showBanner, setShowBanner] = useState(false);
   const [gameState, setGameState] = useState<"idle" | "selecting" | "searching" | "playing">("idle");
-  const [selectedGame, setSelectedGame] = useState<"tris" | "dama" | null>(null);
+  const [selectedGame, setSelectedGame] = useState<"tris" | "dama" | "risiko" | null>(null);
   const [opponent, setOpponent] = useState<Profile | null>(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
   const [gamesPlayed, setGamesPlayed] = useState(0);
   const [nextResetTime, setNextResetTime] = useState<Date | null>(null);
   const [userCredits, setUserCredits] = useState(0);
@@ -33,6 +35,17 @@ export const TrisGameBanner = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         setCurrentUserId(session.user.id);
+        
+        // Fetch current user profile
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", session.user.id)
+          .single();
+        
+        if (profile) {
+          setCurrentUserProfile(profile);
+        }
       }
     };
     fetchUserId();
@@ -156,7 +169,7 @@ export const TrisGameBanner = () => {
     setGameState("selecting");
   };
 
-  const handleGameSelect = (game: "tris" | "dama") => {
+  const handleGameSelect = (game: "tris" | "dama" | "risiko") => {
     setSelectedGame(game);
     setGameState("searching");
   };
@@ -315,7 +328,7 @@ export const TrisGameBanner = () => {
         </div>
         
         {/* Game Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Button
             onClick={() => handleGameSelect("tris")}
             className="h-auto p-6 flex flex-col items-center gap-4 bg-gradient-to-br from-blue-500/20 via-blue-600/15 to-blue-700/20 hover:from-blue-500/30 hover:via-blue-600/25 hover:to-blue-700/30 border-2 border-blue-500/40 hover:border-blue-400/60 transition-all duration-300 hover:scale-105 group relative overflow-hidden"
@@ -335,6 +348,17 @@ export const TrisGameBanner = () => {
             <div className="text-6xl drop-shadow-lg">🔴⚫</div>
             <div className="text-center z-10">
               <span className="text-xl font-bold block">Dama</span>
+            </div>
+          </Button>
+
+          <Button
+            onClick={() => handleGameSelect("risiko")}
+            className="h-auto p-6 flex flex-col items-center gap-4 bg-gradient-to-br from-red-500/20 via-orange-600/15 to-yellow-700/20 hover:from-red-500/30 hover:via-orange-600/25 hover:to-yellow-700/30 border-2 border-red-500/40 hover:border-red-400/60 transition-all duration-300 hover:scale-105 group relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+            <div className="text-6xl drop-shadow-lg">🗺️⚔️</div>
+            <div className="text-center z-10">
+              <span className="text-xl font-bold block">Risiko</span>
             </div>
           </Button>
         </div>
@@ -359,6 +383,10 @@ export const TrisGameBanner = () => {
 
   if (gameState === "playing" && opponent && selectedGame === "dama") {
     return <CheckersBoard opponent={opponent} onGameEnd={handleGameEnd} />;
+  }
+
+  if (gameState === "playing" && opponent && selectedGame === "risiko" && currentUserProfile) {
+    return <RisikoBoard userProfile={currentUserProfile} onGameEnd={(won) => handleGameEnd(won ? "win" : "lose")} />;
   }
 
   return (
