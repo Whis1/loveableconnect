@@ -319,6 +319,7 @@ export const generateTerritories = (): Territory[] => {
   connectByName("Lago Cristallo", "Terre Ghiacciate");
   connectByName("Lago Cristallo", "Canyon Rosso");
   connectByName("Arcipelago Nord", "Piana Verde");
+  connectByName("Porto Abbandonato", "Zona Contaminata");
   
   // Initialize starting positions
   const blueStarts = selectStartingTerritories(territories, 'blue');

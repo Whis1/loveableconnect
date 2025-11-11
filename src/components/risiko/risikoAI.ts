@@ -109,7 +109,7 @@ const tryUseCards = (
         ...prev,
         territories: prev.territories.map(t => {
           if (t.id === strongest.id) {
-            const newTroops = Math.max(0, t.troops - 1);
+            const newTroops = Math.max(0, t.troops - 2);
             return {...t, troops: newTroops, owner: newTroops === 0 ? null : t.owner};
           }
           return t;
