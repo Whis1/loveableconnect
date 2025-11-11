@@ -187,6 +187,13 @@ export const RisikoMap = ({
         {/* Render territories */}
         {territories.map((territory) => (
           <g key={territory.id}>
+            {/* Define clip path for this territory */}
+            <defs>
+              <clipPath id={`clip-${territory.id}`}>
+                <path d={territory.path} />
+              </clipPath>
+            </defs>
+            
             {/* Territory path with solid color */}
             <path
               d={territory.path}
@@ -196,6 +203,29 @@ export const RisikoMap = ({
               className={`transition-all ${!disabled ? 'cursor-pointer hover:brightness-110' : 'cursor-not-allowed'}`}
               onClick={() => !disabled && onTerritoryClick(territory.id)}
             />
+            
+            {/* Vegetazione/puntini verdi dentro il territorio */}
+            <g clipPath={`url(#clip-${territory.id})`}>
+              {[...Array(Math.floor(territory.size / 10))].map((_, i) => {
+                const angle = (i / (territory.size / 10)) * Math.PI * 2.3 + territory.x * 0.05;
+                const radius = territory.size * (0.2 + Math.sin(territory.x + i * 2) * 0.25);
+                const decorX = territory.x + Math.cos(angle) * radius;
+                const decorY = territory.y + Math.sin(angle) * radius;
+                const decorSize = 1.5 + Math.abs(Math.sin(territory.x * 0.5 + i)) * 1;
+                
+                return (
+                  <circle
+                    key={`veg-${territory.id}-${i}`}
+                    cx={decorX}
+                    cy={decorY}
+                    r={decorSize}
+                    fill="#22c55e"
+                    opacity={0.5}
+                    pointerEvents="none"
+                  />
+                );
+              })}
+            </g>
             
             {/* Linee geografiche interne */}
             <path
