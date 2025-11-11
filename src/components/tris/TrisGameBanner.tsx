@@ -375,17 +375,23 @@ export const TrisGameBanner = () => {
       </div>
 
       <div className="space-y-4">
-        {credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium') ? (
+        {!credits ? (
+          <div className="text-center">
+            <div className="animate-pulse">
+              <div className="h-4 bg-muted rounded w-3/4 mx-auto"></div>
+            </div>
+          </div>
+        ) : credits.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium') ? (
           <p className="text-muted-foreground text-center">
             🌟 <span className="font-bold text-primary">Giochi illimitati</span> con il tuo abbonamento Premium Mensile!
           </p>
         ) : (
           <p className="text-muted-foreground text-center">
             Partite gratuite oggi: <span className="font-bold text-primary">{Math.max(0, getGameLimit() - gamesPlayed)}</span>/{getGameLimit()}
-            {credits?.is_premium && credits.subscription_type === 'monthly' && credits.premium_tier === 'standard' && (
+            {credits.is_premium && credits.subscription_type === 'monthly' && credits.premium_tier === 'standard' && (
               <span className="block text-xs mt-1">💎 Abbonamento Platino</span>
             )}
-            {credits?.is_premium && credits.subscription_type === 'weekly' && (
+            {credits.is_premium && credits.subscription_type === 'weekly' && (
               <span className="block text-xs mt-1">✨ Bonus Premium Settimanale</span>
             )}
           </p>
@@ -407,7 +413,7 @@ export const TrisGameBanner = () => {
             className="w-full bg-primary hover:bg-primary/90"
           >
             <Trophy className="w-4 h-4 mr-2" />
-            {gamesPlayed >= getGameLimit() && !(isPremium && subscriptionType === 'monthly' && premiumTier === 'premium') 
+            {gamesPlayed >= getGameLimit() && !(credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium')) 
               ? "Gioca con 2 crediti" 
               : "Iniziare a giocare"}
           </Button>
