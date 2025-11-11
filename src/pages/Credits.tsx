@@ -175,9 +175,9 @@ const Credits = () => {
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <Crown className="h-8 w-8 text-blue-500" />
-                    <div className="flex-1">
+                  <div className="flex-1">
                       <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                        Premium Standard Attivo
+                        Platino Attivo
                       </div>
                       <div className="space-y-1 mt-2 text-sm text-muted-foreground">
                         <div>💰 70 crediti giornalieri (attuale: {credits.balance})</div>
@@ -327,7 +327,7 @@ const Credits = () => {
                   <div className="flex items-center gap-3">
                     <Crown className="h-8 w-8 text-blue-500" />
                     <div>
-                      <CardTitle className="text-2xl">Premium Standard</CardTitle>
+                      <CardTitle className="text-2xl">Platino</CardTitle>
                       <CardDescription>Funzionalità avanzate a un prezzo accessibile</CardDescription>
                     </div>
                   </div>
@@ -367,7 +367,7 @@ const Credits = () => {
                   className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
                   size="lg"
                 >
-                  {purchasing ? t("credits.processing") : "Diventa Premium Standard"}
+                  {purchasing ? t("credits.processing") : "Diventa Platino"}
                 </Button>
                 <p className="text-xs text-muted-foreground text-center">
                   {t("credits.autoRenewal")}
