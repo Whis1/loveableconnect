@@ -208,6 +208,27 @@ export const RisikoMap = ({
               pointerEvents="none"
             />
             
+            {/* Decorazioni: alberellini/vegetazione sui territori */}
+            {[...Array(Math.floor(territory.size / 15))].map((_, i) => {
+              const angle = (i / (territory.size / 15)) * Math.PI * 2 + territory.x * 0.1;
+              const radius = territory.size * (0.3 + Math.sin(territory.x + i) * 0.2);
+              const decorX = territory.x + Math.cos(angle) * radius;
+              const decorY = territory.y + Math.sin(angle) * radius;
+              const decorSize = 2 + Math.sin(territory.x * i) * 1.5;
+              
+              return (
+                <circle
+                  key={`decor-${territory.id}-${i}`}
+                  cx={decorX}
+                  cy={decorY}
+                  r={decorSize}
+                  fill="#22c55e"
+                  opacity={0.4}
+                  pointerEvents="none"
+                />
+              );
+            })}
+            
             
             {/* Territory name - centered and scaled to fit */}
             <text
