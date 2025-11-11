@@ -87,27 +87,32 @@ export const aiMakeMove = (
     return;
   }
 
-  // ⚔️ FASE 4: ATTACCO CON SIMULAZIONI MONTE CARLO (priorità alta)
+  // 🎴 FASE 4: USO CARTE STRATEGICO (tutte: bomba, paracadute, force, truppe)
+  if (tryAllCardsStrategically(gameState, setGameState, showAnimation, handleCombat, myTerritories, enemyTerritories, threats, attackOpportunities, momentum, riskLevel, continents, opponentNickname)) {
+    return;
+  }
+
+  // ⚔️ FASE 5: ATTACCO CON SIMULAZIONI MONTE CARLO
   if (tryMonteCarloAttack(gameState, setGameState, handleCombat, showAnimation, attackOpportunities, riskLevel, opponentNickname)) {
     return;
   }
 
-  // 🎴 FASE 5: USO CARTE SPECIALI (bomba, paracadute, force)
-  if (trySpecialCards(gameState, setGameState, showAnimation, handleCombat, myTerritories, enemyTerritories, threats, attackOpportunities, momentum, opponentNickname)) {
+  // 🔄 FASE 6: SPOSTAMENTO TRUPPE TATTICO
+  if (tryTacticalTroopMovement(gameState, setGameState, showAnimation, myTerritories, threats, pressurePoints, opponentNickname)) {
     return;
   }
 
-  // 🛡️ FASE 6: FORTIFICAZIONE CHOKEPOINTS (solo se non ci sono attacchi)
-  if (myTerritories.length > 3 && tryChokePointFortification(gameState, setGameState, showAnimation, myTerritories, opponentNickname)) {
+  // 🛡️ FASE 7: FORTIFICAZIONE CHOKEPOINTS (solo territori critici)
+  if (tryChokePointFortification(gameState, setGameState, showAnimation, myTerritories, opponentNickname)) {
     return;
   }
 
-  // 🌍 FASE 7: ESPANSIONE CALCOLATA
+  // 🌍 FASE 8: ESPANSIONE CALCOLATA
   if (tryCalculatedExpansion(gameState, setGameState, myTerritories, neutralTerritories, enemyTerritories, riskLevel)) {
     return;
   }
 
-  // 🔄 FASE 8: CONSOLIDAMENTO ZONE
+  // 🔄 FASE 9: CONSOLIDAMENTO ZONE
   if (tryZoneConsolidation(gameState, setGameState, myTerritories, threats)) {
     return;
   }
@@ -434,8 +439,8 @@ const tryContinentalStrategy = (
   return false;
 };
 
-// 🎴 CARTE SPECIALI (bomba, paracadute, force - NO truppe)
-const trySpecialCards = (
+// 🎴 USO STRATEGICO DI TUTTE LE CARTE
+const tryAllCardsStrategically = (
   gameState: GameState,
   setGameState: React.Dispatch<React.SetStateAction<GameState>>,
   showAnimation: (message: string) => void,
@@ -445,8 +450,65 @@ const trySpecialCards = (
   threats: ThreatAnalysis[],
   attackOpportunities: AttackOpportunity[],
   momentum: MomentumAnalysis,
+  riskLevel: number,
+  continents: ContinentalControl[],
   opponentNickname: string
 ): boolean => {
+  // Valuta quale carta usare in base alla situazione
+  const cardScores = {
+    force: 0,
+    bomb: 0,
+    parachute: 0,
+    troops: 0
+  };
+
+  // FORCE: Alto valore se c'è un attacco eccellente disponibile
+  if (gameState.cardCooldowns.force === 0 && attackOpportunities.length > 0) {
+    const excellentAttack = attackOpportunities.find(opp => 
+      opp.monteCarloScore >= 0.75 && (opp.strategicValue + opp.continentalValue) >= 10
+    );
+    if (excellentAttack) cardScores.force = 100;
+  }
+
+  // BOMBA: Alto valore se ci sono minacce concentrate
+  if (gameState.cardCooldowns.bomb === 0 && enemyTerritories.length > 0) {
+    const dangerousEnemies = enemyTerritories.filter(t => t.troops >= 4);
+    if (dangerousEnemies.length > 0) {
+      const maxThreat = Math.max(...dangerousEnemies.map(t => {
+        const adjacentRed = t.neighbors.filter(nId => {
+          const n = gameState.territories.find(ter => ter.id === nId);
+          return n && n.owner === 'red';
+        }).length;
+        return adjacentRed * t.troops;
+      }));
+      if (maxThreat >= 12) cardScores.bomb = 90;
+    }
+  }
+
+  // PARACADUTE: Alto valore se ci sono obiettivi strategici con 1 truppa
+  if (gameState.cardCooldowns.parachute === 0) {
+    const strategicTargets = enemyTerritories.filter(t => t.troops === 1).length;
+    const massiveTargets = enemyTerritories.filter(t => t.troops >= 5).length;
+    if (strategicTargets > 0) cardScores.parachute = 85;
+    else if (massiveTargets > 0) cardScores.parachute = 70;
+  }
+
+  // TRUPPE: Valore basato su situazione difensiva e continentale
+  const criticalTerritories = threats.filter(t => t.threatLevel > 8 || t.isChokepoint).length;
+  const almostCompleteContinents = continents.filter(c => c.completionValue >= 0.7 && c.completionValue < 1).length;
+  
+  if (criticalTerritories > 0) cardScores.troops = 60 + (criticalTerritories * 5);
+  if (almostCompleteContinents > 0) cardScores.troops += 20;
+  if (riskLevel > 0.6) cardScores.troops += 15;
+
+  // Usa la carta con punteggio più alto
+  const bestCard = Object.entries(cardScores).reduce((max, [card, score]) => 
+    score > max.score ? { card, score } : max
+  , { card: '', score: 0 });
+
+  if (bestCard.score === 0) return false;
+
+  // Esegui l'azione della carta migliore
   // FORZA: Usa con attacco strategico eccellente
   if (gameState.cardCooldowns.force === 0 && attackOpportunities.length > 0) {
     const excellentAttack = attackOpportunities.find(opp => 
@@ -582,6 +644,265 @@ const trySpecialCards = (
       
       return true;
     }
+  }
+
+  // ESECUZIONE CARTA FORCE
+  if (bestCard.card === 'force' && gameState.cardCooldowns.force === 0) {
+    const excellentAttack = attackOpportunities.find(opp => 
+      opp.monteCarloScore >= 0.75 && (opp.strategicValue + opp.continentalValue) >= 10
+    );
+
+    if (excellentAttack) {
+      const attacker = gameState.territories.find(t => t.id === excellentAttack.attackerId);
+      const defender = gameState.territories.find(t => t.id === excellentAttack.defenderId);
+
+      if (attacker && defender) {
+        showAnimation(`${opponentNickname}: Attacco devastante! ⚡`);
+        
+        setGameState(prev => ({
+          ...prev,
+          boostedTroops: {
+            ...prev.boostedTroops,
+            [attacker.id]: attacker.troops
+          },
+          cardCooldowns: {...prev.cardCooldowns, force: 4}
+        }));
+
+        setTimeout(() => {
+          handleCombat(attacker.id, defender.id, attacker.troops - 1);
+        }, 800);
+
+        return true;
+      }
+    }
+  }
+
+  // ESECUZIONE CARTA BOMBA
+  if (bestCard.card === 'bomb' && gameState.cardCooldowns.bomb === 0) {
+    const dangerousEnemies = enemyTerritories
+      .filter(t => t.troops >= 4)
+      .map(t => {
+        const adjacentMyTerritories = t.neighbors.filter(nId => {
+          const neighbor = gameState.territories.find(ter => ter.id === nId);
+          return neighbor && neighbor.owner === 'red';
+        });
+        return { territory: t, threat: adjacentMyTerritories.length * t.troops };
+      })
+      .sort((a, b) => b.threat - a.threat);
+
+    if (dangerousEnemies.length > 0 && dangerousEnemies[0].threat >= 12) {
+      const target = dangerousEnemies[0].territory;
+      showAnimation(`${opponentNickname}: Bombardamento tattico! 💣`);
+      
+      setGameState(prev => ({
+        ...prev,
+        territories: prev.territories.map(t => {
+          if (t.id === target.id) {
+            const newTroops = Math.max(0, t.troops - 2);
+            return {...t, troops: newTroops, owner: newTroops === 0 ? null : t.owner};
+          }
+          return t;
+        }),
+        cardCooldowns: {...prev.cardCooldowns, bomb: 5}
+      }));
+      
+      setTimeout(() => {
+        setGameState(prev => ({
+          ...prev,
+          currentPlayer: 'blue',
+          turnTimeLeft: 30
+        }));
+      }, 1500);
+      
+      return true;
+    }
+  }
+
+  // ESECUZIONE CARTA PARACADUTE
+  if (bestCard.card === 'parachute' && gameState.cardCooldowns.parachute === 0) {
+    const blockingEnemies = enemyTerritories.filter(t => {
+      if (t.troops !== 1) return false;
+      const myNeighbors = t.neighbors.filter(nId => {
+        const n = gameState.territories.find(ter => ter.id === nId);
+        return n && n.owner === 'red';
+      });
+      const enemyNeighbors = t.neighbors.filter(nId => {
+        const n = gameState.territories.find(ter => ter.id === nId);
+        return n && n.owner === 'blue';
+      });
+      return myNeighbors.length >= 2 && enemyNeighbors.length >= 1;
+    });
+
+    if (blockingEnemies.length > 0) {
+      const target = blockingEnemies[0];
+      showAnimation(`${opponentNickname}: Conquista lampo! 🪂`);
+      
+      setGameState(prev => ({
+        ...prev,
+        territories: prev.territories.map(t => 
+          t.id === target.id ? {...t, owner: 'red', troops: 1} : t
+        ),
+        cardCooldowns: {...prev.cardCooldowns, parachute: 3}
+      }));
+      
+      setTimeout(() => {
+        setGameState(prev => ({
+          ...prev,
+          currentPlayer: 'blue',
+          turnTimeLeft: 30
+        }));
+      }, 1500);
+      
+      return true;
+    }
+
+    const massiveForces = enemyTerritories.filter(t => t.troops >= 5);
+    if (massiveForces.length > 0) {
+      const target = massiveForces.sort((a, b) => b.troops - a.troops)[0];
+      showAnimation(`${opponentNickname}: Sabotaggio! 🪂`);
+      
+      setGameState(prev => ({
+        ...prev,
+        territories: prev.territories.map(t => 
+          t.id === target.id ? {...t, troops: t.troops - 1} : t
+        ),
+        cardCooldowns: {...prev.cardCooldowns, parachute: 3}
+      }));
+      
+      setTimeout(() => {
+        setGameState(prev => ({
+          ...prev,
+          currentPlayer: 'blue',
+          turnTimeLeft: 30
+        }));
+      }, 1500);
+      
+      return true;
+    }
+  }
+
+  // ESECUZIONE CARTA TRUPPE
+  if (bestCard.card === 'troops' && myTerritories.length > 0) {
+    // Trova il territorio più critico o strategico
+    const criticalThreats = threats
+      .filter(t => t.threatLevel > 8 || t.isChokepoint)
+      .sort((a, b) => b.threatLevel - a.threatLevel);
+
+    let targetTerritory: Territory | undefined;
+
+    if (criticalThreats.length > 0) {
+      targetTerritory = myTerritories.find(t => t.id === criticalThreats[0].territoryId);
+    } else {
+      // Cerca territorio in continente quasi completo
+      const almostComplete = continents.find(c => c.completionValue >= 0.7 && c.completionValue < 1);
+      if (almostComplete) {
+        targetTerritory = myTerritories
+          .filter(t => almostComplete.territories.includes(t.name))
+          .sort((a, b) => b.neighbors.length - a.neighbors.length)[0];
+      }
+    }
+
+    if (!targetTerritory) {
+      targetTerritory = findUltimateStrategicTerritory(myTerritories, threats, continents, []);
+    }
+
+    const redCount = myTerritories.length;
+    const amount = redCount >= 20 ? 3 : 1;
+    
+    const messages = [
+      `${opponentNickname}: Rinforzo strategico +${amount}`,
+      `${opponentNickname}: Difesa rafforzata +${amount}`,
+      `${opponentNickname}: Supporto tattico +${amount}`,
+      `${opponentNickname}: Truppe in arrivo +${amount}`
+    ];
+    
+    setGameState(prev => ({
+      ...prev,
+      territories: prev.territories.map(t => 
+        t.id === targetTerritory!.id ? {...t, troops: t.troops + amount} : t
+      )
+    }));
+    
+    showAnimation(messages[Math.floor(Math.random() * messages.length)]);
+    
+    setTimeout(() => {
+      setGameState(prev => ({
+        ...prev,
+        currentPlayer: 'blue',
+        turnTimeLeft: 30
+      }));
+    }, 800);
+    
+    return true;
+  }
+
+  return false;
+};
+
+// 🔄 SPOSTAMENTO TRUPPE TATTICO
+const tryTacticalTroopMovement = (
+  gameState: GameState,
+  setGameState: React.Dispatch<React.SetStateAction<GameState>>,
+  showAnimation: (message: string) => void,
+  myTerritories: Territory[],
+  threats: ThreatAnalysis[],
+  pressurePoints: Territory[],
+  opponentNickname: string
+): boolean => {
+  // Trova territori sotto pressione che necessitano rinforzi
+  const underPressure = pressurePoints.filter(pp => {
+    const threat = threats.find(t => t.territoryId === pp.id);
+    return threat && threat.threatLevel > 6 && pp.troops < 5;
+  });
+
+  if (underPressure.length === 0) return false;
+
+  const target = underPressure[0];
+  
+  // Trova territori sicuri con truppe eccedenti
+  const safeSuppliers = myTerritories.filter(t => {
+    const hasNoEnemyNeighbor = !t.neighbors.some(nId => {
+      const n = gameState.territories.find(ter => ter.id === nId);
+      return n && n.owner === 'blue';
+    });
+    return hasNoEnemyNeighbor && t.troops >= 4 && t.id !== target.id;
+  }).sort((a, b) => b.troops - a.troops);
+
+  if (safeSuppliers.length > 0) {
+    const source = safeSuppliers[0];
+    const moveTroops = Math.floor(source.troops * 0.6); // Sposta 60% delle truppe
+
+    const messages = [
+      `${opponentNickname}: Rinforzi in movimento! 🚀`,
+      `${opponentNickname}: Riorganizzazione tattica`,
+      `${opponentNickname}: Spostamento strategico`,
+      `${opponentNickname}: Redistribuzione forze`
+    ];
+
+    showAnimation(messages[Math.floor(Math.random() * messages.length)]);
+
+    setGameState(prev => ({
+      ...prev,
+      territories: prev.territories.map(t => {
+        if (t.id === source.id) {
+          return {...t, troops: t.troops - moveTroops};
+        }
+        if (t.id === target.id) {
+          return {...t, troops: t.troops + moveTroops};
+        }
+        return t;
+      })
+    }));
+
+    setTimeout(() => {
+      setGameState(prev => ({
+        ...prev,
+        currentPlayer: 'blue',
+        turnTimeLeft: 30
+      }));
+    }, 800);
+
+    return true;
   }
 
   return false;
