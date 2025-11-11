@@ -150,37 +150,37 @@ const territoryNames = [
 export const generateTerritories = (): Territory[] => {
   const territories: Territory[] = [];
   
-  // Mappa con territori più grandi, attaccati e riempiendo tutta la mappa (viewBox 1300x850)
-  // 54 territori totali distribuiti su tutta la mappa
+  // Mappa unica compatta con territori più vicini - 54 territori
+  // Disposizione più compatta per creare un'unica grande massa continentale
   const continentLayouts = [
-    // Nord America (10 territori) - sinistra alto, territori grandi e attaccati
-    { x: 120, y: 140, size: 55 }, { x: 210, y: 135, size: 58 }, { x: 300, y: 145, size: 56 }, { x: 390, y: 140, size: 54 },
-    { x: 130, y: 240, size: 60 }, { x: 225, y: 235, size: 62 }, { x: 320, y: 240, size: 60 }, { x: 405, y: 235, size: 58 },
-    { x: 180, y: 340, size: 58 }, { x: 280, y: 345, size: 60 },
+    // Nord America (10 territori) - sinistra alto
+    { x: 180, y: 160, size: 55 }, { x: 270, y: 155, size: 58 }, { x: 360, y: 165, size: 56 }, { x: 450, y: 160, size: 54 },
+    { x: 190, y: 260, size: 60 }, { x: 285, y: 255, size: 62 }, { x: 380, y: 260, size: 60 }, { x: 465, y: 255, size: 58 },
+    { x: 240, y: 360, size: 58 }, { x: 340, y: 365, size: 60 },
     
-    // Sud America (8 territori) - sinistra basso, territori grandi che riempiono
-    { x: 190, y: 450, size: 62 }, { x: 290, y: 455, size: 64 }, { x: 380, y: 460, size: 60 },
-    { x: 170, y: 560, size: 65 }, { x: 270, y: 565, size: 68 }, { x: 360, y: 570, size: 64 },
-    { x: 220, y: 680, size: 66 }, { x: 320, y: 685, size: 64 },
+    // Sud America (8 territori) - attaccato al Nord America
+    { x: 180, y: 460, size: 62 }, { x: 280, y: 465, size: 64 }, { x: 370, y: 470, size: 60 },
+    { x: 160, y: 570, size: 65 }, { x: 260, y: 575, size: 68 }, { x: 350, y: 580, size: 64 },
+    { x: 210, y: 680, size: 66 }, { x: 310, y: 685, size: 64 },
     
-    // Europa (9 territori) - centro alto, territori compatti
-    { x: 520, y: 120, size: 52 }, { x: 610, y: 125, size: 54 }, { x: 700, y: 120, size: 52 }, { x: 790, y: 125, size: 50 },
-    { x: 505, y: 210, size: 56 }, { x: 600, y: 215, size: 58 }, { x: 695, y: 210, size: 56 }, { x: 780, y: 215, size: 54 },
-    { x: 600, y: 305, size: 54 },
+    // Europa (9 territori) - centro, attaccata a Nord America
+    { x: 570, y: 140, size: 52 }, { x: 660, y: 145, size: 54 }, { x: 750, y: 140, size: 52 }, { x: 840, y: 145, size: 50 },
+    { x: 555, y: 240, size: 56 }, { x: 650, y: 245, size: 58 }, { x: 745, y: 240, size: 56 }, { x: 830, y: 245, size: 54 },
+    { x: 650, y: 345, size: 54 },
     
-    // Africa (9 territori) - centro, territori grandi
-    { x: 520, y: 400, size: 60 }, { x: 620, y: 405, size: 62 }, { x: 720, y: 400, size: 60 },
-    { x: 500, y: 510, size: 64 }, { x: 610, y: 515, size: 68 }, { x: 715, y: 510, size: 64 },
-    { x: 480, y: 630, size: 66 }, { x: 590, y: 635, size: 70 }, { x: 695, y: 630, size: 66 },
+    // Africa (9 territori) - attaccata a Europa
+    { x: 570, y: 440, size: 60 }, { x: 670, y: 445, size: 62 }, { x: 770, y: 440, size: 60 },
+    { x: 550, y: 550, size: 64 }, { x: 660, y: 555, size: 68 }, { x: 765, y: 550, size: 64 },
+    { x: 530, y: 660, size: 66 }, { x: 640, y: 665, size: 70 }, { x: 745, y: 660, size: 66 },
     
-    // Asia (12 territori) - destra, massa grande
-    { x: 880, y: 115, size: 58 }, { x: 980, y: 120, size: 60 }, { x: 1080, y: 115, size: 58 }, { x: 1180, y: 120, size: 56 },
-    { x: 860, y: 220, size: 62 }, { x: 970, y: 225, size: 64 }, { x: 1075, y: 220, size: 62 }, { x: 1170, y: 225, size: 60 },
-    { x: 880, y: 330, size: 64 }, { x: 985, y: 335, size: 66 }, { x: 1090, y: 330, size: 64 }, { x: 1185, y: 335, size: 62 },
+    // Asia (12 territori) - destra, attaccata a Europa
+    { x: 930, y: 135, size: 58 }, { x: 1030, y: 140, size: 60 }, { x: 1130, y: 135, size: 58 }, { x: 1230, y: 140, size: 56 },
+    { x: 910, y: 240, size: 62 }, { x: 1020, y: 245, size: 64 }, { x: 1125, y: 240, size: 62 }, { x: 1220, y: 245, size: 60 },
+    { x: 930, y: 350, size: 64 }, { x: 1035, y: 355, size: 66 }, { x: 1140, y: 350, size: 64 }, { x: 1235, y: 355, size: 62 },
     
-    // Oceania (6 territori) - basso destra, riempiamo lo spazio
-    { x: 920, y: 480, size: 58 }, { x: 1030, y: 485, size: 60 }, { x: 1135, y: 480, size: 58 },
-    { x: 900, y: 595, size: 62 }, { x: 1010, y: 600, size: 65 }, { x: 1115, y: 595, size: 62 }
+    // Oceania (6 territori) - sotto Asia, collegata da stradine
+    { x: 970, y: 520, size: 58 }, { x: 1080, y: 525, size: 60 }, { x: 1185, y: 520, size: 58 },
+    { x: 950, y: 635, size: 62 }, { x: 1060, y: 640, size: 65 }, { x: 1165, y: 635, size: 62 }
   ];
 
   // Genera i 54 territori con le posizioni FISSE definite
@@ -203,49 +203,47 @@ export const generateTerritories = (): Territory[] => {
     });
   });
   
-  // Definisci connessioni strategiche tra territori (54 totali)
-  // I territori vicini sono attaccati (no linea), quelli lontani hanno stradine
+  // Collegamenti tra territori - mappa unica con solo 4 collegamenti distanti con stradine
   const connections: [number, number[]][] = [
-    // Nord America (0-9) - 10 territori interconnessi
+    // Nord America (0-9) - tutti attaccati
     [0, [1, 4, 5]], [1, [0, 2, 5, 6]], [2, [1, 3, 6, 7]], [3, [2, 7]],
     [4, [0, 5, 8]], [5, [0, 1, 4, 6, 8, 9]], [6, [1, 2, 5, 7, 9]], [7, [2, 3, 6]],
-    [8, [4, 5, 9]], [9, [5, 6, 8]],
+    [8, [4, 5, 9]], [9, [5, 6, 8, 10, 11, 18]], // Collegato a Sud America ed Europa
     
-    // Sud America (10-17) - 8 territori
-    [10, [11, 13, 14]], [11, [10, 12, 14, 15]],
+    // Sud America (10-17) - attaccato a Nord America
+    [10, [9, 11, 13, 14]], [11, [9, 10, 12, 14, 15]],
     [12, [11, 15, 17]], [13, [10, 14, 16]], [14, [10, 11, 13, 15, 16]],
     [15, [11, 12, 14, 17]], [16, [13, 14]], [17, [12, 15]],
     
-    // Europa (18-26) - 9 territori
-    [18, [19, 22, 23]], [19, [18, 20, 23, 24]], [20, [19, 21, 24, 25]], [21, [20, 25]],
-    [22, [18, 23, 26]], [23, [18, 19, 22, 24, 26]], [24, [19, 20, 23, 25, 26]],
-    [25, [20, 21, 24]], [26, [22, 23, 24]],
+    // Europa (18-26) - attaccata a Nord America e Africa
+    [18, [9, 19, 22, 23]], [19, [18, 20, 23, 24]], [20, [19, 21, 24, 25]], [21, [20, 25, 36]], // Collegata ad Asia
+    [22, [18, 23, 26, 27]], [23, [18, 19, 22, 24, 26]], [24, [19, 20, 23, 25, 26]],
+    [25, [20, 21, 24]], [26, [22, 23, 24, 27, 28]], // Collegata ad Africa
     
-    // Africa (27-35) - 9 territori
-    [27, [28, 31, 32]], [28, [27, 29, 32, 33]], [29, [28, 33]],
+    // Africa (27-35) - attaccata a Europa
+    [27, [22, 26, 28, 31, 32]], [28, [26, 27, 29, 32, 33]], [29, [28, 33, 36]], // Collegata ad Asia
     [30, [31, 34]], [31, [27, 30, 32, 34, 35]], [32, [27, 28, 31, 33, 35]],
     [33, [28, 29, 32, 35]], [34, [30, 31, 35]], [35, [31, 32, 33, 34]],
     
-    // Asia (36-47) - 12 territori
-    [36, [37, 40, 41]], [37, [36, 38, 41, 42]], [38, [37, 39, 42, 43]], [39, [38, 43]],
+    // Asia (36-47) - attaccata a Europa e Africa
+    [36, [21, 29, 37, 40, 41]], [37, [36, 38, 41, 42]], [38, [37, 39, 42, 43]], [39, [38, 43]],
     [40, [36, 41, 44, 45]], [41, [36, 37, 40, 42, 45, 46]], [42, [37, 38, 41, 43, 46, 47]],
     [43, [38, 39, 42, 47]], [44, [40, 45]], [45, [40, 41, 44, 46]],
-    [46, [41, 42, 45, 47]], [47, [42, 43, 46]],
+    [46, [41, 42, 45, 47, 48]], [47, [42, 43, 46, 48]], // Collegata a Oceania con stradina
     
-    // Oceania (48-53) - 6 territori
-    [48, [49, 51]], [49, [48, 50, 51, 52]],
+    // Oceania (48-53) - collegata ad Asia con stradina
+    [48, [46, 47, 49, 51]], [49, [48, 50, 51, 52]],
     [50, [49, 52, 53]], [51, [48, 49, 52]],
     [52, [49, 50, 51, 53]], [53, [50, 52]],
     
-    // Collegamenti strategici tra continenti (con stradine visibili)
-    [9, [10]], // Nord America -> Sud America (Panama)
-    [9, [18]], // Nord America -> Europa (Atlantic)
-    [3, [36]], // Nord America -> Asia (Bering Strait)
-    [21, [27]], // Europa -> Africa (Mediterranean)  
-    [26, [27]], // Europa -> Africa (Gibraltar)
-    [29, [36]], // Africa -> Asia (Middle East)
-    [35, [40]], // Africa -> Asia (Indian Ocean)
-    [47, [48]], // Asia -> Oceania (Indonesia)
+    // 4 COLLEGAMENTI CON STRADINE (distanti):
+    // 1. Nord America (3) -> Asia (36) - Stretto di Bering
+    [3, [36]],
+    // 2. Sud America (17) -> Africa (35) - Atlantico Sud  
+    [17, [35]],
+    // 3. Africa (30) -> Oceania (53) - Oceano Indiano
+    [30, [53]],
+    // 4. Nord America (0) -> Europa (18) - Atlantico Nord (già collegato tramite territorio 9)
   ];
   
   connections.forEach(([territoryIndex, neighborIndices]) => {

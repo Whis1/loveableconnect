@@ -126,16 +126,16 @@ export const RisikoMap = ({
             const neighbor = territories.find(t => t.id === neighborId);
             if (!neighbor || territory.id > neighborId) return null;
             
-            // Calcola distanza per identificare collegamenti
+            // Calcola distanza per identificare collegamenti con stradine
             const dx = territory.x - neighbor.x;
             const dy = territory.y - neighbor.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
-            // Non mostrare linee per territori molto vicini (attaccati)
-            // Soglia più alta per ridurre le stradine visibili
-            if (distance < 180) return null;
+            // Mostra stradine SOLO per i 4 collegamenti strategici distanti
+            // Tutti gli altri sono attaccati (no linea)
+            if (distance < 250) return null;
             
-            const isLongDistance = distance > 400; // Collegamento tra continenti molto distanti
+            const isLongDistance = distance > 450; // Collegamenti intercontinentali
             
             // Check if this line is being used for troop movement
             const isMovingPath = movingTroops && 
