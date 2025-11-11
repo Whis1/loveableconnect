@@ -44,57 +44,29 @@ const Auth = () => {
       setShowCookieBanner(true);
     }
 
+    // Only check session once on mount - avoid loops
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/");
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session) {
-        // Wait a moment for profile to be created by trigger
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Check if profile exists
-        let attempts = 0;
-        let profile = null;
-        
-        while (attempts < 8 && !profile) {
-          const { data } = await supabase
+        // Check profile completeness after a delay for OAuth users
+        setTimeout(() => {
+          supabase
             .from("profiles")
             .select("birthdate, city")
             .eq("id", session.user.id)
-            .maybeSingle();
-          
-          profile = data;
-          
-          if (!profile) {
-            await new Promise(resolve => setTimeout(resolve, 700));
-            attempts++;
-          }
-        }
-        
-        // If profile exists but incomplete (missing birthdate OR city), redirect to complete it
-        if (profile && (!profile.birthdate || !profile.city)) {
-          navigate("/profile/edit", { 
-            state: { requiresCompletion: true },
-            replace: true
-          });
-        } else if (profile) {
-          // Profile complete, go to home
-          navigate("/", { replace: true });
-        } else {
-          // Profile doesn't exist after retries, show error
-          toast({
-            title: "Errore",
-            description: "Errore nella creazione del profilo. Riprova ad accedere.",
-            variant: "destructive",
-          });
-        }
+            .maybeSingle()
+            .then(({ data: profile }) => {
+              if (profile && (!profile.birthdate || !profile.city)) {
+                navigate("/profile/edit", { 
+                  state: { requiresCompletion: true },
+                  replace: true
+                });
+              } else if (profile) {
+                navigate("/", { replace: true });
+              }
+            });
+        }, 1500); // Give time for trigger to create profile
       }
     });
-
-    return () => subscription.unsubscribe();
   }, [navigate]);
 
   const handleSignUp = async (e: React.FormEvent) => {
