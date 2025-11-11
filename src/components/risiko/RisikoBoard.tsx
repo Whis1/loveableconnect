@@ -67,6 +67,11 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [targetTerritory, setTargetTerritory] = useState<string | null>(null);
   const [combatAnimation, setCombatAnimation] = useState<{show: boolean, message: string}>({show: false, message: ''});
+  const [conquestBanner, setConquestBanner] = useState<{
+    show: boolean;
+    conquerorName: string;
+    territoryName: string;
+  } | null>(null);
   const [battleBanner, setBattleBanner] = useState<{
     show: boolean;
     attackerTroops: number;
@@ -200,14 +205,22 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         isDefenderBoosted
       );
 
-      // Show battle banner with animation and sound
-      setBattleBanner({
-        show: true,
-        attackerTroops,
-        defenderTroops: defender.troops,
-        winner: result.winner,
-        survivingTroops: result.survivingTroops
-      });
+      // Mostra solo banner semplice di conquista (no animazione battaglia)
+      if (result.winner === 'attacker') {
+        const conquerorName = attacker.owner === 'blue' 
+          ? (userProfile?.nickname || 'Giocatore')
+          : (opponentProfile?.nickname || 'Avversario');
+        
+        setConquestBanner({
+          show: true,
+          conquerorName,
+          territoryName: defender.name
+        });
+
+        setTimeout(() => {
+          setConquestBanner(null);
+        }, 2500);
+      }
 
       // Update territories
       attacker.troops -= attackerTroops;
@@ -260,11 +273,11 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
       };
     });
 
-    // Wait for battle banner animation to complete (4s) before switching turn
+    // Wait for conquest banner (2.5s) before switching turn
     setTimeout(() => {
       setCombatInProgress(false);
       switchTurn();
-    }, 4000);
+    }, 2500);
   };
 
   const switchTurn = () => {
@@ -403,10 +416,23 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           target.troops += amount;
           toast.success(`${amount} truppe unite`);
         } else {
-          // Conquest
+          // Conquest of neutral territory
           target.owner = source.owner;
           target.troops = amount;
-          toast.success("Territorio conquistato!");
+          
+          const conquerorName = source.owner === 'blue' 
+            ? (userProfile?.nickname || 'Giocatore')
+            : (opponentProfile?.nickname || 'Avversario');
+          
+          setConquestBanner({
+            show: true,
+            conquerorName,
+            territoryName: target.name
+          });
+
+          setTimeout(() => {
+            setConquestBanner(null);
+          }, 2500);
         }
 
         return { ...prev, territories: newTerritories, boostedTroops: newBoostedTroops };
@@ -896,6 +922,25 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         survivingTroops={battleBanner?.survivingTroops || 0}
         onComplete={handleBattleBannerComplete}
       />
+
+      {/* Conquest Banner */}
+      {conquestBanner?.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+          <div className="bg-gradient-to-r from-primary/95 to-primary-foreground/95 backdrop-blur-xl px-12 py-8 rounded-2xl border-4 border-primary shadow-2xl animate-scale-in">
+            <div className="text-center space-y-3">
+              <div className="text-4xl font-bold text-white drop-shadow-lg">
+                🏆 Territorio Conquistato! 🏆
+              </div>
+              <div className="text-2xl text-white/90 font-semibold">
+                {conquestBanner.conquerorName} ha conquistato
+              </div>
+              <div className="text-3xl text-yellow-300 font-bold drop-shadow-lg">
+                {conquestBanner.territoryName}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bombing Animation */}
       <BombingAnimation
