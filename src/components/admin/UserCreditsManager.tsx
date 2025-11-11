@@ -15,6 +15,7 @@ export const UserCreditsManager = () => {
   const [loading, setLoading] = useState(false);
   const [loadingPremium, setLoadingPremium] = useState(false);
   const [loadingWeeklyPremium, setLoadingWeeklyPremium] = useState(false);
+  const [loadingPlatinum, setLoadingPlatinum] = useState(false);
   const [loadingUnlock, setLoadingUnlock] = useState(false);
   const [loadingLikes, setLoadingLikes] = useState(false);
 
@@ -152,6 +153,53 @@ export const UserCreditsManager = () => {
       });
     } finally {
       setLoadingWeeklyPremium(false);
+    }
+  };
+
+  const handleAssignPlatinum = async () => {
+    if (!userId) {
+      toast({
+        title: "Errore",
+        description: "Inserisci user ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoadingPlatinum(true);
+    try {
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30);
+
+      const { error } = await supabase
+        .from("user_credits")
+        .update({ 
+          is_premium: true,
+          subscription_type: 'monthly',
+          premium_tier: 'standard',
+          premium_expires_at: expiresAt.toISOString(),
+          balance: 70,
+          daily_likes_remaining: 40,
+        })
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Platino Assegnato",
+        description: "Abbonamento Platino di 30 giorni assegnato (€69,99)",
+      });
+
+      setUserId("");
+    } catch (error: any) {
+      console.error("Error assigning platinum:", error);
+      toast({
+        title: "Errore",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingPlatinum(false);
     }
   };
 
@@ -318,16 +366,29 @@ export const UserCreditsManager = () => {
           </Button>
         </div>
         
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3 mb-3">
           <Button 
             onClick={handleAssignPremium} 
             disabled={loadingPremium} 
             variant="outline"
+            className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white border-0"
           >
             <Crown className="h-4 w-4 mr-2" />
-            {loadingPremium ? "Assegnando..." : "Premium (30gg)"}
+            {loadingPremium ? "Assegnando..." : "Premium (30gg €399)"}
           </Button>
           
+          <Button 
+            onClick={handleAssignPlatinum} 
+            disabled={loadingPlatinum} 
+            variant="outline"
+            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0"
+          >
+            <Crown className="h-4 w-4 mr-2" />
+            {loadingPlatinum ? "Assegnando..." : "Platino (30gg €69)"}
+          </Button>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3">
           <Button 
             onClick={handleAssignWeeklyPremium} 
             disabled={loadingWeeklyPremium} 
