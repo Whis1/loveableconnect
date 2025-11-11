@@ -9,6 +9,7 @@ import { Plane, Users, Zap } from "lucide-react";
 import { RisikoMap } from "./RisikoMap";
 import { RisikoVictoryDialog } from "./RisikoVictoryDialog";
 import { TroopMoveDialog } from "./TroopMoveDialog";
+import { BattleBanner } from "./BattleBanner";
 import { generateTerritories, Territory } from "./territoryGenerator";
 import { simulateBattle, canMoveTroops } from "./risikoLogic";
 import { aiMakeMove } from "./risikoAI";
@@ -59,6 +60,13 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [targetTerritory, setTargetTerritory] = useState<string | null>(null);
   const [combatAnimation, setCombatAnimation] = useState<{show: boolean, message: string}>({show: false, message: ''});
+  const [battleBanner, setBattleBanner] = useState<{
+    show: boolean;
+    attackerTroops: number;
+    defenderTroops: number;
+    winner: 'attacker' | 'defender' | 'draw';
+    survivingTroops: number;
+  } | null>(null);
   const [movingTroops, setMovingTroops] = useState<{
     fromId: string;
     toId: string;
@@ -165,8 +173,14 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         isDefenderBoosted
       );
 
-      // Show combat result
-      showCombatAnimation(result.message);
+      // Show battle banner with animation and sound
+      setBattleBanner({
+        show: true,
+        attackerTroops,
+        defenderTroops: defender.troops,
+        winner: result.winner,
+        survivingTroops: result.survivingTroops
+      });
 
       // Update territories
       attacker.troops -= attackerTroops;
@@ -762,6 +776,18 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         winner={gameState.winner}
         userProfile={userProfile}
         onClose={() => setShowVictory(false)}
+      />
+
+      {/* Battle Banner */}
+      <BattleBanner
+        show={battleBanner?.show || false}
+        attackerProfile={userProfile}
+        defenderProfile={opponentProfile}
+        attackerTroops={battleBanner?.attackerTroops || 0}
+        defenderTroops={battleBanner?.defenderTroops || 0}
+        winner={battleBanner?.winner || 'draw'}
+        survivingTroops={battleBanner?.survivingTroops || 0}
+        onComplete={() => setBattleBanner(null)}
       />
     </div>
   );
