@@ -135,6 +135,8 @@ export const canMoveTroops = (
     ['Isola Vulcanica', 'Bunker Sotterraneo'],
     ['Torre di Guardia', 'Fortezza'],
     ['Torre di Guardia', 'Montagna Sacra'],
+    ['Torre di Guardia', 'Bunker Sotterraneo'],
+    ['Torre di Guardia', 'Isola Vulcanica'],
     ['Lago Cristallo', 'Terre Ghiacciate'],
     ['Lago Cristallo', 'Canyon Rosso'],
   ];

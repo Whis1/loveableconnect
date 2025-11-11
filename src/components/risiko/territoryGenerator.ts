@@ -314,6 +314,8 @@ export const generateTerritories = (): Territory[] => {
   connectByName("Isola Vulcanica", "Bunker Sotterraneo");
   connectByName("Torre di Guardia", "Fortezza");
   connectByName("Torre di Guardia", "Montagna Sacra");
+  connectByName("Torre di Guardia", "Bunker Sotterraneo");
+  connectByName("Torre di Guardia", "Isola Vulcanica");
   connectByName("Lago Cristallo", "Terre Ghiacciate");
   connectByName("Lago Cristallo", "Canyon Rosso");
   
