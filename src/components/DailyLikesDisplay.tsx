@@ -9,9 +9,10 @@ interface DailyLikesDisplayProps {
   resetAt: string | null;
   loading: boolean;
   subscriptionType?: string;
+  premiumTier?: string;
 }
 
-export const DailyLikesDisplay = ({ likesRemaining, isPremium, resetAt, loading, subscriptionType }: DailyLikesDisplayProps) => {
+export const DailyLikesDisplay = ({ likesRemaining, isPremium, resetAt, loading, subscriptionType, premiumTier }: DailyLikesDisplayProps) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -24,8 +25,8 @@ export const DailyLikesDisplay = ({ likesRemaining, isPremium, resetAt, loading,
     );
   }
 
-  // Solo il monthly premium ha like illimitati
-  const isMonthlyPremium = isPremium && subscriptionType === 'monthly';
+  // Solo il monthly premium con tier premium ha like illimitati
+  const isMonthlyPremium = isPremium && subscriptionType === 'monthly' && (!premiumTier || premiumTier === 'premium');
   
   if (isMonthlyPremium) {
     return (
@@ -57,9 +58,10 @@ export const DailyLikesDisplay = ({ likesRemaining, isPremium, resetAt, loading,
 
   const timeRemaining = formatTimeRemaining();
   
-  // Weekly premium mostra 30 like max, free mostra 8 like max
+  // Monthly standard (platino) = 40 like max, Weekly premium = 30 like max, free = 8 like max
+  const isMonthlyStandard = isPremium && subscriptionType === 'monthly' && premiumTier === 'standard';
   const isWeeklyPremium = isPremium && subscriptionType === 'weekly';
-  const maxLikes = isWeeklyPremium ? 30 : 8;
+  const maxLikes = isMonthlyStandard ? 40 : isWeeklyPremium ? 30 : 8;
 
   return (
     <div className="flex flex-col gap-1">
@@ -67,12 +69,14 @@ export const DailyLikesDisplay = ({ likesRemaining, isPremium, resetAt, loading,
         variant="outline"
         onClick={() => navigate("/credits")}
         className={`flex items-center gap-2 ${
+          isMonthlyStandard ? 'bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border-blue-500/20 hover:bg-blue-500/20' :
           isWeeklyPremium ? 'bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/20 hover:bg-purple-500/20' : ''
         }`}
       >
+        {isMonthlyStandard && <Crown className="h-4 w-4 text-blue-500" />}
         {isWeeklyPremium && <Crown className="h-4 w-4 text-purple-500" />}
-        <Heart className={`h-4 w-4 ${isWeeklyPremium ? 'text-purple-500' : 'text-primary'}`} />
-        <span className={`font-medium ${isWeeklyPremium ? 'text-purple-600 dark:text-purple-400' : ''}`}>
+        <Heart className={`h-4 w-4 ${isMonthlyStandard ? 'text-blue-500' : isWeeklyPremium ? 'text-purple-500' : 'text-primary'}`} />
+        <span className={`font-medium ${isMonthlyStandard ? 'text-blue-600 dark:text-blue-400' : isWeeklyPremium ? 'text-purple-600 dark:text-purple-400' : ''}`}>
           {Math.max(0, likesRemaining)}/{maxLikes} Like
         </span>
       </Button>

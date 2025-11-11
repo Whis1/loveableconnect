@@ -14,6 +14,7 @@ interface UserCredits {
   premium_expires_at?: string | null;
   credits_depleted_at?: string | null;
   subscription_type?: string;
+  premium_tier?: string;
 }
 
 export const CreditsDisplay = () => {
@@ -37,9 +38,10 @@ export const CreditsDisplay = () => {
   const isPremiumValid = credits.is_premium && 
     (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date());
 
-  const isMonthlyPremium = isPremiumValid && credits.subscription_type === 'monthly';
+  const isMonthlyPremium = isPremiumValid && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium');
+  const isMonthlyStandard = isPremiumValid && credits.subscription_type === 'monthly' && credits.premium_tier === 'standard';
 
-  // Solo il mensile mostra il badge "Premium" senza crediti
+  // Solo il mensile premium (tier premium) mostra il badge senza crediti
   if (isMonthlyPremium) {
     return (
       <Button
@@ -56,7 +58,7 @@ export const CreditsDisplay = () => {
   const isWeeklyPremium = isPremiumValid && credits.subscription_type === 'weekly';
   
   // Determina il target balance in base al tipo di abbonamento
-  const targetBalance = isWeeklyPremium ? 40 : 16;
+  const targetBalance = isMonthlyStandard ? 70 : isWeeklyPremium ? 40 : 16;
   
   const showCountdown = 
     credits.balance < targetBalance && 
@@ -72,6 +74,7 @@ export const CreditsDisplay = () => {
         resetAt={dailyLikes.resetAt}
         loading={dailyLikes.loading}
         subscriptionType={credits.subscription_type}
+        premiumTier={credits.premium_tier}
       />
       
       {/* Credits Display */}
@@ -80,12 +83,14 @@ export const CreditsDisplay = () => {
           variant="outline"
           onClick={() => navigate("/credits")}
           className={`flex items-center gap-2 ${
+            isMonthlyStandard ? 'bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border-blue-500/20 hover:bg-blue-500/20' : 
             isWeeklyPremium ? 'bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/20 hover:bg-purple-500/20' : ''
           }`}
         >
+          {isMonthlyStandard && <Crown className="h-4 w-4 text-blue-500" />}
           {isWeeklyPremium && <Crown className="h-4 w-4 text-purple-500" />}
-          <Coins className={`h-4 w-4 ${isWeeklyPremium ? 'text-purple-500' : 'text-primary'}`} />
-          <span className={`font-medium ${isWeeklyPremium ? 'text-purple-600 dark:text-purple-400' : ''}`}>
+          <Coins className={`h-4 w-4 ${isMonthlyStandard ? 'text-blue-500' : isWeeklyPremium ? 'text-purple-500' : 'text-primary'}`} />
+          <span className={`font-medium ${isMonthlyStandard ? 'text-blue-600 dark:text-blue-400' : isWeeklyPremium ? 'text-purple-600 dark:text-purple-400' : ''}`}>
             {credits.balance} {t("dashboard.credits")}
           </span>
         </Button>

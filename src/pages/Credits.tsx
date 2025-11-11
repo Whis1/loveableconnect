@@ -143,7 +143,7 @@ const Credits = () => {
             {loading ? (
               <div className="text-center py-4 text-muted-foreground">{t("credits.loading")}</div>
             ) : (credits?.is_premium && (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date())) ? (
-              credits.subscription_type === 'monthly' ? (
+              credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium') ? (
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <Crown className="h-8 w-8 text-amber-500" />
@@ -154,6 +154,39 @@ const Credits = () => {
                       <div className="text-sm text-muted-foreground">{t("credits.premiumSubscriptionActive")}</div>
                       {credits.premium_expires_at && (
                         <div className="text-xs text-muted-foreground mt-1">
+                          Rinnovo: {new Date(credits.premium_expires_at).toLocaleDateString('it-IT')}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    onClick={handleManageSubscription}
+                    disabled={purchasing}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {purchasing ? "Caricamento..." : "Gestisci Abbonamento"}
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Puoi disdire il rinnovo automatico in qualsiasi momento dal portale di gestione
+                  </p>
+                </div>
+              ) : credits.subscription_type === 'monthly' && credits.premium_tier === 'standard' ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Crown className="h-8 w-8 text-blue-500" />
+                    <div className="flex-1">
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        Premium Standard Attivo
+                      </div>
+                      <div className="space-y-1 mt-2 text-sm text-muted-foreground">
+                        <div>💰 70 crediti giornalieri (attuale: {credits.balance})</div>
+                        <div>❤️ 40 like giornalieri</div>
+                        <div>👁️ Visualizzazione illimitata dei like ricevuti</div>
+                        <div>🎮 Possibilità di disputare 20 partite giornaliere tra utenti</div>
+                      </div>
+                      {credits.premium_expires_at && (
+                        <div className="text-xs text-muted-foreground mt-2">
                           Rinnovo: {new Date(credits.premium_expires_at).toLocaleDateString('it-IT')}
                         </div>
                       )}
@@ -216,8 +249,8 @@ const Credits = () => {
         </Card>
 
         {/* Premium Subscriptions */}
-        {/* Nascondi solo se hai Premium Mensile attivo */}
-        {!(credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date())) && (
+        {/* Nascondi solo se hai Premium Mensile premium tier attivo */}
+        {!(credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium') && (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date())) && (
           <>
             {/* Monthly Premium */}
             <Card className="mb-6 border-2 border-amber-500/50 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20">

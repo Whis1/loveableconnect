@@ -7,6 +7,8 @@ interface DailyLikesData {
   likesRemaining: number;
   resetAt: string | null;
   isPremium: boolean;
+  subscriptionType?: string;
+  premiumTier?: string;
 }
 
 const fetchDailyLikes = async (): Promise<DailyLikesData | null> => {
@@ -24,6 +26,8 @@ const fetchDailyLikes = async (): Promise<DailyLikesData | null> => {
       likesRemaining: data[0].likes_remaining,
       resetAt: data[0].reset_at,
       isPremium: data[0].is_premium,
+      subscriptionType: data[0].subscription_type,
+      premiumTier: data[0].premium_tier,
     };
   }
 
@@ -125,6 +129,8 @@ export const useDailyLikes = () => {
     likesRemaining: dailyLikesData?.likesRemaining ?? 8,
     resetAt: dailyLikesData?.resetAt ?? null,
     isPremium: dailyLikesData?.isPremium ?? false,
+    subscriptionType: dailyLikesData?.subscriptionType,
+    premiumTier: dailyLikesData?.premiumTier,
     loading,
     consumeLike,
     refetch,
