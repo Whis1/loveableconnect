@@ -25,6 +25,7 @@ export const TrisGameBanner = () => {
   const [userCredits, setUserCredits] = useState(0);
   const [isPremium, setIsPremium] = useState(false);
   const [subscriptionType, setSubscriptionType] = useState<string>('none');
+  const [premiumTier, setPremiumTier] = useState<string>('none');
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -49,7 +50,7 @@ export const TrisGameBanner = () => {
 
     const { data } = await supabase
       .from("user_credits")
-      .select("balance, is_premium, subscription_type")
+      .select("balance, is_premium, subscription_type, premium_tier")
       .eq("user_id", session.user.id)
       .single();
 
@@ -57,12 +58,14 @@ export const TrisGameBanner = () => {
       setUserCredits(data.balance);
       setIsPremium(data.is_premium || false);
       setSubscriptionType(data.subscription_type || 'none');
+      setPremiumTier(data.premium_tier || 'none');
     }
   };
 
   // Calcola il limite di partite in base all'abbonamento
   const getGameLimit = () => {
-    if (isPremium && subscriptionType === 'monthly') return 999; // Illimitato
+    if (isPremium && subscriptionType === 'monthly' && premiumTier === 'premium') return 999; // Premium illimitato
+    if (isPremium && subscriptionType === 'monthly' && premiumTier === 'standard') return 20; // Platino
     if (isPremium && subscriptionType === 'weekly') return 10;
     return 5; // Free
   };
@@ -117,8 +120,8 @@ export const TrisGameBanner = () => {
   const handleStartGame = async () => {
     const limit = getGameLimit();
     
-    // Monthly premium ha giochi illimitati
-    if (isPremium && subscriptionType === 'monthly') {
+    // Solo monthly premium (tier premium) ha giochi illimitati
+    if (isPremium && subscriptionType === 'monthly' && premiumTier === 'premium') {
       setGameState("selecting");
       return;
     }
@@ -219,7 +222,7 @@ export const TrisGameBanner = () => {
 
     // Check if reached free limit
     const limit = getGameLimit();
-    if (newGamesPlayed >= limit && !(isPremium && subscriptionType === 'monthly')) {
+    if (newGamesPlayed >= limit && !(isPremium && subscriptionType === 'monthly' && premiumTier === 'premium')) {
       const today = new Date();
       today.setDate(today.getDate() + 1);
       setNextResetTime(today);
@@ -383,20 +386,23 @@ export const TrisGameBanner = () => {
       </div>
 
       <div className="space-y-4">
-        {isPremium && subscriptionType === 'monthly' ? (
+        {isPremium && subscriptionType === 'monthly' && premiumTier === 'premium' ? (
           <p className="text-muted-foreground text-center">
             🌟 <span className="font-bold text-primary">Giochi illimitati</span> con il tuo abbonamento Premium Mensile!
           </p>
         ) : (
           <p className="text-muted-foreground text-center">
             Partite gratuite oggi: <span className="font-bold text-primary">{Math.max(0, getGameLimit() - gamesPlayed)}</span>/{getGameLimit()}
+            {isPremium && subscriptionType === 'monthly' && premiumTier === 'standard' && (
+              <span className="block text-xs mt-1">💎 Abbonamento Platino</span>
+            )}
             {isPremium && subscriptionType === 'weekly' && (
               <span className="block text-xs mt-1">✨ Bonus Premium Settimanale</span>
             )}
           </p>
         )}
 
-        {gamesPlayed >= getGameLimit() && userCredits < 2 && !(isPremium && subscriptionType === 'monthly') ? (
+        {gamesPlayed >= getGameLimit() && userCredits < 2 && !(isPremium && subscriptionType === 'monthly' && premiumTier === 'premium') ? (
           <div className="text-center py-4">
             <p className="text-lg mb-2">Hai esaurito le tue sfide giornaliere!</p>
             <p className="text-muted-foreground">
@@ -412,7 +418,7 @@ export const TrisGameBanner = () => {
             className="w-full bg-primary hover:bg-primary/90"
           >
             <Trophy className="w-4 h-4 mr-2" />
-            {gamesPlayed >= getGameLimit() && !(isPremium && subscriptionType === 'monthly') 
+            {gamesPlayed >= getGameLimit() && !(isPremium && subscriptionType === 'monthly' && premiumTier === 'premium') 
               ? "Gioca con 2 crediti" 
               : "Iniziare a giocare"}
           </Button>
