@@ -13,6 +13,8 @@ export const MatchBanner = ({ matchedUserName, matchedUserAvatar, onClose }: Mat
   const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(true);
 
+  console.log('🎯 MatchBanner mounted for:', matchedUserName);
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -23,12 +25,20 @@ export const MatchBanner = ({ matchedUserName, matchedUserAvatar, onClose }: Mat
   };
 
   useEffect(() => {
+    console.log('⏱️ MatchBanner: Setting up 5s timer');
     const timer = setTimeout(() => {
+      console.log('⏱️ MatchBanner: Timer elapsed, hiding banner');
       setIsVisible(false);
-      setTimeout(onClose, 300);
+      setTimeout(() => {
+        console.log('⏱️ MatchBanner: Calling onClose');
+        onClose();
+      }, 300);
     }, 5000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      console.log('⏱️ MatchBanner: Cleanup timer');
+      clearTimeout(timer);
+    };
   }, [onClose]);
 
   useEffect(() => {
