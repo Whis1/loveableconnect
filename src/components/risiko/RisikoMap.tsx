@@ -280,28 +280,74 @@ export const RisikoMap = ({
         ))}
 
         {/* Render all territory names LAST so they're always on top of everything */}
-        {territories.map((territory) => (
-          <g key={`name-${territory.id}`}>
-            {/* Territory name - centered and scaled to fit - nascosto per territori coperti */}
-            {/* Nascondi nomi per territori che stanno sotto altri (circa 1 su 2) */}
-            {parseInt(territory.id.substring(1)) % 2 === 0 && (
-              <text
-                x={territory.x}
-                y={territory.y - territory.size * 0.15}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                className="text-[7px] font-semibold pointer-events-none"
-                style={{ 
-                  fill: '#000',
-                  textShadow: '2px 2px 4px rgba(255,255,255,0.9)',
-                  fontSize: `${Math.max(6, territory.size / 8)}px`
-                }}
-              >
-                {territory.name}
-              </text>
-            )}
-          </g>
-        ))}
+        {territories.map((territory) => {
+          const territoryIndex = parseInt(territory.id.substring(1));
+          // Badge diversi basati sull'indice del territorio
+          const badgeTypes = [
+            { icon: '🏔️', color: '#6b7280', label: 'Montagna' },
+            { icon: '🌲', color: '#22c55e', label: 'Foresta' },
+            { icon: '🏜️', color: '#f59e0b', label: 'Deserto' },
+            { icon: '🏭', color: '#ef4444', label: 'Industria' },
+            { icon: '🏛️', color: '#8b5cf6', label: 'Rovine' },
+            { icon: '🌊', color: '#3b82f6', label: 'Costa' },
+            { icon: '⚡', color: '#eab308', label: 'Energia' },
+            { icon: '🛡️', color: '#64748b', label: 'Fortezza' },
+          ];
+          const badge = badgeTypes[territoryIndex % badgeTypes.length];
+          
+          return (
+            <g key={`name-${territory.id}`}>
+              {/* Territory name - centered and scaled to fit - nascosto per territori coperti */}
+              {/* Nascondi nomi per territori che stanno sotto altri (circa 1 su 2) */}
+              {territoryIndex % 2 === 0 && (
+                <>
+                  <text
+                    x={territory.x}
+                    y={territory.y - territory.size * 0.15}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    className="text-[7px] font-semibold pointer-events-none"
+                    style={{ 
+                      fill: '#000',
+                      textShadow: '2px 2px 4px rgba(255,255,255,0.9)',
+                      fontSize: `${Math.max(6, territory.size / 8)}px`
+                    }}
+                  >
+                    {territory.name}
+                  </text>
+                  
+                  {/* Badge sotto il nome */}
+                  <g transform={`translate(${territory.x}, ${territory.y - territory.size * 0.08})`}>
+                    <rect
+                      x="-35"
+                      y="-8"
+                      width="70"
+                      height="16"
+                      rx="8"
+                      fill={badge.color}
+                      opacity="0.9"
+                      stroke="#fff"
+                      strokeWidth="1.5"
+                    />
+                    <text
+                      x="0"
+                      y="1"
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      className="text-[10px] font-medium pointer-events-none"
+                      style={{ 
+                        fill: '#fff',
+                        fontSize: '9px'
+                      }}
+                    >
+                      {badge.icon} {badge.label}
+                    </text>
+                  </g>
+                </>
+              )}
+            </g>
+          );
+        })}
 
         {/* Animated moving troops - bigger icon */}
         {animatingTroops && (
