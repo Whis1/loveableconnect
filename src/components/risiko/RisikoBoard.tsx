@@ -254,14 +254,16 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
 
         if (!source || !target) return prev;
 
-        source.troops -= amount;
-
-        // Combat or movement
+        // Combat case - don't remove troops here, handleCombat will do it
         if (target.owner && target.owner !== source.owner && target.troops > 0) {
-          // Combat
           setTimeout(() => handleCombat(source.id, target.id, amount), 100);
           return prev;
-        } else if (target.owner === source.owner) {
+        } 
+        
+        // For non-combat moves, remove troops from source
+        source.troops -= amount;
+        
+        if (target.owner === source.owner) {
           // Merge
           target.troops += amount;
           toast.success(`${amount} truppe unite`);
