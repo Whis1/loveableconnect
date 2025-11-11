@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-
+import matchSound from "@/assets/audio/match-sound.m4a";
 interface MatchBannerProps {
   matchedUserName: string;
   matchedUserAvatar?: string | null;
@@ -30,6 +30,19 @@ export const MatchBanner = ({ matchedUserName, matchedUserAvatar, onClose }: Mat
 
     return () => clearTimeout(timer);
   }, [onClose]);
+
+  useEffect(() => {
+    // Play match sound once on mount
+    try {
+      const audio = new Audio(matchSound);
+      audio.volume = 1.0;
+      void audio.play().catch((e) => {
+        console.warn("Autoplay prevented, will play on user gesture.", e);
+      });
+    } catch (e) {
+      console.warn("Error initializing match sound:", e);
+    }
+  }, []);
 
   return (
     <div

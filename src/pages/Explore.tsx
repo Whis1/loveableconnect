@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
@@ -72,6 +72,7 @@ const Explore = () => {
     userName: "",
     userAvatar: null,
   });
+  const ignoreNextRealtimeRef = useRef(false);
   
   const PROFILES_PER_PAGE = 24;
 
@@ -210,17 +211,29 @@ const Explore = () => {
           if (currentUser && (newMatch.user1_id === currentUser || newMatch.user2_id === currentUser)) {
             const otherUserId = newMatch.user1_id === currentUser ? newMatch.user2_id : newMatch.user1_id;
             
-            // Fetch the other user's profile to show their name
+            if (ignoreNextRealtimeRef.current) {
+              console.log('⚠️ Ignoring realtime match banner due to immediate onMatch');
+              ignoreNextRealtimeRef.current = false;
+              return;
+            }
+
+            // Fetch the other user's profile to show their name and avatar
             const { data: otherUserProfile } = await supabase
               .from('profiles')
-              .select('nickname, full_name')
+              .select('nickname, full_name, avatar_url')
               .eq('id', otherUserId)
               .single();
             
             if (otherUserProfile) {
               const userName = otherUserProfile.nickname || otherUserProfile.full_name;
-              console.log('🎉 Showing match banner for:', userName);
-              handleMatch(userName);
+              let userAvatar: string | null = null;
+              if (otherUserProfile.avatar_url) {
+                userAvatar = /^https?:\/\//.test(otherUserProfile.avatar_url)
+                  ? otherUserProfile.avatar_url
+                  : supabase.storage.from('profile-images').getPublicUrl(otherUserProfile.avatar_url).data.publicUrl;
+              }
+              console.log('🎉 Showing match banner for (realtime):', userName);
+              handleMatch(userName, userAvatar);
             }
           }
         }
@@ -669,7 +682,7 @@ const Explore = () => {
                     currentUserId={currentUser!}
                     likedProfileIds={likedProfileIds}
                     onLike={handleProfileLike}
-                    onMatch={handleMatch}
+                    onMatch={(name, avatar) => { ignoreNextRealtimeRef.current = true; handleMatch(name, avatar); }}
                   />
                 ))}
               </div>
