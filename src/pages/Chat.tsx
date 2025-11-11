@@ -815,7 +815,7 @@ const Chat = () => {
                   <VoiceRecorder 
                     onRecordingComplete={handleVoiceRecording}
                     disabled={uploading || !!recordedAudio}
-                    isPremiumMonthly={credits?.is_premium && credits.subscription_type === 'monthly'}
+                    isPremiumMonthly={credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium')}
                     onPremiumRequired={() => setShowVoicePremiumBanner(true)}
                   />
                   <Button 
