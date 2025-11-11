@@ -96,33 +96,26 @@ const getContinentShape = (continentId: number, centerX: number, centerY: number
 // Genera una forma di territorio con seed FISSO per avere sempre la stessa forma
 const generateTerritoryPath = (centerX: number, centerY: number, size: number, territoryIndex: number): string => {
   const points: [number, number][] = [];
-  const numPoints = 12;
+  const numPoints = 6; // Ridotto a 6 per forme più squadrate
   
   // Usa l'indice del territorio come seed fisso invece di un seed variabile
   const fixedSeed = territoryIndex * 0.0185; // Seed deterministico basato sull'indice
   
   for (let i = 0; i < numPoints; i++) {
     const angle = (i / numPoints) * Math.PI * 2;
-    // Variazioni fisse basate sull'indice del territorio
-    const radiusVariation = 0.6 + Math.sin(fixedSeed * 137 + i * 5.7) * 0.35 + Math.cos(fixedSeed * 73 + i * 3.3) * 0.15;
-    const angleJitter = (Math.sin(fixedSeed * 191 + i * 7.1) * 0.15);
+    // Variazioni più marcate per forme squadrate
+    const radiusVariation = 0.75 + Math.sin(fixedSeed * 137 + i * 5.7) * 0.25;
+    const angleJitter = (Math.sin(fixedSeed * 191 + i * 7.1) * 0.25);
     
     const x = centerX + Math.cos(angle + angleJitter) * size * radiusVariation;
     const y = centerY + Math.sin(angle + angleJitter) * size * radiusVariation * 0.95;
     points.push([x, y]);
   }
   
-  // Usa curve di Bezier per forme morbide
+  // Usa linee dirette invece di curve per forme squadrate
   let path = `M ${points[0][0]} ${points[0][1]}`;
-  for (let i = 0; i < points.length; i++) {
-    const current = points[i];
-    const next = points[(i + 1) % points.length];
-    
-    // Punto di controllo fisso per curva morbida
-    const cpX = (next[0] + current[0]) / 2 + (Math.sin(fixedSeed * 113 + i) * size * 0.1);
-    const cpY = (next[1] + current[1]) / 2 + (Math.cos(fixedSeed * 97 + i) * size * 0.1);
-    
-    path += ` Q ${cpX} ${cpY}, ${next[0]} ${next[1]}`;
+  for (let i = 1; i < points.length; i++) {
+    path += ` L ${points[i][0]} ${points[i][1]}`;
   }
   path += ' Z';
   
