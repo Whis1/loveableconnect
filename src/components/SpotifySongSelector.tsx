@@ -25,7 +25,7 @@ interface SpotifySongSelectorProps {
 export const SpotifySongSelector = ({ 
   selectedSongs, 
   onSongsChange,
-  maxSongs = 5 
+  maxSongs = 4 
 }: SpotifySongSelectorProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SpotifySong[]>([]);
