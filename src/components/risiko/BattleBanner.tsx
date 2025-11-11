@@ -100,9 +100,9 @@ export const BattleBanner = ({
                 <div className="text-white font-bold text-2xl mb-2">
                   {attackerProfile?.nickname || 'Attaccante'}
                 </div>
-                <div className="flex items-center gap-3 bg-red-500/30 backdrop-blur px-8 py-4 rounded-full border-2 border-red-500">
-                  <Swords className="w-10 h-10 text-red-400" />
-                  <span className="text-white font-bold text-3xl">{attackerTroops}</span>
+                <div className="flex items-center gap-4 bg-red-500/30 backdrop-blur px-10 py-5 rounded-full border-2 border-red-500">
+                  <Swords className="w-16 h-16 text-red-400" />
+                  <span className="text-white font-bold text-5xl">{attackerTroops}</span>
                 </div>
               </div>
             </div>
@@ -135,9 +135,9 @@ export const BattleBanner = ({
                 <div className="text-white font-bold text-2xl mb-2">
                   {defenderProfile?.nickname || 'Difensore'}
                 </div>
-                <div className="flex items-center gap-3 bg-blue-500/30 backdrop-blur px-8 py-4 rounded-full border-2 border-blue-500">
-                  <Swords className="w-10 h-10 text-blue-400" />
-                  <span className="text-white font-bold text-3xl">{defenderTroops}</span>
+                <div className="flex items-center gap-4 bg-blue-500/30 backdrop-blur px-10 py-5 rounded-full border-2 border-blue-500">
+                  <Swords className="w-16 h-16 text-blue-400" />
+                  <span className="text-white font-bold text-5xl">{defenderTroops}</span>
                 </div>
               </div>
             </div>
