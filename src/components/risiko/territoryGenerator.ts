@@ -203,45 +203,49 @@ export const generateTerritories = (): Territory[] => {
     });
   });
   
-  // Definisci connessioni realistiche tra territori (54 totali) - molti territori contigui
+  // Definisci connessioni strategiche tra territori (54 totali)
+  // I territori vicini sono attaccati (no linea), quelli lontani hanno stradine
   const connections: [number, number[]][] = [
-    // Nord America (0-9) - 10 territori tutti attaccati
+    // Nord America (0-9) - 10 territori interconnessi
     [0, [1, 4, 5]], [1, [0, 2, 5, 6]], [2, [1, 3, 6, 7]], [3, [2, 7]],
     [4, [0, 5, 8]], [5, [0, 1, 4, 6, 8, 9]], [6, [1, 2, 5, 7, 9]], [7, [2, 3, 6]],
-    [8, [4, 5, 9, 10]], [9, [5, 6, 8, 11]],
+    [8, [4, 5, 9]], [9, [5, 6, 8]],
     
     // Sud America (10-17) - 8 territori
-    [10, [8, 11, 13, 14]], [11, [9, 10, 12, 14, 15]],
+    [10, [11, 13, 14]], [11, [10, 12, 14, 15]],
     [12, [11, 15, 17]], [13, [10, 14, 16]], [14, [10, 11, 13, 15, 16]],
     [15, [11, 12, 14, 17]], [16, [13, 14]], [17, [12, 15]],
     
     // Europa (18-26) - 9 territori
     [18, [19, 22, 23]], [19, [18, 20, 23, 24]], [20, [19, 21, 24, 25]], [21, [20, 25]],
-    [22, [18, 23, 26, 27]], [23, [18, 19, 22, 24, 26]], [24, [19, 20, 23, 25, 26]],
-    [25, [20, 21, 24]], [26, [22, 23, 24, 27]],
+    [22, [18, 23, 26]], [23, [18, 19, 22, 24, 26]], [24, [19, 20, 23, 25, 26]],
+    [25, [20, 21, 24]], [26, [22, 23, 24]],
     
     // Africa (27-35) - 9 territori
-    [27, [22, 26, 28, 31, 32]], [28, [27, 29, 32, 33]], [29, [28, 33]],
+    [27, [28, 31, 32]], [28, [27, 29, 32, 33]], [29, [28, 33]],
     [30, [31, 34]], [31, [27, 30, 32, 34, 35]], [32, [27, 28, 31, 33, 35]],
     [33, [28, 29, 32, 35]], [34, [30, 31, 35]], [35, [31, 32, 33, 34]],
     
     // Asia (36-47) - 12 territori
     [36, [37, 40, 41]], [37, [36, 38, 41, 42]], [38, [37, 39, 42, 43]], [39, [38, 43]],
     [40, [36, 41, 44, 45]], [41, [36, 37, 40, 42, 45, 46]], [42, [37, 38, 41, 43, 46, 47]],
-    [43, [38, 39, 42, 47]], [44, [40, 45, 48]], [45, [40, 41, 44, 46, 48, 49]],
-    [46, [41, 42, 45, 47, 49, 50]], [47, [42, 43, 46, 50]],
+    [43, [38, 39, 42, 47]], [44, [40, 45]], [45, [40, 41, 44, 46]],
+    [46, [41, 42, 45, 47]], [47, [42, 43, 46]],
     
     // Oceania (48-53) - 6 territori
-    [48, [44, 49, 51]], [49, [45, 46, 48, 50, 51, 52]],
-    [50, [46, 47, 49, 52, 53]], [51, [48, 49, 52]],
+    [48, [49, 51]], [49, [48, 50, 51, 52]],
+    [50, [49, 52, 53]], [51, [48, 49, 52]],
     [52, [49, 50, 51, 53]], [53, [50, 52]],
     
-    // Collegamenti tra continenti distanti
-    [3, [36]], // Nord America -> Asia (Alaska-Kamchatka)
-    [9, [18]], // Nord America -> Europa
-    [21, [36]], // Europa -> Asia (Medio Oriente)
-    [26, [40]], // Europa -> Asia
-    [29, [44]], // Africa -> Asia
+    // Collegamenti strategici tra continenti (con stradine visibili)
+    [9, [10]], // Nord America -> Sud America (Panama)
+    [9, [18]], // Nord America -> Europa (Atlantic)
+    [3, [36]], // Nord America -> Asia (Bering Strait)
+    [21, [27]], // Europa -> Africa (Mediterranean)  
+    [26, [27]], // Europa -> Africa (Gibraltar)
+    [29, [36]], // Africa -> Asia (Middle East)
+    [35, [40]], // Africa -> Asia (Indian Ocean)
+    [47, [48]], // Asia -> Oceania (Indonesia)
   ];
   
   connections.forEach(([territoryIndex, neighborIndices]) => {

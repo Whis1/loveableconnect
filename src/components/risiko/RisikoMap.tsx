@@ -132,9 +132,10 @@ export const RisikoMap = ({
             const distance = Math.sqrt(dx * dx + dy * dy);
             
             // Non mostrare linee per territori molto vicini (attaccati)
-            if (distance < 150) return null;
+            // Soglia più alta per ridurre le stradine visibili
+            if (distance < 180) return null;
             
-            const isLongDistance = distance > 300; // Collegamento tra continenti distanti
+            const isLongDistance = distance > 400; // Collegamento tra continenti molto distanti
             
             // Check if this line is being used for troop movement
             const isMovingPath = movingTroops && 
