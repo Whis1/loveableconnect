@@ -6,7 +6,7 @@ import mapBackground from "@/assets/risiko-zombie-background.png";
 interface RisikoMapProps {
   territories: Territory[];
   selectedTerritory: string | null;
-  boostedTerritories: string[];
+  boostedTroops: Record<string, number>;
   onTerritoryClick: (id: string) => void;
   disabled: boolean;
   movingTroops?: {
@@ -23,7 +23,7 @@ interface RisikoMapProps {
 export const RisikoMap = ({
   territories,
   selectedTerritory,
-  boostedTerritories,
+  boostedTroops,
   onTerritoryClick,
   disabled,
   movingTroops,
@@ -83,7 +83,7 @@ export const RisikoMap = ({
 
   const getStrokeColor = (territory: Territory) => {
     if (selectedTerritory === territory.id) return '#fbbf24';
-    if (boostedTerritories.includes(territory.id)) return '#10b981';
+    if (boostedTroops[territory.id] && boostedTroops[territory.id] > 0) return '#10b981';
     return '#1f2937';
   };
 
@@ -244,7 +244,7 @@ export const RisikoMap = ({
             />
 
             {/* Boost indicator */}
-            {boostedTerritories.includes(territory.id) && (
+            {boostedTroops[territory.id] && boostedTroops[territory.id] > 0 && (
               <g>
                 <circle
                   cx={territory.x + 25}

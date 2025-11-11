@@ -30,7 +30,7 @@ interface GameState {
     parachute: number;
     force: number;
   };
-  boostedTerritories: string[];
+  boostedTroops: Record<string, number>; // territoryId -> numero di truppe potenziate
   gameOver: boolean;
   winner: Player | null;
 }
@@ -49,7 +49,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
     selectedTerritory: null,
     selectedCard: null,
     cardCooldowns: { bomb: 0, parachute: 0, force: 0 },
-    boostedTerritories: [],
+    boostedTroops: {},
     gameOver: false,
     winner: null
   });
@@ -148,8 +148,14 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
 
       if (!attacker || !defender) return prev;
 
-      const isAttackerBoosted = prev.boostedTerritories.includes(attackerId);
-      const isDefenderBoosted = prev.boostedTerritories.includes(defenderId);
+      // Calcola quante truppe potenziate partecipano al combattimento
+      const attackerBoostedCount = prev.boostedTroops[attackerId] || 0;
+      const defenderBoostedCount = prev.boostedTroops[defenderId] || 0;
+      
+      // Verifica se le truppe in combattimento sono potenziate
+      const attackingBoostedTroops = Math.min(attackerTroops, attackerBoostedCount);
+      const isAttackerBoosted = attackingBoostedTroops > 0;
+      const isDefenderBoosted = defenderBoostedCount > 0;
 
       const result = simulateBattle(
         attackerTroops,
@@ -164,25 +170,49 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
       // Update territories
       attacker.troops -= attackerTroops;
       
+      // Aggiorna truppe potenziate nell'attaccante
+      const newBoostedTroops = { ...prev.boostedTroops };
+      if (attackerBoostedCount > 0) {
+        const remainingBoosted = Math.max(0, attackerBoostedCount - attackingBoostedTroops);
+        if (remainingBoosted > 0) {
+          newBoostedTroops[attackerId] = remainingBoosted;
+        } else {
+          delete newBoostedTroops[attackerId];
+        }
+      }
+      
       if (result.winner === 'attacker') {
         defender.owner = attacker.owner;
         defender.troops = result.survivingTroops;
+        // Le truppe potenziate che sopravvivono vanno al difensore conquistato
+        if (attackingBoostedTroops > 0 && result.survivingTroops > 0) {
+          newBoostedTroops[defenderId] = Math.min(attackingBoostedTroops, result.survivingTroops);
+        } else {
+          delete newBoostedTroops[defenderId];
+        }
       } else if (result.winner === 'defender') {
         defender.troops = result.survivingTroops;
+        // Il difensore perde truppe potenziate se ne aveva
+        if (defenderBoostedCount > 0) {
+          const lostTroops = (defender.troops + attackerTroops) - result.survivingTroops;
+          const remainingBoosted = Math.max(0, defenderBoostedCount - lostTroops);
+          if (remainingBoosted > 0) {
+            newBoostedTroops[defenderId] = remainingBoosted;
+          } else {
+            delete newBoostedTroops[defenderId];
+          }
+        }
       } else {
+        // Pareggio - nessun sopravvissuto
         defender.owner = null;
         defender.troops = 0;
+        delete newBoostedTroops[defenderId];
       }
-
-      // Remove boost after combat
-      const newBoostedTerritories = prev.boostedTerritories.filter(
-        id => id !== attackerId && id !== defenderId
-      );
 
       return {
         ...prev,
         territories: newTerritories,
-        boostedTerritories: newBoostedTerritories,
+        boostedTroops: newBoostedTroops,
         selectedTerritory: null,
         selectedCard: null
       };
@@ -280,8 +310,47 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           return prev;
         } 
         
+        // Gestione truppe potenziate durante il movimento
+        const newBoostedTroops = { ...prev.boostedTroops };
+        const sourceBoostedCount = prev.boostedTroops[source.id] || 0;
+        
         // For non-combat moves, remove troops from source
         source.troops -= amount;
+        
+        // Gestione del potenziamento
+        if (sourceBoostedCount > 0) {
+          const remainingTroops = source.troops;
+          const movedBoostedTroops = Math.min(amount, sourceBoostedCount);
+          const remainingBoostedTroops = sourceBoostedCount - movedBoostedTroops;
+          
+          // Il potenziamento segue il gruppo maggiore di truppe
+          if (amount > remainingTroops) {
+            // Più truppe spostate che rimanenti -> il boost va al target
+            if (movedBoostedTroops > 0) {
+              const targetCurrentBoosted = newBoostedTroops[target.id] || 0;
+              newBoostedTroops[target.id] = targetCurrentBoosted + movedBoostedTroops;
+            }
+            if (remainingBoostedTroops > 0) {
+              newBoostedTroops[source.id] = remainingBoostedTroops;
+            } else {
+              delete newBoostedTroops[source.id];
+            }
+          } else if (amount < remainingTroops) {
+            // Meno truppe spostate che rimanenti -> il boost rimane alla sorgente
+            if (remainingBoostedTroops > 0) {
+              newBoostedTroops[source.id] = remainingBoostedTroops;
+            } else {
+              delete newBoostedTroops[source.id];
+            }
+          } else {
+            // Stesso numero -> il boost va al target (tutte le truppe si spostano)
+            if (movedBoostedTroops > 0) {
+              const targetCurrentBoosted = newBoostedTroops[target.id] || 0;
+              newBoostedTroops[target.id] = targetCurrentBoosted + movedBoostedTroops;
+            }
+            delete newBoostedTroops[source.id];
+          }
+        }
         
         if (target.owner === source.owner) {
           // Merge
@@ -294,7 +363,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           toast.success("Territorio conquistato!");
         }
 
-        return { ...prev, territories: newTerritories };
+        return { ...prev, territories: newTerritories, boostedTroops: newBoostedTroops };
       });
 
       setTargetTerritory(null);
@@ -361,11 +430,14 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         if (gameState.cardCooldowns.force === 0 && territory.owner === 'blue' && territory.troops > 0) {
           setGameState(prev => ({
             ...prev,
-            boostedTerritories: [...prev.boostedTerritories, territoryId],
+            boostedTroops: {
+              ...prev.boostedTroops,
+              [territoryId]: territory.troops // Tutte le truppe del territorio diventano potenziate
+            },
             cardCooldowns: {...prev.cardCooldowns, force: 3},
             selectedCard: null
           }));
-          toast.success("Truppa potenziata! 💪");
+          toast.success(`Truppa potenziata! ${territory.troops} truppe potenziate 💪`);
           switchTurn();
         }
         break;
@@ -646,7 +718,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           <RisikoMap
             territories={gameState.territories}
             selectedTerritory={gameState.selectedTerritory}
-            boostedTerritories={gameState.boostedTerritories}
+            boostedTroops={gameState.boostedTroops}
             onTerritoryClick={handleTerritoryClick}
             disabled={gameState.currentPlayer !== 'blue' || gameState.gameOver}
             movingTroops={movingTroops}

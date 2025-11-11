@@ -15,7 +15,7 @@ interface GameState {
     parachute: number;
     force: number;
   };
-  boostedTerritories: string[];
+  boostedTroops: Record<string, number>;
   gameOver: boolean;
   winner: Player | null;
 }
