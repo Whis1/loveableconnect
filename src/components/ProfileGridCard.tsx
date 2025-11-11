@@ -42,7 +42,7 @@ interface ProfileGridCardProps {
   currentUserId: string;
   likedProfileIds?: Set<string>;
   onLike: (profileId: string) => void;
-  onMatch?: (profileName: string) => void;
+  onMatch?: (profileName: string, profileAvatar: string | null) => void;
 }
 
 export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLike, onMatch }: ProfileGridCardProps) => {
@@ -303,7 +303,12 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
     
     // Se sarà un match, mostra il banner IMMEDIATAMENTE
     if (willBeMatch && onMatch) {
-      onMatch(profile.nickname || profile.full_name);
+      const avatarUrl = profile.avatar_url && /^https?:\/\//.test(profile.avatar_url) 
+        ? profile.avatar_url 
+        : (profile.avatar_url 
+          ? supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl 
+          : null);
+      onMatch(profile.nickname || profile.full_name, avatarUrl);
     } else {
       toast({
         title: t('search.likeSent'),

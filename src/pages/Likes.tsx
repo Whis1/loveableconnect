@@ -103,9 +103,10 @@ const Likes = () => {
   const [checkingUnlock, setCheckingUnlock] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState(false);
-  const [matchBanner, setMatchBanner] = useState<{ show: boolean; userName: string }>({
+  const [matchBanner, setMatchBanner] = useState<{ show: boolean; userName: string; userAvatar: string | null }>({
     show: false,
     userName: "",
+    userAvatar: null,
   });
   const [likingUserId, setLikingUserId] = useState<string | null>(null);
 
@@ -333,47 +334,8 @@ const Likes = () => {
       )
       .subscribe();
 
-    // Realtime subscription for new matches - show banner immediately
-    const matchChannel = supabase
-      .channel('likes-new-matches')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'matches'
-        },
-        async (payload) => {
-          console.log('🎉 New match detected in Likes:', payload);
-          const newMatch = payload.new as any;
-          
-          // Check if this match involves the current user
-          if (currentUserId && (newMatch.user1_id === currentUserId || newMatch.user2_id === currentUserId)) {
-            const otherUserId = newMatch.user1_id === currentUserId ? newMatch.user2_id : newMatch.user1_id;
-            
-            // Fetch the other user's profile to show their name
-            const { data: otherUserProfile } = await supabase
-              .from('profiles')
-              .select('nickname, full_name')
-              .eq('id', otherUserId)
-              .single();
-            
-            if (otherUserProfile) {
-              const userName = otherUserProfile.nickname || otherUserProfile.full_name;
-              console.log('🎉 Showing match banner for:', userName);
-              setMatchBanner({ show: true, userName });
-              
-              // Remove the like from the list since it's now a match
-              setLikes(prev => prev.filter(like => like.from_user_id !== otherUserId));
-            }
-          }
-        }
-      )
-      .subscribe();
-
     return () => {
       supabase.removeChannel(likesDeleteChannel);
-      supabase.removeChannel(matchChannel);
     };
   }, [toast, currentUserId, t]);
 
@@ -415,8 +377,10 @@ const Likes = () => {
 
       // Check if a match was created
       if (data.match_created) {
-        // Match was created! Show banner
-        setMatchBanner({ show: true, userName });
+        // Match was created! Show banner with avatar
+        const matchedLike = likes.find(l => l.from_user_id === userId);
+        const userAvatar = matchedLike ? toPublicAvatarUrl(matchedLike.profile.avatar_url) : null;
+        setMatchBanner({ show: true, userName, userAvatar });
         
         // Remove this like from the list
         setLikes((prev) => prev.filter((l) => l.id !== likeId));
@@ -451,7 +415,8 @@ const Likes = () => {
       {matchBanner.show && (
         <MatchBanner
           matchedUserName={matchBanner.userName}
-          onClose={() => setMatchBanner({ show: false, userName: "" })}
+          matchedUserAvatar={matchBanner.userAvatar}
+          onClose={() => setMatchBanner({ show: false, userName: "", userAvatar: null })}
         />
       )}
       

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import matchHeartIcon from "@/assets/match-heart.png";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface MatchBannerProps {
@@ -74,14 +73,10 @@ export const MatchBanner = ({ matchedUserName, matchedUserAvatar, onClose }: Mat
 
           {/* Main Content */}
           <div className="relative z-10">
-            <div className="mb-6 flex justify-center items-center gap-4">
-              <div className="p-6 bg-white/20 rounded-full backdrop-blur-sm animate-pulse">
-                <img src={matchHeartIcon} alt="Match" className="h-24 w-24" />
-              </div>
-              
-              <Avatar className="h-24 w-24 border-4 border-white shadow-2xl">
+            <div className="mb-6 flex justify-center">
+              <Avatar className="h-32 w-32 border-4 border-white shadow-2xl animate-scale-in">
                 <AvatarImage src={matchedUserAvatar || undefined} alt={matchedUserName} />
-                <AvatarFallback className="bg-gradient-to-br from-pink-400 to-purple-500 text-white text-2xl font-bold">
+                <AvatarFallback className="bg-gradient-to-br from-pink-400 to-purple-500 text-white text-4xl font-bold">
                   {getInitials(matchedUserName)}
                 </AvatarFallback>
               </Avatar>

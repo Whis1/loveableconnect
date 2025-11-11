@@ -67,9 +67,10 @@ const Explore = () => {
   const [ageRange, setAgeRange] = useState([18, 90]);
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
   const [selectedOrientations, setSelectedOrientations] = useState<string[]>([]);
-  const [matchBanner, setMatchBanner] = useState<{ show: boolean; userName: string }>({
+  const [matchBanner, setMatchBanner] = useState<{ show: boolean; userName: string; userAvatar: string | null }>({
     show: false,
     userName: "",
+    userAvatar: null,
   });
   
   const PROFILES_PER_PAGE = 24;
@@ -456,9 +457,9 @@ const Explore = () => {
     // Don't remove from displayed profiles to avoid the disappearing bug
   };
 
-  const handleMatch = (userName: string) => {
+  const handleMatch = (userName: string, userAvatar: string | null = null) => {
     console.log('🎉 MATCH! Showing banner for:', userName);
-    setMatchBanner({ show: true, userName });
+    setMatchBanner({ show: true, userName, userAvatar });
   };
 
   if (loading || likesLoading) {
@@ -507,7 +508,8 @@ const Explore = () => {
       {matchBanner.show && (
         <MatchBanner
           matchedUserName={matchBanner.userName}
-          onClose={() => setMatchBanner({ show: false, userName: "" })}
+          matchedUserAvatar={matchBanner.userAvatar}
+          onClose={() => setMatchBanner({ show: false, userName: "", userAvatar: null })}
         />
       )}
       
