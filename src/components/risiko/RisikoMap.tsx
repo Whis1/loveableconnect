@@ -285,51 +285,46 @@ export const RisikoMap = ({
           
           return (
             <g key={`name-${territory.id}`} pointerEvents="none">
-              {/* Territory name - centered and scaled to fit - nascosto per territori coperti */}
-              {/* Nascondi nomi per territori che stanno sotto altri (circa 1 su 2) */}
-              {territoryIndex % 2 === 0 && (
-                <>
-                  <text
-                    x={territory.x}
-                    y={territory.y - territory.size * 0.15}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    className="text-[7px] font-semibold pointer-events-none"
-                    style={{ 
-                      fill: '#000',
-                      textShadow: '2px 2px 4px rgba(255,255,255,0.9)',
-                      fontSize: `${Math.max(6, territory.size / 8)}px`
-                    }}
-                  >
-                    {territory.name}
-                  </text>
-                  
-                  {/* Badge sotto il nome - solo icona, più in basso */}
-                  <g transform={`translate(${territory.x}, ${territory.y + territory.size * 0.05})`} pointerEvents="none">
-                    <circle
-                      cx="0"
-                      cy="0"
-                      r="12"
-                      fill={badge.color}
-                      opacity="0.9"
-                      stroke="#fff"
-                      strokeWidth="2"
-                    />
-                    <text
-                      x="0"
-                      y="1"
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      className="text-[14px] pointer-events-none"
-                      style={{ 
-                        fontSize: '14px'
-                      }}
-                    >
-                      {badge.icon}
-                    </text>
-                  </g>
-                </>
-              )}
+              {/* Territory name - tutti i territori ora hanno nome visibile */}
+              <text
+                x={territory.x}
+                y={territory.y - territory.size * 0.15}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="text-[7px] font-semibold pointer-events-none"
+                style={{ 
+                  fill: '#000',
+                  textShadow: '2px 2px 4px rgba(255,255,255,0.9)',
+                  fontSize: `${Math.max(6, territory.size / 8)}px`
+                }}
+              >
+                {territory.name}
+              </text>
+              
+              {/* Badge sotto il nome - tutti i territori ora hanno badge */}
+              <g transform={`translate(${territory.x}, ${territory.y + territory.size * 0.05})`} pointerEvents="none">
+                <circle
+                  cx="0"
+                  cy="0"
+                  r="12"
+                  fill={badge.color}
+                  opacity="0.9"
+                  stroke="#fff"
+                  strokeWidth="2"
+                />
+                <text
+                  x="0"
+                  y="1"
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  className="text-[14px] pointer-events-none"
+                  style={{ 
+                    fontSize: '14px'
+                  }}
+                >
+                  {badge.icon}
+                </text>
+              </g>
             </g>
           );
         })}
