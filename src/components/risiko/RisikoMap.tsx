@@ -29,9 +29,9 @@ export const RisikoMap = ({
   return (
     <div className="w-full h-full bg-background rounded-lg border-2 border-border overflow-hidden">
       <svg
-        viewBox="0 0 1200 800"
+        viewBox="0 0 1100 750"
         className="w-full h-full"
-        style={{ background: 'linear-gradient(to bottom, #0f172a, #1e293b)' }}
+        style={{ background: 'linear-gradient(to bottom, #2c3e1f, #1a2614)' }}
       >
         {/* Render territories */}
         {territories.map((territory) => (
