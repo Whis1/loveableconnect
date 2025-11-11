@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Heart } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -12,6 +12,8 @@ interface MatchBannerProps {
 export const MatchBanner = ({ matchedUserName, matchedUserAvatar, onClose }: MatchBannerProps) => {
   const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(true);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
 
   console.log('🎯 MatchBanner mounted for:', matchedUserName);
 
@@ -30,8 +32,8 @@ export const MatchBanner = ({ matchedUserName, matchedUserAvatar, onClose }: Mat
       console.log('⏱️ MatchBanner: Timer elapsed, hiding banner');
       setIsVisible(false);
       setTimeout(() => {
-        console.log('⏱️ MatchBanner: Calling onClose');
-        onClose();
+        console.log('⏱️ MatchBanner: Calling onCloseRef');
+        onCloseRef.current?.();
       }, 300);
     }, 5000);
 
@@ -39,7 +41,7 @@ export const MatchBanner = ({ matchedUserName, matchedUserAvatar, onClose }: Mat
       console.log('⏱️ MatchBanner: Cleanup timer');
       clearTimeout(timer);
     };
-  }, [onClose]);
+  }, []);
 
   useEffect(() => {
     // Play match sound once on mount
