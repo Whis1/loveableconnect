@@ -1,4 +1,6 @@
 import { Territory } from "./territoryGenerator";
+import { useEffect, useState } from "react";
+import troopsIcon from "@/assets/risiko-troops.png";
 
 interface RisikoMapProps {
   territories: Territory[];
@@ -6,6 +8,11 @@ interface RisikoMapProps {
   boostedTerritories: string[];
   onTerritoryClick: (id: string) => void;
   disabled: boolean;
+  movingTroops?: {
+    fromId: string;
+    toId: string;
+    count: number;
+  } | null;
 }
 
 export const RisikoMap = ({
@@ -13,8 +20,56 @@ export const RisikoMap = ({
   selectedTerritory,
   boostedTerritories,
   onTerritoryClick,
-  disabled
+  disabled,
+  movingTroops
 }: RisikoMapProps) => {
+  const [animatingTroops, setAnimatingTroops] = useState<{
+    x: number;
+    y: number;
+    count: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (movingTroops) {
+      const fromTerritory = territories.find(t => t.id === movingTroops.fromId);
+      const toTerritory = territories.find(t => t.id === movingTroops.toId);
+      
+      if (fromTerritory && toTerritory) {
+        setAnimatingTroops({
+          x: fromTerritory.x,
+          y: fromTerritory.y,
+          count: movingTroops.count
+        });
+
+        // Animate to destination
+        const duration = 1000;
+        const startTime = Date.now();
+        
+        const animate = () => {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          
+          const currentX = fromTerritory.x + (toTerritory.x - fromTerritory.x) * progress;
+          const currentY = fromTerritory.y + (toTerritory.y - fromTerritory.y) * progress;
+          
+          setAnimatingTroops({
+            x: currentX,
+            y: currentY,
+            count: movingTroops.count
+          });
+          
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          } else {
+            setAnimatingTroops(null);
+          }
+        };
+        
+        requestAnimationFrame(animate);
+      }
+    }
+  }, [movingTroops, territories]);
+
   const getColor = (territory: Territory) => {
     if (!territory.owner) return '#6b7280';
     return territory.owner === 'blue' ? '#3b82f6' : '#ef4444';
@@ -24,6 +79,11 @@ export const RisikoMap = ({
     if (selectedTerritory === territory.id) return '#fbbf24';
     if (boostedTerritories.includes(territory.id)) return '#10b981';
     return '#1f2937';
+  };
+
+  const getTroopColor = (owner: 'blue' | 'red' | null) => {
+    if (!owner) return '#6b7280';
+    return owner === 'blue' ? '#3b82f6' : '#ef4444';
   };
 
   return (
@@ -69,23 +129,32 @@ export const RisikoMap = ({
               opacity={territory.troops === 0 ? 0.5 : 1}
             />
             
-            {/* Troops count */}
+            {/* Troops icon and count */}
             {territory.troops > 0 && (
               <g>
+                <image
+                  href={troopsIcon}
+                  x={territory.x - 20}
+                  y={territory.y - 25}
+                  width={40}
+                  height={40}
+                  style={{ filter: `drop-shadow(0 2px 4px rgba(0,0,0,0.5))` }}
+                  opacity={0.9}
+                />
                 <circle
                   cx={territory.x}
-                  cy={territory.y}
-                  r={20}
-                  fill="rgba(0,0,0,0.7)"
+                  cy={territory.y + 22}
+                  r={14}
+                  fill={getTroopColor(territory.owner)}
                   stroke="#fff"
                   strokeWidth={2}
                 />
                 <text
                   x={territory.x}
-                  y={territory.y}
+                  y={territory.y + 22}
                   textAnchor="middle"
                   dominantBaseline="central"
-                  className="text-lg font-bold fill-white pointer-events-none"
+                  className="text-sm font-bold fill-white pointer-events-none"
                 >
                   {territory.troops}
                 </text>
@@ -115,6 +184,38 @@ export const RisikoMap = ({
             )}
           </g>
         ))}
+
+        {/* Animated moving troops */}
+        {animatingTroops && (
+          <g className="animate-pulse">
+            <image
+              href={troopsIcon}
+              x={animatingTroops.x - 20}
+              y={animatingTroops.y - 25}
+              width={40}
+              height={40}
+              style={{ filter: `drop-shadow(0 4px 8px rgba(0,0,0,0.7))` }}
+              opacity={0.8}
+            />
+            <circle
+              cx={animatingTroops.x}
+              cy={animatingTroops.y + 22}
+              r={14}
+              fill="#fbbf24"
+              stroke="#fff"
+              strokeWidth={2}
+            />
+            <text
+              x={animatingTroops.x}
+              y={animatingTroops.y + 22}
+              textAnchor="middle"
+              dominantBaseline="central"
+              className="text-sm font-bold fill-white pointer-events-none"
+            >
+              {animatingTroops.count}
+            </text>
+          </g>
+        )}
       </svg>
     </div>
   );

@@ -54,6 +54,11 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [targetTerritory, setTargetTerritory] = useState<string | null>(null);
   const [combatAnimation, setCombatAnimation] = useState<{show: boolean, message: string}>({show: false, message: ''});
+  const [movingTroops, setMovingTroops] = useState<{
+    fromId: string;
+    toId: string;
+    count: number;
+  } | null>(null);
 
   // Initialize game
   useEffect(() => {
@@ -219,37 +224,49 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
   const handleMoveTroops = (amount: number) => {
     if (!gameState.selectedTerritory || !targetTerritory) return;
 
-    setGameState(prev => {
-      const newTerritories = [...prev.territories];
-      const source = newTerritories.find(t => t.id === prev.selectedTerritory);
-      const target = newTerritories.find(t => t.id === targetTerritory);
-
-      if (!source || !target) return prev;
-
-      source.troops -= amount;
-
-      // Combat or movement
-      if (target.owner && target.owner !== source.owner && target.troops > 0) {
-        // Combat
-        setTimeout(() => handleCombat(source.id, target.id, amount), 100);
-        return prev;
-      } else if (target.owner === source.owner) {
-        // Merge
-        target.troops += amount;
-        toast.success(`${amount} truppe unite`);
-      } else {
-        // Conquest
-        target.owner = source.owner;
-        target.troops = amount;
-        toast.success("Territorio conquistato!");
-      }
-
-      return { ...prev, territories: newTerritories };
+    // Start animation
+    setMovingTroops({
+      fromId: gameState.selectedTerritory,
+      toId: targetTerritory,
+      count: amount
     });
 
-    setMoveDialogOpen(false);
-    setTargetTerritory(null);
-    switchTurn();
+    // Wait for animation then update
+    setTimeout(() => {
+      setMovingTroops(null);
+
+      setGameState(prev => {
+        const newTerritories = [...prev.territories];
+        const source = newTerritories.find(t => t.id === prev.selectedTerritory);
+        const target = newTerritories.find(t => t.id === targetTerritory);
+
+        if (!source || !target) return prev;
+
+        source.troops -= amount;
+
+        // Combat or movement
+        if (target.owner && target.owner !== source.owner && target.troops > 0) {
+          // Combat
+          setTimeout(() => handleCombat(source.id, target.id, amount), 100);
+          return prev;
+        } else if (target.owner === source.owner) {
+          // Merge
+          target.troops += amount;
+          toast.success(`${amount} truppe unite`);
+        } else {
+          // Conquest
+          target.owner = source.owner;
+          target.troops = amount;
+          toast.success("Territorio conquistato!");
+        }
+
+        return { ...prev, territories: newTerritories };
+      });
+
+      setMoveDialogOpen(false);
+      setTargetTerritory(null);
+      switchTurn();
+    }, 1000);
   };
 
   const handleCardUsage = (territoryId: string) => {
@@ -472,6 +489,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           boostedTerritories={gameState.boostedTerritories}
           onTerritoryClick={handleTerritoryClick}
           disabled={gameState.currentPlayer !== 'blue' || gameState.gameOver}
+          movingTroops={movingTroops}
         />
       </div>
 
