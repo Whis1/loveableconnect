@@ -128,24 +128,26 @@ export const Tutorial = () => {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] pointer-events-none" />
+      {/* Overlay semitrasparente leggero */}
+      <div className="fixed inset-0 bg-black/20 z-[100] pointer-events-none" />
 
       <Button
         onClick={skipTutorial}
         variant="ghost"
         size="icon"
-        className="fixed top-4 right-4 z-[102] bg-background/80 hover:bg-background pointer-events-auto"
+        className="fixed top-4 right-4 z-[102] bg-background/90 hover:bg-background pointer-events-auto shadow-lg"
       >
         <X className="h-5 w-5" />
       </Button>
 
       {currentStepData?.target && (
         <>
+          {/* Spotlight effect: crea un "buco" nell'overlay per mostrare l'elemento */}
           <div
             className="fixed z-[101] pointer-events-auto rounded-xl transition-all duration-300"
             style={{
               ...highlightStyle,
-              boxShadow: '0 0 0 4px hsl(var(--primary) / 0.5), 0 0 30px 10px hsl(var(--primary) / 0.3)',
+              boxShadow: '0 0 0 4px hsl(var(--primary)), 0 0 0 9999px rgba(0, 0, 0, 0.5)',
               animation: 'tutorial-pulse 2s ease-in-out infinite',
             }}
           />
@@ -161,7 +163,7 @@ export const Tutorial = () => {
                 fill="none"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                style={{ filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3))' }}
+                style={{ filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5))' }}
               />
             </svg>
           </div>
@@ -210,10 +212,10 @@ export const Tutorial = () => {
       <style>{`
         @keyframes tutorial-pulse {
           0%, 100% {
-            box-shadow: 0 0 0 4px hsl(var(--primary) / 0.5), 0 0 30px 10px hsl(var(--primary) / 0.3);
+            box-shadow: 0 0 0 4px hsl(var(--primary)), 0 0 0 9999px rgba(0, 0, 0, 0.5);
           }
           50% {
-            box-shadow: 0 0 0 8px hsl(var(--primary) / 0.7), 0 0 50px 20px hsl(var(--primary) / 0.5);
+            box-shadow: 0 0 0 6px hsl(var(--primary)), 0 0 0 9999px rgba(0, 0, 0, 0.6);
           }
         }
       `}</style>
