@@ -58,7 +58,7 @@ export const BattleBanner = ({
         audio.currentTime = 0;
       };
     }
-  }, [show, audio, onComplete]);
+  }, [show]);
 
   if (!show) return null;
 

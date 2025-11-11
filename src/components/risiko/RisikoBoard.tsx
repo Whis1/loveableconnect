@@ -164,6 +164,10 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
     setTimeout(() => setCombatAnimation({show: false, message: ''}), 3000);
   };
 
+  const handleBattleBannerComplete = useCallback(() => {
+    setBattleBanner(null);
+  }, []);
+
   const handleCombat = (attackerId: string, defenderId: string, attackerTroops: number) => {
     setGameState(prev => {
       const newTerritories = [...prev.territories];
@@ -833,7 +837,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         defenderTroops={battleBanner?.defenderTroops || 0}
         winner={battleBanner?.winner || 'draw'}
         survivingTroops={battleBanner?.survivingTroops || 0}
-        onComplete={() => setBattleBanner(null)}
+        onComplete={handleBattleBannerComplete}
       />
 
       {/* Bombing Animation */}
