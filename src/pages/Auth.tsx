@@ -102,7 +102,7 @@ const Auth = () => {
     if (!ageConsent) {
       toast({
         title: t('auth.errorSignUp'),
-        description: "Devi confermare di avere almeno 18 anni e di accettare i termini e condizioni.",
+        description: "Devi confermare di avere almeno 18 anni e di accettare la Privacy - Termini e condizioni.",
         variant: "destructive",
       });
       return;
