@@ -29,10 +29,32 @@ export const RisikoMap = ({
   return (
     <div className="w-full h-full bg-background rounded-lg border-2 border-border overflow-hidden">
       <svg
-        viewBox="0 0 1100 750"
+        viewBox="0 0 1200 800"
         className="w-full h-full"
         style={{ background: 'linear-gradient(to bottom, #2c3e1f, #1a2614)' }}
       >
+        {/* Render connection lines first (behind territories) */}
+        {territories.map((territory) => 
+          territory.neighbors.map((neighborId) => {
+            const neighbor = territories.find(t => t.id === neighborId);
+            if (!neighbor || territory.id > neighborId) return null; // Draw each line once
+            
+            return (
+              <line
+                key={`${territory.id}-${neighborId}`}
+                x1={territory.x}
+                y1={territory.y}
+                x2={neighbor.x}
+                y2={neighbor.y}
+                stroke="#4a5a3a"
+                strokeWidth={2}
+                strokeDasharray="5,5"
+                opacity={0.5}
+              />
+            );
+          })
+        )}
+
         {/* Render territories */}
         {territories.map((territory) => (
           <g key={territory.id}>
