@@ -95,7 +95,7 @@ export const RisikoMap = ({
   return (
     <div className="w-full h-full bg-background rounded-lg border-2 border-border overflow-hidden">
       <svg
-        viewBox="0 0 1300 850"
+        viewBox="0 0 1600 950"
         className="w-full h-full"
       >
         <defs>
@@ -114,8 +114,8 @@ export const RisikoMap = ({
           href={mapBackground}
           x="0"
           y="0"
-          width="1300"
-          height="850"
+          width="1600"
+          height="950"
           preserveAspectRatio="xMidYMid slice"
           opacity="0.95"
         />

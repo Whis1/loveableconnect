@@ -153,36 +153,36 @@ const territoryNames = [
 export const generateTerritories = (): Territory[] => {
   const territories: Territory[] = [];
   
-  // Mappa super-compatta - territori sovrapposti per massa unica
+  // Mappa super-compatta - territori enormi che riempiono tutto
   const continentLayouts = [
     // Nord America (10 territori) - gruppo ultra-compatto sinistra alto
-    { x: 210, y: 190, size: 75 }, { x: 280, y: 185, size: 78 }, { x: 350, y: 190, size: 75 }, { x: 420, y: 185, size: 73 },
-    { x: 220, y: 270, size: 80 }, { x: 295, y: 265, size: 82 }, { x: 370, y: 270, size: 80 }, { x: 440, y: 265, size: 78 },
-    { x: 260, y: 355, size: 78 }, { x: 340, y: 360, size: 80 },
+    { x: 190, y: 180, size: 110 }, { x: 300, y: 175, size: 115 }, { x: 410, y: 180, size: 110 }, { x: 520, y: 175, size: 108 },
+    { x: 200, y: 300, size: 118 }, { x: 315, y: 295, size: 120 }, { x: 430, y: 300, size: 118 }, { x: 540, y: 295, size: 115 },
+    { x: 260, y: 425, size: 115 }, { x: 380, y: 430, size: 118 },
     
     // Sud America (8 territori) - sovrapposto a Nord America
-    { x: 210, y: 450, size: 82 }, { x: 290, y: 455, size: 84 }, { x: 365, y: 460, size: 80 },
-    { x: 190, y: 545, size: 85 }, { x: 275, y: 550, size: 88 }, { x: 355, y: 555, size: 84 },
-    { x: 235, y: 645, size: 86 }, { x: 320, y: 650, size: 84 },
+    { x: 190, y: 550, size: 120 }, { x: 310, y: 555, size: 125 }, { x: 425, y: 560, size: 118 },
+    { x: 170, y: 675, size: 125 }, { x: 295, y: 680, size: 130 }, { x: 415, y: 685, size: 125 },
+    { x: 235, y: 800, size: 128 }, { x: 360, y: 805, size: 125 },
     
     // Europa (9 territori) - sovrapposta e attaccata a Nord America
-    { x: 535, y: 170, size: 72 }, { x: 610, y: 175, size: 74 }, { x: 685, y: 170, size: 72 }, { x: 760, y: 175, size: 70 },
-    { x: 520, y: 255, size: 76 }, { x: 600, y: 260, size: 78 }, { x: 680, y: 255, size: 76 }, { x: 755, y: 260, size: 74 },
-    { x: 600, y: 345, size: 74 },
+    { x: 650, y: 170, size: 108 }, { x: 760, y: 175, size: 110 }, { x: 870, y: 170, size: 108 }, { x: 980, y: 175, size: 105 },
+    { x: 630, y: 290, size: 113 }, { x: 750, y: 295, size: 115 }, { x: 870, y: 290, size: 113 }, { x: 985, y: 295, size: 110 },
+    { x: 750, y: 415, size: 110 },
     
     // Africa (9 territori) - sovrapposta a Europa
-    { x: 530, y: 440, size: 80 }, { x: 615, y: 445, size: 82 }, { x: 700, y: 440, size: 80 },
-    { x: 510, y: 535, size: 84 }, { x: 605, y: 540, size: 88 }, { x: 695, y: 535, size: 84 },
-    { x: 490, y: 635, size: 86 }, { x: 590, y: 640, size: 90 }, { x: 685, y: 635, size: 86 },
+    { x: 640, y: 540, size: 118 }, { x: 765, y: 545, size: 120 }, { x: 890, y: 540, size: 118 },
+    { x: 620, y: 665, size: 125 }, { x: 755, y: 670, size: 130 }, { x: 885, y: 665, size: 125 },
+    { x: 600, y: 790, size: 128 }, { x: 740, y: 795, size: 135 }, { x: 875, y: 790, size: 128 },
     
     // Asia (12 territori) - completamente sovrapposta a Europa
-    { x: 850, y: 165, size: 78 }, { x: 935, y: 170, size: 80 }, { x: 1020, y: 165, size: 78 }, { x: 1105, y: 170, size: 76 },
-    { x: 835, y: 255, size: 82 }, { x: 925, y: 260, size: 84 }, { x: 1015, y: 255, size: 82 }, { x: 1100, y: 260, size: 80 },
-    { x: 850, y: 350, size: 84 }, { x: 945, y: 355, size: 86 }, { x: 1035, y: 350, size: 84 }, { x: 1120, y: 355, size: 82 },
+    { x: 1075, y: 165, size: 115 }, { x: 1195, y: 170, size: 118 }, { x: 1315, y: 165, size: 115 }, { x: 1435, y: 170, size: 113 },
+    { x: 1055, y: 285, size: 120 }, { x: 1180, y: 290, size: 125 }, { x: 1305, y: 285, size: 120 }, { x: 1425, y: 290, size: 118 },
+    { x: 1075, y: 410, size: 125 }, { x: 1205, y: 415, size: 128 }, { x: 1330, y: 410, size: 125 }, { x: 1450, y: 415, size: 120 },
     
     // Oceania (6 territori) - attaccata ad Asia
-    { x: 895, y: 455, size: 78 }, { x: 985, y: 460, size: 80 }, { x: 1070, y: 455, size: 78 },
-    { x: 875, y: 555, size: 82 }, { x: 970, y: 560, size: 85 }, { x: 1060, y: 555, size: 82 }
+    { x: 1135, y: 545, size: 115 }, { x: 1260, y: 550, size: 118 }, { x: 1380, y: 545, size: 115 },
+    { x: 1115, y: 675, size: 120 }, { x: 1245, y: 680, size: 125 }, { x: 1370, y: 675, size: 120 }
   ];
 
   // Genera i 54 territori con le posizioni FISSE definite
