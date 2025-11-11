@@ -273,17 +273,17 @@ export const RisikoMap = ({
                 {/* Icon positioned above the number circle */}
                 <image
                   href={troopsIcon}
-                  x={territory.x - 20}
-                  y={territory.y - territory.size * 0.25}
-                  width={40}
-                  height={40}
+                  x={territory.x - 24}
+                  y={territory.y - territory.size * 0.45}
+                  width={48}
+                  height={48}
                   style={{ filter: `drop-shadow(0 3px 6px rgba(0,0,0,0.7))` }}
                   opacity={0.95}
                 />
                 {/* Number circle below the icon */}
                 <circle
                   cx={territory.x}
-                  cy={territory.y + territory.size * 0.35}
+                  cy={territory.y + territory.size * 0.45}
                   r={13}
                   fill={getTroopColor(territory.owner)}
                   stroke="#fff"
@@ -291,7 +291,7 @@ export const RisikoMap = ({
                 />
                 <text
                   x={territory.x}
-                  y={territory.y + territory.size * 0.35}
+                  y={territory.y + territory.size * 0.45}
                   textAnchor="middle"
                   dominantBaseline="central"
                   className="text-sm font-bold fill-white pointer-events-none"
@@ -330,16 +330,16 @@ export const RisikoMap = ({
           <g className="animate-pulse">
             <image
               href={troopsIcon}
-              x={animatingTroops.x - 25}
-              y={animatingTroops.y - 35}
-              width={50}
-              height={50}
+              x={animatingTroops.x - 30}
+              y={animatingTroops.y - 50}
+              width={60}
+              height={60}
               style={{ filter: `drop-shadow(0 5px 10px rgba(0,0,0,0.8))` }}
               opacity={0.9}
             />
             <circle
               cx={animatingTroops.x}
-              cy={animatingTroops.y + 25}
+              cy={animatingTroops.y + 35}
               r={16}
               fill="#fbbf24"
               stroke="#fff"
@@ -347,7 +347,7 @@ export const RisikoMap = ({
             />
             <text
               x={animatingTroops.x}
-              y={animatingTroops.y + 25}
+              y={animatingTroops.y + 35}
               textAnchor="middle"
               dominantBaseline="central"
               className="text-base font-bold fill-white pointer-events-none"
