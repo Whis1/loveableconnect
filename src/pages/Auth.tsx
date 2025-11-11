@@ -53,13 +53,13 @@ const Auth = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
         // Wait a moment for profile to be created by trigger
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
         // Check if profile exists
         let attempts = 0;
         let profile = null;
         
-        while (attempts < 5 && !profile) {
+        while (attempts < 8 && !profile) {
           const { data } = await supabase
             .from("profiles")
             .select("birthdate, city")
@@ -69,18 +69,19 @@ const Auth = () => {
           profile = data;
           
           if (!profile) {
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 700));
             attempts++;
           }
         }
         
-        // If profile exists but incomplete, redirect to complete it
+        // If profile exists but incomplete (missing birthdate OR city), redirect to complete it
         if (profile && (!profile.birthdate || !profile.city)) {
           navigate("/profile/edit", { 
             state: { requiresCompletion: true },
             replace: true
           });
         } else if (profile) {
+          // Profile complete, go to home
           navigate("/", { replace: true });
         } else {
           // Profile doesn't exist after retries, show error
