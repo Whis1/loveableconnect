@@ -101,6 +101,12 @@ export const RisikoMap = ({
     ['Giungla Fitta', 'Valle Oscura'],
     ['Laguna Azzurra', 'Pianura Fertile'],
     ['Altopiano', 'Lago Cristallo'],
+    ['Savana Dorata', 'Aeroporto'],
+    ['Isola Vulcanica', 'Bunker Sotterraneo'],
+    ['Torre di Guardia', 'Fortezza'],
+    ['Torre di Guardia', 'Montagna Sacra'],
+    ['Lago Cristallo', 'Terre Ghiacciate'],
+    ['Lago Cristallo', 'Canyon Rosso'],
   ];
 
   return (

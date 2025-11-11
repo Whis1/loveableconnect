@@ -310,6 +310,12 @@ export const generateTerritories = (): Territory[] => {
   connectByName("Giungla Fitta", "Valle Oscura");
   connectByName("Laguna Azzurra", "Pianura Fertile");
   connectByName("Altopiano", "Lago Cristallo");
+  connectByName("Savana Dorata", "Aeroporto");
+  connectByName("Isola Vulcanica", "Bunker Sotterraneo");
+  connectByName("Torre di Guardia", "Fortezza");
+  connectByName("Torre di Guardia", "Montagna Sacra");
+  connectByName("Lago Cristallo", "Terre Ghiacciate");
+  connectByName("Lago Cristallo", "Canyon Rosso");
   
   // Initialize starting positions
   const blueStarts = selectStartingTerritories(territories, 'blue');
