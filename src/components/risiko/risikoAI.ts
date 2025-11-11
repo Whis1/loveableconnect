@@ -87,17 +87,22 @@ export const aiMakeMove = (
     return;
   }
 
-  // 🎴 FASE 4: USO CARTE STRATEGICO (tutte: bomba, paracadute, force, truppe)
-  if (tryAllCardsStrategically(gameState, setGameState, showAnimation, handleCombat, myTerritories, enemyTerritories, threats, attackOpportunities, momentum, riskLevel, continents, opponentNickname)) {
-    return;
-  }
-
-  // ⚔️ FASE 5: ATTACCO CON SIMULAZIONI MONTE CARLO
+  // ⚔️ FASE 4: ATTACCO CON SIMULAZIONI MONTE CARLO
   if (tryMonteCarloAttack(gameState, setGameState, handleCombat, showAnimation, attackOpportunities, riskLevel, opponentNickname)) {
     return;
   }
 
-  // 🔄 FASE 6: SPOSTAMENTO TRUPPE TATTICO
+  // 🏁 FASE 5: CONQUISTA OPPORTUNISTICA (priorità territori con 1-2 truppe)
+  if (tryOpportunisticConquest(gameState, setGameState, handleCombat, showAnimation, attackOpportunities, opponentNickname)) {
+    return;
+  }
+
+  // 🎴 FASE 6: USO CARTE STRATEGICO (tutte: bomba, paracadute, force, truppe)
+  if (tryAllCardsStrategically(gameState, setGameState, showAnimation, handleCombat, myTerritories, enemyTerritories, threats, attackOpportunities, momentum, riskLevel, continents, opponentNickname)) {
+    return;
+  }
+
+  // 🔄 FASE 7: SPOSTAMENTO TRUPPE TATTICO
   if (tryTacticalTroopMovement(gameState, setGameState, showAnimation, myTerritories, threats, pressurePoints, opponentNickname)) {
     return;
   }
@@ -918,34 +923,68 @@ const tryMonteCarloAttack = (
   riskLevel: number,
   opponentNickname: string
 ): boolean => {
-  // Soglia dinamica: più aggressivo se rischio è basso
-  const threshold = riskLevel > 0.6 ? 0.8 : (riskLevel > 0.4 ? 0.7 : 0.65);
-  
-  const viableAttacks = attackOpportunities.filter(opp => 
-    opp.monteCarloScore >= threshold && opp.attackerTroops >= opp.defenderTroops + 2
-  );
+  // Soglia dinamica: più aggressivo se rischio è basso, più prudente se alto
+  const baseThreshold = riskLevel > 0.6 ? 0.8 : (riskLevel > 0.4 ? 0.7 : 0.65);
+
+  // Valuta attacchi con soglia locale più bassa per difensori deboli (1-2 truppe)
+  const viableAttacks = attackOpportunities.filter(opp => {
+    const advantage = opp.attackerTroops - opp.defenderTroops;
+    const localThreshold = opp.defenderTroops <= 2 ? Math.max(0.55, baseThreshold - 0.1) : baseThreshold;
+    const requiredAdvantage = opp.defenderTroops <= 2 ? 1 : 2;
+    return opp.monteCarloScore >= localThreshold && advantage >= requiredAdvantage;
+  });
 
   if (viableAttacks.length > 0) {
     const bestAttack = viableAttacks[0];
     const prob = Math.round(bestAttack.monteCarloScore * 100);
-    
+
+    const conquestMsg = bestAttack.defenderTroops <= 2 ? "Conquista rapida!" : "Attacco!";
     const messages = [
-      `${opponentNickname}: Attacco! ⚔️ (${prob}%)`,
-      `${opponentNickname}: Offensiva strategica! ⚔️`,
-      `${opponentNickname}: All'attacco! ⚔️`,
-      `${opponentNickname}: Conquisto territorio! ⚔️`
+      `${opponentNickname}: ${conquestMsg} ⚔️ (${prob}%)`,
+      `${opponentNickname}: Offensiva per conquistare! ⚔️`,
+      `${opponentNickname}: All'attacco per espandermi! ⚔️`
     ];
-    
+
     showAnimation(messages[Math.floor(Math.random() * messages.length)]);
-    
+
     setTimeout(() => {
       handleCombat(bestAttack.attackerId, bestAttack.defenderId, bestAttack.attackerTroops);
     }, 500);
-    
+
     return true;
   }
 
   return false;
+};
+
+// 🏁 CONQUISTA OPPORTUNISTICA (garantire almeno un tentativo di conquista)
+const tryOpportunisticConquest = (
+  gameState: GameState,
+  setGameState: React.Dispatch<React.SetStateAction<GameState>>,
+  handleCombat: (attackerId: string, defenderId: string, attackerTroops: number) => void,
+  showAnimation: (message: string) => void,
+  attackOpportunities: AttackOpportunity[],
+  opponentNickname: string
+): boolean => {
+  // Priorità a difensori con 1 truppa, poi 2
+  const cheap = attackOpportunities
+    .filter(opp => opp.defenderTroops <= 2 && (opp.attackerTroops - opp.defenderTroops) >= 1)
+    .sort((a, b) => {
+      const valA = (a.continentalValue + a.strategicValue) * (a.defenderTroops === 1 ? 2 : 1);
+      const valB = (b.continentalValue + b.strategicValue) * (b.defenderTroops === 1 ? 2 : 1);
+      return valB - valA;
+    });
+
+  if (cheap.length === 0) return false;
+
+  const attack = cheap[0];
+  showAnimation(`${opponentNickname}: Conquista rapida! ⚔️`);
+
+  setTimeout(() => {
+    handleCombat(attack.attackerId, attack.defenderId, attack.attackerTroops);
+  }, 400);
+
+  return true;
 };
 
 // 🛡️ FORTIFICAZIONE CHOKEPOINTS (solo territori strategici deboli)
