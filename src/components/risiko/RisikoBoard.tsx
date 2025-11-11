@@ -34,9 +34,10 @@ interface GameState {
 interface RisikoBoardProps {
   onGameEnd: (won: boolean) => void;
   userProfile: any;
+  opponentProfile: any;
 }
 
-export const RisikoBoard = ({ onGameEnd, userProfile }: RisikoBoardProps) => {
+export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoBoardProps) => {
   const [gameState, setGameState] = useState<GameState>({
     territories: [],
     currentPlayer: Math.random() > 0.5 ? 'blue' : 'red',
@@ -93,7 +94,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile }: RisikoBoardProps) => {
   useEffect(() => {
     if (gameState.currentPlayer === 'red' && !gameState.gameOver && gameState.territories.length > 0) {
       const timer = setTimeout(() => {
-        aiMakeMove(gameState, setGameState, handleCombat, showCombatAnimation);
+        aiMakeMove(gameState, setGameState, handleCombat, showCombatAnimation, opponentProfile?.nickname || 'Avversario');
       }, 2000);
       return () => clearTimeout(timer);
     }
@@ -274,8 +275,8 @@ export const RisikoBoard = ({ onGameEnd, userProfile }: RisikoBoardProps) => {
 
       case 'bomb':
         if (gameState.cardCooldowns.bomb === 0 && territory.owner === 'red' && territory.troops > 0) {
-          showCombatAnimation("💣 Bombardamento aereo!");
-          setGameState(prev => ({
+        showCombatAnimation("💣 Bombardamento aereo!");
+        setGameState(prev => ({
             ...prev,
             territories: prev.territories.map(t => {
               if (t.id === territoryId) {
@@ -355,14 +356,63 @@ export const RisikoBoard = ({ onGameEnd, userProfile }: RisikoBoardProps) => {
 
   return (
     <div className="w-full h-full flex flex-col gap-4 p-4">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <Badge variant={gameState.currentPlayer === 'blue' ? 'default' : 'destructive'} className="text-lg px-4 py-2">
-          Turno: {gameState.currentPlayer === 'blue' ? 'TU (Blu)' : 'AVVERSARIO (Rosso)'}
-        </Badge>
-        <Badge variant="outline" className="text-lg px-4 py-2">
-          Tempo: {gameState.turnTimeLeft}s
-        </Badge>
+      {/* Header with Profiles */}
+      <div className="flex items-center justify-between gap-4">
+        {/* User Profile (Blu) */}
+        <div className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
+          gameState.currentPlayer === 'blue' 
+            ? 'border-blue-500 bg-blue-500/10 shadow-lg scale-105' 
+            : 'border-border/50 bg-background/50'
+        }`}>
+          <div className="relative">
+            <img
+              src={`https://tcmhvrlsaggyuukdscue.supabase.co/storage/v1/object/public/avatars/${userProfile?.avatar_url}`}
+              alt={userProfile?.nickname}
+              className="w-12 h-12 rounded-full border-2 border-blue-500 object-cover"
+            />
+            {gameState.currentPlayer === 'blue' && (
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full animate-pulse" />
+            )}
+          </div>
+          <div className="flex-1">
+            <p className="font-bold text-blue-500">{userProfile?.nickname}</p>
+            <p className="text-xs text-muted-foreground">
+              {gameState.territories.filter(t => t.owner === 'blue').length} territori
+            </p>
+          </div>
+        </div>
+
+        {/* VS and Timer */}
+        <div className="flex flex-col items-center gap-2">
+          <div className="text-3xl font-bold">⚔️ VS ⚔️</div>
+          <Badge variant="outline" className="text-sm px-3 py-1">
+            ⏱️ {gameState.turnTimeLeft}s
+          </Badge>
+        </div>
+
+        {/* Opponent Profile (Rosso) */}
+        <div className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
+          gameState.currentPlayer === 'red' 
+            ? 'border-red-500 bg-red-500/10 shadow-lg scale-105' 
+            : 'border-border/50 bg-background/50'
+        }`}>
+          <div className="flex-1 text-right">
+            <p className="font-bold text-red-500">{opponentProfile?.nickname}</p>
+            <p className="text-xs text-muted-foreground">
+              {gameState.territories.filter(t => t.owner === 'red').length} territori
+            </p>
+          </div>
+          <div className="relative">
+            <img
+              src={`https://tcmhvrlsaggyuukdscue.supabase.co/storage/v1/object/public/avatars/${opponentProfile?.avatar_url}`}
+              alt={opponentProfile?.nickname}
+              className="w-12 h-12 rounded-full border-2 border-red-500 object-cover"
+            />
+            {gameState.currentPlayer === 'red' && (
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-pulse" />
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Combat Animation */}

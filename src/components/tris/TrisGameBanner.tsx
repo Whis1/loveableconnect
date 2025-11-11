@@ -386,7 +386,7 @@ export const TrisGameBanner = () => {
   }
 
   if (gameState === "playing" && opponent && selectedGame === "risiko" && currentUserProfile) {
-    return <RisikoBoard userProfile={currentUserProfile} onGameEnd={(won) => handleGameEnd(won ? "win" : "lose")} />;
+    return <RisikoBoard userProfile={currentUserProfile} opponentProfile={opponent} onGameEnd={(won) => handleGameEnd(won ? "win" : "lose")} />;
   }
 
   return (

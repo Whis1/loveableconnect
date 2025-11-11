@@ -24,14 +24,15 @@ export const aiMakeMove = (
   gameState: GameState,
   setGameState: React.Dispatch<React.SetStateAction<GameState>>,
   handleCombat: (attackerId: string, defenderId: string, attackerTroops: number) => void,
-  showAnimation: (message: string) => void
+  showAnimation: (message: string) => void,
+  opponentNickname: string
 ) => {
   const myTerritories = gameState.territories.filter(t => t.owner === 'red');
   const enemyTerritories = gameState.territories.filter(t => t.owner === 'blue');
   const neutralTerritories = gameState.territories.filter(t => !t.owner);
 
   // Strategy 1: Use cards if beneficial
-  if (tryUseCards(gameState, setGameState, showAnimation, myTerritories, enemyTerritories, neutralTerritories)) {
+  if (tryUseCards(gameState, setGameState, showAnimation, myTerritories, enemyTerritories, neutralTerritories, opponentNickname)) {
     return;
   }
 
@@ -68,7 +69,8 @@ const tryUseCards = (
   showAnimation: (message: string) => void,
   myTerritories: Territory[],
   enemyTerritories: Territory[],
-  neutralTerritories: Territory[]
+  neutralTerritories: Territory[],
+  opponentNickname: string
 ): boolean => {
   const redCount = myTerritories.length;
   
@@ -84,7 +86,7 @@ const tryUseCards = (
       )
     }));
     
-    showAnimation(`🤖 AI: +${amount} truppe aggiunte`);
+    showAnimation(`${opponentNickname}: +${amount} truppe aggiunte`);
     
     setTimeout(() => {
       setGameState(prev => ({
@@ -101,7 +103,7 @@ const tryUseCards = (
   if (gameState.cardCooldowns.bomb === 0 && enemyTerritories.length > 0) {
     const strongest = enemyTerritories.reduce((max, t) => t.troops > max.troops ? t : max);
     if (strongest.troops >= 3) {
-      showAnimation("🤖 AI: Bombardamento aereo! 💣");
+      showAnimation(`${opponentNickname}: Bombardamento aereo! 💣`);
       
       setGameState(prev => ({
         ...prev,
@@ -138,7 +140,7 @@ const tryUseCards = (
     });
     
     if (strategic) {
-      showAnimation("🤖 AI: Paracadutista lanciato! 🪂");
+      showAnimation(`${opponentNickname}: Paracadutista lanciato! 🪂`);
       
       setGameState(prev => ({
         ...prev,
