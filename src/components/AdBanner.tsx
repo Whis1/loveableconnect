@@ -14,11 +14,6 @@ export const AdBanner = () => {
   const [shouldShowAds, setShouldShowAds] = useState(true);
   const [banners, setBanners] = useState<string[]>(bannersData.banners);
 
-  // Hide ads on auth page
-  if (location.pathname === '/auth') {
-    return null;
-  }
-
   // Load banners from localStorage if available
   useEffect(() => {
     const savedBanners = localStorage.getItem('adBanners');
@@ -74,7 +69,10 @@ export const AdBanner = () => {
     setIsVisible(false);
   };
 
-  if (!shouldShowAds || !isVisible || banners.length === 0) return null;
+  // Hide ads on auth page or if conditions not met
+  if (location.pathname === '/auth' || !shouldShowAds || !isVisible || banners.length === 0) {
+    return null;
+  }
 
   return (
     <div 
