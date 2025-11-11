@@ -8,6 +8,7 @@ import { CheckersBoard } from "./CheckersBoard";
 import { EloLeaderboard } from "./EloLeaderboard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useCredits } from "@/hooks/useCredits";
 
 interface Profile {
   id: string;
@@ -23,11 +24,9 @@ export const TrisGameBanner = () => {
   const [gamesPlayed, setGamesPlayed] = useState(0);
   const [nextResetTime, setNextResetTime] = useState<Date | null>(null);
   const [userCredits, setUserCredits] = useState(0);
-  const [isPremium, setIsPremium] = useState(false);
-  const [subscriptionType, setSubscriptionType] = useState<string>('none');
-  const [premiumTier, setPremiumTier] = useState<string>('none');
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { credits } = useCredits();
 
   useEffect(() => {
     const fetchUserId = async () => {
@@ -41,33 +40,26 @@ export const TrisGameBanner = () => {
 
   useEffect(() => {
     checkGamesRemaining();
-    fetchUserCredits();
   }, []);
 
-  const fetchUserCredits = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    const { data } = await supabase
-      .from("user_credits")
-      .select("balance, is_premium, subscription_type, premium_tier")
-      .eq("user_id", session.user.id)
-      .single();
-
-    if (data) {
-      setUserCredits(data.balance);
-      setIsPremium(data.is_premium || false);
-      setSubscriptionType(data.subscription_type || 'none');
-      setPremiumTier(data.premium_tier || 'none');
+  // Mantieni il saldo locale sincronizzato per feedback immediato
+  useEffect(() => {
+    if (credits?.balance !== undefined) {
+      setUserCredits(credits.balance);
     }
-  };
+  }, [credits?.balance]);
 
   // Calcola il limite di partite in base all'abbonamento
   const getGameLimit = () => {
-    if (isPremium && subscriptionType === 'monthly' && premiumTier === 'premium') return 999; // Premium illimitato
-    if (isPremium && subscriptionType === 'monthly' && premiumTier === 'standard') return 20; // Platino
-    if (isPremium && subscriptionType === 'weekly') return 10;
+    if (credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium')) return 999; // Premium illimitato
+    if (credits?.is_premium && credits.subscription_type === 'monthly' && credits.premium_tier === 'standard') return 20; // Platino
+    if (credits?.is_premium && credits.subscription_type === 'weekly') return 10;
     return 5; // Free
+  };
+
+  // Evita il flash iniziale di 5/5: non mostrare valori finché i crediti non sono caricati
+  const getDisplayLimit = () => {
+    return credits ? getGameLimit() : null;
   };
 
   const checkGamesRemaining = async () => {
@@ -121,7 +113,7 @@ export const TrisGameBanner = () => {
     const limit = getGameLimit();
     
     // Solo monthly premium (tier premium) ha giochi illimitati
-    if (isPremium && subscriptionType === 'monthly' && premiumTier === 'premium') {
+    if (credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium')) {
       setGameState("selecting");
       return;
     }
@@ -222,14 +214,11 @@ export const TrisGameBanner = () => {
 
     // Check if reached free limit
     const limit = getGameLimit();
-    if (newGamesPlayed >= limit && !(isPremium && subscriptionType === 'monthly' && premiumTier === 'premium')) {
+    if (newGamesPlayed >= limit && !(credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium'))) {
       const today = new Date();
       today.setDate(today.getDate() + 1);
       setNextResetTime(today);
     }
-
-    // Refresh credits after game
-    await fetchUserCredits();
 
     // Reset game
     setTimeout(() => {
@@ -386,23 +375,23 @@ export const TrisGameBanner = () => {
       </div>
 
       <div className="space-y-4">
-        {isPremium && subscriptionType === 'monthly' && premiumTier === 'premium' ? (
+        {credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium') ? (
           <p className="text-muted-foreground text-center">
             🌟 <span className="font-bold text-primary">Giochi illimitati</span> con il tuo abbonamento Premium Mensile!
           </p>
         ) : (
           <p className="text-muted-foreground text-center">
             Partite gratuite oggi: <span className="font-bold text-primary">{Math.max(0, getGameLimit() - gamesPlayed)}</span>/{getGameLimit()}
-            {isPremium && subscriptionType === 'monthly' && premiumTier === 'standard' && (
+            {credits?.is_premium && credits.subscription_type === 'monthly' && credits.premium_tier === 'standard' && (
               <span className="block text-xs mt-1">💎 Abbonamento Platino</span>
             )}
-            {isPremium && subscriptionType === 'weekly' && (
+            {credits?.is_premium && credits.subscription_type === 'weekly' && (
               <span className="block text-xs mt-1">✨ Bonus Premium Settimanale</span>
             )}
           </p>
         )}
 
-        {gamesPlayed >= getGameLimit() && userCredits < 2 && !(isPremium && subscriptionType === 'monthly' && premiumTier === 'premium') ? (
+        {gamesPlayed >= getGameLimit() && userCredits < 2 && !(credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium')) ? (
           <div className="text-center py-4">
             <p className="text-lg mb-2">Hai esaurito le tue sfide giornaliere!</p>
             <p className="text-muted-foreground">
