@@ -761,7 +761,6 @@ export const ProfileManager = () => {
                                     <SelectItem value="female">Donna</SelectItem>
                                     <SelectItem value="non-binary">Non binario</SelectItem>
                                     <SelectItem value="genderfluid">Genderfluid</SelectItem>
-                                    <SelectItem value="transexual">Transessuale</SelectItem>
                                     <SelectItem value="transgender">Transgender</SelectItem>
                                     <SelectItem value="other">Altro</SelectItem>
                                   </SelectContent>
