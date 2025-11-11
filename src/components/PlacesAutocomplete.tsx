@@ -35,12 +35,19 @@ export const PlacesAutocomplete = ({
   const [suggestions, setSuggestions] = useState<Array<{ label: string; lat: number; lon: number }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isSelecting, setIsSelecting] = useState(false);
+  const [hasSelected, setHasSelected] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout>();
+  const blurTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
+    // Se l'utente ha selezionato, non fare più ricerche
+    if (hasSelected) {
+      return;
+    }
+
     if (value.length < 2) {
       setSuggestions([]);
+      setShowSuggestions(false);
       return;
     }
 
@@ -91,7 +98,7 @@ export const PlacesAutocomplete = ({
           );
 
         setSuggestions(formattedSuggestions);
-        if (formattedSuggestions.length > 0) {
+        if (formattedSuggestions.length > 0 && !hasSelected) {
           setShowSuggestions(true);
         }
       } catch (error) {
@@ -107,13 +114,13 @@ export const PlacesAutocomplete = ({
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [value, i18n.language]);
+  }, [value, i18n.language, hasSelected]);
 
   const handleSelect = useCallback((suggestion: { label: string; lat: number; lon: number }) => {
-    setIsSelecting(true);
     onChange(suggestion.label, suggestion.lat, suggestion.lon);
     setShowSuggestions(false);
-    setTimeout(() => setIsSelecting(false), 100);
+    setHasSelected(true);
+    setSuggestions([]);
   }, [onChange]);
 
   return (
@@ -124,20 +131,30 @@ export const PlacesAutocomplete = ({
         placeholder={placeholder}
         value={value}
         onChange={(e) => {
-          onChange(e.target.value);
-          if (e.target.value.length >= 2) {
+          const newValue = e.target.value;
+          onChange(newValue);
+          // Reset selezione se l'utente modifica il testo
+          if (hasSelected && newValue !== value) {
+            setHasSelected(false);
+          }
+          if (newValue.length >= 2 && !hasSelected) {
             setShowSuggestions(true);
           }
         }}
         onFocus={() => {
-          if (suggestions.length > 0 && value.length >= 2) {
+          // Mostra suggerimenti solo se NON ha già selezionato
+          if (suggestions.length > 0 && value.length >= 2 && !hasSelected) {
             setShowSuggestions(true);
           }
         }}
         onBlur={() => {
-          if (!isSelecting) {
-            setTimeout(() => setShowSuggestions(false), 300);
+          // Chiudi dropdown dopo un breve delay per permettere il click
+          if (blurTimeoutRef.current) {
+            clearTimeout(blurTimeoutRef.current);
           }
+          blurTimeoutRef.current = setTimeout(() => {
+            setShowSuggestions(false);
+          }, 200);
         }}
         required={required}
         autoComplete="off"
