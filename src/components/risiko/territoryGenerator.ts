@@ -300,8 +300,9 @@ export const generateTerritories = (): Territory[] => {
     }
   };
   
-  // Stradina tra Baia Nebbiosa e Bosco Incantato (come da screenshot)
+  // Stradine speciali per garantire movimenti logici anche a distanza
   connectByName("Baia Nebbiosa", "Bosco Incantato");
+  connectByName("Giungla Fitta", "Pianura Fertile");
   
   // Initialize starting positions
   const blueStarts = selectStartingTerritories(territories, 'blue');
