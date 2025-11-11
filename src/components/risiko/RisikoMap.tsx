@@ -137,6 +137,15 @@ export const RisikoMap = ({
           <pattern id="stripePattern" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
             <line x1="0" y1="0" x2="10" y2="10" stroke="#000" strokeWidth="0.5" opacity="0.1"/>
           </pattern>
+
+          {/* Pattern animato per il movimento delle truppe */}
+          <linearGradient id="movingGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#fbbf24" stopOpacity="0"/>
+            <stop offset="50%" stopColor="#fbbf24" stopOpacity="1"/>
+            <stop offset="100%" stopColor="#fbbf24" stopOpacity="0"/>
+            <animate attributeName="x1" values="-100%;100%" dur="1s" repeatCount="indefinite"/>
+            <animate attributeName="x2" values="0%;200%" dur="1s" repeatCount="indefinite"/>
+          </linearGradient>
         </defs>
 
         {/* Background image */}
@@ -156,18 +165,50 @@ export const RisikoMap = ({
             const neighbor = territories.find(t => t.id === neighborId);
             if (!neighbor || territory.id > neighborId) return null; // Draw each line once
             
+            // Check if this line is being used for troop movement
+            const isMovingPath = movingTroops && 
+              ((movingTroops.fromId === territory.id && movingTroops.toId === neighborId) ||
+               (movingTroops.fromId === neighborId && movingTroops.toId === territory.id));
+            
             return (
-              <line
-                key={`${territory.id}-${neighborId}`}
-                x1={territory.x}
-                y1={territory.y}
-                x2={neighbor.x}
-                y2={neighbor.y}
-                stroke="#8B7355"
-                strokeWidth={3}
-                strokeDasharray="8,4"
-                opacity={0.7}
-              />
+              <g key={`${territory.id}-${neighborId}`}>
+                {/* Base line */}
+                <line
+                  x1={territory.x}
+                  y1={territory.y}
+                  x2={neighbor.x}
+                  y2={neighbor.y}
+                  stroke="#8B7355"
+                  strokeWidth={3}
+                  strokeDasharray="8,4"
+                  opacity={0.7}
+                />
+                {/* Animated overlay when troops are moving */}
+                {isMovingPath && (
+                  <>
+                    <line
+                      x1={territory.x}
+                      y1={territory.y}
+                      x2={neighbor.x}
+                      y2={neighbor.y}
+                      stroke="#fbbf24"
+                      strokeWidth={5}
+                      strokeDasharray="8,4"
+                      opacity={0.8}
+                      className="animate-pulse"
+                    />
+                    <line
+                      x1={territory.x}
+                      y1={territory.y}
+                      x2={neighbor.x}
+                      y2={neighbor.y}
+                      stroke="url(#movingGradient)"
+                      strokeWidth={6}
+                      strokeLinecap="round"
+                    />
+                  </>
+                )}
+              </g>
             );
           })
         )}
