@@ -316,31 +316,28 @@ export const RisikoMap = ({
                     {territory.name}
                   </text>
                   
-                  {/* Badge sotto il nome */}
+                  {/* Badge sotto il nome - solo icona */}
                   <g transform={`translate(${territory.x}, ${territory.y - territory.size * 0.08})`}>
-                    <rect
-                      x="-35"
-                      y="-8"
-                      width="70"
-                      height="16"
-                      rx="8"
+                    <circle
+                      cx="0"
+                      cy="0"
+                      r="12"
                       fill={badge.color}
                       opacity="0.9"
                       stroke="#fff"
-                      strokeWidth="1.5"
+                      strokeWidth="2"
                     />
                     <text
                       x="0"
                       y="1"
                       textAnchor="middle"
                       dominantBaseline="middle"
-                      className="text-[10px] font-medium pointer-events-none"
+                      className="text-[14px] pointer-events-none"
                       style={{ 
-                        fill: '#fff',
-                        fontSize: '9px'
+                        fontSize: '14px'
                       }}
                     >
-                      {badge.icon} {badge.label}
+                      {badge.icon}
                     </text>
                   </g>
                 </>
