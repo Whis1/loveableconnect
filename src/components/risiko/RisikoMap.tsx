@@ -205,40 +205,6 @@ export const RisikoMap = ({
               onClick={() => !disabled && onTerritoryClick(territory.id)}
             />
             
-            {/* Vegetazione ricca con diverse tonalità di verde dentro il territorio */}
-            <g clipPath={`url(#clip-${territory.id})`}>
-              {[...Array(Math.floor(territory.size / 4))].map((_, i) => {
-                const angle = (i / (territory.size / 4)) * Math.PI * 2.3 + territory.x * 0.05;
-                const radius = territory.size * (0.15 + Math.sin(territory.x + i * 2) * 0.3);
-                const decorX = territory.x + Math.cos(angle) * radius;
-                const decorY = territory.y + Math.sin(angle) * radius;
-                const decorSize = 1.2 + Math.abs(Math.sin(territory.x * 0.5 + i)) * 1.8;
-                
-                // Diverse tonalità di verde per varietà
-                const greenVariations = [
-                  '#22c55e', // Verde base
-                  '#16a34a', // Verde più scuro
-                  '#4ade80', // Verde chiaro
-                  '#15803d', // Verde bosco
-                  '#84cc16', // Verde lime
-                  '#65a30d', // Verde oliva
-                ];
-                const greenColor = greenVariations[i % greenVariations.length];
-                
-                return (
-                  <circle
-                    key={`veg-${territory.id}-${i}`}
-                    cx={decorX}
-                    cy={decorY}
-                    r={decorSize}
-                    fill={greenColor}
-                    opacity={0.6}
-                    pointerEvents="none"
-                  />
-                );
-              })}
-            </g>
-            
             {/* Linee geografiche interne */}
             <path
               d={territory.path}
