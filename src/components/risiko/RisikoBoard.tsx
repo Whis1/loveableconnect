@@ -262,7 +262,12 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
       currentPlayer: prev.currentPlayer === 'blue' ? 'red' : 'blue',
       turnTimeLeft: 30,
       selectedTerritory: null,
-      selectedCard: null
+      selectedCard: null,
+      cardCooldowns: {
+        bomb: Math.max(0, prev.cardCooldowns.bomb - 1),
+        parachute: Math.max(0, prev.cardCooldowns.parachute - 1),
+        force: Math.max(0, prev.cardCooldowns.force - 1)
+      }
     }));
   };
 
