@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
 import { useLanguageDetection } from "@/hooks/useLanguageDetection";
@@ -36,6 +37,7 @@ const Auth = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showCookieBanner, setShowCookieBanner] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [ageConsent, setAgeConsent] = useState(false);
 
   useEffect(() => {
     // Check cookie consent
@@ -92,6 +94,15 @@ const Auth = () => {
       toast({
         title: t('auth.errorSignUp'),
         description: t('auth.errorAllFields'),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!ageConsent) {
+      toast({
+        title: t('auth.errorSignUp'),
+        description: "Devi confermare di avere almeno 18 anni e di accettare i termini e condizioni.",
         variant: "destructive",
       });
       return;
@@ -530,7 +541,27 @@ const Auth = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <p className="text-xs text-muted-foreground">Devi avere almeno 18 anni</p>
+                  <div className="flex items-start gap-2 mt-2">
+                    <Checkbox
+                      id="age-consent"
+                      checked={ageConsent}
+                      onCheckedChange={(checked) => setAgeConsent(checked as boolean)}
+                      required
+                    />
+                    <Label 
+                      htmlFor="age-consent" 
+                      className="text-xs text-muted-foreground cursor-pointer leading-relaxed"
+                    >
+                      Confermo di avere almeno 18 anni e accetto i{" "}
+                      <a 
+                        href="/terms" 
+                        target="_blank" 
+                        className="text-primary underline hover:no-underline"
+                      >
+                        termini e condizioni
+                      </a>
+                    </Label>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-city">{t('profile.location')}</Label>

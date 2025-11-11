@@ -78,6 +78,7 @@ const ProfileEdit = () => {
   const [requiresCompletion, setRequiresCompletion] = useState(false);
   const [deletionRequested, setDeletionRequested] = useState(false);
   const [userCredits, setUserCredits] = useState<{ subscription_type: string } | null>(null);
+  const [ageConsent, setAgeConsent] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -301,6 +302,16 @@ const ProfileEdit = () => {
       toast({
         title: "Errore",
         description: "La data di nascita è obbligatoria. Inserisci giorno, mese e anno.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate age consent if setting birthdate for the first time
+    if (requiresCompletion && birthDay && birthMonth && birthYear && !ageConsent) {
+      toast({
+        title: "Errore",
+        description: "Devi confermare di avere almeno 18 anni e di accettare i termini e condizioni.",
         variant: "destructive",
       });
       return;
@@ -858,9 +869,29 @@ const ProfileEdit = () => {
                         </Select>
                       </div>
                       {requiresCompletion && (
-                        <p className="text-xs text-muted-foreground">
-                          ⚠️ Campo obbligatorio - Devi avere almeno 18 anni
-                        </p>
+                        <>
+                          <div className="flex items-start gap-2 mt-2">
+                            <Checkbox
+                              id="age-consent-profile"
+                              checked={ageConsent}
+                              onCheckedChange={(checked) => setAgeConsent(checked as boolean)}
+                              required
+                            />
+                            <Label 
+                              htmlFor="age-consent-profile" 
+                              className="text-xs text-muted-foreground cursor-pointer leading-relaxed"
+                            >
+                              Confermo di avere almeno 18 anni e accetto i{" "}
+                              <a 
+                                href="/terms" 
+                                target="_blank" 
+                                className="text-primary underline hover:no-underline"
+                              >
+                                termini e condizioni
+                              </a>
+                            </Label>
+                          </div>
+                        </>
                       )}
                     </>
                   )}
