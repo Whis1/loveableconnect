@@ -93,24 +93,34 @@ const getContinentShape = (continentId: number, centerX: number, centerY: number
   return shapes[continentId] || shapes[0];
 };
 
-// Genera una forma di territorio più piccola dentro il continente
+// Genera una forma di territorio organica e irregolare tipo continente
 const generateTerritoryPath = (centerX: number, centerY: number, size: number, seed: number): string => {
   const points: [number, number][] = [];
-  const numPoints = 8;
+  const numPoints = 12; // Più punti per forme più complesse
   
   for (let i = 0; i < numPoints; i++) {
     const angle = (i / numPoints) * Math.PI * 2;
-    const radiusVariation = 0.7 + Math.sin(seed * 100 + i * 3) * 0.3;
+    // Variazioni più pronunciate per forme irregolari tipo coste
+    const radiusVariation = 0.6 + Math.sin(seed * 137 + i * 5.7) * 0.35 + Math.cos(seed * 73 + i * 3.3) * 0.15;
+    const angleJitter = (Math.sin(seed * 191 + i * 7.1) * 0.15);
     
-    const x = centerX + Math.cos(angle) * size * radiusVariation;
-    const y = centerY + Math.sin(angle) * size * radiusVariation;
+    const x = centerX + Math.cos(angle + angleJitter) * size * radiusVariation;
+    const y = centerY + Math.sin(angle + angleJitter) * size * radiusVariation * 0.95; // Leggermente più piatto
     points.push([x, y]);
   }
   
+  // Usa curve di Bezier per forme più morbide tipo geografiche
   let path = `M ${points[0][0]} ${points[0][1]}`;
   for (let i = 0; i < points.length; i++) {
+    const current = points[i];
     const next = points[(i + 1) % points.length];
-    path += ` L ${next[0]} ${next[1]}`;
+    const nextNext = points[(i + 2) % points.length];
+    
+    // Punto di controllo per curva morbida
+    const cpX = (next[0] + current[0]) / 2 + (Math.sin(seed * 113 + i) * size * 0.1);
+    const cpY = (next[1] + current[1]) / 2 + (Math.cos(seed * 97 + i) * size * 0.1);
+    
+    path += ` Q ${cpX} ${cpY}, ${next[0]} ${next[1]}`;
   }
   path += ' Z';
   
@@ -135,35 +145,35 @@ const territoryNames = [
 export const generateTerritories = (): Territory[] => {
   const territories: Territory[] = [];
   
-  // Mappa tipo Risiko con continenti realistici e molto più grandi
-  // Definisco le posizioni dei 42 territori in 6 continenti
+  // Mappa realistica basata sull'immagine di sfondo - 42 territori in 6 continenti
+  // Posizioni allineate ai continenti visibili nell'immagine (viewBox 1300x850)
   const continentLayouts = [
-    // Nord America (9 territori) - alto sinistra, molto più grande
-    { x: 200, y: 150, size: 45 }, { x: 280, y: 120, size: 42 }, { x: 360, y: 135, size: 44 },
-    { x: 185, y: 230, size: 48 }, { x: 270, y: 215, size: 46 }, { x: 360, y: 230, size: 45 },
-    { x: 205, y: 310, size: 42 }, { x: 285, y: 300, size: 44 }, { x: 365, y: 320, size: 40 },
+    // Nord America (9 territori) - occupa la parte sinistra superiore
+    { x: 150, y: 180, size: 35 }, { x: 230, y: 160, size: 38 }, { x: 310, y: 170, size: 36 },
+    { x: 140, y: 260, size: 40 }, { x: 220, y: 245, size: 42 }, { x: 300, y: 255, size: 40 },
+    { x: 160, y: 345, size: 38 }, { x: 240, y: 335, size: 40 }, { x: 320, y: 350, size: 38 },
     
-    // Sud America (4 territori) - basso sinistra, più grande
-    { x: 250, y: 480, size: 52 }, { x: 330, y: 500, size: 50 },
-    { x: 270, y: 590, size: 48 }, { x: 340, y: 610, size: 46 },
+    // Sud America (4 territori) - sotto il Nord America, forma allungata verticale
+    { x: 270, y: 450, size: 45 }, { x: 340, y: 470, size: 43 },
+    { x: 280, y: 560, size: 47 }, { x: 340, y: 590, size: 45 },
     
-    // Europa (7 territori) - centro alto, più grande
-    { x: 520, y: 110, size: 40 }, { x: 600, y: 120, size: 42 }, { x: 680, y: 115, size: 38 },
-    { x: 495, y: 190, size: 44 }, { x: 585, y: 200, size: 46 }, { x: 675, y: 195, size: 42 },
-    { x: 595, y: 270, size: 40 },
+    // Europa (7 territori) - centro-sinistra superiore, sopra l'Africa
+    { x: 520, y: 140, size: 35 }, { x: 590, y: 145, size: 37 }, { x: 660, y: 140, size: 35 },
+    { x: 500, y: 210, size: 38 }, { x: 580, y: 215, size: 40 }, { x: 660, y: 210, size: 38 },
+    { x: 590, y: 280, size: 36 },
     
-    // Africa (6 territori) - centro, molto più grande
-    { x: 540, y: 360, size: 50 }, { x: 630, y: 370, size: 52 }, { x: 720, y: 365, size: 48 },
-    { x: 555, y: 470, size: 54 }, { x: 645, y: 485, size: 56 }, { x: 725, y: 480, size: 50 },
+    // Africa (6 territori) - sotto l'Europa, forma triangolare
+    { x: 540, y: 370, size: 42 }, { x: 620, y: 380, size: 45 }, { x: 700, y: 375, size: 42 },
+    { x: 560, y: 480, size: 48 }, { x: 640, y: 495, size: 50 }, { x: 710, y: 490, size: 46 },
     
-    // Asia (12 territori) - destra alto, molto più grande
-    { x: 810, y: 95, size: 48 }, { x: 900, y: 105, size: 50 }, { x: 990, y: 100, size: 46 }, { x: 1080, y: 110, size: 44 },
-    { x: 785, y: 185, size: 52 }, { x: 880, y: 195, size: 54 }, { x: 980, y: 190, size: 50 }, { x: 1075, y: 200, size: 48 },
-    { x: 815, y: 285, size: 52 }, { x: 915, y: 295, size: 54 }, { x: 1015, y: 290, size: 50 }, { x: 1100, y: 300, size: 46 },
+    // Asia (12 territori) - grande massa a destra, dal top fino al centro
+    { x: 770, y: 130, size: 40 }, { x: 860, y: 140, size: 42 }, { x: 950, y: 135, size: 40 }, { x: 1040, y: 145, size: 38 },
+    { x: 750, y: 220, size: 44 }, { x: 840, y: 230, size: 46 }, { x: 940, y: 225, size: 44 }, { x: 1030, y: 235, size: 42 },
+    { x: 780, y: 320, size: 46 }, { x: 880, y: 330, size: 48 }, { x: 980, y: 325, size: 46 }, { x: 1070, y: 335, size: 44 },
     
-    // Oceania (4 territori) - basso destra, più grande
-    { x: 1000, y: 500, size: 46 }, { x: 1090, y: 510, size: 48 },
-    { x: 1020, y: 610, size: 50 }, { x: 1100, y: 620, size: 48 }
+    // Oceania (4 territori) - in basso a destra, isole sparse
+    { x: 1020, y: 520, size: 40 }, { x: 1100, y: 530, size: 42 },
+    { x: 1040, y: 620, size: 44 }, { x: 1120, y: 630, size: 42 }
   ];
 
   // Genera i 42 territori con le posizioni definite
