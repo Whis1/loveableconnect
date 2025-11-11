@@ -10,108 +10,107 @@ export interface Territory {
   size: number;
 }
 
-// Generate realistic geographic territory shapes
-const generateContinentPath = (centerX: number, centerY: number, size: number, seed: number): string => {
+// Forme dei continenti basate sul vero Risiko
+const getContinentShape = (continentId: number, centerX: number, centerY: number, scale: number): string => {
+  const shapes: { [key: number]: string } = {
+    // Nord America - forma irregolare con Alaska
+    0: `M ${centerX - 80*scale} ${centerY - 60*scale} 
+        L ${centerX - 50*scale} ${centerY - 80*scale} 
+        L ${centerX - 10*scale} ${centerY - 85*scale} 
+        L ${centerX + 30*scale} ${centerY - 70*scale} 
+        L ${centerX + 50*scale} ${centerY - 40*scale} 
+        L ${centerX + 55*scale} ${centerY + 10*scale} 
+        L ${centerX + 40*scale} ${centerY + 50*scale} 
+        L ${centerX + 10*scale} ${centerY + 70*scale} 
+        L ${centerX - 30*scale} ${centerY + 65*scale} 
+        L ${centerX - 60*scale} ${centerY + 40*scale} 
+        L ${centerX - 75*scale} ${centerY} 
+        L ${centerX - 85*scale} ${centerY - 30*scale} Z`,
+    
+    // Sud America - forma verticale allungata
+    1: `M ${centerX - 30*scale} ${centerY - 50*scale} 
+        L ${centerX + 20*scale} ${centerY - 55*scale} 
+        L ${centerX + 40*scale} ${centerY - 30*scale} 
+        L ${centerX + 35*scale} ${centerY + 10*scale} 
+        L ${centerX + 20*scale} ${centerY + 50*scale} 
+        L ${centerX} ${centerY + 80*scale} 
+        L ${centerX - 25*scale} ${centerY + 75*scale} 
+        L ${centerX - 40*scale} ${centerY + 40*scale} 
+        L ${centerX - 35*scale} ${centerY - 10*scale} Z`,
+    
+    // Europa - forma compatta con penisole
+    2: `M ${centerX - 40*scale} ${centerY - 50*scale} 
+        L ${centerX - 10*scale} ${centerY - 65*scale} 
+        L ${centerX + 30*scale} ${centerY - 60*scale} 
+        L ${centerX + 50*scale} ${centerY - 40*scale} 
+        L ${centerX + 55*scale} ${centerY - 10*scale} 
+        L ${centerX + 45*scale} ${centerY + 30*scale} 
+        L ${centerX + 20*scale} ${centerY + 55*scale} 
+        L ${centerX - 10*scale} ${centerY + 50*scale} 
+        L ${centerX - 35*scale} ${centerY + 30*scale} 
+        L ${centerX - 50*scale} ${centerY} 
+        L ${centerX - 45*scale} ${centerY - 30*scale} Z`,
+    
+    // Africa - forma larga in alto e stretta in basso
+    3: `M ${centerX - 40*scale} ${centerY - 60*scale} 
+        L ${centerX + 10*scale} ${centerY - 70*scale} 
+        L ${centerX + 50*scale} ${centerY - 55*scale} 
+        L ${centerX + 60*scale} ${centerY - 20*scale} 
+        L ${centerX + 55*scale} ${centerY + 30*scale} 
+        L ${centerX + 35*scale} ${centerY + 65*scale} 
+        L ${centerX + 10*scale} ${centerY + 80*scale} 
+        L ${centerX - 15*scale} ${centerY + 75*scale} 
+        L ${centerX - 40*scale} ${centerY + 50*scale} 
+        L ${centerX - 50*scale} ${centerY + 10*scale} 
+        L ${centerX - 48*scale} ${centerY - 30*scale} Z`,
+    
+    // Asia - forma grande e complessa
+    4: `M ${centerX - 70*scale} ${centerY - 70*scale} 
+        L ${centerX - 20*scale} ${centerY - 85*scale} 
+        L ${centerX + 40*scale} ${centerY - 80*scale} 
+        L ${centerX + 80*scale} ${centerY - 60*scale} 
+        L ${centerX + 90*scale} ${centerY - 20*scale} 
+        L ${centerX + 85*scale} ${centerY + 25*scale} 
+        L ${centerX + 65*scale} ${centerY + 55*scale} 
+        L ${centerX + 30*scale} ${centerY + 70*scale} 
+        L ${centerX - 10*scale} ${centerY + 65*scale} 
+        L ${centerX - 45*scale} ${centerY + 45*scale} 
+        L ${centerX - 70*scale} ${centerY + 15*scale} 
+        L ${centerX - 75*scale} ${centerY - 30*scale} Z`,
+    
+    // Oceania - forma a isole
+    5: `M ${centerX - 35*scale} ${centerY - 40*scale} 
+        L ${centerX + 15*scale} ${centerY - 45*scale} 
+        L ${centerX + 45*scale} ${centerY - 30*scale} 
+        L ${centerX + 50*scale} ${centerY + 10*scale} 
+        L ${centerX + 40*scale} ${centerY + 45*scale} 
+        L ${centerX + 10*scale} ${centerY + 60*scale} 
+        L ${centerX - 20*scale} ${centerY + 55*scale} 
+        L ${centerX - 45*scale} ${centerY + 30*scale} 
+        L ${centerX - 50*scale} ${centerY - 10*scale} Z`
+  };
+  
+  return shapes[continentId] || shapes[0];
+};
+
+// Genera una forma di territorio più piccola dentro il continente
+const generateTerritoryPath = (centerX: number, centerY: number, size: number, seed: number): string => {
   const points: [number, number][] = [];
+  const numPoints = 8;
   
-  // Create different base shapes for variety
-  const shapeType = Math.floor(seed * 5);
-  
-  if (shapeType === 0) {
-    // Elongated horizontal continent (like South America)
-    const numPoints = 12;
-    for (let i = 0; i < numPoints; i++) {
-      const angle = (i / numPoints) * Math.PI * 2;
-      const horizontalStretch = 1.4 + Math.sin(seed * 100) * 0.3;
-      const verticalCompression = 0.7;
-      const radiusVariation = 0.6 + Math.sin(seed * 50 + i * 3) * 0.4 + Math.cos(seed * 30 + i * 5) * 0.25;
-      
-      const x = centerX + Math.cos(angle) * size * radiusVariation * horizontalStretch;
-      const y = centerY + Math.sin(angle) * size * radiusVariation * verticalCompression;
-      
-      // Add peninsulas and bays
-      if (i % 3 === 0) {
-        const peninsulaExtend = Math.sin(seed * 200 + i) * size * 0.3;
-        points.push([x + peninsulaExtend * Math.cos(angle), y + peninsulaExtend * Math.sin(angle)]);
-      } else {
-        points.push([x, y]);
-      }
-    }
-  } else if (shapeType === 1) {
-    // Vertical elongated (like Italy or Chile)
-    const numPoints = 14;
-    for (let i = 0; i < numPoints; i++) {
-      const angle = (i / numPoints) * Math.PI * 2;
-      const horizontalCompression = 0.6;
-      const verticalStretch = 1.5 + Math.cos(seed * 80) * 0.4;
-      const radiusVariation = 0.55 + Math.sin(seed * 60 + i * 4) * 0.45;
-      
-      const x = centerX + Math.cos(angle) * size * radiusVariation * horizontalCompression;
-      const y = centerY + Math.sin(angle) * size * radiusVariation * verticalStretch;
-      points.push([x, y]);
-    }
-  } else if (shapeType === 2) {
-    // Large blocky continent (like Africa or Australia)
-    const numPoints = 10;
-    for (let i = 0; i < numPoints; i++) {
-      const angle = (i / numPoints) * Math.PI * 2;
-      const radiusVariation = 0.75 + Math.sin(seed * 70 + i * 2) * 0.25;
-      
-      const x = centerX + Math.cos(angle) * size * radiusVariation;
-      const y = centerY + Math.sin(angle) * size * radiusVariation;
-      
-      // Add irregular edges
-      const edgeJitter = Math.sin(seed * 150 + i * 7) * size * 0.2;
-      points.push([x + edgeJitter, y + edgeJitter * 0.8]);
-    }
-  } else if (shapeType === 3) {
-    // Archipelago-like (island chains)
-    const numPoints = 8;
-    for (let i = 0; i < numPoints; i++) {
-      const angle = (i / numPoints) * Math.PI * 2;
-      const radiusVariation = 0.5 + Math.sin(seed * 90 + i * 6) * 0.5;
-      
-      // Create more irregular, island-like shapes
-      const irregularity = Math.cos(seed * 120 + i * 4) * size * 0.25;
-      const x = centerX + Math.cos(angle) * size * radiusVariation + irregularity;
-      const y = centerY + Math.sin(angle) * size * radiusVariation - irregularity * 0.6;
-      points.push([x, y]);
-    }
-  } else {
-    // Complex irregular shape (like Europe with many peninsulas)
-    const numPoints = 16;
-    for (let i = 0; i < numPoints; i++) {
-      const angle = (i / numPoints) * Math.PI * 2;
-      const baseRadius = 0.65 + Math.sin(seed * 45 + i * 2.5) * 0.35;
-      
-      // Add complex coastline with bays and peninsulas
-      let radiusVariation = baseRadius;
-      if (i % 4 === 0) {
-        radiusVariation *= 1.3; // Peninsula
-      } else if (i % 4 === 2) {
-        radiusVariation *= 0.7; // Bay
-      }
-      
-      const x = centerX + Math.cos(angle) * size * radiusVariation;
-      const y = centerY + Math.sin(angle) * size * radiusVariation;
-      
-      // Add coastal irregularity
-      const coastalJitter = Math.sin(seed * 180 + i * 9) * size * 0.15;
-      points.push([x + coastalJitter, y + coastalJitter * 0.7]);
-    }
+  for (let i = 0; i < numPoints; i++) {
+    const angle = (i / numPoints) * Math.PI * 2;
+    const radiusVariation = 0.7 + Math.sin(seed * 100 + i * 3) * 0.3;
+    
+    const x = centerX + Math.cos(angle) * size * radiusVariation;
+    const y = centerY + Math.sin(angle) * size * radiusVariation;
+    points.push([x, y]);
   }
   
-  // Create smooth paths with Bezier curves for natural coastlines
   let path = `M ${points[0][0]} ${points[0][1]}`;
   for (let i = 0; i < points.length; i++) {
-    const current = points[i];
     const next = points[(i + 1) % points.length];
-    const nextNext = points[(i + 2) % points.length];
-    
-    // Use quadratic curves for smoother, more natural looking borders
-    const cpx = next[0];
-    const cpy = next[1];
-    path += ` Q ${cpx} ${cpy} ${(next[0] + nextNext[0]) / 2} ${(next[1] + nextNext[1]) / 2}`;
+    path += ` L ${next[0]} ${next[1]}`;
   }
   path += ' Z';
   
@@ -136,37 +135,35 @@ const territoryNames = [
 export const generateTerritories = (): Territory[] => {
   const territories: Territory[] = [];
   
-  // Mappa tipo Risiko con continenti realistici
+  // Mappa tipo Risiko con continenti realistici e molto più grandi
   // Definisco le posizioni dei 42 territori in 6 continenti
   const continentLayouts = [
-    // Nord America (9 territori) - alto sinistra
-    { x: 150, y: 120, size: 55 }, { x: 220, y: 100, size: 50 }, { x: 290, y: 110, size: 52 },
-    { x: 140, y: 190, size: 58 }, { x: 220, y: 180, size: 56 }, { x: 300, y: 190, size: 54 },
-    { x: 160, y: 260, size: 50 }, { x: 230, y: 250, size: 52 }, { x: 300, y: 270, size: 48 },
+    // Nord America (9 territori) - alto sinistra, molto più grande
+    { x: 200, y: 150, size: 45 }, { x: 280, y: 120, size: 42 }, { x: 360, y: 135, size: 44 },
+    { x: 185, y: 230, size: 48 }, { x: 270, y: 215, size: 46 }, { x: 360, y: 230, size: 45 },
+    { x: 205, y: 310, size: 42 }, { x: 285, y: 300, size: 44 }, { x: 365, y: 320, size: 40 },
     
-    // Sud America (4 territori) - basso sinistra
-    { x: 200, y: 380, size: 60 }, { x: 270, y: 400, size: 58 },
-    { x: 220, y: 480, size: 56 }, { x: 280, y: 500, size: 54 },
+    // Sud America (4 territori) - basso sinistra, più grande
+    { x: 250, y: 480, size: 52 }, { x: 330, y: 500, size: 50 },
+    { x: 270, y: 590, size: 48 }, { x: 340, y: 610, size: 46 },
     
-    // Europa (7 territori) - centro alto
-    { x: 450, y: 90, size: 48 }, { x: 520, y: 100, size: 50 }, { x: 590, y: 95, size: 46 },
-    { x: 430, y: 160, size: 52 }, { x: 510, y: 170, size: 54 }, { x: 590, y: 165, size: 50 },
-    { x: 520, y: 230, size: 48 },
+    // Europa (7 territori) - centro alto, più grande
+    { x: 520, y: 110, size: 40 }, { x: 600, y: 120, size: 42 }, { x: 680, y: 115, size: 38 },
+    { x: 495, y: 190, size: 44 }, { x: 585, y: 200, size: 46 }, { x: 675, y: 195, size: 42 },
+    { x: 595, y: 270, size: 40 },
     
-    // Africa (6 territori) - centro
-    { x: 470, y: 300, size: 58 }, { x: 550, y: 310, size: 60 }, { x: 630, y: 305, size: 56 },
-    { x: 480, y: 390, size: 62 }, { x: 560, y: 400, size: 64 }, { x: 630, y: 395, size: 58 },
+    // Africa (6 territori) - centro, molto più grande
+    { x: 540, y: 360, size: 50 }, { x: 630, y: 370, size: 52 }, { x: 720, y: 365, size: 48 },
+    { x: 555, y: 470, size: 54 }, { x: 645, y: 485, size: 56 }, { x: 725, y: 480, size: 50 },
     
-    // Asia (10 territori) - destra alto
-    { x: 720, y: 80, size: 56 }, { x: 800, y: 90, size: 58 }, { x: 880, y: 85, size: 54 },
-    { x: 700, y: 160, size: 60 }, { x: 780, y: 170, size: 62 }, { x: 870, y: 165, size: 58 },
-    { x: 960, y: 160, size: 56 }, { x: 730, y: 250, size: 60 }, { x: 820, y: 260, size: 62 },
-    { x: 910, y: 255, size: 58 },
+    // Asia (12 territori) - destra alto, molto più grande
+    { x: 810, y: 95, size: 48 }, { x: 900, y: 105, size: 50 }, { x: 990, y: 100, size: 46 }, { x: 1080, y: 110, size: 44 },
+    { x: 785, y: 185, size: 52 }, { x: 880, y: 195, size: 54 }, { x: 980, y: 190, size: 50 }, { x: 1075, y: 200, size: 48 },
+    { x: 815, y: 285, size: 52 }, { x: 915, y: 295, size: 54 }, { x: 1015, y: 290, size: 50 }, { x: 1100, y: 300, size: 46 },
     
-    // Oceania (6 territori) - basso destra
-    { x: 880, y: 380, size: 52 }, { x: 960, y: 390, size: 54 },
-    { x: 860, y: 460, size: 50 }, { x: 940, y: 470, size: 52 },
-    { x: 900, y: 550, size: 56 }, { x: 980, y: 560, size: 54 }
+    // Oceania (4 territori) - basso destra, più grande
+    { x: 1000, y: 500, size: 46 }, { x: 1090, y: 510, size: 48 },
+    { x: 1020, y: 610, size: 50 }, { x: 1100, y: 620, size: 48 }
   ];
 
   // Genera i 42 territori con le posizioni definite
@@ -174,7 +171,7 @@ export const generateTerritories = (): Territory[] => {
     const id = `t${index}`;
     const seed = index / 42;
     
-    const path = generateContinentPath(layout.x, layout.y, layout.size, seed);
+    const path = generateTerritoryPath(layout.x, layout.y, layout.size, seed);
     
     territories.push({
       id,
@@ -189,7 +186,7 @@ export const generateTerritories = (): Territory[] => {
     });
   });
   
-  // Definisci connessioni realistiche tra territori
+  // Definisci connessioni realistiche tra territori (42 totali)
   const connections: [number, number[]][] = [
     // Nord America (0-8)
     [0, [1, 3]], [1, [0, 2, 4]], [2, [1, 5]],
@@ -209,22 +206,20 @@ export const generateTerritories = (): Territory[] => {
     [20, [13, 21, 23]], [21, [15, 20, 22, 24]], [22, [19, 21, 25]],
     [23, [20, 24]], [24, [21, 23, 25]], [25, [22, 24]],
     
-    // Asia (26-35)
-    [26, [27, 29, 31]], [27, [26, 28, 30]], [28, [27, 32]],
-    [29, [26, 30, 33]], [30, [27, 29, 31, 34]], [31, [26, 30, 32, 35]],
-    [32, [28, 31, 36]], [33, [29, 34, 37]], [34, [30, 33, 35, 38]],
-    [35, [31, 34, 36, 39]],
+    // Asia (26-37) - 12 territori
+    [26, [27, 30]], [27, [26, 28, 31]], [28, [27, 29, 32]], [29, [28, 33]],
+    [30, [26, 31, 34]], [31, [27, 30, 32, 35]], [32, [28, 31, 33, 36]], [33, [29, 32, 37]],
+    [34, [30, 35, 38]], [35, [31, 34, 36, 39]], [36, [32, 35, 37, 40]], [37, [33, 36, 41]],
     
-    // Oceania (36-41)
-    [36, [32, 37]], [37, [33, 36, 38]], 
-    [38, [34, 37, 39, 40]], [39, [35, 38, 41]],
-    [40, [38, 41]], [41, [39, 40]],
+    // Oceania (38-41) - 4 territori invece di 6, corretto
+    [38, [34, 39]], [39, [38, 40]],
+    [40, [39, 41]], [41, [37, 40]],
     
     // Collegamenti tra continenti distanti
-    [2, [26]], // Nord America -> Asia (Alaska-Siberia)
+    [2, [26]], // Nord America -> Asia (Alaska-Kamchatka)
     [8, [13]], // Nord America -> Europa
-    [15, [26]], // Europa -> Asia
-    [22, [29]], // Africa -> Asia (Medio Oriente)
+    [15, [26]], // Europa -> Asia (Medio Oriente)
+    [22, [30]], // Africa -> Asia
   ];
   
   connections.forEach(([territoryIndex, neighborIndices]) => {
