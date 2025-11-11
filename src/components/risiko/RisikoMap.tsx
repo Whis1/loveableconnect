@@ -92,6 +92,14 @@ export const RisikoMap = ({
     return owner === 'blue' ? '#3b82f6' : '#ef4444';
   };
 
+  const roadNamePairs: [string, string][] = [
+    ['Baia Nebbiosa', 'Bosco Incantato'],
+    ['Mare Interno', 'Terre Ghiacciate'],
+    ['Mare Interno', 'Savana Dorata'],
+    ['Mare Interno', 'Bosco Incantato'],
+    ['Fiume Lungo', 'Mare Interno'],
+  ];
+
   return (
     <div className="w-full h-full bg-background rounded-lg border-2 border-border overflow-hidden">
       <svg
@@ -120,6 +128,8 @@ export const RisikoMap = ({
           opacity="0.95"
         />
         
+        {/* Stradine speciali: visive e percorribili */}
+        
         {/* Render connection lines first (behind territories) */}
         {territories.map((territory) => 
           territory.neighbors.map((neighborId) => {
@@ -131,9 +141,14 @@ export const RisikoMap = ({
             const dy = territory.y - neighbor.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
-            // Mostra stradine SOLO per collegamenti estremamente distanti
-            // Soglia altissima per massima compattezza visiva
-            if (distance < 350) return null;
+            // Strada speciale? Non nasconderla
+            const isSpecialRoad = roadNamePairs.some(([a,b]) =>
+              (territory.name === a && neighbor.name === b) ||
+              (territory.name === b && neighbor.name === a)
+            );
+            
+            // Mostra stradine speciali anche se la distanza è bassa
+            if (distance < 350 && !isSpecialRoad) return null;
             
             const isLongDistance = distance > 450; // Collegamenti intercontinentali
             

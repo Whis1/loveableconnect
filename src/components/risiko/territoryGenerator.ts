@@ -303,6 +303,10 @@ export const generateTerritories = (): Territory[] => {
   // Stradine speciali per garantire movimenti logici anche a distanza
   connectByName("Baia Nebbiosa", "Bosco Incantato");
   connectByName("Giungla Fitta", "Pianura Fertile");
+  connectByName("Mare Interno", "Terre Ghiacciate");
+  connectByName("Mare Interno", "Savana Dorata");
+  connectByName("Mare Interno", "Bosco Incantato");
+  connectByName("Fiume Lungo", "Mare Interno");
   
   // Initialize starting positions
   const blueStarts = selectStartingTerritories(territories, 'blue');
