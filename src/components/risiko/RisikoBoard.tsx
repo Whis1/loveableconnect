@@ -10,6 +10,7 @@ import { RisikoMap } from "./RisikoMap";
 import { RisikoVictoryDialog } from "./RisikoVictoryDialog";
 import { TroopMoveDialog } from "./TroopMoveDialog";
 import { BattleBanner } from "./BattleBanner";
+import { BombingAnimation } from "./BombingAnimation";
 import { generateTerritories, Territory } from "./territoryGenerator";
 import { simulateBattle, canMoveTroops } from "./risikoLogic";
 import { aiMakeMove } from "./risikoAI";
@@ -17,6 +18,10 @@ import troopCardImage from "@/assets/risiko-troop-card.png";
 import bombCardImage from "@/assets/risiko-bomb-card.png";
 import parachuteCardImage from "@/assets/risiko-parachute-card.png";
 import forceCardImage from "@/assets/risiko-force-card.png";
+import marciaSoldatiSound from "@/assets/audio/marcia-soldati.m4a";
+import bombardamentoSound from "@/assets/audio/bombardamento.m4a";
+import paracaduteSound from "@/assets/audio/paracadute.m4a";
+import powerSound from "@/assets/audio/power.m4a";
 
 type Player = 'blue' | 'red';
 type CardType = 'troops' | 'bomb' | 'parachute' | 'force';
@@ -67,6 +72,10 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
     winner: 'attacker' | 'defender' | 'draw';
     survivingTroops: number;
   } | null>(null);
+  const [bombingAnimation, setBombingAnimation] = useState<{
+    show: boolean;
+    position: { x: number; y: number };
+  }>({ show: false, position: { x: 0, y: 0 } });
   const [movingTroops, setMovingTroops] = useState<{
     fromId: string;
     toId: string;
@@ -79,6 +88,12 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
   const [showEmoji, setShowEmoji] = useState(false);
   const [userEmoji, setUserEmoji] = useState<string | null>(null);
   const [opponentEmoji, setOpponentEmoji] = useState<string | null>(null);
+
+  // Audio players
+  const [marchSound] = useState(() => new Audio(marciaSoldatiSound));
+  const [bombSound] = useState(() => new Audio(bombardamentoSound));
+  const [parachuteSound] = useState(() => new Audio(paracaduteSound));
+  const [powerUpSound] = useState(() => new Audio(powerSound));
 
   // Initialize game
   useEffect(() => {
@@ -293,6 +308,10 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
   const handleMoveTroops = (amount: number) => {
     if (!gameState.selectedTerritory || !targetTerritory) return;
 
+    // Play march sound
+    marchSound.currentTime = 0;
+    marchSound.play().catch(console.error);
+
     // Start animation
     setMovingTroops({
       fromId: gameState.selectedTerritory,
@@ -415,25 +434,44 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
 
       case 'bomb':
         if (gameState.cardCooldowns.bomb === 0 && territory.owner === 'red' && territory.troops > 0) {
-        showCombatAnimation("💣 Bombardamento aereo!");
-        setGameState(prev => ({
-            ...prev,
-            territories: prev.territories.map(t => {
-              if (t.id === territoryId) {
-                const newTroops = Math.max(0, t.troops - 1);
-                return {...t, troops: newTroops, owner: newTroops === 0 ? null : t.owner};
-              }
-              return t;
-            }),
-            cardCooldowns: {...prev.cardCooldowns, bomb: 5},
-            selectedCard: null
-          }));
-          setTimeout(switchTurn, 1000);
+          // Play bomb sound
+          bombSound.currentTime = 0;
+          bombSound.play().catch(console.error);
+
+          // Get territory position (approximate center of screen for animation)
+          const screenWidth = window.innerWidth;
+          const screenHeight = window.innerHeight;
+          setBombingAnimation({
+            show: true,
+            position: { x: screenWidth / 2, y: screenHeight / 2 }
+          });
+
+          // Wait for animation to complete before applying effect
+          setTimeout(() => {
+            showCombatAnimation("💣 Bombardamento aereo!");
+            setGameState(prev => ({
+              ...prev,
+              territories: prev.territories.map(t => {
+                if (t.id === territoryId) {
+                  const newTroops = Math.max(0, t.troops - 1);
+                  return {...t, troops: newTroops, owner: newTroops === 0 ? null : t.owner};
+                }
+                return t;
+              }),
+              cardCooldowns: {...prev.cardCooldowns, bomb: 5},
+              selectedCard: null
+            }));
+            setTimeout(switchTurn, 1000);
+          }, 2300);
         }
         break;
 
       case 'parachute':
         if (gameState.cardCooldowns.parachute === 0 && (!territory.owner || territory.troops === 0)) {
+          // Play parachute sound
+          parachuteSound.currentTime = 0;
+          parachuteSound.play().catch(console.error);
+
           showCombatAnimation("🪂 Paracadutista lanciato!");
           setGameState(prev => ({
             ...prev,
@@ -449,6 +487,10 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
 
       case 'force':
         if (gameState.cardCooldowns.force === 0 && territory.owner === 'blue' && territory.troops > 0) {
+          // Play power up sound
+          powerUpSound.currentTime = 0;
+          powerUpSound.play().catch(console.error);
+
           setGameState(prev => ({
             ...prev,
             boostedTroops: {
@@ -788,6 +830,13 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         winner={battleBanner?.winner || 'draw'}
         survivingTroops={battleBanner?.survivingTroops || 0}
         onComplete={() => setBattleBanner(null)}
+      />
+
+      {/* Bombing Animation */}
+      <BombingAnimation
+        show={bombingAnimation.show}
+        territoryPosition={bombingAnimation.position}
+        onComplete={() => setBombingAnimation({ show: false, position: { x: 0, y: 0 } })}
       />
     </div>
   );
