@@ -397,7 +397,28 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
       // Navigate to chat
       navigate(`/chat/${matchData.id}`);
     } else {
-      // Show chat confirmation banner
+      // Check if user has premium tier (€399.99 subscription)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: userCreditsData } = await supabase
+          .from("user_credits")
+          .select("subscription_type, premium_tier, is_premium, premium_expires_at")
+          .eq("user_id", session.user.id)
+          .single();
+        
+        const hasPremiumTier = userCreditsData?.is_premium && 
+                               userCreditsData?.subscription_type === 'monthly' && 
+                               userCreditsData?.premium_tier === 'premium' &&
+                               (!userCreditsData?.premium_expires_at || new Date(userCreditsData.premium_expires_at) > new Date());
+        
+        if (hasPremiumTier) {
+          // Premium users bypass the confirmation banner and go directly to chat
+          await handleConfirmChat();
+          return;
+        }
+      }
+      
+      // Show chat confirmation banner for non-premium users
       setShowChatConfirmation(true);
     }
   };
