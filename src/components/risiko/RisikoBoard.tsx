@@ -11,6 +11,7 @@ import { TroopMoveDialog } from "./TroopMoveDialog";
 import { generateTerritories, Territory } from "./territoryGenerator";
 import { simulateBattle, canMoveTroops } from "./risikoLogic";
 import { aiMakeMove } from "./risikoAI";
+import troopCardImage from "@/assets/risiko-troop-card.png";
 
 type Player = 'blue' | 'red';
 type CardType = 'troops' | 'bomb' | 'parachute' | 'force';
@@ -558,9 +559,15 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
             }`}
             onClick={() => gameState.currentPlayer === 'blue' && !gameState.gameOver && setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'troops' ? null : 'troops' }))}
           >
-            <div className="flex flex-col items-center gap-1">
-              <Users className="w-6 h-6" />
-              <span className="text-xs font-medium">+{troopCardAmount}</span>
+            <div className="flex flex-col items-center gap-1 relative">
+              <img 
+                src={troopCardImage} 
+                alt="Aggiungi Truppe" 
+                className="w-full h-auto rounded"
+              />
+              <span className="absolute bottom-1 text-xl font-bold text-primary drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
+                +{troopCardAmount}
+              </span>
             </div>
           </Card>
           
