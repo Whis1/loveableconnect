@@ -322,14 +322,6 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
     // Wait for animation then update
     setTimeout(() => {
       setMovingTroops(null);
-      
-      // Show arrival animation
-      setArrivedTroops({
-        territoryId: targetTerritory,
-        timestamp: Date.now()
-      });
-      
-      setTimeout(() => setArrivedTroops(null), 2000);
 
       setGameState(prev => {
         const newTerritories = [...prev.territories];
