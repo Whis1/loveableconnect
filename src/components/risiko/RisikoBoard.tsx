@@ -248,8 +248,8 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
       };
     });
 
-    // End turn after combat
-    setTimeout(() => switchTurn(), 3500);
+    // Wait for battle banner animation to complete (4s) before switching turn
+    setTimeout(() => switchTurn(), 4000);
   };
 
   const switchTurn = () => {
@@ -342,7 +342,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         if (target.owner && target.owner !== source.owner && target.troops > 0) {
           setTimeout(() => handleCombat(source.id, target.id, amount), 100);
           return prev;
-        } 
+        }
         
         // Gestione truppe potenziate durante il movimento
         const newBoostedTroops = { ...prev.boostedTroops };
@@ -401,7 +401,9 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
       });
 
       setTargetTerritory(null);
-      switchTurn();
+      
+      // Switch turn after non-combat move animation completes
+      setTimeout(() => switchTurn(), 1500);
     }, 1000);
   };
 
@@ -420,6 +422,8 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
             return 1;
           };
           const amount = getTroopCardAmount(blueCount);
+          
+          showCombatAnimation(`+${amount} truppe aggiunte!`);
           setGameState(prev => ({
             ...prev,
             territories: prev.territories.map(t => 
@@ -428,7 +432,9 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
             selectedCard: null
           }));
           toast.success(`+${amount} truppe aggiunte`);
-          switchTurn();
+          
+          // Wait for animation to complete before switching turn
+          setTimeout(() => switchTurn(), 2000);
         }
         break;
 
@@ -461,7 +467,8 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
               cardCooldowns: {...prev.cardCooldowns, bomb: 5},
               selectedCard: null
             }));
-            setTimeout(switchTurn, 1000);
+            // Wait for combat animation to complete (3s) before switching turn
+            setTimeout(() => switchTurn(), 3000);
           }, 2300);
         }
         break;
@@ -481,7 +488,9 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
             cardCooldowns: {...prev.cardCooldowns, parachute: 3},
             selectedCard: null
           }));
-          setTimeout(switchTurn, 1000);
+          
+          // Wait for animation to complete (3s) before switching turn
+          setTimeout(() => switchTurn(), 3000);
         }
         break;
 
@@ -491,6 +500,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           powerUpSound.currentTime = 0;
           powerUpSound.play().catch(console.error);
 
+          showCombatAnimation("⚡ Truppe potenziate!");
           setGameState(prev => ({
             ...prev,
             boostedTroops: {
@@ -500,8 +510,10 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
             cardCooldowns: {...prev.cardCooldowns, force: 3},
             selectedCard: null
           }));
-          toast.success(`Truppa potenziata! ${territory.troops} truppe potenziate 💪`);
-          switchTurn();
+          toast.success("Truppe potenziate con successo!");
+          
+          // Wait for animation to complete before switching turn
+          setTimeout(() => switchTurn(), 2500);
         }
         break;
     }
