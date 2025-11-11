@@ -114,8 +114,8 @@ export default {
             filter: "brightness(1)",
           },
           "50%": {
-            transform: "scale(1.015)",
-            filter: "brightness(1.03)",
+            transform: "scale(1.01)",
+            filter: "brightness(1.02)",
           }
         },
       },
@@ -125,7 +125,7 @@ export default {
         "fade-in": "fade-in 0.3s ease-out",
         "slide-in-bottom": "slide-in-bottom 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
         "scale-slow": "scale-slow 6s ease-in-out infinite",
-        "breath-slow": "breath-slow 12s ease-in-out infinite",
+        "breath-slow": "breath-slow 16s ease-in-out infinite",
       },
     },
   },

@@ -51,7 +51,7 @@ export const MessageSuggestions = ({ onSuggestionSelect, onDismiss }: MessageSug
               <Button
                 onClick={() => setSelectedMode('bold')}
                 variant="outline"
-                className="h-auto py-3 px-4 bg-red-500/10 hover:bg-red-500/20 border-red-500/30 text-red-700 dark:text-red-300 hover:border-red-500/50 transition-all duration-200 flex items-center justify-center gap-2 animate-breath-slow [animation-delay:6s]"
+                className="h-auto py-3 px-4 bg-red-500/10 hover:bg-red-500/20 border-red-500/30 text-red-700 dark:text-red-300 hover:border-red-500/50 transition-all duration-200 flex items-center justify-center gap-2 animate-breath-slow [animation-delay:8s]"
               >
                 <span className="text-2xl">😈</span>
                 <span className="font-medium">Rispondi in modo spinto</span>
