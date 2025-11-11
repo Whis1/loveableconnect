@@ -240,7 +240,86 @@ export const RisikoMap = ({
           </g>
         ))}
 
-        {/* Render all troops AFTER all territories so they're always on top */}
+        {/* Render all territory names and badges first */}
+        {territories.map((territory) => {
+          const territoryIndex = parseInt(territory.id.substring(1));
+          // Badge più variati basati sull'indice del territorio
+          const badgeTypes = [
+            { icon: '🏔️', color: '#6b7280' },
+            { icon: '🌲', color: '#22c55e' },
+            { icon: '🏜️', color: '#f59e0b' },
+            { icon: '🏭', color: '#ef4444' },
+            { icon: '🏛️', color: '#8b5cf6' },
+            { icon: '🌊', color: '#3b82f6' },
+            { icon: '⚡', color: '#eab308' },
+            { icon: '🛡️', color: '#64748b' },
+            { icon: '🌋', color: '#dc2626' },
+            { icon: '❄️', color: '#06b6d4' },
+            { icon: '🏰', color: '#7c3aed' },
+            { icon: '⛰️', color: '#475569' },
+            { icon: '🌴', color: '#059669' },
+            { icon: '🏕️', color: '#92400e' },
+            { icon: '🗿', color: '#78716c' },
+            { icon: '💎', color: '#0ea5e9' },
+            { icon: '🔥', color: '#f97316' },
+            { icon: '🌿', color: '#16a34a' },
+            { icon: '⚔️', color: '#991b1b' },
+            { icon: '🏞️', color: '#84cc16' },
+          ];
+          const badge = badgeTypes[territoryIndex % badgeTypes.length];
+          
+          return (
+            <g key={`name-${territory.id}`}>
+              {/* Territory name - centered and scaled to fit - nascosto per territori coperti */}
+              {/* Nascondi nomi per territori che stanno sotto altri (circa 1 su 2) */}
+              {territoryIndex % 2 === 0 && (
+                <>
+                  <text
+                    x={territory.x}
+                    y={territory.y - territory.size * 0.15}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    className="text-[7px] font-semibold pointer-events-none"
+                    style={{ 
+                      fill: '#000',
+                      textShadow: '2px 2px 4px rgba(255,255,255,0.9)',
+                      fontSize: `${Math.max(6, territory.size / 8)}px`
+                    }}
+                  >
+                    {territory.name}
+                  </text>
+                  
+                  {/* Badge sotto il nome - solo icona, più in basso */}
+                  <g transform={`translate(${territory.x}, ${territory.y + territory.size * 0.05})`}>
+                    <circle
+                      cx="0"
+                      cy="0"
+                      r="12"
+                      fill={badge.color}
+                      opacity="0.9"
+                      stroke="#fff"
+                      strokeWidth="2"
+                    />
+                    <text
+                      x="0"
+                      y="1"
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      className="text-[14px] pointer-events-none"
+                      style={{ 
+                        fontSize: '14px'
+                      }}
+                    >
+                      {badge.icon}
+                    </text>
+                  </g>
+                </>
+              )}
+            </g>
+          );
+        })}
+
+        {/* Render all troops LAST so they're always on top of EVERYTHING */}
         {territories.map((territory) => (
           <g key={`troops-${territory.id}`}>
             {/* Troops icon and count - icon bigger and above number */}
@@ -278,73 +357,6 @@ export const RisikoMap = ({
             )}
           </g>
         ))}
-
-        {/* Render all territory names LAST so they're always on top of everything */}
-        {territories.map((territory) => {
-          const territoryIndex = parseInt(territory.id.substring(1));
-          // Badge diversi basati sull'indice del territorio
-          const badgeTypes = [
-            { icon: '🏔️', color: '#6b7280', label: 'Montagna' },
-            { icon: '🌲', color: '#22c55e', label: 'Foresta' },
-            { icon: '🏜️', color: '#f59e0b', label: 'Deserto' },
-            { icon: '🏭', color: '#ef4444', label: 'Industria' },
-            { icon: '🏛️', color: '#8b5cf6', label: 'Rovine' },
-            { icon: '🌊', color: '#3b82f6', label: 'Costa' },
-            { icon: '⚡', color: '#eab308', label: 'Energia' },
-            { icon: '🛡️', color: '#64748b', label: 'Fortezza' },
-          ];
-          const badge = badgeTypes[territoryIndex % badgeTypes.length];
-          
-          return (
-            <g key={`name-${territory.id}`}>
-              {/* Territory name - centered and scaled to fit - nascosto per territori coperti */}
-              {/* Nascondi nomi per territori che stanno sotto altri (circa 1 su 2) */}
-              {territoryIndex % 2 === 0 && (
-                <>
-                  <text
-                    x={territory.x}
-                    y={territory.y - territory.size * 0.15}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    className="text-[7px] font-semibold pointer-events-none"
-                    style={{ 
-                      fill: '#000',
-                      textShadow: '2px 2px 4px rgba(255,255,255,0.9)',
-                      fontSize: `${Math.max(6, territory.size / 8)}px`
-                    }}
-                  >
-                    {territory.name}
-                  </text>
-                  
-                  {/* Badge sotto il nome - solo icona */}
-                  <g transform={`translate(${territory.x}, ${territory.y - territory.size * 0.08})`}>
-                    <circle
-                      cx="0"
-                      cy="0"
-                      r="12"
-                      fill={badge.color}
-                      opacity="0.9"
-                      stroke="#fff"
-                      strokeWidth="2"
-                    />
-                    <text
-                      x="0"
-                      y="1"
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      className="text-[14px] pointer-events-none"
-                      style={{ 
-                        fontSize: '14px'
-                      }}
-                    >
-                      {badge.icon}
-                    </text>
-                  </g>
-                </>
-              )}
-            </g>
-          );
-        })}
 
         {/* Animated moving troops - bigger icon */}
         {animatingTroops && (
