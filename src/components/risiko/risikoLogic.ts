@@ -108,8 +108,20 @@ export const canMoveTroops = (
   target: Territory,
   allTerritories: Territory[]
 ): boolean => {
-  if (!source.neighbors.includes(target.id)) return false;
-  if (source.troops === 0) return false;
+  // Deve avere truppe da muovere
+  if (source.troops === 0) {
+    console.log("❌ Nessuna truppa da muovere");
+    return false;
+  }
+  
+  // Devono essere adiacenti (vicini)
+  if (!source.neighbors.includes(target.id)) {
+    console.log(`❌ ${source.name} (${source.id}) non è vicino a ${target.name} (${target.id})`);
+    console.log(`Vicini di ${source.name}:`, source.neighbors);
+    return false;
+  }
+  
+  console.log(`✓ Puoi muovere da ${source.name} a ${target.name}`);
   return true;
 };
 
