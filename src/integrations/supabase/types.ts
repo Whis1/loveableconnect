@@ -936,7 +936,9 @@ export type Database = {
         Returns: {
           is_premium: boolean
           likes_remaining: number
+          premium_tier: string
           reset_at: string
+          subscription_type: string
         }[]
       }
       check_and_reset_user_credits: {
