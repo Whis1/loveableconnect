@@ -108,6 +108,16 @@ export default {
             opacity: "1",
           }
         },
+        "breath-slow": {
+          "0%, 100%": {
+            transform: "scale(1)",
+            filter: "brightness(1)",
+          },
+          "50%": {
+            transform: "scale(1.015)",
+            filter: "brightness(1.03)",
+          }
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -115,6 +125,7 @@ export default {
         "fade-in": "fade-in 0.3s ease-out",
         "slide-in-bottom": "slide-in-bottom 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
         "scale-slow": "scale-slow 6s ease-in-out infinite",
+        "breath-slow": "breath-slow 12s ease-in-out infinite",
       },
     },
   },
