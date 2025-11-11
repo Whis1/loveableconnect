@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Plane, Users, Zap } from "lucide-react";
@@ -533,12 +534,16 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
             : 'border-border/50 bg-background/50'
         }`}>
           <div className="relative">
-            <img
-              src={userAvatarUrl}
-              alt={userProfile?.nickname}
-              className="w-12 h-12 rounded-full border-2 border-blue-500 object-cover"
-              style={{ objectFit: 'cover', objectPosition: 'center' }}
-            />
+            <Avatar className="w-12 h-12 border-2 border-blue-500">
+              <AvatarImage 
+                src={userAvatarUrl}
+                alt={userProfile?.nickname}
+                className="object-cover"
+              />
+              <AvatarFallback className="bg-primary text-primary-foreground text-lg font-bold">
+                {userProfile?.nickname?.[0]?.toUpperCase() || '?'}
+              </AvatarFallback>
+            </Avatar>
             {gameState.currentPlayer === 'blue' && (
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full animate-pulse" />
             )}
@@ -590,12 +595,16 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
             </p>
           </div>
           <div className="relative">
-            <img
-              src={opponentAvatarUrl}
-              alt={opponentProfile?.nickname}
-              className="w-12 h-12 rounded-full border-2 border-red-500 object-cover"
-              style={{ objectFit: 'cover', objectPosition: 'center' }}
-            />
+            <Avatar className="w-12 h-12 border-2 border-red-500">
+              <AvatarImage 
+                src={opponentAvatarUrl}
+                alt={opponentProfile?.nickname}
+                className="object-cover"
+              />
+              <AvatarFallback className="bg-primary text-primary-foreground text-lg font-bold">
+                {opponentProfile?.nickname?.[0]?.toUpperCase() || '?'}
+              </AvatarFallback>
+            </Avatar>
             {gameState.currentPlayer === 'red' && (
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-pulse" />
             )}
