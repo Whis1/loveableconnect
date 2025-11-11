@@ -962,14 +962,14 @@ const ProfileEdit = () => {
 
               {/* Favorite Songs */}
               <div className="space-y-2">
-                <Label>🎵 Canzoni Preferite (max 5)</Label>
+                <Label>🎵 Canzoni Preferite (max 4)</Label>
                 <p className="text-sm text-muted-foreground mb-2">
                   Aggiungi le tue canzoni preferite da Spotify per far sapere agli altri i tuoi gusti musicali
                 </p>
                 <SpotifySongSelector
                   selectedSongs={favoriteSongs}
                   onSongsChange={setFavoriteSongs}
-                  maxSongs={5}
+                  maxSongs={4}
                 />
               </div>
 

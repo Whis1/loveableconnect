@@ -856,7 +856,7 @@ export const ProfileManager = () => {
 
                               {/* Canzoni Preferite */}
                               <div className="space-y-2">
-                                <Label>🎵 Canzoni Preferite (max 5)</Label>
+                                <Label>🎵 Canzoni Preferite (max 4)</Label>
                                 <p className="text-sm text-muted-foreground mb-2">
                                   Aggiungi le canzoni preferite da Spotify per questo profilo
                                 </p>
@@ -866,7 +866,7 @@ export const ProfileManager = () => {
                                     const updated = { ...profile, favorite_songs: songs };
                                     setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
                                   }}
-                                  maxSongs={5}
+                                  maxSongs={4}
                                 />
                               </div>
 
