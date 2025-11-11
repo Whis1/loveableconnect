@@ -215,11 +215,22 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         setGameState(prev => ({ ...prev, selectedTerritory: null }));
       } else {
         const source = gameState.territories.find(t => t.id === gameState.selectedTerritory);
+        if (source) {
+          const neighborNames = source.neighbors.map(id => gameState.territories.find(t => t.id === id)?.name || id);
+          console.log('[Risiko] Tentativo movimento:', {
+            from: { id: source.id, name: source.name, troops: source.troops },
+            to: { id: territory.id, name: territory.name, troops: territory.troops, owner: territory.owner },
+            sourceNeighbors: neighborNames,
+          });
+        }
         if (source && canMoveTroops(source, territory, gameState.territories)) {
           setTargetTerritory(territoryId);
           setMoveDialogOpen(true);
         } else {
-          toast.error("Non puoi muovere truppe qui");
+          const reason = source?.troops === 0
+            ? 'nessuna truppa da muovere'
+            : 'territorio non adiacente o senza stradina';
+          toast.error(`Non puoi muovere truppe qui: ${reason}`);
         }
       }
     }
