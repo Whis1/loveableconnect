@@ -96,34 +96,33 @@ const getContinentShape = (continentId: number, centerX: number, centerY: number
 // Genera una forma di territorio con seed FISSO per avere sempre la stessa forma
 const generateTerritoryPath = (centerX: number, centerY: number, size: number, territoryIndex: number): string => {
   const points: [number, number][] = [];
-  const numPoints = 16; // Più punti per forme organiche
+  const numPoints = 12; // Numero ridotto per forme più arrotondate
   
   // Usa l'indice del territorio come seed fisso invece di un seed variabile
   const fixedSeed = territoryIndex * 0.0185; // Seed deterministico basato sull'indice
   
   for (let i = 0; i < numPoints; i++) {
     const angle = (i / numPoints) * Math.PI * 2;
-    // Variazioni irregolari per forme geografiche naturali
-    const radiusVariation = 0.55 + 
-      Math.sin(fixedSeed * 137 + i * 5.7) * 0.35 + 
-      Math.cos(fixedSeed * 73 + i * 3.3) * 0.2 +
-      Math.sin(fixedSeed * 211 + i * 2.1) * 0.15;
-    const angleJitter = (Math.sin(fixedSeed * 191 + i * 7.1) * 0.2);
+    // Variazioni più morbide e controllate per evitare punte
+    const radiusVariation = 0.75 + 
+      Math.sin(fixedSeed * 137 + i * 5.7) * 0.2 + 
+      Math.cos(fixedSeed * 73 + i * 3.3) * 0.1;
+    const angleJitter = (Math.sin(fixedSeed * 191 + i * 7.1) * 0.08);
     
     const x = centerX + Math.cos(angle + angleJitter) * size * radiusVariation;
     const y = centerY + Math.sin(angle + angleJitter) * size * radiusVariation * 0.9;
     points.push([x, y]);
   }
   
-  // Usa curve morbide per forme organiche
+  // Usa curve morbide con punti di controllo più vicini per forme arrotondate
   let path = `M ${points[0][0]} ${points[0][1]}`;
   for (let i = 0; i < points.length; i++) {
     const current = points[i];
     const next = points[(i + 1) % points.length];
     
-    // Punti di controllo per curve naturali
-    const cpX = (next[0] + current[0]) / 2 + (Math.sin(fixedSeed * 113 + i * 1.3) * size * 0.15);
-    const cpY = (next[1] + current[1]) / 2 + (Math.cos(fixedSeed * 97 + i * 1.7) * size * 0.15);
+    // Punti di controllo più vicini per curve dolci
+    const cpX = (next[0] + current[0]) / 2 + (Math.sin(fixedSeed * 113 + i * 1.3) * size * 0.08);
+    const cpY = (next[1] + current[1]) / 2 + (Math.cos(fixedSeed * 97 + i * 1.7) * size * 0.08);
     
     path += ` Q ${cpX} ${cpY}, ${next[0]} ${next[1]}`;
   }
