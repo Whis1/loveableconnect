@@ -87,18 +87,18 @@ export const aiMakeMove = (
     return;
   }
 
-  // 🎴 FASE 4: USO CARTE STRATEGICHE CON TIMING PERFETTO
-  if (tryAdvancedCardStrategy(gameState, setGameState, showAnimation, handleCombat, myTerritories, enemyTerritories, threats, attackOpportunities, momentum, riskLevel, opponentNickname)) {
-    return;
-  }
-
-  // ⚔️ FASE 5: ATTACCO CON SIMULAZIONI MONTE CARLO
+  // ⚔️ FASE 4: ATTACCO CON SIMULAZIONI MONTE CARLO (priorità alta)
   if (tryMonteCarloAttack(gameState, setGameState, handleCombat, showAnimation, attackOpportunities, riskLevel, opponentNickname)) {
     return;
   }
 
-  // 🛡️ FASE 6: FORTIFICAZIONE CHOKEPOINTS
-  if (tryChokePointFortification(gameState, setGameState, showAnimation, myTerritories, opponentNickname)) {
+  // 🎴 FASE 5: USO CARTE SPECIALI (bomba, paracadute, force)
+  if (trySpecialCards(gameState, setGameState, showAnimation, handleCombat, myTerritories, enemyTerritories, threats, attackOpportunities, momentum, opponentNickname)) {
+    return;
+  }
+
+  // 🛡️ FASE 6: FORTIFICAZIONE CHOKEPOINTS (solo se non ci sono attacchi)
+  if (myTerritories.length > 3 && tryChokePointFortification(gameState, setGameState, showAnimation, myTerritories, opponentNickname)) {
     return;
   }
 
@@ -112,11 +112,18 @@ export const aiMakeMove = (
     return;
   }
 
-  // 🎲 DEFAULT: RINFORZO INTELLIGENTE
+  // 🎲 DEFAULT: AGGIUNGI TRUPPE (solo se nessuna altra strategia funziona)
   if (myTerritories.length > 0) {
     const strategic = findUltimateStrategicTerritory(myTerritories, threats, continents, pressurePoints);
     const redCount = myTerritories.length;
     const amount = redCount >= 20 ? 3 : 1;
+    
+    const messages = [
+      `${opponentNickname}: Rinforzo +${amount}`,
+      `${opponentNickname}: Truppe in arrivo +${amount}`,
+      `${opponentNickname}: Rafforzamento +${amount}`,
+      `${opponentNickname}: Supporto tattico +${amount}`
+    ];
     
     setGameState(prev => ({
       ...prev,
@@ -125,7 +132,7 @@ export const aiMakeMove = (
       )
     }));
     
-    showAnimation(`${opponentNickname}: Rinforzo tattico`);
+    showAnimation(messages[Math.floor(Math.random() * messages.length)]);
   }
 
   setTimeout(() => {
@@ -427,8 +434,8 @@ const tryContinentalStrategy = (
   return false;
 };
 
-// 🎴 CARTE STRATEGICHE AVANZATE
-const tryAdvancedCardStrategy = (
+// 🎴 CARTE SPECIALI (bomba, paracadute, force - NO truppe)
+const trySpecialCards = (
   gameState: GameState,
   setGameState: React.Dispatch<React.SetStateAction<GameState>>,
   showAnimation: (message: string) => void,
@@ -438,7 +445,6 @@ const tryAdvancedCardStrategy = (
   threats: ThreatAnalysis[],
   attackOpportunities: AttackOpportunity[],
   momentum: MomentumAnalysis,
-  riskLevel: number,
   opponentNickname: string
 ): boolean => {
   // FORZA: Usa con attacco strategico eccellente
@@ -578,43 +584,6 @@ const tryAdvancedCardStrategy = (
     }
   }
 
-  // TRUPPE: Aggiungi su territori chokepoint o frontline
-  if (myTerritories.length > 0) {
-    const chokepoints = myTerritories.filter(t => 
-      TerritorialAnalyzer.identifyChokepoints(t, gameState.territories)
-    );
-
-    if (chokepoints.length > 0) {
-      const target = chokepoints.sort((a, b) => {
-        const threatA = threats.find(th => th.territoryId === a.id)?.threatLevel || 0;
-        const threatB = threats.find(th => th.territoryId === b.id)?.threatLevel || 0;
-        return threatB - threatA;
-      })[0];
-
-      const redCount = myTerritories.length;
-      const amount = redCount >= 20 ? 3 : 1;
-      
-      setGameState(prev => ({
-        ...prev,
-        territories: prev.territories.map(t => 
-          t.id === target.id ? {...t, troops: t.troops + amount} : t
-        )
-      }));
-      
-      showAnimation(`${opponentNickname}: Fortifico chokepoint +${amount}`);
-      
-      setTimeout(() => {
-        setGameState(prev => ({
-          ...prev,
-          currentPlayer: 'blue',
-          turnTimeLeft: 30
-        }));
-      }, 800);
-      
-      return true;
-    }
-  }
-
   return false;
 };
 
@@ -628,8 +597,8 @@ const tryMonteCarloAttack = (
   riskLevel: number,
   opponentNickname: string
 ): boolean => {
-  // Soglia dinamica basata sul rischio
-  const threshold = riskLevel > 0.5 ? 0.8 : 0.7;
+  // Soglia dinamica: più aggressivo se rischio è basso
+  const threshold = riskLevel > 0.6 ? 0.8 : (riskLevel > 0.4 ? 0.7 : 0.65);
   
   const viableAttacks = attackOpportunities.filter(opp => 
     opp.monteCarloScore >= threshold && opp.attackerTroops >= opp.defenderTroops + 2
@@ -637,7 +606,16 @@ const tryMonteCarloAttack = (
 
   if (viableAttacks.length > 0) {
     const bestAttack = viableAttacks[0];
-    showAnimation(`${opponentNickname}: Attacco calcolato! ⚔️ (${Math.round(bestAttack.monteCarloScore * 100)}%)`);
+    const prob = Math.round(bestAttack.monteCarloScore * 100);
+    
+    const messages = [
+      `${opponentNickname}: Attacco! ⚔️ (${prob}%)`,
+      `${opponentNickname}: Offensiva strategica! ⚔️`,
+      `${opponentNickname}: All'attacco! ⚔️`,
+      `${opponentNickname}: Conquisto territorio! ⚔️`
+    ];
+    
+    showAnimation(messages[Math.floor(Math.random() * messages.length)]);
     
     setTimeout(() => {
       handleCombat(bestAttack.attackerId, bestAttack.defenderId, bestAttack.attackerTroops);
@@ -649,7 +627,7 @@ const tryMonteCarloAttack = (
   return false;
 };
 
-// 🛡️ FORTIFICAZIONE CHOKEPOINTS
+// 🛡️ FORTIFICAZIONE CHOKEPOINTS (solo territori strategici deboli)
 const tryChokePointFortification = (
   gameState: GameState,
   setGameState: React.Dispatch<React.SetStateAction<GameState>>,
@@ -661,47 +639,55 @@ const tryChokePointFortification = (
     TerritorialAnalyzer.identifyChokepoints(t, gameState.territories)
   );
 
-  const weakChokepoints = chokepoints.filter(cp => cp.troops < 4);
+  // Solo chokepoint REALMENTE deboli (< 3 truppe)
+  const weakChokepoints = chokepoints.filter(cp => cp.troops < 3);
 
-  if (weakChokepoints.length > 0) {
-    const target = weakChokepoints[0];
-    const sources = myTerritories.filter(t => {
-      const hasNoEnemyNeighbor = !t.neighbors.some(nId => {
-        const n = gameState.territories.find(ter => ter.id === nId);
-        return n && n.owner === 'blue';
-      });
-      return hasNoEnemyNeighbor && t.troops >= 3 && t.id !== target.id;
-    }).sort((a, b) => b.troops - a.troops);
+  if (weakChokepoints.length === 0) return false;
 
-    if (sources.length > 0) {
-      const source = sources[0];
-      const moveTroops = Math.floor(source.troops / 2);
+  const target = weakChokepoints[0];
+  const sources = myTerritories.filter(t => {
+    const hasNoEnemyNeighbor = !t.neighbors.some(nId => {
+      const n = gameState.territories.find(ter => ter.id === nId);
+      return n && n.owner === 'blue';
+    });
+    return hasNoEnemyNeighbor && t.troops >= 4 && t.id !== target.id;
+  }).sort((a, b) => b.troops - a.troops);
 
-      showAnimation(`${opponentNickname}: Fortifico posizione chiave 🛡️`);
+  if (sources.length > 0) {
+    const source = sources[0];
+    const moveTroops = Math.floor(source.troops / 2);
 
+    const messages = [
+      `${opponentNickname}: Difesa strategica 🛡️`,
+      `${opponentNickname}: Protezione frontiera 🛡️`,
+      `${opponentNickname}: Riorganizzazione difensiva`,
+      `${opponentNickname}: Consolidamento posizioni`
+    ];
+
+    showAnimation(messages[Math.floor(Math.random() * messages.length)]);
+
+    setGameState(prev => ({
+      ...prev,
+      territories: prev.territories.map(t => {
+        if (t.id === source.id) {
+          return {...t, troops: t.troops - moveTroops};
+        }
+        if (t.id === target.id) {
+          return {...t, troops: t.troops + moveTroops};
+        }
+        return t;
+      })
+    }));
+
+    setTimeout(() => {
       setGameState(prev => ({
         ...prev,
-        territories: prev.territories.map(t => {
-          if (t.id === source.id) {
-            return {...t, troops: t.troops - moveTroops};
-          }
-          if (t.id === target.id) {
-            return {...t, troops: t.troops + moveTroops};
-          }
-          return t;
-        })
+        currentPlayer: 'blue',
+        turnTimeLeft: 30
       }));
+    }, 800);
 
-      setTimeout(() => {
-        setGameState(prev => ({
-          ...prev,
-          currentPlayer: 'blue',
-          turnTimeLeft: 30
-        }));
-      }, 800);
-
-      return true;
-    }
+    return true;
   }
 
   return false;
