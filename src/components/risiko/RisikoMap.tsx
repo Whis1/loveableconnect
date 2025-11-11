@@ -215,7 +215,34 @@ export const RisikoMap = ({
               strokeDasharray="2,2"
               pointerEvents="none"
             />
-            
+
+            {/* Boost indicator */}
+            {boostedTerritories.includes(territory.id) && (
+              <g>
+                <circle
+                  cx={territory.x + 25}
+                  cy={territory.y - 25}
+                  r={12}
+                  fill="#10b981"
+                  className="animate-pulse"
+                />
+                <text
+                  x={territory.x + 25}
+                  y={territory.y - 25}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  className="text-sm font-bold fill-white pointer-events-none"
+                >
+                  ⚡
+                </text>
+              </g>
+            )}
+          </g>
+        ))}
+
+        {/* Render all troops and names AFTER all territories so they're always on top */}
+        {territories.map((territory) => (
+          <g key={`troops-${territory.id}`}>
             
             {/* Territory name - centered and scaled to fit - nascosto per territori coperti */}
             {/* Nascondi nomi per territori che stanno sotto altri (circa 1 su 2) */}
@@ -266,28 +293,6 @@ export const RisikoMap = ({
                   className="text-sm font-bold fill-white pointer-events-none"
                 >
                   {territory.troops}
-                </text>
-              </g>
-            )}
-
-            {/* Boost indicator */}
-            {boostedTerritories.includes(territory.id) && (
-              <g>
-                <circle
-                  cx={territory.x + 25}
-                  cy={territory.y - 25}
-                  r={12}
-                  fill="#10b981"
-                  className="animate-pulse"
-                />
-                <text
-                  x={territory.x + 25}
-                  y={territory.y - 25}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  className="text-sm font-bold fill-white pointer-events-none"
-                >
-                  ⚡
                 </text>
               </g>
             )}
