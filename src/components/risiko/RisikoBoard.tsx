@@ -63,6 +63,9 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
     territoryId: string;
     timestamp: number;
   } | null>(null);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const [userEmoji, setUserEmoji] = useState<string | null>(null);
+  const [opponentEmoji, setOpponentEmoji] = useState<string | null>(null);
 
   // Initialize game
   useEffect(() => {
@@ -396,6 +399,29 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
   const blueCount = gameState.territories.filter(t => t.owner === 'blue').length;
   const troopCardAmount = blueCount >= 20 ? 3 : 1;
 
+  // Emoji system
+  const availableEmojis = ['😊', '😎', '🔥', '💪', '👍', '😂', '🎉', '⚔️', '🏆', '💀', '😤', '🤔'];
+
+  const handleEmojiClick = (emoji: string) => {
+    setUserEmoji(emoji);
+    setShowEmoji(false);
+    setTimeout(() => setUserEmoji(null), 3000);
+  };
+
+  // AI sends random emoji occasionally
+  useEffect(() => {
+    if (gameState.currentPlayer === 'red' && !gameState.gameOver) {
+      const shouldSendEmoji = Math.random() < 0.15;
+      if (shouldSendEmoji) {
+        const randomEmoji = availableEmojis[Math.floor(Math.random() * availableEmojis.length)];
+        setTimeout(() => {
+          setOpponentEmoji(randomEmoji);
+          setTimeout(() => setOpponentEmoji(null), 3000);
+        }, 1000 + Math.random() * 2000);
+      }
+    }
+  }, [gameState.currentPlayer, gameState.turnTimeLeft]);
+
   // Build avatar URL from storage path or accept full URLs
   const getAvatarUrl = (avatarPath?: string | null) => {
     if (!avatarPath) return "";
@@ -427,6 +453,11 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
             {gameState.currentPlayer === 'blue' && (
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full animate-pulse" />
             )}
+            {userEmoji && (
+              <div className="absolute -right-8 top-1/2 -translate-y-1/2 text-3xl animate-bounce">
+                {userEmoji}
+              </div>
+            )}
           </div>
           <div className="flex-1">
             <p className="font-bold text-blue-500">{userProfile?.nickname}</p>
@@ -436,7 +467,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           </div>
         </div>
 
-        {/* VS and Timer */}
+        {/* VS, Timer and Emoji Button */}
         <div className="flex flex-col items-center gap-2">
           <div className="text-3xl font-bold flex items-center gap-2">
             <span>⚔️</span>
@@ -446,6 +477,15 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           <Badge variant="outline" className="text-sm px-3 py-1">
             ⏱️ {gameState.turnTimeLeft}s
           </Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowEmoji(!showEmoji)}
+            className="mt-1"
+            disabled={gameState.currentPlayer !== 'blue' || gameState.gameOver}
+          >
+            😊
+          </Button>
         </div>
 
         {/* Opponent Profile (Rosso) */}
@@ -470,9 +510,31 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
             {gameState.currentPlayer === 'red' && (
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-pulse" />
             )}
+            {opponentEmoji && (
+              <div className="absolute -left-8 top-1/2 -translate-y-1/2 text-3xl animate-bounce">
+                {opponentEmoji}
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Emoji Picker */}
+      {showEmoji && (
+        <div className="flex flex-wrap gap-2 mb-4 p-3 bg-background/95 rounded-lg border shadow-lg animate-fade-in">
+          {availableEmojis.map((emoji) => (
+            <Button
+              key={emoji}
+              variant="ghost"
+              size="sm"
+              onClick={() => handleEmojiClick(emoji)}
+              className="text-2xl hover:scale-125 transition-transform"
+            >
+              {emoji}
+            </Button>
+          ))}
+        </div>
+      )}
 
       {/* Combat Animation */}
       {combatAnimation.show && (
