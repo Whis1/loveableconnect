@@ -139,8 +139,8 @@ export const Tutorial = () => {
 
   return (
     <>
-      {/* Overlay semitrasparente leggero */}
-      <div className="fixed inset-0 bg-black/20 z-[100] pointer-events-none" />
+      {/* Overlay semitrasparente leggero che blocca i click */}
+      <div className="fixed inset-0 bg-black/20 z-[100] pointer-events-auto" />
 
       <Button
         onClick={skipTutorial}
@@ -155,7 +155,7 @@ export const Tutorial = () => {
         <>
           {/* Spotlight effect: crea un "buco" nell'overlay per mostrare l'elemento */}
           <div
-            className="fixed z-[101] pointer-events-auto rounded-xl transition-all duration-300"
+            className="fixed z-[101] pointer-events-none rounded-xl transition-all duration-300"
             style={{
               ...highlightStyle,
               boxShadow: '0 0 0 4px hsl(var(--primary)), 0 0 0 9999px rgba(0, 0, 0, 0.5)',
@@ -182,7 +182,7 @@ export const Tutorial = () => {
       )}
 
       {showControls && !isLastStep && currentStep !== 8 && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[102] flex gap-4 pointer-events-auto animate-fade-in">
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[102] flex gap-4 pointer-events-auto">
           <Button
             onClick={handleReplay}
             variant="outline"
@@ -203,7 +203,7 @@ export const Tutorial = () => {
       )}
 
       {showControls && currentStep === 8 && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[102] pointer-events-auto animate-fade-in">
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[102] pointer-events-auto">
           <Button
             onClick={handleConclude}
             size="lg"
