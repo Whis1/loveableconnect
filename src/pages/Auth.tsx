@@ -552,13 +552,13 @@ const Auth = () => {
                       htmlFor="age-consent" 
                       className="text-xs text-muted-foreground cursor-pointer leading-relaxed"
                     >
-                      Confermo di avere almeno 18 anni e accetto i{" "}
+                      Confermo di avere almeno 18 anni e accetto la{" "}
                       <a 
                         href="/terms" 
                         target="_blank" 
                         className="text-primary underline hover:no-underline"
                       >
-                        termini e condizioni
+                        Privacy - Termini e condizioni
                       </a>
                     </Label>
                   </div>
