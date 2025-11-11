@@ -487,7 +487,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
             size="sm"
             onClick={() => setShowEmoji(!showEmoji)}
             className="mt-1"
-            disabled={gameState.currentPlayer !== 'blue' || gameState.gameOver}
+            disabled={gameState.gameOver}
           >
             😊
           </Button>
