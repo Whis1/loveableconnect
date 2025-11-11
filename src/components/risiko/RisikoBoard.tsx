@@ -455,57 +455,79 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         </div>
       )}
 
-      {/* Cards */}
-      {gameState.currentPlayer === 'blue' && !gameState.gameOver && (
-        <div className="flex gap-2 justify-center flex-wrap">
-          <Button
-            variant={gameState.selectedCard === 'troops' ? 'default' : 'outline'}
-            onClick={() => setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'troops' ? null : 'troops' }))}
-            className="flex items-center gap-2"
-          >
-            <Users className="w-4 h-4" />
-            +{troopCardAmount} Truppe
-          </Button>
-          <Button
-            variant={gameState.selectedCard === 'bomb' ? 'default' : 'outline'}
-            onClick={() => setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'bomb' ? null : 'bomb' }))}
-            disabled={gameState.cardCooldowns.bomb > 0}
-            className="flex items-center gap-2"
-          >
-            <Plane className="w-4 h-4" />
-            Bombardamento {gameState.cardCooldowns.bomb > 0 && `(${gameState.cardCooldowns.bomb})`}
-          </Button>
-          <Button
-            variant={gameState.selectedCard === 'parachute' ? 'default' : 'outline'}
-            onClick={() => setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'parachute' ? null : 'parachute' }))}
-            disabled={gameState.cardCooldowns.parachute > 0}
-            className="flex items-center gap-2"
-          >
-            🪂 Paracadutista {gameState.cardCooldowns.parachute > 0 && `(${gameState.cardCooldowns.parachute})`}
-          </Button>
-          <Button
-            variant={gameState.selectedCard === 'force' ? 'default' : 'outline'}
-            onClick={() => setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'force' ? null : 'force' }))}
-            disabled={gameState.cardCooldowns.force > 0}
-            className="flex items-center gap-2"
-          >
-            <Zap className="w-4 h-4" />
-            Forza {gameState.cardCooldowns.force > 0 && `(${gameState.cardCooldowns.force})`}
-          </Button>
-        </div>
-      )}
+      {/* Main Content - Map and Cards */}
+      <div className="flex-1 min-h-0 flex gap-3">
+        {/* Cards on the left side */}
+        {gameState.currentPlayer === 'blue' && !gameState.gameOver && (
+          <div className="flex flex-col gap-2 w-20">
+            <Card 
+              className={`p-2 cursor-pointer transition-all hover:scale-105 ${
+                gameState.selectedCard === 'troops' ? 'ring-2 ring-primary bg-primary/10' : 'hover:bg-muted/50'
+              }`}
+              onClick={() => setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'troops' ? null : 'troops' }))}
+            >
+              <div className="flex flex-col items-center gap-1">
+                <Users className="w-6 h-6" />
+                <span className="text-xs font-medium">+{troopCardAmount}</span>
+              </div>
+            </Card>
+            
+            <Card 
+              className={`p-2 cursor-pointer transition-all hover:scale-105 ${
+                gameState.selectedCard === 'bomb' ? 'ring-2 ring-primary bg-primary/10' : 'hover:bg-muted/50'
+              } ${gameState.cardCooldowns.bomb > 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={() => gameState.cardCooldowns.bomb === 0 && setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'bomb' ? null : 'bomb' }))}
+            >
+              <div className="flex flex-col items-center gap-1">
+                <Plane className="w-6 h-6" />
+                <span className="text-xs font-medium">
+                  {gameState.cardCooldowns.bomb > 0 ? `${gameState.cardCooldowns.bomb}` : '💣'}
+                </span>
+              </div>
+            </Card>
+            
+            <Card 
+              className={`p-2 cursor-pointer transition-all hover:scale-105 ${
+                gameState.selectedCard === 'parachute' ? 'ring-2 ring-primary bg-primary/10' : 'hover:bg-muted/50'
+              } ${gameState.cardCooldowns.parachute > 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={() => gameState.cardCooldowns.parachute === 0 && setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'parachute' ? null : 'parachute' }))}
+            >
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-xl">🪂</span>
+                <span className="text-xs font-medium">
+                  {gameState.cardCooldowns.parachute > 0 ? `${gameState.cardCooldowns.parachute}` : ''}
+                </span>
+              </div>
+            </Card>
+            
+            <Card 
+              className={`p-2 cursor-pointer transition-all hover:scale-105 ${
+                gameState.selectedCard === 'force' ? 'ring-2 ring-primary bg-primary/10' : 'hover:bg-muted/50'
+              } ${gameState.cardCooldowns.force > 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={() => gameState.cardCooldowns.force === 0 && setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'force' ? null : 'force' }))}
+            >
+              <div className="flex flex-col items-center gap-1">
+                <Zap className="w-6 h-6" />
+                <span className="text-xs font-medium">
+                  {gameState.cardCooldowns.force > 0 ? `${gameState.cardCooldowns.force}` : '⚡'}
+                </span>
+              </div>
+            </Card>
+          </div>
+        )}
 
-      {/* Map */}
-      <div className="flex-1 min-h-0">
-        <RisikoMap
-          territories={gameState.territories}
-          selectedTerritory={gameState.selectedTerritory}
-          boostedTerritories={gameState.boostedTerritories}
-          onTerritoryClick={handleTerritoryClick}
-          disabled={gameState.currentPlayer !== 'blue' || gameState.gameOver}
-          movingTroops={movingTroops}
-          arrivedTroops={arrivedTroops}
-        />
+        {/* Map */}
+        <div className="flex-1 min-h-0">
+          <RisikoMap
+            territories={gameState.territories}
+            selectedTerritory={gameState.selectedTerritory}
+            boostedTerritories={gameState.boostedTerritories}
+            onTerritoryClick={handleTerritoryClick}
+            disabled={gameState.currentPlayer !== 'blue' || gameState.gameOver}
+            movingTroops={movingTroops}
+            arrivedTroops={arrivedTroops}
+          />
+        </div>
       </div>
 
       {/* Move Dialog */}
