@@ -207,8 +207,8 @@ export const RisikoMap = ({
             
             {/* Vegetazione ricca con diverse tonalità di verde dentro il territorio */}
             <g clipPath={`url(#clip-${territory.id})`}>
-              {[...Array(Math.floor(territory.size / 6))].map((_, i) => {
-                const angle = (i / (territory.size / 6)) * Math.PI * 2.3 + territory.x * 0.05;
+              {[...Array(Math.floor(territory.size / 4))].map((_, i) => {
+                const angle = (i / (territory.size / 4)) * Math.PI * 2.3 + territory.x * 0.05;
                 const radius = territory.size * (0.15 + Math.sin(territory.x + i * 2) * 0.3);
                 const decorX = territory.x + Math.cos(angle) * radius;
                 const decorY = territory.y + Math.sin(angle) * radius;
