@@ -379,7 +379,13 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
       case 'troops':
         if (territory.owner === 'blue') {
           const blueCount = gameState.territories.filter(t => t.owner === 'blue').length;
-          const amount = blueCount >= 20 ? 3 : 1;
+          const getTroopCardAmount = (territoryCount: number) => {
+            if (territoryCount >= 28) return 6;
+            if (territoryCount >= 20) return 4;
+            if (territoryCount >= 10) return 2;
+            return 1;
+          };
+          const amount = getTroopCardAmount(blueCount);
           setGameState(prev => ({
             ...prev,
             territories: prev.territories.map(t => 
@@ -474,7 +480,13 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
   };
 
   const blueCount = gameState.territories.filter(t => t.owner === 'blue').length;
-  const troopCardAmount = blueCount >= 20 ? 3 : 1;
+  const getTroopCardAmount = (territoryCount: number) => {
+    if (territoryCount >= 28) return 6;
+    if (territoryCount >= 20) return 4;
+    if (territoryCount >= 10) return 2;
+    return 1;
+  };
+  const troopCardAmount = getTroopCardAmount(blueCount);
 
   // Emoji system
   const availableEmojis = ['😊', '😎', '🔥', '💪', '👍', '😂', '🎉', '⚔️', '🏆', '💀', '😤', '🤔'];
