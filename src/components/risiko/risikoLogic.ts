@@ -124,13 +124,18 @@ export const canMoveTroops = (
   const dx = source.x - target.x;
   const dy = source.y - target.y;
   const distance = Math.hypot(dx, dy);
-  if (distance < 180) {
+  
+  // Soglia aumentata per coprire stradine più lunghe
+  if (distance < 300) {
     console.log(`✓ Vicini (distanza ${Math.round(distance)}): ${source.name} -> ${target.name}`);
     return true;
   }
 
   console.log(`❌ Non adiacenti: ${source.name} -> ${target.name}. Distanza ${Math.round(distance)}`);
-  console.log(`Vicini di ${source.name}:`, source.neighbors);
+  console.log(`Vicini di "${source.name}":`, source.neighbors.map(id => {
+    const t = allTerritories.find(x => x.id === id);
+    return t ? t.name : id;
+  }));
   return false;
 };
 
