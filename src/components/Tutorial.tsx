@@ -170,7 +170,7 @@ export const Tutorial = () => {
         </>
       )}
 
-      {showControls && !isLastStep && (
+      {showControls && !isLastStep && currentStep !== 8 && (
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[102] flex gap-4 pointer-events-auto animate-fade-in">
           <Button
             onClick={handleReplay}
