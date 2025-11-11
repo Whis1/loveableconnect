@@ -1,5 +1,6 @@
 export interface Territory {
   id: string;
+  name: string;
   x: number;
   y: number;
   path: string;
@@ -36,6 +37,21 @@ const generateContinentPath = (centerX: number, centerY: number, size: number, s
   return path;
 };
 
+// Territory names
+const territoryNames = [
+  "Città Perduta", "Isola d'Elbagian", "Porto Antico", "Valle Oscura",
+  "Montagne Gelate", "Deserto Rosso", "Foresta Nera", "Laguna Azzurra",
+  "Castello Reale", "Piana Verde", "Vulcano Attivo", "Penisola Sud",
+  "Arcipelago Nord", "Terra Sacra", "Miniere d'Oro", "Roccaforte",
+  "Baia Nebbiosa", "Altopiano", "Giungla Fitta", "Steppa Infinita",
+  "Oasi Nascosta", "Grotte Profonde", "Pianura Fertile", "Costa Selvaggia",
+  "Borgo Antico", "Torre di Guardia", "Fiume Lungo", "Colline Verdi",
+  "Mare Interno", "Isola Vulcanica", "Terre Ghiacciate", "Canyon Rosso",
+  "Savana Dorata", "Lago Cristallo", "Bosco Incantato", "Delta Paludoso",
+  "Montagna Sacra", "Villaggio Perduto", "Promontorio", "Baia dei Pirati",
+  "Fortezza", "Terre Desolate"
+];
+
 export const generateTerritories = (): Territory[] => {
   const territories: Territory[] = [];
   
@@ -43,7 +59,7 @@ export const generateTerritories = (): Territory[] => {
   const rows = 6;
   const cols = 7;
   const spacingX = 160;
-  const spacingY = 120;
+  const spacingY = 130;
   const offsetX = 80;
   const offsetY = 60;
   
@@ -54,9 +70,9 @@ export const generateTerritories = (): Territory[] => {
       const id = `t${index}`;
       const seed = index / 42;
       
-      // Vary continent sizes
-      const baseSize = 35;
-      const sizeVariation = 15 + (Math.sin(seed * 50) * 10);
+      // Larger continent sizes
+      const baseSize = 55;
+      const sizeVariation = 20 + (Math.sin(seed * 50) * 15);
       const size = baseSize + sizeVariation;
       
       // Stagger odd rows and add some randomness
@@ -71,6 +87,7 @@ export const generateTerritories = (): Territory[] => {
       
       territories.push({
         id,
+        name: territoryNames[index] || `Territorio ${index + 1}`,
         x,
         y,
         path,

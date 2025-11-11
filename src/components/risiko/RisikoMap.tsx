@@ -72,7 +72,7 @@ export const RisikoMap = ({
   }, [movingTroops, territories]);
 
   const getColor = (territory: Territory) => {
-    if (!territory.owner) return '#6b7280';
+    if (!territory.owner) return '#8B8B7A'; // Grigio acceso per neutrali
     return territory.owner === 'blue' ? '#3b82f6' : '#ef4444';
   };
 
@@ -93,6 +93,20 @@ export const RisikoMap = ({
         viewBox="0 0 1200 800"
         className="w-full h-full"
       >
+        <defs>
+          {/* Pattern per texture alberelli */}
+          <pattern id="treePattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+            <circle cx="5" cy="8" r="2" fill="#2d5016" opacity="0.3"/>
+            <circle cx="15" cy="12" r="1.5" fill="#2d5016" opacity="0.3"/>
+            <circle cx="10" cy="15" r="2" fill="#2d5016" opacity="0.3"/>
+          </pattern>
+          
+          {/* Pattern per striature */}
+          <pattern id="stripePattern" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="0" x2="10" y2="10" stroke="#000" strokeWidth="0.5" opacity="0.1"/>
+          </pattern>
+        </defs>
+
         {/* Background image */}
         <image
           href={mapBackground}
@@ -129,43 +143,65 @@ export const RisikoMap = ({
         {/* Render territories */}
         {territories.map((territory) => (
           <g key={territory.id}>
-            {/* Territory path */}
+            {/* Territory path with solid color */}
             <path
               d={territory.path}
               fill={getColor(territory)}
               stroke={getStrokeColor(territory)}
-              strokeWidth={selectedTerritory === territory.id ? 4 : 2}
-              className={`transition-all ${!disabled ? 'cursor-pointer hover:opacity-80' : 'cursor-not-allowed'}`}
+              strokeWidth={selectedTerritory === territory.id ? 4 : 2.5}
+              className={`transition-all ${!disabled ? 'cursor-pointer hover:brightness-110' : 'cursor-not-allowed'}`}
               onClick={() => !disabled && onTerritoryClick(territory.id)}
-              opacity={territory.troops === 0 ? 0.5 : 1}
             />
+            
+            {/* Texture overlay */}
+            <path
+              d={territory.path}
+              fill="url(#treePattern)"
+              pointerEvents="none"
+            />
+            <path
+              d={territory.path}
+              fill="url(#stripePattern)"
+              pointerEvents="none"
+            />
+            
+            {/* Territory name */}
+            <text
+              x={territory.x}
+              y={territory.y - territory.size * 0.6}
+              textAnchor="middle"
+              className="text-[10px] font-bold fill-white pointer-events-none"
+              style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}
+            >
+              {territory.name}
+            </text>
             
             {/* Troops icon and count */}
             {territory.troops > 0 && (
               <g>
                 <image
                   href={troopsIcon}
-                  x={territory.x - 20}
-                  y={territory.y - 25}
-                  width={40}
-                  height={40}
+                  x={territory.x - 18}
+                  y={territory.y - 18}
+                  width={36}
+                  height={36}
                   style={{ filter: `drop-shadow(0 2px 4px rgba(0,0,0,0.5))` }}
                   opacity={0.9}
                 />
                 <circle
                   cx={territory.x}
-                  cy={territory.y + 22}
-                  r={14}
+                  cy={territory.y + 20}
+                  r={12}
                   fill={getTroopColor(territory.owner)}
                   stroke="#fff"
                   strokeWidth={2}
                 />
                 <text
                   x={territory.x}
-                  y={territory.y + 22}
+                  y={territory.y + 20}
                   textAnchor="middle"
                   dominantBaseline="central"
-                  className="text-sm font-bold fill-white pointer-events-none"
+                  className="text-xs font-bold fill-white pointer-events-none"
                 >
                   {territory.troops}
                 </text>
