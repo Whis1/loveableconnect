@@ -105,9 +105,11 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
   // AI turn
   useEffect(() => {
     if (gameState.currentPlayer === 'red' && !gameState.gameOver && gameState.territories.length > 0) {
+      // Random delay between 6-14 seconds to make AI feel more realistic
+      const aiThinkingTime = 6000 + Math.random() * 8000; // 6000ms to 14000ms
       const timer = setTimeout(() => {
         aiMakeMove(gameState, setGameState, handleCombat, showCombatAnimation, opponentProfile?.nickname || 'Avversario');
-      }, 2000);
+      }, aiThinkingTime);
       return () => clearTimeout(timer);
     }
   }, [gameState.currentPlayer, gameState.gameOver, gameState.territories.length]);
