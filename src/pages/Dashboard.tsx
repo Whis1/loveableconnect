@@ -470,6 +470,9 @@ const Dashboard = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="relative">
+                  <p className="text-white/90 mb-6">
+                    {t("dashboard.exploreProfiles")}
+                  </p>
                   <Button
                     className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold shadow-lg group-hover:shadow-xl transition-all duration-300"
                   >
