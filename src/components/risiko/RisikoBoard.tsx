@@ -61,6 +61,8 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
     winner: null
   });
 
+  const [combatInProgress, setCombatInProgress] = useState(false);
+
   const [showVictory, setShowVictory] = useState(false);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [targetTerritory, setTargetTerritory] = useState<string | null>(null);
@@ -132,7 +134,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
 
   // AI turn
   useEffect(() => {
-    if (gameState.currentPlayer === 'red' && !gameState.gameOver && gameState.territories.length > 0) {
+    if (gameState.currentPlayer === 'red' && !gameState.gameOver && gameState.territories.length > 0 && !combatInProgress) {
       // Random delay between 6-14 seconds to make AI feel more realistic
       const aiThinkingTime = 6000 + Math.random() * 8000; // 6000ms to 14000ms
       const timer = setTimeout(() => {
@@ -140,7 +142,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
       }, aiThinkingTime);
       return () => clearTimeout(timer);
     }
-  }, [gameState.currentPlayer, gameState.gameOver, gameState.territories.length]);
+  }, [gameState.currentPlayer, gameState.gameOver, gameState.territories.length, combatInProgress]);
 
   // Check victory
   useEffect(() => {
@@ -169,12 +171,18 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
   }, []);
 
   const handleCombat = (attackerId: string, defenderId: string, attackerTroops: number) => {
+    // Blocca altre azioni durante il combattimento
+    setCombatInProgress(true);
+    
     setGameState(prev => {
       const newTerritories = [...prev.territories];
       const attacker = newTerritories.find(t => t.id === attackerId);
       const defender = newTerritories.find(t => t.id === defenderId);
 
-      if (!attacker || !defender) return prev;
+      if (!attacker || !defender) {
+        setCombatInProgress(false);
+        return prev;
+      }
 
       // Calcola quante truppe potenziate partecipano al combattimento
       const attackerBoostedCount = prev.boostedTroops[attackerId] || 0;
@@ -253,7 +261,10 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
     });
 
     // Wait for battle banner animation to complete (4s) before switching turn
-    setTimeout(() => switchTurn(), 4000);
+    setTimeout(() => {
+      setCombatInProgress(false);
+      switchTurn();
+    }, 4000);
   };
 
   const switchTurn = () => {
@@ -272,7 +283,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
   };
 
   const handleTerritoryClick = (territoryId: string) => {
-    if (gameState.currentPlayer !== 'blue' || gameState.gameOver) return;
+    if (gameState.currentPlayer !== 'blue' || gameState.gameOver || combatInProgress) return;
 
     const territory = gameState.territories.find(t => t.id === territoryId);
     if (!territory) return;
