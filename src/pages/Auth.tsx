@@ -44,29 +44,45 @@ const Auth = () => {
       setShowCookieBanner(true);
     }
 
-    // Only check session once on mount - avoid loops
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        // Check profile completeness after a delay for OAuth users
-        setTimeout(() => {
-          supabase
-            .from("profiles")
-            .select("birthdate, city")
-            .eq("id", session.user.id)
-            .maybeSingle()
-            .then(({ data: profile }) => {
-              if (profile && (!profile.birthdate || !profile.city)) {
-                navigate("/profile/edit", { 
-                  state: { requiresCompletion: true },
-                  replace: true
-                });
-              } else if (profile) {
-                navigate("/", { replace: true });
-              }
-            });
-        }, 1500); // Give time for trigger to create profile
+    const checkAndNavigate = (userId: string) => {
+      // Give time for profile trigger (OAuth) then determine destination
+      setTimeout(() => {
+        supabase
+          .from("profiles")
+          .select("birthdate, city")
+          .eq("id", userId)
+          .maybeSingle()
+          .then(({ data: profile }) => {
+            if (profile && (!profile.birthdate || !profile.city)) {
+              navigate("/profile/edit", { 
+                state: { requiresCompletion: true },
+                replace: true
+              });
+            } else {
+              navigate("/", { replace: true });
+            }
+          });
+      }, 1200);
+    };
+
+    // Listen for auth changes first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user?.id) {
+        // Defer any Supabase calls outside the callback
+        setTimeout(() => checkAndNavigate(session.user!.id), 0);
       }
     });
+
+    // Then check if already authenticated
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.id) {
+        checkAndNavigate(session.user.id);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const handleSignUp = async (e: React.FormEvent) => {
