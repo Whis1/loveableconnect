@@ -45,10 +45,10 @@ export const BattleBanner = ({
         setPhase('result');
       }, 2500);
 
-      // Complete (1s after result shown)
+      // Complete (3.5s after result shown)
       const completeTimer = setTimeout(() => {
         onComplete();
-      }, 4000);
+      }, 6000);
 
       return () => {
         clearTimeout(introTimer);
