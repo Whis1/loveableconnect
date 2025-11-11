@@ -43,7 +43,7 @@ export const MessageSuggestions = ({ onSuggestionSelect, onDismiss }: MessageSug
               <Button
                 onClick={() => setSelectedMode('neutral')}
                 variant="outline"
-                className="h-auto py-3 px-4 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30 text-blue-700 dark:text-blue-300 hover:border-blue-500/50 transition-all duration-200 flex items-center justify-center gap-2 animate-[scale-slow_4s_ease-in-out_infinite]"
+                className="h-auto py-3 px-4 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30 text-blue-700 dark:text-blue-300 hover:border-blue-500/50 transition-all duration-200 flex items-center justify-center gap-2 animate-[scale-slow_6s_ease-in-out_infinite]"
               >
                 <span className="text-2xl">😇</span>
                 <span className="font-medium">Rispondi in modo neutro</span>
@@ -51,7 +51,7 @@ export const MessageSuggestions = ({ onSuggestionSelect, onDismiss }: MessageSug
               <Button
                 onClick={() => setSelectedMode('bold')}
                 variant="outline"
-                className="h-auto py-3 px-4 bg-red-500/10 hover:bg-red-500/20 border-red-500/30 text-red-700 dark:text-red-300 hover:border-red-500/50 transition-all duration-200 flex items-center justify-center gap-2 animate-[scale-slow_4s_ease-in-out_2s_infinite]"
+                className="h-auto py-3 px-4 bg-red-500/10 hover:bg-red-500/20 border-red-500/30 text-red-700 dark:text-red-300 hover:border-red-500/50 transition-all duration-200 flex items-center justify-center gap-2 animate-[scale-slow_6s_ease-in-out_3s_infinite]"
               >
                 <span className="text-2xl">😈</span>
                 <span className="font-medium">Rispondi in modo spinto</span>

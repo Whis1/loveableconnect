@@ -101,10 +101,10 @@ export default {
         "scale-slow": {
           "0%, 100%": {
             transform: "scale(1)",
-            opacity: "0.8",
+            opacity: "0.7",
           },
           "50%": {
-            transform: "scale(1.03)",
+            transform: "scale(1.05)",
             opacity: "1",
           }
         },
@@ -114,7 +114,7 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.3s ease-out",
         "slide-in-bottom": "slide-in-bottom 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
-        "scale-slow": "scale-slow 4s ease-in-out infinite",
+        "scale-slow": "scale-slow 6s ease-in-out infinite",
       },
     },
   },
