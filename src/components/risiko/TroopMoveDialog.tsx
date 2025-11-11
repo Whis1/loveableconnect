@@ -25,8 +25,9 @@ export const TroopMoveDialog = ({
   const [amount, setAmount] = useState(1);
 
   const handleConfirm = () => {
-    onConfirm(amount);
+    onOpenChange(false); // Close dialog immediately
     setAmount(1);
+    onConfirm(amount);
   };
 
   const increment = () => {

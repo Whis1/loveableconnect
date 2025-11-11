@@ -293,7 +293,6 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         return { ...prev, territories: newTerritories };
       });
 
-      setMoveDialogOpen(false);
       setTargetTerritory(null);
       switchTurn();
     }, 1000);
