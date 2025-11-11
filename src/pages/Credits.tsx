@@ -305,7 +305,7 @@ const Credits = () => {
                 <ul className="space-y-2">
                   <li className="flex items-center gap-2">
                     <Coins className="h-5 w-5 text-blue-500" />
-                    <span><strong>70 crediti giornalieri</strong> - reset automatico</span>
+                    <span><strong>70 crediti giornalieri</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Heart className="h-5 w-5 text-blue-500" />
@@ -369,7 +369,7 @@ const Credits = () => {
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-center gap-2">
                       <Coins className="h-4 w-4 text-purple-500" />
-                      <span><strong>40 crediti giornalieri</strong> - reset automatico</span>
+                      <span><strong>40 crediti giornalieri</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Heart className="h-4 w-4 text-purple-500" />
