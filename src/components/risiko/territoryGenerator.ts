@@ -225,7 +225,7 @@ export const generateTerritories = (): Territory[] => {
     [13, [10, 14, 16]], 
     [14, [10, 11, 13, 15, 16]], 
     [15, [11, 12, 14, 16, 17]], 
-    [16, [13, 14, 15, 17]], 
+    [16, [13, 14, 15, 17, 34]], // Baia Nebbiosa - Collegato anche a Bosco Incantato (34)
     [17, [12, 15, 16, 35]], // Collegato ad Africa
     
     // Europa (18-26) - tutti collegati completamente tra loro
@@ -247,7 +247,7 @@ export const generateTerritories = (): Territory[] => {
     [31, [27, 28, 30, 32, 34, 35]], 
     [32, [27, 28, 29, 31, 33, 35]], 
     [33, [28, 29, 32, 34, 35]], 
-    [34, [30, 31, 33, 35]], 
+    [34, [16, 30, 31, 33, 35]], // Bosco Incantato - Collegato anche a Baia Nebbiosa (16)
     [35, [17, 31, 32, 33, 34]], // Collegato a Sud America
     
     // Asia (36-47) - tutti collegati tra loro, a Europa e Africa
