@@ -30,9 +30,12 @@ export const Tutorial = () => {
   const [highlightStyle, setHighlightStyle] = useState<React.CSSProperties>({});
   const [arrowStyle, setArrowStyle] = useState<React.CSSProperties>({});
   const audioRef = useRef<HTMLAudioElement>(null);
+  const preloadAudioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     playCurrentStep();
+    // Precarica l'audio successivo
+    preloadNextAudio();
   }, [currentStep]);
 
   useEffect(() => {
@@ -40,6 +43,14 @@ export const Tutorial = () => {
       updateHighlightPosition();
     }
   }, [currentStep]);
+
+  const preloadNextAudio = () => {
+    const nextStep = currentStep + 1;
+    if (nextStep < tutorialSteps.length && preloadAudioRef.current) {
+      preloadAudioRef.current.src = tutorialSteps[nextStep].audio;
+      preloadAudioRef.current.load();
+    }
+  };
 
   const updateHighlightPosition = () => {
     const step = tutorialSteps[currentStep];
@@ -207,6 +218,12 @@ export const Tutorial = () => {
         ref={audioRef}
         onEnded={handleAudioEnded}
         className="hidden"
+        preload="auto"
+      />
+      <audio
+        ref={preloadAudioRef}
+        className="hidden"
+        preload="auto"
       />
 
       <style>{`
