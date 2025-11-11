@@ -14,6 +14,9 @@ type Conversation = {
   matchId: string
   lastMessageAt: string
   unreadCount: number
+  userCity: string | null
+  userLatitude: number | null
+  userLongitude: number | null
 }
 
 Deno.serve(async (req) => {
@@ -41,7 +44,7 @@ Deno.serve(async (req) => {
       .eq('is_admin_profile', true)
     if (adminsErr) throw adminsErr
 
-    const userProfileCache = new Map<string, { nickname: string; avatar_url: string | null }>()
+    const userProfileCache = new Map<string, { nickname: string; avatar_url: string | null; city: string | null; latitude: number | null; longitude: number | null }>()
     const conversations: Conversation[] = []
 
     for (const admin of admins || []) {
@@ -88,11 +91,17 @@ Deno.serve(async (req) => {
         if (!userProfileCache.has(otherUserId)) {
           const { data: uProf, error: uErr } = await supabase
             .from('profiles')
-            .select('nickname, avatar_url')
+            .select('nickname, avatar_url, city, latitude, longitude')
             .eq('id', otherUserId)
             .single()
           if (uErr) throw uErr
-          userProfileCache.set(otherUserId, { nickname: uProf?.nickname || 'Utente', avatar_url: uProf?.avatar_url || null })
+          userProfileCache.set(otherUserId, { 
+            nickname: uProf?.nickname || 'Utente', 
+            avatar_url: uProf?.avatar_url || null,
+            city: uProf?.city || null,
+            latitude: uProf?.latitude || null,
+            longitude: uProf?.longitude || null
+          })
         }
         const u = userProfileCache.get(otherUserId)!
 
@@ -105,6 +114,9 @@ Deno.serve(async (req) => {
           matchId: m.id as string,
           lastMessageAt,
           unreadCount: unreadCount || 0,
+          userCity: u.city,
+          userLatitude: u.latitude,
+          userLongitude: u.longitude,
         })
       }
     }

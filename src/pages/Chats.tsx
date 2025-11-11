@@ -16,6 +16,9 @@ interface Conversation {
   matchId: string;
   lastMessageAt: string;
   unreadCount: number;
+  userCity?: string | null;
+  userLatitude?: number | null;
+  userLongitude?: number | null;
 }
 
 const Chats = () => {

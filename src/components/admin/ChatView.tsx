@@ -21,6 +21,9 @@ interface Conversation {
   matchId: string;
   lastMessageAt: string;
   unreadCount: number;
+  userCity?: string | null;
+  userLatitude?: number | null;
+  userLongitude?: number | null;
 }
 
 interface Message {
@@ -256,6 +259,19 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-semibold text-lg">{conversation.userNickname}</h3>
+              {/* Location info for admin secondaries */}
+              {(conversation.userCity || conversation.userLatitude || conversation.userLongitude) && (
+                <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                  {conversation.userCity && (
+                    <p>📍 {conversation.userCity}</p>
+                  )}
+                  {conversation.userLatitude && conversation.userLongitude && (
+                    <p className="font-mono">
+                      {conversation.userLatitude.toFixed(6)}, {conversation.userLongitude.toFixed(6)}
+                    </p>
+                  )}
+                </div>
+              )}
               <button
                 onClick={() => setShowUserProfile(true)}
                 className="text-xs text-primary hover:underline flex items-center gap-1 mt-0.5"
