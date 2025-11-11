@@ -139,6 +139,7 @@ export const canMoveTroops = (
     ['Torre di Guardia', 'Isola Vulcanica'],
     ['Lago Cristallo', 'Terre Ghiacciate'],
     ['Lago Cristallo', 'Canyon Rosso'],
+    ['Arcipelago Nord', 'Piana Verde'],
   ];
 
   const isRoadLinked = roadNamePairs.some(([a, b]) =>

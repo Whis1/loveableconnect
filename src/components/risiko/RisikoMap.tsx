@@ -109,6 +109,7 @@ export const RisikoMap = ({
     ['Torre di Guardia', 'Isola Vulcanica'],
     ['Lago Cristallo', 'Terre Ghiacciate'],
     ['Lago Cristallo', 'Canyon Rosso'],
+    ['Arcipelago Nord', 'Piana Verde'],
   ];
 
   return (
