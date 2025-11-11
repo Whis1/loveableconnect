@@ -269,7 +269,7 @@ export const RisikoMap = ({
           const badge = badgeTypes[territoryIndex % badgeTypes.length];
           
           return (
-            <g key={`name-${territory.id}`}>
+            <g key={`name-${territory.id}`} pointerEvents="none">
               {/* Territory name - centered and scaled to fit - nascosto per territori coperti */}
               {/* Nascondi nomi per territori che stanno sotto altri (circa 1 su 2) */}
               {territoryIndex % 2 === 0 && (
@@ -290,7 +290,7 @@ export const RisikoMap = ({
                   </text>
                   
                   {/* Badge sotto il nome - solo icona, più in basso */}
-                  <g transform={`translate(${territory.x}, ${territory.y + territory.size * 0.05})`}>
+                  <g transform={`translate(${territory.x}, ${territory.y + territory.size * 0.05})`} pointerEvents="none">
                     <circle
                       cx="0"
                       cy="0"
@@ -321,10 +321,10 @@ export const RisikoMap = ({
 
         {/* Render all troops LAST so they're always on top of EVERYTHING */}
         {territories.map((territory) => (
-          <g key={`troops-${territory.id}`}>
+          <g key={`troops-${territory.id}`} pointerEvents="none">
             {/* Troops icon and count - icon bigger and above number */}
             {territory.troops > 0 && (
-              <g className={arrivedTroops?.territoryId === territory.id ? 'animate-scale-in' : ''}>
+              <g className={arrivedTroops?.territoryId === territory.id ? 'animate-scale-in' : ''} pointerEvents="none">
                 {/* Icon positioned above the number circle */}
                 <image
                   href={troopsIcon}

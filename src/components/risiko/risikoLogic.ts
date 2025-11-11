@@ -113,16 +113,25 @@ export const canMoveTroops = (
     console.log("❌ Nessuna truppa da muovere");
     return false;
   }
-  
-  // Devono essere adiacenti (vicini)
-  if (!source.neighbors.includes(target.id)) {
-    console.log(`❌ ${source.name} (${source.id}) non è vicino a ${target.name} (${target.id})`);
-    console.log(`Vicini di ${source.name}:`, source.neighbors);
-    return false;
+
+  // Se sono vicini secondo la mappa, ok
+  if (source.neighbors.includes(target.id)) {
+    console.log(`✓ Vicini (mappa): ${source.name} -> ${target.name}`);
+    return true;
   }
-  
-  console.log(`✓ Puoi muovere da ${source.name} a ${target.name}`);
-  return true;
+
+  // Fallback: considera adiacenti se molto vicini visivamente (stradina o contiguità)
+  const dx = source.x - target.x;
+  const dy = source.y - target.y;
+  const distance = Math.hypot(dx, dy);
+  if (distance < 180) {
+    console.log(`✓ Vicini (distanza ${Math.round(distance)}): ${source.name} -> ${target.name}`);
+    return true;
+  }
+
+  console.log(`❌ Non adiacenti: ${source.name} -> ${target.name}. Distanza ${Math.round(distance)}`);
+  console.log(`Vicini di ${source.name}:`, source.neighbors);
+  return false;
 };
 
 export const findPath = (
