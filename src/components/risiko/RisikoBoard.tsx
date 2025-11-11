@@ -101,6 +101,10 @@ export const RisikoBoard = ({ onGameEnd, userProfile }: RisikoBoardProps) => {
 
   // Check victory
   useEffect(() => {
+    // Don't check until game has started with troops
+    const totalTerritories = gameState.territories.filter(t => t.owner).length;
+    if (totalTerritories < 10) return; // Wait for initialization
+    
     const blueTroops = gameState.territories.filter(t => t.owner === 'blue').reduce((sum, t) => sum + t.troops, 0);
     const redTroops = gameState.territories.filter(t => t.owner === 'red').reduce((sum, t) => sum + t.troops, 0);
 
