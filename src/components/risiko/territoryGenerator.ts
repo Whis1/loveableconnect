@@ -10,20 +10,28 @@ export interface Territory {
   size: number;
 }
 
-// Generate irregular continent-like path
+// Generate irregular continent-like path with realistic shapes
 const generateContinentPath = (centerX: number, centerY: number, size: number, seed: number): string => {
   const points: [number, number][] = [];
-  const numPoints = 6 + Math.floor(seed * 6);
+  // More points for more complex, realistic shapes
+  const numPoints = 8 + Math.floor(seed * 8);
   
   for (let i = 0; i < numPoints; i++) {
     const angle = (i / numPoints) * Math.PI * 2;
-    const variance = 0.5 + (Math.sin(seed * 100 + i * 7) * 0.5);
+    // Much more variation in distance to create irregular continent shapes
+    const variance = 0.4 + (Math.sin(seed * 100 + i * 7) * 0.4) + (Math.cos(seed * 50 + i * 3) * 0.3);
     const distance = size * variance;
-    const x = centerX + Math.cos(angle) * distance;
-    const y = centerY + Math.sin(angle) * distance;
+    
+    // Add some jaggedness for realistic coastlines
+    const jitterX = Math.sin(seed * 200 + i * 11) * size * 0.15;
+    const jitterY = Math.cos(seed * 200 + i * 13) * size * 0.15;
+    
+    const x = centerX + Math.cos(angle) * distance + jitterX;
+    const y = centerY + Math.sin(angle) * distance + jitterY;
     points.push([x, y]);
   }
   
+  // Create smoother curves for more realistic continent shapes
   let path = `M ${points[0][0]} ${points[0][1]}`;
   for (let i = 0; i < points.length; i++) {
     const next = points[(i + 1) % points.length];
@@ -58,10 +66,10 @@ export const generateTerritories = (): Territory[] => {
   // Grid layout: 6 rows x 7 columns = 42 territories
   const rows = 6;
   const cols = 7;
-  const spacingX = 140;
-  const spacingY = 110;
-  const offsetX = 70;
-  const offsetY = 55;
+  const spacingX = 125; // Closer together
+  const spacingY = 100; // Closer together vertically
+  const offsetX = 80; // More margin on left
+  const offsetY = 80; // More margin on top to prevent overflow
   
   // Generate 42 territories with varied sizes and positions
   for (let row = 0; row < rows; row++) {
@@ -70,15 +78,15 @@ export const generateTerritories = (): Territory[] => {
       const id = `t${index}`;
       const seed = index / 42;
       
-      // Larger continent sizes
-      const baseSize = 50;
-      const sizeVariation = 15 + (Math.sin(seed * 50) * 10);
+      // Much larger continent sizes for realistic appearance
+      const baseSize = 60;
+      const sizeVariation = 18 + (Math.sin(seed * 50) * 12);
       const size = baseSize + sizeVariation;
       
-      // Stagger odd rows and add some randomness
+      // Stagger odd rows and add some randomness for more organic placement
       const rowOffset = row % 2 === 1 ? spacingX / 2 : 0;
-      const randomOffsetX = (Math.sin(seed * 123) * 8);
-      const randomOffsetY = (Math.cos(seed * 456) * 6);
+      const randomOffsetX = (Math.sin(seed * 123) * 10);
+      const randomOffsetY = (Math.cos(seed * 456) * 8);
       
       const x = offsetX + col * spacingX + rowOffset + randomOffsetX;
       const y = offsetY + row * spacingY + randomOffsetY;
