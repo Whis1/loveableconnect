@@ -240,29 +240,9 @@ export const RisikoMap = ({
           </g>
         ))}
 
-        {/* Render all troops and names AFTER all territories so they're always on top */}
+        {/* Render all troops AFTER all territories so they're always on top */}
         {territories.map((territory) => (
           <g key={`troops-${territory.id}`}>
-            
-            {/* Territory name - centered and scaled to fit - nascosto per territori coperti */}
-            {/* Nascondi nomi per territori che stanno sotto altri (circa 1 su 2) */}
-            {parseInt(territory.id.substring(1)) % 2 === 0 && (
-              <text
-                x={territory.x}
-                y={territory.y - territory.size * 0.15}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                className="text-[7px] font-semibold pointer-events-none"
-                style={{ 
-                  fill: '#22c55e',
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                  fontSize: `${Math.max(6, territory.size / 8)}px`
-                }}
-              >
-                {territory.name}
-              </text>
-            )}
-            
             {/* Troops icon and count - icon bigger and above number */}
             {territory.troops > 0 && (
               <g className={arrivedTroops?.territoryId === territory.id ? 'animate-scale-in' : ''}>
@@ -295,6 +275,30 @@ export const RisikoMap = ({
                   {territory.troops}
                 </text>
               </g>
+            )}
+          </g>
+        ))}
+
+        {/* Render all territory names LAST so they're always on top of everything */}
+        {territories.map((territory) => (
+          <g key={`name-${territory.id}`}>
+            {/* Territory name - centered and scaled to fit - nascosto per territori coperti */}
+            {/* Nascondi nomi per territori che stanno sotto altri (circa 1 su 2) */}
+            {parseInt(territory.id.substring(1)) % 2 === 0 && (
+              <text
+                x={territory.x}
+                y={territory.y - territory.size * 0.15}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="text-[7px] font-semibold pointer-events-none"
+                style={{ 
+                  fill: '#22c55e',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
+                  fontSize: `${Math.max(6, territory.size / 8)}px`
+                }}
+              >
+                {territory.name}
+              </text>
             )}
           </g>
         ))}
