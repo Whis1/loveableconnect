@@ -83,6 +83,7 @@ export const UserCreditsManager = () => {
         .update({ 
           is_premium: true,
           subscription_type: 'monthly',
+          premium_tier: 'premium',
           premium_expires_at: expiresAt.toISOString(),
           balance: 999,
           daily_likes_remaining: 999,
