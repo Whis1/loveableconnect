@@ -1,6 +1,7 @@
 import { Territory } from "./territoryGenerator";
 import { useEffect, useState } from "react";
 import troopsIcon from "@/assets/risiko-troops.png";
+import mapBackground from "@/assets/risiko-background.png";
 
 interface RisikoMapProps {
   territories: Territory[];
@@ -91,8 +92,18 @@ export const RisikoMap = ({
       <svg
         viewBox="0 0 1200 800"
         className="w-full h-full"
-        style={{ background: 'linear-gradient(to bottom, #2c3e1f, #1a2614)' }}
       >
+        {/* Background image */}
+        <image
+          href={mapBackground}
+          x="0"
+          y="0"
+          width="1200"
+          height="800"
+          preserveAspectRatio="xMidYMid slice"
+          opacity="0.9"
+        />
+        
         {/* Render connection lines first (behind territories) */}
         {territories.map((territory) => 
           territory.neighbors.map((neighborId) => {
