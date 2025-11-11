@@ -120,14 +120,14 @@ export const canMoveTroops = (
     return true;
   }
 
-  // Fallback: considera adiacenti se molto vicini visivamente (stradina o contiguità)
+  // Fallback minimo solo per territori davvero contigui visivamente
   const dx = source.x - target.x;
   const dy = source.y - target.y;
   const distance = Math.hypot(dx, dy);
   
-  // Soglia aumentata per coprire stradine più lunghe
-  if (distance < 300) {
-    console.log(`✓ Vicini (distanza ${Math.round(distance)}): ${source.name} -> ${target.name}`);
+  // Soglia molto bassa - solo per territori che si toccano visivamente
+  if (distance < 120) {
+    console.log(`✓ Vicini per contiguità visiva (${Math.round(distance)}px): ${source.name} -> ${target.name}`);
     return true;
   }
 
