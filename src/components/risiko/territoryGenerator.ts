@@ -58,10 +58,10 @@ export const generateTerritories = (): Territory[] => {
   // Grid layout: 6 rows x 7 columns = 42 territories
   const rows = 6;
   const cols = 7;
-  const spacingX = 160;
-  const spacingY = 130;
-  const offsetX = 80;
-  const offsetY = 60;
+  const spacingX = 155;
+  const spacingY = 125;
+  const offsetX = 90;
+  const offsetY = 70;
   
   // Generate 42 territories with varied sizes and positions
   for (let row = 0; row < rows; row++) {
@@ -70,15 +70,15 @@ export const generateTerritories = (): Territory[] => {
       const id = `t${index}`;
       const seed = index / 42;
       
-      // Larger continent sizes
-      const baseSize = 55;
-      const sizeVariation = 20 + (Math.sin(seed * 50) * 15);
+      // Continent sizes - reduced to fit in map
+      const baseSize = 45;
+      const sizeVariation = 12 + (Math.sin(seed * 50) * 8);
       const size = baseSize + sizeVariation;
       
       // Stagger odd rows and add some randomness
       const rowOffset = row % 2 === 1 ? spacingX / 2 : 0;
-      const randomOffsetX = (Math.sin(seed * 123) * 15);
-      const randomOffsetY = (Math.cos(seed * 456) * 12);
+      const randomOffsetX = (Math.sin(seed * 123) * 10);
+      const randomOffsetY = (Math.cos(seed * 456) * 8);
       
       const x = offsetX + col * spacingX + rowOffset + randomOffsetX;
       const y = offsetY + row * spacingY + randomOffsetY;

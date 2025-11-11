@@ -59,6 +59,10 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
     toId: string;
     count: number;
   } | null>(null);
+  const [arrivedTroops, setArrivedTroops] = useState<{
+    territoryId: string;
+    timestamp: number;
+  } | null>(null);
 
   // Initialize game
   useEffect(() => {
@@ -234,6 +238,14 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
     // Wait for animation then update
     setTimeout(() => {
       setMovingTroops(null);
+      
+      // Show arrival animation
+      setArrivedTroops({
+        territoryId: targetTerritory,
+        timestamp: Date.now()
+      });
+      
+      setTimeout(() => setArrivedTroops(null), 2000);
 
       setGameState(prev => {
         const newTerritories = [...prev.territories];
@@ -490,6 +502,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           onTerritoryClick={handleTerritoryClick}
           disabled={gameState.currentPlayer !== 'blue' || gameState.gameOver}
           movingTroops={movingTroops}
+          arrivedTroops={arrivedTroops}
         />
       </div>
 
