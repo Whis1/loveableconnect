@@ -469,7 +469,8 @@ const Dashboard = () => {
                     {t("dashboard.discoverDescription")}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="relative">
+                <CardContent className="relative flex flex-col">
+                  <div className="flex-1 min-h-[60px]" />
                   <Button
                     className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold shadow-lg group-hover:shadow-xl transition-all duration-300"
                   >
