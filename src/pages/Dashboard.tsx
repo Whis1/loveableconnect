@@ -15,6 +15,7 @@ import { GeolocationBanner } from "@/components/GeolocationBanner";
 import { NotificationPermissionBanner } from "@/components/NotificationPermissionBanner";
 import { InboxDropdown } from "@/components/InboxDropdown";
 import { Tutorial } from "@/components/Tutorial";
+import { AdBanner } from "@/components/AdBanner";
 import loveIcon from "@/assets/love-icon.png";
 
 interface Profile {
@@ -531,6 +532,9 @@ const Dashboard = () => {
 
       {/* Notification Permission Banner */}
       <NotificationPermissionBanner />
+      
+      {/* Ad Banner System */}
+      <AdBanner />
     </div>
   );
 };

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { UserCreditsManager } from "@/components/admin/UserCreditsManager";
 import { UserBanManager } from "@/components/admin/UserBanManager";
 import { UserReportsMonitor } from "@/components/admin/UserReportsMonitor";
+import { BannerManager } from "@/components/admin/BannerManager";
 import { Shield, LogOut, MessageSquare, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -161,6 +162,8 @@ export default function AdminArrettu() {
         <UserReportsMonitor />
 
         <UserCreditsManager />
+        
+        <BannerManager />
       </div>
     </div>
   );
