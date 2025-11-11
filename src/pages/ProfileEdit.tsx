@@ -311,7 +311,7 @@ const ProfileEdit = () => {
     if (requiresCompletion && birthDay && birthMonth && birthYear && !ageConsent) {
       toast({
         title: "Errore",
-        description: "Devi confermare di avere almeno 18 anni e di accettare i termini e condizioni.",
+        description: "Devi confermare di avere almeno 18 anni e di accettare la Privacy - Termini e condizioni.",
         variant: "destructive",
       });
       return;
@@ -881,13 +881,13 @@ const ProfileEdit = () => {
                               htmlFor="age-consent-profile" 
                               className="text-xs text-muted-foreground cursor-pointer leading-relaxed"
                             >
-                              Confermo di avere almeno 18 anni e accetto i{" "}
+                              Confermo di avere almeno 18 anni e accetto la{" "}
                               <a 
                                 href="/terms" 
                                 target="_blank" 
                                 className="text-primary underline hover:no-underline"
                               >
-                                termini e condizioni
+                                Privacy - Termini e condizioni
                               </a>
                             </Label>
                           </div>
