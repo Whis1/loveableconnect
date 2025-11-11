@@ -126,10 +126,14 @@ export const RisikoMap = ({
             const neighbor = territories.find(t => t.id === neighborId);
             if (!neighbor || territory.id > neighborId) return null;
             
-            // Calcola distanza per identificare collegamenti lunghi (tra continenti)
+            // Calcola distanza per identificare collegamenti
             const dx = territory.x - neighbor.x;
             const dy = territory.y - neighbor.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Non mostrare linee per territori molto vicini (attaccati)
+            if (distance < 150) return null;
+            
             const isLongDistance = distance > 300; // Collegamento tra continenti distanti
             
             // Check if this line is being used for troop movement
@@ -221,32 +225,34 @@ export const RisikoMap = ({
               {territory.name}
             </text>
             
-            {/* Troops icon and count - positioned inside territory */}
+            {/* Troops icon and count - icon bigger and above number */}
             {territory.troops > 0 && (
               <g className={arrivedTroops?.territoryId === territory.id ? 'animate-scale-in' : ''}>
+                {/* Icon positioned above the number circle */}
                 <image
                   href={troopsIcon}
-                  x={territory.x - 14}
-                  y={territory.y + territory.size * 0.15}
-                  width={28}
-                  height={28}
-                  style={{ filter: `drop-shadow(0 2px 4px rgba(0,0,0,0.5))` }}
-                  opacity={0.9}
+                  x={territory.x - 20}
+                  y={territory.y - territory.size * 0.25}
+                  width={40}
+                  height={40}
+                  style={{ filter: `drop-shadow(0 3px 6px rgba(0,0,0,0.7))` }}
+                  opacity={0.95}
                 />
+                {/* Number circle below the icon */}
                 <circle
                   cx={territory.x}
-                  cy={territory.y + territory.size * 0.5}
-                  r={10}
+                  cy={territory.y + territory.size * 0.35}
+                  r={13}
                   fill={getTroopColor(territory.owner)}
                   stroke="#fff"
-                  strokeWidth={2}
+                  strokeWidth={2.5}
                 />
                 <text
                   x={territory.x}
-                  y={territory.y + territory.size * 0.5}
+                  y={territory.y + territory.size * 0.35}
                   textAnchor="middle"
                   dominantBaseline="central"
-                  className="text-xs font-bold fill-white pointer-events-none"
+                  className="text-sm font-bold fill-white pointer-events-none"
                 >
                   {territory.troops}
                 </text>
@@ -277,32 +283,32 @@ export const RisikoMap = ({
           </g>
         ))}
 
-        {/* Animated moving troops */}
+        {/* Animated moving troops - bigger icon */}
         {animatingTroops && (
           <g className="animate-pulse">
             <image
               href={troopsIcon}
-              x={animatingTroops.x - 20}
-              y={animatingTroops.y - 25}
-              width={40}
-              height={40}
-              style={{ filter: `drop-shadow(0 4px 8px rgba(0,0,0,0.7))` }}
-              opacity={0.8}
+              x={animatingTroops.x - 25}
+              y={animatingTroops.y - 35}
+              width={50}
+              height={50}
+              style={{ filter: `drop-shadow(0 5px 10px rgba(0,0,0,0.8))` }}
+              opacity={0.9}
             />
             <circle
               cx={animatingTroops.x}
-              cy={animatingTroops.y + 22}
-              r={14}
+              cy={animatingTroops.y + 25}
+              r={16}
               fill="#fbbf24"
               stroke="#fff"
-              strokeWidth={2}
+              strokeWidth={3}
             />
             <text
               x={animatingTroops.x}
-              y={animatingTroops.y + 22}
+              y={animatingTroops.y + 25}
               textAnchor="middle"
               dominantBaseline="central"
-              className="text-sm font-bold fill-white pointer-events-none"
+              className="text-base font-bold fill-white pointer-events-none"
             >
               {animatingTroops.count}
             </text>
