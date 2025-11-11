@@ -1,7 +1,7 @@
 import { Territory } from "./territoryGenerator";
 import { useEffect, useState } from "react";
 import troopsIcon from "@/assets/risiko-troops.png";
-import mapBackground from "@/assets/risiko-map-background.webp";
+import mapBackground from "@/assets/risiko-zombie-background.png";
 
 interface RisikoMapProps {
   territories: Territory[];
