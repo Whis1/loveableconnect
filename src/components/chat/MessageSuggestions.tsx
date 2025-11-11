@@ -43,17 +43,17 @@ export const MessageSuggestions = ({ onSuggestionSelect, onDismiss }: MessageSug
               <Button
                 onClick={() => setSelectedMode('neutral')}
                 variant="outline"
-                className="h-auto py-3 px-4 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30 text-blue-700 dark:text-blue-300 hover:border-blue-500/50 transition-all duration-200 flex items-center justify-center gap-2"
+                className="h-auto py-3 px-4 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30 text-blue-700 dark:text-blue-300 hover:border-blue-500/50 transition-all duration-200 flex items-center justify-center gap-2 animate-[pulse_3s_ease-in-out_infinite]"
               >
-                <span className="text-xl">🟦</span>
+                <span className="text-2xl">😇</span>
                 <span className="font-medium">Rispondi in modo neutro</span>
               </Button>
               <Button
                 onClick={() => setSelectedMode('bold')}
                 variant="outline"
-                className="h-auto py-3 px-4 bg-red-500/10 hover:bg-red-500/20 border-red-500/30 text-red-700 dark:text-red-300 hover:border-red-500/50 transition-all duration-200 flex items-center justify-center gap-2"
+                className="h-auto py-3 px-4 bg-red-500/10 hover:bg-red-500/20 border-red-500/30 text-red-700 dark:text-red-300 hover:border-red-500/50 transition-all duration-200 flex items-center justify-center gap-2 animate-[pulse_3s_ease-in-out_1.5s_infinite]"
               >
-                <span className="text-xl">🟥</span>
+                <span className="text-2xl">😈</span>
                 <span className="font-medium">Rispondi in modo spinto</span>
               </Button>
             </div>
@@ -62,7 +62,7 @@ export const MessageSuggestions = ({ onSuggestionSelect, onDismiss }: MessageSug
           <div className="space-y-3">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2 text-sm font-medium">
-                <span className="text-xl">{selectedMode === 'neutral' ? '🟦' : '🟥'}</span>
+                <span className="text-2xl">{selectedMode === 'neutral' ? '😇' : '😈'}</span>
                 <span className="text-foreground/80">
                   {selectedMode === 'neutral' ? 'Suggerimenti neutri' : 'Suggerimenti spinti'}
                 </span>
