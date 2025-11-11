@@ -1,7 +1,7 @@
 import { Territory } from "./territoryGenerator";
 import { useEffect, useState } from "react";
 import troopsIcon from "@/assets/risiko-troops.png";
-import mapBackground from "@/assets/risiko-background.png";
+import mapBackground from "@/assets/risiko-map-background.webp";
 
 interface RisikoMapProps {
   territories: Territory[];
@@ -95,7 +95,7 @@ export const RisikoMap = ({
   return (
     <div className="w-full h-full bg-background rounded-lg border-2 border-border overflow-hidden">
       <svg
-        viewBox="0 0 1200 800"
+        viewBox="0 0 1300 850"
         className="w-full h-full"
       >
         <defs>
@@ -114,10 +114,10 @@ export const RisikoMap = ({
           href={mapBackground}
           x="0"
           y="0"
-          width="1200"
-          height="800"
+          width="1300"
+          height="850"
           preserveAspectRatio="xMidYMid slice"
-          opacity="0.9"
+          opacity="0.95"
         />
         
         {/* Render connection lines first (behind territories) */}
