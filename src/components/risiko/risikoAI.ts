@@ -69,7 +69,6 @@ export const aiMakeMove = (
 
   // 🚨 FASE 1: RISPOSTA EMERGENZA (se rischio critico)
   if (riskLevel > 0.7 || (momentum.turnsToDefeat && momentum.turnsToDefeat < 5)) {
-    showAnimation(`${opponentNickname}: 🚨 Modalità difesa critica!`);
     if (tryEmergencyDefense(gameState, setGameState, handleCombat, showAnimation, myTerritories, enemyTerritories, pressurePoints, opponentNickname)) {
       return;
     }
@@ -128,13 +127,6 @@ export const aiMakeMove = (
     const redCount = myTerritories.length;
     const amount = redCount >= 20 ? 3 : 1;
     
-    const messages = [
-      `${opponentNickname}: Rinforzo +${amount}`,
-      `${opponentNickname}: Truppe in arrivo +${amount}`,
-      `${opponentNickname}: Rafforzamento +${amount}`,
-      `${opponentNickname}: Supporto tattico +${amount}`
-    ];
-    
     setGameState(prev => ({
       ...prev,
       territories: prev.territories.map(t => 
@@ -142,7 +134,7 @@ export const aiMakeMove = (
       )
     }));
     
-    showAnimation(messages[Math.floor(Math.random() * messages.length)]);
+    showAnimation(`${opponentNickname} ha aggiunto truppe`);
   }
 
   setTimeout(() => {
@@ -285,7 +277,7 @@ const tryEmergencyDefense = (
       .sort((a, b) => b!.troops - a!.troops)[0];
 
     if (strongestThreat && strongestThreat.troops >= 3) {
-      showAnimation(`${opponentNickname}: Bombardamento difensivo! 💣`);
+      showAnimation(`${opponentNickname} ha usato la bomba`);
       
       setGameState(prev => ({
         ...prev,
@@ -320,6 +312,8 @@ const tryEmergencyDefense = (
     const source = reinforcements[0];
     const target = pressurePoints[0];
     const moveTroops = Math.floor(source.troops / 2);
+
+    showAnimation(`${opponentNickname} sta spostando truppe`);
 
     setGameState(prev => ({
       ...prev,
@@ -371,7 +365,7 @@ const tryPreemptiveDefense = (
     const source = nearbyAllies.sort((a, b) => b.troops - a.troops)[0];
     const moveTroops = Math.floor(source.troops / 2);
 
-    showAnimation(`${opponentNickname}: Ho previsto la tua mossa! 🔮`);
+    showAnimation(`${opponentNickname} sta spostando truppe`);
 
     setGameState(prev => ({
       ...prev,
@@ -430,7 +424,7 @@ const tryContinentalStrategy = (
 
       if (continentalAttacks.length > 0 && continentalAttacks[0].monteCarloScore >= 0.65) {
         const attack = continentalAttacks[0];
-        showAnimation(`${opponentNickname}: Conquisto il ${nearComplete.region}! 🏆`);
+        showAnimation(`${opponentNickname} sta attaccando`);
         
         setTimeout(() => {
           handleCombat(attack.attackerId, attack.defenderId, attack.attackerTroops);
@@ -525,7 +519,7 @@ const tryAllCardsStrategically = (
       const defender = gameState.territories.find(t => t.id === excellentAttack.defenderId);
 
       if (attacker && defender) {
-        showAnimation(`${opponentNickname}: Attacco devastante! ⚡`);
+        showAnimation(`${opponentNickname} ha usato la forza`);
         
         setGameState(prev => ({
           ...prev,
@@ -560,7 +554,7 @@ const tryAllCardsStrategically = (
 
     if (dangerousEnemies.length > 0 && dangerousEnemies[0].threat >= 12) {
       const target = dangerousEnemies[0].territory;
-      showAnimation(`${opponentNickname}: Neutralizzo la minaccia! 💣`);
+      showAnimation(`${opponentNickname} ha usato la bomba`);
       
       setGameState(prev => ({
         ...prev,
@@ -604,7 +598,7 @@ const tryAllCardsStrategically = (
 
     if (blockingEnemies.length > 0) {
       const target = blockingEnemies[0];
-      showAnimation(`${opponentNickname}: Colpo di stato! 🪂`);
+      showAnimation(`${opponentNickname} ha usato il paracadute`);
       
       setGameState(prev => ({
         ...prev,
@@ -629,7 +623,7 @@ const tryAllCardsStrategically = (
     const massiveForces = enemyTerritories.filter(t => t.troops >= 5);
     if (massiveForces.length > 0) {
       const target = massiveForces.sort((a, b) => b.troops - a.troops)[0];
-      showAnimation(`${opponentNickname}: Sabotaggio! 🪂`);
+      showAnimation(`${opponentNickname} ha usato il paracadute`);
       
       setGameState(prev => ({
         ...prev,
@@ -662,7 +656,7 @@ const tryAllCardsStrategically = (
       const defender = gameState.territories.find(t => t.id === excellentAttack.defenderId);
 
       if (attacker && defender) {
-        showAnimation(`${opponentNickname}: Attacco devastante! ⚡`);
+        showAnimation(`${opponentNickname} ha usato la forza`);
         
         setGameState(prev => ({
           ...prev,
@@ -697,7 +691,7 @@ const tryAllCardsStrategically = (
 
     if (dangerousEnemies.length > 0 && dangerousEnemies[0].threat >= 12) {
       const target = dangerousEnemies[0].territory;
-      showAnimation(`${opponentNickname}: Bombardamento tattico! 💣`);
+      showAnimation(`${opponentNickname} ha usato la bomba`);
       
       setGameState(prev => ({
         ...prev,
@@ -740,7 +734,7 @@ const tryAllCardsStrategically = (
 
     if (blockingEnemies.length > 0) {
       const target = blockingEnemies[0];
-      showAnimation(`${opponentNickname}: Conquista lampo! 🪂`);
+      showAnimation(`${opponentNickname} ha usato il paracadute`);
       
       setGameState(prev => ({
         ...prev,
@@ -764,7 +758,7 @@ const tryAllCardsStrategically = (
     const massiveForces = enemyTerritories.filter(t => t.troops >= 5);
     if (massiveForces.length > 0) {
       const target = massiveForces.sort((a, b) => b.troops - a.troops)[0];
-      showAnimation(`${opponentNickname}: Sabotaggio! 🪂`);
+      showAnimation(`${opponentNickname} ha usato il paracadute`);
       
       setGameState(prev => ({
         ...prev,
@@ -814,13 +808,6 @@ const tryAllCardsStrategically = (
     const redCount = myTerritories.length;
     const amount = redCount >= 20 ? 3 : 1;
     
-    const messages = [
-      `${opponentNickname}: Rinforzo strategico +${amount}`,
-      `${opponentNickname}: Difesa rafforzata +${amount}`,
-      `${opponentNickname}: Supporto tattico +${amount}`,
-      `${opponentNickname}: Truppe in arrivo +${amount}`
-    ];
-    
     setGameState(prev => ({
       ...prev,
       territories: prev.territories.map(t => 
@@ -828,7 +815,7 @@ const tryAllCardsStrategically = (
       )
     }));
     
-    showAnimation(messages[Math.floor(Math.random() * messages.length)]);
+    showAnimation(`${opponentNickname} ha aggiunto truppe`);
     
     setTimeout(() => {
       setGameState(prev => ({
@@ -877,14 +864,7 @@ const tryTacticalTroopMovement = (
     const source = safeSuppliers[0];
     const moveTroops = Math.floor(source.troops * 0.6); // Sposta 60% delle truppe
 
-    const messages = [
-      `${opponentNickname}: Rinforzi in movimento! 🚀`,
-      `${opponentNickname}: Riorganizzazione tattica`,
-      `${opponentNickname}: Spostamento strategico`,
-      `${opponentNickname}: Redistribuzione forze`
-    ];
-
-    showAnimation(messages[Math.floor(Math.random() * messages.length)]);
+    showAnimation(`${opponentNickname} sta spostando truppe`);
 
     setGameState(prev => ({
       ...prev,
@@ -936,16 +916,8 @@ const tryMonteCarloAttack = (
 
   if (viableAttacks.length > 0) {
     const bestAttack = viableAttacks[0];
-    const prob = Math.round(bestAttack.monteCarloScore * 100);
 
-    const conquestMsg = bestAttack.defenderTroops <= 2 ? "Conquista rapida!" : "Attacco!";
-    const messages = [
-      `${opponentNickname}: ${conquestMsg} ⚔️ (${prob}%)`,
-      `${opponentNickname}: Offensiva per conquistare! ⚔️`,
-      `${opponentNickname}: All'attacco per espandermi! ⚔️`
-    ];
-
-    showAnimation(messages[Math.floor(Math.random() * messages.length)]);
+    showAnimation(`${opponentNickname} sta attaccando`);
 
     setTimeout(() => {
       handleCombat(bestAttack.attackerId, bestAttack.defenderId, bestAttack.attackerTroops);
@@ -978,7 +950,7 @@ const tryOpportunisticConquest = (
   if (cheap.length === 0) return false;
 
   const attack = cheap[0];
-  showAnimation(`${opponentNickname}: Conquista rapida! ⚔️`);
+  showAnimation(`${opponentNickname} sta attaccando`);
 
   setTimeout(() => {
     handleCombat(attack.attackerId, attack.defenderId, attack.attackerTroops);
@@ -1017,14 +989,7 @@ const tryChokePointFortification = (
     const source = sources[0];
     const moveTroops = Math.floor(source.troops / 2);
 
-    const messages = [
-      `${opponentNickname}: Difesa strategica 🛡️`,
-      `${opponentNickname}: Protezione frontiera 🛡️`,
-      `${opponentNickname}: Riorganizzazione difensiva`,
-      `${opponentNickname}: Consolidamento posizioni`
-    ];
-
-    showAnimation(messages[Math.floor(Math.random() * messages.length)]);
+    showAnimation(`${opponentNickname} sta spostando truppe`);
 
     setGameState(prev => ({
       ...prev,
