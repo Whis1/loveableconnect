@@ -128,6 +128,9 @@ export const canMoveTroops = (
     ['Mare Interno', 'Savana Dorata'],
     ['Mare Interno', 'Bosco Incantato'],
     ['Fiume Lungo', 'Mare Interno'],
+    ['Giungla Fitta', 'Valle Oscura'],
+    ['Laguna Azzurra', 'Pianura Fertile'],
+    ['Altopiano', 'Lago Cristallo'],
   ];
 
   const isRoadLinked = roadNamePairs.some(([a, b]) =>

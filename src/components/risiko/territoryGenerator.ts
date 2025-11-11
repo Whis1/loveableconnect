@@ -307,6 +307,9 @@ export const generateTerritories = (): Territory[] => {
   connectByName("Mare Interno", "Savana Dorata");
   connectByName("Mare Interno", "Bosco Incantato");
   connectByName("Fiume Lungo", "Mare Interno");
+  connectByName("Giungla Fitta", "Valle Oscura");
+  connectByName("Laguna Azzurra", "Pianura Fertile");
+  connectByName("Altopiano", "Lago Cristallo");
   
   // Initialize starting positions
   const blueStarts = selectStartingTerritories(territories, 'blue');
