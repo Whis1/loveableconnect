@@ -292,8 +292,8 @@ export const RisikoMap = ({
                 dominantBaseline="middle"
                 className="text-[7px] font-semibold pointer-events-none"
                 style={{ 
-                  fill: '#22c55e',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
+                  fill: '#000',
+                  textShadow: '2px 2px 4px rgba(255,255,255,0.9)',
                   fontSize: `${Math.max(6, territory.size / 8)}px`
                 }}
               >
