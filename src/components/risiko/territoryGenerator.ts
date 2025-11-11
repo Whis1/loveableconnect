@@ -290,6 +290,19 @@ export const generateTerritories = (): Territory[] => {
     }
   });
   
+  // Assicurati che alcune "stradine" speciali siano sempre collegate per nome
+  const connectByName = (a: string, b: string) => {
+    const ta = territories.find(t => t.name === a);
+    const tb = territories.find(t => t.name === b);
+    if (ta && tb) {
+      if (!ta.neighbors.includes(tb.id)) ta.neighbors.push(tb.id);
+      if (!tb.neighbors.includes(ta.id)) tb.neighbors.push(ta.id);
+    }
+  };
+  
+  // Stradina tra Baia Nebbiosa e Bosco Incantato (come da screenshot)
+  connectByName("Baia Nebbiosa", "Bosco Incantato");
+  
   // Initialize starting positions
   const blueStarts = selectStartingTerritories(territories, 'blue');
   const redStarts = selectStartingTerritories(territories, 'red', blueStarts);
