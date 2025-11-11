@@ -289,13 +289,25 @@ const selectStartingTerritories = (
 ): string[] => {
   const available = territories
     .filter(t => !excludeIds.includes(t.id) && !t.owner)
-    .map(t => t.id);
+    .map(t => ({ id: t.id, x: t.x, y: t.y }));
   
   if (available.length < 5) return [];
   
-  // Select a random starting territory
-  const startIndex = Math.floor(Math.random() * available.length);
-  const startId = available[startIndex];
+  let startTerritory;
+  
+  if (player === 'blue') {
+    // Blue starts in the left side of the map (x < 500)
+    const leftSide = available.filter(t => t.x < 500);
+    if (leftSide.length === 0) return [];
+    startTerritory = leftSide[Math.floor(Math.random() * leftSide.length)];
+  } else {
+    // Red starts in the right side of the map (x > 800)
+    const rightSide = available.filter(t => t.x > 800);
+    if (rightSide.length === 0) return [];
+    startTerritory = rightSide[Math.floor(Math.random() * rightSide.length)];
+  }
+  
+  const startId = startTerritory.id;
   const selected = [startId];
   
   // Find 4 more nearby territories
@@ -306,7 +318,7 @@ const selectStartingTerritories = (
     if (!territory) continue;
     
     for (const neighborId of territory.neighbors) {
-      if (!selected.includes(neighborId) && !excludeIds.includes(neighborId) && available.includes(neighborId)) {
+      if (!selected.includes(neighborId) && !excludeIds.includes(neighborId) && available.some(a => a.id === neighborId)) {
         selected.push(neighborId);
         candidates.push(neighborId);
         if (selected.length >= 5) break;
