@@ -544,6 +544,7 @@ export type Database = {
           sexual_orientation: string | null
           show_online_status: boolean | null
           tris_elo: number | null
+          tutorial_completed: boolean | null
           updated_at: string
           user_images_link: string | null
         }
@@ -574,6 +575,7 @@ export type Database = {
           sexual_orientation?: string | null
           show_online_status?: boolean | null
           tris_elo?: number | null
+          tutorial_completed?: boolean | null
           updated_at?: string
           user_images_link?: string | null
         }
@@ -604,6 +606,7 @@ export type Database = {
           sexual_orientation?: string | null
           show_online_status?: boolean | null
           tris_elo?: number | null
+          tutorial_completed?: boolean | null
           updated_at?: string
           user_images_link?: string | null
         }

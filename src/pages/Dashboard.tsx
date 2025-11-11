@@ -14,6 +14,7 @@ import { DashboardControls } from "@/components/DashboardControls";
 import { GeolocationBanner } from "@/components/GeolocationBanner";
 import { NotificationPermissionBanner } from "@/components/NotificationPermissionBanner";
 import { InboxDropdown } from "@/components/InboxDropdown";
+import { Tutorial } from "@/components/Tutorial";
 import loveIcon from "@/assets/love-icon.png";
 
 interface Profile {
@@ -44,6 +45,7 @@ const Dashboard = () => {
   const [matches, setMatches] = useState<any[]>([]);
   const [likesReceived, setLikesReceived] = useState<any[]>([]);
   const [showGeolocationBanner, setShowGeolocationBanner] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
     let matchesChannel: ReturnType<typeof supabase.channel> | null = null;
@@ -85,6 +87,11 @@ const Dashboard = () => {
       }
 
       setProfile(profileData);
+
+      // Check if tutorial should be shown
+      if (!profileData.tutorial_completed) {
+        setShowTutorial(true);
+      }
 
       // Fetch role
       const { data: roleData } = await supabase
@@ -324,6 +331,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen relative bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-950 dark:via-purple-950 dark:to-indigo-950">
+      {showTutorial && <Tutorial />}
       {/* Background Image */}
       <div 
         className="fixed inset-0 z-0 opacity-20 dark:opacity-30" 
@@ -349,7 +357,7 @@ const Dashboard = () => {
               <p className="text-xs text-muted-foreground">{t("dashboard.tagline")}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 order-1 md:order-2">
+          <div id="credits-display" className="flex items-center gap-2 order-1 md:order-2">
             <InboxDropdown />
             <CreditsDisplay />
           </div>
@@ -357,7 +365,7 @@ const Dashboard = () => {
 
         <div className="grid gap-6 lg:grid-cols-3 mb-8">
           {/* User Profile Card - Redesigned */}
-          <div className="lg:col-span-1 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+          <div id="user-profile-card" className="lg:col-span-1 animate-fade-in" style={{ animationDelay: '0.1s' }}>
             {user && <UserProfileCard userId={user.id} />}
           </div>
 
@@ -366,7 +374,7 @@ const Dashboard = () => {
             {/* Stats Cards - Redesigned */}
             <div className="grid gap-4 md:grid-cols-2 animate-fade-in" style={{ animationDelay: '0.2s' }}>
               {/* Matches Card */}
-              <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-pink-500 to-rose-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+              <Card id="matches-card" className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-pink-500 to-rose-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
                 {/* Card Background */}
                 <div 
                   className="absolute inset-0 opacity-10" 
@@ -400,7 +408,7 @@ const Dashboard = () => {
               </Card>
 
               {/* Likes Card */}
-              <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+              <Card id="likes-card" className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
                 {/* Card Background */}
                 <div 
                   className="absolute inset-0 opacity-10" 
@@ -437,7 +445,7 @@ const Dashboard = () => {
             {/* Discover and Support */}
             <div className="grid gap-4 md:grid-cols-2 animate-fade-in" style={{ animationDelay: '0.3s' }}>
               {/* Discover Card */}
-              <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+              <Card id="discover-card" className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer"
                 onClick={handleExploreClick}
               >
                 {/* Card Background */}
@@ -475,7 +483,7 @@ const Dashboard = () => {
               </Card>
               
               {/* Support Card */}
-              <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+              <Card id="support-card" className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer"
                 onClick={() => navigate("/support")}
               >
                 <div 
