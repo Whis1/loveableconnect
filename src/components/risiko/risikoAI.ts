@@ -129,23 +129,54 @@ const tryUseCards = (
     }
   }
 
-  // Use parachute on strategic neutral territory
-  if (gameState.cardCooldowns.parachute === 0 && neutralTerritories.length > 0) {
-    const strategic = neutralTerritories.find(t => {
-      const enemyNeighbors = t.neighbors.filter(nId => {
+  // Use parachute on enemy territory with 1 troop or strategic target
+  if (gameState.cardCooldowns.parachute === 0) {
+    // Priority 1: Trova territori nemici con 1 truppa adiacenti a territori rossi (conquista strategica)
+    const singleTroopEnemies = enemyTerritories.filter(t => t.troops === 1);
+    const strategic = singleTroopEnemies.find(t => {
+      const redNeighbors = t.neighbors.filter(nId => {
         const n = gameState.territories.find(ter => ter.id === nId);
-        return n && n.owner === 'blue';
+        return n && n.owner === 'red';
       });
-      return enemyNeighbors.length >= 2;
+      return redNeighbors.length >= 1; // Almeno un vicino rosso
     });
     
     if (strategic) {
-      showAnimation(`${opponentNickname}: Paracadutista lanciato! 🪂`);
+      showAnimation(`${opponentNickname}: Paracadutista conquista! 🪂`);
       
       setGameState(prev => ({
         ...prev,
         territories: prev.territories.map(t => 
           t.id === strategic.id ? {...t, owner: 'red', troops: 1} : t
+        ),
+        cardCooldowns: {...prev.cardCooldowns, parachute: 3},
+        boostedTroops: {
+          ...prev.boostedTroops,
+          [strategic.id]: undefined
+        }
+      }));
+      
+      setTimeout(() => {
+        setGameState(prev => ({
+          ...prev,
+          currentPlayer: 'blue',
+          turnTimeLeft: 30
+        }));
+      }, 1500);
+      
+      return true;
+    }
+    
+    // Priority 2: Indebolisci territorio nemico forte (2+ truppe)
+    const strongEnemies = enemyTerritories.filter(t => t.troops >= 3);
+    if (strongEnemies.length > 0) {
+      const target = strongEnemies.reduce((max, t) => t.troops > max.troops ? t : max);
+      showAnimation(`${opponentNickname}: Paracadutista in missione kamikaze! 🪂`);
+      
+      setGameState(prev => ({
+        ...prev,
+        territories: prev.territories.map(t => 
+          t.id === target.id ? {...t, troops: t.troops - 1} : t
         ),
         cardCooldowns: {...prev.cardCooldowns, parachute: 3}
       }));
@@ -159,6 +190,39 @@ const tryUseCards = (
       }, 1500);
       
       return true;
+    }
+    
+    // Priority 3: Fallback su territorio neutrale strategico
+    if (neutralTerritories.length > 0) {
+      const neutralStrategic = neutralTerritories.find(t => {
+        const blueNeighbors = t.neighbors.filter(nId => {
+          const n = gameState.territories.find(ter => ter.id === nId);
+          return n && n.owner === 'blue';
+        });
+        return blueNeighbors.length >= 2;
+      });
+      
+      if (neutralStrategic) {
+        showAnimation(`${opponentNickname}: Paracadutista lanciato! 🪂`);
+        
+        setGameState(prev => ({
+          ...prev,
+          territories: prev.territories.map(t => 
+            t.id === neutralStrategic.id ? {...t, owner: 'red', troops: 1} : t
+          ),
+          cardCooldowns: {...prev.cardCooldowns, parachute: 3}
+        }));
+        
+        setTimeout(() => {
+          setGameState(prev => ({
+            ...prev,
+            currentPlayer: 'blue',
+            turnTimeLeft: 30
+          }));
+        }, 1500);
+        
+        return true;
+      }
     }
   }
 

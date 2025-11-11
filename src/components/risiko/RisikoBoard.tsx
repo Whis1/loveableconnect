@@ -475,20 +475,61 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         break;
 
       case 'parachute':
-        if (gameState.cardCooldowns.parachute === 0 && (!territory.owner || territory.troops === 0)) {
+        if (gameState.cardCooldowns.parachute === 0) {
+          // Può atterrare su territori vuoti o nemici
+          if (territory.owner === 'blue') {
+            toast.error("Non puoi paracadutare sul tuo territorio!");
+            return;
+          }
+
           // Play parachute sound
           parachuteSound.currentTime = 0;
           parachuteSound.play().catch(console.error);
 
-          showCombatAnimation("🪂 Paracadutista lanciato!");
-          setGameState(prev => ({
-            ...prev,
-            territories: prev.territories.map(t => 
-              t.id === territoryId ? {...t, owner: 'blue', troops: 1} : t
-            ),
-            cardCooldowns: {...prev.cardCooldowns, parachute: 3},
-            selectedCard: null
-          }));
+          if (!territory.owner || territory.troops === 0) {
+            // Territorio vuoto/neutrale - conquista normale
+            showCombatAnimation("🪂 Paracadutista lanciato!");
+            setGameState(prev => ({
+              ...prev,
+              territories: prev.territories.map(t => 
+                t.id === territoryId ? {...t, owner: 'blue', troops: 1} : t
+              ),
+              cardCooldowns: {...prev.cardCooldowns, parachute: 3},
+              selectedCard: null
+            }));
+            toast.success("Territorio conquistato!");
+          } else if (territory.owner === 'red') {
+            // Territorio nemico - logica di combattimento
+            if (territory.troops === 1) {
+              // 1 truppa nemica - la uccide e si posiziona
+              showCombatAnimation("🪂 Paracadutista elimina il nemico!");
+              setGameState(prev => ({
+                ...prev,
+                territories: prev.territories.map(t => 
+                  t.id === territoryId ? {...t, owner: 'blue', troops: 1} : t
+                ),
+                cardCooldowns: {...prev.cardCooldowns, parachute: 3},
+                selectedCard: null,
+                boostedTroops: {
+                  ...prev.boostedTroops,
+                  [territoryId]: undefined // Rimuove eventuali potenziamenti
+                }
+              }));
+              toast.success("Paracadutista conquista il territorio!");
+            } else {
+              // 2+ truppe nemiche - muore ma toglie -1 truppa
+              showCombatAnimation("🪂 Paracadutista abbattuto! -1 truppa nemica");
+              setGameState(prev => ({
+                ...prev,
+                territories: prev.territories.map(t => 
+                  t.id === territoryId ? {...t, troops: t.troops - 1} : t
+                ),
+                cardCooldowns: {...prev.cardCooldowns, parachute: 3},
+                selectedCard: null
+              }));
+              toast.info("Paracadutista abbattuto, ma elimina una truppa nemica!");
+            }
+          }
           
           // Wait for animation to complete (3s) before switching turn
           setTimeout(() => switchTurn(), 3000);
