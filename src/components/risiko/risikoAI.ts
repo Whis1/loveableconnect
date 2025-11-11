@@ -52,7 +52,7 @@ export const aiMakeMove = (
   const momentum = GameStateAnalyzer.analyzeMomentum(gameState.territories, aiMemory);
   const riskLevel = GameStateAnalyzer.calculateRiskLevel(gameState.territories);
   const continents = TerritorialAnalyzer.identifyContinents(gameState.territories);
-  const pressurePoints = GameStateAnalyzer.identifyPressurePoints(gameState.territories, 'blue');
+  const pressurePoints = GameStateAnalyzer.identifyPressurePoints(gameState.territories, 'red');
   const playerPrediction = aiMemory.predictPlayerMove(gameState.territories);
   const threats = analyzeThreatLevel(gameState, myTerritories, enemyTerritories);
   const attackOpportunities = findAttackOpportunities(gameState, myTerritories, enemyTerritories);
@@ -96,12 +96,17 @@ export const aiMakeMove = (
     return;
   }
 
-  // 🎴 FASE 6: USO CARTE STRATEGICO (tutte: bomba, paracadute, force, truppe)
+  // 🧱 FASE 6: ASSALTO PREPARATO (sposto truppe sul fronte e attacco subito)
+  if (tryPreparedAssault(gameState, setGameState, handleCombat, showAnimation, myTerritories, opponentNickname)) {
+    return;
+  }
+
+  // 🎴 FASE 7: USO CARTE STRATEGICO (tutte: bomba, paracadute, force, truppe)
   if (tryAllCardsStrategically(gameState, setGameState, showAnimation, handleCombat, myTerritories, enemyTerritories, threats, attackOpportunities, momentum, riskLevel, continents, opponentNickname)) {
     return;
   }
 
-  // 🔄 FASE 7: SPOSTAMENTO TRUPPE TATTICO
+  // 🔄 FASE 8: SPOSTAMENTO TRUPPE TATTICO
   if (tryTacticalTroopMovement(gameState, setGameState, showAnimation, myTerritories, threats, pressurePoints, opponentNickname)) {
     return;
   }
@@ -847,7 +852,53 @@ const tryTacticalTroopMovement = (
     return threat && threat.threatLevel > 6 && pp.troops < 5;
   });
 
-  if (underPressure.length === 0) return false;
+  if (underPressure.length === 0) {
+    // Fallback: rinforza il fronte (territorio rosso adiacente a nemici con poche truppe)
+    const frontline = myTerritories
+      .filter(t => t.neighbors.some(nId => {
+        const n = gameState.territories.find(ter => ter.id === nId);
+        return n && n.owner === 'blue';
+      }))
+      .sort((a, b) => a.troops - b.troops);
+
+    if (frontline.length === 0) return false;
+
+    const target = frontline[0];
+
+    const safeSuppliers = myTerritories.filter(t => {
+      const hasNoEnemyNeighbor = !t.neighbors.some(nId => {
+        const n = gameState.territories.find(ter => ter.id === nId);
+        return n && n.owner === 'blue';
+      });
+      return hasNoEnemyNeighbor && t.troops >= 4 && t.id !== target.id;
+    }).sort((a, b) => b.troops - a.troops);
+
+    if (safeSuppliers.length === 0) return false;
+
+    const source = safeSuppliers[0];
+    const moveTroops = Math.floor(source.troops * 0.4); // sposta 40% verso prima linea
+
+    showAnimation(`${opponentNickname} sta spostando truppe`);
+
+    setGameState(prev => ({
+      ...prev,
+      territories: prev.territories.map(t => {
+        if (t.id === source.id) return { ...t, troops: t.troops - moveTroops };
+        if (t.id === target.id) return { ...t, troops: t.troops + moveTroops };
+        return t;
+      })
+    }));
+
+    setTimeout(() => {
+      setGameState(prev => ({
+        ...prev,
+        currentPlayer: 'blue',
+        turnTimeLeft: 30
+      }));
+    }, 800);
+
+    return true;
+  }
 
   const target = underPressure[0];
   
@@ -955,6 +1006,83 @@ const tryOpportunisticConquest = (
   setTimeout(() => {
     handleCombat(attack.attackerId, attack.defenderId, attack.attackerTroops);
   }, 400);
+
+  return true;
+};
+
+// 🧱 ASSALTO PREPARATO (consolida truppe su un fronte e attacca)
+const tryPreparedAssault = (
+  gameState: GameState,
+  setGameState: React.Dispatch<React.SetStateAction<GameState>>,
+  handleCombat: (attackerId: string, defenderId: string, attackerTroops: number) => void,
+  showAnimation: (message: string) => void,
+  myTerritories: Territory[],
+  opponentNickname: string
+): boolean => {
+  // Trova fronti: territori rossi adiacenti a nemici
+  const fronts = myTerritories.filter(a =>
+    a.neighbors.some(nId => {
+      const n = gameState.territories.find(t => t.id === nId);
+      return n && n.owner === 'blue';
+    })
+  );
+
+  // Candidati: preferisci nemici con 1-2 truppe
+  type Candidate = { attacker: Territory; enemy: Territory; supplier: Territory; move: number };
+  const candidates: Candidate[] = [];
+
+  for (const a of fronts) {
+    const enemies = a.neighbors
+      .map(nId => gameState.territories.find(t => t.id === nId))
+      .filter((t): t is Territory => !!t && t.owner === 'blue')
+      .sort((e1, e2) => e1.troops - e2.troops);
+
+    if (enemies.length === 0) continue;
+    const e = enemies[0];
+
+    // Fornitori adiacenti al fronte con abbastanza truppe
+    const suppliers = a.neighbors
+      .map(nId => gameState.territories.find(t => t.id === nId))
+      .filter((t): t is Territory => !!t && t.owner === 'red' && t.id !== a.id && t.troops >= 4)
+      .sort((s1, s2) => s2.troops - s1.troops);
+
+    if (suppliers.length === 0) continue;
+
+    const s = suppliers[0];
+    const move = Math.min(2, s.troops - 1); // muovi 1-2 truppe per creare vantaggio
+    if (move <= 0) continue;
+
+    candidates.push({ attacker: a, enemy: e, supplier: s, move });
+  }
+
+  if (candidates.length === 0) return false;
+
+  // Punteggio: preferisci nemico con 1 truppa e attaccante con più vicini strategici
+  candidates.sort((c1, c2) => {
+    const score = (c: Candidate) => (c.enemy.troops <= 1 ? 100 : 50) + (c.attacker.neighbors.length * 2) - c.enemy.troops;
+    return score(c2) - score(c1);
+  });
+
+  const best = candidates[0];
+
+  // Sposta e attacca subito
+  showAnimation(`${opponentNickname} sta spostando truppe`);
+  setGameState(prev => ({
+    ...prev,
+    territories: prev.territories.map(t => {
+      if (t.id === best.supplier.id) return { ...t, troops: t.troops - best.move };
+      if (t.id === best.attacker.id) return { ...t, troops: t.troops + best.move };
+      return t;
+    })
+  }));
+
+  // Calcola truppe che attaccheranno (tutte meno 1)
+  const plannedAttackTroops = Math.max(1, best.attacker.troops + best.move - 1);
+
+  setTimeout(() => {
+    showAnimation(`${opponentNickname} sta attaccando`);
+    handleCombat(best.attacker.id, best.enemy.id, plannedAttackTroops);
+  }, 350);
 
   return true;
 };
