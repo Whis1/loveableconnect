@@ -10,32 +10,105 @@ export interface Territory {
   size: number;
 }
 
-// Generate irregular continent-like path with realistic shapes
+// Generate realistic geographic territory shapes
 const generateContinentPath = (centerX: number, centerY: number, size: number, seed: number): string => {
   const points: [number, number][] = [];
-  // More points for more complex, realistic shapes
-  const numPoints = 8 + Math.floor(seed * 8);
   
-  for (let i = 0; i < numPoints; i++) {
-    const angle = (i / numPoints) * Math.PI * 2;
-    // Much more variation in distance to create irregular continent shapes
-    const variance = 0.4 + (Math.sin(seed * 100 + i * 7) * 0.4) + (Math.cos(seed * 50 + i * 3) * 0.3);
-    const distance = size * variance;
-    
-    // Add some jaggedness for realistic coastlines
-    const jitterX = Math.sin(seed * 200 + i * 11) * size * 0.15;
-    const jitterY = Math.cos(seed * 200 + i * 13) * size * 0.15;
-    
-    const x = centerX + Math.cos(angle) * distance + jitterX;
-    const y = centerY + Math.sin(angle) * distance + jitterY;
-    points.push([x, y]);
+  // Create different base shapes for variety
+  const shapeType = Math.floor(seed * 5);
+  
+  if (shapeType === 0) {
+    // Elongated horizontal continent (like South America)
+    const numPoints = 12;
+    for (let i = 0; i < numPoints; i++) {
+      const angle = (i / numPoints) * Math.PI * 2;
+      const horizontalStretch = 1.4 + Math.sin(seed * 100) * 0.3;
+      const verticalCompression = 0.7;
+      const radiusVariation = 0.6 + Math.sin(seed * 50 + i * 3) * 0.4 + Math.cos(seed * 30 + i * 5) * 0.25;
+      
+      const x = centerX + Math.cos(angle) * size * radiusVariation * horizontalStretch;
+      const y = centerY + Math.sin(angle) * size * radiusVariation * verticalCompression;
+      
+      // Add peninsulas and bays
+      if (i % 3 === 0) {
+        const peninsulaExtend = Math.sin(seed * 200 + i) * size * 0.3;
+        points.push([x + peninsulaExtend * Math.cos(angle), y + peninsulaExtend * Math.sin(angle)]);
+      } else {
+        points.push([x, y]);
+      }
+    }
+  } else if (shapeType === 1) {
+    // Vertical elongated (like Italy or Chile)
+    const numPoints = 14;
+    for (let i = 0; i < numPoints; i++) {
+      const angle = (i / numPoints) * Math.PI * 2;
+      const horizontalCompression = 0.6;
+      const verticalStretch = 1.5 + Math.cos(seed * 80) * 0.4;
+      const radiusVariation = 0.55 + Math.sin(seed * 60 + i * 4) * 0.45;
+      
+      const x = centerX + Math.cos(angle) * size * radiusVariation * horizontalCompression;
+      const y = centerY + Math.sin(angle) * size * radiusVariation * verticalStretch;
+      points.push([x, y]);
+    }
+  } else if (shapeType === 2) {
+    // Large blocky continent (like Africa or Australia)
+    const numPoints = 10;
+    for (let i = 0; i < numPoints; i++) {
+      const angle = (i / numPoints) * Math.PI * 2;
+      const radiusVariation = 0.75 + Math.sin(seed * 70 + i * 2) * 0.25;
+      
+      const x = centerX + Math.cos(angle) * size * radiusVariation;
+      const y = centerY + Math.sin(angle) * size * radiusVariation;
+      
+      // Add irregular edges
+      const edgeJitter = Math.sin(seed * 150 + i * 7) * size * 0.2;
+      points.push([x + edgeJitter, y + edgeJitter * 0.8]);
+    }
+  } else if (shapeType === 3) {
+    // Archipelago-like (island chains)
+    const numPoints = 8;
+    for (let i = 0; i < numPoints; i++) {
+      const angle = (i / numPoints) * Math.PI * 2;
+      const radiusVariation = 0.5 + Math.sin(seed * 90 + i * 6) * 0.5;
+      
+      // Create more irregular, island-like shapes
+      const irregularity = Math.cos(seed * 120 + i * 4) * size * 0.25;
+      const x = centerX + Math.cos(angle) * size * radiusVariation + irregularity;
+      const y = centerY + Math.sin(angle) * size * radiusVariation - irregularity * 0.6;
+      points.push([x, y]);
+    }
+  } else {
+    // Complex irregular shape (like Europe with many peninsulas)
+    const numPoints = 16;
+    for (let i = 0; i < numPoints; i++) {
+      const angle = (i / numPoints) * Math.PI * 2;
+      const baseRadius = 0.65 + Math.sin(seed * 45 + i * 2.5) * 0.35;
+      
+      // Add complex coastline with bays and peninsulas
+      let radiusVariation = baseRadius;
+      if (i % 4 === 0) {
+        radiusVariation *= 1.3; // Peninsula
+      } else if (i % 4 === 2) {
+        radiusVariation *= 0.7; // Bay
+      }
+      
+      const x = centerX + Math.cos(angle) * size * radiusVariation;
+      const y = centerY + Math.sin(angle) * size * radiusVariation;
+      
+      // Add coastal irregularity
+      const coastalJitter = Math.sin(seed * 180 + i * 9) * size * 0.15;
+      points.push([x + coastalJitter, y + coastalJitter * 0.7]);
+    }
   }
   
-  // Create smoother curves for more realistic continent shapes
+  // Create smooth paths with Bezier curves for natural coastlines
   let path = `M ${points[0][0]} ${points[0][1]}`;
   for (let i = 0; i < points.length; i++) {
+    const current = points[i];
     const next = points[(i + 1) % points.length];
     const nextNext = points[(i + 2) % points.length];
+    
+    // Use quadratic curves for smoother, more natural looking borders
     const cpx = next[0];
     const cpy = next[1];
     path += ` Q ${cpx} ${cpy} ${(next[0] + nextNext[0]) / 2} ${(next[1] + nextNext[1]) / 2}`;
@@ -66,27 +139,36 @@ export const generateTerritories = (): Territory[] => {
   // Grid layout: 6 rows x 7 columns = 42 territories
   const rows = 6;
   const cols = 7;
-  const spacingX = 125; // Closer together
-  const spacingY = 100; // Closer together vertically
-  const offsetX = 80; // More margin on left
-  const offsetY = 80; // More margin on top to prevent overflow
+  const spacingX = 128;
+  const spacingY = 102;
+  const offsetX = 75;
+  const offsetY = 75;
   
-  // Generate 42 territories with varied sizes and positions
+  // Generate 42 territories with much more varied sizes for realism
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
       const index = row * cols + col;
       const id = `t${index}`;
       const seed = index / 42;
       
-      // Much larger continent sizes for realistic appearance
-      const baseSize = 60;
-      const sizeVariation = 18 + (Math.sin(seed * 50) * 12);
+      // Create varied continent sizes - some large, some small like real geography
+      const sizeCategory = Math.floor(seed * 3);
+      let baseSize;
+      if (sizeCategory === 0) {
+        baseSize = 45 + Math.sin(seed * 100) * 8; // Small territories
+      } else if (sizeCategory === 1) {
+        baseSize = 55 + Math.cos(seed * 80) * 10; // Medium territories
+      } else {
+        baseSize = 70 + Math.sin(seed * 60) * 12; // Large territories
+      }
+      
+      const sizeVariation = 8 + (Math.sin(seed * 50) * 6);
       const size = baseSize + sizeVariation;
       
-      // Stagger odd rows and add some randomness for more organic placement
-      const rowOffset = row % 2 === 1 ? spacingX / 2 : 0;
-      const randomOffsetX = (Math.sin(seed * 123) * 10);
-      const randomOffsetY = (Math.cos(seed * 456) * 8);
+      // Create more organic, geographic-looking placement
+      const rowOffset = row % 2 === 1 ? spacingX / 2.2 : 0;
+      const randomOffsetX = (Math.sin(seed * 123) * 12) + (Math.cos(seed * 234) * 8);
+      const randomOffsetY = (Math.cos(seed * 456) * 10) + (Math.sin(seed * 567) * 6);
       
       const x = offsetX + col * spacingX + rowOffset + randomOffsetX;
       const y = offsetY + row * spacingY + randomOffsetY;
