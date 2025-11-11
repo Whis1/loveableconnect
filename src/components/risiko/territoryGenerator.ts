@@ -136,83 +136,112 @@ const territoryNames = [
 export const generateTerritories = (): Territory[] => {
   const territories: Territory[] = [];
   
-  // Grid layout: 6 rows x 7 columns = 42 territories
-  const rows = 6;
-  const cols = 7;
-  const spacingX = 128;
-  const spacingY = 102;
-  const offsetX = 75;
-  const offsetY = 75;
+  // Mappa tipo Risiko con continenti realistici
+  // Definisco le posizioni dei 42 territori in 6 continenti
+  const continentLayouts = [
+    // Nord America (9 territori) - alto sinistra
+    { x: 150, y: 120, size: 55 }, { x: 220, y: 100, size: 50 }, { x: 290, y: 110, size: 52 },
+    { x: 140, y: 190, size: 58 }, { x: 220, y: 180, size: 56 }, { x: 300, y: 190, size: 54 },
+    { x: 160, y: 260, size: 50 }, { x: 230, y: 250, size: 52 }, { x: 300, y: 270, size: 48 },
+    
+    // Sud America (4 territori) - basso sinistra
+    { x: 200, y: 380, size: 60 }, { x: 270, y: 400, size: 58 },
+    { x: 220, y: 480, size: 56 }, { x: 280, y: 500, size: 54 },
+    
+    // Europa (7 territori) - centro alto
+    { x: 450, y: 90, size: 48 }, { x: 520, y: 100, size: 50 }, { x: 590, y: 95, size: 46 },
+    { x: 430, y: 160, size: 52 }, { x: 510, y: 170, size: 54 }, { x: 590, y: 165, size: 50 },
+    { x: 520, y: 230, size: 48 },
+    
+    // Africa (6 territori) - centro
+    { x: 470, y: 300, size: 58 }, { x: 550, y: 310, size: 60 }, { x: 630, y: 305, size: 56 },
+    { x: 480, y: 390, size: 62 }, { x: 560, y: 400, size: 64 }, { x: 630, y: 395, size: 58 },
+    
+    // Asia (10 territori) - destra alto
+    { x: 720, y: 80, size: 56 }, { x: 800, y: 90, size: 58 }, { x: 880, y: 85, size: 54 },
+    { x: 700, y: 160, size: 60 }, { x: 780, y: 170, size: 62 }, { x: 870, y: 165, size: 58 },
+    { x: 960, y: 160, size: 56 }, { x: 730, y: 250, size: 60 }, { x: 820, y: 260, size: 62 },
+    { x: 910, y: 255, size: 58 },
+    
+    // Oceania (6 territori) - basso destra
+    { x: 880, y: 380, size: 52 }, { x: 960, y: 390, size: 54 },
+    { x: 860, y: 460, size: 50 }, { x: 940, y: 470, size: 52 },
+    { x: 900, y: 550, size: 56 }, { x: 980, y: 560, size: 54 }
+  ];
+
+  // Genera i 42 territori con le posizioni definite
+  continentLayouts.forEach((layout, index) => {
+    const id = `t${index}`;
+    const seed = index / 42;
+    
+    const path = generateContinentPath(layout.x, layout.y, layout.size, seed);
+    
+    territories.push({
+      id,
+      name: territoryNames[index] || `Territorio ${index + 1}`,
+      x: layout.x,
+      y: layout.y,
+      path,
+      neighbors: [],
+      owner: null,
+      troops: 0,
+      size: layout.size
+    });
+  });
   
-  // Generate 42 territories with much more varied sizes for realism
-  for (let row = 0; row < rows; row++) {
-    for (let col = 0; col < cols; col++) {
-      const index = row * cols + col;
-      const id = `t${index}`;
-      const seed = index / 42;
-      
-      // Create varied continent sizes - some large, some small like real geography
-      const sizeCategory = Math.floor(seed * 3);
-      let baseSize;
-      if (sizeCategory === 0) {
-        baseSize = 45 + Math.sin(seed * 100) * 8; // Small territories
-      } else if (sizeCategory === 1) {
-        baseSize = 55 + Math.cos(seed * 80) * 10; // Medium territories
-      } else {
-        baseSize = 70 + Math.sin(seed * 60) * 12; // Large territories
-      }
-      
-      const sizeVariation = 8 + (Math.sin(seed * 50) * 6);
-      const size = baseSize + sizeVariation;
-      
-      // Create more organic, geographic-looking placement
-      const rowOffset = row % 2 === 1 ? spacingX / 2.2 : 0;
-      const randomOffsetX = (Math.sin(seed * 123) * 12) + (Math.cos(seed * 234) * 8);
-      const randomOffsetY = (Math.cos(seed * 456) * 10) + (Math.sin(seed * 567) * 6);
-      
-      const x = offsetX + col * spacingX + rowOffset + randomOffsetX;
-      const y = offsetY + row * spacingY + randomOffsetY;
-      
-      const path = generateContinentPath(x, y, size, seed);
-      
-      territories.push({
-        id,
-        name: territoryNames[index] || `Territorio ${index + 1}`,
-        x,
-        y,
-        path,
-        neighbors: [],
-        owner: null,
-        troops: 0,
-        size
+  // Definisci connessioni realistiche tra territori
+  const connections: [number, number[]][] = [
+    // Nord America (0-8)
+    [0, [1, 3]], [1, [0, 2, 4]], [2, [1, 5]],
+    [3, [0, 4, 6]], [4, [1, 3, 5, 7]], [5, [2, 4, 8]],
+    [6, [3, 7, 9]], [7, [4, 6, 8, 10]], [8, [5, 7, 11]],
+    
+    // Sud America (9-12)
+    [9, [6, 10, 12]], [10, [9, 11]], 
+    [11, [8, 10, 12]], [12, [9, 11]],
+    
+    // Europa (13-19)
+    [13, [14, 16, 20]], [14, [13, 15, 17]], [15, [14, 18, 21]],
+    [16, [13, 17, 19]], [17, [14, 16, 18, 19]], [18, [15, 17, 21]],
+    [19, [16, 17, 22]],
+    
+    // Africa (20-25)
+    [20, [13, 21, 23]], [21, [15, 20, 22, 24]], [22, [19, 21, 25]],
+    [23, [20, 24]], [24, [21, 23, 25]], [25, [22, 24]],
+    
+    // Asia (26-35)
+    [26, [27, 29, 31]], [27, [26, 28, 30]], [28, [27, 32]],
+    [29, [26, 30, 33]], [30, [27, 29, 31, 34]], [31, [26, 30, 32, 35]],
+    [32, [28, 31, 36]], [33, [29, 34, 37]], [34, [30, 33, 35, 38]],
+    [35, [31, 34, 36, 39]],
+    
+    // Oceania (36-41)
+    [36, [32, 37]], [37, [33, 36, 38]], 
+    [38, [34, 37, 39, 40]], [39, [35, 38, 41]],
+    [40, [38, 41]], [41, [39, 40]],
+    
+    // Collegamenti tra continenti distanti
+    [2, [26]], // Nord America -> Asia (Alaska-Siberia)
+    [8, [13]], // Nord America -> Europa
+    [15, [26]], // Europa -> Asia
+    [22, [29]], // Africa -> Asia (Medio Oriente)
+  ];
+  
+  connections.forEach(([territoryIndex, neighborIndices]) => {
+    const territory = territories[territoryIndex];
+    if (territory) {
+      neighborIndices.forEach(neighborIndex => {
+        const neighborId = `t${neighborIndex}`;
+        if (!territory.neighbors.includes(neighborId)) {
+          territory.neighbors.push(neighborId);
+        }
+        // Aggiungi connessione inversa
+        const neighbor = territories[neighborIndex];
+        if (neighbor && !neighbor.neighbors.includes(territory.id)) {
+          neighbor.neighbors.push(territory.id);
+        }
       });
     }
-  }
-  
-  // Calculate neighbors (adjacent territories in grid)
-  territories.forEach((territory, index) => {
-    const row = Math.floor(index / cols);
-    const col = index % cols;
-    const neighbors: string[] = [];
-    
-    // Check adjacent cells (up to 6 neighbors in hexagonal pattern)
-    const adjacentOffsets = [
-      [-1, 0], [-1, 1],  // top
-      [0, -1], [0, 1],   // sides
-      [1, 0], [1, 1]     // bottom
-    ];
-    
-    adjacentOffsets.forEach(([dRow, dCol]) => {
-      const newRow = row + dRow;
-      const newCol = col + dCol;
-      
-      if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols) {
-        const neighborIndex = newRow * cols + newCol;
-        neighbors.push(`t${neighborIndex}`);
-      }
-    });
-    
-    territory.neighbors = neighbors;
   });
   
   // Initialize starting positions

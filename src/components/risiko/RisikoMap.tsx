@@ -2,7 +2,6 @@ import { Territory } from "./territoryGenerator";
 import { useEffect, useState } from "react";
 import troopsIcon from "@/assets/risiko-troops.png";
 import mapBackground from "@/assets/risiko-background.png";
-import { Home, TreePine, Church, Castle } from "lucide-react";
 
 interface RisikoMapProps {
   territories: Territory[];
@@ -93,32 +92,6 @@ export const RisikoMap = ({
     return owner === 'blue' ? '#3b82f6' : '#ef4444';
   };
 
-  // Generate decorations for each territory
-  const getDecorations = (territory: Territory) => {
-    const decorations: { icon: string; x: number; y: number; rotation: number }[] = [];
-    const seed = parseInt(territory.id.replace('t', ''));
-    const numDecorations = 2 + (seed % 3); // 2-4 decorations per territory
-    
-    const icons = ['home', 'tree', 'church', 'castle'];
-    
-    for (let i = 0; i < numDecorations; i++) {
-      const angle = ((seed + i) / numDecorations) * Math.PI * 2;
-      const distance = territory.size * (0.3 + ((seed + i * 7) % 30) / 100);
-      const x = territory.x + Math.cos(angle) * distance;
-      const y = territory.y + Math.sin(angle) * distance;
-      const rotation = (seed + i * 13) % 360;
-      
-      decorations.push({
-        icon: icons[(seed + i) % icons.length],
-        x,
-        y,
-        rotation
-      });
-    }
-    
-    return decorations;
-  };
-
   return (
     <div className="w-full h-full bg-background rounded-lg border-2 border-border overflow-hidden">
       <svg
@@ -126,18 +99,6 @@ export const RisikoMap = ({
         className="w-full h-full"
       >
         <defs>
-          {/* Pattern per texture alberelli */}
-          <pattern id="treePattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-            <circle cx="5" cy="8" r="2" fill="#2d5016" opacity="0.3"/>
-            <circle cx="15" cy="12" r="1.5" fill="#2d5016" opacity="0.3"/>
-            <circle cx="10" cy="15" r="2" fill="#2d5016" opacity="0.3"/>
-          </pattern>
-          
-          {/* Pattern per striature */}
-          <pattern id="stripePattern" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
-            <line x1="0" y1="0" x2="10" y2="10" stroke="#000" strokeWidth="0.5" opacity="0.1"/>
-          </pattern>
-
           {/* Pattern animato per il movimento delle truppe */}
           <linearGradient id="movingGradient" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#fbbf24" stopOpacity="0"/>
@@ -163,25 +124,31 @@ export const RisikoMap = ({
         {territories.map((territory) => 
           territory.neighbors.map((neighborId) => {
             const neighbor = territories.find(t => t.id === neighborId);
-            if (!neighbor || territory.id > neighborId) return null; // Draw each line once
+            if (!neighbor || territory.id > neighborId) return null;
+            
+            // Calcola distanza per identificare collegamenti lunghi (tra continenti)
+            const dx = territory.x - neighbor.x;
+            const dy = territory.y - neighbor.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const isLongDistance = distance > 300; // Collegamento tra continenti distanti
             
             // Check if this line is being used for troop movement
             const isMovingPath = movingTroops && 
               ((movingTroops.fromId === territory.id && movingTroops.toId === neighborId) ||
-               (movingTroops.fromId === neighborId && movingTroops.toId === territory.id));
+                (movingTroops.fromId === neighborId && movingTroops.toId === territory.id));
             
             return (
               <g key={`${territory.id}-${neighborId}`}>
-                {/* Base line */}
+                {/* Base line - stile diverso per collegamenti distanti */}
                 <line
                   x1={territory.x}
                   y1={territory.y}
                   x2={neighbor.x}
                   y2={neighbor.y}
                   stroke="#8B7355"
-                  strokeWidth={3}
-                  strokeDasharray="8,4"
-                  opacity={0.7}
+                  strokeWidth={isLongDistance ? 2 : 3}
+                  strokeDasharray={isLongDistance ? "6,6" : "8,4"}
+                  opacity={isLongDistance ? 0.5 : 0.7}
                 />
                 {/* Animated overlay when troops are moving */}
                 {isMovingPath && (
@@ -226,35 +193,17 @@ export const RisikoMap = ({
               onClick={() => !disabled && onTerritoryClick(territory.id)}
             />
             
-            {/* Texture overlay */}
+            {/* Linee geografiche interne */}
             <path
               d={territory.path}
-              fill="url(#treePattern)"
-              pointerEvents="none"
-            />
-            <path
-              d={territory.path}
-              fill="url(#stripePattern)"
+              fill="none"
+              stroke="#000"
+              strokeWidth="0.5"
+              opacity="0.15"
+              strokeDasharray="2,2"
               pointerEvents="none"
             />
             
-            {/* Territory decorations (houses, trees, etc) */}
-            {getDecorations(territory).map((decoration, idx) => (
-              <g key={idx} transform={`translate(${decoration.x}, ${decoration.y}) rotate(${decoration.rotation})`}>
-                {decoration.icon === 'home' && (
-                  <Home className="w-3 h-3" style={{ color: '#654321', opacity: 0.6 }} />
-                )}
-                {decoration.icon === 'tree' && (
-                  <TreePine className="w-3 h-3" style={{ color: '#2d5016', opacity: 0.6 }} />
-                )}
-                {decoration.icon === 'church' && (
-                  <Church className="w-3 h-3" style={{ color: '#8B4513', opacity: 0.6 }} />
-                )}
-                {decoration.icon === 'castle' && (
-                  <Castle className="w-3 h-3" style={{ color: '#696969', opacity: 0.6 }} />
-                )}
-              </g>
-            ))}
             
             {/* Territory name - centered and scaled to fit */}
             <text
@@ -262,10 +211,11 @@ export const RisikoMap = ({
               y={territory.y - territory.size * 0.15}
               textAnchor="middle"
               dominantBaseline="middle"
-              className="text-[9px] font-bold fill-white pointer-events-none"
+              className="text-[7px] font-semibold pointer-events-none"
               style={{ 
-                textShadow: '1px 1px 3px rgba(0,0,0,0.9)',
-                fontSize: `${Math.max(8, territory.size / 5.5)}px`
+                fill: '#22c55e',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                fontSize: `${Math.max(6, territory.size / 8)}px`
               }}
             >
               {territory.name}
