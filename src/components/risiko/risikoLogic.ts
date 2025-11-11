@@ -120,18 +120,25 @@ export const canMoveTroops = (
     return true;
   }
 
-  // Fallback minimo solo per territori davvero contigui visivamente
-  const dx = source.x - target.x;
-  const dy = source.y - target.y;
-  const distance = Math.hypot(dx, dy);
-  
-  // Soglia molto bassa - solo per territori che si toccano visivamente
-  if (distance < 120) {
-    console.log(`✓ Vicini per contiguità visiva (${Math.round(distance)}px): ${source.name} -> ${target.name}`);
+  // Stradine esplicite per nome (ponti strategici)
+  const roadNamePairs: [string, string][] = [
+    ['Baia Nebbiosa', 'Bosco Incantato'],
+    ['Giungla Fitta', 'Pianura Fertile'],
+    ['Mare Interno', 'Terre Ghiacciate'],
+    ['Mare Interno', 'Savana Dorata'],
+    ['Mare Interno', 'Bosco Incantato'],
+    ['Fiume Lungo', 'Mare Interno'],
+  ];
+
+  const isRoadLinked = roadNamePairs.some(([a, b]) =>
+    (source.name === a && target.name === b) || (source.name === b && target.name === a)
+  );
+  if (isRoadLinked) {
+    console.log(`✓ Collegati da stradina: ${source.name} -> ${target.name}`);
     return true;
   }
 
-  console.log(`❌ Non adiacenti: ${source.name} -> ${target.name}. Distanza ${Math.round(distance)}`);
+  console.log(`❌ Non adiacenti: ${source.name} -> ${target.name}`);
   console.log(`Vicini di "${source.name}":`, source.neighbors.map(id => {
     const t = allTerritories.find(x => x.id === id);
     return t ? t.name : id;
