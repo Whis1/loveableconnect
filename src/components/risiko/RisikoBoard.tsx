@@ -396,6 +396,17 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
   const blueCount = gameState.territories.filter(t => t.owner === 'blue').length;
   const troopCardAmount = blueCount >= 20 ? 3 : 1;
 
+  // Build avatar URL from storage path or accept full URLs
+  const getAvatarUrl = (avatarPath?: string | null) => {
+    if (!avatarPath) return "";
+    if (/^https?:\/\//.test(avatarPath)) return avatarPath;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    return `${supabaseUrl}/storage/v1/object/public/profile-images/${avatarPath}`;
+  };
+
+  const userAvatarUrl = getAvatarUrl(userProfile?.avatar_url);
+  const opponentAvatarUrl = getAvatarUrl(opponentProfile?.avatar_url);
+
   return (
     <div className="w-full h-full flex flex-col gap-4 p-4">
       {/* Header with Profiles */}
@@ -408,7 +419,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         }`}>
           <div className="relative">
             <img
-              src={`https://tcmhvrlsaggyuukdscue.supabase.co/storage/v1/object/public/avatars/${userProfile?.avatar_url}`}
+              src={userAvatarUrl}
               alt={userProfile?.nickname}
               className="w-12 h-12 rounded-full border-2 border-blue-500 object-cover"
               style={{ objectFit: 'cover', objectPosition: 'center' }}
@@ -451,7 +462,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           </div>
           <div className="relative">
             <img
-              src={`https://tcmhvrlsaggyuukdscue.supabase.co/storage/v1/object/public/avatars/${opponentProfile?.avatar_url}`}
+              src={opponentAvatarUrl}
               alt={opponentProfile?.nickname}
               className="w-12 h-12 rounded-full border-2 border-red-500 object-cover"
               style={{ objectFit: 'cover', objectPosition: 'center' }}

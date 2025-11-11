@@ -23,6 +23,14 @@ export const RisikoVictoryDialog = ({
 }: RisikoVictoryDialogProps) => {
   const playerWon = winner === 'blue';
 
+  const getAvatarUrl = (avatarPath?: string | null) => {
+    if (!avatarPath) return "";
+    if (/^https?:\/\//.test(avatarPath)) return avatarPath;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    return `${supabaseUrl}/storage/v1/object/public/profile-images/${avatarPath}`;
+  };
+
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
@@ -35,7 +43,7 @@ export const RisikoVictoryDialog = ({
         <div className="flex flex-col items-center gap-4 py-6">
           <Avatar className="w-32 h-32 border-4 border-primary">
             <AvatarImage 
-              src={`https://tcmhvrlsaggyuukdscue.supabase.co/storage/v1/object/public/avatars/${userProfile?.avatar_url}`}
+              src={getAvatarUrl(userProfile?.avatar_url)}
               alt={userProfile?.nickname}
             />
             <AvatarFallback className="text-4xl">
