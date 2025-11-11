@@ -2,15 +2,26 @@ import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import matchHeartIcon from "@/assets/match-heart.png";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface MatchBannerProps {
   matchedUserName: string;
+  matchedUserAvatar?: string | null;
   onClose: () => void;
 }
 
-export const MatchBanner = ({ matchedUserName, onClose }: MatchBannerProps) => {
+export const MatchBanner = ({ matchedUserName, matchedUserAvatar, onClose }: MatchBannerProps) => {
   const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(true);
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map(n => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -63,10 +74,17 @@ export const MatchBanner = ({ matchedUserName, onClose }: MatchBannerProps) => {
 
           {/* Main Content */}
           <div className="relative z-10">
-            <div className="mb-6 flex justify-center">
+            <div className="mb-6 flex justify-center items-center gap-4">
               <div className="p-6 bg-white/20 rounded-full backdrop-blur-sm animate-pulse">
                 <img src={matchHeartIcon} alt="Match" className="h-24 w-24" />
               </div>
+              
+              <Avatar className="h-24 w-24 border-4 border-white shadow-2xl">
+                <AvatarImage src={matchedUserAvatar || undefined} alt={matchedUserName} />
+                <AvatarFallback className="bg-gradient-to-br from-pink-400 to-purple-500 text-white text-2xl font-bold">
+                  {getInitials(matchedUserName)}
+                </AvatarFallback>
+              </Avatar>
             </div>
 
             <h2 className="text-6xl font-black text-white mb-4 drop-shadow-lg">
