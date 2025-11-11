@@ -150,37 +150,36 @@ const territoryNames = [
 export const generateTerritories = (): Territory[] => {
   const territories: Territory[] = [];
   
-  // Mappa unica compatta con territori più vicini - 54 territori
-  // Disposizione più compatta per creare un'unica grande massa continentale
+  // Mappa ultra-compatta - territori molto vicini per creare massa unica
   const continentLayouts = [
-    // Nord America (10 territori) - sinistra alto
-    { x: 180, y: 160, size: 55 }, { x: 270, y: 155, size: 58 }, { x: 360, y: 165, size: 56 }, { x: 450, y: 160, size: 54 },
-    { x: 190, y: 260, size: 60 }, { x: 285, y: 255, size: 62 }, { x: 380, y: 260, size: 60 }, { x: 465, y: 255, size: 58 },
-    { x: 240, y: 360, size: 58 }, { x: 340, y: 365, size: 60 },
+    // Nord America (10 territori) - gruppo compatto sinistra alto
+    { x: 200, y: 180, size: 58 }, { x: 285, y: 175, size: 60 }, { x: 370, y: 180, size: 58 }, { x: 455, y: 175, size: 56 },
+    { x: 210, y: 270, size: 62 }, { x: 300, y: 265, size: 64 }, { x: 390, y: 270, size: 62 }, { x: 475, y: 265, size: 60 },
+    { x: 255, y: 365, size: 60 }, { x: 350, y: 370, size: 62 },
     
-    // Sud America (8 territori) - attaccato al Nord America
-    { x: 180, y: 460, size: 62 }, { x: 280, y: 465, size: 64 }, { x: 370, y: 470, size: 60 },
-    { x: 160, y: 570, size: 65 }, { x: 260, y: 575, size: 68 }, { x: 350, y: 580, size: 64 },
-    { x: 210, y: 680, size: 66 }, { x: 310, y: 685, size: 64 },
+    // Sud America (8 territori) - direttamente sotto Nord America, super attaccato
+    { x: 200, y: 465, size: 64 }, { x: 295, y: 470, size: 66 }, { x: 385, y: 475, size: 62 },
+    { x: 180, y: 570, size: 67 }, { x: 275, y: 575, size: 70 }, { x: 365, y: 580, size: 66 },
+    { x: 230, y: 675, size: 68 }, { x: 325, y: 680, size: 66 },
     
-    // Europa (9 territori) - centro, attaccata a Nord America
-    { x: 570, y: 140, size: 52 }, { x: 660, y: 145, size: 54 }, { x: 750, y: 140, size: 52 }, { x: 840, y: 145, size: 50 },
-    { x: 555, y: 240, size: 56 }, { x: 650, y: 245, size: 58 }, { x: 745, y: 240, size: 56 }, { x: 830, y: 245, size: 54 },
-    { x: 650, y: 345, size: 54 },
+    // Europa (9 territori) - centro, attaccata strettamente a Nord America
+    { x: 565, y: 160, size: 54 }, { x: 650, y: 165, size: 56 }, { x: 735, y: 160, size: 54 }, { x: 820, y: 165, size: 52 },
+    { x: 550, y: 255, size: 58 }, { x: 640, y: 260, size: 60 }, { x: 730, y: 255, size: 58 }, { x: 815, y: 260, size: 56 },
+    { x: 640, y: 355, size: 56 },
     
-    // Africa (9 territori) - attaccata a Europa
-    { x: 570, y: 440, size: 60 }, { x: 670, y: 445, size: 62 }, { x: 770, y: 440, size: 60 },
-    { x: 550, y: 550, size: 64 }, { x: 660, y: 555, size: 68 }, { x: 765, y: 550, size: 64 },
-    { x: 530, y: 660, size: 66 }, { x: 640, y: 665, size: 70 }, { x: 745, y: 660, size: 66 },
+    // Africa (9 territori) - direttamente sotto Europa, strettamente unita
+    { x: 560, y: 450, size: 62 }, { x: 655, y: 455, size: 64 }, { x: 750, y: 450, size: 62 },
+    { x: 540, y: 555, size: 66 }, { x: 645, y: 560, size: 70 }, { x: 745, y: 555, size: 66 },
+    { x: 520, y: 660, size: 68 }, { x: 625, y: 665, size: 72 }, { x: 725, y: 660, size: 68 },
     
-    // Asia (12 territori) - destra, attaccata a Europa
-    { x: 930, y: 135, size: 58 }, { x: 1030, y: 140, size: 60 }, { x: 1130, y: 135, size: 58 }, { x: 1230, y: 140, size: 56 },
-    { x: 910, y: 240, size: 62 }, { x: 1020, y: 245, size: 64 }, { x: 1125, y: 240, size: 62 }, { x: 1220, y: 245, size: 60 },
-    { x: 930, y: 350, size: 64 }, { x: 1035, y: 355, size: 66 }, { x: 1140, y: 350, size: 64 }, { x: 1235, y: 355, size: 62 },
+    // Asia (12 territori) - destra, completamente attaccata a Europa
+    { x: 910, y: 155, size: 60 }, { x: 1005, y: 160, size: 62 }, { x: 1100, y: 155, size: 60 }, { x: 1195, y: 160, size: 58 },
+    { x: 895, y: 255, size: 64 }, { x: 995, y: 260, size: 66 }, { x: 1095, y: 255, size: 64 }, { x: 1190, y: 260, size: 62 },
+    { x: 910, y: 360, size: 66 }, { x: 1015, y: 365, size: 68 }, { x: 1115, y: 360, size: 66 }, { x: 1210, y: 365, size: 64 },
     
-    // Oceania (6 territori) - sotto Asia, collegata da stradine
-    { x: 970, y: 520, size: 58 }, { x: 1080, y: 525, size: 60 }, { x: 1185, y: 520, size: 58 },
-    { x: 950, y: 635, size: 62 }, { x: 1060, y: 640, size: 65 }, { x: 1165, y: 635, size: 62 }
+    // Oceania (6 territori) - sotto Asia, ben attaccata
+    { x: 950, y: 480, size: 60 }, { x: 1055, y: 485, size: 62 }, { x: 1155, y: 480, size: 60 },
+    { x: 930, y: 590, size: 64 }, { x: 1040, y: 595, size: 67 }, { x: 1145, y: 590, size: 64 }
   ];
 
   // Genera i 54 territori con le posizioni FISSE definite

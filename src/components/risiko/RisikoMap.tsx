@@ -131,9 +131,9 @@ export const RisikoMap = ({
             const dy = territory.y - neighbor.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
-            // Mostra stradine SOLO per i 4 collegamenti strategici distanti
-            // Tutti gli altri sono attaccati (no linea)
-            if (distance < 250) return null;
+            // Mostra stradine SOLO per collegamenti molto distanti
+            // Soglia alta per massima compattezza
+            if (distance < 300) return null;
             
             const isLongDistance = distance > 450; // Collegamenti intercontinentali
             
@@ -205,14 +205,25 @@ export const RisikoMap = ({
               onClick={() => !disabled && onTerritoryClick(territory.id)}
             />
             
-            {/* Vegetazione/puntini verdi dentro il territorio */}
+            {/* Vegetazione ricca con diverse tonalità di verde dentro il territorio */}
             <g clipPath={`url(#clip-${territory.id})`}>
-              {[...Array(Math.floor(territory.size / 10))].map((_, i) => {
-                const angle = (i / (territory.size / 10)) * Math.PI * 2.3 + territory.x * 0.05;
-                const radius = territory.size * (0.2 + Math.sin(territory.x + i * 2) * 0.25);
+              {[...Array(Math.floor(territory.size / 6))].map((_, i) => {
+                const angle = (i / (territory.size / 6)) * Math.PI * 2.3 + territory.x * 0.05;
+                const radius = territory.size * (0.15 + Math.sin(territory.x + i * 2) * 0.3);
                 const decorX = territory.x + Math.cos(angle) * radius;
                 const decorY = territory.y + Math.sin(angle) * radius;
-                const decorSize = 1.5 + Math.abs(Math.sin(territory.x * 0.5 + i)) * 1;
+                const decorSize = 1.2 + Math.abs(Math.sin(territory.x * 0.5 + i)) * 1.8;
+                
+                // Diverse tonalità di verde per varietà
+                const greenVariations = [
+                  '#22c55e', // Verde base
+                  '#16a34a', // Verde più scuro
+                  '#4ade80', // Verde chiaro
+                  '#15803d', // Verde bosco
+                  '#84cc16', // Verde lime
+                  '#65a30d', // Verde oliva
+                ];
+                const greenColor = greenVariations[i % greenVariations.length];
                 
                 return (
                   <circle
@@ -220,8 +231,8 @@ export const RisikoMap = ({
                     cx={decorX}
                     cy={decorY}
                     r={decorSize}
-                    fill="#22c55e"
-                    opacity={0.5}
+                    fill={greenColor}
+                    opacity={0.6}
                     pointerEvents="none"
                   />
                 );
