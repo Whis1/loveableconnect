@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Plane, Users, Zap } from "lucide-react";
+import { Plane, Users, Zap, BookOpen } from "lucide-react";
 import { RisikoMap } from "./RisikoMap";
 import { RisikoVictoryDialog } from "./RisikoVictoryDialog";
 import { TroopMoveDialog } from "./TroopMoveDialog";
@@ -805,6 +807,103 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
 
         {/* VS, Timer and Emoji Button */}
         <div className="flex flex-col items-center gap-2">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="gap-2"
+              >
+                <BookOpen className="w-4 h-4" />
+                Spiegazione
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl max-h-[80vh]">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold">Come si gioca a Risiko</DialogTitle>
+              </DialogHeader>
+              <ScrollArea className="h-[60vh] pr-4">
+                <div className="space-y-6">
+                  <section>
+                    <h3 className="text-xl font-bold mb-3 text-primary">🎯 Obiettivo del Gioco</h3>
+                    <p className="text-muted-foreground">
+                      L'obiettivo è conquistare tutti i territori sulla mappa sconfiggendo gli avversari. 
+                      Vince chi riesce a controllare l'intera mappa eliminando tutti i giocatori nemici.
+                    </p>
+                  </section>
+
+                  <section>
+                    <h3 className="text-xl font-bold mb-3 text-primary">🎮 Come si Gioca</h3>
+                    <div className="space-y-2 text-muted-foreground">
+                      <p><strong>1. Fase di Rinforzo:</strong> All'inizio di ogni turno ricevi truppe bonus in base ai territori che controlli e ai continenti completi.</p>
+                      <p><strong>2. Fase di Attacco:</strong> Puoi attaccare territori nemici adiacenti. Il combattimento si risolve con dei dadi virtuali.</p>
+                      <p><strong>3. Fase di Movimento:</strong> Alla fine del turno puoi spostare truppe tra i tuoi territori adiacenti per fortificare le tue difese.</p>
+                    </div>
+                  </section>
+
+                  <section>
+                    <h3 className="text-xl font-bold mb-3 text-primary">⚔️ Combattimento</h3>
+                    <div className="space-y-2 text-muted-foreground">
+                      <p>Quando attacchi un territorio nemico:</p>
+                      <ul className="list-disc pl-6 space-y-1">
+                        <li>L'attaccante può usare fino a 3 truppe per attaccare</li>
+                        <li>Il difensore può usare fino a 2 truppe per difendersi</li>
+                        <li>Si lanciano i dadi e si confrontano i risultati</li>
+                        <li>La truppa con il dado più basso perde un'unità</li>
+                        <li>Se conquisti il territorio, devi spostare almeno le truppe che hai usato per attaccare</li>
+                      </ul>
+                    </div>
+                  </section>
+
+                  <section>
+                    <h3 className="text-xl font-bold mb-3 text-primary">🃏 Le Carte Speciali</h3>
+                    <div className="space-y-3 text-muted-foreground">
+                      <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                        <p className="font-bold text-red-400">💣 Carta Bomba</p>
+                        <p className="text-sm">Elimina immediatamente tutte le truppe nemiche da un territorio, conquistandolo istantaneamente. Devastante per punti strategici!</p>
+                      </div>
+                      <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                        <p className="font-bold text-blue-400">🪂 Carta Paracadute</p>
+                        <p className="text-sm">Permette di spostare truppe verso qualsiasi tuo territorio sulla mappa, anche non adiacente. Perfetta per rinforzi d'emergenza!</p>
+                      </div>
+                      <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                        <p className="font-bold text-yellow-400">⚡ Carta Forza</p>
+                        <p className="text-sm">Raddoppia le truppe in un territorio scelto. Usa questa carta per creare una fortezza inespugnabile!</p>
+                      </div>
+                      <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                        <p className="font-bold text-green-400">🎖️ Carta Truppe</p>
+                        <p className="text-sm">Aggiunge +5 truppe bonus da piazzare dove vuoi. Ottima per espansioni rapide o difese critiche!</p>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section>
+                    <h3 className="text-xl font-bold mb-3 text-primary">🌍 Bonus Continenti</h3>
+                    <p className="text-muted-foreground mb-2">
+                      Controllare un intero continente ti dà truppe bonus extra ogni turno:
+                    </p>
+                    <ul className="list-disc pl-6 space-y-1 text-muted-foreground">
+                      <li>Più territori ha un continente, maggiore è il bonus</li>
+                      <li>Difendi i tuoi continenti completi per massimizzare i rinforzi</li>
+                      <li>Conquista i continenti nemici per indebolirli</li>
+                    </ul>
+                  </section>
+
+                  <section>
+                    <h3 className="text-xl font-bold mb-3 text-primary">💡 Consigli Strategici</h3>
+                    <ul className="list-disc pl-6 space-y-1 text-muted-foreground">
+                      <li>Concentra le tue truppe piuttosto che sparpagliarle</li>
+                      <li>Controlla i territori di confine tra continenti (punti strategici)</li>
+                      <li>Usa le carte al momento giusto per ribaltare le sorti della battaglia</li>
+                      <li>Non attaccare troppo: lascia sempre truppe sufficienti per difenderti</li>
+                      <li>Conquista territori adiacenti per creare linee difensive solide</li>
+                    </ul>
+                  </section>
+                </div>
+              </ScrollArea>
+            </DialogContent>
+          </Dialog>
+          
           <div className="text-3xl font-bold flex items-center gap-2">
             <span>⚔️</span>
             <span>VS</span>
