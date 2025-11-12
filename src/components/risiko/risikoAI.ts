@@ -55,7 +55,8 @@ export const aiMakeMove = (
     marchSound: HTMLAudioElement;
   },
   showToast?: (message: string, type: 'success' | 'info' | 'error') => void,
-  setBombingAnimation?: (state: { show: boolean; position: { x: number; y: number } }) => void
+  setBombingAnimation?: (state: { show: boolean; position: { x: number; y: number } }) => void,
+  setMovingTroops?: (state: { fromId: string; toId: string; count: number } | null) => void
 ) => {
   turnCounter++;
   
@@ -144,7 +145,7 @@ export const aiMakeMove = (
   }
 
   // 🔄 FASE 9: SPOSTAMENTO TRUPPE TATTICO
-  if (tryTacticalTroopMovement(gameState, setGameState, showAnimation, myTerritories, threats, pressurePoints, opponentNickname, audioPlayers)) {
+  if (tryTacticalTroopMovement(gameState, setGameState, showAnimation, myTerritories, threats, pressurePoints, opponentNickname, audioPlayers, setMovingTroops)) {
     return;
   }
 
@@ -1154,7 +1155,8 @@ const tryTacticalTroopMovement = (
     parachuteSound: HTMLAudioElement;
     powerUpSound: HTMLAudioElement;
     marchSound: HTMLAudioElement;
-  }
+  },
+  setMovingTroops?: (state: { fromId: string; toId: string; count: number } | null) => void
 ): boolean => {
   // Riduci i movimenti tattici inutili - solo se realmente necessario
   const underPressure = pressurePoints.filter(pp => {
@@ -1194,24 +1196,40 @@ const tryTacticalTroopMovement = (
       audioPlayers.marchSound.play().catch(console.error);
     }
 
+    // Avvia animazione truppe
+    if (setMovingTroops) {
+      setMovingTroops({
+        fromId: source.id,
+        toId: target.id,
+        count: moveTroops
+      });
+    }
+
     showAnimation(`${opponentNickname} sta spostando truppe`);
 
-    setGameState(prev => ({
-      ...prev,
-      territories: prev.territories.map(t => {
-        if (t.id === source.id) return { ...t, troops: t.troops - moveTroops };
-        if (t.id === target.id) return { ...t, troops: t.troops + moveTroops };
-        return t;
-      })
-    }));
-
+    // Aspetta animazione prima di aggiornare
     setTimeout(() => {
+      if (setMovingTroops) {
+        setMovingTroops(null);
+      }
+      
       setGameState(prev => ({
         ...prev,
-        currentPlayer: 'blue',
-        turnTimeLeft: 30
+        territories: prev.territories.map(t => {
+          if (t.id === source.id) return { ...t, troops: t.troops - moveTroops };
+          if (t.id === target.id) return { ...t, troops: t.troops + moveTroops };
+          return t;
+        })
       }));
-    }, 800);
+
+      setTimeout(() => {
+        setGameState(prev => ({
+          ...prev,
+          currentPlayer: 'blue',
+          turnTimeLeft: 30
+        }));
+      }, 800);
+    }, 1500);
 
     return true;
   }
@@ -1241,28 +1259,44 @@ const tryTacticalTroopMovement = (
       audioPlayers.marchSound.play().catch(console.error);
     }
 
+    // Avvia animazione truppe
+    if (setMovingTroops) {
+      setMovingTroops({
+        fromId: source.id,
+        toId: stepId,
+        count: moveTroops
+      });
+    }
+
     showAnimation(`${opponentNickname} sta spostando truppe`);
 
-    setGameState(prev => ({
-      ...prev,
-      territories: prev.territories.map(t => {
-        if (t.id === source.id) {
-          return { ...t, troops: t.troops - moveTroops };
-        }
-        if (t.id === stepId) {
-          return { ...t, troops: t.troops + moveTroops };
-        }
-        return t;
-      })
-    }));
-
+    // Aspetta animazione prima di aggiornare
     setTimeout(() => {
+      if (setMovingTroops) {
+        setMovingTroops(null);
+      }
+      
       setGameState(prev => ({
         ...prev,
-        currentPlayer: 'blue',
-        turnTimeLeft: 30
+        territories: prev.territories.map(t => {
+          if (t.id === source.id) {
+            return { ...t, troops: t.troops - moveTroops };
+          }
+          if (t.id === stepId) {
+            return { ...t, troops: t.troops + moveTroops };
+          }
+          return t;
+        })
       }));
-    }, 800);
+
+      setTimeout(() => {
+        setGameState(prev => ({
+          ...prev,
+          currentPlayer: 'blue',
+          turnTimeLeft: 30
+        }));
+      }, 800);
+    }, 1500);
 
     return true;
   }

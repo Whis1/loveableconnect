@@ -185,7 +185,8 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
             else if (type === 'info') toast.info(message);
             else if (type === 'error') toast.error(message);
           },
-          setBombingAnimation
+          setBombingAnimation,
+          setMovingTroops
         );
       }, aiThinkingTime);
       return () => clearTimeout(timer);
