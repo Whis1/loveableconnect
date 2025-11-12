@@ -362,7 +362,6 @@ export const generateTerritories = (): Territory[] => {
   connectByName("Giungla Fitta", "Valle Oscura"); // collegamento strategico
   connectByName("Laguna Azzurra", "Pianura Fertile"); // collegamento strategico
   connectByName("Altopiano", "Lago Cristallo"); // collegamento strategico
-  connectByName("Baia Nebbiosa", "Bosco Incantato"); // collegamento strategico
   connectByName("Mare Interno", "Terre Ghiacciate"); // collegamento strategico
   connectByName("Mare Interno", "Bosco Incantato"); // collegamento strategico
   connectByName("Fiume Lungo", "Mare Interno"); // collegamento strategico
@@ -375,7 +374,6 @@ export const generateTerritories = (): Territory[] => {
   connectByName("Piana Verde", "Giungla Fitta"); // Nord America -> Europa
   connectByName("Foresta Nera", "Giungla Fitta"); // Nord America -> Europa
   connectByName("Altopiano", "Delta Paludoso"); // Sud America -> Africa
-  connectByName("Baia Nebbiosa", "Bosco Incantato"); // Sud America -> Africa
   connectByName("Grotte Profonde", "Montagna Sacra"); // Europa -> Asia
   connectByName("Terre Ghiacciate", "Centrale Elettrica"); // Africa -> Oceania
   connectByName("Savana Dorata", "Aeroporto"); // Africa -> Oceania
