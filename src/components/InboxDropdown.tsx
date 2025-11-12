@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Mail, X, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import loveableConnectIcon from "@/assets/loveable-connect-icon.png";
 import {
   Dialog,
   DialogContent,
@@ -188,8 +189,8 @@ export const InboxDropdown = () => {
                   >
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <div className="h-8 w-8 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center flex-shrink-0">
-                          <Heart className="h-4 w-4 text-white" />
+                        <div className="h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          <img src={loveableConnectIcon} alt="LoveableConnect" className="h-full w-full object-cover" />
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="font-semibold text-sm text-foreground truncate">
@@ -230,8 +231,8 @@ export const InboxDropdown = () => {
         <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <div className="h-10 w-10 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center">
-                <Heart className="h-5 w-5 text-white" />
+              <div className="h-10 w-10 rounded-full flex items-center justify-center overflow-hidden">
+                <img src={loveableConnectIcon} alt="LoveableConnect" className="h-full w-full object-cover" />
               </div>
               <div>
                 <p className="font-semibold">LoveableConnect</p>
