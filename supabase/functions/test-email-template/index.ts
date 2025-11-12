@@ -165,6 +165,17 @@ serve(async (req) => {
       throw new Error("RESEND_API_KEY non configurata");
     }
 
+    // Con onboarding@resend.dev puoi inviare solo alla tua email Resend
+    const RESEND_TEST_EMAIL = "daishxvii@gmail.com";
+    const isUsingTestDomain = true; // Cambia a false quando usi il dominio verificato
+    
+    if (isUsingTestDomain && testEmail !== RESEND_TEST_EMAIL) {
+      throw new Error(
+        `Con il dominio di test (onboarding@resend.dev), puoi inviare email solo a ${RESEND_TEST_EMAIL}. ` +
+        `Per inviare ad altri indirizzi, verifica il dominio loveableconnect.com su resend.com/domains.`
+      );
+    }
+
     console.log(`Attempting to send test email for template: ${templateKey} to ${testEmail}`);
     
     const resend = new Resend(resendApiKey);
