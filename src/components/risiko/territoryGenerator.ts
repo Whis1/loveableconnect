@@ -374,7 +374,6 @@ export const generateTerritories = (): Territory[] => {
   connectByName("Foresta Nera", "Giungla Fitta"); // Nord America -> Europa
   connectByName("Altopiano", "Delta Paludoso"); // Sud America -> Africa
   connectByName("Grotte Profonde", "Montagna Sacra"); // Europa -> Asia
-  connectByName("Terre Ghiacciate", "Centrale Elettrica"); // Africa -> Oceania
   connectByName("Savana Dorata", "Aeroporto"); // Africa -> Oceania
   connectByName("Torre di Guardia", "Fortezza"); // Europa -> Asia
   connectByName("Torre di Guardia", "Montagna Sacra"); // Europa -> Asia
