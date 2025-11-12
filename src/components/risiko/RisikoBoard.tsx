@@ -715,7 +715,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
               }),
               cardCooldowns: {
                 ...prev.cardCooldowns,
-                blue: {...prev.cardCooldowns.blue, bomb: 5}
+                blue: {...prev.cardCooldowns.blue, bomb: 6}
               },
               selectedCard: null
             }));
@@ -749,7 +749,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
               ),
               cardCooldowns: {
                 ...prev.cardCooldowns,
-                blue: {...prev.cardCooldowns.blue, parachute: 3}
+                blue: {...prev.cardCooldowns.blue, parachute: 5}
               },
               selectedCard: null
             }));
@@ -766,7 +766,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
                 ),
                 cardCooldowns: {
                   ...prev.cardCooldowns,
-                  blue: {...prev.cardCooldowns.blue, parachute: 3}
+                  blue: {...prev.cardCooldowns.blue, parachute: 5}
                 },
                 selectedCard: null,
                 boostedTroops: {
@@ -785,7 +785,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
                 ),
                 cardCooldowns: {
                   ...prev.cardCooldowns,
-                  blue: {...prev.cardCooldowns.blue, parachute: 3}
+                  blue: {...prev.cardCooldowns.blue, parachute: 5}
                 },
                 selectedCard: null
               }));
@@ -814,7 +814,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
             },
             cardCooldowns: {
               ...prev.cardCooldowns,
-              blue: {...prev.cardCooldowns.blue, force: 3}
+              blue: {...prev.cardCooldowns.blue, force: 4}
             },
             selectedCard: null
           }));

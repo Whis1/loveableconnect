@@ -370,7 +370,7 @@ const tryEmergencyDefense = (
             }),
             cardCooldowns: {
               ...prev.cardCooldowns,
-              red: {...prev.cardCooldowns.red, bomb: 5}
+              red: {...prev.cardCooldowns.red, bomb: 6}
             }
           }));
           
@@ -396,7 +396,7 @@ const tryEmergencyDefense = (
           }),
           cardCooldowns: {
             ...prev.cardCooldowns,
-            red: {...prev.cardCooldowns.red, bomb: 5}
+            red: {...prev.cardCooldowns.red, bomb: 6}
           }
         }));
         
@@ -828,7 +828,7 @@ const tryAllCardsStrategically = (
             }),
             cardCooldowns: {
               ...prev.cardCooldowns,
-              red: {...prev.cardCooldowns.red, bomb: 5}
+              red: {...prev.cardCooldowns.red, bomb: 6}
             }
           }));
           
@@ -856,7 +856,7 @@ const tryAllCardsStrategically = (
           }),
           cardCooldowns: {
             ...prev.cardCooldowns,
-            red: {...prev.cardCooldowns.red, bomb: 5}
+            red: {...prev.cardCooldowns.red, bomb: 6}
           }
         }));
         
@@ -935,7 +935,7 @@ const tryAllCardsStrategically = (
         ),
         cardCooldowns: {
           ...prev.cardCooldowns,
-          red: {...prev.cardCooldowns.red, parachute: 3}
+          red: {...prev.cardCooldowns.red, parachute: 5}
         }
       }));
       
@@ -983,7 +983,7 @@ const tryAllCardsStrategically = (
         ),
         cardCooldowns: {
           ...prev.cardCooldowns,
-          red: {...prev.cardCooldowns.red, parachute: 3}
+          red: {...prev.cardCooldowns.red, parachute: 5}
         }
       }));
       
@@ -1086,7 +1086,7 @@ const tryAllCardsStrategically = (
             }),
             cardCooldowns: {
               ...prev.cardCooldowns,
-              red: {...prev.cardCooldowns.red, bomb: 5}
+              red: {...prev.cardCooldowns.red, bomb: 6}
             }
           }));
           
@@ -1113,7 +1113,7 @@ const tryAllCardsStrategically = (
           }),
           cardCooldowns: {
             ...prev.cardCooldowns,
-            red: {...prev.cardCooldowns.red, bomb: 5}
+            red: {...prev.cardCooldowns.red, bomb: 6}
           }
         }));
         
@@ -1164,7 +1164,7 @@ const tryAllCardsStrategically = (
         ),
         cardCooldowns: {
           ...prev.cardCooldowns,
-          red: {...prev.cardCooldowns.red, parachute: 3}
+          red: {...prev.cardCooldowns.red, parachute: 5}
         }
       }));
       
@@ -1199,7 +1199,7 @@ const tryAllCardsStrategically = (
         ),
         cardCooldowns: {
           ...prev.cardCooldowns,
-          red: {...prev.cardCooldowns.red, parachute: 3}
+          red: {...prev.cardCooldowns.red, parachute: 5}
         }
       }));
       
