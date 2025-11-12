@@ -155,7 +155,7 @@ export const aiMakeMove = (
     }));
     
     showAnimation(`+${amount} truppe aggiunte!`);
-    if (showToast) showToast(`${opponentNickname}: +${amount} truppe aggiunte`, 'success');
+    if (showToast) showToast(`${opponentNickname} si è aggiunto +${amount} truppe`, 'success');
   }
 
   setTimeout(() => {
@@ -592,7 +592,7 @@ const tryAllCardsStrategically = (
     if (excellentAttack) cardScores.force = 100;
   }
 
-  // BOMBA: Alto valore se ci sono minacce concentrate
+  // BOMBA: Alto valore se ci sono minacce concentrate o nemici con 4+ truppe
   if (gameState.cardCooldowns.red.bomb === 0 && enemyTerritories.length > 0) {
     const dangerousEnemies = enemyTerritories.filter(t => t.troops >= 4);
     if (dangerousEnemies.length > 0) {
@@ -603,7 +603,10 @@ const tryAllCardsStrategically = (
         }).length;
         return adjacentRed * t.troops;
       }));
-      if (maxThreat >= 12) cardScores.bomb = 90;
+      // Soglia abbassata da 12 a 8 per usare più spesso la bomba
+      if (maxThreat >= 8) cardScores.bomb = 95;
+      // Bonus extra se ci sono nemici molto forti (6+ truppe)
+      else if (dangerousEnemies.some(t => t.troops >= 6)) cardScores.bomb = 85;
     }
   }
 
@@ -685,7 +688,8 @@ const tryAllCardsStrategically = (
       })
       .sort((a, b) => b.threat - a.threat);
 
-    if (dangerousEnemies.length > 0 && dangerousEnemies[0].threat >= 12) {
+    // Soglia abbassata da 12 a 8, o anche su nemici molto forti (6+ truppe) senza considerare threat
+    if (dangerousEnemies.length > 0 && (dangerousEnemies[0].threat >= 8 || dangerousEnemies[0].territory.troops >= 6)) {
       const target = dangerousEnemies[0].territory;
       
       // Riproduci audio bomba
@@ -1101,7 +1105,7 @@ const tryAllCardsStrategically = (
     }));
     
     showAnimation(`+${amount} truppe aggiunte!`);
-    if (showToast) showToast(`${opponentNickname}: +${amount} truppe aggiunte`, 'success');
+    if (showToast) showToast(`${opponentNickname} si è aggiunto +${amount} truppe`, 'success');
     
     setTimeout(() => {
       setGameState(prev => ({
