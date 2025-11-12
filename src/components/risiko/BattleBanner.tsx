@@ -175,79 +175,93 @@ export const BattleBanner = ({
                   <ScrollArea className="h-[60vh] pr-4">
                     <div className="space-y-6">
                       <section>
-                        <h3 className="text-xl font-bold mb-3 text-primary">🎯 Obiettivo del Gioco</h3>
-                        <p className="text-muted-foreground">
-                          L'obiettivo è conquistare tutti i territori sulla mappa sconfiggendo gli avversari. 
-                          Vince chi riesce a controllare l'intera mappa eliminando tutti i giocatori nemici.
+                        <h3 className="text-2xl font-bold mb-4 text-primary">Benvenuto nel Risiko di LoveableConnect!</h3>
+                        <p className="text-muted-foreground leading-relaxed">
+                          In questo gioco metterai alla prova la tua astuzia strategica contro altri utenti, per conquistare territori, guadagnare crediti e dimostrare chi domina.
                         </p>
                       </section>
 
                       <section>
-                        <h3 className="text-xl font-bold mb-3 text-primary">🎮 Come si Gioca</h3>
+                        <h3 className="text-xl font-bold mb-3 text-primary">🎯 Regole Base</h3>
                         <div className="space-y-2 text-muted-foreground">
-                          <p><strong>1. Fase di Rinforzo:</strong> All'inizio di ogni turno ricevi truppe bonus in base ai territori che controlli e ai continenti completi.</p>
-                          <p><strong>2. Fase di Attacco:</strong> Puoi attaccare territori nemici adiacenti. Il combattimento si risolve con dei dadi virtuali.</p>
-                          <p><strong>3. Fase di Movimento:</strong> Alla fine del turno puoi spostare truppe tra i tuoi territori adiacenti per fortificare le tue difese.</p>
+                          <p>A ogni inizio partita ti verranno assegnati <strong>5 territori</strong>, in ogni territorio <strong>2 truppe</strong>, per un totale di 10 truppe. Puoi attaccare, difenderti, conquistare o rafforzare le tue truppe. Scegli attentamente la tua strategia.</p>
+                          <p className="font-semibold mt-4">Vince chi conquista tutti i territori dell'avversario, eliminando tutte le sue truppe dalla mappa.</p>
                         </div>
                       </section>
 
                       <section>
-                        <h3 className="text-xl font-bold mb-3 text-primary">⚔️ Combattimento</h3>
-                        <div className="space-y-2 text-muted-foreground">
-                          <p>Quando attacchi un territorio nemico:</p>
-                          <ul className="list-disc pl-6 space-y-1">
-                            <li>L'attaccante può usare fino a 3 truppe per attaccare</li>
-                            <li>Il difensore può usare fino a 2 truppe per difendersi</li>
-                            <li>Si lanciano i dadi e si confrontano i risultati</li>
-                            <li>La truppa con il dado più basso perde un'unità</li>
-                            <li>Se conquisti il territorio, devi spostare almeno le truppe che hai usato per attaccare</li>
-                          </ul>
-                        </div>
+                        <h3 className="text-xl font-bold mb-3 text-primary">🏆 Premi e Classifiche</h3>
+                        <ul className="space-y-2 text-muted-foreground">
+                          <li>🎉 Ogni <strong>vittoria</strong> ti fa guadagnare <strong>6 crediti</strong> e <strong>+20 ELO</strong></li>
+                          <li>🤝 Un <strong>pareggio</strong> non assegna punti né crediti</li>
+                          <li>😔 Una <strong>sconfitta</strong> ti farà perdere <strong>-10 punti ELO</strong></li>
+                        </ul>
                       </section>
 
                       <section>
-                        <h3 className="text-xl font-bold mb-3 text-primary">🃏 Le Carte Speciali</h3>
-                        <div className="space-y-3 text-muted-foreground">
-                          <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-                            <p className="font-bold text-red-400">💣 Carta Bomba</p>
-                            <p className="text-sm">Elimina immediatamente tutte le truppe nemiche da un territorio, conquistandolo istantaneamente. Devastante per punti strategici!</p>
-                          </div>
-                          <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                            <p className="font-bold text-blue-400">🪂 Carta Paracadute</p>
-                            <p className="text-sm">Permette di spostare truppe verso qualsiasi tuo territorio sulla mappa, anche non adiacente. Perfetta per rinforzi d'emergenza!</p>
-                          </div>
-                          <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                            <p className="font-bold text-yellow-400">⚡ Carta Forza</p>
-                            <p className="text-sm">Raddoppia le truppe in un territorio scelto. Usa questa carta per creare una fortezza inespugnabile!</p>
-                          </div>
-                          <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-                            <p className="font-bold text-green-400">🎖️ Carta Truppe</p>
-                            <p className="text-sm">Aggiunge +5 truppe bonus da piazzare dove vuoi. Ottima per espansioni rapide o difese critiche!</p>
-                          </div>
-                        </div>
-                      </section>
-
-                      <section>
-                        <h3 className="text-xl font-bold mb-3 text-primary">🌍 Bonus Continenti</h3>
-                        <p className="text-muted-foreground mb-2">
-                          Controllare un intero continente ti dà truppe bonus extra ogni turno:
+                        <h3 className="text-xl font-bold mb-3 text-primary">🃏 Le Carte - La Chiave della Vittoria</h3>
+                        <p className="text-muted-foreground mb-4">
+                          Nel Risiko di LoveableConnect, le carte sono la chiave per vincere o ribaltare qualsiasi battaglia. Ci sono 4 carte totali, e ognuna può cambiare il destino della partita.
                         </p>
-                        <ul className="list-disc pl-6 space-y-1 text-muted-foreground">
-                          <li>Più territori ha un continente, maggiore è il bonus</li>
-                          <li>Difendi i tuoi continenti completi per massimizzare i rinforzi</li>
-                          <li>Conquista i continenti nemici per indebolirli</li>
-                        </ul>
+                        
+                        <div className="space-y-4">
+                          <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+                            <p className="font-bold text-green-400 text-lg mb-2">🎴 1. Aggiungi Truppe</p>
+                            <div className="text-sm text-muted-foreground space-y-2">
+                              <p>Questa carta ti permette di rinforzare il tuo esercito aggiungendo nuove truppe.</p>
+                              <p>Hai la possibilità di inviare <strong>+1 truppa per turno</strong> su un tuo territorio conquistato, ma più territori conquisti, più rinforzi riceverai:</p>
+                              <ul className="list-disc pl-6 space-y-1 mt-2">
+                                <li>Se controlli <strong>10 territori</strong>, la carta aumenta di <strong>+2 truppe</strong></li>
+                                <li>Se ne hai <strong>20</strong>, diventa <strong>+4 truppe</strong></li>
+                                <li>Se domini <strong>28 territori</strong>, diventa <strong>+6 truppe</strong> a ogni utilizzo</li>
+                              </ul>
+                              <p className="mt-2 italic">Puoi usare questa carta ogni turno, e rappresenta il tuo potere politico e territoriale crescente.</p>
+                            </div>
+                          </div>
+
+                          <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                            <p className="font-bold text-red-400 text-lg mb-2">💣 2. Bombardamento Aereo</p>
+                            <div className="text-sm text-muted-foreground space-y-2">
+                              <p>Un'arma devastante. Può essere usata <strong>una volta ogni 5 turni</strong>.</p>
+                              <p>Elimina <strong>2 truppe nemiche</strong> in un colpo solo. Pianifica con attenzione la tua strategia. Un bombardamento ben piazzato può cambiare il corso di una guerra… o farti vincere una partita.</p>
+                            </div>
+                          </div>
+
+                          <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                            <p className="font-bold text-blue-400 text-lg mb-2">🪂 3. Paracadutista</p>
+                            <div className="text-sm text-muted-foreground space-y-2">
+                              <p>La carta più audace e imprevedibile, può essere usata <strong>una volta ogni 3 turni</strong>.</p>
+                              <p>Ti consente di conquistare territori vicini o distanti, e far atterrare una truppa in un territorio nemico.</p>
+                              <ul className="list-disc pl-6 space-y-1 mt-2">
+                                <li>Se il nemico ha <strong>una sola truppa</strong>, il tuo paracadutista la elimina e <strong>conquista il territorio</strong></li>
+                                <li>Ma se ci sono <strong>più truppe</strong>, il tuo soldato cadrà in battaglia senza conquistare nulla</li>
+                              </ul>
+                              <p className="mt-2 italic">È una mossa rischiosa, ma letale se usata al momento giusto.</p>
+                            </div>
+                          </div>
+
+                          <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                            <p className="font-bold text-yellow-400 text-lg mb-2">⚔️ 4. Potenziamento Truppe</p>
+                            <div className="text-sm text-muted-foreground space-y-2">
+                              <p>La carta perfetta per gli scontri diretti. Può essere usata <strong>una volta ogni 3 turni</strong>.</p>
+                              <p>Quando una tua truppa ha il potenziamento attivo:</p>
+                              <ul className="list-disc pl-6 space-y-1 mt-2">
+                                <li>In un <strong>1 vs 1</strong>, vince automaticamente</li>
+                                <li>In un <strong>1 vs 2</strong>, riesce a pareggiare, ma perde il potere dopo il primo scontro</li>
+                              </ul>
+                              <p className="mt-2 italic">Usala con intelligenza: una truppa potenziata nel punto giusto può ribaltare un'intera partita.</p>
+                            </div>
+                          </div>
+                        </div>
                       </section>
 
                       <section>
-                        <h3 className="text-xl font-bold mb-3 text-primary">💡 Consigli Strategici</h3>
-                        <ul className="list-disc pl-6 space-y-1 text-muted-foreground">
-                          <li>Concentra le tue truppe piuttosto che sparpagliarle</li>
-                          <li>Controlla i territori di confine tra continenti (punti strategici)</li>
-                          <li>Usa le carte al momento giusto per ribaltare le sorti della battaglia</li>
-                          <li>Non attaccare troppo: lascia sempre truppe sufficienti per difenderti</li>
-                          <li>Conquista territori adiacenti per creare linee difensive solide</li>
-                        </ul>
+                        <h3 className="text-xl font-bold mb-3 text-primary">💡 Conclusione</h3>
+                        <div className="text-muted-foreground space-y-2">
+                          <p className="font-semibold">Usa le carte con strategia.</p>
+                          <p>Ogni decisione può portarti alla vittoria o farti perdere tutto. Sfrutta i momenti giusti, osserva l'avversario e conquista la mappa.</p>
+                          <p className="text-lg font-bold text-primary mt-4">Alla fine, solo uno sarà il vero dominatore.</p>
+                        </div>
                       </section>
                     </div>
                   </ScrollArea>
