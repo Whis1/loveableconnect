@@ -78,8 +78,8 @@ serve(async (req) => {
       logStep("No existing customer");
     }
 
-    // Price ID per Regalo Premium Mensile (299.99 EUR) - include messaggi vocali
-    const priceId = "price_1SOdt0K6IHDbrxmEur0p7hKi";
+    // Price ID per Regalo Premium Mensile (399.99 EUR) - include messaggi vocali
+    const priceId = "price_1SSdgNK6IHDbrxmESA6GPN1Q";
 
     // Crea sessione checkout con metadata per tracciare il regalo
     const origin = req.headers.get("origin") || "http://localhost:5173";
@@ -124,7 +124,7 @@ serve(async (req) => {
         recipient_id: recipient_id,
         stripe_session_id: session.id,
         subscription_type: "monthly",
-        amount_cents: 29999,
+        amount_cents: 39999,
         currency: "eur",
         status: "pending",
       });
