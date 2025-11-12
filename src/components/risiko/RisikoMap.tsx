@@ -117,7 +117,6 @@ export const RisikoMap = ({
     ['Valle Oscura', 'Pianura Fertile'],
     ['Piana Verde', 'Giungla Fitta'],
     ['Foresta Nera', 'Giungla Fitta'],
-    ['Altopiano', 'Delta Paludoso'],
     ['Grotte Profonde', 'Montagna Sacra'],
     ['Isola Vulcanica', 'Montagna Sacra'],
     ['Savana Dorata', 'Aeroporto'],
