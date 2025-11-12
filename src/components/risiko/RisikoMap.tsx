@@ -367,7 +367,7 @@ export const RisikoMap = ({
           <g key={`troops-${territory.id}`} pointerEvents="none">
             {/* Troops icon and count - icon bigger and above number */}
             {territory.troops > 0 && (
-              <g className={arrivedTroops?.territoryId === territory.id ? 'animate-scale-in' : ''} pointerEvents="none">
+              <g pointerEvents="none">
                 {/* Icon positioned above the number circle */}
                 <image
                   href={troopsIcon}
