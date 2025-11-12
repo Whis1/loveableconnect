@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Plane, Users, Zap, BookOpen } from "lucide-react";
+import { Plane, Users, Zap, BookOpen, Volume2 } from "lucide-react";
 import { RisikoMap } from "./RisikoMap";
 import { RisikoVictoryDialog } from "./RisikoVictoryDialog";
 import { TroopMoveDialog } from "./TroopMoveDialog";
@@ -118,6 +118,8 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
   const [bombSound] = useState(() => new Audio(bombardamentoSound));
   const [parachuteSound] = useState(() => new Audio(paracaduteSound));
   const [powerUpSound] = useState(() => new Audio(powerSound));
+  const [tutorialSound] = useState(() => new Audio("/audio/tutorial_spiegazione.m4a"));
+  const [isTutorialPlaying, setIsTutorialPlaying] = useState(false);
 
   // Preload/unlock audio on first user interaction and set volumes
   useEffect(() => {
@@ -126,9 +128,10 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
     bombSound.volume = 0.8;
     parachuteSound.volume = 0.6;
     powerUpSound.volume = 0.6;
+    tutorialSound.volume = 0.7;
 
     const unlock = () => {
-      const audios = [marchSound, bombSound, parachuteSound, powerUpSound];
+      const audios = [marchSound, bombSound, parachuteSound, powerUpSound, tutorialSound];
       audios.forEach((a) => {
         a.muted = true;
         a.play().then(() => {
@@ -142,7 +145,25 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
 
     window.addEventListener('pointerdown', unlock, { once: true });
     return () => window.removeEventListener('pointerdown', unlock);
-  }, [marchSound, bombSound, parachuteSound, powerUpSound]);
+  }, [marchSound, bombSound, parachuteSound, powerUpSound, tutorialSound]);
+
+  // Handle tutorial audio end
+  useEffect(() => {
+    const handleEnded = () => setIsTutorialPlaying(false);
+    tutorialSound.addEventListener('ended', handleEnded);
+    return () => tutorialSound.removeEventListener('ended', handleEnded);
+  }, [tutorialSound]);
+
+  const handleTutorialAudio = () => {
+    if (isTutorialPlaying) {
+      tutorialSound.pause();
+      tutorialSound.currentTime = 0;
+      setIsTutorialPlaying(false);
+    } else {
+      tutorialSound.play().catch(() => {});
+      setIsTutorialPlaying(true);
+    }
+  };
 
   // AI-only arrival bounce when movement completes + ensure sound
   useEffect(() => {
@@ -959,6 +980,16 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
 
         {/* VS, Timer and Emoji Button */}
         <div className="flex flex-col items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="gap-2 relative z-[60]"
+            onClick={handleTutorialAudio}
+          >
+            <Volume2 className="w-4 h-4" />
+            {isTutorialPlaying ? 'Ferma spiegazione' : 'Ascolta spiegazione'}
+          </Button>
+          
           <Dialog>
             <DialogTrigger asChild>
               <Button 
@@ -967,7 +998,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
                 className="gap-2 relative z-[60]"
               >
                 <BookOpen className="w-4 h-4" />
-                Spiegazione
+                Leggi spiegazione
               </Button>
             </DialogTrigger>
               <DialogContent className="max-w-3xl max-h-[80vh]">
