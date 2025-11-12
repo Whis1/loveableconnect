@@ -129,22 +129,6 @@ export const TrisGameBanner = () => {
   const handleStartGame = async () => {
     const limit = getGameLimit();
     
-    // Carica il profilo subito se non è già caricato
-    if (!currentUserProfile) {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", session.user.id)
-          .maybeSingle();
-        
-        if (profile) {
-          setCurrentUserProfile(profile);
-        }
-      }
-    }
-    
     // Solo monthly premium (tier premium) ha giochi illimitati
     if (credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium')) {
       setGameState("selecting");
@@ -170,7 +154,7 @@ export const TrisGameBanner = () => {
         .from("user_credits")
         .select("balance")
         .eq("user_id", session.user.id)
-        .maybeSingle();
+        .single();
 
       if (credits) {
         await supabase
