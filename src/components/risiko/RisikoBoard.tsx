@@ -1262,6 +1262,87 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
             arrivedTroops={arrivedTroops}
           />
         </div>
+
+        {/* AI Cards on the right side - opponent's cards display */}
+        <div className="flex flex-col gap-2 w-20">
+          <Card 
+            className="p-2 opacity-60 border-red-500/30"
+          >
+            <div className="flex flex-col items-center gap-1 relative">
+              <img 
+                src={troopCardImage} 
+                alt="Truppe Avversario" 
+                className="w-full h-auto rounded"
+              />
+              <span className="absolute bottom-1 text-xl font-bold text-red-500 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
+                +{Math.min(6, Math.floor(gameState.territories.filter(t => t.owner === 'red').length / 5) + 1)}
+              </span>
+            </div>
+          </Card>
+          
+          <Card 
+            className={`p-2 ${
+              gameState.cardCooldowns.red.bomb === 0 && gameState.currentPlayer === 'red'
+                ? 'border-red-500 opacity-90' 
+                : 'opacity-60 border-red-500/30'
+            }`}
+          >
+            <div className="flex flex-col items-center gap-1 relative">
+              <img 
+                src={bombCardImage} 
+                alt="Bomba Avversario" 
+                className="w-full h-auto rounded"
+              />
+              {gameState.cardCooldowns.red.bomb > 0 && (
+                <span className="absolute bottom-1 text-xl font-bold text-red-500 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
+                  {gameState.cardCooldowns.red.bomb}
+                </span>
+              )}
+            </div>
+          </Card>
+          
+          <Card 
+            className={`p-2 ${
+              gameState.cardCooldowns.red.parachute === 0 && gameState.currentPlayer === 'red'
+                ? 'border-red-500 opacity-90' 
+                : 'opacity-60 border-red-500/30'
+            }`}
+          >
+            <div className="flex flex-col items-center gap-1 relative">
+              <img 
+                src={parachuteCardImage} 
+                alt="Paracadutista Avversario" 
+                className="w-full h-auto rounded"
+              />
+              {gameState.cardCooldowns.red.parachute > 0 && (
+                <span className="absolute bottom-1 text-xl font-bold text-red-500 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
+                  {gameState.cardCooldowns.red.parachute}
+                </span>
+              )}
+            </div>
+          </Card>
+          
+          <Card 
+            className={`p-2 ${
+              gameState.cardCooldowns.red.force === 0 && gameState.currentPlayer === 'red'
+                ? 'border-red-500 opacity-90' 
+                : 'opacity-60 border-red-500/30'
+            }`}
+          >
+            <div className="flex flex-col items-center gap-1 relative">
+              <img 
+                src={forceCardImage} 
+                alt="Potenziamento Avversario" 
+                className="w-full h-auto rounded"
+              />
+              {gameState.cardCooldowns.red.force > 0 && (
+                <span className="absolute bottom-1 text-xl font-bold text-red-500 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
+                  {gameState.cardCooldowns.red.force}
+                </span>
+              )}
+            </div>
+          </Card>
+        </div>
       </div>
 
       {/* Move Dialog */}
