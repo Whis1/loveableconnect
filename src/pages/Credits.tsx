@@ -446,7 +446,7 @@ const Credits = () => {
                     {purchasing ? t("credits.processing") : "Inizia Prova Settimanale"}
                   </Button>
                   <p className="text-xs text-muted-foreground text-center">
-                    Rinnovo automatico. Disdici quando vuoi.
+                    Rinnovo automatico. Disdici quando vuoi il rinnovo automatico.
                   </p>
                 </CardContent>
               </Card>
