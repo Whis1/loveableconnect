@@ -445,7 +445,7 @@ const tryEmergencyDefense = (
       
       setTimeout(() => {
         setMovingTroops(null);
-      }, 1200);
+      }, 1000);
     }
 
     showAnimation(`${opponentNickname} sta spostando truppe`);
@@ -464,7 +464,7 @@ const tryEmergencyDefense = (
           return t;
         })
       }));
-    }, 100);
+    }, 1000);
 
     setTimeout(() => {
       setGameState(prev => ({
@@ -472,7 +472,7 @@ const tryEmergencyDefense = (
         currentPlayer: 'blue',
         turnTimeLeft: 30
       }));
-    }, 1300);
+    }, 2000);
 
     return true;
   }
@@ -526,7 +526,7 @@ const tryPreemptiveDefense = (
       
       setTimeout(() => {
         setMovingTroops(null);
-      }, 1200);
+      }, 1000);
     }
 
     showAnimation(`${opponentNickname} sta spostando truppe`);
@@ -545,7 +545,7 @@ const tryPreemptiveDefense = (
           return t;
         })
       }));
-    }, 100);
+    }, 1000);
 
     setTimeout(() => {
       setGameState(prev => ({
@@ -553,7 +553,7 @@ const tryPreemptiveDefense = (
         currentPlayer: 'blue',
         turnTimeLeft: 30
       }));
-    }, 1300);
+    }, 2000);
 
     return true;
   }
@@ -1382,8 +1382,8 @@ const tryTacticalTroopMovement = (
           currentPlayer: 'blue',
           turnTimeLeft: 30
         }));
-      }, 800);
-    }, 1500);
+      }, 1000);
+    }, 1000);
 
     return true;
   }
@@ -1470,8 +1470,8 @@ const tryTacticalTroopMovement = (
           currentPlayer: 'blue',
           turnTimeLeft: 30
         }));
-      }, 800);
-    }, 1500);
+      }, 1000);
+    }, 1000);
 
     return true;
   }
@@ -1817,7 +1817,7 @@ const tryChokePointFortification = (
       
       setTimeout(() => {
         setMovingTroops(null);
-      }, 1200);
+      }, 1000);
     }
 
     // Aggiorna stato DOPO un piccolo delay
@@ -1834,7 +1834,7 @@ const tryChokePointFortification = (
           return t;
         })
       }));
-    }, 100);
+    }, 1000);
 
     setTimeout(() => {
       setGameState(prev => ({
@@ -1842,7 +1842,7 @@ const tryChokePointFortification = (
         currentPlayer: 'blue',
         turnTimeLeft: 30
       }));
-    }, 1300);
+    }, 2000);
 
     return true;
   }
