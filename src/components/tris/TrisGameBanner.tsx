@@ -10,6 +10,9 @@ import { EloLeaderboard } from "./EloLeaderboard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCredits } from "@/hooks/useCredits";
+import trisIcon from "@/assets/tris-icon.png";
+import damaIcon from "@/assets/dama-icon.png";
+import risikoIcon from "@/assets/risiko-icon.png";
 
 interface Profile {
   id: string;
@@ -334,7 +337,9 @@ export const TrisGameBanner = () => {
             className="h-auto p-6 flex flex-col items-center gap-4 bg-gradient-to-br from-blue-500/20 via-blue-600/15 to-blue-700/20 hover:from-blue-500/30 hover:via-blue-600/25 hover:to-blue-700/30 border-2 border-blue-500/40 hover:border-blue-400/60 transition-all duration-300 hover:scale-105 group relative overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-            <div className="text-6xl drop-shadow-lg">❌⭕</div>
+            <div className="w-20 h-20 flex items-center justify-center">
+              <img src={trisIcon} alt="Tris" className="w-full h-full object-contain drop-shadow-lg" />
+            </div>
             <div className="text-center z-10">
               <span className="text-xl font-bold block">Tris</span>
             </div>
@@ -345,7 +350,9 @@ export const TrisGameBanner = () => {
             className="h-auto p-6 flex flex-col items-center gap-4 bg-gradient-to-br from-purple-500/20 via-purple-600/15 to-purple-700/20 hover:from-purple-500/30 hover:via-purple-600/25 hover:to-purple-700/30 border-2 border-purple-500/40 hover:border-purple-400/60 transition-all duration-300 hover:scale-105 group relative overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-            <div className="text-6xl drop-shadow-lg">🔴⚫</div>
+            <div className="w-20 h-20 flex items-center justify-center">
+              <img src={damaIcon} alt="Dama" className="w-full h-full object-contain drop-shadow-lg" />
+            </div>
             <div className="text-center z-10">
               <span className="text-xl font-bold block">Dama</span>
             </div>
@@ -356,7 +363,9 @@ export const TrisGameBanner = () => {
             className="h-auto p-6 flex flex-col items-center gap-4 bg-gradient-to-br from-red-500/20 via-orange-600/15 to-yellow-700/20 hover:from-red-500/30 hover:via-orange-600/25 hover:to-yellow-700/30 border-2 border-red-500/40 hover:border-red-400/60 transition-all duration-300 hover:scale-105 group relative overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-            <div className="text-6xl drop-shadow-lg">🗺️⚔️</div>
+            <div className="w-20 h-20 flex items-center justify-center">
+              <img src={risikoIcon} alt="Risiko" className="w-full h-full object-contain drop-shadow-lg" />
+            </div>
             <div className="text-center z-10">
               <span className="text-xl font-bold block">Risiko</span>
             </div>
