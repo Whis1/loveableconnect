@@ -445,7 +445,7 @@ const tryEmergencyDefense = (
       
       setTimeout(() => {
         setMovingTroops(null);
-      }, 1000);
+      }, 2000);
     }
 
     showAnimation(`${opponentNickname} sta spostando truppe`);
@@ -464,7 +464,7 @@ const tryEmergencyDefense = (
           return t;
         })
       }));
-    }, 1000);
+    }, 2000);
 
     setTimeout(() => {
       setGameState(prev => ({
@@ -472,7 +472,7 @@ const tryEmergencyDefense = (
         currentPlayer: 'blue',
         turnTimeLeft: 30
       }));
-    }, 2000);
+    }, 3000);
 
     return true;
   }
@@ -526,7 +526,7 @@ const tryPreemptiveDefense = (
       
       setTimeout(() => {
         setMovingTroops(null);
-      }, 1000);
+      }, 2000);
     }
 
     showAnimation(`${opponentNickname} sta spostando truppe`);
@@ -545,7 +545,7 @@ const tryPreemptiveDefense = (
           return t;
         })
       }));
-    }, 1000);
+    }, 2000);
 
     setTimeout(() => {
       setGameState(prev => ({
@@ -553,7 +553,7 @@ const tryPreemptiveDefense = (
         currentPlayer: 'blue',
         turnTimeLeft: 30
       }));
-    }, 2000);
+    }, 3000);
 
     return true;
   }
@@ -1382,7 +1382,7 @@ const tryTacticalTroopMovement = (
           turnTimeLeft: 30
         }));
       }, 1000);
-    }, 1000);
+    }, 2000);
 
     return true;
   }
@@ -1470,7 +1470,7 @@ const tryTacticalTroopMovement = (
           turnTimeLeft: 30
         }));
       }, 1000);
-    }, 1000);
+    }, 2000);
 
     return true;
   }
@@ -1581,10 +1581,10 @@ const tryAggressiveExpansion = (
         
         setTimeout(() => {
           setMovingTroops(null);
-        }, 1000);
+        }, 2000);
       }
 
-      // Aggiorna stato DOPO animazione (1000ms)
+      // Aggiorna stato DOPO animazione (2000ms)
       setTimeout(() => {
         setGameState(prev => ({
           ...prev,
@@ -1598,16 +1598,16 @@ const tryAggressiveExpansion = (
             return t;
           })
         }));
-      }, 1000);
+      }, 2000);
 
-      // Switch turno DOPO update (2000ms totale)
+      // Switch turno DOPO update (3000ms totale)
       setTimeout(() => {
         setGameState(prev => ({
           ...prev,
           currentPlayer: 'blue',
           turnTimeLeft: 30
         }));
-      }, 2000);
+      }, 3000);
 
       return true;
     }
@@ -1765,7 +1765,7 @@ const tryPreparedAssault = (
     
     setTimeout(() => {
       setMovingTroops(null);
-    }, 1200);
+    }, 2000);
   }
 
   // Sposta e attacca subito
@@ -1780,7 +1780,7 @@ const tryPreparedAssault = (
         return t;
       })
     }));
-  }, 100);
+  }, 2000);
 
   // Calcola truppe che attaccheranno (tutte meno 1)
   const plannedAttackTroops = Math.max(1, best.attacker.troops + best.move - 1);
@@ -1788,7 +1788,7 @@ const tryPreparedAssault = (
   setTimeout(() => {
     showAnimation(`${opponentNickname} sta attaccando`);
     handleCombat(best.attacker.id, best.enemy.id, plannedAttackTroops);
-  }, 350);
+  }, 2250);
 
   return true;
 };
@@ -1846,7 +1846,7 @@ const tryChokePointFortification = (
       
       setTimeout(() => {
         setMovingTroops(null);
-      }, 1000);
+      }, 2000);
     }
 
     // Aggiorna stato DOPO un piccolo delay
@@ -1863,7 +1863,7 @@ const tryChokePointFortification = (
           return t;
         })
       }));
-    }, 1000);
+    }, 2000);
 
     setTimeout(() => {
       setGameState(prev => ({
@@ -1871,7 +1871,7 @@ const tryChokePointFortification = (
         currentPlayer: 'blue',
         turnTimeLeft: 30
       }));
-    }, 2000);
+    }, 3000);
 
     return true;
   }
@@ -1993,10 +1993,10 @@ const tryZoneConsolidation = (
         
         setTimeout(() => {
           setMovingTroops(null);
-        }, 1000);
+        }, 2000);
       }
 
-      // Aggiorna stato DOPO animazione (1000ms)
+      // Aggiorna stato DOPO animazione (2000ms)
       setTimeout(() => {
         setGameState(prev => ({
           ...prev,
@@ -2010,16 +2010,16 @@ const tryZoneConsolidation = (
             return t;
           })
         }));
-      }, 1000);
+      }, 2000);
 
-      // Switch turno DOPO update (2000ms totale)
+      // Switch turno DOPO update (3000ms totale)
       setTimeout(() => {
         setGameState(prev => ({
           ...prev,
           currentPlayer: 'blue',
           turnTimeLeft: 30
         }));
-      }, 2000);
+      }, 3000);
 
       return true;
     }
