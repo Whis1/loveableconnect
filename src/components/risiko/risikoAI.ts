@@ -63,6 +63,16 @@ export const aiMakeMove = (
   const enemyTerritories = gameState.territories.filter(t => t.owner === 'blue');
   const neutralTerritories = gameState.territories.filter(t => !t.owner);
 
+  // 📊 CALCOLO VANTAGGIO TERRITORIALE (più territori = più truppe per turno)
+  const myTerritoryCount = myTerritories.length;
+  const enemyTerritoryCount = enemyTerritories.length;
+  const myTroopsPerTurn = myTerritoryCount >= 20 ? 3 : 1;
+  const enemyTroopsPerTurn = enemyTerritoryCount >= 20 ? 3 : 1;
+  const territorialAdvantage = myTerritoryCount - enemyTerritoryCount;
+  
+  // L'AI sa che conquistare territori è fondamentale per vincere
+  const needsExpansion = territorialAdvantage <= 0 || myTerritoryCount < 15;
+
   // 🧠 ANALISI COMPLETA DELLA SITUAZIONE
   const momentum = GameStateAnalyzer.analyzeMomentum(gameState.territories, aiMemory);
   const riskLevel = GameStateAnalyzer.calculateRiskLevel(gameState.territories);
@@ -74,6 +84,11 @@ export const aiMakeMove = (
 
   console.log('🎯 AI Strategic Analysis:', {
     turn: turnCounter,
+    myTerritories: myTerritoryCount,
+    enemyTerritories: enemyTerritoryCount,
+    territorialAdvantage,
+    myTroopsPerTurn,
+    needsExpansion,
     momentum: momentum.playerMomentum.toFixed(2),
     riskLevel: riskLevel.toFixed(2),
     turnsToDefeat: momentum.turnsToDefeat,
@@ -89,54 +104,56 @@ export const aiMakeMove = (
     }
   }
 
-  // 🎯 FASE 2: PREVISIONE E CONTRATTACCO
+  // 🌍 FASE 2: ESPANSIONE TERRITORIALE AGGRESSIVA (priorità massima!)
+  if (needsExpansion || riskLevel < 0.5) {
+    if (tryAggressiveExpansion(gameState, setGameState, handleCombat, showAnimation, myTerritories, enemyTerritories, neutralTerritories, attackOpportunities, opponentNickname)) {
+      return;
+    }
+  }
+
+  // 🎯 FASE 3: PREVISIONE E CONTRATTACCO
   if (playerPrediction.confidence > 0.5 && playerPrediction.likelyTargets.length > 0) {
     if (tryPreemptiveDefense(gameState, setGameState, showAnimation, playerPrediction, myTerritories, opponentNickname, audioPlayers)) {
       return;
     }
   }
 
-  // 🏆 FASE 3: CONTROLLO CONTINENTALE
+  // 🏁 FASE 4: CONQUISTA OPPORTUNISTICA (priorità territori con 1-3 truppe)
+  if (tryOpportunisticConquest(gameState, setGameState, handleCombat, showAnimation, attackOpportunities, opponentNickname, needsExpansion)) {
+    return;
+  }
+
+  // 🏆 FASE 5: CONTROLLO CONTINENTALE
   if (tryContinentalStrategy(gameState, setGameState, handleCombat, showAnimation, continents, myTerritories, enemyTerritories, attackOpportunities, opponentNickname)) {
     return;
   }
 
-  // ⚔️ FASE 4: ATTACCO CON SIMULAZIONI MONTE CARLO
+  // ⚔️ FASE 6: ATTACCO CON SIMULAZIONI MONTE CARLO
   if (tryMonteCarloAttack(gameState, setGameState, handleCombat, showAnimation, attackOpportunities, riskLevel, opponentNickname)) {
     return;
   }
 
-  // 🏁 FASE 5: CONQUISTA OPPORTUNISTICA (priorità territori con 1-2 truppe)
-  if (tryOpportunisticConquest(gameState, setGameState, handleCombat, showAnimation, attackOpportunities, opponentNickname)) {
-    return;
-  }
-
-  // 🧱 FASE 6: ASSALTO PREPARATO (sposto truppe sul fronte e attacco subito)
+  // 🧱 FASE 7: ASSALTO PREPARATO (sposto truppe sul fronte e attacco subito)
   if (tryPreparedAssault(gameState, setGameState, handleCombat, showAnimation, myTerritories, opponentNickname, audioPlayers)) {
     return;
   }
 
-  // 🎴 FASE 7: USO CARTE STRATEGICO (tutte: bomba, paracadute, force, truppe)
+  // 🎴 FASE 8: USO CARTE STRATEGICO (tutte: bomba, paracadute, force, truppe)
   if (tryAllCardsStrategically(gameState, setGameState, showAnimation, handleCombat, myTerritories, enemyTerritories, threats, attackOpportunities, momentum, riskLevel, continents, opponentNickname, audioPlayers, showToast, setBombingAnimation)) {
     return;
   }
 
-  // 🔄 FASE 8: SPOSTAMENTO TRUPPE TATTICO
+  // 🔄 FASE 9: SPOSTAMENTO TRUPPE TATTICO
   if (tryTacticalTroopMovement(gameState, setGameState, showAnimation, myTerritories, threats, pressurePoints, opponentNickname, audioPlayers)) {
     return;
   }
 
-  // 🛡️ FASE 7: FORTIFICAZIONE CHOKEPOINTS (solo territori critici)
+  // 🛡️ FASE 10: FORTIFICAZIONE CHOKEPOINTS (solo territori critici)
   if (tryChokePointFortification(gameState, setGameState, showAnimation, myTerritories, opponentNickname, audioPlayers)) {
     return;
   }
 
-  // 🌍 FASE 8: ESPANSIONE CALCOLATA
-  if (tryCalculatedExpansion(gameState, setGameState, myTerritories, neutralTerritories, enemyTerritories, riskLevel)) {
-    return;
-  }
-
-  // 🔄 FASE 9: CONSOLIDAMENTO ZONE
+  // 🔄 FASE 11: CONSOLIDAMENTO ZONE
   if (tryZoneConsolidation(gameState, setGameState, myTerritories, threats)) {
     return;
   }
@@ -1289,6 +1306,90 @@ const tryMonteCarloAttack = (
   return false;
 };
 
+// 🌍 ESPANSIONE TERRITORIALE AGGRESSIVA - Priorità massima per conquistare più territori
+const tryAggressiveExpansion = (
+  gameState: GameState,
+  setGameState: React.Dispatch<React.SetStateAction<GameState>>,
+  handleCombat: (attackerId: string, defenderId: string, attackerTroops: number) => void,
+  showAnimation: (message: string) => void,
+  myTerritories: Territory[],
+  enemyTerritories: Territory[],
+  neutralTerritories: Territory[],
+  attackOpportunities: AttackOpportunity[],
+  opponentNickname: string
+): boolean => {
+  // 1. PRIORITÀ: Conquista territori neutrali adiacenti (espansione gratuita)
+  for (const myTerritory of myTerritories) {
+    if (myTerritory.troops < 2) continue;
+
+    const neutralNeighbors = myTerritory.neighbors
+      .map(nId => gameState.territories.find(t => t.id === nId))
+      .filter(t => t && !t.owner) as Territory[];
+
+    if (neutralNeighbors.length > 0) {
+      const target = neutralNeighbors[0];
+      const moveTroops = Math.max(2, Math.floor(myTerritory.troops / 2));
+
+      setGameState(prev => ({
+        ...prev,
+        territories: prev.territories.map(t => {
+          if (t.id === myTerritory.id) {
+            return {...t, troops: t.troops - moveTroops};
+          }
+          if (t.id === target.id) {
+            return {...t, owner: 'red', troops: moveTroops};
+          }
+          return t;
+        })
+      }));
+
+      setTimeout(() => {
+        setGameState(prev => ({
+          ...prev,
+          currentPlayer: 'blue',
+          turnTimeLeft: 30
+        }));
+      }, 500);
+
+      return true;
+    }
+  }
+
+  // 2. ATTACCO AGGRESSIVO: Territori nemici con 1-2 truppe (conquista facile)
+  const easyTargets = attackOpportunities
+    .filter(opp => opp.defenderTroops <= 2 && opp.attackerTroops >= opp.defenderTroops)
+    .sort((a, b) => a.defenderTroops - b.defenderTroops); // Attacca prima i più deboli
+
+  if (easyTargets.length > 0) {
+    const attack = easyTargets[0];
+    showAnimation(`${opponentNickname} sta conquistando territori`);
+
+    setTimeout(() => {
+      handleCombat(attack.attackerId, attack.defenderId, attack.attackerTroops);
+    }, 400);
+
+    return true;
+  }
+
+  // 3. ATTACCO MEDIO: Territori con 3 truppe se abbiamo vantaggio
+  const mediumTargets = attackOpportunities
+    .filter(opp => opp.defenderTroops === 3 && opp.attackerTroops >= opp.defenderTroops + 1)
+    .sort((a, b) => b.attackerTroops - a.attackerTroops);
+
+  if (mediumTargets.length > 0) {
+    const attack = mediumTargets[0];
+    showAnimation(`${opponentNickname} sta espandendo il territorio`);
+
+    setTimeout(() => {
+      handleCombat(attack.attackerId, attack.defenderId, attack.attackerTroops);
+    }, 400);
+
+    return true;
+  }
+
+  return false;
+};
+
 // 🏁 CONQUISTA OPPORTUNISTICA (garantire almeno un tentativo di conquista)
 const tryOpportunisticConquest = (
   gameState: GameState,
@@ -1296,20 +1397,25 @@ const tryOpportunisticConquest = (
   handleCombat: (attackerId: string, defenderId: string, attackerTroops: number) => void,
   showAnimation: (message: string) => void,
   attackOpportunities: AttackOpportunity[],
-  opponentNickname: string
+  opponentNickname: string,
+  needsExpansion: boolean = false
 ): boolean => {
-  // Attacca QUALSIASI territorio con 1-2 truppe se hai almeno parità
-  const cheap = attackOpportunities
-    .filter(opp => opp.defenderTroops <= 3 && opp.attackerTroops >= opp.defenderTroops)
+  // Se ha bisogno di espansione, attacca anche con 1 solo di vantaggio
+  const threshold = needsExpansion ? 0 : 0;
+  
+  // Attacca QUALSIASI territorio con 1-4 truppe se hai almeno parità (o lieve vantaggio se serve espansione)
+  const viable = attackOpportunities
+    .filter(opp => opp.defenderTroops <= 4 && opp.attackerTroops >= opp.defenderTroops + threshold)
     .sort((a, b) => {
-      const valA = (a.continentalValue + a.strategicValue) * (4 - a.defenderTroops);
-      const valB = (b.continentalValue + b.strategicValue) * (4 - b.defenderTroops);
-      return valB - valA;
+      // Priorità massima a territori con meno truppe = più facili da conquistare
+      const priorityA = (100 - a.defenderTroops * 10) + (a.continentalValue + a.strategicValue);
+      const priorityB = (100 - b.defenderTroops * 10) + (b.continentalValue + b.strategicValue);
+      return priorityB - priorityA;
     });
 
-  if (cheap.length === 0) return false;
+  if (viable.length === 0) return false;
 
-  const attack = cheap[0];
+  const attack = viable[0];
   showAnimation(`${opponentNickname} sta attaccando`);
 
   setTimeout(() => {
