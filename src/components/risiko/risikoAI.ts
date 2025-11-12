@@ -1585,8 +1585,6 @@ const tryAggressiveExpansion = (
         }, 1000);
       }
 
-      showAnimation(`${opponentNickname} sta espandendo il territorio`);
-
       // Aggiorna stato DOPO animazione (1000ms)
       setTimeout(() => {
         setGameState(prev => ({
@@ -1998,8 +1996,6 @@ const tryZoneConsolidation = (
           setMovingTroops(null);
         }, 1000);
       }
-
-      showAnimation?.(`${opponentNickname} sta consolidando le truppe`);
 
       // Aggiorna stato DOPO animazione (1000ms)
       setTimeout(() => {
