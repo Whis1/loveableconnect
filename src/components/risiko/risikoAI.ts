@@ -610,32 +610,31 @@ const tryAllCardsStrategically = (
     if (excellentAttack) cardScores.force = 100;
   }
 
-  // BOMBA: Usa anche contro 2-3 truppe nemiche
+  // BOMBA: Colpisce OVUNQUE (minimo 2 truppe nemiche)
   if (gameState.cardCooldowns.red.bomb === 0 && enemyTerritories.length > 0) {
-    const dangerousEnemies = enemyTerritories.filter(t => t.troops >= 2);
-    if (dangerousEnemies.length > 0) {
-      const maxThreat = Math.max(...dangerousEnemies.map(t => {
-        const adjacentRed = t.neighbors.filter(nId => {
-          const n = gameState.territories.find(ter => ter.id === nId);
-          return n && n.owner === 'red';
-        }).length;
-        return adjacentRed * t.troops;
-      }));
-      // Usa bomba molto più facilmente: soglia abbassata a 4
-      if (maxThreat >= 4) cardScores.bomb = 95;
-      // Usa anche contro nemici con 3+ truppe vicini ai nostri territori
-      else if (dangerousEnemies.some(t => t.troops >= 3)) cardScores.bomb = 88;
-      // Usa anche contro 2 truppe se sono adiacenti
-      else if (dangerousEnemies.some(t => t.troops >= 2)) cardScores.bomb = 80;
+    const targets = enemyTerritories.filter(t => t.troops >= 2);
+    if (targets.length > 0) {
+      // Priorità globale: più truppe = più valore
+      const sorted = targets
+        .map(t => {
+          let value = t.troops * 10;
+          const isChokepoint = TerritorialAnalyzer.identifyChokepoints(t, gameState.territories);
+          if (isChokepoint) value += 30;
+          value += t.neighbors.length * 5;
+          return { territory: t, value };
+        })
+        .sort((a, b) => b.value - a.value);
+      
+      cardScores.bomb = 95;
     }
   }
 
-  // PARACADUTE: Alto valore se ci sono obiettivi strategici con 1 truppa
+  // PARACADUTE: Colpisce OVUNQUE (1 truppa = conquista, 5+ truppe = kamikaze)
   if (gameState.cardCooldowns.red.parachute === 0) {
-    const strategicTargets = enemyTerritories.filter(t => t.troops === 1).length;
-    const massiveTargets = enemyTerritories.filter(t => t.troops >= 5).length;
-    if (strategicTargets > 0) cardScores.parachute = 85;
-    else if (massiveTargets > 0) cardScores.parachute = 70;
+    const singleTroops = enemyTerritories.filter(t => t.troops === 1).length;
+    const massiveTroops = enemyTerritories.filter(t => t.troops >= 5).length;
+    if (singleTroops > 0) cardScores.parachute = 90;
+    else if (massiveTroops > 0) cardScores.parachute = 75;
   }
 
   // TRUPPE: Valore basato su situazione difensiva e continentale
@@ -695,22 +694,46 @@ const tryAllCardsStrategically = (
     }
   }
 
-  // BOMBA: Usa anche contro 2-3 truppe
+  // BOMBA: Colpisce OVUNQUE sulla mappa - non serve essere vicini!
   if (gameState.cardCooldowns.red.bomb === 0 && enemyTerritories.length > 0) {
-    const dangerousEnemies = enemyTerritories
+    // 💣 STRATEGIA GLOBALE: La bomba può colpire QUALSIASI territorio nemico
+    const strategicTargets = enemyTerritories
       .filter(t => t.troops >= 2)
       .map(t => {
-        const adjacentMyTerritories = t.neighbors.filter(nId => {
-          const neighbor = gameState.territories.find(ter => ter.id === nId);
-          return neighbor && neighbor.owner === 'red';
-        });
-        return { territory: t, threat: adjacentMyTerritories.length * t.troops };
+        // Calcola valore strategico globale (non serve essere adiacenti!)
+        let strategicValue = 0;
+        
+        // Priorità: territori con molte truppe
+        strategicValue += t.troops * 10;
+        
+        // Bonus se è un chokepoint
+        const isChokepoint = TerritorialAnalyzer.identifyChokepoints(t, gameState.territories);
+        if (isChokepoint) strategicValue += 30;
+        
+        // Bonus se ha tanti vicini (hub strategico)
+        strategicValue += t.neighbors.length * 5;
+        
+        // Bonus se conquistandolo completeremmo un continente
+        const continentValue = continents.find(c => 
+          c.territories.includes(t.name) && c.completionValue >= 0.6
+        );
+        if (continentValue) strategicValue += 25;
+        
+        return { territory: t, strategicValue };
       })
-      .sort((a, b) => b.threat - a.threat);
+      .sort((a, b) => b.strategicValue - a.strategicValue);
 
-    // Usa bomba molto più facilmente: soglia 4, o su qualsiasi nemico con 2+ truppe adiacente
-    if (dangerousEnemies.length > 0 && (dangerousEnemies[0].threat >= 4 || dangerousEnemies[0].territory.troops >= 2)) {
-      const target = dangerousEnemies[0].territory;
+    // 🎲 IMPREVEDIBILITÀ: 40% chance di non scegliere sempre il migliore
+    if (strategicTargets.length > 0) {
+      let target: typeof strategicTargets[0];
+      const randomChoice = Math.random();
+      if (randomChoice > 0.6 && strategicTargets.length > 1) {
+        target = strategicTargets[1]; // 40% secondo migliore
+      } else if (randomChoice > 0.85 && strategicTargets.length > 2) {
+        target = strategicTargets[2]; // 25% terzo migliore
+      } else {
+        target = strategicTargets[0];
+      }
       
       // Riproduci audio bomba
       if (audioPlayers?.bombSound) {
@@ -729,12 +752,13 @@ const tryAllCardsStrategically = (
         
         // Aspetta che l'animazione completi prima di applicare l'effetto
         setTimeout(() => {
-          showAnimation("💣 Bombardamento aereo!");
+          showAnimation("💣 Bombardamento aereo a distanza!");
+          if (showToast) showToast(`${opponentNickname} ha bombardato il tuo territorio "${target.territory.name}" da lontano!`, 'error');
           
           setGameState(prev => ({
             ...prev,
             territories: prev.territories.map(t => {
-              if (t.id === target.id) {
+              if (t.id === target.territory.id) {
                 const newTroops = Math.max(0, t.troops - 2);
                 return {...t, troops: newTroops, owner: newTroops === 0 ? null : t.owner};
               }
@@ -756,12 +780,13 @@ const tryAllCardsStrategically = (
         }, 2300);
       } else {
         // Fallback senza animazione
-        showAnimation("💣 Bombardamento aereo!");
+        showAnimation("💣 Bombardamento aereo a distanza!");
+        if (showToast) showToast(`${opponentNickname} ha bombardato il tuo territorio "${target.territory.name}" da lontano!`, 'error');
         
         setGameState(prev => ({
           ...prev,
           territories: prev.territories.map(t => {
-            if (t.id === target.id) {
+            if (t.id === target.territory.id) {
               const newTroops = Math.max(0, t.troops - 2);
               return {...t, troops: newTroops, owner: newTroops === 0 ? null : t.owner};
             }
@@ -786,24 +811,51 @@ const tryAllCardsStrategically = (
     }
   }
 
-  // PARACADUTE: Usa per blocchi strategici o conquiste rapide
-  if (gameState.cardCooldowns.red.parachute === 0) {
-    // Priorità: territori nemici singoli che bloccano espansioni
-    const blockingEnemies = enemyTerritories.filter(t => {
-      if (t.troops !== 1) return false;
-      const myNeighbors = t.neighbors.filter(nId => {
-        const n = gameState.territories.find(ter => ter.id === nId);
-        return n && n.owner === 'red';
-      });
-      const enemyNeighbors = t.neighbors.filter(nId => {
-        const n = gameState.territories.find(ter => ter.id === nId);
-        return n && n.owner === 'blue';
-      });
-      return myNeighbors.length >= 2 && enemyNeighbors.length >= 2;
-    });
+  // PARACADUTE: Colpisce OVUNQUE sulla mappa - non serve essere vicini!
+  if (gameState.cardCooldowns.red.parachute === 0 && enemyTerritories.length > 0) {
+    // 🪂 STRATEGIA GLOBALE: Il paracadute può colpire QUALSIASI territorio nemico
+    
+    // Priorità 1: Territori con 1 truppa (conquista istantanea ovunque!)
+    const singleTroopTargets = enemyTerritories
+      .filter(t => t.troops === 1)
+      .map(t => {
+        let strategicValue = 50; // Base value
+        
+        // Bonus se è un chokepoint
+        const isChokepoint = TerritorialAnalyzer.identifyChokepoints(t, gameState.territories);
+        if (isChokepoint) strategicValue += 40;
+        
+        // Bonus se conquistandolo completeremmo un continente
+        const continentValue = continents.find(c => 
+          c.territories.includes(t.name) && c.completionValue >= 0.6
+        );
+        if (continentValue) strategicValue += 35;
+        
+        // Bonus se ha tanti vicini (hub)
+        strategicValue += t.neighbors.length * 8;
+        
+        // Bonus se è isolato dal nemico (facile da tenere)
+        const enemyNeighbors = t.neighbors.filter(nId => {
+          const n = gameState.territories.find(ter => ter.id === nId);
+          return n && n.owner === 'blue';
+        }).length;
+        if (enemyNeighbors === 0) strategicValue += 25;
+        
+        return { territory: t, strategicValue };
+      })
+      .sort((a, b) => b.strategicValue - a.strategicValue);
 
-    if (blockingEnemies.length > 0) {
-      const target = blockingEnemies[0];
+    // 🎲 IMPREVEDIBILITÀ nella scelta
+    if (singleTroopTargets.length > 0) {
+      let target: typeof singleTroopTargets[0];
+      const randomChoice = Math.random();
+      if (randomChoice > 0.65 && singleTroopTargets.length > 1) {
+        target = singleTroopTargets[1];
+      } else if (randomChoice > 0.85 && singleTroopTargets.length > 2) {
+        target = singleTroopTargets[2];
+      } else {
+        target = singleTroopTargets[0];
+      }
       
       // Riproduci audio paracadute
       if (audioPlayers?.parachuteSound) {
@@ -811,13 +863,13 @@ const tryAllCardsStrategically = (
         audioPlayers.parachuteSound.play().catch(console.error);
       }
 
-      showAnimation("🪂 Paracadutista elimina il nemico!");
-      if (showToast) showToast(`${opponentNickname} ha buttato paracadutista sul tuo territorio "${target.name}"!`, 'error');
+      showAnimation("🪂 Paracadutista conquista territorio nemico!");
+      if (showToast) showToast(`${opponentNickname} ha lanciato paracadutista sul tuo territorio "${target.territory.name}" da lontano!`, 'error');
       
       setGameState(prev => ({
         ...prev,
         territories: prev.territories.map(t => 
-          t.id === target.id ? {...t, owner: 'red', troops: 1} : t
+          t.id === target.territory.id ? {...t, owner: 'red', troops: 1} : t
         ),
         cardCooldowns: {
           ...prev.cardCooldowns,
@@ -836,10 +888,22 @@ const tryAllCardsStrategically = (
       return true;
     }
 
-    // Kamikaze su concentrazioni massicce (5+ truppe)
-    const massiveForces = enemyTerritories.filter(t => t.troops >= 5);
-    if (massiveForces.length > 0) {
-      const target = massiveForces.sort((a, b) => b.troops - a.troops)[0];
+    // Priorità 2: Kamikaze su concentrazioni massicce (5+ truppe) - colpisce ovunque!
+    const massiveTargets = enemyTerritories
+      .filter(t => t.troops >= 5)
+      .map(t => {
+        let strategicValue = t.troops * 8; // Più truppe = più valore
+        
+        // Bonus se è un chokepoint
+        const isChokepoint = TerritorialAnalyzer.identifyChokepoints(t, gameState.territories);
+        if (isChokepoint) strategicValue += 30;
+        
+        return { territory: t, strategicValue };
+      })
+      .sort((a, b) => b.strategicValue - a.strategicValue);
+      
+    if (massiveTargets.length > 0) {
+      const target = massiveTargets[0];
       
       // Riproduci audio paracadute
       if (audioPlayers?.parachuteSound) {
@@ -847,13 +911,13 @@ const tryAllCardsStrategically = (
         audioPlayers.parachuteSound.play().catch(console.error);
       }
 
-      showAnimation("🪂 Paracadutista abbattuto! -1 truppa nemica");
-      if (showToast) showToast(`${opponentNickname} ha buttato paracadutista sul tuo territorio "${target.name}"! -1 truppa`, 'error');
+      showAnimation("🪂 Paracadutista kamikaze! -1 truppa nemica");
+      if (showToast) showToast(`${opponentNickname} ha lanciato paracadutista kamikaze sul tuo territorio "${target.territory.name}"! -1 truppa`, 'error');
       
       setGameState(prev => ({
         ...prev,
         territories: prev.territories.map(t => 
-          t.id === target.id ? {...t, troops: t.troops - 1} : t
+          t.id === target.territory.id ? {...t, troops: t.troops - 1} : t
         ),
         cardCooldowns: {
           ...prev.cardCooldowns,
