@@ -43,26 +43,8 @@ export const GiftSubscriptionBanner = ({
                 {recipientNickname}
               </span>{" "}
               per{" "}
-              <span className="font-bold text-foreground">299,99 euro al mese</span>
+              <span className="font-bold text-foreground">399,99 euro al mese</span>
             </p>
-          </div>
-
-          <div className="bg-muted/50 rounded-lg p-4 w-full space-y-2 text-left text-sm">
-            <p className="font-medium text-foreground">Cosa include:</p>
-            <ul className="space-y-1 text-muted-foreground">
-              <li className="flex items-center gap-2">
-                <span className="text-primary">✓</span>
-                Crediti illimitati per messaggi
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-primary">✓</span>
-                Visualizzazione like ricevuti gratis
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-primary">✓</span>
-                Badge Premium esclusivo
-              </li>
-            </ul>
           </div>
 
           <p className="text-xs text-muted-foreground">
