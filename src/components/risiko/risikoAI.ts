@@ -1,5 +1,5 @@
 import { Territory } from "./territoryGenerator";
-import { canMoveTroops, simulateBattle } from "./risikoLogic";
+import { canMoveTroops, simulateBattle, findPath } from "./risikoLogic";
 import {
   AIMemorySystem,
   MonteCarloSimulator,
@@ -260,6 +260,22 @@ const calculateSuccessChance = (attackerTroops: number, defenderTroops: number):
   return Math.min(0.95, 0.5 + (advantage * 0.15));
 };
 
+// Helper: restituisce il prossimo passo adiacente verso il target, senza teletrasporti
+const getAdjacentStep = (
+  fromId: string,
+  toId: string,
+  territories: Territory[],
+  owner: Player
+): string | null => {
+  const from = territories.find(t => t.id === fromId);
+  const to = territories.find(t => t.id === toId);
+  if (!from || !to) return null;
+  if (canMoveTroops(from, to, territories)) return to.id;
+  const path = findPath(fromId, toId, territories, owner);
+  if (!path || path.length < 2) return null;
+  return path[1]; // fai un solo passo
+};
+
 // 🚨 DIFESA EMERGENZA
 const tryEmergencyDefense = (
   gameState: GameState,
@@ -318,6 +334,12 @@ const tryEmergencyDefense = (
     const target = pressurePoints[0];
     const moveTroops = Math.floor(source.troops / 2);
 
+    // Muovi solo di un passo verso il target (no salti di continente)
+    const stepId = getAdjacentStep(source.id, target.id, gameState.territories, 'red');
+    if (!stepId) return false;
+    const step = gameState.territories.find(t => t.id === stepId);
+    if (!step || (step.owner && step.owner !== 'red')) return false;
+
     showAnimation(`${opponentNickname} sta spostando truppe`);
 
     setGameState(prev => ({
@@ -326,7 +348,7 @@ const tryEmergencyDefense = (
         if (t.id === source.id) {
           return {...t, troops: t.troops - moveTroops};
         }
-        if (t.id === target.id) {
+        if (t.id === stepId) {
           return {...t, troops: t.troops + moveTroops};
         }
         return t;
@@ -915,16 +937,20 @@ const tryTacticalTroopMovement = (
     const source = safeSuppliers[0];
     const moveTroops = Math.floor(source.troops * 0.6); // Sposta 60% delle truppe
 
+    // Muovi solo di un passo verso il fronte
+    const stepId = getAdjacentStep(source.id, target.id, gameState.territories, 'red');
+    if (!stepId) return false;
+
     showAnimation(`${opponentNickname} sta spostando truppe`);
 
     setGameState(prev => ({
       ...prev,
       territories: prev.territories.map(t => {
         if (t.id === source.id) {
-          return {...t, troops: t.troops - moveTroops};
+          return { ...t, troops: t.troops - moveTroops };
         }
-        if (t.id === target.id) {
-          return {...t, troops: t.troops + moveTroops};
+        if (t.id === stepId) {
+          return { ...t, troops: t.troops + moveTroops };
         }
         return t;
       })
