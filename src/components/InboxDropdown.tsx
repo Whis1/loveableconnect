@@ -4,6 +4,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Mail, X, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 
@@ -18,6 +24,8 @@ export const InboxDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<InboxMessage[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [selectedMessage, setSelectedMessage] = useState<InboxMessage | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -121,6 +129,12 @@ export const InboxDropdown = () => {
     });
 
     fetchMessages();
+    setDialogOpen(false);
+  };
+
+  const handleMessageClick = (message: InboxMessage) => {
+    setSelectedMessage(message);
+    setDialogOpen(true);
   };
 
   return (
@@ -169,7 +183,8 @@ export const InboxDropdown = () => {
                 {messages.map((message) => (
                   <div
                     key={message.id}
-                    className="group relative bg-card hover:bg-accent/50 border border-border rounded-lg p-4 transition-all hover:shadow-md"
+                    className="group relative bg-card hover:bg-accent/50 border border-border rounded-lg p-4 transition-all hover:shadow-md cursor-pointer"
+                    onClick={() => handleMessageClick(message)}
                   >
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -192,7 +207,10 @@ export const InboxDropdown = () => {
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20 hover:text-destructive flex-shrink-0"
-                        onClick={() => handleDelete(message.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(message.id);
+                        }}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -207,6 +225,46 @@ export const InboxDropdown = () => {
           </div>
         </Card>
       )}
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center">
+                <Heart className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <p className="font-semibold">LoveableConnect</p>
+                {selectedMessage && (
+                  <p className="text-xs text-muted-foreground font-normal">
+                    {formatDistanceToNow(new Date(selectedMessage.created_at), { 
+                      addSuffix: true,
+                      locale: it 
+                    })}
+                  </p>
+                )}
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          {selectedMessage && (
+            <div className="space-y-4">
+              <div className="bg-accent/30 rounded-lg p-4 border border-border">
+                <p className="text-foreground leading-relaxed whitespace-pre-wrap break-words">
+                  {selectedMessage.message}
+                </p>
+              </div>
+              <Button
+                variant="destructive"
+                className="w-full"
+                onClick={() => handleDelete(selectedMessage.id)}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Elimina messaggio
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
