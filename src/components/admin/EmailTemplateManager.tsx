@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Mail, Edit, RotateCcw, Eye, Save } from "lucide-react";
+import { Mail, Edit, RotateCcw, Eye, Save, Send } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface EmailTemplate {
@@ -30,6 +30,7 @@ export function EmailTemplateManager() {
   const [editedSubject, setEditedSubject] = useState("");
   const [editedContent, setEditedContent] = useState("");
   const [saving, setSaving] = useState(false);
+  const [sendingTest, setSendingTest] = useState(false);
 
   useEffect(() => {
     loadTemplates();
@@ -117,6 +118,23 @@ export function EmailTemplateManager() {
     }
   };
 
+  const sendTestEmail = async (templateKey: string) => {
+    setSendingTest(true);
+    try {
+      const { error } = await supabase.functions.invoke('test-email-template', {
+        body: { templateKey }
+      });
+
+      if (error) throw error;
+
+      toast.success("Email di test inviata! Controlla la tua casella email.");
+    } catch (error: any) {
+      toast.error("Errore nell'invio dell'email di test: " + error.message);
+    } finally {
+      setSendingTest(false);
+    }
+  };
+
   if (loading) {
     return <div className="p-4">Caricamento template...</div>;
   }
@@ -151,10 +169,23 @@ export function EmailTemplateManager() {
                         {template.description}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-3">
                       <div className="text-xs text-muted-foreground">
                         <strong>Oggetto:</strong> {template.subject}
                       </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full flex items-center gap-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          sendTestEmail(template.template_key);
+                        }}
+                        disabled={sendingTest}
+                      >
+                        <Send className="w-3 h-3" />
+                        {sendingTest ? "Invio..." : "Invia Test"}
+                      </Button>
                     </CardContent>
                   </Card>
                 </DialogTrigger>
