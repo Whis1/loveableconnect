@@ -148,38 +148,70 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
     const territories = generateTerritories();
     setGameState(prev => ({ ...prev, territories }));
     
+    // Check and apply pending penalty from previous abandoned game
+    const applyPendingPenalty = async () => {
+      if (localStorage.getItem("risiko_pending_penalty") === "1") {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            await supabase.rpc('update_tris_elo', {
+              user_id: session.user.id,
+              elo_change: -10
+            });
+          }
+        } catch (e) {
+          console.error("Failed to apply pending penalty:", e);
+        } finally {
+          localStorage.removeItem("risiko_pending_penalty");
+        }
+      }
+    };
+    applyPendingPenalty();
+    
     // 🚨 SISTEMA PENALITÀ ELO - Protezione abbandono partita
     const handleBeforeUnload = () => {
       if (!gameCompletedRef.current) {
-        // Penalty immediata quando utente ricarica/chiude
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (session) {
-            supabase.from('profiles')
-              .update({ 
-                risiko_elo: Math.max(0, (userProfile.risiko_elo || 1200) - 10) 
-              })
-              .eq('id', session.user.id);
-          }
-        });
+        // Mark penalty as pending for next session
+        localStorage.setItem("risiko_pending_penalty", "1");
+        
+        // Attempt immediate penalty via edge function (may or may not complete)
+        try {
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+              supabase.rpc('update_tris_elo', {
+                user_id: session.user.id,
+                elo_change: -10
+              });
+            }
+          });
+        } catch (e) {
+          console.error("Penalty attempt failed:", e);
+        }
       }
     };
 
     const handlePopState = () => {
       if (!gameCompletedRef.current) {
-        // Penalty quando utente preme back
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        // Mark penalty as pending for next page
+        localStorage.setItem("risiko_pending_penalty", "1");
+        
+        // Attempt immediate penalty
+        supabase.auth.getSession().then(async ({ data: { session } }) => {
           if (session) {
-            supabase.from('profiles')
-              .update({ 
-                risiko_elo: Math.max(0, (userProfile.risiko_elo || 1200) - 10) 
-              })
-              .eq('id', session.user.id);
+            try {
+              await supabase.rpc('update_tris_elo', {
+                user_id: session.user.id,
+                elo_change: -10
+              });
+            } catch (e) {
+              console.error("Penalty attempt failed:", e);
+            }
           }
         });
       }
     };
 
-    // Blocca navigazione indietro
+    // Block back navigation
     history.pushState(null, "", window.location.href);
     window.addEventListener("popstate", handlePopState);
     window.addEventListener("beforeunload", handleBeforeUnload);
@@ -188,15 +220,20 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
       window.removeEventListener("popstate", handlePopState);
       window.removeEventListener("beforeunload", handleBeforeUnload);
       
-      // Penalty se abbandona senza completare
+      // Penalty if abandoned without completion
       if (!gameCompletedRef.current) {
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        localStorage.setItem("risiko_pending_penalty", "1");
+        
+        supabase.auth.getSession().then(async ({ data: { session } }) => {
           if (session) {
-            supabase.from('profiles')
-              .update({ 
-                risiko_elo: Math.max(0, (userProfile.risiko_elo || 1200) - 10) 
-              })
-              .eq('id', session.user.id);
+            try {
+              await supabase.rpc('update_tris_elo', {
+                user_id: session.user.id,
+                elo_change: -10
+              });
+            } catch (e) {
+              console.error("Penalty attempt failed:", e);
+            }
           }
         });
       }
