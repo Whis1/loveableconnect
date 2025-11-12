@@ -38,6 +38,14 @@ interface GameState {
   winner: Player | null;
 }
 
+// Funzione corretta per calcolare le truppe della carta (uguale al giocatore)
+const getTroopCardAmount = (territoryCount: number): number => {
+  if (territoryCount >= 28) return 6;
+  if (territoryCount >= 20) return 4;
+  if (territoryCount >= 10) return 2;
+  return 1;
+};
+
 // Sistema di memoria globale per l'AI
 const aiMemory = new AIMemorySystem();
 let turnCounter = 0;
@@ -169,7 +177,7 @@ export const aiMakeMove = (
   if (myTerritories.length > 0) {
     const strategic = findUltimateStrategicTerritory(myTerritories, threats, continents, pressurePoints);
     const redCount = myTerritories.length;
-    const amount = redCount >= 20 ? 3 : 1;
+    const amount = getTroopCardAmount(redCount);
     
     setGameState(prev => ({
       ...prev,
@@ -1247,7 +1255,7 @@ const tryAllCardsStrategically = (
     }
 
     const redCount = myTerritories.length;
-    const amount = redCount >= 20 ? 3 : 1;
+    const amount = getTroopCardAmount(redCount);
     
     setGameState(prev => ({
       ...prev,
