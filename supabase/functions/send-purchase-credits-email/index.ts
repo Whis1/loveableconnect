@@ -36,11 +36,34 @@ serve(async (req) => {
 
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-    await resend.emails.send({
-      from: "LoveableConnect 💕 <noreply@loveableconnect.com>",
-      to: [user.email],
-      subject: "✅ Acquisto Crediti Completato con Successo!",
-      html: `
+    // Get current balance
+    const { data: credits } = await supabase
+      .from('user_credits')
+      .select('balance')
+      .eq('user_id', userId)
+      .single();
+    
+    const newBalance = credits?.balance || 0;
+
+    // Helper: replace {{placeholders}}
+    const replaceVars = (text: string, vars: Record<string, string>) =>
+      Object.entries(vars).reduce((acc, [k, v]) => acc.replaceAll(`{{${k}}}`, v ?? ''), text);
+
+    // Try to load template from DB
+    const { data: tmpl } = await supabase
+      .from('email_templates')
+      .select('*')
+      .eq('template_key', 'purchase_credits')
+      .maybeSingle();
+
+    const variables = {
+      creditsAmount: creditsAmount.toString(),
+      amountPaid: amountPaid ? (amountPaid / 100).toFixed(2) : '0',
+      newBalance: newBalance.toString(),
+    } as Record<string, string>;
+
+    const subject = tmpl ? replaceVars(tmpl.subject, variables) : "Grazie per il tuo acquisto! 🎉";
+    const html = tmpl ? replaceVars(tmpl.html_content, variables) : `
         <!DOCTYPE html>
         <html lang="it">
           <head>
@@ -49,76 +72,22 @@ serve(async (req) => {
           </head>
           <body style="margin:0; padding:0; background:linear-gradient(135deg,#fde2e4,#f3e8ff); font-family:'Segoe UI',Roboto,Arial,sans-serif;">
             <div style="max-width:600px; margin:40px auto; background:white; border-radius:20px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.1);">
-              
-              <!-- HEADER -->
               <div style="background:linear-gradient(135deg,#ec4899,#9333ea); padding:40px 20px; text-align:center;">
-                <img src="https://tcmhvrlsaggyuukdscue.supabase.co/storage/v1/object/public/images/loveable-logo.png" alt="LoveableConnect" style="width:120px; height:120px; margin-bottom:20px; border-radius:50%; border:4px solid rgba(255,255,255,0.3); box-shadow:0 8px 32px rgba(0,0,0,0.2);" />
-                <div style="font-size:60px; margin-bottom:10px;">🎉</div>
                 <h1 style="color:white; margin:10px 0 0; font-size:32px; font-weight:800;">Acquisto Completato!</h1>
-                <p style="color:rgba(255,255,255,0.95); font-size:16px; margin-top:10px;">I tuoi crediti sono pronti all'uso</p>
               </div>
-              
-              <!-- BODY -->
               <div style="padding:40px 30px;">
-                <h2 style="color:#9333ea; font-size:24px; margin-bottom:15px; font-weight:700;">Grazie per il tuo acquisto! 🎊</h2>
-                <p style="color:#374151; font-size:16px; line-height:1.6;">
-                  Abbiamo ricevuto il tuo pagamento e i crediti sono stati aggiunti immediatamente al tuo account.
-                </p>
-                
-                <!-- CREDITS BOX -->
-                <div style="background:linear-gradient(135deg,#dcfce7,#d1fae5); padding:30px; border-radius:16px; margin:30px 0; text-align:center; border:2px solid rgba(34,197,94,0.2);">
-                  <div style="font-size:48px; margin-bottom:10px;">💎</div>
-                  <h3 style="color:#166534; margin:10px 0; font-size:28px; font-weight:800;">${creditsAmount} Crediti</h3>
-                  <p style="color:#15803d; font-size:16px; margin:5px 0;">aggiunti al tuo account</p>
-                  ${amountPaid ? `<p style="color:#4b5563; font-size:14px; margin-top:15px;">Pagamento: €${(amountPaid / 100).toFixed(2)}</p>` : ''}
-                </div>
-                
-                <!-- CTA BUTTON -->
-                <div style="text-align:center; margin:35px 0;">
-                  <a href="${supabaseUrl.replace('.supabase.co', '')}/" 
-                     style="display:inline-block;
-                            background:linear-gradient(135deg,#ec4899,#9333ea);
-                            color:white;
-                            padding:18px 45px;
-                            border-radius:16px;
-                            font-weight:700;
-                            text-decoration:none;
-                            font-size:18px;
-                            box-shadow:0 8px 30px rgba(147,51,234,0.4);
-                            border:2px solid rgba(255,255,255,0.2);">
-                    🚀 Inizia a Usare i Crediti
-                  </a>
-                </div>
-                
-                <!-- WHAT YOU CAN DO -->
-                <div style="background:linear-gradient(135deg,#f3e8ff,#fce7f3); padding:25px; border-radius:16px; margin-top:30px; border:2px solid rgba(236,72,153,0.1);">
-                  <h3 style="color:#9333ea; margin-bottom:15px; font-size:18px; font-weight:700;">💡 Cosa puoi fare con i crediti:</h3>
-                  <ul style="color:#4b5563; font-size:14px; line-height:2; margin:0; padding-left:0; list-style:none;">
-                    <li>💬 <strong>Inviare messaggi</strong> a tutti i tuoi match</li>
-                    <li>❤️ <strong>Mettere like</strong> a nuovi profili interessanti</li>
-                    <li>🔓 <strong>Sbloccare contenuti premium</strong> e funzionalità esclusive</li>
-                    <li>✨ <strong>Aumentare la tua visibilità</strong> nella community</li>
-                  </ul>
-                </div>
-                
-                <!-- SUPPORT -->
-                <div style="background:#f9fafb; padding:20px; border-radius:12px; margin-top:25px; border:1px solid #e5e7eb;">
-                  <p style="margin:0; color:#6b7280; font-size:14px; line-height:1.6; text-align:center;">
-                    💌 Hai domande? Il nostro team di supporto è sempre disponibile ad aiutarti!
-                  </p>
-                </div>
-              </div>
-              
-              <!-- FOOTER -->
-              <div style="background:linear-gradient(135deg,#fafafa,#f3f4f6); padding:25px; text-align:center; border-top:2px solid #e5e7eb;">
-                <p style="color:#6b7280; font-size:14px; margin:5px 0; font-weight:600;">💕 LoveableConnect</p>
-                <p style="color:#9ca3af; font-size:12px; margin:5px 0;">Dove nascono legami autentici</p>
-                <p style="color:#9ca3af; font-size:12px; margin-top:15px;">Grazie per il tuo supporto!</p>
+                <p>Hai acquistato <strong>${creditsAmount} crediti</strong> per €${(amountPaid / 100).toFixed(2)}.</p>
+                <p>Il tuo nuovo saldo è <strong>${newBalance} crediti</strong>.</p>
               </div>
             </div>
           </body>
-        </html>
-      `,
+        </html>`;
+
+    await resend.emails.send({
+      from: "LoveableConnect 💕 <noreply@loveableconnect.com>",
+      to: [user.email],
+      subject,
+      html,
     });
 
     return new Response(JSON.stringify({ success: true }), {

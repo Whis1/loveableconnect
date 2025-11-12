@@ -36,58 +36,50 @@ serve(async (req) => {
 
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-    let planName = '';
-    let planEmoji = '💎';
-    let benefits: string[] = [];
-
-    if (subscriptionType === 'monthly' && tier === 'premium') {
-      planName = 'Premium Mensile';
-      planEmoji = '👑';
-      benefits = [
-        '💬 <strong>Messaggi illimitati</strong> senza costi',
-        '❤️ <strong>Like illimitati</strong> ogni giorno',
-        '👁️ <strong>Vedi chi ti ha messo like</strong> prima di ricambiare',
-        '🎯 <strong>Filtri di ricerca avanzati</strong>',
-        '✨ <strong>Priorità nei risultati</strong> di ricerca',
-        '🎮 <strong>Accesso completo ai giochi</strong>',
-        '🔓 <strong>Crediti illimitati</strong> per tutte le funzioni'
-      ];
-    } else if (subscriptionType === 'monthly' && tier === 'standard') {
-      planName = 'Standard Mensile';
-      planEmoji = '⭐';
-      benefits = [
-        '💬 <strong>Messaggi illimitati</strong> senza costi',
-        '❤️ <strong>40 like giornalieri</strong>',
-        '👁️ <strong>Vedi chi ti ha messo like</strong>',
-        '🎯 <strong>Filtri di ricerca avanzati</strong>',
-        '✨ <strong>Maggiore visibilità</strong>',
-        '💎 <strong>70 crediti al giorno</strong>'
-      ];
-    } else if (subscriptionType === 'weekly') {
-      planName = 'Premium Settimanale';
-      planEmoji = '⚡';
-      benefits = [
-        '💬 <strong>5 chat gratuite al giorno</strong>',
-        '❤️ <strong>30 like giornalieri</strong>',
-        '👁️ <strong>Vedi chi ti ha messo like</strong>',
-        '🎯 <strong>Filtri di ricerca</strong>',
-        '💎 <strong>40 crediti al giorno</strong>'
-      ];
+    let planName = "Premium";
+    let planEmoji = "✨";
+    let benefits = "";
+    
+    if (subscriptionType === "monthly") {
+      planName = tier === "gold" ? "Gold Mensile" : tier === "platinum" ? "Platinum Mensile" : "Premium Mensile";
+      planEmoji = tier === "gold" ? "🥇" : tier === "platinum" ? "💎" : "✨";
+      benefits = tier === "platinum" 
+        ? "<li>✨ Chat illimitate</li><li>💬 Messaggi vocali</li><li>👁️ Vedi chi ti ha messo like</li><li>🔓 Like illimitati</li><li>🎮 Accesso a tutti i giochi</li><li>🏆 Doppi punti ELO</li>"
+        : "<li>✨ Chat illimitate</li><li>💬 Messaggi vocali</li><li>👁️ Vedi chi ti ha messo like</li><li>🔓 Like illimitati</li>";
+    } else if (subscriptionType === "yearly") {
+      planName = tier === "gold" ? "Gold Annuale" : tier === "platinum" ? "Platinum Annuale" : "Premium Annuale";
+      planEmoji = tier === "gold" ? "🥇" : tier === "platinum" ? "💎" : "✨";
+      benefits = tier === "platinum"
+        ? "<li>✨ Chat illimitate</li><li>💬 Messaggi vocali</li><li>👁️ Vedi chi ti ha messo like</li><li>🔓 Like illimitati</li><li>🎮 Accesso a tutti i giochi</li><li>🏆 Doppi punti ELO</li><li>💰 Risparmio del 20%</li>"
+        : "<li>✨ Chat illimitate</li><li>💬 Messaggi vocali</li><li>👁️ Vedi chi ti ha messo like</li><li>🔓 Like illimitati</li><li>💰 Risparmio del 20%</li>";
     }
 
-    const expiryDate = expiresAt ? new Date(expiresAt).toLocaleDateString('it-IT', { 
-      day: 'numeric', 
-      month: 'long', 
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    const formattedDate = expiresAt ? new Date(expiresAt).toLocaleDateString('it-IT', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
     }) : '';
 
-    await resend.emails.send({
-      from: "LoveableConnect 💕 <noreply@loveableconnect.com>",
-      to: [user.email],
-      subject: `${planEmoji} Benvenuto in ${planName}!`,
-      html: `
+    // Helper: replace {{placeholders}}
+    const replaceVars = (text: string, vars: Record<string, string>) =>
+      Object.entries(vars).reduce((acc, [k, v]) => acc.replaceAll(`{{${k}}}`, v ?? ''), text);
+
+    // Try to load template from DB
+    const { data: tmpl } = await supabase
+      .from('email_templates')
+      .select('*')
+      .eq('template_key', 'subscription_purchased')
+      .maybeSingle();
+
+    const variables = {
+      subscriptionType: planName,
+      tier: tier || '',
+      expiresAt: formattedDate,
+      benefits,
+    } as Record<string, string>;
+
+    const subject = tmpl ? replaceVars(tmpl.subject, variables) : "Benvenuto in Premium! 🌟";
+    const html = tmpl ? replaceVars(tmpl.html_content, variables) : `
         <!DOCTYPE html>
         <html lang="it">
           <head>
@@ -96,84 +88,27 @@ serve(async (req) => {
           </head>
           <body style="margin:0; padding:0; background:linear-gradient(135deg,#fde2e4,#f3e8ff); font-family:'Segoe UI',Roboto,Arial,sans-serif;">
             <div style="max-width:600px; margin:40px auto; background:white; border-radius:20px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.1);">
-              
-              <!-- HEADER -->
               <div style="background:linear-gradient(135deg,#ec4899,#9333ea); padding:40px 20px; text-align:center;">
-                <img src="https://tcmhvrlsaggyuukdscue.supabase.co/storage/v1/object/public/images/loveable-logo.png" alt="LoveableConnect" style="width:120px; height:120px; margin-bottom:20px; border-radius:50%; border:4px solid rgba(255,255,255,0.3); box-shadow:0 8px 32px rgba(0,0,0,0.2);" />
-                <div style="font-size:60px; margin-bottom:10px;">${planEmoji}</div>
-                <h1 style="color:white; margin:10px 0 0; font-size:32px; font-weight:800;">Abbonamento Attivo!</h1>
-                <p style="color:rgba(255,255,255,0.95); font-size:16px; margin-top:10px;">Benvenuto in ${planName}</p>
+                <h1 style="color:white; margin:10px 0 0; font-size:32px; font-weight:800;">Benvenuto in Premium! ${planEmoji}</h1>
               </div>
-              
-              <!-- BODY -->
               <div style="padding:40px 30px;">
-                <h2 style="color:#9333ea; font-size:24px; margin-bottom:15px; font-weight:700;">Congratulazioni! 🎉</h2>
-                <p style="color:#374151; font-size:16px; line-height:1.6;">
-                  Il tuo abbonamento <strong style="color:#ec4899;">${planName}</strong> è ora attivo e pronto all'uso!
-                </p>
-                
-                ${expiryDate ? `
-                <div style="background:linear-gradient(135deg,#fff7ed,#ffedd5); padding:20px; border-radius:12px; margin:25px 0; border-left:5px solid #f97316;">
-                  <p style="margin:0; color:#92400e; font-size:15px;">
-                    <strong>📅 Scadenza:</strong> ${expiryDate}
-                  </p>
-                </div>
-                ` : ''}
-                
-                <!-- CTA BUTTON -->
-                <div style="text-align:center; margin:35px 0;">
-                  <a href="${supabaseUrl.replace('.supabase.co', '')}/" 
-                     style="display:inline-block;
-                            background:linear-gradient(135deg,#ec4899,#9333ea);
-                            color:white;
-                            padding:18px 45px;
-                            border-radius:16px;
-                            font-weight:700;
-                            text-decoration:none;
-                            font-size:18px;
-                            box-shadow:0 8px 30px rgba(147,51,234,0.4);
-                            border:2px solid rgba(255,255,255,0.2);">
-                    🚀 Scopri Tutte le Funzionalità
-                  </a>
-                </div>
-                
-                <!-- BENEFITS -->
-                <div style="background:linear-gradient(135deg,#f3e8ff,#fce7f3); padding:25px; border-radius:16px; margin-top:30px; border:2px solid rgba(236,72,153,0.1);">
-                  <h3 style="color:#9333ea; margin-bottom:15px; font-size:18px; font-weight:700;">✨ I tuoi vantaggi esclusivi:</h3>
-                  <ul style="color:#4b5563; font-size:14px; line-height:2; margin:0; padding-left:0; list-style:none;">
-                    ${benefits.map(benefit => `<li>${benefit}</li>`).join('\n                    ')}
-                  </ul>
-                </div>
-                
-                <!-- TIPS -->
-                <div style="background:linear-gradient(135deg,#dbeafe,#bfdbfe); padding:25px; border-radius:16px; margin-top:25px; border:2px solid rgba(59,130,246,0.2);">
-                  <h3 style="color:#1e40af; margin-bottom:15px; font-size:18px; font-weight:700;">💡 Suggerimenti per iniziare:</h3>
-                  <ul style="color:#1e3a8a; font-size:14px; line-height:1.8; margin:0; padding-left:0; list-style:none;">
-                    <li>🔍 <strong>Esplora</strong> i profili con i nuovi filtri avanzati</li>
-                    <li>💬 <strong>Inizia conversazioni</strong> con i tuoi match</li>
-                    <li>❤️ <strong>Metti like</strong> senza limiti alle persone interessanti</li>
-                    <li>🎮 <strong>Gioca</strong> per rompere il ghiaccio</li>
-                  </ul>
-                </div>
-                
-                <!-- SUPPORT -->
-                <div style="background:#f9fafb; padding:20px; border-radius:12px; margin-top:25px; border:1px solid #e5e7eb;">
-                  <p style="margin:0; color:#6b7280; font-size:14px; line-height:1.6; text-align:center;">
-                    💌 Hai domande sul tuo abbonamento? Contatta il nostro supporto, siamo qui per te!
-                  </p>
-                </div>
-              </div>
-              
-              <!-- FOOTER -->
-              <div style="background:linear-gradient(135deg,#fafafa,#f3f4f6); padding:25px; text-align:center; border-top:2px solid #e5e7eb;">
-                <p style="color:#6b7280; font-size:14px; margin:5px 0; font-weight:600;">💕 LoveableConnect</p>
-                <p style="color:#9ca3af; font-size:12px; margin:5px 0;">Dove nascono legami autentici</p>
-                <p style="color:#9ca3af; font-size:12px; margin-top:15px;">Grazie per aver scelto Premium!</p>
+                <p>Il tuo abbonamento <strong>${planName}</strong> è ora attivo!</p>
+                ${formattedDate ? `<p>Scadenza: <strong>${formattedDate}</strong></p>` : ''}
+                <h2 style="color:#ec4899; margin-top:30px;">I tuoi vantaggi:</h2>
+                <ul style="color:#666;">
+                  ${benefits}
+                </ul>
+                <p style="margin-top:30px;">Inizia subito a goderti tutti i vantaggi premium! ✨</p>
               </div>
             </div>
           </body>
-        </html>
-      `,
+        </html>`;
+
+    await resend.emails.send({
+      from: "LoveableConnect 💕 <noreply@loveableconnect.com>",
+      to: [user.email],
+      subject,
+      html,
     });
 
     return new Response(JSON.stringify({ success: true }), {
