@@ -50,7 +50,7 @@ export const RisikoMap = ({
         });
 
         // Animate to destination with smooth easing
-        const duration = 1800;
+        const duration = 2500;
         const startTime = Date.now();
         
         // Easing function for smooth animation (ease-in-out)
