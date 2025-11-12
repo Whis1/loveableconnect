@@ -157,12 +157,12 @@ export default function AdminArrettu() {
               <DialogTrigger asChild>
                 <Button variant="outline">
                   <Map className="h-5 w-5 mr-2" />
-                  Risiko
+                  Conquistiator
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-6xl max-h-[90vh]">
                 <DialogHeader>
-                  <DialogTitle>Gestione Territori Risiko</DialogTitle>
+                  <DialogTitle>Gestione Territori Conquistiator</DialogTitle>
                 </DialogHeader>
                 <TerritoryConnectionsManager />
               </DialogContent>

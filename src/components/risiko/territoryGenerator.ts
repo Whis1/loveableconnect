@@ -10,7 +10,7 @@ export interface Territory {
   size: number;
 }
 
-// Forme dei continenti basate sul vero Risiko
+// Forme dei continenti basate sul vero Conquistiator
 const getContinentShape = (continentId: number, centerX: number, centerY: number, scale: number): string => {
   const shapes: { [key: number]: string } = {
     // Nord America - forma irregolare con Alaska

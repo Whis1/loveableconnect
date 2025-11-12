@@ -523,7 +523,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         const source = gameState.territories.find(t => t.id === gameState.selectedTerritory);
         if (source) {
           const neighborNames = source.neighbors.map(id => gameState.territories.find(t => t.id === id)?.name || id);
-          console.log('[Risiko] Tentativo movimento:', {
+          console.log('[Conquistiator] Tentativo movimento:', {
             from: { id: source.id, name: source.name, troops: source.troops },
             to: { id: territory.id, name: territory.name, troops: territory.troops, owner: territory.owner },
             sourceNeighbors: neighborNames,
@@ -845,13 +845,13 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           .eq('user_id', userProfile.id);
       }
 
-      // Vittoria: +20 ELO Risiko
+      // Vittoria: +20 ELO Conquistiator
       await supabase
         .from('profiles')
         .update({ game_elo: (userProfile.game_elo || 1200) + 20 })
         .eq('id', userProfile.id);
     } else {
-      // Sconfitta: -10 ELO Risiko
+      // Sconfitta: -10 ELO Conquistiator
       await supabase
         .from('profiles')
         .update({ game_elo: Math.max(0, (userProfile.game_elo || 1200) - 10) })
@@ -973,12 +973,12 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
               </DialogTrigger>
             <DialogContent className="max-w-3xl max-h-[80vh]">
               <DialogHeader>
-                <DialogTitle className="text-2xl font-bold">Come si gioca a Risiko</DialogTitle>
+                <DialogTitle className="text-2xl font-bold">Come si gioca a Conquistiator</DialogTitle>
               </DialogHeader>
               <ScrollArea className="h-[60vh] pr-4">
                 <div className="space-y-6">
                   <section>
-                    <h3 className="text-2xl font-bold mb-4 text-primary">Benvenuto nel Risiko di LoveableConnect!</h3>
+                    <h3 className="text-2xl font-bold mb-4 text-primary">Benvenuto nel Conquistiator di LoveableConnect!</h3>
                     <p className="text-muted-foreground leading-relaxed">
                       In questo gioco metterai alla prova la tua astuzia strategica contro altri utenti, per conquistare territori, guadagnare crediti e dimostrare chi domina.
                     </p>
@@ -1004,7 +1004,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
                   <section>
                     <h3 className="text-xl font-bold mb-3 text-primary">🃏 Le Carte - La Chiave della Vittoria</h3>
                     <p className="text-muted-foreground mb-4">
-                      Nel Risiko di LoveableConnect, le carte sono la chiave per vincere o ribaltare qualsiasi battaglia. Ci sono 4 carte totali, e ognuna può cambiare il destino della partita.
+                      Nel Conquistiator di LoveableConnect, le carte sono la chiave per vincere o ribaltare qualsiasi battaglia. Ci sono 4 carte totali, e ognuna può cambiare il destino della partita.
                     </p>
                     
                     <div className="space-y-4">

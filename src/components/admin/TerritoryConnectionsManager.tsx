@@ -253,10 +253,10 @@ export const TerritoryConnectionsManager = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            🗺️ Gestione Connessioni Territori Risiko
+            🗺️ Gestione Connessioni Territori Conquistiator
           </CardTitle>
           <CardDescription>
-            Modifica le connessioni tra i 54 territori del gioco Risiko. Le modifiche saranno applicate a tutte le nuove partite.
+            Modifica le connessioni tra i 54 territori del gioco Conquistiator. Le modifiche saranno applicate a tutte le nuove partite.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
