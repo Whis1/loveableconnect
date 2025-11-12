@@ -4,13 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { UserCreditsManager } from "@/components/admin/UserCreditsManager";
 import { UserBanManager } from "@/components/admin/UserBanManager";
 import { UserReportsMonitor } from "@/components/admin/UserReportsMonitor";
 import { BannerManager } from "@/components/admin/BannerManager";
 import { TerritoryConnectionsManager } from "@/components/admin/TerritoryConnectionsManager";
 import { EmailTemplateManager } from "@/components/admin/EmailTemplateManager";
-import { Shield, LogOut, MessageSquare, UserPlus, Map, Mail } from "lucide-react";
+import { Shield, LogOut, MessageSquare, UserPlus, Map, Mail, Megaphone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -23,6 +24,9 @@ export default function AdminArrettu() {
   const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
   const [risikoDialogOpen, setRisikoDialogOpen] = useState(false);
+  const [inboxAllDialogOpen, setInboxAllDialogOpen] = useState(false);
+  const [broadcastMessage, setBroadcastMessage] = useState("");
+  const [sendingBroadcast, setSendingBroadcast] = useState(false);
   const { isAdmin, loading: adminLoading } = useAdminRole();
 
   useEffect(() => {
@@ -64,6 +68,43 @@ export default function AdminArrettu() {
       title: "Logout effettuato",
       description: "Sei stato disconnesso",
     });
+  };
+
+  const handleSendBroadcast = async () => {
+    if (!broadcastMessage.trim()) {
+      toast({
+        title: "Errore",
+        description: "Il messaggio non può essere vuoto",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSendingBroadcast(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-send-inbox-to-all', {
+        body: { message: broadcastMessage },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Messaggio inviato!",
+        description: `Inviato a ${data.count} utenti`,
+      });
+
+      setBroadcastMessage("");
+      setInboxAllDialogOpen(false);
+    } catch (error: any) {
+      console.error('Error sending broadcast:', error);
+      toast({
+        title: "Errore",
+        description: error.message || "Errore durante l'invio",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingBroadcast(false);
+    }
   };
 
   if (!isLoggedIn) {
@@ -166,6 +207,38 @@ export default function AdminArrettu() {
                   <DialogTitle>Gestione Territori Conquistiator</DialogTitle>
                 </DialogHeader>
                 <TerritoryConnectionsManager />
+              </DialogContent>
+            </Dialog>
+            <Dialog open={inboxAllDialogOpen} onOpenChange={setInboxAllDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Megaphone className="h-5 w-5 mr-2" />
+                  Inbox ALL
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Invia Messaggio a Tutti gli Utenti</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="broadcast-message">Messaggio</Label>
+                    <Textarea
+                      id="broadcast-message"
+                      placeholder="Scrivi il messaggio da inviare a tutti gli utenti..."
+                      value={broadcastMessage}
+                      onChange={(e) => setBroadcastMessage(e.target.value)}
+                      rows={6}
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleSendBroadcast} 
+                    disabled={sendingBroadcast || !broadcastMessage.trim()}
+                    className="w-full"
+                  >
+                    {sendingBroadcast ? "Invio in corso..." : "Invia a Tutti"}
+                  </Button>
+                </div>
               </DialogContent>
             </Dialog>
             <Button variant="outline" onClick={handleLogout}>
