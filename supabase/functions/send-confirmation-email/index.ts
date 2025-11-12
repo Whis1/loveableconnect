@@ -45,7 +45,7 @@ serve(async (req) => {
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
     await resend.emails.send({
-      from: "LoveableConnect 💕 <noreply@loveableconnect.com>",
+      from: "LoveableConnect 💕 <onboarding@resend.dev>",
       to: [email],
       subject: "💖 Benvenuto su LoveableConnect – Conferma il tuo account!",
       html: `
