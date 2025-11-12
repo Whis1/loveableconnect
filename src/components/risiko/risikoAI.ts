@@ -100,7 +100,7 @@ export const aiMakeMove = (
 
   // 🚨 FASE 1: RISPOSTA EMERGENZA (se rischio critico)
   if (riskLevel > 0.7 || (momentum.turnsToDefeat && momentum.turnsToDefeat < 5)) {
-    if (tryEmergencyDefense(gameState, setGameState, handleCombat, showAnimation, myTerritories, enemyTerritories, pressurePoints, opponentNickname, audioPlayers, showToast, setBombingAnimation)) {
+    if (tryEmergencyDefense(gameState, setGameState, handleCombat, showAnimation, myTerritories, enemyTerritories, pressurePoints, opponentNickname, audioPlayers, showToast, setBombingAnimation, setMovingTroops)) {
       return;
     }
   }
@@ -114,7 +114,7 @@ export const aiMakeMove = (
 
   // 🎯 FASE 3: PREVISIONE E CONTRATTACCO
   if (playerPrediction.confidence > 0.5 && playerPrediction.likelyTargets.length > 0) {
-    if (tryPreemptiveDefense(gameState, setGameState, showAnimation, playerPrediction, myTerritories, opponentNickname, audioPlayers)) {
+    if (tryPreemptiveDefense(gameState, setGameState, showAnimation, playerPrediction, myTerritories, opponentNickname, audioPlayers, setMovingTroops)) {
       return;
     }
   }
@@ -135,7 +135,7 @@ export const aiMakeMove = (
   }
 
   // 🧱 FASE 7: ASSALTO PREPARATO (sposto truppe sul fronte e attacco subito)
-  if (tryPreparedAssault(gameState, setGameState, handleCombat, showAnimation, myTerritories, opponentNickname, audioPlayers)) {
+  if (tryPreparedAssault(gameState, setGameState, handleCombat, showAnimation, myTerritories, opponentNickname, audioPlayers, setMovingTroops)) {
     return;
   }
 
@@ -150,7 +150,7 @@ export const aiMakeMove = (
   }
 
   // 🛡️ FASE 10: FORTIFICAZIONE CHOKEPOINTS (solo territori critici)
-  if (tryChokePointFortification(gameState, setGameState, showAnimation, myTerritories, opponentNickname, audioPlayers)) {
+  if (tryChokePointFortification(gameState, setGameState, showAnimation, myTerritories, opponentNickname, audioPlayers, setMovingTroops)) {
     return;
   }
 
@@ -327,7 +327,8 @@ const tryEmergencyDefense = (
     marchSound: HTMLAudioElement;
   },
   showToast?: (message: string, type: 'success' | 'info' | 'error') => void,
-  setBombingAnimation?: (state: { show: boolean; position: { x: number; y: number } }) => void
+  setBombingAnimation?: (state: { show: boolean; position: { x: number; y: number } }) => void,
+  setMovingTroops?: (state: { fromId: string; toId: string; count: number } | null) => void
 ): boolean => {
   if (pressurePoints.length === 0) return false;
 
@@ -434,6 +435,19 @@ const tryEmergencyDefense = (
       audioPlayers.marchSound.play().catch(console.error);
     }
 
+    // Avvia animazione truppe
+    if (setMovingTroops) {
+      setMovingTroops({
+        fromId: source.id,
+        toId: stepId,
+        count: moveTroops
+      });
+      
+      setTimeout(() => {
+        setMovingTroops(null);
+      }, 1000);
+    }
+
     showAnimation(`${opponentNickname} sta spostando truppe`);
 
     setGameState(prev => ({
@@ -476,7 +490,8 @@ const tryPreemptiveDefense = (
     parachuteSound: HTMLAudioElement;
     powerUpSound: HTMLAudioElement;
     marchSound: HTMLAudioElement;
-  }
+  },
+  setMovingTroops?: (state: { fromId: string; toId: string; count: number } | null) => void
 ): boolean => {
   const predictedTarget = myTerritories.find(t => 
     playerPrediction.likelyTargets.includes(t.id)
@@ -496,6 +511,19 @@ const tryPreemptiveDefense = (
     if (audioPlayers?.marchSound) {
       audioPlayers.marchSound.currentTime = 0;
       audioPlayers.marchSound.play().catch(console.error);
+    }
+
+    // Avvia animazione truppe
+    if (setMovingTroops) {
+      setMovingTroops({
+        fromId: source.id,
+        toId: predictedTarget.id,
+        count: moveTroops
+      });
+      
+      setTimeout(() => {
+        setMovingTroops(null);
+      }, 1000);
     }
 
     showAnimation(`${opponentNickname} sta spostando truppe`);
@@ -1633,7 +1661,8 @@ const tryPreparedAssault = (
     parachuteSound: HTMLAudioElement;
     powerUpSound: HTMLAudioElement;
     marchSound: HTMLAudioElement;
-  }
+  },
+  setMovingTroops?: (state: { fromId: string; toId: string; count: number } | null) => void
 ): boolean => {
   // Trova fronti: territori rossi adiacenti a nemici
   const fronts = myTerritories.filter(a =>
@@ -1691,6 +1720,19 @@ const tryPreparedAssault = (
     audioPlayers.marchSound.play().catch(console.error);
   }
 
+  // Avvia animazione truppe
+  if (setMovingTroops) {
+    setMovingTroops({
+      fromId: best.supplier.id,
+      toId: best.attacker.id,
+      count: best.move
+    });
+    
+    setTimeout(() => {
+      setMovingTroops(null);
+    }, 1000);
+  }
+
   // Sposta e attacca subito
   showAnimation(`${opponentNickname} sta spostando truppe`);
   setGameState(prev => ({
@@ -1725,7 +1767,8 @@ const tryChokePointFortification = (
     parachuteSound: HTMLAudioElement;
     powerUpSound: HTMLAudioElement;
     marchSound: HTMLAudioElement;
-  }
+  },
+  setMovingTroops?: (state: { fromId: string; toId: string; count: number } | null) => void
 ): boolean => {
   const chokepoints = myTerritories.filter(t => 
     TerritorialAnalyzer.identifyChokepoints(t, gameState.territories)
@@ -1753,6 +1796,19 @@ const tryChokePointFortification = (
     if (audioPlayers?.marchSound) {
       audioPlayers.marchSound.currentTime = 0;
       audioPlayers.marchSound.play().catch(console.error);
+    }
+
+    // Avvia animazione truppe
+    if (setMovingTroops) {
+      setMovingTroops({
+        fromId: source.id,
+        toId: target.id,
+        count: moveTroops
+      });
+      
+      setTimeout(() => {
+        setMovingTroops(null);
+      }, 1000);
     }
 
     showAnimation(`${opponentNickname} sta spostando truppe`);
