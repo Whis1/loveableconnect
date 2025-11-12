@@ -178,7 +178,7 @@ export const InboxDropdown = () => {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="font-semibold text-sm text-foreground truncate">
-                            LoveableConnect Manager
+                            LoveableConnect
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {formatDistanceToNow(new Date(message.created_at), { 
