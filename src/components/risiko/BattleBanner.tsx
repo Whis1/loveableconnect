@@ -222,7 +222,7 @@ export const BattleBanner = ({
                           <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
                             <p className="font-bold text-red-400 text-lg mb-2">💣 2. Bombardamento Aereo</p>
                             <div className="text-sm text-muted-foreground space-y-2">
-                              <p>Un'arma devastante. Può essere usata <strong>una volta ogni 5 turni</strong>.</p>
+                              <p>Un'arma devastante. Può essere usata <strong>una volta ogni 6 turni</strong>.</p>
                               <p>Elimina <strong>2 truppe nemiche</strong> in un colpo solo. Pianifica con attenzione la tua strategia. Un bombardamento ben piazzato può cambiare il corso di una guerra… o farti vincere una partita.</p>
                             </div>
                           </div>
@@ -230,7 +230,7 @@ export const BattleBanner = ({
                           <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
                             <p className="font-bold text-blue-400 text-lg mb-2">🪂 3. Paracadutista</p>
                             <div className="text-sm text-muted-foreground space-y-2">
-                              <p>La carta più audace e imprevedibile, può essere usata <strong>una volta ogni 3 turni</strong>.</p>
+                              <p>La carta più audace e imprevedibile, può essere usata <strong>una volta ogni 5 turni</strong>.</p>
                               <p>Ti consente di conquistare territori vicini o distanti, e far atterrare una truppa in un territorio nemico.</p>
                               <ul className="list-disc pl-6 space-y-1 mt-2">
                                 <li>Se il nemico ha <strong>una sola truppa</strong>, il tuo paracadutista la elimina e <strong>conquista il territorio</strong></li>
@@ -243,7 +243,7 @@ export const BattleBanner = ({
                           <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
                             <p className="font-bold text-yellow-400 text-lg mb-2">⚔️ 4. Potenziamento Truppe</p>
                             <div className="text-sm text-muted-foreground space-y-2">
-                              <p>La carta perfetta per gli scontri diretti. Può essere usata <strong>una volta ogni 3 turni</strong>.</p>
+                              <p>La carta perfetta per gli scontri diretti. Può essere usata <strong>una volta ogni 4 turni</strong>.</p>
                               <p>Quando una tua truppa ha il potenziamento attivo:</p>
                               <ul className="list-disc pl-6 space-y-1 mt-2">
                                 <li>In un <strong>1 vs 1</strong>, vince automaticamente</li>
