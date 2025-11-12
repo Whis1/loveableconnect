@@ -123,6 +123,31 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
   const [parachuteSound] = useState(() => new Audio(paracaduteSound));
   const [powerUpSound] = useState(() => new Audio(powerSound));
 
+  // Preload/unlock audio on first user interaction and set volumes
+  useEffect(() => {
+    // Set base volumes
+    marchSound.volume = 0.6;
+    bombSound.volume = 0.8;
+    parachuteSound.volume = 0.6;
+    powerUpSound.volume = 0.6;
+
+    const unlock = () => {
+      const audios = [marchSound, bombSound, parachuteSound, powerUpSound];
+      audios.forEach((a) => {
+        a.muted = true;
+        a.play().then(() => {
+          a.pause();
+          a.currentTime = 0;
+          a.muted = false;
+        }).catch(() => {});
+      });
+      window.removeEventListener('pointerdown', unlock);
+    };
+
+    window.addEventListener('pointerdown', unlock, { once: true });
+    return () => window.removeEventListener('pointerdown', unlock);
+  }, [marchSound, bombSound, parachuteSound, powerUpSound]);
+
   // Initialize game
   useEffect(() => {
     const territories = generateTerritories();
