@@ -40,7 +40,14 @@ export const aiMakeMove = (
   setGameState: React.Dispatch<React.SetStateAction<GameState>>,
   handleCombat: (attackerId: string, defenderId: string, attackerTroops: number) => void,
   showAnimation: (message: string) => void,
-  opponentNickname: string
+  opponentNickname: string,
+  audioPlayers?: {
+    bombSound: HTMLAudioElement;
+    parachuteSound: HTMLAudioElement;
+    powerUpSound: HTMLAudioElement;
+  },
+  showToast?: (message: string, type: 'success' | 'info' | 'error') => void,
+  setBombingAnimation?: (state: { show: boolean; position: { x: number; y: number } }) => void
 ) => {
   turnCounter++;
   
@@ -102,7 +109,7 @@ export const aiMakeMove = (
   }
 
   // 🎴 FASE 7: USO CARTE STRATEGICO (tutte: bomba, paracadute, force, truppe)
-  if (tryAllCardsStrategically(gameState, setGameState, showAnimation, handleCombat, myTerritories, enemyTerritories, threats, attackOpportunities, momentum, riskLevel, continents, opponentNickname)) {
+  if (tryAllCardsStrategically(gameState, setGameState, showAnimation, handleCombat, myTerritories, enemyTerritories, threats, attackOpportunities, momentum, riskLevel, continents, opponentNickname, audioPlayers, showToast, setBombingAnimation)) {
     return;
   }
 
@@ -478,7 +485,14 @@ const tryAllCardsStrategically = (
   momentum: MomentumAnalysis,
   riskLevel: number,
   continents: ContinentalControl[],
-  opponentNickname: string
+  opponentNickname: string,
+  audioPlayers?: {
+    bombSound: HTMLAudioElement;
+    parachuteSound: HTMLAudioElement;
+    powerUpSound: HTMLAudioElement;
+  },
+  showToast?: (message: string, type: 'success' | 'info' | 'error') => void,
+  setBombingAnimation?: (state: { show: boolean; position: { x: number; y: number } }) => void
 ): boolean => {
   // Valuta quale carta usare in base alla situazione
   const cardScores = {
@@ -581,27 +595,72 @@ const tryAllCardsStrategically = (
 
     if (dangerousEnemies.length > 0 && dangerousEnemies[0].threat >= 12) {
       const target = dangerousEnemies[0].territory;
-      showAnimation(`${opponentNickname} ha usato la bomba`);
       
-      setGameState(prev => ({
-        ...prev,
-        territories: prev.territories.map(t => {
-          if (t.id === target.id) {
-            const newTroops = Math.max(0, t.troops - 2);
-            return {...t, troops: newTroops, owner: newTroops === 0 ? null : t.owner};
-          }
-          return t;
-        }),
-        cardCooldowns: {...prev.cardCooldowns, bomb: 5}
-      }));
-      
-      setTimeout(() => {
+      // Riproduci audio bomba
+      if (audioPlayers?.bombSound) {
+        audioPlayers.bombSound.currentTime = 0;
+        audioPlayers.bombSound.play().catch(console.error);
+      }
+
+      // Mostra animazione bombardamento se disponibile
+      if (setBombingAnimation) {
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+        setBombingAnimation({
+          show: true,
+          position: { x: screenWidth / 2, y: screenHeight / 2 }
+        });
+        
+        // Aspetta che l'animazione completi prima di applicare l'effetto
+        setTimeout(() => {
+          showAnimation("💣 Bombardamento aereo!");
+          if (showToast) showToast(`${opponentNickname} ha usato il bombardamento aereo!`, 'error');
+          
+          setGameState(prev => ({
+            ...prev,
+            territories: prev.territories.map(t => {
+              if (t.id === target.id) {
+                const newTroops = Math.max(0, t.troops - 2);
+                return {...t, troops: newTroops, owner: newTroops === 0 ? null : t.owner};
+              }
+              return t;
+            }),
+            cardCooldowns: {...prev.cardCooldowns, bomb: 5}
+          }));
+          
+          setTimeout(() => {
+            setGameState(prev => ({
+              ...prev,
+              currentPlayer: 'blue',
+              turnTimeLeft: 30
+            }));
+          }, 3000);
+        }, 2300);
+      } else {
+        // Fallback senza animazione
+        showAnimation("💣 Bombardamento aereo!");
+        if (showToast) showToast(`${opponentNickname} ha usato il bombardamento aereo!`, 'error');
+        
         setGameState(prev => ({
           ...prev,
-          currentPlayer: 'blue',
-          turnTimeLeft: 30
+          territories: prev.territories.map(t => {
+            if (t.id === target.id) {
+              const newTroops = Math.max(0, t.troops - 2);
+              return {...t, troops: newTroops, owner: newTroops === 0 ? null : t.owner};
+            }
+            return t;
+          }),
+          cardCooldowns: {...prev.cardCooldowns, bomb: 5}
         }));
-      }, 1500);
+        
+        setTimeout(() => {
+          setGameState(prev => ({
+            ...prev,
+            currentPlayer: 'blue',
+            turnTimeLeft: 30
+          }));
+        }, 1500);
+      }
       
       return true;
     }
@@ -625,7 +684,15 @@ const tryAllCardsStrategically = (
 
     if (blockingEnemies.length > 0) {
       const target = blockingEnemies[0];
-      showAnimation(`${opponentNickname} ha usato il paracadute`);
+      
+      // Riproduci audio paracadute
+      if (audioPlayers?.parachuteSound) {
+        audioPlayers.parachuteSound.currentTime = 0;
+        audioPlayers.parachuteSound.play().catch(console.error);
+      }
+
+      showAnimation("🪂 Paracadutista lanciato!");
+      if (showToast) showToast(`${opponentNickname} ha lanciato un paracadutista!`, 'info');
       
       setGameState(prev => ({
         ...prev,
@@ -641,7 +708,7 @@ const tryAllCardsStrategically = (
           currentPlayer: 'blue',
           turnTimeLeft: 30
         }));
-      }, 1500);
+      }, 3000);
       
       return true;
     }
@@ -650,7 +717,15 @@ const tryAllCardsStrategically = (
     const massiveForces = enemyTerritories.filter(t => t.troops >= 5);
     if (massiveForces.length > 0) {
       const target = massiveForces.sort((a, b) => b.troops - a.troops)[0];
-      showAnimation(`${opponentNickname} ha usato il paracadute`);
+      
+      // Riproduci audio paracadute
+      if (audioPlayers?.parachuteSound) {
+        audioPlayers.parachuteSound.currentTime = 0;
+        audioPlayers.parachuteSound.play().catch(console.error);
+      }
+
+      showAnimation("🪂 Paracadutista abbattuto! -1 truppa");
+      if (showToast) showToast(`${opponentNickname} ha lanciato un paracadutista kamikaze!`, 'info');
       
       setGameState(prev => ({
         ...prev,
@@ -666,7 +741,7 @@ const tryAllCardsStrategically = (
           currentPlayer: 'blue',
           turnTimeLeft: 30
         }));
-      }, 1500);
+      }, 3000);
       
       return true;
     }
@@ -683,7 +758,14 @@ const tryAllCardsStrategically = (
       const defender = gameState.territories.find(t => t.id === excellentAttack.defenderId);
 
       if (attacker && defender) {
-        showAnimation(`${opponentNickname} ha usato la forza`);
+        // Riproduci audio potenziamento
+        if (audioPlayers?.powerUpSound) {
+          audioPlayers.powerUpSound.currentTime = 0;
+          audioPlayers.powerUpSound.play().catch(console.error);
+        }
+
+        showAnimation("⚡ Truppe potenziate!");
+        if (showToast) showToast(`${opponentNickname} ha potenziato le sue truppe!`, 'info');
         
         setGameState(prev => ({
           ...prev,
@@ -718,27 +800,72 @@ const tryAllCardsStrategically = (
 
     if (dangerousEnemies.length > 0 && dangerousEnemies[0].threat >= 12) {
       const target = dangerousEnemies[0].territory;
-      showAnimation(`${opponentNickname} ha usato la bomba`);
       
-      setGameState(prev => ({
-        ...prev,
-        territories: prev.territories.map(t => {
-          if (t.id === target.id) {
-            const newTroops = Math.max(0, t.troops - 2);
-            return {...t, troops: newTroops, owner: newTroops === 0 ? null : t.owner};
-          }
-          return t;
-        }),
-        cardCooldowns: {...prev.cardCooldowns, bomb: 5}
-      }));
-      
-      setTimeout(() => {
+      // Riproduci audio bomba
+      if (audioPlayers?.bombSound) {
+        audioPlayers.bombSound.currentTime = 0;
+        audioPlayers.bombSound.play().catch(console.error);
+      }
+
+      // Mostra animazione bombardamento se disponibile
+      if (setBombingAnimation) {
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+        setBombingAnimation({
+          show: true,
+          position: { x: screenWidth / 2, y: screenHeight / 2 }
+        });
+        
+        // Aspetta che l'animazione completi prima di applicare l'effetto
+        setTimeout(() => {
+          showAnimation("💣 Bombardamento aereo!");
+          if (showToast) showToast(`${opponentNickname} ha usato il bombardamento aereo!`, 'error');
+          
+          setGameState(prev => ({
+            ...prev,
+            territories: prev.territories.map(t => {
+              if (t.id === target.id) {
+                const newTroops = Math.max(0, t.troops - 2);
+                return {...t, troops: newTroops, owner: newTroops === 0 ? null : t.owner};
+              }
+              return t;
+            }),
+            cardCooldowns: {...prev.cardCooldowns, bomb: 5}
+          }));
+          
+          setTimeout(() => {
+            setGameState(prev => ({
+              ...prev,
+              currentPlayer: 'blue',
+              turnTimeLeft: 30
+            }));
+          }, 3000);
+        }, 2300);
+      } else {
+        // Fallback senza animazione
+        showAnimation(`${opponentNickname} ha usato la bomba`);
+        if (showToast) showToast(`${opponentNickname} ha usato il bombardamento aereo!`, 'error');
+        
         setGameState(prev => ({
           ...prev,
-          currentPlayer: 'blue',
-          turnTimeLeft: 30
+          territories: prev.territories.map(t => {
+            if (t.id === target.id) {
+              const newTroops = Math.max(0, t.troops - 2);
+              return {...t, troops: newTroops, owner: newTroops === 0 ? null : t.owner};
+            }
+            return t;
+          }),
+          cardCooldowns: {...prev.cardCooldowns, bomb: 5}
         }));
-      }, 1500);
+        
+        setTimeout(() => {
+          setGameState(prev => ({
+            ...prev,
+            currentPlayer: 'blue',
+            turnTimeLeft: 30
+          }));
+        }, 1500);
+      }
       
       return true;
     }
@@ -761,7 +888,15 @@ const tryAllCardsStrategically = (
 
     if (blockingEnemies.length > 0) {
       const target = blockingEnemies[0];
-      showAnimation(`${opponentNickname} ha usato il paracadute`);
+      
+      // Riproduci audio paracadute
+      if (audioPlayers?.parachuteSound) {
+        audioPlayers.parachuteSound.currentTime = 0;
+        audioPlayers.parachuteSound.play().catch(console.error);
+      }
+
+      showAnimation("🪂 Paracadutista elimina il nemico!");
+      if (showToast) showToast(`${opponentNickname} ha conquistato un territorio con il paracadute!`, 'info');
       
       setGameState(prev => ({
         ...prev,
@@ -777,7 +912,7 @@ const tryAllCardsStrategically = (
           currentPlayer: 'blue',
           turnTimeLeft: 30
         }));
-      }, 1500);
+      }, 3000);
       
       return true;
     }
@@ -785,7 +920,15 @@ const tryAllCardsStrategically = (
     const massiveForces = enemyTerritories.filter(t => t.troops >= 5);
     if (massiveForces.length > 0) {
       const target = massiveForces.sort((a, b) => b.troops - a.troops)[0];
-      showAnimation(`${opponentNickname} ha usato il paracadute`);
+      
+      // Riproduci audio paracadute
+      if (audioPlayers?.parachuteSound) {
+        audioPlayers.parachuteSound.currentTime = 0;
+        audioPlayers.parachuteSound.play().catch(console.error);
+      }
+
+      showAnimation("🪂 Paracadutista abbattuto! -1 truppa");
+      if (showToast) showToast(`${opponentNickname} ha lanciato un paracadutista kamikaze!`, 'info');
       
       setGameState(prev => ({
         ...prev,
@@ -801,7 +944,7 @@ const tryAllCardsStrategically = (
           currentPlayer: 'blue',
           turnTimeLeft: 30
         }));
-      }, 1500);
+      }, 3000);
       
       return true;
     }

@@ -146,7 +146,24 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
       // Random delay between 6-14 seconds to make AI feel more realistic
       const aiThinkingTime = 6000 + Math.random() * 8000; // 6000ms to 14000ms
       const timer = setTimeout(() => {
-        aiMakeMove(gameState, setGameState, handleCombat, showCombatAnimation, opponentProfile?.nickname || 'Avversario');
+        aiMakeMove(
+          gameState, 
+          setGameState, 
+          handleCombat, 
+          showCombatAnimation, 
+          opponentProfile?.nickname || 'Avversario',
+          {
+            bombSound,
+            parachuteSound,
+            powerUpSound
+          },
+          (message, type) => {
+            if (type === 'success') toast.success(message);
+            else if (type === 'info') toast.info(message);
+            else if (type === 'error') toast.error(message);
+          },
+          setBombingAnimation
+        );
       }, aiThinkingTime);
       return () => clearTimeout(timer);
     }
