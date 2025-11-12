@@ -170,12 +170,12 @@ export const BattleBanner = ({
                 </DialogTrigger>
                 <DialogContent className="max-w-3xl max-h-[80vh]">
                   <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold">Come si gioca a Conquistiator</DialogTitle>
+                    <DialogTitle className="text-2xl font-bold">Benvenuto nel Conquistiator di LoveableConnect!</DialogTitle>
                   </DialogHeader>
                   <ScrollArea className="h-[60vh] pr-4">
                     <div className="space-y-6">
                       <section>
-                        <h3 className="text-2xl font-bold mb-4 text-primary">Benvenuto nel Conquistiator di LoveableConnect!</h3>
+                        <h3 className="text-2xl font-bold mb-4 text-primary">Come si gioca a Conquistiator?</h3>
                         <p className="text-muted-foreground leading-relaxed">
                           In questo gioco metterai alla prova la tua astuzia strategica contro altri utenti, per conquistare territori, guadagnare crediti e dimostrare chi domina.
                         </p>
