@@ -868,10 +868,10 @@ const tryTacticalTroopMovement = (
   pressurePoints: Territory[],
   opponentNickname: string
 ): boolean => {
-  // Trova territori sotto pressione che necessitano rinforzi
+  // Riduci i movimenti tattici inutili - solo se realmente necessario
   const underPressure = pressurePoints.filter(pp => {
     const threat = threats.find(t => t.territoryId === pp.id);
-    return threat && threat.threatLevel > 6 && pp.troops < 5;
+    return threat && threat.threatLevel > 10 && pp.troops < 3;
   });
 
   if (underPressure.length === 0) {
@@ -980,14 +980,14 @@ const tryMonteCarloAttack = (
   riskLevel: number,
   opponentNickname: string
 ): boolean => {
-  // Soglia dinamica: più aggressivo se rischio è basso, più prudente se alto
-  const baseThreshold = riskLevel > 0.6 ? 0.8 : (riskLevel > 0.4 ? 0.7 : 0.65);
+  // Soglie più aggressive per garantire più attacchi
+  const baseThreshold = riskLevel > 0.7 ? 0.6 : (riskLevel > 0.5 ? 0.5 : 0.4);
 
-  // Valuta attacchi con soglia locale più bassa per difensori deboli (1-2 truppe)
+  // Attacchi ancora più aggressivi contro difensori deboli
   const viableAttacks = attackOpportunities.filter(opp => {
     const advantage = opp.attackerTroops - opp.defenderTroops;
-    const localThreshold = opp.defenderTroops <= 2 ? Math.max(0.55, baseThreshold - 0.1) : baseThreshold;
-    const requiredAdvantage = opp.defenderTroops <= 2 ? 1 : 2;
+    const localThreshold = opp.defenderTroops <= 2 ? Math.max(0.35, baseThreshold - 0.2) : baseThreshold;
+    const requiredAdvantage = opp.defenderTroops <= 1 ? 0 : (opp.defenderTroops <= 2 ? 1 : 2);
     return opp.monteCarloScore >= localThreshold && advantage >= requiredAdvantage;
   });
 
@@ -1015,12 +1015,12 @@ const tryOpportunisticConquest = (
   attackOpportunities: AttackOpportunity[],
   opponentNickname: string
 ): boolean => {
-  // Priorità a difensori con 1 truppa, poi 2
+  // Attacca QUALSIASI territorio con 1-2 truppe se hai almeno parità
   const cheap = attackOpportunities
-    .filter(opp => opp.defenderTroops <= 2 && (opp.attackerTroops - opp.defenderTroops) >= 1)
+    .filter(opp => opp.defenderTroops <= 3 && opp.attackerTroops >= opp.defenderTroops)
     .sort((a, b) => {
-      const valA = (a.continentalValue + a.strategicValue) * (a.defenderTroops === 1 ? 2 : 1);
-      const valB = (b.continentalValue + b.strategicValue) * (b.defenderTroops === 1 ? 2 : 1);
+      const valA = (a.continentalValue + a.strategicValue) * (4 - a.defenderTroops);
+      const valB = (b.continentalValue + b.strategicValue) * (4 - b.defenderTroops);
       return valB - valA;
     });
 
@@ -1075,8 +1075,12 @@ const tryPreparedAssault = (
     if (suppliers.length === 0) continue;
 
     const s = suppliers[0];
-    const move = Math.min(2, s.troops - 1); // muovi 1-2 truppe per creare vantaggio
+    const move = Math.min(3, s.troops - 1); // muovi fino a 3 truppe per avere vantaggio decisivo
     if (move <= 0) continue;
+
+    // Solo se l'attacco risultante ha buone chance
+    const finalAttackTroops = a.troops + move - 1;
+    if (finalAttackTroops <= e.troops) continue; // deve avere almeno vantaggio numerico
 
     candidates.push({ attacker: a, enemy: e, supplier: s, move });
   }
