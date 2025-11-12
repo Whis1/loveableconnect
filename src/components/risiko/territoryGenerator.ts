@@ -372,7 +372,7 @@ export const generateTerritories = (): Territory[] => {
   // Collegamenti intercontinentali strategici
   connectByName("Piana Verde", "Giungla Fitta"); // Nord America -> Europa
   connectByName("Foresta Nera", "Giungla Fitta"); // Nord America -> Europa
-  connectByName("Altopiano", "Delta Paludoso"); // Sud America -> Africa
+  // Rimosso collegamento diretto Altopiano -> Delta Paludoso (deve passare per Lago Cristallo e Bosco Incantato)
   connectByName("Grotte Profonde", "Montagna Sacra"); // Europa -> Asia
   connectByName("Savana Dorata", "Aeroporto"); // Africa -> Oceania
   connectByName("Torre di Guardia", "Fortezza"); // Europa -> Asia
