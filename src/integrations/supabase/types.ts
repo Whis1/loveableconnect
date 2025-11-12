@@ -774,6 +774,36 @@ export type Database = {
         }
         Relationships: []
       }
+      territory_connections: {
+        Row: {
+          created_at: string | null
+          id: string
+          neighbor_indices: number[]
+          territory_index: number
+          territory_name: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          neighbor_indices: number[]
+          territory_index: number
+          territory_name: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          neighbor_indices?: number[]
+          territory_index?: number
+          territory_name?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       tris_games: {
         Row: {
           created_at: string
