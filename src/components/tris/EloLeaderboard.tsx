@@ -8,7 +8,7 @@ interface LeaderboardProfile {
   id: string;
   nickname: string;
   avatar_url: string | null;
-  tris_elo: number;
+  game_elo: number;
   is_admin_profile: boolean;
 }
 
@@ -117,8 +117,8 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     try {
       const { data: profiles, error } = await supabase
         .from("profiles")
-        .select("id, nickname, avatar_url, tris_elo, is_admin_profile")
-        .order("tris_elo", { ascending: false });
+        .select("id, nickname, avatar_url, game_elo, is_admin_profile")
+        .order("game_elo", { ascending: false });
 
       if (error) throw error;
 
@@ -126,13 +126,13 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         // Use persisted ELOs for admin profiles, real ELOs for users
         const updatedProfiles = profiles.map(profile => {
           if (profile.is_admin_profile && elosMap.has(profile.id)) {
-            return { ...profile, tris_elo: elosMap.get(profile.id)! };
+            return { ...profile, game_elo: elosMap.get(profile.id)! };
           }
           return profile;
         });
 
         // Sort by ELO
-        const sortedProfiles = updatedProfiles.sort((a, b) => (b.tris_elo || 1200) - (a.tris_elo || 1200));
+        const sortedProfiles = updatedProfiles.sort((a, b) => (b.game_elo || 1200) - (a.game_elo || 1200));
         
         // Get top 5
         setTopPlayers(sortedProfiles.slice(0, 5));
@@ -141,7 +141,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         if (userId) {
           const userProfile = sortedProfiles.find(p => p.id === userId);
           if (userProfile) {
-            setUserElo(userProfile.tris_elo || 1200);
+            setUserElo(userProfile.game_elo || 1200);
             const rank = sortedProfiles.findIndex(p => p.id === userId) + 1;
             setUserRank(rank);
           }
@@ -157,8 +157,8 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
       // Fetch all profiles with ELO
       const { data: profiles, error } = await supabase
         .from("profiles")
-        .select("id, nickname, avatar_url, tris_elo, is_admin_profile")
-        .order("tris_elo", { ascending: false });
+        .select("id, nickname, avatar_url, game_elo, is_admin_profile")
+        .order("game_elo", { ascending: false });
 
       if (error) throw error;
 
@@ -169,7 +169,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         // First, collect all non-admin ELOs
         profiles.forEach(profile => {
           if (!profile.is_admin_profile) {
-            usedElos.add(profile.tris_elo || 1200);
+            usedElos.add(profile.game_elo || 1200);
           }
         });
         
@@ -195,7 +195,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
             
             usedElos.add(newElo);
             newAdminElos.set(profile.id, newElo);
-            return { ...profile, tris_elo: newElo };
+            return { ...profile, game_elo: newElo };
           }
           return profile;
         });
@@ -206,7 +206,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         savePersistedData(newAdminElos);
 
         // Sort by ELO after updating admin profiles
-        const sortedProfiles = updatedProfiles.sort((a, b) => (b.tris_elo || 1200) - (a.tris_elo || 1200));
+        const sortedProfiles = updatedProfiles.sort((a, b) => (b.game_elo || 1200) - (a.game_elo || 1200));
         
         // Get top 5
         setTopPlayers(sortedProfiles.slice(0, 5));
@@ -215,7 +215,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         if (userId) {
           const userProfile = sortedProfiles.find(p => p.id === userId);
           if (userProfile) {
-            setUserElo(userProfile.tris_elo || 1200);
+            setUserElo(userProfile.game_elo || 1200);
             const rank = sortedProfiles.findIndex(p => p.id === userId) + 1;
             setUserRank(rank);
           }
@@ -371,7 +371,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
                 <div className="text-right">
                   <p className="text-xs text-muted-foreground">ELO</p>
                   <p className="font-bold text-lg text-primary">
-                    {player.tris_elo || 1200}
+                    {player.game_elo || 1200}
                   </p>
                 </div>
               </div>

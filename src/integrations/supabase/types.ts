@@ -527,6 +527,7 @@ export type Database = {
           created_at: string
           favorite_songs: Json | null
           full_name: string
+          game_elo: number | null
           gender: string | null
           id: string
           interests: string[] | null
@@ -541,10 +542,8 @@ export type Database = {
           photos: string[] | null
           relationship_status: string | null
           relationship_type: string | null
-          risiko_elo: number | null
           sexual_orientation: string | null
           show_online_status: boolean | null
-          tris_elo: number | null
           tutorial_completed: boolean | null
           updated_at: string
           user_images_link: string | null
@@ -559,6 +558,7 @@ export type Database = {
           created_at?: string
           favorite_songs?: Json | null
           full_name: string
+          game_elo?: number | null
           gender?: string | null
           id: string
           interests?: string[] | null
@@ -573,10 +573,8 @@ export type Database = {
           photos?: string[] | null
           relationship_status?: string | null
           relationship_type?: string | null
-          risiko_elo?: number | null
           sexual_orientation?: string | null
           show_online_status?: boolean | null
-          tris_elo?: number | null
           tutorial_completed?: boolean | null
           updated_at?: string
           user_images_link?: string | null
@@ -591,6 +589,7 @@ export type Database = {
           created_at?: string
           favorite_songs?: Json | null
           full_name?: string
+          game_elo?: number | null
           gender?: string | null
           id?: string
           interests?: string[] | null
@@ -605,10 +604,8 @@ export type Database = {
           photos?: string[] | null
           relationship_status?: string | null
           relationship_type?: string | null
-          risiko_elo?: number | null
           sexual_orientation?: string | null
           show_online_status?: boolean | null
-          tris_elo?: number | null
           tutorial_completed?: boolean | null
           updated_at?: string
           user_images_link?: string | null
@@ -1016,6 +1013,10 @@ export type Database = {
       }
       unlock_location_for_user: {
         Args: { p_user_id: string }
+        Returns: undefined
+      }
+      update_game_elo: {
+        Args: { elo_change: number; user_id: string }
         Returns: undefined
       }
       update_tris_elo: {

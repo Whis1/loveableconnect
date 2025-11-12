@@ -154,7 +154,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (session) {
-            await supabase.rpc('update_tris_elo', {
+            await supabase.rpc('update_game_elo', {
               user_id: session.user.id,
               elo_change: -10
             });
@@ -178,7 +178,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         try {
           supabase.auth.getSession().then(({ data: { session } }) => {
             if (session) {
-              supabase.rpc('update_tris_elo', {
+              supabase.rpc('update_game_elo', {
                 user_id: session.user.id,
                 elo_change: -10
               });
@@ -199,7 +199,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         supabase.auth.getSession().then(async ({ data: { session } }) => {
           if (session) {
             try {
-              await supabase.rpc('update_tris_elo', {
+              await supabase.rpc('update_game_elo', {
                 user_id: session.user.id,
                 elo_change: -10
               });
@@ -227,7 +227,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         supabase.auth.getSession().then(async ({ data: { session } }) => {
           if (session) {
             try {
-              await supabase.rpc('update_tris_elo', {
+              await supabase.rpc('update_game_elo', {
                 user_id: session.user.id,
                 elo_change: -10
               });
@@ -819,13 +819,13 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
       // Vittoria: +20 ELO Risiko
       await supabase
         .from('profiles')
-        .update({ risiko_elo: (userProfile.risiko_elo || 1200) + 20 })
+        .update({ game_elo: (userProfile.game_elo || 1200) + 20 })
         .eq('id', userProfile.id);
     } else {
       // Sconfitta: -10 ELO Risiko
       await supabase
         .from('profiles')
-        .update({ risiko_elo: Math.max(0, (userProfile.risiko_elo || 1200) - 10) })
+        .update({ game_elo: Math.max(0, (userProfile.game_elo || 1200) - 10) })
         .eq('id', userProfile.id);
     }
 
@@ -914,7 +914,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
               {gameState.territories.filter(t => t.owner === 'blue').reduce((sum, t) => sum + t.troops, 0)} truppe
             </p>
             <p className="text-xs text-blue-400 font-semibold">
-              ELO: {userProfile?.risiko_elo || 1200}
+              ELO: {userProfile?.game_elo || 1200}
             </p>
           </div>
         </div>
@@ -1052,7 +1052,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
               {gameState.territories.filter(t => t.owner === 'red').reduce((sum, t) => sum + t.troops, 0)} truppe
             </p>
             <p className="text-xs text-red-400 font-semibold">
-              ELO: {opponentProfile?.risiko_elo || 1200}
+              ELO: {opponentProfile?.game_elo || 1200}
             </p>
           </div>
           <div className="relative">

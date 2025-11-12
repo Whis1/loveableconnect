@@ -9,8 +9,7 @@ interface Profile {
   nickname: string;
   avatar_url: string | null;
   photos: string[] | null;
-  tris_elo?: number;
-  risiko_elo?: number;
+  game_elo?: number;
 }
 
 interface OpponentSearchProps {
@@ -39,7 +38,7 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
     // Fetch ALL admin profiles - sono bot, sempre disponibili
     const { data: adminProfiles } = await supabase
       .from("profiles")
-      .select("id, nickname, avatar_url, photos, tris_elo, risiko_elo")
+      .select("id, nickname, avatar_url, photos, game_elo")
       .eq("is_admin_profile", true);
 
     if (adminProfiles && adminProfiles.length > 0) {
@@ -85,10 +84,10 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
         const data: StoredLeaderboardData = JSON.parse(stored);
         // If this opponent has an ELO in the leaderboard, use that instead
         if (data.adminElos[opponent.id]) {
-          console.log(`Using leaderboard ELO ${data.adminElos[opponent.id]} for ${opponent.nickname} (DB ELO: ${opponent.tris_elo})`);
+          console.log(`Using leaderboard ELO ${data.adminElos[opponent.id]} for ${opponent.nickname} (DB ELO: ${opponent.game_elo})`);
           return {
             ...opponent,
-            tris_elo: data.adminElos[opponent.id]
+            game_elo: data.adminElos[opponent.id]
           };
         }
       }

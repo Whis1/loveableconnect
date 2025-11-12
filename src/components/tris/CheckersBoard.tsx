@@ -9,7 +9,7 @@ interface Profile {
   id: string;
   nickname: string;
   avatar_url: string | null;
-  tris_elo?: number;
+  game_elo?: number;
 }
 
 interface CheckersBoardProps {
@@ -95,8 +95,8 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
               filter: `id=eq.${session.user.id}`
             },
             (payload: any) => {
-              if (payload.new.tris_elo !== undefined) {
-                setUserElo(payload.new.tris_elo);
+              if (payload.new.game_elo !== undefined) {
+                setUserElo(payload.new.game_elo);
               }
             }
           )
@@ -157,7 +157,7 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
         supabase.auth.getSession().then(({ data: { session } }) => {
           if (session) {
             supabase
-              .rpc("update_tris_elo", {
+              .rpc("update_game_elo", {
                 user_id: session.user.id,
                 elo_change: -10,
               });
@@ -238,13 +238,13 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
 
     const { data } = await supabase
       .from("profiles")
-      .select("id, nickname, avatar_url, tris_elo")
+      .select("id, nickname, avatar_url, game_elo")
       .eq("id", session.user.id)
       .single();
 
     if (data) {
       setCurrentUserProfile(data);
-      setUserElo(data.tris_elo || 1200);
+      setUserElo(data.game_elo || 1200);
     }
   };
 
@@ -260,7 +260,7 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     if (!session) return;
 
     try {
-      await supabase.rpc("update_tris_elo", {
+      await supabase.rpc("update_game_elo", {
         user_id: session.user.id,
         elo_change: eloChange,
       });
