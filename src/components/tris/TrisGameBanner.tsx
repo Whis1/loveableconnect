@@ -173,8 +173,25 @@ export const TrisGameBanner = () => {
     setGameState("selecting");
   };
 
-  const handleGameSelect = (game: "tris" | "dama" | "risiko") => {
+  const handleGameSelect = async (game: "tris" | "dama" | "risiko") => {
     setSelectedGame(game);
+    
+    // For RISIKO, ensure user profile is loaded
+    if (game === "risiko" && !currentUserProfile) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", session.user.id)
+          .single();
+        
+        if (profile) {
+          setCurrentUserProfile(profile);
+        }
+      }
+    }
+    
     setGameState("searching");
   };
 
