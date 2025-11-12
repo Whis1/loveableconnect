@@ -136,7 +136,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           if (session) {
             supabase.from('profiles')
               .update({ 
-                risiko_elo: Math.max(0, (userProfile.risiko_elo || 1200) - 15) 
+                risiko_elo: Math.max(0, (userProfile.risiko_elo || 1200) - 10) 
               })
               .eq('id', session.user.id);
           }
@@ -151,7 +151,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           if (session) {
             supabase.from('profiles')
               .update({ 
-                risiko_elo: Math.max(0, (userProfile.risiko_elo || 1200) - 15) 
+                risiko_elo: Math.max(0, (userProfile.risiko_elo || 1200) - 10) 
               })
               .eq('id', session.user.id);
           }
@@ -174,7 +174,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           if (session) {
             supabase.from('profiles')
               .update({ 
-                risiko_elo: Math.max(0, (userProfile.risiko_elo || 1200) - 15) 
+                risiko_elo: Math.max(0, (userProfile.risiko_elo || 1200) - 10) 
               })
               .eq('id', session.user.id);
           }
@@ -775,16 +775,16 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           .eq('user_id', userProfile.id);
       }
 
-      // Vittoria: +25 ELO Risiko
+      // Vittoria: +20 ELO Risiko
       await supabase
         .from('profiles')
-        .update({ risiko_elo: (userProfile.risiko_elo || 1200) + 25 })
+        .update({ risiko_elo: (userProfile.risiko_elo || 1200) + 20 })
         .eq('id', userProfile.id);
     } else {
-      // Sconfitta: -12 ELO Risiko
+      // Sconfitta: -10 ELO Risiko
       await supabase
         .from('profiles')
-        .update({ risiko_elo: Math.max(0, (userProfile.risiko_elo || 1200) - 12) })
+        .update({ risiko_elo: Math.max(0, (userProfile.risiko_elo || 1200) - 10) })
         .eq('id', userProfile.id);
     }
 
