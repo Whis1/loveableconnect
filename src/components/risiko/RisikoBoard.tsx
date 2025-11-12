@@ -433,6 +433,11 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
     setTimeout(() => {
       setMovingTroops(null);
 
+      // Check if this is a combat move
+      const source = gameState.territories.find(t => t.id === gameState.selectedTerritory);
+      const target = gameState.territories.find(t => t.id === targetTerritory);
+      const isCombat = target && target.owner && target.owner !== source?.owner && target.troops > 0;
+
       setGameState(prev => {
         const newTerritories = [...prev.territories];
         const source = newTerritories.find(t => t.id === prev.selectedTerritory);
@@ -503,8 +508,11 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
 
       setTargetTerritory(null);
       
-      // Switch turn after non-combat move animation completes
-      setTimeout(() => switchTurn(), 1500);
+      // Switch turn ONLY for non-combat moves (merges and neutral conquests)
+      // For combat, handleCombat will handle the turn switch
+      if (!isCombat) {
+        setTimeout(() => switchTurn(), 1500);
+      }
     }, 1000);
   };
 
