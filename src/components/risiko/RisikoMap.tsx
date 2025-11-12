@@ -49,22 +49,16 @@ export const RisikoMap = ({
           count: movingTroops.count
         });
 
-        // Animate to destination with smooth easing
-        const duration = 2500;
+        // Movimento lineare costante
+        const duration = 2000;
         const startTime = Date.now();
-        
-        // Easing function for smooth animation (ease-in-out)
-        const easeInOutCubic = (t: number): number => {
-          return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-        };
         
         const animate = () => {
           const elapsed = Date.now() - startTime;
-          const linearProgress = Math.min(elapsed / duration, 1);
-          const easedProgress = easeInOutCubic(linearProgress);
+          const progress = Math.min(elapsed / duration, 1);
           
-          const currentX = fromTerritory.x + (toTerritory.x - fromTerritory.x) * easedProgress;
-          const currentY = fromTerritory.y + (toTerritory.y - fromTerritory.y) * easedProgress;
+          const currentX = fromTerritory.x + (toTerritory.x - fromTerritory.x) * progress;
+          const currentY = fromTerritory.y + (toTerritory.y - fromTerritory.y) * progress;
           
           setAnimatingTroops({
             x: currentX,
@@ -72,7 +66,7 @@ export const RisikoMap = ({
             count: movingTroops.count
           });
           
-          if (linearProgress < 1) {
+          if (progress < 1) {
             animationFrameId = requestAnimationFrame(animate);
           } else {
             setAnimatingTroops(null);
