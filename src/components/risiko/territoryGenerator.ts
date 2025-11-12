@@ -363,7 +363,6 @@ export const generateTerritories = (): Territory[] => {
   connectByName("Laguna Azzurra", "Pianura Fertile"); // collegamento strategico
   connectByName("Altopiano", "Lago Cristallo"); // collegamento strategico
   connectByName("Mare Interno", "Terre Ghiacciate"); // collegamento strategico
-  connectByName("Mare Interno", "Bosco Incantato"); // collegamento strategico
   connectByName("Fiume Lungo", "Mare Interno"); // collegamento strategico
   connectByName("Lago Cristallo", "Terre Ghiacciate"); // collegamento strategico
   connectByName("Lago Cristallo", "Canyon Rosso"); // collegamento strategico
