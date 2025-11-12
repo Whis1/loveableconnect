@@ -13,29 +13,19 @@ serve(async (req) => {
   }
 
   try {
-    const { templateKey } = await req.json();
+    const { templateKey, testEmail } = await req.json();
 
     if (!templateKey) {
       throw new Error("templateKey è obbligatorio");
     }
 
-    // Get the authorization header to identify the requesting user
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
-      throw new Error("Non autenticato");
+    if (!testEmail) {
+      throw new Error("testEmail è obbligatorio");
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Verify user from auth header
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    
-    if (userError || !user?.email) {
-      throw new Error("Utente non trovato o non autorizzato");
-    }
 
     // Load template from DB
     const { data: template, error: templateError } = await supabase
@@ -146,7 +136,7 @@ serve(async (req) => {
       
       case 'support_email':
         variables = {
-          userEmail: user.email,
+          userEmail: testEmail,
           message: 'Questo è un messaggio di test per il supporto.',
         };
         break;
@@ -174,7 +164,7 @@ serve(async (req) => {
 
     await resend.emails.send({
       from: "LoveableConnect 💕 <noreply@loveableconnect.com>",
-      to: [user.email],
+      to: [testEmail],
       subject: `[TEST] ${subject}`,
       html: `
         <div style="background: #fff3cd; border: 2px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 8px; text-align: center;">
@@ -188,11 +178,11 @@ serve(async (req) => {
       `,
     });
 
-    console.log(`Test email sent for template: ${templateKey} to ${user.email}`);
+    console.log(`Test email sent for template: ${templateKey} to ${testEmail}`);
 
     return new Response(JSON.stringify({ 
       success: true, 
-      message: `Email di test inviata a ${user.email}` 
+      message: `Email di test inviata a ${testEmail}` 
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
