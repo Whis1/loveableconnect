@@ -107,7 +107,7 @@ export const aiMakeMove = (
 
   // 🌍 FASE 2: ESPANSIONE TERRITORIALE AGGRESSIVA (priorità massima!)
   if (needsExpansion || riskLevel < 0.5) {
-    if (tryAggressiveExpansion(gameState, setGameState, handleCombat, showAnimation, myTerritories, enemyTerritories, neutralTerritories, attackOpportunities, opponentNickname)) {
+    if (tryAggressiveExpansion(gameState, setGameState, handleCombat, showAnimation, myTerritories, enemyTerritories, neutralTerritories, attackOpportunities, opponentNickname, audioPlayers, setMovingTroops)) {
       return;
     }
   }
@@ -155,7 +155,7 @@ export const aiMakeMove = (
   }
 
   // 🔄 FASE 11: CONSOLIDAMENTO ZONE
-  if (tryZoneConsolidation(gameState, setGameState, myTerritories, threats)) {
+  if (tryZoneConsolidation(gameState, setGameState, myTerritories, threats, opponentNickname, audioPlayers, setMovingTroops, showAnimation)) {
     return;
   }
 
@@ -1536,7 +1536,14 @@ const tryAggressiveExpansion = (
   enemyTerritories: Territory[],
   neutralTerritories: Territory[],
   attackOpportunities: AttackOpportunity[],
-  opponentNickname: string
+  opponentNickname: string,
+  audioPlayers?: {
+    bombSound: HTMLAudioElement;
+    parachuteSound: HTMLAudioElement;
+    powerUpSound: HTMLAudioElement;
+    marchSound: HTMLAudioElement;
+  },
+  setMovingTroops?: (state: { fromId: string; toId: string; count: number } | null) => void
 ): boolean => {
   // 1. PRIORITÀ: Conquista territori neutrali adiacenti (espansione gratuita)
   for (const myTerritory of myTerritories) {
@@ -1559,26 +1566,51 @@ const tryAggressiveExpansion = (
       }
       if (moveTroops < 1) continue;
 
-      setGameState(prev => ({
-        ...prev,
-        territories: prev.territories.map(t => {
-          if (t.id === myTerritory.id) {
-            return {...t, troops: t.troops - moveTroops};
-          }
-          if (t.id === target.id) {
-            return {...t, owner: 'red', troops: moveTroops};
-          }
-          return t;
-        })
-      }));
+      // Riproduci audio marcia
+      if (audioPlayers?.marchSound) {
+        audioPlayers.marchSound.currentTime = 0;
+        audioPlayers.marchSound.play().catch(console.error);
+      }
 
+      // Avvia animazione truppe
+      if (setMovingTroops) {
+        setMovingTroops({
+          fromId: myTerritory.id,
+          toId: target.id,
+          count: moveTroops
+        });
+        
+        setTimeout(() => {
+          setMovingTroops(null);
+        }, 1000);
+      }
+
+      showAnimation(`${opponentNickname} sta espandendo il territorio`);
+
+      // Aggiorna stato DOPO animazione (1000ms)
+      setTimeout(() => {
+        setGameState(prev => ({
+          ...prev,
+          territories: prev.territories.map(t => {
+            if (t.id === myTerritory.id) {
+              return {...t, troops: t.troops - moveTroops};
+            }
+            if (t.id === target.id) {
+              return {...t, owner: 'red', troops: moveTroops};
+            }
+            return t;
+          })
+        }));
+      }, 1000);
+
+      // Switch turno DOPO update (2000ms totale)
       setTimeout(() => {
         setGameState(prev => ({
           ...prev,
           currentPlayer: 'blue',
           turnTimeLeft: 30
         }));
-      }, 500);
+      }, 2000);
 
       return true;
     }
@@ -1914,7 +1946,16 @@ const tryZoneConsolidation = (
   gameState: GameState,
   setGameState: React.Dispatch<React.SetStateAction<GameState>>,
   myTerritories: Territory[],
-  threats: ThreatAnalysis[]
+  threats: ThreatAnalysis[],
+  opponentNickname: string,
+  audioPlayers?: {
+    bombSound: HTMLAudioElement;
+    parachuteSound: HTMLAudioElement;
+    powerUpSound: HTMLAudioElement;
+    marchSound: HTMLAudioElement;
+  },
+  setMovingTroops?: (state: { fromId: string; toId: string; count: number } | null) => void,
+  showAnimation?: (message: string) => void
 ): boolean => {
   const rearTerritories = myTerritories.filter(t => {
     const hasEnemyNeighbor = t.neighbors.some(nId => {
@@ -1939,26 +1980,51 @@ const tryZoneConsolidation = (
       const target = frontlineTerritories[0];
       const moveTroops = weakRear.troops - 1;
 
-      setGameState(prev => ({
-        ...prev,
-        territories: prev.territories.map(t => {
-          if (t.id === weakRear.id) {
-            return {...t, troops: 1};
-          }
-          if (t.id === target.id) {
-            return {...t, troops: t.troops + moveTroops};
-          }
-          return t;
-        })
-      }));
+      // Riproduci audio marcia
+      if (audioPlayers?.marchSound) {
+        audioPlayers.marchSound.currentTime = 0;
+        audioPlayers.marchSound.play().catch(console.error);
+      }
 
+      // Avvia animazione truppe
+      if (setMovingTroops) {
+        setMovingTroops({
+          fromId: weakRear.id,
+          toId: target.id,
+          count: moveTroops
+        });
+        
+        setTimeout(() => {
+          setMovingTroops(null);
+        }, 1000);
+      }
+
+      showAnimation?.(`${opponentNickname} sta consolidando le truppe`);
+
+      // Aggiorna stato DOPO animazione (1000ms)
+      setTimeout(() => {
+        setGameState(prev => ({
+          ...prev,
+          territories: prev.territories.map(t => {
+            if (t.id === weakRear.id) {
+              return {...t, troops: 1};
+            }
+            if (t.id === target.id) {
+              return {...t, troops: t.troops + moveTroops};
+            }
+            return t;
+          })
+        }));
+      }, 1000);
+
+      // Switch turno DOPO update (2000ms totale)
       setTimeout(() => {
         setGameState(prev => ({
           ...prev,
           currentPlayer: 'blue',
           turnTimeLeft: 30
         }));
-      }, 500);
+      }, 2000);
 
       return true;
     }
