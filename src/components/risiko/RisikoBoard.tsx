@@ -91,6 +91,8 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
     defenderTroops: number;
     winner: 'attacker' | 'defender' | 'draw';
     survivingTroops: number;
+    userPlayer: 'blue' | 'red';
+    attackerPlayer: 'blue' | 'red';
     onComplete: () => void;
   } | null>(null);
   const [bombingAnimation, setBombingAnimation] = useState<{
@@ -259,6 +261,8 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
       defenderTroops: defender.troops,
       winner: result.winner,
       survivingTroops: result.survivingTroops,
+      userPlayer: 'blue',
+      attackerPlayer: attacker.owner as 'blue' | 'red',
       onComplete: () => {
         setBattleBanner(null);
         // Mostra banner conquista solo se attaccante vince
@@ -1012,6 +1016,8 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           defenderTroops={battleBanner.defenderTroops}
           winner={battleBanner.winner}
           survivingTroops={battleBanner.survivingTroops}
+          userPlayer={battleBanner.userPlayer}
+          attackerPlayer={battleBanner.attackerPlayer}
           onComplete={battleBanner.onComplete}
         />
       )}

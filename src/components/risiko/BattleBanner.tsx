@@ -15,6 +15,8 @@ interface BattleBannerProps {
   winner: 'attacker' | 'defender' | 'draw';
   survivingTroops: number;
   onComplete: () => void;
+  userPlayer: 'blue' | 'red'; // Aggiunto per sapere chi è l'utente
+  attackerPlayer: 'blue' | 'red'; // Aggiunto per sapere chi attacca
 }
 
 export const BattleBanner = ({
@@ -25,7 +27,9 @@ export const BattleBanner = ({
   defenderTroops,
   winner,
   survivingTroops,
-  onComplete
+  onComplete,
+  userPlayer,
+  attackerPlayer
 }: BattleBannerProps) => {
   const [phase, setPhase] = useState<'intro' | 'combat' | 'result'>('intro');
   const [audio] = useState(() => new Audio(scontroSound));
@@ -66,15 +70,56 @@ export const BattleBanner = ({
   if (!show) return null;
 
   const getResultMessage = () => {
+    const isUserAttacker = userPlayer === attackerPlayer;
+    
     if (winner === 'draw') return 'PAREGGIO!';
-    if (winner === 'attacker') return 'ATTACCANTE VINCE!';
-    return 'DIFENSORE RESISTE!';
+    
+    if (winner === 'attacker') {
+      // L'attaccante ha vinto
+      if (isUserAttacker) {
+        return 'HAI VINTO!';
+      } else {
+        return 'SEI STATO SCONFITTO!';
+      }
+    } else {
+      // Il difensore ha vinto
+      if (isUserAttacker) {
+        return 'SEI STATO RESPINTO!';
+      } else {
+        return 'HAI DIFESO IL TERRITORIO!';
+      }
+    }
   };
 
   const getResultIcon = () => {
+    const isUserAttacker = userPlayer === attackerPlayer;
+    const userWon = (winner === 'attacker' && isUserAttacker) || (winner === 'defender' && !isUserAttacker);
+    
     if (winner === 'draw') return <Skull className="w-16 h-16 text-gray-400" />;
-    if (winner === 'attacker') return <Trophy className="w-16 h-16 text-yellow-400" />;
-    return <Trophy className="w-16 h-16 text-blue-400" />;
+    if (userWon) return <Trophy className="w-16 h-16 text-yellow-400" />;
+    return <Skull className="w-16 h-16 text-red-400" />;
+  };
+
+  const getResultSubtext = () => {
+    const isUserAttacker = userPlayer === attackerPlayer;
+    
+    if (winner === 'draw') {
+      return '💀 Entrambi eliminati 💀';
+    }
+    
+    if (winner === 'attacker') {
+      if (isUserAttacker) {
+        return '🎉 Territorio conquistato! 🎉';
+      } else {
+        return '💔 Il tuo territorio è stato conquistato 💔';
+      }
+    } else {
+      if (isUserAttacker) {
+        return '😞 Attacco fallito 😞';
+      } else {
+        return '🛡️ Difesa riuscita! 🛡️';
+      }
+    }
   };
 
   return (
@@ -256,21 +301,15 @@ export const BattleBanner = ({
                 Truppe superstiti: {survivingTroops}
               </span>
             </div>
-            {winner === 'attacker' && (
-              <div className="text-green-400 font-bold text-2xl animate-bounce">
-                🎉 Territorio conquistato! 🎉
-              </div>
-            )}
-            {winner === 'defender' && (
-              <div className="text-blue-400 font-bold text-2xl animate-bounce">
-                🛡️ Difesa riuscita! 🛡️
-              </div>
-            )}
-            {winner === 'draw' && (
-              <div className="text-gray-400 font-bold text-2xl">
-                💀 Entrambi eliminati 💀
-              </div>
-            )}
+            <div className={`font-bold text-2xl animate-bounce ${
+              (winner === 'attacker' && userPlayer === attackerPlayer) || (winner === 'defender' && userPlayer !== attackerPlayer)
+                ? 'text-green-400'
+                : winner === 'draw'
+                ? 'text-gray-400'
+                : 'text-red-400'
+            }`}>
+              {getResultSubtext()}
+            </div>
           </div>
         )}
       </div>
