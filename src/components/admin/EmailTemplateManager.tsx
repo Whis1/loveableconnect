@@ -31,6 +31,9 @@ export function EmailTemplateManager() {
   const [editedContent, setEditedContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
+  const [testEmailDialogOpen, setTestEmailDialogOpen] = useState(false);
+  const [testEmail, setTestEmail] = useState("");
+  const [selectedTestTemplate, setSelectedTestTemplate] = useState<string | null>(null);
 
   useEffect(() => {
     loadTemplates();
@@ -118,16 +121,29 @@ export function EmailTemplateManager() {
     }
   };
 
-  const sendTestEmail = async (templateKey: string) => {
+  const openTestEmailDialog = (templateKey: string) => {
+    setSelectedTestTemplate(templateKey);
+    setTestEmailDialogOpen(true);
+  };
+
+  const sendTestEmail = async () => {
+    if (!testEmail || !selectedTestTemplate) return;
+
     setSendingTest(true);
     try {
       const { error } = await supabase.functions.invoke('test-email-template', {
-        body: { templateKey }
+        body: { 
+          templateKey: selectedTestTemplate,
+          testEmail: testEmail 
+        }
       });
 
       if (error) throw error;
 
-      toast.success("Email di test inviata! Controlla la tua casella email.");
+      toast.success(`Email di test inviata a ${testEmail}!`);
+      setTestEmailDialogOpen(false);
+      setTestEmail("");
+      setSelectedTestTemplate(null);
     } catch (error: any) {
       toast.error("Errore nell'invio dell'email di test: " + error.message);
     } finally {
@@ -179,12 +195,11 @@ export function EmailTemplateManager() {
                         className="w-full flex items-center gap-2"
                         onClick={(e) => {
                           e.stopPropagation();
-                          sendTestEmail(template.template_key);
+                          openTestEmailDialog(template.template_key);
                         }}
-                        disabled={sendingTest}
                       >
                         <Send className="w-3 h-3" />
-                        {sendingTest ? "Invio..." : "Invia Test"}
+                        Invia Test
                       </Button>
                     </CardContent>
                   </Card>
@@ -311,6 +326,36 @@ export function EmailTemplateManager() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={testEmailDialogOpen} onOpenChange={setTestEmailDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Invia Email di Test</DialogTitle>
+            <DialogDescription>
+              Inserisci l'indirizzo email a cui inviare il template di test
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="test-email">Email destinatario</Label>
+              <Input
+                id="test-email"
+                type="email"
+                placeholder="esempio@email.com"
+                value={testEmail}
+                onChange={(e) => setTestEmail(e.target.value)}
+              />
+            </div>
+            <Button 
+              onClick={sendTestEmail} 
+              disabled={sendingTest || !testEmail}
+              className="w-full"
+            >
+              {sendingTest ? "Invio..." : "Invia Email di Test"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
