@@ -639,13 +639,17 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
 
       setTargetTerritory(null);
       
-      // 🔓 RIATTIVA INTERAZIONI dopo spostamento
-      setCardActionInProgress(false);
-      
       // Switch turn ONLY for non-combat moves (merges and neutral conquests)
       // For combat, handleCombat will handle the turn switch
       if (!isCombat) {
-        setTimeout(() => switchTurn(), 1000);
+        setTimeout(() => {
+          // 🔓 RIATTIVA INTERAZIONI solo DOPO switch turno
+          setCardActionInProgress(false);
+          switchTurn();
+        }, 1000);
+      } else {
+        // Per combattimenti, riattiva dopo handleCombat
+        // (handleCombat già gestisce il timing)
       }
     }, 1000);
   };
