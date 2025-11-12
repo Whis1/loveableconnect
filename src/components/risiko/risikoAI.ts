@@ -84,7 +84,7 @@ export const aiMakeMove = (
 
   // 🚨 FASE 1: RISPOSTA EMERGENZA (se rischio critico)
   if (riskLevel > 0.7 || (momentum.turnsToDefeat && momentum.turnsToDefeat < 5)) {
-    if (tryEmergencyDefense(gameState, setGameState, handleCombat, showAnimation, myTerritories, enemyTerritories, pressurePoints, opponentNickname, audioPlayers)) {
+    if (tryEmergencyDefense(gameState, setGameState, handleCombat, showAnimation, myTerritories, enemyTerritories, pressurePoints, opponentNickname, audioPlayers, showToast, setBombingAnimation)) {
       return;
     }
   }
@@ -154,7 +154,8 @@ export const aiMakeMove = (
       )
     }));
     
-    showAnimation(`${opponentNickname} ha aggiunto truppe`);
+    showAnimation(`+${amount} truppe aggiunte!`);
+    if (showToast) showToast(`${opponentNickname}: +${amount} truppe aggiunte`, 'success');
   }
 
   setTimeout(() => {
@@ -306,7 +307,9 @@ const tryEmergencyDefense = (
     parachuteSound: HTMLAudioElement;
     powerUpSound: HTMLAudioElement;
     marchSound: HTMLAudioElement;
-  }
+  },
+  showToast?: (message: string, type: 'success' | 'info' | 'error') => void,
+  setBombingAnimation?: (state: { show: boolean; position: { x: number; y: number } }) => void
 ): boolean => {
   if (pressurePoints.length === 0) return false;
 
@@ -319,30 +322,73 @@ const tryEmergencyDefense = (
       .sort((a, b) => b!.troops - a!.troops)[0];
 
     if (strongestThreat && strongestThreat.troops >= 3) {
-      showAnimation(`${opponentNickname} ha usato la bomba`);
-      
-      setGameState(prev => ({
-        ...prev,
-        territories: prev.territories.map(t => {
-          if (t.id === strongestThreat.id) {
-            const newTroops = Math.max(0, t.troops - 2);
-            return {...t, troops: newTroops, owner: newTroops === 0 ? null : t.owner};
-          }
-          return t;
-        }),
-        cardCooldowns: {
-          ...prev.cardCooldowns,
-          red: {...prev.cardCooldowns.red, bomb: 5}
-        }
-      }));
-      
-      setTimeout(() => {
+      // Riproduci audio bomba
+      if (audioPlayers?.bombSound) {
+        audioPlayers.bombSound.currentTime = 0;
+        audioPlayers.bombSound.play().catch(console.error);
+      }
+
+      // Mostra animazione bombardamento se disponibile
+      if (setBombingAnimation) {
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+        setBombingAnimation({
+          show: true,
+          position: { x: screenWidth / 2, y: screenHeight / 2 }
+        });
+        
+        setTimeout(() => {
+          showAnimation("💣 Bombardamento aereo!");
+          
+          setGameState(prev => ({
+            ...prev,
+            territories: prev.territories.map(t => {
+              if (t.id === strongestThreat.id) {
+                const newTroops = Math.max(0, t.troops - 2);
+                return {...t, troops: newTroops, owner: newTroops === 0 ? null : t.owner};
+              }
+              return t;
+            }),
+            cardCooldowns: {
+              ...prev.cardCooldowns,
+              red: {...prev.cardCooldowns.red, bomb: 5}
+            }
+          }));
+          
+          setTimeout(() => {
+            setGameState(prev => ({
+              ...prev,
+              currentPlayer: 'blue',
+              turnTimeLeft: 30
+            }));
+          }, 3000);
+        }, 2300);
+      } else {
+        showAnimation("💣 Bombardamento aereo!");
+        
         setGameState(prev => ({
           ...prev,
-          currentPlayer: 'blue',
-          turnTimeLeft: 30
+          territories: prev.territories.map(t => {
+            if (t.id === strongestThreat.id) {
+              const newTroops = Math.max(0, t.troops - 2);
+              return {...t, troops: newTroops, owner: newTroops === 0 ? null : t.owner};
+            }
+            return t;
+          }),
+          cardCooldowns: {
+            ...prev.cardCooldowns,
+            red: {...prev.cardCooldowns.red, bomb: 5}
+          }
         }));
-      }, 1500);
+        
+        setTimeout(() => {
+          setGameState(prev => ({
+            ...prev,
+            currentPlayer: 'blue',
+            turnTimeLeft: 30
+          }));
+        }, 1500);
+      }
       
       return true;
     }
@@ -596,7 +642,14 @@ const tryAllCardsStrategically = (
       const defender = gameState.territories.find(t => t.id === excellentAttack.defenderId);
 
       if (attacker && defender) {
-        showAnimation(`${opponentNickname} ha usato la forza`);
+        // Riproduci audio potenziamento
+        if (audioPlayers?.powerUpSound) {
+          audioPlayers.powerUpSound.currentTime = 0;
+          audioPlayers.powerUpSound.play().catch(console.error);
+        }
+
+        showAnimation("⚡ Truppe potenziate!");
+        if (showToast) showToast(`${opponentNickname} ha potenziato le sue truppe!`, 'success');
         
         setGameState(prev => ({
           ...prev,
@@ -653,7 +706,6 @@ const tryAllCardsStrategically = (
         // Aspetta che l'animazione completi prima di applicare l'effetto
         setTimeout(() => {
           showAnimation("💣 Bombardamento aereo!");
-          if (showToast) showToast(`${opponentNickname} ha usato il bombardamento aereo!`, 'error');
           
           setGameState(prev => ({
             ...prev,
@@ -681,7 +733,6 @@ const tryAllCardsStrategically = (
       } else {
         // Fallback senza animazione
         showAnimation("💣 Bombardamento aereo!");
-        if (showToast) showToast(`${opponentNickname} ha usato il bombardamento aereo!`, 'error');
         
         setGameState(prev => ({
           ...prev,
@@ -736,8 +787,8 @@ const tryAllCardsStrategically = (
         audioPlayers.parachuteSound.play().catch(console.error);
       }
 
-      showAnimation("🪂 Paracadutista lanciato!");
-      if (showToast) showToast(`${opponentNickname} ha lanciato un paracadutista!`, 'info');
+      showAnimation("🪂 Paracadutista elimina il nemico!");
+      if (showToast) showToast(`${opponentNickname} ha conquistato un territorio con il paracadute!`, 'success');
       
       setGameState(prev => ({
         ...prev,
@@ -772,8 +823,8 @@ const tryAllCardsStrategically = (
         audioPlayers.parachuteSound.play().catch(console.error);
       }
 
-      showAnimation("🪂 Paracadutista abbattuto! -1 truppa");
-      if (showToast) showToast(`${opponentNickname} ha lanciato un paracadutista kamikaze!`, 'info');
+      showAnimation("🪂 Paracadutista abbattuto! -1 truppa nemica");
+      if (showToast) showToast(`${opponentNickname}: Paracadutista abbattuto, ma elimina una tua truppa!`, 'info');
       
       setGameState(prev => ({
         ...prev,
@@ -816,7 +867,7 @@ const tryAllCardsStrategically = (
         }
 
         showAnimation("⚡ Truppe potenziate!");
-        if (showToast) showToast(`${opponentNickname} ha potenziato le sue truppe!`, 'info');
+        if (showToast) showToast(`${opponentNickname} ha potenziato le sue truppe!`, 'success');
         
         setGameState(prev => ({
           ...prev,
@@ -824,7 +875,10 @@ const tryAllCardsStrategically = (
             ...prev.boostedTroops,
             [attacker.id]: attacker.troops
           },
-          cardCooldowns: {...prev.cardCooldowns, force: 4}
+          cardCooldowns: {
+            ...prev.cardCooldowns,
+            red: {...prev.cardCooldowns.red, force: 4}
+          }
         }));
 
         setTimeout(() => {
@@ -870,7 +924,6 @@ const tryAllCardsStrategically = (
         // Aspetta che l'animazione completi prima di applicare l'effetto
         setTimeout(() => {
           showAnimation("💣 Bombardamento aereo!");
-          if (showToast) showToast(`${opponentNickname} ha usato il bombardamento aereo!`, 'error');
           
           setGameState(prev => ({
             ...prev,
@@ -881,7 +934,10 @@ const tryAllCardsStrategically = (
               }
               return t;
             }),
-            cardCooldowns: {...prev.cardCooldowns, bomb: 5}
+            cardCooldowns: {
+              ...prev.cardCooldowns,
+              red: {...prev.cardCooldowns.red, bomb: 5}
+            }
           }));
           
           setTimeout(() => {
@@ -894,8 +950,7 @@ const tryAllCardsStrategically = (
         }, 2300);
       } else {
         // Fallback senza animazione
-        showAnimation(`${opponentNickname} ha usato la bomba`);
-        if (showToast) showToast(`${opponentNickname} ha usato il bombardamento aereo!`, 'error');
+        showAnimation("💣 Bombardamento aereo!");
         
         setGameState(prev => ({
           ...prev,
@@ -906,7 +961,10 @@ const tryAllCardsStrategically = (
             }
             return t;
           }),
-          cardCooldowns: {...prev.cardCooldowns, bomb: 5}
+          cardCooldowns: {
+            ...prev.cardCooldowns,
+            red: {...prev.cardCooldowns.red, bomb: 5}
+          }
         }));
         
         setTimeout(() => {
@@ -947,7 +1005,7 @@ const tryAllCardsStrategically = (
       }
 
       showAnimation("🪂 Paracadutista elimina il nemico!");
-      if (showToast) showToast(`${opponentNickname} ha conquistato un territorio con il paracadute!`, 'info');
+      if (showToast) showToast(`${opponentNickname}: Paracadutista conquista il territorio!`, 'success');
       
       setGameState(prev => ({
         ...prev,
@@ -981,8 +1039,8 @@ const tryAllCardsStrategically = (
         audioPlayers.parachuteSound.play().catch(console.error);
       }
 
-      showAnimation("🪂 Paracadutista abbattuto! -1 truppa");
-      if (showToast) showToast(`${opponentNickname} ha lanciato un paracadutista kamikaze!`, 'info');
+      showAnimation("🪂 Paracadutista abbattuto! -1 truppa nemica");
+      if (showToast) showToast(`${opponentNickname}: Paracadutista abbattuto, ma elimina una tua truppa!`, 'info');
       
       setGameState(prev => ({
         ...prev,
@@ -1042,7 +1100,8 @@ const tryAllCardsStrategically = (
       )
     }));
     
-    showAnimation(`${opponentNickname} ha aggiunto truppe`);
+    showAnimation(`+${amount} truppe aggiunte!`);
+    if (showToast) showToast(`${opponentNickname}: +${amount} truppe aggiunte`, 'success');
     
     setTimeout(() => {
       setGameState(prev => ({
