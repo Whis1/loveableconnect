@@ -160,9 +160,16 @@ serve(async (req) => {
     const subject = replaceVars(template.subject, variables);
     const html = replaceVars(template.html_content, variables);
 
-    const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendApiKey) {
+      throw new Error("RESEND_API_KEY non configurata");
+    }
 
-    await resend.emails.send({
+    console.log(`Attempting to send test email for template: ${templateKey} to ${testEmail}`);
+    
+    const resend = new Resend(resendApiKey);
+
+    const emailResult = await resend.emails.send({
       from: "LoveableConnect 💕 <noreply@loveableconnect.com>",
       to: [testEmail],
       subject: `[TEST] ${subject}`,
@@ -178,7 +185,14 @@ serve(async (req) => {
       `,
     });
 
-    console.log(`Test email sent for template: ${templateKey} to ${testEmail}`);
+    console.log(`Resend response:`, emailResult);
+    
+    if (emailResult.error) {
+      console.error(`Resend error:`, emailResult.error);
+      throw new Error(`Errore Resend: ${emailResult.error.message}`);
+    }
+
+    console.log(`Test email sent successfully. Email ID: ${emailResult.data?.id}`);
 
     return new Response(JSON.stringify({ 
       success: true, 
