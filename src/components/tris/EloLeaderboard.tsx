@@ -16,12 +16,13 @@ interface EloLeaderboardProps {
   userId?: string;
 }
 
-const STORAGE_KEY = 'elo_leaderboard_data';
+const STORAGE_KEY = 'elo_leaderboard_data_v2'; // v2: only multiples of 10
 const UPDATE_INTERVAL = 20 * 60 * 1000; // 20 minutes in milliseconds
 
 interface StoredLeaderboardData {
   adminElos: Record<string, number>;
   lastUpdate: string;
+  version: number; // Version tracking
 }
 
 export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
@@ -30,6 +31,15 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
   const [userRank, setUserRank] = useState<number | null>(null);
   const [adminElos, setAdminElos] = useState<Map<string, number>>(new Map());
   const [isOpen, setIsOpen] = useState(false);
+
+  // Clear old localStorage data on mount
+  useEffect(() => {
+    const oldKey = 'elo_leaderboard_data';
+    if (localStorage.getItem(oldKey)) {
+      localStorage.removeItem(oldKey);
+      console.log('Cleared old leaderboard data');
+    }
+  }, []);
 
   // Load persisted data from localStorage
   const loadPersistedData = (): StoredLeaderboardData | null => {
@@ -50,6 +60,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
       const data: StoredLeaderboardData = {
         adminElos: Object.fromEntries(adminElosMap),
         lastUpdate: new Date().toISOString(),
+        version: 2, // Track version for migrations
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (error) {
