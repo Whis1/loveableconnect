@@ -815,8 +815,8 @@ const tryAllCardsStrategically = (
         
         // Aspetta che l'animazione completi prima di applicare l'effetto
         setTimeout(() => {
-          showAnimation("💣 Bombardamento aereo a distanza!");
-          if (showToast) showToast(`${opponentNickname} ha bombardato il tuo territorio "${target.territory.name}" da lontano!`, 'error');
+          showAnimation("💣 Bombardamento aereo!");
+          if (showToast) showToast(`${opponentNickname} ha bombardato il tuo territorio "${target.territory.name}"!`, 'error');
           
           setGameState(prev => ({
             ...prev,
@@ -843,8 +843,8 @@ const tryAllCardsStrategically = (
         }, 2300);
       } else {
         // Fallback senza animazione
-        showAnimation("💣 Bombardamento aereo a distanza!");
-        if (showToast) showToast(`${opponentNickname} ha bombardato il tuo territorio "${target.territory.name}" da lontano!`, 'error');
+        showAnimation("💣 Bombardamento aereo!");
+        if (showToast) showToast(`${opponentNickname} ha bombardato il tuo territorio "${target.territory.name}"!`, 'error');
         
         setGameState(prev => ({
           ...prev,
