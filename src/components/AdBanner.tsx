@@ -48,12 +48,12 @@ export const AdBanner = () => {
     const showBannerInterval = setInterval(() => {
       setIsVisible(true);
       
-      // Auto-hide after 8 seconds
+      // Auto-hide after 14 seconds
       setTimeout(() => {
         setIsVisible(false);
         // Move to next banner
         setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
-      }, 8000);
+      }, 14000);
     }, 180000); // 3 minutes = 180000ms
 
     // Show first banner after 3 minutes
