@@ -121,7 +121,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
   // Preload/unlock audio on first user interaction and set volumes
   useEffect(() => {
     // Set base volumes
-    marchSound.volume = 0.6;
+    marchSound.volume = 0.85;
     bombSound.volume = 0.8;
     parachuteSound.volume = 0.6;
     powerUpSound.volume = 0.6;
@@ -142,6 +142,21 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
     window.addEventListener('pointerdown', unlock, { once: true });
     return () => window.removeEventListener('pointerdown', unlock);
   }, [marchSound, bombSound, parachuteSound, powerUpSound]);
+
+  // Ensure movement UX: play march and bounce arrival when movingTroops changes
+  useEffect(() => {
+    if (movingTroops) {
+      try {
+        marchSound.currentTime = 0;
+        marchSound.play().catch(() => {});
+      } catch {}
+      const arrivalTimer = setTimeout(() => {
+        setArrivedTroops({ territoryId: movingTroops.toId, timestamp: Date.now() });
+        setTimeout(() => setArrivedTroops(null), 600);
+      }, 1500);
+      return () => clearTimeout(arrivalTimer);
+    }
+  }, [movingTroops, marchSound]);
 
   // Initialize game
   useEffect(() => {
@@ -622,7 +637,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
       if (!isCombat) {
         setTimeout(() => switchTurn(), 1500);
       }
-    }, 1000);
+    }, 1500);
   };
 
   const handleCardUsage = (territoryId: string) => {
