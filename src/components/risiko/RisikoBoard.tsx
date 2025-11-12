@@ -74,10 +74,13 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
   } | null>(null);
   const [battleBanner, setBattleBanner] = useState<{
     show: boolean;
+    attackerProfile: any;
+    defenderProfile: any;
     attackerTroops: number;
     defenderTroops: number;
     winner: 'attacker' | 'defender' | 'draw';
     survivingTroops: number;
+    onComplete: () => void;
   } | null>(null);
   const [bombingAnimation, setBombingAnimation] = useState<{
     show: boolean;
@@ -171,13 +174,75 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
     setTimeout(() => setCombatAnimation({show: false, message: ''}), 3000);
   };
 
-  const handleBattleBannerComplete = useCallback(() => {
-    setBattleBanner(null);
-  }, []);
-
   const handleCombat = (attackerId: string, defenderId: string, attackerTroops: number) => {
     // Blocca altre azioni durante il combattimento
     setCombatInProgress(true);
+    
+    // Trova territories prima del setGameState
+    const attacker = gameState.territories.find(t => t.id === attackerId);
+    const defender = gameState.territories.find(t => t.id === defenderId);
+
+    if (!attacker || !defender) {
+      setCombatInProgress(false);
+      return;
+    }
+
+    // Calcola quante truppe potenziate partecipano al combattimento
+    const attackerBoostedCount = gameState.boostedTroops[attackerId] || 0;
+    const defenderBoostedCount = gameState.boostedTroops[defenderId] || 0;
+    
+    // Verifica se le truppe in combattimento sono potenziate
+    const attackingBoostedTroops = Math.min(attackerTroops, attackerBoostedCount);
+    const isAttackerBoosted = attackingBoostedTroops > 0;
+    const isDefenderBoosted = defenderBoostedCount > 0;
+
+    const result = simulateBattle(
+      attackerTroops,
+      defender.troops,
+      isAttackerBoosted,
+      isDefenderBoosted
+    );
+
+    // Mostra banner battaglia con animazione e audio
+    const attackerProfileData = attacker.owner === 'blue' ? userProfile : opponentProfile;
+    const defenderProfileData = defender.owner === 'blue' ? userProfile : opponentProfile;
+
+    setBattleBanner({
+      show: true,
+      attackerProfile: attackerProfileData || {
+        id: attacker.owner,
+        nickname: attacker.owner === 'blue' ? 'Giocatore' : 'Avversario',
+        avatar_url: null
+      },
+      defenderProfile: defenderProfileData || {
+        id: defender.owner || 'neutral',
+        nickname: defender.owner === 'blue' ? 'Giocatore' : (defender.owner === 'red' ? 'Avversario' : 'Neutrale'),
+        avatar_url: null
+      },
+      attackerTroops,
+      defenderTroops: defender.troops,
+      winner: result.winner,
+      survivingTroops: result.survivingTroops,
+      onComplete: () => {
+        setBattleBanner(null);
+        // Mostra banner conquista solo se attaccante vince
+        if (result.winner === 'attacker') {
+          const conquerorName = attacker.owner === 'blue' 
+            ? (userProfile?.nickname || 'Giocatore')
+            : (opponentProfile?.nickname || 'Avversario');
+          
+          setConquestBanner({
+            show: true,
+            conquerorName,
+            territoryName: defender.name
+          });
+
+          setTimeout(() => {
+            setConquestBanner(null);
+          }, 2500);
+        }
+      }
+    });
     
     setGameState(prev => {
       const newTerritories = [...prev.territories];
@@ -185,41 +250,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
       const defender = newTerritories.find(t => t.id === defenderId);
 
       if (!attacker || !defender) {
-        setCombatInProgress(false);
         return prev;
-      }
-
-      // Calcola quante truppe potenziate partecipano al combattimento
-      const attackerBoostedCount = prev.boostedTroops[attackerId] || 0;
-      const defenderBoostedCount = prev.boostedTroops[defenderId] || 0;
-      
-      // Verifica se le truppe in combattimento sono potenziate
-      const attackingBoostedTroops = Math.min(attackerTroops, attackerBoostedCount);
-      const isAttackerBoosted = attackingBoostedTroops > 0;
-      const isDefenderBoosted = defenderBoostedCount > 0;
-
-      const result = simulateBattle(
-        attackerTroops,
-        defender.troops,
-        isAttackerBoosted,
-        isDefenderBoosted
-      );
-
-      // Mostra solo banner semplice di conquista (no animazione battaglia)
-      if (result.winner === 'attacker') {
-        const conquerorName = attacker.owner === 'blue' 
-          ? (userProfile?.nickname || 'Giocatore')
-          : (opponentProfile?.nickname || 'Avversario');
-        
-        setConquestBanner({
-          show: true,
-          conquerorName,
-          territoryName: defender.name
-        });
-
-        setTimeout(() => {
-          setConquestBanner(null);
-        }, 2500);
       }
 
       // Update territories
@@ -273,11 +304,12 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
       };
     });
 
-    // Wait for conquest banner (2.5s) before switching turn
+    // Wait for battle banner (~5s) + conquest banner (2.5s se c'è) before switching turn
+    const totalWaitTime = result.winner === 'attacker' ? 7500 : 5000;
     setTimeout(() => {
       setCombatInProgress(false);
       switchTurn();
-    }, 2500);
+    }, totalWaitTime);
   };
 
   const switchTurn = () => {
@@ -898,16 +930,18 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
       />
 
       {/* Battle Banner */}
-      <BattleBanner
-        show={battleBanner?.show || false}
-        attackerProfile={userProfile}
-        defenderProfile={opponentProfile}
-        attackerTroops={battleBanner?.attackerTroops || 0}
-        defenderTroops={battleBanner?.defenderTroops || 0}
-        winner={battleBanner?.winner || 'draw'}
-        survivingTroops={battleBanner?.survivingTroops || 0}
-        onComplete={handleBattleBannerComplete}
-      />
+      {battleBanner?.show && (
+        <BattleBanner
+          show={true}
+          attackerProfile={battleBanner.attackerProfile}
+          defenderProfile={battleBanner.defenderProfile}
+          attackerTroops={battleBanner.attackerTroops}
+          defenderTroops={battleBanner.defenderTroops}
+          winner={battleBanner.winner}
+          survivingTroops={battleBanner.survivingTroops}
+          onComplete={battleBanner.onComplete}
+        />
+      )}
 
       {/* Conquest Banner */}
       {conquestBanner?.show && (
