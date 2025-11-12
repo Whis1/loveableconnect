@@ -788,7 +788,7 @@ const tryAllCardsStrategically = (
       }
 
       showAnimation("🪂 Paracadutista elimina il nemico!");
-      if (showToast) showToast(`${opponentNickname} ha conquistato un territorio con il paracadute!`, 'success');
+      if (showToast) showToast(`${opponentNickname} ha buttato paracadutista sul tuo territorio "${target.name}"!`, 'error');
       
       setGameState(prev => ({
         ...prev,
@@ -824,7 +824,7 @@ const tryAllCardsStrategically = (
       }
 
       showAnimation("🪂 Paracadutista abbattuto! -1 truppa nemica");
-      if (showToast) showToast(`${opponentNickname}: Paracadutista abbattuto, ma elimina una tua truppa!`, 'info');
+      if (showToast) showToast(`${opponentNickname} ha buttato paracadutista sul tuo territorio "${target.name}"! -1 truppa`, 'error');
       
       setGameState(prev => ({
         ...prev,
@@ -1005,7 +1005,7 @@ const tryAllCardsStrategically = (
       }
 
       showAnimation("🪂 Paracadutista elimina il nemico!");
-      if (showToast) showToast(`${opponentNickname}: Paracadutista conquista il territorio!`, 'success');
+      if (showToast) showToast(`${opponentNickname} ha buttato paracadutista sul tuo territorio "${target.name}"!`, 'error');
       
       setGameState(prev => ({
         ...prev,
@@ -1040,7 +1040,7 @@ const tryAllCardsStrategically = (
       }
 
       showAnimation("🪂 Paracadutista abbattuto! -1 truppa nemica");
-      if (showToast) showToast(`${opponentNickname}: Paracadutista abbattuto, ma elimina una tua truppa!`, 'info');
+      if (showToast) showToast(`${opponentNickname} ha buttato paracadutista sul tuo territorio "${target.name}"! -1 truppa`, 'error');
       
       setGameState(prev => ({
         ...prev,
