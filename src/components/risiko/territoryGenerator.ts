@@ -319,11 +319,11 @@ export const generateTerritories = (): Territory[] => {
     [44, [40, 41, 45, 48]], // Bunker Sotterraneo
     [45, [41, 42, 44, 46, 48, 49]], // Porto Abbandonato (hub)
     [46, [42, 43, 45, 47, 49]], // Città Fantasma
-    [47, [43, 46, 49, 50]], // Base Segreta
+    [47, [43, 46, 50]], // Base Segreta - scollegato da Ospedale
     
     // Oceania (48-53)
     [48, [44, 45, 49, 51]], // Laboratorio
-    [49, [45, 46, 48, 50, 51, 52]], // Ospedale (hub)
+    [49, [45, 46, 48, 50, 51, 52]], // Ospedale (hub) - scollegato da Base Segreta
     [50, [47, 49, 52, 53]], // Centro Commerciale
     [51, [48, 49, 52]], // Aeroporto
     [52, [49, 50, 51, 53]], // Stazione Ferroviaria (hub)
