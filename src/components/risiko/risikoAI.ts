@@ -98,6 +98,12 @@ export const aiMakeMove = (
     bestContinent: continents[0]?.region
   });
 
+  // 🛡️ FASE 0: PROTEZIONE ANTI-PARACADUTISTI (priorità massima!)
+  // L'AI ha imparato che lasciare territori con 1 truppa li rende vulnerabili ai paracadutisti
+  if (tryProtectFromParachutes(gameState, setGameState, myTerritories, opponentNickname, audioPlayers, setMovingTroops, showAnimation)) {
+    return;
+  }
+
   // 🚨 FASE 1: RISPOSTA EMERGENZA (se rischio critico)
   if (riskLevel > 0.7 || (momentum.turnsToDefeat && momentum.turnsToDefeat < 5)) {
     if (tryEmergencyDefense(gameState, setGameState, handleCombat, showAnimation, myTerritories, enemyTerritories, pressurePoints, opponentNickname, audioPlayers, showToast, setBombingAnimation, setMovingTroops)) {
@@ -1389,14 +1395,89 @@ const tryTacticalTroopMovement = (
 
   const target = underPressure[0];
   
-  // Trova territori sicuri con truppe eccedenti
-  const safeSuppliers = myTerritories.filter(t => {
-    const hasNoEnemyNeighbor = !t.neighbors.some(nId => {
-      const n = gameState.territories.find(ter => ter.id === nId);
-      return n && n.owner === 'blue';
-    });
-    return hasNoEnemyNeighbor && t.troops >= 3 && t.id !== target.id; // Minimo 3 per lasciare 1
-  }).sort((a, b) => b.troops - a.troops);
+    // Trova territori sicuri con truppe eccedenti
+    const safeSuppliers = myTerritories.filter(t => {
+      const hasNoEnemyNeighbor = !t.neighbors.some(nId => {
+        const n = gameState.territories.find(ter => ter.id === nId);
+        return n && n.owner === 'blue';
+      });
+      // IMPORTANTE: preferisci territori con 4+ truppe per lasciare almeno 2 (protezione anti-paracadutisti)
+      return hasNoEnemyNeighbor && t.troops >= 4 && t.id !== target.id;
+    }).sort((a, b) => b.troops - a.troops);
+
+    if (safeSuppliers.length === 0) {
+      // Fallback: cerca territori con almeno 3 truppe
+      const emergencySuppliers = myTerritories.filter(t => {
+        const hasNoEnemyNeighbor = !t.neighbors.some(nId => {
+          const n = gameState.territories.find(ter => ter.id === nId);
+          return n && n.owner === 'blue';
+        });
+        return hasNoEnemyNeighbor && t.troops >= 3 && t.id !== target.id;
+      }).sort((a, b) => b.troops - a.troops);
+      
+      if (emergencySuppliers.length === 0) return false;
+      
+      const source = emergencySuppliers[0];
+      
+      // Sposta solo 1 truppa per mantenere almeno 2 nella fonte (protezione anti-paracadutisti)
+      const moveTroops = 1;
+      
+      // SICUREZZA: assicurati che source abbia almeno 2 truppe dopo
+      if (source.troops - moveTroops < 2) {
+        return false; // Non spostare se lascerebbe il territorio vulnerabile
+      }
+
+      // Muovi solo di un passo verso il fronte
+      const stepId = getAdjacentStep(source.id, target.id, gameState.territories, 'red');
+      if (!stepId) return false;
+
+      // Riproduci audio marcia
+      if (audioPlayers?.marchSound) {
+        audioPlayers.marchSound.currentTime = 0;
+        audioPlayers.marchSound.play().catch(console.error);
+      }
+
+      // Avvia animazione truppe
+      if (setMovingTroops) {
+        setMovingTroops({
+          fromId: source.id,
+          toId: stepId,
+          count: moveTroops
+        });
+      }
+
+      showAnimation(`${opponentNickname} sta spostando truppe`);
+
+      // Aspetta animazione prima di aggiornare
+      setTimeout(() => {
+        if (setMovingTroops) {
+          setMovingTroops(null);
+        }
+        
+        setGameState(prev => ({
+          ...prev,
+          territories: prev.territories.map(t => {
+            if (t.id === source.id) {
+              return { ...t, troops: t.troops - moveTroops };
+            }
+            if (t.id === stepId) {
+              return { ...t, troops: t.troops + moveTroops };
+            }
+            return t;
+          })
+        }));
+
+        setTimeout(() => {
+          setGameState(prev => ({
+            ...prev,
+            currentPlayer: 'blue',
+            turnTimeLeft: 30
+          }));
+        }, 1000);
+      }, 2000);
+
+      return true;
+    }
 
   if (safeSuppliers.length > 0) {
     const source = safeSuppliers[0];
@@ -2026,6 +2107,159 @@ const tryZoneConsolidation = (
   }
 
   return false;
+};
+
+// 🛡️ PROTEZIONE ANTI-PARACADUTISTI
+// L'AI ha imparato che territori con 1 truppa sono vulnerabili ai paracadutisti nemici
+// Questa funzione rinforza i territori con 1 truppa per proteggerli
+const tryProtectFromParachutes = (
+  gameState: GameState,
+  setGameState: React.Dispatch<React.SetStateAction<GameState>>,
+  myTerritories: Territory[],
+  opponentNickname: string,
+  audioPlayers?: {
+    bombSound: HTMLAudioElement;
+    parachuteSound: HTMLAudioElement;
+    powerUpSound: HTMLAudioElement;
+    marchSound: HTMLAudioElement;
+  },
+  setMovingTroops?: (state: { fromId: string; toId: string; count: number } | null) => void,
+  showAnimation?: (message: string) => void
+): boolean => {
+  // Trova territori vulnerabili (con 1 sola truppa)
+  const vulnerableTerritories = myTerritories
+    .filter(t => t.troops === 1)
+    .sort((a, b) => {
+      // Priorità ai territori strategici o con molti vicini
+      const scoreA = a.neighbors.length + (TerritorialAnalyzer.identifyChokepoints(a, gameState.territories) ? 10 : 0);
+      const scoreB = b.neighbors.length + (TerritorialAnalyzer.identifyChokepoints(b, gameState.territories) ? 10 : 0);
+      return scoreB - scoreA;
+    });
+
+  if (vulnerableTerritories.length === 0) return false;
+
+  // 🎯 STRATEGIA DIFENSIVA: Proteggi il territorio più vulnerabile
+  const target = vulnerableTerritories[0];
+
+  // Trova territori sicuri (senza nemici vicini) con truppe eccedenti
+  const safeSuppliers = myTerritories.filter(t => {
+    const hasNoEnemyNeighbor = !t.neighbors.some(nId => {
+      const n = gameState.territories.find(ter => ter.id === nId);
+      return n && n.owner === 'blue';
+    });
+    // IMPORTANTE: serve almeno 4 truppe per spostarne 2 e lasciarne almeno 2
+    return hasNoEnemyNeighbor && t.troops >= 4 && t.id !== target.id;
+  }).sort((a, b) => b.troops - a.troops);
+
+  if (safeSuppliers.length === 0) {
+    // Se non ci sono fornitori sicuri con 4+ truppe, cerca almeno chi ha 3 truppe
+    const emergencySuppliers = myTerritories.filter(t => {
+      const hasNoEnemyNeighbor = !t.neighbors.some(nId => {
+        const n = gameState.territories.find(ter => ter.id === nId);
+        return n && n.owner === 'blue';
+      });
+      return hasNoEnemyNeighbor && t.troops >= 3 && t.id !== target.id;
+    }).sort((a, b) => b.troops - a.troops);
+
+    if (emergencySuppliers.length === 0) return false;
+
+    const source = emergencySuppliers[0];
+    const moveTroops = 1; // Sposta solo 1 truppa per portare il target a 2
+
+    // Riproduci audio marcia
+    if (audioPlayers?.marchSound) {
+      audioPlayers.marchSound.currentTime = 0;
+      audioPlayers.marchSound.play().catch(console.error);
+    }
+
+    // Avvia animazione truppe
+    if (setMovingTroops) {
+      setMovingTroops({
+        fromId: source.id,
+        toId: target.id,
+        count: moveTroops
+      });
+    }
+
+    if (showAnimation) {
+      showAnimation(`${opponentNickname} protegge ${target.name} dai paracadutisti`);
+    }
+
+    // Aspetta animazione prima di aggiornare
+    setTimeout(() => {
+      if (setMovingTroops) {
+        setMovingTroops(null);
+      }
+      
+      setGameState(prev => ({
+        ...prev,
+        territories: prev.territories.map(t => {
+          if (t.id === source.id) return { ...t, troops: t.troops - moveTroops };
+          if (t.id === target.id) return { ...t, troops: t.troops + moveTroops };
+          return t;
+        })
+      }));
+
+      setTimeout(() => {
+        setGameState(prev => ({
+          ...prev,
+          currentPlayer: 'blue',
+          turnTimeLeft: 30
+        }));
+      }, 1000);
+    }, 2000);
+
+    return true;
+  }
+
+  const source = safeSuppliers[0];
+  // Sposta 2 truppe se possibile, altrimenti 1
+  const moveTroops = source.troops >= 4 ? 2 : 1;
+
+  // Riproduci audio marcia
+  if (audioPlayers?.marchSound) {
+    audioPlayers.marchSound.currentTime = 0;
+    audioPlayers.marchSound.play().catch(console.error);
+  }
+
+  // Avvia animazione truppe
+  if (setMovingTroops) {
+    setMovingTroops({
+      fromId: source.id,
+      toId: target.id,
+      count: moveTroops
+    });
+  }
+
+  if (showAnimation) {
+    showAnimation(`${opponentNickname} protegge ${target.name} dai paracadutisti`);
+  }
+
+  // Aspetta animazione prima di aggiornare
+  setTimeout(() => {
+    if (setMovingTroops) {
+      setMovingTroops(null);
+    }
+    
+    setGameState(prev => ({
+      ...prev,
+      territories: prev.territories.map(t => {
+        if (t.id === source.id) return { ...t, troops: t.troops - moveTroops };
+        if (t.id === target.id) return { ...t, troops: t.troops + moveTroops };
+        return t;
+      })
+    }));
+
+    setTimeout(() => {
+      setGameState(prev => ({
+        ...prev,
+        currentPlayer: 'blue',
+        turnTimeLeft: 30
+      }));
+    }, 1000);
+  }, 2000);
+
+  return true;
 };
 
 // 🎯 TROVA TERRITORIO STRATEGICO SUPREMO
