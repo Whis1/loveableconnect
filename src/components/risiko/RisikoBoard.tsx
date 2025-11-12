@@ -542,6 +542,9 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
   const handleMoveTroops = (amount: number) => {
     if (!gameState.selectedTerritory || !targetTerritory) return;
 
+    // 🚨 BLOCCA TUTTE LE INTERAZIONI durante spostamento truppe
+    setCardActionInProgress(true);
+
     // Play march sound
     marchSound.currentTime = 0;
     marchSound.play().catch(console.error);
@@ -631,6 +634,9 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
       });
 
       setTargetTerritory(null);
+      
+      // 🔓 RIATTIVA INTERAZIONI dopo spostamento
+      setCardActionInProgress(false);
       
       // Switch turn ONLY for non-combat moves (merges and neutral conquests)
       // For combat, handleCombat will handle the turn switch
@@ -1125,11 +1131,11 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         <div className="flex flex-col gap-2 w-20">
           <Card 
             className={`p-2 transition-all ${
-              gameState.currentPlayer === 'blue' && !gameState.gameOver && !cardActionInProgress
+              gameState.currentPlayer === 'blue' && !gameState.gameOver && !cardActionInProgress && !movingTroops
                 ? `cursor-pointer hover:scale-105 ${gameState.selectedCard === 'troops' ? 'ring-2 ring-primary bg-primary/10' : 'hover:bg-muted/50'}`
                 : 'opacity-40 cursor-not-allowed'
             }`}
-            onClick={() => gameState.currentPlayer === 'blue' && !gameState.gameOver && !cardActionInProgress && setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'troops' ? null : 'troops' }))}
+            onClick={() => gameState.currentPlayer === 'blue' && !gameState.gameOver && !cardActionInProgress && !movingTroops && setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'troops' ? null : 'troops' }))}
           >
             <div className="flex flex-col items-center gap-1 relative">
               <img 
@@ -1145,11 +1151,11 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           
           <Card 
             className={`p-2 transition-all ${
-              gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.blue.bomb === 0 && !cardActionInProgress
+              gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.blue.bomb === 0 && !cardActionInProgress && !movingTroops
                 ? `cursor-pointer hover:scale-105 ${gameState.selectedCard === 'bomb' ? 'ring-2 ring-primary bg-primary/10' : 'hover:bg-muted/50'}`
                 : 'opacity-40 cursor-not-allowed'
             }`}
-            onClick={() => gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.blue.bomb === 0 && !cardActionInProgress && setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'bomb' ? null : 'bomb' }))}
+            onClick={() => gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.blue.bomb === 0 && !cardActionInProgress && !movingTroops && setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'bomb' ? null : 'bomb' }))}
           >
             <div className="flex flex-col items-center gap-1 relative">
               <img 
@@ -1167,11 +1173,11 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           
           <Card 
             className={`p-2 transition-all ${
-              gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.blue.parachute === 0 && !cardActionInProgress
+              gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.blue.parachute === 0 && !cardActionInProgress && !movingTroops
                 ? `cursor-pointer hover:scale-105 ${gameState.selectedCard === 'parachute' ? 'ring-2 ring-primary bg-primary/10' : 'hover:bg-muted/50'}`
                 : 'opacity-40 cursor-not-allowed'
             }`}
-            onClick={() => gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.blue.parachute === 0 && !cardActionInProgress && setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'parachute' ? null : 'parachute' }))}
+            onClick={() => gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.blue.parachute === 0 && !cardActionInProgress && !movingTroops && setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'parachute' ? null : 'parachute' }))}
           >
             <div className="flex flex-col items-center gap-1 relative">
               <img 
@@ -1189,11 +1195,11 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           
           <Card 
             className={`p-2 transition-all ${
-              gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.blue.force === 0 && !cardActionInProgress
+              gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.blue.force === 0 && !cardActionInProgress && !movingTroops
                 ? `cursor-pointer hover:scale-105 ${gameState.selectedCard === 'force' ? 'ring-2 ring-primary bg-primary/10' : 'hover:bg-muted/50'}`
                 : 'opacity-40 cursor-not-allowed'
             }`}
-            onClick={() => gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.blue.force === 0 && !cardActionInProgress && setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'force' ? null : 'force' }))}
+            onClick={() => gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.blue.force === 0 && !cardActionInProgress && !movingTroops && setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'force' ? null : 'force' }))}
           >
             <div className="flex flex-col items-center gap-1 relative">
               <img 
