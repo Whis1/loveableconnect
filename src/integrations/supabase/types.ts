@@ -541,6 +541,7 @@ export type Database = {
           photos: string[] | null
           relationship_status: string | null
           relationship_type: string | null
+          risiko_elo: number | null
           sexual_orientation: string | null
           show_online_status: boolean | null
           tris_elo: number | null
@@ -572,6 +573,7 @@ export type Database = {
           photos?: string[] | null
           relationship_status?: string | null
           relationship_type?: string | null
+          risiko_elo?: number | null
           sexual_orientation?: string | null
           show_online_status?: boolean | null
           tris_elo?: number | null
@@ -603,6 +605,7 @@ export type Database = {
           photos?: string[] | null
           relationship_status?: string | null
           relationship_type?: string | null
+          risiko_elo?: number | null
           sexual_orientation?: string | null
           show_online_status?: boolean | null
           tris_elo?: number | null

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -113,6 +113,9 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
   const [showEmoji, setShowEmoji] = useState(false);
   const [userEmoji, setUserEmoji] = useState<string | null>(null);
   const [opponentEmoji, setOpponentEmoji] = useState<string | null>(null);
+  
+  // ELO penalty system refs
+  const gameCompletedRef = useRef(false);
 
   // Audio players
   const [marchSound] = useState(() => new Audio(marciaSoldatiSound));
@@ -124,6 +127,60 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
   useEffect(() => {
     const territories = generateTerritories();
     setGameState(prev => ({ ...prev, territories }));
+    
+    // 🚨 SISTEMA PENALITÀ ELO - Protezione abbandono partita
+    const handleBeforeUnload = () => {
+      if (!gameCompletedRef.current) {
+        // Penalty immediata quando utente ricarica/chiude
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session) {
+            supabase.from('profiles')
+              .update({ 
+                risiko_elo: Math.max(0, (userProfile.risiko_elo || 1200) - 15) 
+              })
+              .eq('id', session.user.id);
+          }
+        });
+      }
+    };
+
+    const handlePopState = () => {
+      if (!gameCompletedRef.current) {
+        // Penalty quando utente preme back
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session) {
+            supabase.from('profiles')
+              .update({ 
+                risiko_elo: Math.max(0, (userProfile.risiko_elo || 1200) - 15) 
+              })
+              .eq('id', session.user.id);
+          }
+        });
+      }
+    };
+
+    // Blocca navigazione indietro
+    history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handlePopState);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      
+      // Penalty se abbandona senza completare
+      if (!gameCompletedRef.current) {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session) {
+            supabase.from('profiles')
+              .update({ 
+                risiko_elo: Math.max(0, (userProfile.risiko_elo || 1200) - 15) 
+              })
+              .eq('id', session.user.id);
+          }
+        });
+      }
+    };
   }, []);
 
   // Turn timer
@@ -206,6 +263,10 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
       const winner = blueTroops > 0 ? 'blue' : 'red';
       setGameState(prev => ({ ...prev, gameOver: true, winner }));
       setShowVictory(true);
+      
+      // Segna partita completata - nessuna penalità
+      gameCompletedRef.current = true;
+      
       handleGameEnd(winner === 'blue');
     }
   }, [gameState.territories]);
@@ -697,6 +758,9 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
   };
 
   const handleGameEnd = async (won: boolean) => {
+    // 🏆 Segna partita completata - nessuna penalità abbandono
+    gameCompletedRef.current = true;
+    
     if (won) {
       const { data: credits } = await supabase
         .from('user_credits')
@@ -711,14 +775,16 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           .eq('user_id', userProfile.id);
       }
 
+      // Vittoria: +25 ELO Risiko
       await supabase
         .from('profiles')
-        .update({ tris_elo: (userProfile.tris_elo || 1200) + 20 })
+        .update({ risiko_elo: (userProfile.risiko_elo || 1200) + 25 })
         .eq('id', userProfile.id);
     } else {
+      // Sconfitta: -12 ELO Risiko
       await supabase
         .from('profiles')
-        .update({ tris_elo: Math.max(0, (userProfile.tris_elo || 1200) - 10) })
+        .update({ risiko_elo: Math.max(0, (userProfile.risiko_elo || 1200) - 12) })
         .eq('id', userProfile.id);
     }
 
