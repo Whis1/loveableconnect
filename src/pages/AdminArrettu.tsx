@@ -9,7 +9,8 @@ import { UserBanManager } from "@/components/admin/UserBanManager";
 import { UserReportsMonitor } from "@/components/admin/UserReportsMonitor";
 import { BannerManager } from "@/components/admin/BannerManager";
 import { TerritoryConnectionsManager } from "@/components/admin/TerritoryConnectionsManager";
-import { Shield, LogOut, MessageSquare, UserPlus, Map } from "lucide-react";
+import { EmailTemplateManager } from "@/components/admin/EmailTemplateManager";
+import { Shield, LogOut, MessageSquare, UserPlus, Map, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -181,6 +182,18 @@ export default function AdminArrettu() {
         <UserCreditsManager />
         
         <BannerManager />
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Gestione Template Email
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <EmailTemplateManager />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
