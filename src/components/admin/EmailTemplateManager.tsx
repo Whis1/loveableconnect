@@ -37,13 +37,13 @@ export function EmailTemplateManager() {
 
   const loadTemplates = async () => {
     try {
-      const { data, error } = await supabase
-        .from("email_templates")
-        .select("*")
-        .order("template_name");
+      const { data, error } = await (supabase
+        .from('email_templates' as any)
+        .select('*')
+        .order('template_name') as any);
 
       if (error) throw error;
-      setTemplates(data || []);
+      setTemplates((data as EmailTemplate[]) || []);
     } catch (error: any) {
       toast.error("Errore nel caricamento dei template: " + error.message);
     } finally {
@@ -62,12 +62,12 @@ export function EmailTemplateManager() {
 
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("email_templates")
+      const { error } = await (supabase
+        .from('email_templates' as any) as any)
         .update({
           subject: editedSubject,
           html_content: editedContent,
-        })
+        } as any)
         .eq("id", selectedTemplate.id);
 
       if (error) throw error;
@@ -97,12 +97,12 @@ export function EmailTemplateManager() {
 
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("email_templates")
+      const { error } = await (supabase
+        .from('email_templates' as any) as any)
         .update({
           subject: selectedTemplate.subject,
           html_content: selectedTemplate.default_html_content,
-        })
+        } as any)
         .eq("id", selectedTemplate.id);
 
       if (error) throw error;
