@@ -144,16 +144,22 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
     return () => window.removeEventListener('pointerdown', unlock);
   }, [marchSound, bombSound, parachuteSound, powerUpSound]);
 
-  // AI-only arrival bounce when movement completes
+  // AI-only arrival bounce when movement completes + ensure sound
   useEffect(() => {
     if (movingTroops && lastMoveBy === 'ai') {
+      try {
+        if (marchSound.paused) {
+          marchSound.currentTime = 0;
+          marchSound.play().catch(() => {});
+        }
+      } catch {}
       const arrivalTimer = setTimeout(() => {
         setArrivedTroops({ territoryId: movingTroops.toId, timestamp: Date.now() });
         setTimeout(() => setArrivedTroops(null), 600);
       }, 1000);
       return () => clearTimeout(arrivalTimer);
     }
-  }, [movingTroops, lastMoveBy]);
+  }, [movingTroops, lastMoveBy, marchSound]);
 
   // Initialize game
   useEffect(() => {
@@ -639,9 +645,9 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
       // Switch turn ONLY for non-combat moves (merges and neutral conquests)
       // For combat, handleCombat will handle the turn switch
       if (!isCombat) {
-        setTimeout(() => switchTurn(), 1500);
+        setTimeout(() => switchTurn(), 1000);
       }
-    }, 1500);
+    }, 1000);
   };
 
   const handleCardUsage = (territoryId: string) => {
