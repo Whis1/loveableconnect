@@ -776,6 +776,7 @@ export type Database = {
       }
       territory_connections: {
         Row: {
+          badge: string | null
           created_at: string | null
           id: string
           neighbor_indices: number[]
@@ -785,6 +786,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          badge?: string | null
           created_at?: string | null
           id?: string
           neighbor_indices: number[]
@@ -794,6 +796,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          badge?: string | null
           created_at?: string | null
           id?: string
           neighbor_indices?: number[]
