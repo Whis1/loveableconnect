@@ -1158,6 +1158,12 @@ const tryTacticalTroopMovement = (
   },
   setMovingTroops?: (state: { fromId: string; toId: string; count: number } | null) => void
 ): boolean => {
+  // 🎲 PERSONALITÀ AI VARIABILE per ogni turno (imprevedibilità)
+  const aiPersonality = Math.random();
+  const isAggressive = aiPersonality > 0.65; // 35% chance - attacca con più truppe
+  const isCautious = aiPersonality < 0.35; // 35% chance - lascia più protezione
+  // 30% middle ground - bilanciato
+
   // Riduci i movimenti tattici inutili - solo se realmente necessario
   const underPressure = pressurePoints.filter(pp => {
     const threat = threats.find(t => t.territoryId === pp.id);
@@ -1182,13 +1188,34 @@ const tryTacticalTroopMovement = (
         const n = gameState.territories.find(ter => ter.id === nId);
         return n && n.owner === 'blue';
       });
-      return hasNoEnemyNeighbor && t.troops >= 4 && t.id !== target.id;
+      return hasNoEnemyNeighbor && t.troops >= 3 && t.id !== target.id; // Minimo 3 per lasciare 1
     }).sort((a, b) => b.troops - a.troops);
 
     if (safeSuppliers.length === 0) return false;
 
     const source = safeSuppliers[0];
-    const moveTroops = Math.floor(source.troops * 0.4); // sposta 40% verso prima linea
+    
+    // 🎲 LOGICA IMPREVEDIBILE: varia la quantità in base alla personalità
+    let moveTroops: number;
+    if (isAggressive) {
+      // Aggressivo: sposta 50-70% ma SEMPRE lascia almeno 1
+      const percentage = 0.5 + Math.random() * 0.2;
+      moveTroops = Math.max(1, Math.min(source.troops - 1, Math.floor(source.troops * percentage)));
+    } else if (isCautious) {
+      // Cauto: sposta 20-35% e lascia protezione
+      const percentage = 0.2 + Math.random() * 0.15;
+      moveTroops = Math.max(1, Math.min(source.troops - 1, Math.floor(source.troops * percentage)));
+    } else {
+      // Bilanciato: sposta 35-50%
+      const percentage = 0.35 + Math.random() * 0.15;
+      moveTroops = Math.max(1, Math.min(source.troops - 1, Math.floor(source.troops * percentage)));
+    }
+    
+    // SICUREZZA: assicurati che source abbia almeno 1 truppa dopo
+    if (source.troops - moveTroops < 1) {
+      moveTroops = source.troops - 1;
+    }
+    if (moveTroops < 1) return false;
 
     // Riproduci audio marcia
     if (audioPlayers?.marchSound) {
@@ -1242,12 +1269,33 @@ const tryTacticalTroopMovement = (
       const n = gameState.territories.find(ter => ter.id === nId);
       return n && n.owner === 'blue';
     });
-    return hasNoEnemyNeighbor && t.troops >= 4 && t.id !== target.id;
+    return hasNoEnemyNeighbor && t.troops >= 3 && t.id !== target.id; // Minimo 3 per lasciare 1
   }).sort((a, b) => b.troops - a.troops);
 
   if (safeSuppliers.length > 0) {
     const source = safeSuppliers[0];
-    const moveTroops = Math.floor(source.troops * 0.6); // Sposta 60% delle truppe
+    
+    // 🎲 LOGICA IMPREVEDIBILE per emergenze
+    let moveTroops: number;
+    if (isAggressive) {
+      // Emergenza aggressiva: sposta 60-80%
+      const percentage = 0.6 + Math.random() * 0.2;
+      moveTroops = Math.max(1, Math.min(source.troops - 1, Math.floor(source.troops * percentage)));
+    } else if (isCautious) {
+      // Emergenza cauta: sposta 40-55%
+      const percentage = 0.4 + Math.random() * 0.15;
+      moveTroops = Math.max(1, Math.min(source.troops - 1, Math.floor(source.troops * percentage)));
+    } else {
+      // Emergenza bilanciata: sposta 50-65%
+      const percentage = 0.5 + Math.random() * 0.15;
+      moveTroops = Math.max(1, Math.min(source.troops - 1, Math.floor(source.troops * percentage)));
+    }
+    
+    // SICUREZZA: assicurati che source abbia almeno 1 truppa dopo
+    if (source.troops - moveTroops < 1) {
+      moveTroops = source.troops - 1;
+    }
+    if (moveTroops < 1) return false;
 
     // Muovi solo di un passo verso il fronte
     const stepId = getAdjacentStep(source.id, target.id, gameState.territories, 'red');
@@ -1326,12 +1374,23 @@ const tryMonteCarloAttack = (
   });
 
   if (viableAttacks.length > 0) {
-    const bestAttack = viableAttacks[0];
+    // 🎲 IMPREVEDIBILITÀ: non sempre scegliere il migliore, 30% chance di prendere il 2° o 3° migliore
+    let selectedAttack: AttackOpportunity;
+    const randomChoice = Math.random();
+    if (randomChoice > 0.7 && viableAttacks.length > 1) {
+      // 30% chance: scegli il secondo migliore
+      selectedAttack = viableAttacks[1];
+    } else if (randomChoice > 0.85 && viableAttacks.length > 2) {
+      // 15% chance: scegli il terzo migliore
+      selectedAttack = viableAttacks[2];
+    } else {
+      selectedAttack = viableAttacks[0];
+    }
 
     showAnimation(`${opponentNickname} sta attaccando`);
 
     setTimeout(() => {
-      handleCombat(bestAttack.attackerId, bestAttack.defenderId, bestAttack.attackerTroops);
+      handleCombat(selectedAttack.attackerId, selectedAttack.defenderId, selectedAttack.attackerTroops);
     }, 500);
 
     return true;
@@ -1362,7 +1421,16 @@ const tryAggressiveExpansion = (
 
     if (neutralNeighbors.length > 0) {
       const target = neutralNeighbors[0];
-      const moveTroops = Math.max(2, Math.floor(myTerritory.troops / 2));
+      
+      // 🎲 VARIABILITÀ: non sempre metà, può essere da 30% a 70%
+      const percentage = 0.3 + Math.random() * 0.4;
+      let moveTroops = Math.max(1, Math.floor(myTerritory.troops * percentage));
+      
+      // SICUREZZA: lascia sempre almeno 1 truppa
+      if (myTerritory.troops - moveTroops < 1) {
+        moveTroops = myTerritory.troops - 1;
+      }
+      if (moveTroops < 1) continue;
 
       setGameState(prev => ({
         ...prev,
