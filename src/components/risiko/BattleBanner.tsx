@@ -237,6 +237,7 @@ export const BattleBanner = ({
                                 <li>Ma se ci sono <strong>più truppe</strong>, il tuo soldato cadrà in battaglia senza conquistare nulla</li>
                               </ul>
                               <p className="mt-2 italic">È una mossa rischiosa, ma letale se usata al momento giusto.</p>
+                              <p className="mt-3 text-yellow-400 font-semibold">💡 Suggerimento facoltativo: lascia sempre 2 o più truppe nel territorio, per evitare che un paracadutista nemico ti conquisti facilmente il territorio.</p>
                             </div>
                           </div>
 
