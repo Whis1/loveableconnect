@@ -369,11 +369,11 @@ export const TrisGameBanner = () => {
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
             <div className="w-20 h-20 flex items-center justify-center">
-              <img src={risikoIcon} alt="Risiko" className="w-full h-full object-contain drop-shadow-lg" />
+              <img src={risikoIcon} alt="Conquistiator" className="w-full h-full object-contain drop-shadow-lg" />
             </div>
             <div className="text-center z-10">
               <span className="text-2xl font-black tracking-wider uppercase bg-gradient-to-r from-red-400 via-orange-300 to-yellow-400 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(239,68,68,0.5)]">
-                RISIKO
+                CONQUISTIATOR
               </span>
             </div>
           </Button>
