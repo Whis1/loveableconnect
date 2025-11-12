@@ -16,7 +16,6 @@ import { NotificationPermissionBanner } from "@/components/NotificationPermissio
 import { InboxDropdown } from "@/components/InboxDropdown";
 import { Tutorial } from "@/components/Tutorial";
 import loveIcon from "@/assets/love-icon.png";
-
 interface Profile {
   id: string;
   full_name: string;
@@ -28,15 +27,17 @@ interface Profile {
   avatar_url: string | null;
   photos: string[] | null;
 }
-
 interface UserRole {
   role: string;
 }
-
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { t } = useTranslation();
+  const {
+    toast
+  } = useToast();
+  const {
+    t
+  } = useTranslation();
   useBanCheck(); // Check if user is banned
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -46,46 +47,48 @@ const Dashboard = () => {
   const [likesReceived, setLikesReceived] = useState<any[]>([]);
   const [showGeolocationBanner, setShowGeolocationBanner] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
-
   useEffect(() => {
     let matchesChannel: ReturnType<typeof supabase.channel> | null = null;
     let likesChannel: ReturnType<typeof supabase.channel> | null = null;
     let profileChannel: ReturnType<typeof supabase.channel> | null = null;
     let hiddenMatchesChannel: ReturnType<typeof supabase.channel> | null = null;
-
     const fetchUserData = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
+      const {
+        data: {
+          session
+        }
+      } = await supabase.auth.getSession();
       if (!session) {
         navigate("/auth");
         return;
       }
-
       setUser(session.user);
 
       // Fetch profile
-      const { data: profileData, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", session.user.id)
-        .maybeSingle();
+      const {
+        data: profileData,
+        error
+      } = await supabase.from("profiles").select("*").eq("id", session.user.id).maybeSingle();
 
       // If profile doesn't exist, redirect to auth
       if (error || !profileData) {
         console.error("Profile not found, redirecting to auth");
-        navigate("/auth", { replace: true });
-        return;
-      }
-
-      // Check if profile is incomplete (missing birthdate or location)
-      if (!profileData.birthdate || !profileData.city) {
-        navigate("/profile/edit", { 
-          state: { requiresCompletion: true },
+        navigate("/auth", {
           replace: true
         });
         return;
       }
 
+      // Check if profile is incomplete (missing birthdate or location)
+      if (!profileData.birthdate || !profileData.city) {
+        navigate("/profile/edit", {
+          state: {
+            requiresCompletion: true
+          },
+          replace: true
+        });
+        return;
+      }
       setProfile(profileData);
 
       // Check if tutorial should be shown
@@ -94,191 +97,135 @@ const Dashboard = () => {
       }
 
       // Fetch role
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
-
+      const {
+        data: roleData
+      } = await supabase.from("user_roles").select("role").eq("user_id", session.user.id).maybeSingle();
       setUserRole(roleData?.role || null);
 
       // Fetch matches
-      const { data: matchesData } = await supabase
-        .from("matches")
-        .select("*")
-        .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`);
+      const {
+        data: matchesData
+      } = await supabase.from("matches").select("*").or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`);
 
       // Get hidden matches for current user (only those hidden from matches page)
-      const { data: hiddenMatches } = await supabase
-        .from("hidden_matches")
-        .select("match_id")
-        .eq("user_id", session.user.id)
-        .in("hidden_from", ["matches", "both"]);
-      
+      const {
+        data: hiddenMatches
+      } = await supabase.from("hidden_matches").select("match_id").eq("user_id", session.user.id).in("hidden_from", ["matches", "both"]);
       const hiddenMatchIds = new Set(hiddenMatches?.map(h => h.match_id) || []);
-      
+
       // Filter out hidden matches
       const visibleMatches = (matchesData || []).filter(match => !hiddenMatchIds.has(match.id));
       setMatches(visibleMatches);
 
       // Fetch likes received
-      const { data: likesData } = await supabase
-        .from("likes")
-        .select("*")
-        .eq("to_user_id", session.user.id);
-
+      const {
+        data: likesData
+      } = await supabase.from("likes").select("*").eq("to_user_id", session.user.id);
       setLikesReceived(likesData || []);
-
       setLoading(false);
 
       // Set up realtime subscription for profile updates
-      profileChannel = supabase
-        .channel('dashboard-profile')
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'profiles',
-            filter: `id=eq.${session.user.id}`
-          },
-          (payload) => {
-            console.log('Profile updated in dashboard:', payload.new);
-            setProfile(payload.new as Profile);
-          }
-        )
-        .subscribe();
+      profileChannel = supabase.channel('dashboard-profile').on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'profiles',
+        filter: `id=eq.${session.user.id}`
+      }, payload => {
+        console.log('Profile updated in dashboard:', payload.new);
+        setProfile(payload.new as Profile);
+      }).subscribe();
 
       // Set up realtime subscription for new matches
-      matchesChannel = supabase
-        .channel('dashboard-matches')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'matches',
-          },
-          (payload) => {
-            const newMatch = payload.new as any;
-            if (newMatch.user1_id === session.user.id || newMatch.user2_id === session.user.id) {
-              setMatches(prev => [newMatch, ...prev]);
-              toast({
-                title: t("dashboard.newMatch"),
-                description: t("dashboard.newMatchDescription"),
-              });
-            }
-          }
-        )
-        .subscribe();
+      matchesChannel = supabase.channel('dashboard-matches').on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'matches'
+      }, payload => {
+        const newMatch = payload.new as any;
+        if (newMatch.user1_id === session.user.id || newMatch.user2_id === session.user.id) {
+          setMatches(prev => [newMatch, ...prev]);
+          toast({
+            title: t("dashboard.newMatch"),
+            description: t("dashboard.newMatchDescription")
+          });
+        }
+      }).subscribe();
 
       // Set up realtime subscription for new likes
-      likesChannel = supabase
-        .channel('dashboard-likes')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'likes',
-          },
-          (payload) => {
-            const newLike = payload.new as any;
-            if (newLike.to_user_id === session.user.id) {
-              setLikesReceived(prev => [newLike, ...prev]);
-            }
-          }
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: 'DELETE',
-            schema: 'public',
-            table: 'likes',
-          },
-          async (payload) => {
-            const deletedLike = payload.old as any;
-            // When a like is deleted, it might mean a match was created
-            // Refresh matches to show the new match
-            if (deletedLike.to_user_id === session.user.id || deletedLike.from_user_id === session.user.id) {
-              const { data: matchesData } = await supabase
-                .from("matches")
-                .select("*")
-                .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`);
+      likesChannel = supabase.channel('dashboard-likes').on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'likes'
+      }, payload => {
+        const newLike = payload.new as any;
+        if (newLike.to_user_id === session.user.id) {
+          setLikesReceived(prev => [newLike, ...prev]);
+        }
+      }).on('postgres_changes', {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'likes'
+      }, async payload => {
+        const deletedLike = payload.old as any;
+        // When a like is deleted, it might mean a match was created
+        // Refresh matches to show the new match
+        if (deletedLike.to_user_id === session.user.id || deletedLike.from_user_id === session.user.id) {
+          const {
+            data: matchesData
+          } = await supabase.from("matches").select("*").or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`);
+          const {
+            data: hiddenMatches
+          } = await supabase.from("hidden_matches").select("match_id").eq("user_id", session.user.id).in("hidden_from", ["matches", "both"]);
+          const hiddenMatchIds = new Set(hiddenMatches?.map(h => h.match_id) || []);
+          const visibleMatches = (matchesData || []).filter(match => !hiddenMatchIds.has(match.id));
+          setMatches(visibleMatches);
 
-              const { data: hiddenMatches } = await supabase
-                .from("hidden_matches")
-                .select("match_id")
-                .eq("user_id", session.user.id)
-                .in("hidden_from", ["matches", "both"]);
-              
-              const hiddenMatchIds = new Set(hiddenMatches?.map(h => h.match_id) || []);
-              const visibleMatches = (matchesData || []).filter(match => !hiddenMatchIds.has(match.id));
-              setMatches(visibleMatches);
-              
-              // Also update likes list
-              const { data: likesData } = await supabase
-                .from("likes")
-                .select("*")
-                .eq("to_user_id", session.user.id);
-              setLikesReceived(likesData || []);
-            }
-          }
-        )
-        .subscribe();
+          // Also update likes list
+          const {
+            data: likesData
+          } = await supabase.from("likes").select("*").eq("to_user_id", session.user.id);
+          setLikesReceived(likesData || []);
+        }
+      }).subscribe();
 
       // Set up realtime subscription for hidden matches
-      hiddenMatchesChannel = supabase
-        .channel('dashboard-hidden-matches')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'hidden_matches',
-          },
-          (payload) => {
-            const hiddenMatch = payload.new as any;
-            if (hiddenMatch.user_id === session.user.id) {
-              setMatches(prev => prev.filter(m => m.id !== hiddenMatch.match_id));
-            }
-          }
-        )
-        .subscribe();
+      hiddenMatchesChannel = supabase.channel('dashboard-hidden-matches').on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'hidden_matches'
+      }, payload => {
+        const hiddenMatch = payload.new as any;
+        if (hiddenMatch.user_id === session.user.id) {
+          setMatches(prev => prev.filter(m => m.id !== hiddenMatch.match_id));
+        }
+      }).subscribe();
     };
-
     fetchUserData();
 
     // Refetch data when window regains focus (user returns to dashboard)
     const handleFocus = () => {
       fetchUserData();
     };
-    
     window.addEventListener('focus', handleFocus);
 
     // Realtime listener for deleted likes (when matches are created)
-    const likesDeleteChannel = supabase
-      .channel('likes-delete-channel')
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'likes',
-        },
-        async (payload) => {
-          // When a like is deleted, refresh user data
-          await fetchUserData();
-        }
-      )
-      .subscribe();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const likesDeleteChannel = supabase.channel('likes-delete-channel').on('postgres_changes', {
+      event: 'DELETE',
+      schema: 'public',
+      table: 'likes'
+    }, async payload => {
+      // When a like is deleted, refresh user data
+      await fetchUserData();
+    }).subscribe();
+    const {
+      data: {
+        subscription
+      }
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
         navigate("/auth");
       }
     });
-
     return () => {
       window.removeEventListener('focus', handleFocus);
       subscription.unsubscribe();
@@ -297,7 +244,6 @@ const Dashboard = () => {
       supabase.removeChannel(likesDeleteChannel);
     };
   }, [navigate, toast]);
-
   const handleExploreClick = () => {
     const geolocationEnabled = localStorage.getItem("geolocationEnabled");
     if (geolocationEnabled === "true") {
@@ -306,42 +252,32 @@ const Dashboard = () => {
       setShowGeolocationBanner(true);
     }
   };
-
   const handleActivateGeolocation = () => {
     // The GeolocationBanner component now handles saving to localStorage
     setShowGeolocationBanner(false);
     toast({
       title: "✓ Geolocalizzazione attivata",
-      description: "Ora puoi esplorare i profili nelle tue vicinanze",
+      description: "Ora puoi esplorare i profili nelle tue vicinanze"
     });
     navigate("/explore");
   };
-
   const handleCloseGeolocationBanner = () => {
     setShowGeolocationBanner(false);
   };
-
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+    return <div className="min-h-screen flex items-center justify-center bg-background">
         <p className="text-muted-foreground">{t("dashboard.loading")}</p>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen relative bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-950 dark:via-purple-950 dark:to-indigo-950">
+  return <div className="min-h-screen relative bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-950 dark:via-purple-950 dark:to-indigo-950">
       {showTutorial && <Tutorial />}
       {/* Background Image */}
-      <div 
-        className="fixed inset-0 z-0 opacity-20 dark:opacity-30" 
-        style={{
-          backgroundImage: 'url(/images/love-background.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
-      />
+      <div className="fixed inset-0 z-0 opacity-20 dark:opacity-30" style={{
+      backgroundImage: 'url(/images/love-background.png)',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat'
+    }} />
       
       <DashboardControls />
       
@@ -354,7 +290,7 @@ const Dashboard = () => {
               <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
                 {t("dashboard.title")}
               </h1>
-              <p className="text-xs text-muted-foreground">{t("dashboard.tagline")}</p>
+              
             </div>
           </div>
           <div id="credits-display" className="flex items-center gap-2 order-1 md:order-2">
@@ -365,25 +301,26 @@ const Dashboard = () => {
 
         <div className="grid gap-6 lg:grid-cols-3 mb-8">
           {/* User Profile Card - Redesigned */}
-          <div id="user-profile-card" className="lg:col-span-1 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+          <div id="user-profile-card" className="lg:col-span-1 animate-fade-in" style={{
+          animationDelay: '0.1s'
+        }}>
             {user && <UserProfileCard userId={user.id} />}
           </div>
 
           {/* Stats and Messages */}
           <div className="lg:col-span-2 space-y-6">
             {/* Stats Cards - Redesigned */}
-            <div className="grid gap-4 md:grid-cols-2 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <div className="grid gap-4 md:grid-cols-2 animate-fade-in" style={{
+            animationDelay: '0.2s'
+          }}>
               {/* Matches Card */}
               <Card id="matches-card" className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-pink-500 to-rose-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
                 {/* Card Background */}
-                <div 
-                  className="absolute inset-0 opacity-10" 
-                  style={{
-                    backgroundImage: 'url(/images/love-background.png)',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  }}
-                />
+                <div className="absolute inset-0 opacity-10" style={{
+                backgroundImage: 'url(/images/love-background.png)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }} />
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTR6bTAtMTBjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-20" />
                 <CardHeader className="relative">
                   <CardTitle className="flex items-center gap-3 text-white">
@@ -397,10 +334,7 @@ const Dashboard = () => {
                   <div className="text-6xl font-black mb-4 drop-shadow-lg">
                     {matches.length}
                   </div>
-                  <Button 
-                    className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold shadow-lg group-hover:shadow-xl transition-all duration-300"
-                    onClick={() => navigate("/matches")}
-                  >
+                  <Button className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold shadow-lg group-hover:shadow-xl transition-all duration-300" onClick={() => navigate("/matches")}>
                     {t("dashboard.viewMatches")}
                     <Heart className="h-4 w-4 ml-2" />
                   </Button>
@@ -410,14 +344,11 @@ const Dashboard = () => {
               {/* Likes Card */}
               <Card id="likes-card" className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
                 {/* Card Background */}
-                <div 
-                  className="absolute inset-0 opacity-10" 
-                  style={{
-                    backgroundImage: 'url(/images/love-background.png)',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  }}
-                />
+                <div className="absolute inset-0 opacity-10" style={{
+                backgroundImage: 'url(/images/love-background.png)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }} />
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTR6bTAtMTBjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-20" />
                 <CardHeader className="relative">
                   <CardTitle className="flex items-center gap-3 text-white">
@@ -431,10 +362,7 @@ const Dashboard = () => {
                   <div className="text-6xl font-black mb-4 drop-shadow-lg">
                     {likesReceived.length}
                   </div>
-                  <Button 
-                    className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold shadow-lg group-hover:shadow-xl transition-all duration-300"
-                    onClick={() => navigate("/likes")}
-                  >
+                  <Button className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold shadow-lg group-hover:shadow-xl transition-all duration-300" onClick={() => navigate("/likes")}>
                     {t("dashboard.seeWhoLikes")}
                     <Sparkles className="h-4 w-4 ml-2" />
                   </Button>
@@ -443,20 +371,17 @@ const Dashboard = () => {
             </div>
 
             {/* Discover and Support */}
-            <div className="grid gap-4 md:grid-cols-2 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <div className="grid gap-4 md:grid-cols-2 animate-fade-in" style={{
+            animationDelay: '0.3s'
+          }}>
               {/* Discover Card */}
-              <Card id="discover-card" className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer"
-                onClick={handleExploreClick}
-              >
+              <Card id="discover-card" className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer" onClick={handleExploreClick}>
                 {/* Card Background */}
-                <div 
-                  className="absolute inset-0 opacity-10" 
-                  style={{
-                    backgroundImage: 'url(/images/love-background.png)',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  }}
-                />
+                <div className="absolute inset-0 opacity-10" style={{
+                backgroundImage: 'url(/images/love-background.png)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }} />
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTR6bTAtMTBjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-20" />
                 <CardHeader className="relative">
                   <CardTitle className="flex items-center gap-3 text-white">
@@ -471,9 +396,7 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent className="relative flex flex-col">
                   <div className="flex-1 min-h-[76px]" />
-                  <Button
-                    className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold shadow-lg group-hover:shadow-xl transition-all duration-300"
-                  >
+                  <Button className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold shadow-lg group-hover:shadow-xl transition-all duration-300">
                     {t("dashboard.exploreProfiles")}
                     <Users className="h-4 w-4 ml-2" />
                   </Button>
@@ -481,17 +404,12 @@ const Dashboard = () => {
               </Card>
               
               {/* Support Card */}
-              <Card id="support-card" className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer"
-                onClick={() => navigate("/support")}
-              >
-                <div 
-                  className="absolute inset-0 opacity-10" 
-                  style={{
-                    backgroundImage: 'url(/images/love-background.png)',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  }}
-                />
+              <Card id="support-card" className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer" onClick={() => navigate("/support")}>
+                <div className="absolute inset-0 opacity-10" style={{
+                backgroundImage: 'url(/images/love-background.png)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }} />
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTR6bTAtMTBjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-20" />
                 <CardHeader className="relative">
                   <CardTitle className="flex items-center gap-3 text-white">
@@ -508,9 +426,7 @@ const Dashboard = () => {
                   <p className="text-white/90 mb-6">
                     {t("dashboard.contactSupport")}
                   </p>
-                  <Button 
-                    className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold shadow-lg group-hover:shadow-xl transition-all duration-300"
-                  >
+                  <Button className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold shadow-lg group-hover:shadow-xl transition-all duration-300">
                     {t("dashboard.sendMessage")}
                     <MessageCircle className="h-4 w-4 ml-2" />
                   </Button>
@@ -522,17 +438,10 @@ const Dashboard = () => {
       </div>
 
       {/* Geolocation Banner */}
-      {showGeolocationBanner && (
-        <GeolocationBanner
-          onActivate={handleActivateGeolocation}
-          onClose={handleCloseGeolocationBanner}
-        />
-      )}
+      {showGeolocationBanner && <GeolocationBanner onActivate={handleActivateGeolocation} onClose={handleCloseGeolocationBanner} />}
 
       {/* Notification Permission Banner */}
       <NotificationPermissionBanner />
-    </div>
-  );
+    </div>;
 };
-
 export default Dashboard;
