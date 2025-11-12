@@ -341,7 +341,9 @@ export const TrisGameBanner = () => {
               <img src={trisIcon} alt="Tris" className="w-full h-full object-contain drop-shadow-lg" />
             </div>
             <div className="text-center z-10">
-              <span className="text-xl font-bold block">Tris</span>
+              <span className="text-2xl font-black tracking-wider uppercase bg-gradient-to-r from-blue-400 via-blue-300 to-blue-500 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(59,130,246,0.5)]">
+                TRIS
+              </span>
             </div>
           </Button>
           
@@ -354,7 +356,9 @@ export const TrisGameBanner = () => {
               <img src={damaIcon} alt="Dama" className="w-full h-full object-contain drop-shadow-lg" />
             </div>
             <div className="text-center z-10">
-              <span className="text-xl font-bold block">Dama</span>
+              <span className="text-2xl font-black tracking-wider uppercase bg-gradient-to-r from-purple-400 via-purple-300 to-purple-500 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(168,85,247,0.5)]">
+                DAMA
+              </span>
             </div>
           </Button>
 
@@ -367,7 +371,9 @@ export const TrisGameBanner = () => {
               <img src={risikoIcon} alt="Risiko" className="w-full h-full object-contain drop-shadow-lg" />
             </div>
             <div className="text-center z-10">
-              <span className="text-xl font-bold block">Risiko</span>
+              <span className="text-2xl font-black tracking-wider uppercase bg-gradient-to-r from-red-400 via-orange-300 to-yellow-400 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(239,68,68,0.5)]">
+                RISIKO
+              </span>
             </div>
           </Button>
         </div>
