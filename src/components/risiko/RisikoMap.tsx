@@ -36,6 +36,8 @@ export const RisikoMap = ({
   } | null>(null);
 
   useEffect(() => {
+    let animationFrameId: number | null = null;
+    
     if (movingTroops) {
       const fromTerritory = territories.find(t => t.id === movingTroops.fromId);
       const toTerritory = territories.find(t => t.id === movingTroops.toId);
@@ -47,16 +49,22 @@ export const RisikoMap = ({
           count: movingTroops.count
         });
 
-        // Animate to destination
+        // Animate to destination with smooth easing
         const duration = 1000;
         const startTime = Date.now();
         
+        // Easing function for smooth animation (ease-in-out)
+        const easeInOutCubic = (t: number): number => {
+          return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        };
+        
         const animate = () => {
           const elapsed = Date.now() - startTime;
-          const progress = Math.min(elapsed / duration, 1);
+          const linearProgress = Math.min(elapsed / duration, 1);
+          const easedProgress = easeInOutCubic(linearProgress);
           
-          const currentX = fromTerritory.x + (toTerritory.x - fromTerritory.x) * progress;
-          const currentY = fromTerritory.y + (toTerritory.y - fromTerritory.y) * progress;
+          const currentX = fromTerritory.x + (toTerritory.x - fromTerritory.x) * easedProgress;
+          const currentY = fromTerritory.y + (toTerritory.y - fromTerritory.y) * easedProgress;
           
           setAnimatingTroops({
             x: currentX,
@@ -64,16 +72,26 @@ export const RisikoMap = ({
             count: movingTroops.count
           });
           
-          if (progress < 1) {
-            requestAnimationFrame(animate);
+          if (linearProgress < 1) {
+            animationFrameId = requestAnimationFrame(animate);
           } else {
             setAnimatingTroops(null);
+            animationFrameId = null;
           }
         };
         
-        requestAnimationFrame(animate);
+        animationFrameId = requestAnimationFrame(animate);
       }
+    } else {
+      setAnimatingTroops(null);
     }
+    
+    // Cleanup function to cancel animation if component unmounts or movingTroops changes
+    return () => {
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
   }, [movingTroops, territories]);
 
   const getColor = (territory: Territory) => {
