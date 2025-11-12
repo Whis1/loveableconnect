@@ -124,6 +124,22 @@ const TermsAndConditions = () => {
                     </p>
                   </div>
 
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">8. Dati dei minigame</h3>
+                    <p className="font-semibold">Raccolta e utilizzo dei dati</p>
+                    <p>
+                      LoveableConnect raccoglie dati relativi alle performance nei minigame (punti ELO e crediti) per permettere il corretto funzionamento dei giochi, calcolare i punteggi e aggiornare la classifica.
+                    </p>
+                    <p className="font-semibold mt-3">Dati pubblici</p>
+                    <p>
+                      Solo i dati dei Top 5 giocatori vengono resi pubblici nella classifica visibile a tutti gli utenti. Nessun altro dato di gioco viene condiviso pubblicamente.
+                    </p>
+                    <p className="font-semibold mt-3">Protezione dei dati</p>
+                    <p>
+                      Tutti i dati di gioco sono trattati in conformità alla normativa vigente sulla protezione dei dati personali e non saranno condivisi con terze parti non autorizzate.
+                    </p>
+                  </div>
+
                   <h2 className="text-2xl font-bold mt-8">INFORMATIVA PRIVACY CONTATTI</h2>
                   
                   <div className="space-y-3">
@@ -357,25 +373,48 @@ const TermsAndConditions = () => {
 
                   <div className="space-y-3">
                     <h3 className="text-lg font-semibold">7. MESSAGGI VOCALI IN CHAT</h3>
+                    <p className="font-semibold">Funzionalità</p>
                     <p>
-                      LoveableConnect offre una funzionalità di messaggi vocali disponibile esclusivamente per gli utenti con abbonamento attivo.
-                      Utilizzando questa funzione, l'utente accetta che i messaggi vocali vengano trasmessi e temporaneamente archiviati sui server di LoveableConnect per garantire la consegna e la sicurezza della comunicazione.
+                      Gli utenti abbonati a Premium possono inviare i messaggi vocali all'interno delle chat con altri utenti.
+                      Questa funzione è disponibile solo per gli utenti con abbonamento mensile Premium attivo.
+                      Gli utenti non abbonati non potranno inviare messaggi vocali, ma potranno riceverli se il mittente ha un abbonamento attivo.
                     </p>
-                    <p className="font-semibold mt-3">I messaggi vocali:</p>
-                    <ul className="list-disc list-inside space-y-2 pl-4">
-                      <li>Sono accessibili solo ai partecipanti alla conversazione.</li>
-                      <li>Possono essere rimossi automaticamente dopo un periodo di tempo determinato o su segnalazione.</li>
-                      <li>Non devono contenere linguaggio offensivo, contenuti sessuali espliciti, incitamento all'odio o violazioni della privacy di terzi.</li>
-                      <li>Possono essere analizzati in caso di segnalazioni per violazioni dei Termini di Servizio.</li>
-                    </ul>
-                    <p className="mt-3">
-                      LoveableConnect non è responsabile per l'uso improprio dei messaggi vocali da parte degli utenti.
-                      L'uso della funzione implica accettazione piena di queste condizioni.
+                    <p className="font-semibold mt-3">Condizioni d'uso</p>
+                    <p>
+                      L'utente è responsabile dei contenuti vocali inviati. Non sono consentiti messaggi che contengano contenuti illegali, offensivi, diffamatori o sessualmente espliciti non appropriati al contesto della piattaforma.
+                      LoveableConnect si riserva il diritto di moderare o rimuovere messaggi vocali che violino i termini.
+                      Gli utenti devono rispettare la privacy altrui: non è consentito registrare o condividere conversazioni senza il consenso dei partecipanti.
+                    </p>
+                    <p className="font-semibold mt-3">Limitazioni</p>
+                    <p>
+                      L'abbonamento Premium deve essere attivo per poter usare la funzione.
+                      Eventuali violazioni delle regole possono comportare la sospensione temporanea o permanente dell'accesso alla funzione vocale e, nei casi gravi, dell'account.
                     </p>
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">8. ⚖️ DICHIARAZIONE DI RESPONSABILITÀ</h3>
+                    <h3 className="text-lg font-semibold">8. MINIGAME E CLASSIFICA</h3>
+                    <p className="font-semibold">Funzionamento dei minigame</p>
+                    <p>
+                      All'interno del sito LoveableConnect sono disponibili minigame come Tris, Dama e Conquistatior. Partecipando a queste sfide, gli utenti possono guadagnare crediti e punti ELO.
+                    </p>
+                    <ul className="list-disc list-inside space-y-2 pl-4">
+                      <li><strong>Vittoria:</strong> +6 crediti e +20 punti ELO</li>
+                      <li><strong>Pareggio:</strong> nessuna variazione</li>
+                      <li><strong>Sconfitta:</strong> perdita di 10 punti ELO</li>
+                    </ul>
+                    <p className="font-semibold mt-3">Classifica ELO</p>
+                    <p>
+                      Il sistema tiene traccia dei punti ELO di tutti gli utenti. Solo i Top 5 giocatori con punteggio più alto vengono mostrati pubblicamente nella classifica. Gli utenti presenti nella classifica lo diventano automaticamente in base alle loro performance nei minigame.
+                    </p>
+                    <p className="font-semibold mt-3">Regole di gioco</p>
+                    <p>
+                      Tutti gli utenti devono rispettare le regole dei minigame e non possono utilizzare mezzi illeciti, bot o trucchi per manipolare i risultati. LoveableConnect si riserva il diritto di intervenire in caso di comportamenti scorretti, inclusa la rimozione dei punti o dei crediti guadagnati in modo fraudolento.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">9. ⚖️ DICHIARAZIONE DI RESPONSABILITÀ</h3>
                     <p>LoveableConnect non si assume responsabilità per:</p>
                     <ul className="list-disc list-inside space-y-2 pl-4">
                       <li>comportamenti o contenuti pubblicati dagli utenti;</li>
@@ -388,7 +427,7 @@ const TermsAndConditions = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">9. CONCLUSIONE DEL CONTRATTO</h3>
+                    <h3 className="text-lg font-semibold">10. CONCLUSIONE DEL CONTRATTO</h3>
                     <p>
                       La informiamo che premendo il pulsante "Iscriviti" in fase di registrazione del Sito/App o, comunque, utilizzando il Servizio, Lei dichiara di aver letto ed espressamente accetta le presenti CONDIZIONI GENERALI. La registrazione a LoveableConnect e l'utilizzo del Servizio (fatto salvo che per i servizi disponibili esclusivamente a pagamento, i quali richiedono la sottoscrizione di un Abbonamento o un pagamento On-Demand) sono completamente gratuiti (salvi i costi per le apparecchiature – computer, applicazioni e mezzi di telecomunicazione – e i costi di connessione alla rete Internet, che sono a carico dell'Utente sulla base delle condizioni economiche stabilite dal proprio operatore).
                     </p>
@@ -398,7 +437,7 @@ const TermsAndConditions = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">10. I SERVIZI DI LOVEABLECONNECT</h3>
+                    <h3 className="text-lg font-semibold">11. I SERVIZI DI LOVEABLECONNECT</h3>
                     <p>
                       <strong>3.1</strong> L'Utente nel completare il Profilo in fase di registrazione, inserisce il Territorio, il genere (Maschile/Femmine/altro) di Utenti che sta cercando, il nickname con cui apparirà sul Sito/App, indica la propria età e poi convalida il proprio Profilo tramite la ricezione di una e-mail e relativa conferma.
                     </p>
