@@ -879,19 +879,28 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
     setTimeout(() => setUserEmoji(null), 3000);
   };
 
-  // AI sends random emoji occasionally
+  // AI sends random emoji occasionally (una sola volta per turno, completamente randomica)
   useEffect(() => {
     if (gameState.currentPlayer === 'red' && !gameState.gameOver) {
-      const shouldSendEmoji = Math.random() < 0.15;
+      // 8% di probabilità di inviare emoji durante il turno
+      const shouldSendEmoji = Math.random() < 0.08;
       if (shouldSendEmoji) {
         const randomEmoji = availableEmojis[Math.floor(Math.random() * availableEmojis.length)];
-        setTimeout(() => {
-          setOpponentEmoji(randomEmoji);
-          setTimeout(() => setOpponentEmoji(null), 3000);
-        }, 1000 + Math.random() * 2000);
+        // Delay completamente randomico: da 2 a 20 secondi nel turno
+        const randomDelay = 2000 + Math.random() * 18000;
+        
+        const emojiTimer = setTimeout(() => {
+          // Verifica che sia ancora il turno dell'AI
+          if (gameState.currentPlayer === 'red' && !gameState.gameOver) {
+            setOpponentEmoji(randomEmoji);
+            setTimeout(() => setOpponentEmoji(null), 3000);
+          }
+        }, randomDelay);
+        
+        return () => clearTimeout(emojiTimer);
       }
     }
-  }, [gameState.currentPlayer, gameState.turnTimeLeft]);
+  }, [gameState.currentPlayer, gameState.gameOver]); // Solo al cambio turno, non ogni secondo
 
   // Build avatar URL from storage path or accept full URLs
   const getAvatarUrl = (avatarPath?: string | null) => {
