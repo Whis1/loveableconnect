@@ -602,48 +602,77 @@ const tryAllCardsStrategically = (
     troops: 0
   };
 
-  // FORCE: Alto valore se c'è un attacco eccellente disponibile
-  if (gameState.cardCooldowns.red.force === 0 && attackOpportunities.length > 0) {
-    const excellentAttack = attackOpportunities.find(opp => 
-      opp.monteCarloScore >= 0.75 && (opp.strategicValue + opp.continentalValue) >= 10
-    );
-    if (excellentAttack) cardScores.force = 100;
-  }
+  // 🎯 CALCOLO SITUAZIONE TATTICA
+  const myTotalTroops = myTerritories.reduce((sum, t) => sum + t.troops, 0);
+  const enemyTotalTroops = enemyTerritories.reduce((sum, t) => sum + t.troops, 0);
+  const averageTroopsPerTerritory = myTotalTroops / Math.max(1, myTerritories.length);
+  const troopDeficit = enemyTotalTroops - myTotalTroops;
 
-  // BOMBA: Colpisce OVUNQUE (minimo 2 truppe nemiche)
-  if (gameState.cardCooldowns.red.bomb === 0 && enemyTerritories.length > 0) {
-    const targets = enemyTerritories.filter(t => t.troops >= 2);
-    if (targets.length > 0) {
-      // Priorità globale: più truppe = più valore
-      const sorted = targets
-        .map(t => {
-          let value = t.troops * 10;
-          const isChokepoint = TerritorialAnalyzer.identifyChokepoints(t, gameState.territories);
-          if (isChokepoint) value += 30;
-          value += t.neighbors.length * 5;
-          return { territory: t, value };
-        })
-        .sort((a, b) => b.value - a.value);
-      
-      cardScores.bomb = 95;
-    }
+  // 🪖 TRUPPE: PRIORITÀ MASSIMA - l'AI deve crescere!
+  // Base score molto alto per far sì che usi sempre le truppe
+  cardScores.troops = 100;
+  
+  // Bonus se sotto in truppe rispetto al nemico
+  if (troopDeficit > 0) {
+    cardScores.troops += Math.min(50, troopDeficit * 5); // +5 per ogni truppa di svantaggio
   }
-
-  // PARACADUTE: Colpisce OVUNQUE (1 truppa = conquista, 5+ truppe = kamikaze)
-  if (gameState.cardCooldowns.red.parachute === 0) {
-    const singleTroops = enemyTerritories.filter(t => t.troops === 1).length;
-    const massiveTroops = enemyTerritories.filter(t => t.troops >= 5).length;
-    if (singleTroops > 0) cardScores.parachute = 90;
-    else if (massiveTroops > 0) cardScores.parachute = 75;
+  
+  // Bonus se la media per territorio è bassa (territori deboli)
+  if (averageTroopsPerTerritory < 3) {
+    cardScores.troops += 30;
   }
-
-  // TRUPPE: Valore basato su situazione difensiva e continentale
+  
+  // Bonus in situazioni critiche
   const criticalTerritories = threats.filter(t => t.threatLevel > 8 || t.isChokepoint).length;
   const almostCompleteContinents = continents.filter(c => c.completionValue >= 0.7 && c.completionValue < 1).length;
   
-  if (criticalTerritories > 0) cardScores.troops = 60 + (criticalTerritories * 5);
-  if (almostCompleteContinents > 0) cardScores.troops += 20;
-  if (riskLevel > 0.6) cardScores.troops += 15;
+  if (criticalTerritories > 0) cardScores.troops += (criticalTerritories * 10);
+  if (almostCompleteContinents > 0) cardScores.troops += 25;
+  if (riskLevel > 0.6) cardScores.troops += 20;
+
+  // FORCE: Alto valore solo se c'è un attacco ECCEZIONALE disponibile
+  if (gameState.cardCooldowns.red.force === 0 && attackOpportunities.length > 0) {
+    const excellentAttack = attackOpportunities.find(opp => 
+      opp.monteCarloScore >= 0.8 && (opp.strategicValue + opp.continentalValue) >= 15
+    );
+    if (excellentAttack) cardScores.force = 140; // Deve battere le truppe solo se MOLTO vantaggioso
+  }
+
+  // BOMBA: Usala solo se ci sono obiettivi REALMENTE pericolosi
+  if (gameState.cardCooldowns.red.bomb === 0 && enemyTerritories.length > 0) {
+    const dangeroustargets = enemyTerritories.filter(t => t.troops >= 4); // Minimo 4 truppe
+    if (dangeroustargets.length > 0) {
+      const maxValue = Math.max(...dangeroustargets.map(t => {
+        let value = t.troops * 10;
+        const isChokepoint = TerritorialAnalyzer.identifyChokepoints(t, gameState.territories);
+        if (isChokepoint) value += 30;
+        return value;
+      }));
+      
+      // Score alto solo se target ha 5+ truppe
+      if (maxValue >= 50) cardScores.bomb = 130;
+      else if (maxValue >= 40) cardScores.bomb = 110;
+    }
+  }
+
+  // PARACADUTE: Usalo solo per obiettivi VERAMENTE strategici
+  if (gameState.cardCooldowns.red.parachute === 0) {
+    const highValueTargets = enemyTerritories
+      .filter(t => t.troops === 1)
+      .filter(t => {
+        const isChokepoint = TerritorialAnalyzer.identifyChokepoints(t, gameState.territories);
+        const inAlmostCompleteContinent = continents.some(c => 
+          c.territories.includes(t.name) && c.completionValue >= 0.6
+        );
+        return isChokepoint || inAlmostCompleteContinent;
+      }).length;
+    
+    if (highValueTargets > 0) cardScores.parachute = 120;
+    
+    // Kamikaze solo su truppe MASSIVE (7+)
+    const massiveTargets = enemyTerritories.filter(t => t.troops >= 7).length;
+    if (massiveTargets > 0) cardScores.parachute = Math.max(cardScores.parachute, 115);
+  }
 
   // Usa la carta con punteggio più alto
   const bestCard = Object.entries(cardScores).reduce((max, [card, score]) => 
