@@ -25,6 +25,8 @@ export const TerritoryConnectionsManager = () => {
   const [editingName, setEditingName] = useState("");
   const [editingBadge, setEditingBadge] = useState("");
   const [newNeighbor, setNewNeighbor] = useState("");
+  const [searchNeighbor, setSearchNeighbor] = useState("");
+  const [showNeighborDropdown, setShowNeighborDropdown] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -74,6 +76,8 @@ export const TerritoryConnectionsManager = () => {
     setEditingName(territory.territory_name);
     setEditingBadge(territory.badge || '🏔️');
     setNewNeighbor("");
+    setSearchNeighbor("");
+    setShowNeighborDropdown(false);
     setValidationErrors([]);
   };
 
@@ -83,23 +87,14 @@ export const TerritoryConnectionsManager = () => {
     setEditingName("");
     setEditingBadge("");
     setNewNeighbor("");
+    setSearchNeighbor("");
+    setShowNeighborDropdown(false);
     setValidationErrors([]);
   };
 
-  const addNeighbor = () => {
-    const neighborIndex = parseInt(newNeighbor);
-    if (isNaN(neighborIndex)) {
-      toast.error("Inserisci un indice valido");
-      return;
-    }
-
+  const addNeighborByIndex = (neighborIndex: number) => {
     if (neighborIndex === selectedTerritory?.territory_index) {
       toast.error("Un territorio non può essere vicino a se stesso");
-      return;
-    }
-
-    if (neighborIndex < 0 || neighborIndex > 53) {
-      toast.error("Indice deve essere tra 0 e 53");
       return;
     }
 
@@ -109,8 +104,21 @@ export const TerritoryConnectionsManager = () => {
     }
 
     setEditingConnections([...editingConnections, neighborIndex]);
-    setNewNeighbor("");
+    setSearchNeighbor("");
+    setShowNeighborDropdown(false);
   };
+
+  const filteredAvailableTerritories = connections.filter((territory) => {
+    if (!searchNeighbor.trim()) return false;
+    if (territory.territory_index === selectedTerritory?.territory_index) return false;
+    if (editingConnections.includes(territory.territory_index)) return false;
+    
+    const query = searchNeighbor.toLowerCase();
+    return (
+      territory.territory_name.toLowerCase().includes(query) ||
+      territory.territory_index.toString().includes(query)
+    );
+  });
 
   const removeNeighbor = (index: number) => {
     setEditingConnections(editingConnections.filter((n) => n !== index));
@@ -345,19 +353,44 @@ export const TerritoryConnectionsManager = () => {
               {/* Add Neighbor */}
               <div className="space-y-2">
                 <h4 className="font-semibold text-sm">Aggiungi Vicino:</h4>
-                <div className="flex gap-2">
-                  <Input
-                    type="number"
-                    placeholder="Indice vicino (0-53)"
-                    value={newNeighbor}
-                    onChange={(e) => setNewNeighbor(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && addNeighbor()}
-                    min={0}
-                    max={53}
-                  />
-                  <Button onClick={addNeighbor} size="icon">
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                <div className="relative">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Cerca territorio per nome o indice..."
+                      value={searchNeighbor}
+                      onChange={(e) => {
+                        setSearchNeighbor(e.target.value);
+                        setShowNeighborDropdown(true);
+                      }}
+                      onFocus={() => setShowNeighborDropdown(true)}
+                    />
+                  </div>
+                  
+                  {showNeighborDropdown && searchNeighbor.trim() && (
+                    <Card className="absolute z-50 w-full mt-1 max-h-[200px] overflow-hidden">
+                      <ScrollArea className="h-[200px]">
+                        {filteredAvailableTerritories.length > 0 ? (
+                          <div className="p-1">
+                            {filteredAvailableTerritories.map((territory) => (
+                              <div
+                                key={territory.territory_index}
+                                className="flex items-center gap-2 p-2 hover:bg-accent rounded-md cursor-pointer"
+                                onClick={() => addNeighborByIndex(territory.territory_index)}
+                              >
+                                <Badge variant="outline">{territory.territory_index}</Badge>
+                                <span className="text-xl">{territory.badge || '🏔️'}</span>
+                                <span className="text-sm">{territory.territory_name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground p-4 text-center">
+                            Nessun territorio trovato
+                          </p>
+                        )}
+                      </ScrollArea>
+                    </Card>
+                  )}
                 </div>
               </div>
 
