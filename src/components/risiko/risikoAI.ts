@@ -172,8 +172,8 @@ export const aiMakeMove = (
       )
     }));
     
-    showAnimation(`+${amount} truppe aggiunte!`);
-    if (showToast) showToast(`${opponentNickname} si è aggiunto +${amount} truppe`, 'success');
+    showAnimation(`${opponentNickname} ha aggiunto +${amount} truppe su ${strategic.name}`);
+    if (showToast) showToast(`${opponentNickname} ha aggiunto +${amount} truppe su ${strategic.name}`, 'success');
   }
 
   setTimeout(() => {
@@ -1217,8 +1217,8 @@ const tryAllCardsStrategically = (
       )
     }));
     
-    showAnimation(`+${amount} truppe aggiunte!`);
-    if (showToast) showToast(`${opponentNickname} si è aggiunto +${amount} truppe`, 'success');
+    showAnimation(`${opponentNickname} ha aggiunto +${amount} truppe su ${targetTerritory!.name}`);
+    if (showToast) showToast(`${opponentNickname} ha aggiunto +${amount} truppe su ${targetTerritory!.name}`, 'success');
     
     setTimeout(() => {
       setGameState(prev => ({

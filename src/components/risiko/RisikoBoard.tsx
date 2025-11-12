@@ -80,11 +80,6 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [targetTerritory, setTargetTerritory] = useState<string | null>(null);
   const [combatAnimation, setCombatAnimation] = useState<{show: boolean, message: string}>({show: false, message: ''});
-  const [conquestBanner, setConquestBanner] = useState<{
-    show: boolean;
-    conquerorName: string;
-    territoryName: string;
-  } | null>(null);
   const [battleBanner, setBattleBanner] = useState<{
     show: boolean;
     attackerProfile: any;
@@ -354,22 +349,6 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
       attackerPlayer: attacker.owner as 'blue' | 'red',
       onComplete: () => {
         setBattleBanner(null);
-        // Mostra banner conquista solo se attaccante vince
-        if (result.winner === 'attacker') {
-          const conquerorName = attacker.owner === 'blue' 
-            ? (userProfile?.nickname || 'Giocatore')
-            : (opponentProfile?.nickname || 'Avversario');
-          
-          setConquestBanner({
-            show: true,
-            conquerorName,
-            territoryName: defender.name
-          });
-
-          setTimeout(() => {
-            setConquestBanner(null);
-          }, 2500);
-        }
       }
     });
     
@@ -1211,25 +1190,6 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           attackerPlayer={battleBanner.attackerPlayer}
           onComplete={battleBanner.onComplete}
         />
-      )}
-
-      {/* Conquest Banner */}
-      {conquestBanner?.show && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-          <div className="bg-gradient-to-r from-primary/95 to-primary-foreground/95 backdrop-blur-xl px-12 py-8 rounded-2xl border-4 border-primary shadow-2xl animate-scale-in">
-            <div className="text-center space-y-3">
-              <div className="text-4xl font-bold text-white drop-shadow-lg">
-                🏆 Territorio Conquistato! 🏆
-              </div>
-              <div className="text-2xl text-white/90 font-semibold">
-                {conquestBanner.conquerorName} ha conquistato
-              </div>
-              <div className="text-3xl text-yellow-300 font-bold drop-shadow-lg">
-                {conquestBanner.territoryName}
-              </div>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* Bombing Animation */}
