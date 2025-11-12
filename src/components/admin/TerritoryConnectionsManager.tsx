@@ -118,32 +118,40 @@ export const TerritoryConnectionsManager = () => {
 
   const validateConnections = () => {
     const errors: string[] = [];
+    const warnings: string[] = [];
 
     if (!selectedTerritory) return errors;
 
-    // Verifica che le connessioni siano bidirezionali
-    editingConnections.forEach((neighborIndex) => {
-      const neighbor = connections.find((c) => c.territory_index === neighborIndex);
-      if (neighbor && !neighbor.neighbor_indices.includes(selectedTerritory.territory_index)) {
-        errors.push(
-          `⚠️ ${neighbor.territory_name} (${neighborIndex}) non ha ${selectedTerritory.territory_name} come vicino`
-        );
-      }
-    });
+    // Mostra info sui cambiamenti che verranno applicati automaticamente
+    const oldNeighbors = selectedTerritory.neighbor_indices;
+    const newNeighbors = editingConnections;
+    
+    const addedNeighbors = newNeighbors.filter(n => !oldNeighbors.includes(n));
+    const removedNeighbors = oldNeighbors.filter(n => !newNeighbors.includes(n));
 
-    // Verifica connessioni rimosse
-    selectedTerritory.neighbor_indices.forEach((oldNeighbor) => {
-      if (!editingConnections.includes(oldNeighbor)) {
-        const neighbor = connections.find((c) => c.territory_index === oldNeighbor);
-        if (neighbor && neighbor.neighbor_indices.includes(selectedTerritory.territory_index)) {
-          errors.push(
-            `⚠️ Devi rimuovere anche ${selectedTerritory.territory_name} da ${neighbor.territory_name} (${oldNeighbor})`
+    if (addedNeighbors.length > 0) {
+      addedNeighbors.forEach(neighborIndex => {
+        const neighbor = connections.find(c => c.territory_index === neighborIndex);
+        if (neighbor && !neighbor.neighbor_indices.includes(selectedTerritory.territory_index)) {
+          warnings.push(
+            `✅ ${neighbor.territory_name} (${neighborIndex}) verrà aggiornato automaticamente per includere questo territorio`
           );
         }
-      }
-    });
+      });
+    }
 
-    setValidationErrors(errors);
+    if (removedNeighbors.length > 0) {
+      removedNeighbors.forEach(neighborIndex => {
+        const neighbor = connections.find(c => c.territory_index === neighborIndex);
+        if (neighbor && neighbor.neighbor_indices.includes(selectedTerritory.territory_index)) {
+          warnings.push(
+            `✅ ${neighbor.territory_name} (${neighborIndex}) verrà aggiornato automaticamente per rimuovere questo territorio`
+          );
+        }
+      });
+    }
+
+    setValidationErrors([...errors, ...warnings]);
     return errors;
   };
 
@@ -160,16 +168,11 @@ export const TerritoryConnectionsManager = () => {
       return;
     }
 
-    const errors = validateConnections();
-    if (errors.length > 0) {
-      toast.error("Correggi gli errori di validazione prima di salvare");
-      return;
-    }
-
     try {
       setSaving(true);
 
-      const { error } = await supabase
+      // 1. Aggiorna il territorio corrente
+      const { error: updateError } = await supabase
         .from("territory_connections")
         .update({ 
           neighbor_indices: editingConnections,
@@ -178,9 +181,41 @@ export const TerritoryConnectionsManager = () => {
         })
         .eq("territory_index", selectedTerritory.territory_index);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
-      toast.success("Modifiche salvate con successo!");
+      // 2. Gestisci collegamenti bidirezionali automaticamente
+      const oldNeighbors = selectedTerritory.neighbor_indices;
+      const newNeighbors = editingConnections;
+      
+      // Vicini aggiunti: aggiungi questo territorio ai loro vicini
+      const addedNeighbors = newNeighbors.filter(n => !oldNeighbors.includes(n));
+      for (const neighborIndex of addedNeighbors) {
+        const neighbor = connections.find(c => c.territory_index === neighborIndex);
+        if (neighbor && !neighbor.neighbor_indices.includes(selectedTerritory.territory_index)) {
+          const updatedNeighbors = [...neighbor.neighbor_indices, selectedTerritory.territory_index];
+          await supabase
+            .from("territory_connections")
+            .update({ neighbor_indices: updatedNeighbors })
+            .eq("territory_index", neighborIndex);
+        }
+      }
+
+      // Vicini rimossi: rimuovi questo territorio dai loro vicini
+      const removedNeighbors = oldNeighbors.filter(n => !newNeighbors.includes(n));
+      for (const neighborIndex of removedNeighbors) {
+        const neighbor = connections.find(c => c.territory_index === neighborIndex);
+        if (neighbor && neighbor.neighbor_indices.includes(selectedTerritory.territory_index)) {
+          const updatedNeighbors = neighbor.neighbor_indices.filter(
+            id => id !== selectedTerritory.territory_index
+          );
+          await supabase
+            .from("territory_connections")
+            .update({ neighbor_indices: updatedNeighbors })
+            .eq("territory_index", neighborIndex);
+        }
+      }
+
+      toast.success("Modifiche salvate con successo! Collegamenti bidirezionali aggiornati automaticamente.");
       await loadConnections();
       closeEditDialog();
     } catch (error) {
@@ -360,18 +395,24 @@ export const TerritoryConnectionsManager = () => {
                 onClick={validateConnections}
                 className="w-full"
               >
-                <AlertTriangle className="h-4 w-4 mr-2" />
-                Valida Connessioni
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+                Anteprima Modifiche
               </Button>
 
               {validationErrors.length > 0 && (
-                <div className="space-y-2 p-3 bg-destructive/10 border border-destructive rounded-md">
-                  <p className="font-semibold text-sm text-destructive">Errori di validazione:</p>
+                <div className="space-y-2 p-3 bg-blue-500/10 border border-blue-500 rounded-md">
+                  <p className="font-semibold text-sm text-blue-600 dark:text-blue-400">
+                    📋 Modifiche automatiche che verranno applicate:
+                  </p>
                   {validationErrors.map((error, i) => (
-                    <p key={i} className="text-xs text-destructive">
+                    <p key={i} className="text-xs text-blue-600 dark:text-blue-400">
                       {error}
                     </p>
                   ))}
+                  <p className="text-xs text-muted-foreground mt-2">
+                    💡 I collegamenti sono bidirezionali: quando aggiungi/rimuovi un vicino, 
+                    l'altro territorio verrà aggiornato automaticamente.
+                  </p>
                 </div>
               )}
 
@@ -379,7 +420,7 @@ export const TerritoryConnectionsManager = () => {
                 <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500 rounded-md">
                   <CheckCircle2 className="h-4 w-4 text-green-500" />
                   <p className="text-sm text-green-600 dark:text-green-400">
-                    Validazione superata! Puoi salvare.
+                    Pronto per il salvataggio!
                   </p>
                 </div>
               )}
