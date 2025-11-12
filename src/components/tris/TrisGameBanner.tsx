@@ -18,6 +18,8 @@ interface Profile {
   id: string;
   nickname: string;
   avatar_url: string | null;
+  tris_elo?: number;
+  risiko_elo?: number;
 }
 
 export const TrisGameBanner = () => {

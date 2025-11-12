@@ -10,6 +10,7 @@ interface Profile {
   avatar_url: string | null;
   photos: string[] | null;
   tris_elo?: number;
+  risiko_elo?: number;
 }
 
 interface OpponentSearchProps {
@@ -38,7 +39,7 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
     // Fetch ALL admin profiles - sono bot, sempre disponibili
     const { data: adminProfiles } = await supabase
       .from("profiles")
-      .select("id, nickname, avatar_url, photos, tris_elo")
+      .select("id, nickname, avatar_url, photos, tris_elo, risiko_elo")
       .eq("is_admin_profile", true);
 
     if (adminProfiles && adminProfiles.length > 0) {
