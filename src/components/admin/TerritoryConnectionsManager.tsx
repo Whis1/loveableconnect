@@ -364,29 +364,31 @@ export const TerritoryConnectionsManager = () => {
               {/* Current Neighbors */}
               <div className="space-y-2">
                 <h4 className="font-semibold text-sm">Vicini attuali ({editingConnections.length}):</h4>
-                <div className="space-y-1">
-                  {editingConnections.sort((a, b) => a - b).map((neighbor) => (
-                    <div
-                      key={neighbor}
-                      className="flex items-center justify-between p-2 bg-secondary rounded-md"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Badge>{neighbor}</Badge>
-                        <span className="text-sm">{getTerritoryName(neighbor)}</span>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => removeNeighbor(neighbor)}
+                <ScrollArea className="h-[200px] w-full rounded-md border p-2">
+                  <div className="space-y-1">
+                    {editingConnections.sort((a, b) => a - b).map((neighbor) => (
+                      <div
+                        key={neighbor}
+                        className="flex items-center justify-between p-2 bg-secondary rounded-md"
                       >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  {editingConnections.length === 0 && (
-                    <p className="text-sm text-muted-foreground">Nessun vicino</p>
-                  )}
-                </div>
+                        <div className="flex items-center gap-2">
+                          <Badge>{neighbor}</Badge>
+                          <span className="text-sm">{getTerritoryName(neighbor)}</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => removeNeighbor(neighbor)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    {editingConnections.length === 0 && (
+                      <p className="text-sm text-muted-foreground p-2">Nessun vicino</p>
+                    )}
+                  </div>
+                </ScrollArea>
               </div>
 
               {/* Validation */}
