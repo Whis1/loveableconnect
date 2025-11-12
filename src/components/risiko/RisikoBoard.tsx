@@ -1266,7 +1266,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         {/* AI Cards on the right side - opponent's cards display */}
         <div className="flex flex-col gap-2 w-20">
           <Card 
-            className="p-2 border-red-500/30"
+            className="p-2 opacity-60 border-red-500/30"
           >
             <div className="flex flex-col items-center gap-1 relative">
               <img 
@@ -1281,11 +1281,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           </Card>
           
           <Card 
-            className={`p-2 ${
-              gameState.cardCooldowns.red.bomb === 0 && gameState.currentPlayer === 'red'
-                ? 'border-red-500 opacity-90' 
-                : 'opacity-60 border-red-500/30'
-            }`}
+            className="p-2 opacity-60 border-red-500/30"
           >
             <div className="flex flex-col items-center gap-1 relative">
               <img 
@@ -1302,11 +1298,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           </Card>
           
           <Card 
-            className={`p-2 ${
-              gameState.cardCooldowns.red.parachute === 0 && gameState.currentPlayer === 'red'
-                ? 'border-red-500 opacity-90' 
-                : 'opacity-60 border-red-500/30'
-            }`}
+            className="p-2 opacity-60 border-red-500/30"
           >
             <div className="flex flex-col items-center gap-1 relative">
               <img 
@@ -1323,11 +1315,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           </Card>
           
           <Card 
-            className={`p-2 ${
-              gameState.cardCooldowns.red.force === 0 && gameState.currentPlayer === 'red'
-                ? 'border-red-500 opacity-90' 
-                : 'opacity-60 border-red-500/30'
-            }`}
+            className="p-2 opacity-60 border-red-500/30"
           >
             <div className="flex flex-col items-center gap-1 relative">
               <img 
