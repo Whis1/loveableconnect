@@ -120,27 +120,31 @@ export const canMoveTroops = (
     return true;
   }
 
-  // Stradine esplicite per nome (ponti strategici)
+  // Stradine esplicite per nome (ponti strategici) - ALLINEATE con territoryGenerator
   const roadNamePairs: [string, string][] = [
-    ['Baia Nebbiosa', 'Bosco Incantato'],
     ['Giungla Fitta', 'Pianura Fertile'],
-    ['Mare Interno', 'Terre Ghiacciate'],
-    ['Mare Interno', 'Savana Dorata'],
-    ['Mare Interno', 'Bosco Incantato'],
-    ['Fiume Lungo', 'Mare Interno'],
     ['Giungla Fitta', 'Valle Oscura'],
     ['Laguna Azzurra', 'Pianura Fertile'],
     ['Altopiano', 'Lago Cristallo'],
-    ['Savana Dorata', 'Aeroporto'],
-    ['Isola Vulcanica', 'Bunker Sotterraneo'],
-    ['Torre di Guardia', 'Fortezza'],
-    ['Torre di Guardia', 'Montagna Sacra'],
-    ['Torre di Guardia', 'Bunker Sotterraneo'],
-    ['Torre di Guardia', 'Isola Vulcanica'],
+    ['Baia Nebbiosa', 'Bosco Incantato'],
+    ['Mare Interno', 'Terre Ghiacciate'],
+    ['Mare Interno', 'Bosco Incantato'],
+    ['Fiume Lungo', 'Mare Interno'],
     ['Lago Cristallo', 'Terre Ghiacciate'],
     ['Lago Cristallo', 'Canyon Rosso'],
     ['Arcipelago Nord', 'Piana Verde'],
     ['Valle Oscura', 'Pianura Fertile'],
+    ['Piana Verde', 'Giungla Fitta'],
+    ['Foresta Nera', 'Giungla Fitta'],
+    ['Altopiano', 'Delta Paludoso'],
+    ['Grotte Profonde', 'Montagna Sacra'],
+    ['Isola Vulcanica', 'Montagna Sacra'],
+    ['Terre Ghiacciate', 'Centrale Elettrica'],
+    ['Savana Dorata', 'Aeroporto'],
+    ['Torre di Guardia', 'Fortezza'],
+    ['Torre di Guardia', 'Montagna Sacra'],
+    ['Torre di Guardia', 'Bunker Sotterraneo'],
+    ['Isola Vulcanica', 'Bunker Sotterraneo'],
   ];
 
   const isRoadLinked = roadNamePairs.some(([a, b]) =>

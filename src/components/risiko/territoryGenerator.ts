@@ -204,73 +204,73 @@ export const generateTerritories = (): Territory[] => {
     });
   });
   
-  // Collegamenti tra territori - tutti i collegamenti devono essere completi e bidirezionali
+  // Collegamenti tra territori - CORRETTI per evitare salti impossibili
   const connections: [number, number[]][] = [
-    // Nord America (0-9) - tutti attaccati tra loro
-    [0, [1, 4, 5]], 
-    [1, [0, 2, 4, 5, 6]], 
-    [2, [1, 3, 5, 6, 7]], 
-    [3, [2, 6, 7, 36]], // Collegato ad Asia
-    [4, [0, 1, 5, 8, 9]], 
-    [5, [0, 1, 2, 4, 6, 8, 9]], 
-    [6, [1, 2, 3, 5, 7, 9, 18]], // Collegato ad Europa
-    [7, [2, 3, 6]], 
-    [8, [4, 5, 9, 10]], // Collegato a Sud America
-    [9, [4, 5, 6, 8, 10, 11, 18]], // Collegato a Sud America ed Europa
+    // Nord America (0-9)
+    [0, [1, 4]], // Città Perduta: solo vicini diretti
+    [1, [0, 2, 5]], // Isola d'Elbagian
+    [2, [1, 3, 6]], // Porto Antico
+    [3, [2, 7]], // Valle Oscura
+    [4, [0, 5, 8]], // Montagne Gelate
+    [5, [1, 4, 6, 8, 9]], // Deserto Rosso (hub centrale)
+    [6, [2, 5, 7, 9]], // Foresta Nera
+    [7, [3, 6]], // Laguna Azzurra
+    [8, [4, 5, 9, 10]], // Castello Reale - collegato a Sud America
+    [9, [5, 6, 8, 10, 11]], // Piana Verde - collegato a Sud America
     
-    // Sud America (10-17) - tutti collegati tra loro e a Nord America
-    [10, [8, 9, 11, 13, 14]], 
-    [11, [9, 10, 12, 14, 15]], 
-    [12, [11, 15, 17]], 
-    [13, [10, 14, 16]], 
-    [14, [10, 11, 13, 15, 16]], 
-    [15, [11, 12, 14, 16, 17]], 
-    [16, [13, 14, 15, 17, 34]], // Baia Nebbiosa - Collegato anche a Bosco Incantato (34)
-    [17, [12, 15, 16, 35]], // Collegato ad Africa
+    // Sud America (10-17)
+    [10, [8, 11, 13]], // Vulcano Attivo
+    [11, [9, 10, 12, 14]], // Penisola Sud
+    [12, [11, 15]], // Arcipelago Nord
+    [13, [10, 14, 16]], // Terra Sacra
+    [14, [11, 13, 15, 16]], // Miniere d'Oro (hub centrale)
+    [15, [12, 14, 17]], // Roccaforte
+    [16, [13, 14, 17]], // Baia Nebbiosa
+    [17, [15, 16]], // Altopiano
     
-    // Europa (18-26) - tutti collegati completamente tra loro
-    [18, [6, 9, 19, 20, 22, 23, 24]], 
-    [19, [18, 20, 21, 22, 23, 24, 25]], 
-    [20, [18, 19, 21, 22, 23, 24, 25]], 
-    [21, [19, 20, 23, 24, 25, 36]], // Collegato ad Asia
-    [22, [18, 19, 20, 23, 24, 26, 27]], 
-    [23, [18, 19, 20, 21, 22, 24, 25, 26]], 
-    [24, [18, 19, 20, 21, 22, 23, 25, 26]], 
-    [25, [19, 20, 21, 23, 24, 26]], 
-    [26, [22, 23, 24, 25, 27, 28]], // Collegato ad Africa
+    // Europa (18-26)
+    [18, [19, 22]], // Giungla Fitta: solo Steppa Infinita e Pianura Fertile
+    [19, [18, 20, 22, 23]], // Steppa Infinita (hub)
+    [20, [19, 21, 23, 24]], // Oasi Nascosta
+    [21, [20, 24, 25]], // Grotte Profonde
+    [22, [18, 19, 23, 26]], // Pianura Fertile (hub)
+    [23, [19, 20, 22, 24, 26]], // Costa Selvaggia (NO Giungla, NO Grotte, NO Torre)
+    [24, [20, 21, 23, 25, 26]], // Borgo Antico
+    [25, [21, 24]], // Torre di Guardia
+    [26, [22, 23, 24, 27]], // Fiume Lungo - collegato ad Africa
     
-    // Africa (27-35) - tutti collegati tra loro, a Europa
-    [27, [22, 26, 28, 30, 31, 32]], 
-    [28, [26, 27, 29, 31, 32, 33]], 
-    [29, [28, 32, 33, 36]], // Collegato ad Asia
-    [30, [27, 31, 34, 53]], // Collegato a Oceania
-    [31, [27, 28, 30, 32, 34, 35]], 
-    [32, [27, 28, 29, 31, 33, 35]], 
-    [33, [28, 29, 32, 34, 35]], 
-    [34, [16, 30, 31, 33, 35]], // Bosco Incantato - Collegato anche a Baia Nebbiosa (16)
-    [35, [17, 31, 32, 33, 34]], // Collegato a Sud America
+    // Africa (27-35)
+    [27, [26, 28, 30]], // Colline Verdi
+    [28, [27, 29, 31]], // Mare Interno
+    [29, [28, 32]], // Isola Vulcanica
+    [30, [27, 31, 33]], // Terre Ghiacciate
+    [31, [28, 30, 32, 34]], // Canyon Rosso (hub)
+    [32, [29, 31, 33, 35]], // Savana Dorata
+    [33, [30, 31, 34]], // Lago Cristallo
+    [34, [31, 33, 35]], // Bosco Incantato
+    [35, [32, 34]], // Delta Paludoso
     
-    // Asia (36-47) - tutti collegati tra loro, a Europa e Africa
-    [36, [3, 21, 29, 37, 40, 41]], 
-    [37, [36, 38, 40, 41, 42]], 
-    [38, [37, 39, 41, 42, 43]], 
-    [39, [38, 42, 43]], 
-    [40, [36, 37, 41, 44, 45]], 
-    [41, [36, 37, 38, 40, 42, 44, 45, 46]], 
-    [42, [37, 38, 39, 41, 43, 46, 47]], 
-    [43, [38, 39, 42, 47]], 
-    [44, [40, 41, 45, 48]], 
-    [45, [40, 41, 44, 46, 48]], 
-    [46, [41, 42, 45, 47, 48, 49]], 
-    [47, [42, 43, 46, 49]], 
+    // Asia (36-47)
+    [36, [37, 40]], // Montagna Sacra
+    [37, [36, 38, 41]], // Villaggio Perduto
+    [38, [37, 39, 42]], // Promontorio
+    [39, [38, 43]], // Baia dei Pirati
+    [40, [36, 41, 44]], // Fortezza
+    [41, [37, 40, 42, 44, 45]], // Terre Desolate (hub)
+    [42, [38, 41, 43, 45, 46]], // Zona Contaminata (hub)
+    [43, [39, 42, 46, 47]], // Area Militare
+    [44, [40, 41, 45, 48]], // Bunker Sotterraneo
+    [45, [41, 42, 44, 46, 48, 49]], // Porto Abbandonato (hub)
+    [46, [42, 43, 45, 47, 49]], // Città Fantasma
+    [47, [43, 46, 49, 50]], // Base Segreta
     
-    // Oceania (48-53) - tutti collegati tra loro e ad Asia
-    [48, [44, 45, 46, 49, 51, 52]], 
-    [49, [46, 47, 48, 50, 51, 52]], 
-    [50, [49, 51, 52, 53]], 
-    [51, [48, 49, 50, 52]], 
-    [52, [48, 49, 50, 51, 53]], 
-    [53, [30, 50, 52]], // Collegato ad Africa
+    // Oceania (48-53)
+    [48, [44, 45, 49, 51]], // Laboratorio
+    [49, [45, 46, 48, 50, 51, 52]], // Ospedale (hub)
+    [50, [47, 49, 52, 53]], // Centro Commerciale
+    [51, [48, 49, 52]], // Aeroporto
+    [52, [49, 50, 51, 53]], // Stazione Ferroviaria (hub)
+    [53, [50, 52]], // Centrale Elettrica
   ];
   
   connections.forEach(([territoryIndex, neighborIndices]) => {
@@ -300,26 +300,33 @@ export const generateTerritories = (): Territory[] => {
     }
   };
   
-  // Stradine speciali per garantire movimenti logici anche a distanza
-  connectByName("Baia Nebbiosa", "Bosco Incantato");
-  connectByName("Giungla Fitta", "Pianura Fertile");
-  connectByName("Mare Interno", "Terre Ghiacciate");
-  connectByName("Mare Interno", "Savana Dorata");
-  connectByName("Mare Interno", "Bosco Incantato");
-  connectByName("Fiume Lungo", "Mare Interno");
-  connectByName("Giungla Fitta", "Valle Oscura");
-  connectByName("Laguna Azzurra", "Pianura Fertile");
-  connectByName("Altopiano", "Lago Cristallo");
-  connectByName("Savana Dorata", "Aeroporto");
-  connectByName("Isola Vulcanica", "Bunker Sotterraneo");
-  connectByName("Torre di Guardia", "Fortezza");
-  connectByName("Torre di Guardia", "Montagna Sacra");
-  connectByName("Torre di Guardia", "Bunker Sotterraneo");
-  connectByName("Torre di Guardia", "Isola Vulcanica");
-  connectByName("Lago Cristallo", "Terre Ghiacciate");
-  connectByName("Lago Cristallo", "Canyon Rosso");
-  connectByName("Arcipelago Nord", "Piana Verde");
-  connectByName("Porto Abbandonato", "Zona Contaminata");
+  // Stradine speciali SOLO per collegamenti logici strategici (no salti lunghi)
+  connectByName("Giungla Fitta", "Pianura Fertile"); // già vicini
+  connectByName("Giungla Fitta", "Valle Oscura"); // collegamento strategico
+  connectByName("Laguna Azzurra", "Pianura Fertile"); // collegamento strategico
+  connectByName("Altopiano", "Lago Cristallo"); // collegamento strategico
+  connectByName("Baia Nebbiosa", "Bosco Incantato"); // collegamento strategico
+  connectByName("Mare Interno", "Terre Ghiacciate"); // collegamento strategico
+  connectByName("Mare Interno", "Bosco Incantato"); // collegamento strategico
+  connectByName("Fiume Lungo", "Mare Interno"); // collegamento strategico
+  connectByName("Lago Cristallo", "Terre Ghiacciate"); // collegamento strategico
+  connectByName("Lago Cristallo", "Canyon Rosso"); // collegamento strategico
+  connectByName("Arcipelago Nord", "Piana Verde"); // collegamento strategico
+  connectByName("Valle Oscura", "Pianura Fertile"); // nuova stradina
+  
+  // Collegamenti intercontinentali strategici
+  connectByName("Piana Verde", "Giungla Fitta"); // Nord America -> Europa
+  connectByName("Foresta Nera", "Giungla Fitta"); // Nord America -> Europa
+  connectByName("Altopiano", "Delta Paludoso"); // Sud America -> Africa
+  connectByName("Baia Nebbiosa", "Bosco Incantato"); // Sud America -> Africa
+  connectByName("Grotte Profonde", "Montagna Sacra"); // Europa -> Asia
+  connectByName("Isola Vulcanica", "Montagna Sacra"); // Africa -> Asia
+  connectByName("Terre Ghiacciate", "Centrale Elettrica"); // Africa -> Oceania
+  connectByName("Savana Dorata", "Aeroporto"); // Africa -> Oceania (già presente)
+  connectByName("Torre di Guardia", "Fortezza"); // Europa -> Asia (già presente)
+  connectByName("Torre di Guardia", "Montagna Sacra"); // Europa -> Asia (già presente)
+  connectByName("Torre di Guardia", "Bunker Sotterraneo"); // Europa -> Asia (già presente)
+  connectByName("Isola Vulcanica", "Bunker Sotterraneo"); // Africa -> Asia (già presente)
   
   // Initialize starting positions
   const blueStarts = selectStartingTerritories(territories, 'blue');
