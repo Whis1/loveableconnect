@@ -149,6 +149,63 @@ const territoryNames = [
   "Stazione Ferroviaria", "Centrale Elettrica", "Fabbrica", "Discarica"
 ];
 
+// Funzione di validazione collegamenti
+const validateConnections = (territories: Territory[]): void => {
+  console.log('🔍 === VALIDAZIONE COLLEGAMENTI TERRITORI ===');
+  
+  const MAX_DISTANCE = 400; // Distanza massima accettabile tra territori collegati
+  const warnings: string[] = [];
+  const distances: number[] = [];
+  
+  territories.forEach(territory => {
+    territory.neighbors.forEach(neighborId => {
+      const neighbor = territories.find(t => t.id === neighborId);
+      if (!neighbor) {
+        warnings.push(`⚠️ ERRORE: ${territory.name} ha un vicino inesistente: ${neighborId}`);
+        return;
+      }
+      
+      // Calcola distanza euclidea tra i centri dei territori
+      const distance = Math.sqrt(
+        Math.pow(territory.x - neighbor.x, 2) + 
+        Math.pow(territory.y - neighbor.y, 2)
+      );
+      
+      distances.push(distance);
+      
+      // Verifica se la distanza supera il massimo
+      if (distance > MAX_DISTANCE) {
+        warnings.push(
+          `❌ COLLEGAMENTO TROPPO LUNGO: ${territory.name} (${territory.id}) ↔ ${neighbor.name} (${neighbor.id}) = ${Math.round(distance)}px (max: ${MAX_DISTANCE}px)`
+        );
+      }
+    });
+  });
+  
+  // Calcola statistiche
+  const avgDistance = distances.length > 0 
+    ? Math.round(distances.reduce((a, b) => a + b, 0) / distances.length)
+    : 0;
+  const maxDistance = distances.length > 0 ? Math.round(Math.max(...distances)) : 0;
+  const minDistance = distances.length > 0 ? Math.round(Math.min(...distances)) : 0;
+  
+  console.log('📊 Statistiche collegamenti:');
+  console.log(`   - Totale collegamenti: ${distances.length}`);
+  console.log(`   - Distanza media: ${avgDistance}px`);
+  console.log(`   - Distanza minima: ${minDistance}px`);
+  console.log(`   - Distanza massima: ${maxDistance}px`);
+  console.log(`   - Soglia massima: ${MAX_DISTANCE}px`);
+  
+  if (warnings.length > 0) {
+    console.warn(`⚠️ Trovati ${warnings.length} problemi:`);
+    warnings.forEach(warning => console.warn(warning));
+  } else {
+    console.log('✅ Tutti i collegamenti sono validi!');
+  }
+  
+  console.log('🔍 === FINE VALIDAZIONE ===\n');
+};
+
 export const generateTerritories = (): Territory[] => {
   const territories: Territory[] = [];
   
@@ -347,6 +404,9 @@ export const generateTerritories = (): Territory[] => {
       t.troops = 2;
     }
   });
+  
+  // Esegui validazione collegamenti
+  validateConnections(territories);
   
   return territories;
 };
