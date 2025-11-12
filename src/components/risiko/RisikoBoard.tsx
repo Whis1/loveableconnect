@@ -1266,7 +1266,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         {/* AI Cards on the right side - opponent's cards display */}
         <div className="flex flex-col gap-2 w-20">
           <Card 
-            className="p-2 opacity-60 border-red-500/30"
+            className="p-2 border-red-500/30"
           >
             <div className="flex flex-col items-center gap-1 relative">
               <img 
@@ -1275,7 +1275,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
                 className="w-full h-auto rounded"
               />
               <span className="absolute bottom-1 text-xl font-bold text-red-500 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
-                +{Math.min(6, Math.floor(gameState.territories.filter(t => t.owner === 'red').length / 5) + 1)}
+                +{getTroopCardAmount(gameState.territories.filter(t => t.owner === 'red').length)}
               </span>
             </div>
           </Card>
