@@ -140,7 +140,7 @@ serve(async (req) => {
         const expiryDate = new Date(subscription.current_period_end * 1000);
         
         await resend.emails.send({
-          from: "LoveableConnect <onboarding@resend.dev>",
+          from: "LoveableConnect <noreply@loveableconnect.com>",
           to: [recipientEmail],
           subject: "🎁 Hai ricevuto un Regalo Premium! - LoveableConnect",
           html: `

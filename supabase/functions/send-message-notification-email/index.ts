@@ -96,7 +96,7 @@ serve(async (req) => {
         </html>`;
 
     await resend.emails.send({
-      from: "LoveableConnect 💕 <onboarding@resend.dev>",
+      from: "LoveableConnect 💕 <noreply@loveableconnect.com>",
       to: [user.email],
       subject,
       html,
