@@ -478,9 +478,6 @@ const Credits = () => {
                   >
                     {purchasing ? t("credits.processing") : t("credits.buy")}
                   </Button>
-                  <p className="text-xs text-muted-foreground text-center">
-                    {t("credits.vatIncluded")}
-                  </p>
                 </CardContent>
               </Card>
             ))}
