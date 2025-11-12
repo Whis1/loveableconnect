@@ -381,6 +381,14 @@ export const generateTerritories = (): Territory[] => {
   connectByName("Torre di Guardia", "Isola Vulcanica"); // Europa -> Africa
   connectByName("Isola Vulcanica", "Bunker Sotterraneo"); // Africa -> Asia
   
+  // BLOCCO ESPLICITO: rimuovi qualsiasi collegamento tra Terre Ghiacciate e Centrale Elettrica
+  const terrGhiacciate = territories.find(t => t.name === "Terre Ghiacciate");
+  const centrElettrica = territories.find(t => t.name === "Centrale Elettrica");
+  if (terrGhiacciate && centrElettrica) {
+    terrGhiacciate.neighbors = terrGhiacciate.neighbors.filter(id => id !== centrElettrica.id);
+    centrElettrica.neighbors = centrElettrica.neighbors.filter(id => id !== terrGhiacciate.id);
+  }
+  
   // Initialize starting positions
   const blueStarts = selectStartingTerritories(territories, 'blue');
   const redStarts = selectStartingTerritories(territories, 'red', blueStarts);

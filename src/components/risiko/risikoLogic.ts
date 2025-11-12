@@ -137,7 +137,6 @@ export const canMoveTroops = (
     ['Altopiano', 'Delta Paludoso'],
     ['Grotte Profonde', 'Montagna Sacra'],
     ['Isola Vulcanica', 'Montagna Sacra'],
-    ['Terre Ghiacciate', 'Centrale Elettrica'],
     ['Savana Dorata', 'Aeroporto'],
     ['Torre di Guardia', 'Fortezza'],
     ['Torre di Guardia', 'Montagna Sacra'],
