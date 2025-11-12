@@ -170,7 +170,7 @@ serve(async (req) => {
     const resend = new Resend(resendApiKey);
 
     const emailResult = await resend.emails.send({
-      from: "LoveableConnect 💕 <noreply@loveableconnect.com>",
+      from: "LoveableConnect 💕 <onboarding@resend.dev>",
       to: [testEmail],
       subject: `[TEST] ${subject}`,
       html: `
