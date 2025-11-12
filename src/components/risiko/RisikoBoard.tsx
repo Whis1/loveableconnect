@@ -959,18 +959,17 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
 
         {/* VS, Timer and Emoji Button */}
         <div className="flex flex-col items-center gap-2">
-          {!battleBanner && !bombingAnimation.show && (
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="gap-2"
-                >
-                  <BookOpen className="w-4 h-4" />
-                  Spiegazione
-                </Button>
-              </DialogTrigger>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="gap-2 relative z-[60]"
+              >
+                <BookOpen className="w-4 h-4" />
+                Spiegazione
+              </Button>
+            </DialogTrigger>
               <DialogContent className="max-w-3xl max-h-[80vh]">
                 <DialogHeader>
                   <DialogTitle className="text-2xl font-bold">Benvenuto nel Conquistiator di LoveableConnect!</DialogTitle>
@@ -1071,7 +1070,6 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
               </ScrollArea>
             </DialogContent>
           </Dialog>
-          )}
           
           <div className="text-3xl font-bold flex items-center gap-2">
             <span>⚔️</span>
