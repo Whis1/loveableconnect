@@ -416,23 +416,9 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           target.troops += amount;
           toast.success(`${amount} truppe unite`);
         } else {
-          // Conquest of neutral territory
+          // Conquest of neutral territory (no banner for gray territories)
           target.owner = source.owner;
           target.troops = amount;
-          
-          const conquerorName = source.owner === 'blue' 
-            ? (userProfile?.nickname || 'Giocatore')
-            : (opponentProfile?.nickname || 'Avversario');
-          
-          setConquestBanner({
-            show: true,
-            conquerorName,
-            territoryName: target.name
-          });
-
-          setTimeout(() => {
-            setConquestBanner(null);
-          }, 2500);
         }
 
         return { ...prev, territories: newTerritories, boostedTroops: newBoostedTroops };
