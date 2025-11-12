@@ -664,12 +664,12 @@ const tryAllCardsStrategically = (
   if (almostCompleteContinents > 0) cardScores.troops += 25;
   if (riskLevel > 0.6) cardScores.troops += 20;
 
-  // FORCE: Alto valore solo se c'è un attacco ECCEZIONALE disponibile
+  // FORCE: Alto valore se c'è un buon attacco strategico disponibile
   if (gameState.cardCooldowns.red.force === 0 && attackOpportunities.length > 0) {
-    const excellentAttack = attackOpportunities.find(opp => 
-      opp.monteCarloScore >= 0.8 && (opp.strategicValue + opp.continentalValue) >= 15
+    const goodAttack = attackOpportunities.find(opp => 
+      opp.monteCarloScore >= 0.65 && (opp.strategicValue + opp.continentalValue) >= 8
     );
-    if (excellentAttack) cardScores.force = 140; // Deve battere le truppe solo se MOLTO vantaggioso
+    if (goodAttack) cardScores.force = 155; // Punteggio più alto per usarla più spesso
   }
 
   // BOMBA: Usala solo se ci sono obiettivi REALMENTE pericolosi
@@ -715,16 +715,15 @@ const tryAllCardsStrategically = (
 
   if (bestCard.score === 0) return false;
 
-  // Esegui l'azione della carta migliore
-  // FORZA: Usa con attacco strategico eccellente
-  if (gameState.cardCooldowns.red.force === 0 && attackOpportunities.length > 0) {
-    const excellentAttack = attackOpportunities.find(opp => 
-      opp.monteCarloScore >= 0.75 && (opp.strategicValue + opp.continentalValue) >= 10
+  // FORZA: Usa con attacco strategico
+  if (bestCard.card === 'force' && gameState.cardCooldowns.red.force === 0 && attackOpportunities.length > 0) {
+    const goodAttack = attackOpportunities.find(opp => 
+      opp.monteCarloScore >= 0.6 && (opp.strategicValue + opp.continentalValue) >= 8
     );
 
-    if (excellentAttack) {
-      const attacker = gameState.territories.find(t => t.id === excellentAttack.attackerId);
-      const defender = gameState.territories.find(t => t.id === excellentAttack.defenderId);
+    if (goodAttack) {
+      const attacker = gameState.territories.find(t => t.id === goodAttack.attackerId);
+      const defender = gameState.territories.find(t => t.id === goodAttack.defenderId);
 
       if (attacker && defender) {
         // Riproduci audio potenziamento
@@ -1002,13 +1001,13 @@ const tryAllCardsStrategically = (
 
   // ESECUZIONE CARTA FORCE
   if (bestCard.card === 'force' && gameState.cardCooldowns.red.force === 0) {
-    const excellentAttack = attackOpportunities.find(opp => 
-      opp.monteCarloScore >= 0.75 && (opp.strategicValue + opp.continentalValue) >= 10
+    const goodAttack = attackOpportunities.find(opp => 
+      opp.monteCarloScore >= 0.6 && (opp.strategicValue + opp.continentalValue) >= 8
     );
 
-    if (excellentAttack) {
-      const attacker = gameState.territories.find(t => t.id === excellentAttack.attackerId);
-      const defender = gameState.territories.find(t => t.id === excellentAttack.defenderId);
+    if (goodAttack) {
+      const attacker = gameState.territories.find(t => t.id === goodAttack.attackerId);
+      const defender = gameState.territories.find(t => t.id === goodAttack.defenderId);
 
       if (attacker && defender) {
         // Riproduci audio potenziamento
