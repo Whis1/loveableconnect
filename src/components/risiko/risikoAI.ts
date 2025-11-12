@@ -445,23 +445,26 @@ const tryEmergencyDefense = (
       
       setTimeout(() => {
         setMovingTroops(null);
-      }, 1000);
+      }, 1200);
     }
 
     showAnimation(`${opponentNickname} sta spostando truppe`);
 
-    setGameState(prev => ({
-      ...prev,
-      territories: prev.territories.map(t => {
-        if (t.id === source.id) {
-          return {...t, troops: t.troops - moveTroops};
-        }
-        if (t.id === stepId) {
-          return {...t, troops: t.troops + moveTroops};
-        }
-        return t;
-      })
-    }));
+    // Aggiorna stato DOPO un piccolo delay per far vedere l'animazione partire
+    setTimeout(() => {
+      setGameState(prev => ({
+        ...prev,
+        territories: prev.territories.map(t => {
+          if (t.id === source.id) {
+            return {...t, troops: t.troops - moveTroops};
+          }
+          if (t.id === stepId) {
+            return {...t, troops: t.troops + moveTroops};
+          }
+          return t;
+        })
+      }));
+    }, 100);
 
     setTimeout(() => {
       setGameState(prev => ({
@@ -469,7 +472,7 @@ const tryEmergencyDefense = (
         currentPlayer: 'blue',
         turnTimeLeft: 30
       }));
-    }, 800);
+    }, 1300);
 
     return true;
   }
@@ -523,23 +526,26 @@ const tryPreemptiveDefense = (
       
       setTimeout(() => {
         setMovingTroops(null);
-      }, 1000);
+      }, 1200);
     }
 
     showAnimation(`${opponentNickname} sta spostando truppe`);
 
-    setGameState(prev => ({
-      ...prev,
-      territories: prev.territories.map(t => {
-        if (t.id === source.id) {
-          return {...t, troops: t.troops - moveTroops};
-        }
-        if (t.id === predictedTarget.id) {
-          return {...t, troops: t.troops + moveTroops};
-        }
-        return t;
-      })
-    }));
+    // Aggiorna stato DOPO un piccolo delay
+    setTimeout(() => {
+      setGameState(prev => ({
+        ...prev,
+        territories: prev.territories.map(t => {
+          if (t.id === source.id) {
+            return {...t, troops: t.troops - moveTroops};
+          }
+          if (t.id === predictedTarget.id) {
+            return {...t, troops: t.troops + moveTroops};
+          }
+          return t;
+        })
+      }));
+    }, 100);
 
     setTimeout(() => {
       setGameState(prev => ({
@@ -547,7 +553,7 @@ const tryPreemptiveDefense = (
         currentPlayer: 'blue',
         turnTimeLeft: 30
       }));
-    }, 800);
+    }, 1300);
 
     return true;
   }
@@ -1730,19 +1736,22 @@ const tryPreparedAssault = (
     
     setTimeout(() => {
       setMovingTroops(null);
-    }, 1000);
+    }, 1200);
   }
 
   // Sposta e attacca subito
   showAnimation(`${opponentNickname} sta spostando truppe`);
-  setGameState(prev => ({
-    ...prev,
-    territories: prev.territories.map(t => {
-      if (t.id === best.supplier.id) return { ...t, troops: t.troops - best.move };
-      if (t.id === best.attacker.id) return { ...t, troops: t.troops + best.move };
-      return t;
-    })
-  }));
+  
+  setTimeout(() => {
+    setGameState(prev => ({
+      ...prev,
+      territories: prev.territories.map(t => {
+        if (t.id === best.supplier.id) return { ...t, troops: t.troops - best.move };
+        if (t.id === best.attacker.id) return { ...t, troops: t.troops + best.move };
+        return t;
+      })
+    }));
+  }, 100);
 
   // Calcola truppe che attaccheranno (tutte meno 1)
   const plannedAttackTroops = Math.max(1, best.attacker.troops + best.move - 1);
@@ -1808,23 +1817,24 @@ const tryChokePointFortification = (
       
       setTimeout(() => {
         setMovingTroops(null);
-      }, 1000);
+      }, 1200);
     }
 
-    showAnimation(`${opponentNickname} sta spostando truppe`);
-
-    setGameState(prev => ({
-      ...prev,
-      territories: prev.territories.map(t => {
-        if (t.id === source.id) {
-          return {...t, troops: t.troops - moveTroops};
-        }
-        if (t.id === target.id) {
-          return {...t, troops: t.troops + moveTroops};
-        }
-        return t;
-      })
-    }));
+    // Aggiorna stato DOPO un piccolo delay
+    setTimeout(() => {
+      setGameState(prev => ({
+        ...prev,
+        territories: prev.territories.map(t => {
+          if (t.id === source.id) {
+            return {...t, troops: t.troops - moveTroops};
+          }
+          if (t.id === target.id) {
+            return {...t, troops: t.troops + moveTroops};
+          }
+          return t;
+        })
+      }));
+    }, 100);
 
     setTimeout(() => {
       setGameState(prev => ({
@@ -1832,7 +1842,7 @@ const tryChokePointFortification = (
         currentPlayer: 'blue',
         turnTimeLeft: 30
       }));
-    }, 800);
+    }, 1300);
 
     return true;
   }
