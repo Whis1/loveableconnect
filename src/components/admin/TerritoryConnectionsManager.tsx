@@ -13,6 +13,7 @@ interface TerritoryConnection {
   territory_index: number;
   territory_name: string;
   neighbor_indices: number[];
+  badge: string;
 }
 
 export const TerritoryConnectionsManager = () => {
@@ -21,6 +22,8 @@ export const TerritoryConnectionsManager = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTerritory, setSelectedTerritory] = useState<TerritoryConnection | null>(null);
   const [editingConnections, setEditingConnections] = useState<number[]>([]);
+  const [editingName, setEditingName] = useState("");
+  const [editingBadge, setEditingBadge] = useState("");
   const [newNeighbor, setNewNeighbor] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -68,6 +71,8 @@ export const TerritoryConnectionsManager = () => {
   const openEditDialog = (territory: TerritoryConnection) => {
     setSelectedTerritory(territory);
     setEditingConnections([...territory.neighbor_indices]);
+    setEditingName(territory.territory_name);
+    setEditingBadge(territory.badge || '🏔️');
     setNewNeighbor("");
     setValidationErrors([]);
   };
@@ -75,6 +80,8 @@ export const TerritoryConnectionsManager = () => {
   const closeEditDialog = () => {
     setSelectedTerritory(null);
     setEditingConnections([]);
+    setEditingName("");
+    setEditingBadge("");
     setNewNeighbor("");
     setValidationErrors([]);
   };
@@ -143,6 +150,16 @@ export const TerritoryConnectionsManager = () => {
   const saveConnections = async () => {
     if (!selectedTerritory) return;
 
+    if (!editingName.trim()) {
+      toast.error("Il nome del territorio non può essere vuoto");
+      return;
+    }
+
+    if (!editingBadge.trim()) {
+      toast.error("Il badge non può essere vuoto");
+      return;
+    }
+
     const errors = validateConnections();
     if (errors.length > 0) {
       toast.error("Correggi gli errori di validazione prima di salvare");
@@ -154,17 +171,21 @@ export const TerritoryConnectionsManager = () => {
 
       const { error } = await supabase
         .from("territory_connections")
-        .update({ neighbor_indices: editingConnections })
+        .update({ 
+          neighbor_indices: editingConnections,
+          territory_name: editingName.trim(),
+          badge: editingBadge.trim()
+        })
         .eq("territory_index", selectedTerritory.territory_index);
 
       if (error) throw error;
 
-      toast.success("Connessioni salvate con successo!");
+      toast.success("Modifiche salvate con successo!");
       await loadConnections();
       closeEditDialog();
     } catch (error) {
       console.error("Error saving connections:", error);
-      toast.error("Errore nel salvataggio delle connessioni");
+      toast.error("Errore nel salvataggio delle modifiche");
     } finally {
       setSaving(false);
     }
@@ -220,6 +241,7 @@ export const TerritoryConnectionsManager = () => {
                       <div className="flex-1 space-y-2">
                         <div className="flex items-center gap-2">
                           <Badge variant="outline">{territory.territory_index}</Badge>
+                          <span className="text-xl">{territory.badge || '🏔️'}</span>
                           <span className="font-semibold">{territory.territory_name}</span>
                         </div>
                         <div className="flex flex-wrap gap-1">
@@ -256,20 +278,52 @@ export const TerritoryConnectionsManager = () => {
 
           <ScrollArea className="flex-1 pr-4">
             <div className="space-y-4">
+              {/* Edit Name and Badge */}
+              <div className="space-y-3 p-3 bg-secondary/50 rounded-lg">
+                <h4 className="font-semibold text-sm">Informazioni Territorio:</h4>
+                <div className="space-y-2">
+                  <div>
+                    <label className="text-xs text-muted-foreground">Nome:</label>
+                    <Input
+                      value={editingName}
+                      onChange={(e) => setEditingName(e.target.value)}
+                      placeholder="Nome territorio"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Badge (emoji):</label>
+                    <Input
+                      value={editingBadge}
+                      onChange={(e) => setEditingBadge(e.target.value)}
+                      placeholder="🏔️"
+                      className="mt-1 text-2xl text-center"
+                      maxLength={2}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Usa un emoji (copia/incolla). Esempi: 🏔️ 🌲 🏜️ 🏭 🏛️ 🌊 ⚡ 🛡️ 🌋 ❄️ 🏰
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* Add Neighbor */}
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  placeholder="Indice vicino (0-53)"
-                  value={newNeighbor}
-                  onChange={(e) => setNewNeighbor(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && addNeighbor()}
-                  min={0}
-                  max={53}
-                />
-                <Button onClick={addNeighbor} size="icon">
-                  <Plus className="h-4 w-4" />
-                </Button>
+              <div className="space-y-2">
+                <h4 className="font-semibold text-sm">Aggiungi Vicino:</h4>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Indice vicino (0-53)"
+                    value={newNeighbor}
+                    onChange={(e) => setNewNeighbor(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addNeighbor()}
+                    min={0}
+                    max={53}
+                  />
+                  <Button onClick={addNeighbor} size="icon">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
 
               {/* Current Neighbors */}
