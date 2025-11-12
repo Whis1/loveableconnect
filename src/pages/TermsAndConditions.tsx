@@ -5,26 +5,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft } from "lucide-react";
 import { useLanguageDetection } from "@/hooks/useLanguageDetection";
-
 const TermsAndConditions = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const {
+    t
+  } = useTranslation();
   useLanguageDetection();
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4 md:p-8">
+  return <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
-        <Button
-          variant="ghost"
-          onClick={() => {
-            if (window.history.state && (window.history.state.idx ?? 0) > 0) {
-              navigate(-1);
-            } else {
-              navigate("/");
-            }
-          }}
-          className="mb-4"
-        >
+        <Button variant="ghost" onClick={() => {
+        if (window.history.state && (window.history.state.idx ?? 0) > 0) {
+          navigate(-1);
+        } else {
+          navigate("/");
+        }
+      }} className="mb-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
           {t('terms.back')}
         </Button>
@@ -278,13 +273,13 @@ const TermsAndConditions = () => {
                     <ul className="list-disc list-inside space-y-2 pl-4">
                       <li><strong>"Abbonamento"</strong> il periodo di sottoscrizione dei Servizi a pagamento;</li>
                       <li><strong>"Applicazione"</strong> l'applicazione LoveableConnect, disponibile sulle piattaforme App Store di Apple e Play Store di Google scaricabile gratuitamente.</li>
-                      <li><strong>"Canoni"</strong> le tipologie di pacchetti e/o abbonamenti disponibili sul Sito/App, con le modalità descritte nell'articolo 3.2 e seguenti;</li>
+                      
                       <li><strong>"Cause di Forza Maggiore"</strong> a titolo esemplificativo e senza alcun intento limitativo, si considerano cause di forza maggiore ai sensi e per gli effetti delle CONDIZIONI GENERALI: serrate, scioperi, mancanza assoluta di mezzi di trasporto, guerra, rivolta o altre azioni militari, inondazioni, incendi, fulmini, esplosioni, incidenti, interruzioni dell'energia elettrica, interruzioni, malfunzionamenti o sovraccarichi delle linee telefoniche o telematiche, ritardi o inadempimenti da parte dei terzi fornitori di LoveableConnect o qualsiasi altro evento che esuli dalla ragionevole sfera di controllo di LoveableConnect e che impedisca il pieno e corretto adempimento delle obbligazioni previste dalle CONDIZIONI GENERALI in capo alla stessa;</li>
                       <li><strong>"Contenuti"</strong> ogni informazione, dato, video, immagine, foto, testo, descrizione, indicazione, dettaglio personale, interesse, hobby, presentazione forniti dall'Utente e caricati sul Sito/App;</li>
                       <li><strong>"Data di Efficacia"</strong> si considera la data di accettazione delle presenti CONDIZIONI GENERALI da parte dell'Utente</li>
-                      <li><strong>"Durata del Contratto"</strong> la durata delle presenti CONDIZIONI GENERALI, come indicata al successivo articolo 8;</li>
+                      
                       <li><strong>"Profilo"</strong> pagina web personale e privata dell'Utente sul Sito/App, collegata all'account creato in fase di iscrizione al Sito/App;</li>
-                      <li><strong>"Servizi"</strong> i servizi a disposizione dell'Utente presenti sul Sito/App, come specificato al seguente articolo 3 delle presenti CONDIZIONI GENERALI;</li>
+                      
                     </ul>
                   </div>
 
@@ -657,9 +652,9 @@ const TermsAndConditions = () => {
                           <div>
                             <p className="font-medium">Cookie di autenticazione Supabase</p>
                             <p className="text-sm text-muted-foreground mt-1">
-                              <strong>Nome:</strong> sb-access-token, sb-refresh-token<br/>
-                              <strong>Finalità:</strong> Gestione dell'autenticazione utente e mantenimento della sessione di login<br/>
-                              <strong>Durata:</strong> Sessione / persistente fino al logout<br/>
+                              <strong>Nome:</strong> sb-access-token, sb-refresh-token<br />
+                              <strong>Finalità:</strong> Gestione dell'autenticazione utente e mantenimento della sessione di login<br />
+                              <strong>Durata:</strong> Sessione / persistente fino al logout<br />
                               <strong>Tipologia:</strong> Cookie tecnico di prima parte
                             </p>
                           </div>
@@ -667,9 +662,9 @@ const TermsAndConditions = () => {
                           <div>
                             <p className="font-medium">Cookie di consenso cookie</p>
                             <p className="text-sm text-muted-foreground mt-1">
-                              <strong>Nome:</strong> cookie-consent<br/>
-                              <strong>Finalità:</strong> Memorizza le preferenze dell'utente riguardo l'uso dei cookie<br/>
-                              <strong>Durata:</strong> 12 mesi<br/>
+                              <strong>Nome:</strong> cookie-consent<br />
+                              <strong>Finalità:</strong> Memorizza le preferenze dell'utente riguardo l'uso dei cookie<br />
+                              <strong>Durata:</strong> 12 mesi<br />
                               <strong>Tipologia:</strong> Cookie tecnico di prima parte
                             </p>
                           </div>
@@ -683,9 +678,9 @@ const TermsAndConditions = () => {
                           <div>
                             <p className="font-medium">Preferenze tema</p>
                             <p className="text-sm text-muted-foreground mt-1">
-                              <strong>Nome:</strong> theme<br/>
-                              <strong>Finalità:</strong> Memorizza la preferenza del tema (chiaro/scuro)<br/>
-                              <strong>Durata:</strong> Permanente fino alla cancellazione manuale<br/>
+                              <strong>Nome:</strong> theme<br />
+                              <strong>Finalità:</strong> Memorizza la preferenza del tema (chiaro/scuro)<br />
+                              <strong>Durata:</strong> Permanente fino alla cancellazione manuale<br />
                               <strong>Tipologia:</strong> Memorizzazione locale
                             </p>
                           </div>
@@ -693,9 +688,9 @@ const TermsAndConditions = () => {
                           <div>
                             <p className="font-medium">Preferenze lingua</p>
                             <p className="text-sm text-muted-foreground mt-1">
-                              <strong>Nome:</strong> i18nextLng<br/>
-                              <strong>Finalità:</strong> Memorizza la lingua selezionata dall'utente (italiano, inglese, tedesco, spagnolo, francese, arabo)<br/>
-                              <strong>Durata:</strong> Permanente fino alla cancellazione manuale<br/>
+                              <strong>Nome:</strong> i18nextLng<br />
+                              <strong>Finalità:</strong> Memorizza la lingua selezionata dall'utente (italiano, inglese, tedesco, spagnolo, francese, arabo)<br />
+                              <strong>Durata:</strong> Permanente fino alla cancellazione manuale<br />
                               <strong>Tipologia:</strong> Memorizzazione locale
                             </p>
                           </div>
@@ -703,9 +698,9 @@ const TermsAndConditions = () => {
                           <div>
                             <p className="font-medium">Dati cache applicazione</p>
                             <p className="text-sm text-muted-foreground mt-1">
-                              <strong>Nome:</strong> Vari (react-query cache, profili visualizzati)<br/>
-                              <strong>Finalità:</strong> Migliorare le prestazioni dell'applicazione memorizzando temporaneamente dati già caricati<br/>
-                              <strong>Durata:</strong> Sessione / temporaneo<br/>
+                              <strong>Nome:</strong> Vari (react-query cache, profili visualizzati)<br />
+                              <strong>Finalità:</strong> Migliorare le prestazioni dell'applicazione memorizzando temporaneamente dati già caricati<br />
+                              <strong>Durata:</strong> Sessione / temporaneo<br />
                               <strong>Tipologia:</strong> Memorizzazione locale
                             </p>
                           </div>
@@ -718,9 +713,9 @@ const TermsAndConditions = () => {
                         <div className="mt-3">
                           <p className="font-medium">Service Worker</p>
                           <p className="text-sm text-muted-foreground mt-1">
-                            <strong>Nome:</strong> sw.js<br/>
-                            <strong>Finalità:</strong> Gestione delle notifiche push e funzionalità offline dell'applicazione<br/>
-                            <strong>Durata:</strong> Fino alla disinstallazione manuale<br/>
+                            <strong>Nome:</strong> sw.js<br />
+                            <strong>Finalità:</strong> Gestione delle notifiche push e funzionalità offline dell'applicazione<br />
+                            <strong>Durata:</strong> Fino alla disinstallazione manuale<br />
                             <strong>Tipologia:</strong> Tecnologia web necessaria per le notifiche push
                           </p>
                         </div>
@@ -806,7 +801,7 @@ const TermsAndConditions = () => {
 
                   <div className="mt-6 p-4 bg-muted rounded-lg">
                     <p className="text-sm">
-                      <strong>Ultimo aggiornamento:</strong> Gennaio 2025<br/>
+                      <strong>Ultimo aggiornamento:</strong> Gennaio 2025<br />
                       LoveableConnect si riserva il diritto di modificare questa Cookie Policy in qualsiasi momento. Le modifiche saranno pubblicate su questa pagina con data di aggiornamento.
                     </p>
                   </div>
@@ -816,8 +811,6 @@ const TermsAndConditions = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default TermsAndConditions;
