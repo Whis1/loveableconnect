@@ -173,7 +173,8 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           {
             bombSound,
             parachuteSound,
-            powerUpSound
+            powerUpSound,
+            marchSound
           },
           (message, type) => {
             if (type === 'success') toast.success(message);
