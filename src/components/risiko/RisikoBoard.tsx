@@ -910,6 +910,12 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
             <p className="text-xs text-muted-foreground">
               {gameState.territories.filter(t => t.owner === 'blue').length} territori
             </p>
+            <p className="text-xs text-muted-foreground">
+              {gameState.territories.filter(t => t.owner === 'blue').reduce((sum, t) => sum + t.troops, 0)} truppe
+            </p>
+            <p className="text-xs text-blue-400 font-semibold">
+              ELO: {userProfile?.risiko_elo || 1200}
+            </p>
           </div>
         </div>
 
@@ -1041,6 +1047,12 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
             <p className="font-bold text-red-500">{opponentProfile?.nickname}</p>
             <p className="text-xs text-muted-foreground">
               {gameState.territories.filter(t => t.owner === 'red').length} territori
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {gameState.territories.filter(t => t.owner === 'red').reduce((sum, t) => sum + t.troops, 0)} truppe
+            </p>
+            <p className="text-xs text-red-400 font-semibold">
+              ELO: {opponentProfile?.risiko_elo || 1200}
             </p>
           </div>
           <div className="relative">
