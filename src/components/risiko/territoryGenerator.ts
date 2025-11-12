@@ -320,13 +320,13 @@ export const generateTerritories = (): Territory[] => {
   connectByName("Altopiano", "Delta Paludoso"); // Sud America -> Africa
   connectByName("Baia Nebbiosa", "Bosco Incantato"); // Sud America -> Africa
   connectByName("Grotte Profonde", "Montagna Sacra"); // Europa -> Asia
-  connectByName("Isola Vulcanica", "Montagna Sacra"); // Africa -> Asia
   connectByName("Terre Ghiacciate", "Centrale Elettrica"); // Africa -> Oceania
-  connectByName("Savana Dorata", "Aeroporto"); // Africa -> Oceania (già presente)
-  connectByName("Torre di Guardia", "Fortezza"); // Europa -> Asia (già presente)
-  connectByName("Torre di Guardia", "Montagna Sacra"); // Europa -> Asia (già presente)
-  connectByName("Torre di Guardia", "Bunker Sotterraneo"); // Europa -> Asia (già presente)
-  connectByName("Isola Vulcanica", "Bunker Sotterraneo"); // Africa -> Asia (già presente)
+  connectByName("Savana Dorata", "Aeroporto"); // Africa -> Oceania
+  connectByName("Torre di Guardia", "Fortezza"); // Europa -> Asia
+  connectByName("Torre di Guardia", "Montagna Sacra"); // Europa -> Asia
+  connectByName("Torre di Guardia", "Bunker Sotterraneo"); // Europa -> Asia
+  connectByName("Torre di Guardia", "Isola Vulcanica"); // Europa -> Africa
+  connectByName("Isola Vulcanica", "Bunker Sotterraneo"); // Africa -> Asia
   
   // Initialize starting positions
   const blueStarts = selectStartingTerritories(territories, 'blue');
