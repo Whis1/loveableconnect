@@ -41,7 +41,7 @@ export const AdBanner = () => {
     }
   }, [credits, loading]);
 
-  // Timer to show banner every 6 minutes
+  // Timer to show banner every 3 minutes
   useEffect(() => {
     if (!shouldShowAds || banners.length === 0) return;
 
@@ -54,9 +54,9 @@ export const AdBanner = () => {
         // Move to next banner
         setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
       }, 8000);
-    }, 360000); // 6 minutes = 360000ms
+    }, 180000); // 3 minutes = 180000ms
 
-    // Show first banner after 6 minutes
+    // Show first banner after 3 minutes
     return () => clearInterval(showBannerInterval);
   }, [shouldShowAds, banners]);
 

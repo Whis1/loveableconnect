@@ -56,7 +56,7 @@ export const BannerManager = () => {
         <CardTitle>Gestione Banner Pubblicitari</CardTitle>
         <CardDescription>
           Aggiungi, rimuovi o visualizza i banner pubblicitari in rotazione.
-          I banner vengono mostrati ogni 6 minuti agli utenti free.
+          I banner vengono mostrati ogni 3 minuti agli utenti free.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -153,7 +153,7 @@ export const BannerManager = () => {
             ℹ️ Informazioni
           </h4>
           <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
-            <li>• I banner vengono mostrati in sequenza ogni 6 minuti</li>
+            <li>• I banner vengono mostrati in sequenza ogni 3 minuti</li>
             <li>• Ogni banner resta visibile per 8 secondi</li>
             <li>• Gli utenti premium (mensile e settimanale) non vedono i banner</li>
             <li>• La rotazione riprende dal primo banner quando finisce la lista</li>
