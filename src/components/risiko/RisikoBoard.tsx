@@ -33,9 +33,16 @@ interface GameState {
   selectedTerritory: string | null;
   selectedCard: CardType | null;
   cardCooldowns: {
-    bomb: number;
-    parachute: number;
-    force: number;
+    blue: {
+      bomb: number;
+      parachute: number;
+      force: number;
+    };
+    red: {
+      bomb: number;
+      parachute: number;
+      force: number;
+    };
   };
   boostedTroops: Record<string, number>; // territoryId -> numero di truppe potenziate
   gameOver: boolean;
@@ -55,7 +62,10 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
     turnTimeLeft: 30,
     selectedTerritory: null,
     selectedCard: null,
-    cardCooldowns: { bomb: 0, parachute: 0, force: 0 },
+    cardCooldowns: {
+      blue: { bomb: 0, parachute: 0, force: 0 },
+      red: { bomb: 0, parachute: 0, force: 0 }
+    },
     boostedTroops: {},
     gameOver: false,
     winner: null
@@ -127,9 +137,16 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
             selectedTerritory: null,
             selectedCard: null,
             cardCooldowns: {
-              bomb: Math.max(0, prev.cardCooldowns.bomb - 1),
-              parachute: Math.max(0, prev.cardCooldowns.parachute - 1),
-              force: Math.max(0, prev.cardCooldowns.force - 1)
+              blue: {
+                bomb: Math.max(0, prev.cardCooldowns.blue.bomb - 1),
+                parachute: Math.max(0, prev.cardCooldowns.blue.parachute - 1),
+                force: Math.max(0, prev.cardCooldowns.blue.force - 1)
+              },
+              red: {
+                bomb: Math.max(0, prev.cardCooldowns.red.bomb - 1),
+                parachute: Math.max(0, prev.cardCooldowns.red.parachute - 1),
+                force: Math.max(0, prev.cardCooldowns.red.force - 1)
+              }
             }
           };
         }
@@ -337,9 +354,16 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
       selectedTerritory: null,
       selectedCard: null,
       cardCooldowns: {
-        bomb: Math.max(0, prev.cardCooldowns.bomb - 1),
-        parachute: Math.max(0, prev.cardCooldowns.parachute - 1),
-        force: Math.max(0, prev.cardCooldowns.force - 1)
+        blue: {
+          bomb: Math.max(0, prev.cardCooldowns.blue.bomb - 1),
+          parachute: Math.max(0, prev.cardCooldowns.blue.parachute - 1),
+          force: Math.max(0, prev.cardCooldowns.blue.force - 1)
+        },
+        red: {
+          bomb: Math.max(0, prev.cardCooldowns.red.bomb - 1),
+          parachute: Math.max(0, prev.cardCooldowns.red.parachute - 1),
+          force: Math.max(0, prev.cardCooldowns.red.force - 1)
+        }
       }
     }));
   };
@@ -512,7 +536,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         break;
 
       case 'bomb':
-        if (gameState.cardCooldowns.bomb === 0 && territory.owner === 'red' && territory.troops > 0) {
+        if (gameState.cardCooldowns.blue.bomb === 0 && territory.owner === 'red' && territory.troops > 0) {
           // Play bomb sound
           bombSound.currentTime = 0;
           bombSound.play().catch(console.error);
@@ -537,7 +561,10 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
                 }
                 return t;
               }),
-              cardCooldowns: {...prev.cardCooldowns, bomb: 5},
+              cardCooldowns: {
+                ...prev.cardCooldowns,
+                blue: {...prev.cardCooldowns.blue, bomb: 5}
+              },
               selectedCard: null
             }));
             // Wait for combat animation to complete (3s) before switching turn
@@ -547,7 +574,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         break;
 
       case 'parachute':
-        if (gameState.cardCooldowns.parachute === 0) {
+        if (gameState.cardCooldowns.blue.parachute === 0) {
           // Può atterrare su territori vuoti o nemici
           if (territory.owner === 'blue') {
             toast.error("Non puoi paracadutare sul tuo territorio!");
@@ -566,7 +593,10 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
               territories: prev.territories.map(t => 
                 t.id === territoryId ? {...t, owner: 'blue', troops: 1} : t
               ),
-              cardCooldowns: {...prev.cardCooldowns, parachute: 3},
+              cardCooldowns: {
+                ...prev.cardCooldowns,
+                blue: {...prev.cardCooldowns.blue, parachute: 3}
+              },
               selectedCard: null
             }));
             toast.success("Territorio conquistato!");
@@ -580,7 +610,10 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
                 territories: prev.territories.map(t => 
                   t.id === territoryId ? {...t, owner: 'blue', troops: 1} : t
                 ),
-                cardCooldowns: {...prev.cardCooldowns, parachute: 3},
+                cardCooldowns: {
+                  ...prev.cardCooldowns,
+                  blue: {...prev.cardCooldowns.blue, parachute: 3}
+                },
                 selectedCard: null,
                 boostedTroops: {
                   ...prev.boostedTroops,
@@ -596,7 +629,10 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
                 territories: prev.territories.map(t => 
                   t.id === territoryId ? {...t, troops: t.troops - 1} : t
                 ),
-                cardCooldowns: {...prev.cardCooldowns, parachute: 3},
+                cardCooldowns: {
+                  ...prev.cardCooldowns,
+                  blue: {...prev.cardCooldowns.blue, parachute: 3}
+                },
                 selectedCard: null
               }));
               toast.info("Paracadutista abbattuto, ma elimina una truppa nemica!");
@@ -609,7 +645,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
         break;
 
       case 'force':
-        if (gameState.cardCooldowns.force === 0 && territory.owner === 'blue' && territory.troops > 0) {
+        if (gameState.cardCooldowns.blue.force === 0 && territory.owner === 'blue' && territory.troops > 0) {
           // Play power up sound
           powerUpSound.currentTime = 0;
           powerUpSound.play().catch(console.error);
@@ -621,7 +657,10 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
               ...prev.boostedTroops,
               [territoryId]: territory.troops // Tutte le truppe del territorio diventano potenziate
             },
-            cardCooldowns: {...prev.cardCooldowns, force: 3},
+            cardCooldowns: {
+              ...prev.cardCooldowns,
+              blue: {...prev.cardCooldowns.blue, force: 3}
+            },
             selectedCard: null
           }));
           toast.success("Truppe potenziate con successo!");
@@ -851,11 +890,11 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           
           <Card 
             className={`p-2 transition-all ${
-              gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.bomb === 0
+              gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.blue.bomb === 0
                 ? `cursor-pointer hover:scale-105 ${gameState.selectedCard === 'bomb' ? 'ring-2 ring-primary bg-primary/10' : 'hover:bg-muted/50'}`
                 : 'opacity-40 cursor-not-allowed'
             }`}
-            onClick={() => gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.bomb === 0 && setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'bomb' ? null : 'bomb' }))}
+            onClick={() => gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.blue.bomb === 0 && setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'bomb' ? null : 'bomb' }))}
           >
             <div className="flex flex-col items-center gap-1 relative">
               <img 
@@ -863,9 +902,9 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
                 alt="Bombardamento Aereo" 
                 className="w-full h-auto rounded"
               />
-              {gameState.cardCooldowns.bomb > 0 && (
+              {gameState.cardCooldowns.blue.bomb > 0 && (
                 <span className="absolute bottom-1 text-xl font-bold text-primary drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
-                  {gameState.cardCooldowns.bomb}
+                  {gameState.cardCooldowns.blue.bomb}
                 </span>
               )}
             </div>
@@ -873,11 +912,11 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           
           <Card 
             className={`p-2 transition-all ${
-              gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.parachute === 0
+              gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.blue.parachute === 0
                 ? `cursor-pointer hover:scale-105 ${gameState.selectedCard === 'parachute' ? 'ring-2 ring-primary bg-primary/10' : 'hover:bg-muted/50'}`
                 : 'opacity-40 cursor-not-allowed'
             }`}
-            onClick={() => gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.parachute === 0 && setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'parachute' ? null : 'parachute' }))}
+            onClick={() => gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.blue.parachute === 0 && setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'parachute' ? null : 'parachute' }))}
           >
             <div className="flex flex-col items-center gap-1 relative">
               <img 
@@ -885,9 +924,9 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
                 alt="Paracadutista" 
                 className="w-full h-auto rounded"
               />
-              {gameState.cardCooldowns.parachute > 0 && (
+              {gameState.cardCooldowns.blue.parachute > 0 && (
                 <span className="absolute bottom-1 text-xl font-bold text-primary drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
-                  {gameState.cardCooldowns.parachute}
+                  {gameState.cardCooldowns.blue.parachute}
                 </span>
               )}
             </div>
@@ -895,11 +934,11 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
           
           <Card 
             className={`p-2 transition-all ${
-              gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.force === 0
+              gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.blue.force === 0
                 ? `cursor-pointer hover:scale-105 ${gameState.selectedCard === 'force' ? 'ring-2 ring-primary bg-primary/10' : 'hover:bg-muted/50'}`
                 : 'opacity-40 cursor-not-allowed'
             }`}
-            onClick={() => gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.force === 0 && setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'force' ? null : 'force' }))}
+            onClick={() => gameState.currentPlayer === 'blue' && !gameState.gameOver && gameState.cardCooldowns.blue.force === 0 && setGameState(prev => ({ ...prev, selectedCard: prev.selectedCard === 'force' ? null : 'force' }))}
           >
             <div className="flex flex-col items-center gap-1 relative">
               <img 
@@ -907,9 +946,9 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
                 alt="Truppe Potenziate" 
                 className="w-full h-auto rounded"
               />
-              {gameState.cardCooldowns.force > 0 && (
+              {gameState.cardCooldowns.blue.force > 0 && (
                 <span className="absolute bottom-1 text-xl font-bold text-primary drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
-                  {gameState.cardCooldowns.force}
+                  {gameState.cardCooldowns.blue.force}
                 </span>
               )}
             </div>

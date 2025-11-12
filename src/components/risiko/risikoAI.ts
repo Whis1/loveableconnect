@@ -22,9 +22,16 @@ interface GameState {
   selectedTerritory: string | null;
   selectedCard: CardType | null;
   cardCooldowns: {
-    bomb: number;
-    parachute: number;
-    force: number;
+    blue: {
+      bomb: number;
+      parachute: number;
+      force: number;
+    };
+    red: {
+      bomb: number;
+      parachute: number;
+      force: number;
+    };
   };
   boostedTroops: Record<string, number>;
   gameOver: boolean;
@@ -297,7 +304,7 @@ const tryEmergencyDefense = (
   if (pressurePoints.length === 0) return false;
 
   // Usa la bomba su minacce immediate
-  if (gameState.cardCooldowns.bomb === 0) {
+  if (gameState.cardCooldowns.red.bomb === 0) {
     const mostThreatened = pressurePoints[0];
     const strongestThreat = mostThreatened.neighbors
       .map(nId => gameState.territories.find(t => t.id === nId))
@@ -316,7 +323,10 @@ const tryEmergencyDefense = (
           }
           return t;
         }),
-        cardCooldowns: {...prev.cardCooldowns, bomb: 5}
+        cardCooldowns: {
+          ...prev.cardCooldowns,
+          red: {...prev.cardCooldowns.red, bomb: 5}
+        }
       }));
       
       setTimeout(() => {
@@ -503,7 +513,7 @@ const tryAllCardsStrategically = (
   };
 
   // FORCE: Alto valore se c'è un attacco eccellente disponibile
-  if (gameState.cardCooldowns.force === 0 && attackOpportunities.length > 0) {
+  if (gameState.cardCooldowns.red.force === 0 && attackOpportunities.length > 0) {
     const excellentAttack = attackOpportunities.find(opp => 
       opp.monteCarloScore >= 0.75 && (opp.strategicValue + opp.continentalValue) >= 10
     );
@@ -511,7 +521,7 @@ const tryAllCardsStrategically = (
   }
 
   // BOMBA: Alto valore se ci sono minacce concentrate
-  if (gameState.cardCooldowns.bomb === 0 && enemyTerritories.length > 0) {
+  if (gameState.cardCooldowns.red.bomb === 0 && enemyTerritories.length > 0) {
     const dangerousEnemies = enemyTerritories.filter(t => t.troops >= 4);
     if (dangerousEnemies.length > 0) {
       const maxThreat = Math.max(...dangerousEnemies.map(t => {
@@ -526,7 +536,7 @@ const tryAllCardsStrategically = (
   }
 
   // PARACADUTE: Alto valore se ci sono obiettivi strategici con 1 truppa
-  if (gameState.cardCooldowns.parachute === 0) {
+  if (gameState.cardCooldowns.red.parachute === 0) {
     const strategicTargets = enemyTerritories.filter(t => t.troops === 1).length;
     const massiveTargets = enemyTerritories.filter(t => t.troops >= 5).length;
     if (strategicTargets > 0) cardScores.parachute = 85;
@@ -550,7 +560,7 @@ const tryAllCardsStrategically = (
 
   // Esegui l'azione della carta migliore
   // FORZA: Usa con attacco strategico eccellente
-  if (gameState.cardCooldowns.force === 0 && attackOpportunities.length > 0) {
+  if (gameState.cardCooldowns.red.force === 0 && attackOpportunities.length > 0) {
     const excellentAttack = attackOpportunities.find(opp => 
       opp.monteCarloScore >= 0.75 && (opp.strategicValue + opp.continentalValue) >= 10
     );
@@ -568,7 +578,10 @@ const tryAllCardsStrategically = (
             ...prev.boostedTroops,
             [attacker.id]: attacker.troops
           },
-          cardCooldowns: {...prev.cardCooldowns, force: 4}
+          cardCooldowns: {
+            ...prev.cardCooldowns,
+            red: {...prev.cardCooldowns.red, force: 4}
+          }
         }));
 
         setTimeout(() => {
@@ -581,7 +594,7 @@ const tryAllCardsStrategically = (
   }
 
   // BOMBA: Usa su concentrazioni nemiche pericolose
-  if (gameState.cardCooldowns.bomb === 0 && enemyTerritories.length > 0) {
+  if (gameState.cardCooldowns.red.bomb === 0 && enemyTerritories.length > 0) {
     const dangerousEnemies = enemyTerritories
       .filter(t => t.troops >= 4)
       .map(t => {
@@ -625,7 +638,10 @@ const tryAllCardsStrategically = (
               }
               return t;
             }),
-            cardCooldowns: {...prev.cardCooldowns, bomb: 5}
+            cardCooldowns: {
+              ...prev.cardCooldowns,
+              red: {...prev.cardCooldowns.red, bomb: 5}
+            }
           }));
           
           setTimeout(() => {
@@ -650,7 +666,10 @@ const tryAllCardsStrategically = (
             }
             return t;
           }),
-          cardCooldowns: {...prev.cardCooldowns, bomb: 5}
+          cardCooldowns: {
+            ...prev.cardCooldowns,
+            red: {...prev.cardCooldowns.red, bomb: 5}
+          }
         }));
         
         setTimeout(() => {
@@ -667,7 +686,7 @@ const tryAllCardsStrategically = (
   }
 
   // PARACADUTE: Usa per blocchi strategici o conquiste rapide
-  if (gameState.cardCooldowns.parachute === 0) {
+  if (gameState.cardCooldowns.red.parachute === 0) {
     // Priorità: territori nemici singoli che bloccano espansioni
     const blockingEnemies = enemyTerritories.filter(t => {
       if (t.troops !== 1) return false;
@@ -699,7 +718,10 @@ const tryAllCardsStrategically = (
         territories: prev.territories.map(t => 
           t.id === target.id ? {...t, owner: 'red', troops: 1} : t
         ),
-        cardCooldowns: {...prev.cardCooldowns, parachute: 3}
+        cardCooldowns: {
+          ...prev.cardCooldowns,
+          red: {...prev.cardCooldowns.red, parachute: 3}
+        }
       }));
       
       setTimeout(() => {
@@ -732,7 +754,10 @@ const tryAllCardsStrategically = (
         territories: prev.territories.map(t => 
           t.id === target.id ? {...t, troops: t.troops - 1} : t
         ),
-        cardCooldowns: {...prev.cardCooldowns, parachute: 3}
+        cardCooldowns: {
+          ...prev.cardCooldowns,
+          red: {...prev.cardCooldowns.red, parachute: 3}
+        }
       }));
       
       setTimeout(() => {
@@ -748,7 +773,7 @@ const tryAllCardsStrategically = (
   }
 
   // ESECUZIONE CARTA FORCE
-  if (bestCard.card === 'force' && gameState.cardCooldowns.force === 0) {
+  if (bestCard.card === 'force' && gameState.cardCooldowns.red.force === 0) {
     const excellentAttack = attackOpportunities.find(opp => 
       opp.monteCarloScore >= 0.75 && (opp.strategicValue + opp.continentalValue) >= 10
     );
@@ -786,7 +811,7 @@ const tryAllCardsStrategically = (
   }
 
   // ESECUZIONE CARTA BOMBA
-  if (bestCard.card === 'bomb' && gameState.cardCooldowns.bomb === 0) {
+  if (bestCard.card === 'bomb' && gameState.cardCooldowns.red.bomb === 0) {
     const dangerousEnemies = enemyTerritories
       .filter(t => t.troops >= 4)
       .map(t => {
@@ -872,7 +897,7 @@ const tryAllCardsStrategically = (
   }
 
   // ESECUZIONE CARTA PARACADUTE
-  if (bestCard.card === 'parachute' && gameState.cardCooldowns.parachute === 0) {
+  if (bestCard.card === 'parachute' && gameState.cardCooldowns.red.parachute === 0) {
     const blockingEnemies = enemyTerritories.filter(t => {
       if (t.troops !== 1) return false;
       const myNeighbors = t.neighbors.filter(nId => {
@@ -903,7 +928,10 @@ const tryAllCardsStrategically = (
         territories: prev.territories.map(t => 
           t.id === target.id ? {...t, owner: 'red', troops: 1} : t
         ),
-        cardCooldowns: {...prev.cardCooldowns, parachute: 3}
+        cardCooldowns: {
+          ...prev.cardCooldowns,
+          red: {...prev.cardCooldowns.red, parachute: 3}
+        }
       }));
       
       setTimeout(() => {
@@ -935,7 +963,10 @@ const tryAllCardsStrategically = (
         territories: prev.territories.map(t => 
           t.id === target.id ? {...t, troops: t.troops - 1} : t
         ),
-        cardCooldowns: {...prev.cardCooldowns, parachute: 3}
+        cardCooldowns: {
+          ...prev.cardCooldowns,
+          red: {...prev.cardCooldowns.red, parachute: 3}
+        }
       }));
       
       setTimeout(() => {
