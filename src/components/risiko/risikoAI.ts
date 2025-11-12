@@ -592,9 +592,9 @@ const tryAllCardsStrategically = (
     if (excellentAttack) cardScores.force = 100;
   }
 
-  // BOMBA: Alto valore se ci sono minacce concentrate o nemici con 4+ truppe
+  // BOMBA: Usa anche contro 2-3 truppe nemiche
   if (gameState.cardCooldowns.red.bomb === 0 && enemyTerritories.length > 0) {
-    const dangerousEnemies = enemyTerritories.filter(t => t.troops >= 4);
+    const dangerousEnemies = enemyTerritories.filter(t => t.troops >= 2);
     if (dangerousEnemies.length > 0) {
       const maxThreat = Math.max(...dangerousEnemies.map(t => {
         const adjacentRed = t.neighbors.filter(nId => {
@@ -603,10 +603,12 @@ const tryAllCardsStrategically = (
         }).length;
         return adjacentRed * t.troops;
       }));
-      // Soglia abbassata da 12 a 8 per usare più spesso la bomba
-      if (maxThreat >= 8) cardScores.bomb = 95;
-      // Bonus extra se ci sono nemici molto forti (6+ truppe)
-      else if (dangerousEnemies.some(t => t.troops >= 6)) cardScores.bomb = 85;
+      // Usa bomba molto più facilmente: soglia abbassata a 4
+      if (maxThreat >= 4) cardScores.bomb = 95;
+      // Usa anche contro nemici con 3+ truppe vicini ai nostri territori
+      else if (dangerousEnemies.some(t => t.troops >= 3)) cardScores.bomb = 88;
+      // Usa anche contro 2 truppe se sono adiacenti
+      else if (dangerousEnemies.some(t => t.troops >= 2)) cardScores.bomb = 80;
     }
   }
 
@@ -675,10 +677,10 @@ const tryAllCardsStrategically = (
     }
   }
 
-  // BOMBA: Usa su concentrazioni nemiche pericolose
+  // BOMBA: Usa anche contro 2-3 truppe
   if (gameState.cardCooldowns.red.bomb === 0 && enemyTerritories.length > 0) {
     const dangerousEnemies = enemyTerritories
-      .filter(t => t.troops >= 4)
+      .filter(t => t.troops >= 2)
       .map(t => {
         const adjacentMyTerritories = t.neighbors.filter(nId => {
           const neighbor = gameState.territories.find(ter => ter.id === nId);
@@ -688,8 +690,8 @@ const tryAllCardsStrategically = (
       })
       .sort((a, b) => b.threat - a.threat);
 
-    // Soglia abbassata da 12 a 8, o anche su nemici molto forti (6+ truppe) senza considerare threat
-    if (dangerousEnemies.length > 0 && (dangerousEnemies[0].threat >= 8 || dangerousEnemies[0].territory.troops >= 6)) {
+    // Usa bomba molto più facilmente: soglia 4, o su qualsiasi nemico con 2+ truppe adiacente
+    if (dangerousEnemies.length > 0 && (dangerousEnemies[0].threat >= 4 || dangerousEnemies[0].territory.troops >= 2)) {
       const target = dangerousEnemies[0].territory;
       
       // Riproduci audio bomba
