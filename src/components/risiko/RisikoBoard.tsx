@@ -105,6 +105,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
     territoryId: string;
     timestamp: number;
   } | null>(null);
+  const [lastMoveBy, setLastMoveBy] = useState<'player' | 'ai' | null>(null);
   const [showEmoji, setShowEmoji] = useState(false);
   const [userEmoji, setUserEmoji] = useState<string | null>(null);
   const [opponentEmoji, setOpponentEmoji] = useState<string | null>(null);
@@ -143,20 +144,16 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
     return () => window.removeEventListener('pointerdown', unlock);
   }, [marchSound, bombSound, parachuteSound, powerUpSound]);
 
-  // Ensure movement UX: play march and bounce arrival when movingTroops changes
+  // AI-only arrival bounce when movement completes
   useEffect(() => {
-    if (movingTroops) {
-      try {
-        marchSound.currentTime = 0;
-        marchSound.play().catch(() => {});
-      } catch {}
+    if (movingTroops && lastMoveBy === 'ai') {
       const arrivalTimer = setTimeout(() => {
         setArrivedTroops({ territoryId: movingTroops.toId, timestamp: Date.now() });
         setTimeout(() => setArrivedTroops(null), 600);
-      }, 1500);
+      }, 1000);
       return () => clearTimeout(arrivalTimer);
     }
-  }, [movingTroops, marchSound]);
+  }, [movingTroops, lastMoveBy]);
 
   // Initialize game
   useEffect(() => {
@@ -315,7 +312,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
             else if (type === 'error') toast.error(message);
           },
           setBombingAnimation,
-          setMovingTroops
+          (state) => { setLastMoveBy(state ? 'ai' : null); setMovingTroops(state); }
         );
       }, aiThinkingTime);
       return () => clearTimeout(timer);
@@ -544,6 +541,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
 
     // 🚨 BLOCCA TUTTE LE INTERAZIONI durante spostamento truppe
     setCardActionInProgress(true);
+    setLastMoveBy('player');
 
     // Play march sound
     marchSound.currentTime = 0;
