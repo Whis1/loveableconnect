@@ -24,7 +24,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Sending support email from:", userEmail);
 
     const emailResponse = await resend.emails.send({
-      from: "LoveableConnect Support 💕 <onboarding@resend.dev>",
+      from: "LoveableConnect Support 💕 <loveableconnect.lovable.app>",
       replyTo: userEmail,
       to: ["daishxvii@gmail.com"],
       subject: `🆘 Nuovo messaggio di supporto da ${userEmail}`,
@@ -56,7 +56,7 @@ const handler = async (req: Request): Promise<Response> => {
                     <strong style="color:#9333ea;">Email:</strong> ${userEmail}
                   </p>
                   <p style="margin:0; color:#4b5563; font-size:14px;">
-                    <strong style="color:#9333ea;">Data:</strong> ${new Date().toLocaleString('it-IT')}
+                    <strong style="color:#9333ea;">Data:</strong> ${new Date().toLocaleString("it-IT")}
                   </p>
                 </div>
                 
