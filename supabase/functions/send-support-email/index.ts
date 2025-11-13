@@ -26,7 +26,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "LoveableConnect Support 💕 <loveableconnect.com>",
       replyTo: userEmail,
-      to: ["loveableconnect.lovable.app"],
+      to: ["loveableconnect.com"],
       subject: `🆘 Nuovo messaggio di supporto da ${userEmail}`,
       html: `
         <!DOCTYPE html>
