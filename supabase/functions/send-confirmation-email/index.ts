@@ -26,14 +26,14 @@ serve(async (req) => {
       {
         auth: {
           autoRefreshToken: false,
-          persistSession: false
-        }
-      }
+          persistSession: false,
+        },
+      },
     );
 
     // Generate email confirmation link
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'magiclink',
+      type: "magiclink",
       email: email,
     });
 
@@ -45,7 +45,7 @@ serve(async (req) => {
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
     await resend.emails.send({
-      from: "LoveableConnect 💕 <onboarding@resend.dev>",
+      from: "LoveableConnect 💕 <loveableconnect.com>",
       to: [email],
       subject: "💖 Benvenuto su LoveableConnect – Conferma il tuo account!",
       html: `
