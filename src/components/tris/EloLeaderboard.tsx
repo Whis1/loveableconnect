@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,13 +16,12 @@ interface EloLeaderboardProps {
   userId?: string;
 }
 
-const STORAGE_KEY = 'elo_leaderboard_data_v2'; // v2: only multiples of 10
+const STORAGE_KEY = 'elo_leaderboard_data';
 const UPDATE_INTERVAL = 20 * 60 * 1000; // 20 minutes in milliseconds
 
 interface StoredLeaderboardData {
   adminElos: Record<string, number>;
   lastUpdate: string;
-  version: number; // Version tracking
 }
 
 export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
@@ -31,15 +30,6 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
   const [userRank, setUserRank] = useState<number | null>(null);
   const [adminElos, setAdminElos] = useState<Map<string, number>>(new Map());
   const [isOpen, setIsOpen] = useState(false);
-
-  // Clear old localStorage data on mount
-  useEffect(() => {
-    const oldKey = 'elo_leaderboard_data';
-    if (localStorage.getItem(oldKey)) {
-      localStorage.removeItem(oldKey);
-      console.log('Cleared old leaderboard data');
-    }
-  }, []);
 
   // Load persisted data from localStorage
   const loadPersistedData = (): StoredLeaderboardData | null => {
@@ -60,7 +50,6 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
       const data: StoredLeaderboardData = {
         adminElos: Object.fromEntries(adminElosMap),
         lastUpdate: new Date().toISOString(),
-        version: 2, // Track version for migrations
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (error) {
@@ -82,7 +71,52 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     return timeSinceUpdate > (UPDATE_INTERVAL + randomVariance);
   };
 
-  const fetchAndBuildLeaderboard = useCallback(async (elosMap: Map<string, number>) => {
+  useEffect(() => {
+    // Load persisted data or fetch new data
+    const persisted = loadPersistedData();
+    const needsUpdate = shouldUpdate();
+
+    if (persisted && !needsUpdate) {
+      // Use persisted data WITHOUT modifications
+      const elosMap = new Map(Object.entries(persisted.adminElos));
+      setAdminElos(elosMap);
+      // Build leaderboard directly from persisted data
+      buildLeaderboardFromExistingElos(elosMap);
+    } else {
+      // Time to update: adjust ELOs or generate new ones
+      fetchLeaderboard(!persisted); // true if no persisted data (initial), false if updating
+    }
+
+    // Set up interval to check for updates every minute
+    const checkInterval = setInterval(() => {
+      if (shouldUpdate()) {
+        fetchLeaderboard(false); // Adjust existing ELOs
+      }
+    }, 60 * 1000); // Check every minute
+    
+    return () => clearInterval(checkInterval);
+  }, [userId]);
+
+  const generateHighElo = () => {
+    // Generate random high ELO between 1800-2500 for admin profiles, multipli di 10
+    const randomValue = Math.floor(Math.random() * 71) * 10; // 0-700 in step of 10
+    return 1800 + randomValue; // 1800, 1810, 1820, ..., 2500
+  };
+
+  const adjustElo = (currentElo: number): number => {
+    // Simulate ELO changes: ±10, ±20, ±30 points (multipli di 10)
+    const changeMultiplier = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3
+    const change = changeMultiplier * 10; // 10, 20, or 30
+    const isIncrease = Math.random() > 0.5;
+    const newElo = isIncrease ? currentElo + change : currentElo - change;
+    
+    // Keep ELO in reasonable bounds (1700-2600), ensure multipli di 10
+    const bounded = Math.max(1700, Math.min(2600, newElo));
+    return Math.round(bounded / 10) * 10; // Assicura multiplo di 10
+  };
+
+  // Build leaderboard from existing ELOs without fetching or modifying
+  const buildLeaderboardFromExistingElos = async (elosMap: Map<string, number>) => {
     try {
       const { data: profiles, error } = await supabase
         .from("profiles")
@@ -119,64 +153,9 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     } catch (error) {
       console.error("Error building leaderboard:", error);
     }
-  }, [userId]);
-
-  useEffect(() => {
-    let isMounted = true;
-    
-    const initLeaderboard = async () => {
-      const persisted = loadPersistedData();
-      const needsUpdate = shouldUpdate();
-
-      if (persisted && !needsUpdate) {
-        // Use persisted data WITHOUT modifications
-        const elosMap = new Map(Object.entries(persisted.adminElos));
-        if (isMounted) {
-          setAdminElos(elosMap);
-          await fetchAndBuildLeaderboard(elosMap);
-        }
-      } else {
-        // Time to update: adjust ELOs or generate new ones
-        if (isMounted) {
-          await fetchLeaderboard(!persisted); // true if no persisted data (initial), false if updating
-        }
-      }
-    };
-
-    initLeaderboard();
-
-    // Set up interval to check for updates every 5 minutes (reduced frequency)
-    const checkInterval = setInterval(() => {
-      if (shouldUpdate() && isMounted) {
-        fetchLeaderboard(false); // Adjust existing ELOs
-      }
-    }, 5 * 60 * 1000); // Check every 5 minutes
-    
-    return () => {
-      isMounted = false;
-      clearInterval(checkInterval);
-    };
-  }, [userId, fetchAndBuildLeaderboard]);
-
-  const generateHighElo = () => {
-    // Generate random high ELO between 1800-2500 for admin profiles, multipli di 10
-    const randomValue = Math.floor(Math.random() * 71) * 10; // 0-700 in step of 10
-    return 1800 + randomValue; // 1800, 1810, 1820, ..., 2500
   };
 
-  const adjustElo = (currentElo: number): number => {
-    // Simulate ELO changes: ±10, ±20, ±30 points (multipli di 10)
-    const changeMultiplier = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3
-    const change = changeMultiplier * 10; // 10, 20, or 30
-    const isIncrease = Math.random() > 0.5;
-    const newElo = isIncrease ? currentElo + change : currentElo - change;
-    
-    // Keep ELO in reasonable bounds (1700-2600), ensure multipli di 10
-    const bounded = Math.max(1700, Math.min(2600, newElo));
-    return Math.round(bounded / 10) * 10; // Assicura multiplo di 10
-  };
-
-  const fetchLeaderboard = useCallback(async (isInitial: boolean = false) => {
+  const fetchLeaderboard = async (isInitial: boolean = false) => {
     try {
       // Fetch all profiles with ELO
       const { data: profiles, error } = await supabase
@@ -248,7 +227,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
     }
-  }, [userId, adminElos]);
+  };
 
   const getAvatarUrl = (avatarPath: string | null) => {
     if (!avatarPath) return "";
