@@ -31,7 +31,6 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
   const [userRank, setUserRank] = useState<number | null>(null);
   const [adminElos, setAdminElos] = useState<Map<string, number>>(new Map());
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
   // Clear old localStorage data on mount
   useEffect(() => {
@@ -83,21 +82,16 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     return timeSinceUpdate > (UPDATE_INTERVAL + randomVariance);
   };
 
-  // Main effect to load leaderboard data
-  useEffect(() => {
-    let isMounted = true;
-    let intervalId: NodeJS.Timeout | null = null;
-    
-    const buildLeaderboard = async (elosMap: Map<string, number>) => {
-      try {
-        const { data: profiles, error } = await supabase
-          .from("profiles")
-          .select("id, nickname, avatar_url, game_elo, is_admin_profile")
-          .order("game_elo", { ascending: false });
+  const fetchAndBuildLeaderboard = useCallback(async (elosMap: Map<string, number>) => {
+    try {
+      const { data: profiles, error } = await supabase
+        .from("profiles")
+        .select("id, nickname, avatar_url, game_elo, is_admin_profile")
+        .order("game_elo", { ascending: false });
 
-        if (error) throw error;
-        if (!profiles || !isMounted) return;
+      if (error) throw error;
 
+      if (profiles) {
         // Use persisted ELOs for admin profiles, real ELOs for users
         const updatedProfiles = profiles.map(profile => {
           if (profile.is_admin_profile && elosMap.has(profile.id)) {
@@ -109,126 +103,60 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         // Sort by ELO
         const sortedProfiles = updatedProfiles.sort((a, b) => (b.game_elo || 1200) - (a.game_elo || 1200));
         
-        if (isMounted) {
-          // Get top 5
-          setTopPlayers(sortedProfiles.slice(0, 5));
+        // Get top 5
+        setTopPlayers(sortedProfiles.slice(0, 5));
 
-          // Find user's rank and ELO
-          if (userId) {
-            const userProfile = sortedProfiles.find(p => p.id === userId);
-            if (userProfile) {
-              setUserElo(userProfile.game_elo || 1200);
-              const rank = sortedProfiles.findIndex(p => p.id === userId) + 1;
-              setUserRank(rank);
-            }
+        // Find user's rank and ELO
+        if (userId) {
+          const userProfile = sortedProfiles.find(p => p.id === userId);
+          if (userProfile) {
+            setUserElo(userProfile.game_elo || 1200);
+            const rank = sortedProfiles.findIndex(p => p.id === userId) + 1;
+            setUserRank(rank);
           }
-          setIsLoading(false);
         }
-      } catch (error) {
-        console.error("Error building leaderboard:", error);
-        if (isMounted) setIsLoading(false);
       }
-    };
+    } catch (error) {
+      console.error("Error building leaderboard:", error);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    let isMounted = true;
     
-    const fetchLeaderboardData = async (isInitial: boolean = false) => {
-      try {
-        const { data: profiles, error } = await supabase
-          .from("profiles")
-          .select("id, nickname, avatar_url, game_elo, is_admin_profile")
-          .order("game_elo", { ascending: false });
-
-        if (error) throw error;
-        if (!profiles || !isMounted) return;
-
-        const newAdminElos = new Map<string, number>();
-        const usedElos = new Set<number>();
-        
-        // First, collect all non-admin ELOs
-        profiles.forEach(profile => {
-          if (!profile.is_admin_profile) {
-            usedElos.add(profile.game_elo || 1200);
-          }
-        });
-
-        const updatedProfiles = profiles.map(profile => {
-          if (profile.is_admin_profile) {
-            let newElo: number;
-            
-            if (isInitial || !adminElos.has(profile.id)) {
-              // Initial load: generate new ELO
-              do {
-                newElo = generateHighElo();
-              } while (usedElos.has(newElo));
-            } else {
-              // Update: adjust existing ELO
-              const currentElo = adminElos.get(profile.id) || generateHighElo();
-              do {
-                newElo = adjustElo(currentElo);
-              } while (usedElos.has(newElo));
-            }
-            
-            usedElos.add(newElo);
-            newAdminElos.set(profile.id, newElo);
-            return { ...profile, game_elo: newElo };
-          }
-          return profile;
-        });
-
-        if (isMounted) {
-          setAdminElos(newAdminElos);
-          savePersistedData(newAdminElos);
-
-          // Sort and update UI
-          const sortedProfiles = updatedProfiles.sort((a, b) => (b.game_elo || 1200) - (a.game_elo || 1200));
-          setTopPlayers(sortedProfiles.slice(0, 5));
-
-          if (userId) {
-            const userProfile = sortedProfiles.find(p => p.id === userId);
-            if (userProfile) {
-              setUserElo(userProfile.game_elo || 1200);
-              const rank = sortedProfiles.findIndex(p => p.id === userId) + 1;
-              setUserRank(rank);
-            }
-          }
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error("Error fetching leaderboard:", error);
-        if (isMounted) setIsLoading(false);
-      }
-    };
-
     const initLeaderboard = async () => {
       const persisted = loadPersistedData();
       const needsUpdate = shouldUpdate();
 
       if (persisted && !needsUpdate) {
-        // Use persisted data
+        // Use persisted data WITHOUT modifications
         const elosMap = new Map(Object.entries(persisted.adminElos));
         if (isMounted) {
           setAdminElos(elosMap);
-          await buildLeaderboard(elosMap);
+          await fetchAndBuildLeaderboard(elosMap);
         }
       } else {
-        // Fetch new data
-        await fetchLeaderboardData(!persisted);
-      }
-
-      // Set up periodic updates (every 10 minutes)
-      intervalId = setInterval(() => {
-        if (shouldUpdate()) {
-          fetchLeaderboardData(false);
+        // Time to update: adjust ELOs or generate new ones
+        if (isMounted) {
+          await fetchLeaderboard(!persisted); // true if no persisted data (initial), false if updating
         }
-      }, 10 * 60 * 1000);
+      }
     };
 
     initLeaderboard();
+
+    // Set up interval to check for updates every 5 minutes (reduced frequency)
+    const checkInterval = setInterval(() => {
+      if (shouldUpdate() && isMounted) {
+        fetchLeaderboard(false); // Adjust existing ELOs
+      }
+    }, 5 * 60 * 1000); // Check every 5 minutes
     
     return () => {
       isMounted = false;
-      if (intervalId) clearInterval(intervalId);
+      clearInterval(checkInterval);
     };
-  }, [userId]);
+  }, [userId, fetchAndBuildLeaderboard]);
 
   const generateHighElo = () => {
     // Generate random high ELO between 1800-2500 for admin profiles, multipli di 10
@@ -247,6 +175,80 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     const bounded = Math.max(1700, Math.min(2600, newElo));
     return Math.round(bounded / 10) * 10; // Assicura multiplo di 10
   };
+
+  const fetchLeaderboard = useCallback(async (isInitial: boolean = false) => {
+    try {
+      // Fetch all profiles with ELO
+      const { data: profiles, error } = await supabase
+        .from("profiles")
+        .select("id, nickname, avatar_url, game_elo, is_admin_profile")
+        .order("game_elo", { ascending: false });
+
+      if (error) throw error;
+
+      if (profiles) {
+        const newAdminElos = new Map<string, number>();
+        const usedElos = new Set<number>();
+        
+        // First, collect all non-admin ELOs
+        profiles.forEach(profile => {
+          if (!profile.is_admin_profile) {
+            usedElos.add(profile.game_elo || 1200);
+          }
+        });
+        
+        // Use current adminElos state for subsequent updates
+        const currentElosMap = adminElos;
+
+        const updatedProfiles = profiles.map(profile => {
+          if (profile.is_admin_profile) {
+            let newElo: number;
+            
+            if (isInitial || !currentElosMap.has(profile.id)) {
+              // Initial load or new profile: generate completely new ELO
+              do {
+                newElo = generateHighElo();
+              } while (usedElos.has(newElo));
+            } else {
+              // Subsequent update: adjust existing ELO to simulate games played
+              const currentElo = currentElosMap.get(profile.id) || generateHighElo();
+              do {
+                newElo = adjustElo(currentElo);
+              } while (usedElos.has(newElo));
+            }
+            
+            usedElos.add(newElo);
+            newAdminElos.set(profile.id, newElo);
+            return { ...profile, game_elo: newElo };
+          }
+          return profile;
+        });
+
+        setAdminElos(newAdminElos);
+        
+        // Save to localStorage
+        savePersistedData(newAdminElos);
+
+        // Sort by ELO after updating admin profiles
+        const sortedProfiles = updatedProfiles.sort((a, b) => (b.game_elo || 1200) - (a.game_elo || 1200));
+        
+        // Get top 5
+        setTopPlayers(sortedProfiles.slice(0, 5));
+
+        // Find user's rank and ELO
+        if (userId) {
+          const userProfile = sortedProfiles.find(p => p.id === userId);
+          if (userProfile) {
+            setUserElo(userProfile.game_elo || 1200);
+            const rank = sortedProfiles.findIndex(p => p.id === userId) + 1;
+            setUserRank(rank);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching leaderboard:", error);
+    }
+  }, [userId, adminElos]);
 
   const getAvatarUrl = (avatarPath: string | null) => {
     if (!avatarPath) return "";
@@ -314,18 +316,6 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     if (userRank === 3) return "3° 🥉";
     return `${userRank}°`;
   };
-
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <Card className="p-4 bg-gradient-to-r from-primary/20 to-secondary/20 border-primary/30">
-          <div className="flex items-center justify-center py-8">
-            <p className="text-muted-foreground">Caricamento classifica...</p>
-          </div>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
