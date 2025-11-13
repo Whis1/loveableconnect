@@ -98,21 +98,18 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
   }, [userId]);
 
   const generateHighElo = () => {
-    // Generate random high ELO between 1800-2500 for admin profiles, multipli di 10
-    const randomValue = Math.floor(Math.random() * 71) * 10; // 0-700 in step of 10
-    return 1800 + randomValue; // 1800, 1810, 1820, ..., 2500
+    // Generate random high ELO between 1800-2500 for admin profiles
+    return Math.floor(Math.random() * 700) + 1800;
   };
 
   const adjustElo = (currentElo: number): number => {
-    // Simulate ELO changes: ±10, ±20, ±30 points (multipli di 10)
-    const changeMultiplier = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3
-    const change = changeMultiplier * 10; // 10, 20, or 30
+    // Simulate ELO changes: ±5 to ±15 points
+    const change = Math.floor(Math.random() * 11) + 5; // 5-15
     const isIncrease = Math.random() > 0.5;
     const newElo = isIncrease ? currentElo + change : currentElo - change;
     
-    // Keep ELO in reasonable bounds (1700-2600), ensure multipli di 10
-    const bounded = Math.max(1700, Math.min(2600, newElo));
-    return Math.round(bounded / 10) * 10; // Assicura multiplo di 10
+    // Keep ELO in reasonable bounds (1700-2600)
+    return Math.max(1700, Math.min(2600, newElo));
   };
 
   // Build leaderboard from existing ELOs without fetching or modifying
