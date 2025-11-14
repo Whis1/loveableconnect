@@ -30,6 +30,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
   const [userRank, setUserRank] = useState<number | null>(null);
   const [adminElos, setAdminElos] = useState<Map<string, number>>(new Map());
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Load persisted data from localStorage
   const loadPersistedData = (): StoredLeaderboardData | null => {
@@ -72,6 +73,8 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
   };
 
   useEffect(() => {
+    if (isLoading) return; // Prevent multiple simultaneous calls
+    
     // Load persisted data or fetch new data
     const persisted = loadPersistedData();
     const needsUpdate = shouldUpdate();
@@ -89,7 +92,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
 
     // Set up interval to check for updates every minute
     const checkInterval = setInterval(() => {
-      if (shouldUpdate()) {
+      if (shouldUpdate() && !isLoading) {
         fetchLeaderboard(false); // Adjust existing ELOs
       }
     }, 60 * 1000); // Check every minute
@@ -116,6 +119,9 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
 
   // Build leaderboard from existing ELOs without fetching or modifying
   const buildLeaderboardFromExistingElos = async (elosMap: Map<string, number>) => {
+    if (isLoading) return;
+    setIsLoading(true);
+    
     try {
       const { data: profiles, error } = await supabase
         .from("profiles")
@@ -151,10 +157,15 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
       }
     } catch (error) {
       console.error("Error building leaderboard:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const fetchLeaderboard = async (isInitial: boolean = false) => {
+    if (isLoading) return;
+    setIsLoading(true);
+    
     try {
       // Fetch all profiles with ELO
       const { data: profiles, error } = await supabase
@@ -225,6 +236,8 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
       }
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
