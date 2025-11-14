@@ -111,9 +111,35 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     return Math.round(boundedElo / 10) * 10;
   };
 
+  // Compute user's ELO and global rank efficiently (no heavy client sorting)
+  const computeUserEloAndRank = async () => {
+    try {
+      if (!userId) return;
+      // Fetch user's ELO
+      const { data: userProfile, error: userErr } = await supabase
+        .from('profiles')
+        .select('game_elo')
+        .eq('id', userId)
+        .maybeSingle();
+      if (userErr) throw userErr;
+      const elo = userProfile?.game_elo ?? 1200;
+      setUserElo(elo);
+      // Count how many users have strictly higher ELO to compute rank
+      const { count } = await supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .gt('game_elo', elo);
+      const higher = count ?? 0;
+      setUserRank(higher + 1);
+    } catch (e) {
+      console.error('Error computing user rank:', e);
+      // Fallback if something goes wrong
+      setUserRank(null);
+    }
+  };
+
   // Build leaderboard from existing ELOs without fetching or modifying
   const buildLeaderboardFromExistingElos = async (elosMap: Map<string, number>) => {
-    if (isLoading) return;
     setIsLoading(true);
     
     try {
@@ -121,7 +147,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         .from("profiles")
         .select("id, nickname, avatar_url, game_elo, is_admin_profile")
         .order("game_elo", { ascending: false })
-        .limit(200);
+        .limit(5);
 
       if (error) throw error;
 
@@ -140,14 +166,9 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         // Get top 5
         setTopPlayers(sortedProfiles.slice(0, 5));
 
-        // Find user's rank and ELO
+        // Compute user's rank via count, independent of top 5
         if (userId) {
-          const userProfile = sortedProfiles.find(p => p.id === userId);
-          if (userProfile) {
-            setUserElo(userProfile.game_elo || 1200);
-            const rank = sortedProfiles.findIndex(p => p.id === userId) + 1;
-            setUserRank(rank);
-          }
+          await computeUserEloAndRank();
         }
       }
     } catch (error) {
@@ -167,7 +188,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         .from("profiles")
         .select("id, nickname, avatar_url, game_elo, is_admin_profile")
         .order("game_elo", { ascending: false })
-        .limit(200);
+        .limit(5);
 
       if (error) throw error;
 
@@ -220,14 +241,9 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         // Get top 5
         setTopPlayers(sortedProfiles.slice(0, 5));
 
-        // Find user's rank and ELO
+        // Compute user's rank via count, independent of top 5
         if (userId) {
-          const userProfile = sortedProfiles.find(p => p.id === userId);
-          if (userProfile) {
-            setUserElo(userProfile.game_elo || 1200);
-            const rank = sortedProfiles.findIndex(p => p.id === userId) + 1;
-            setUserRank(rank);
-          }
+          await computeUserEloAndRank();
         }
       }
     } catch (error) {
