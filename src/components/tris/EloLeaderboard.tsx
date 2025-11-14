@@ -90,14 +90,8 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
       fetchLeaderboard(!persisted); // true if no persisted data (initial), false if updating
     }
 
-    // Set up interval to check for updates every minute
-    const checkInterval = setInterval(() => {
-      if (shouldUpdate() && !isLoading) {
-        fetchLeaderboard(false); // Adjust existing ELOs
-      }
-    }, 60 * 1000); // Check every minute
-    
-    return () => clearInterval(checkInterval);
+    // Periodic updates disabled to prevent UI stalls
+    // We will refresh ELOs only on mount or when userId changes
   }, [userId]);
 
   const generateHighElo = () => {
@@ -126,7 +120,8 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
       const { data: profiles, error } = await supabase
         .from("profiles")
         .select("id, nickname, avatar_url, game_elo, is_admin_profile")
-        .order("game_elo", { ascending: false });
+        .order("game_elo", { ascending: false })
+        .limit(200);
 
       if (error) throw error;
 
@@ -171,7 +166,8 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
       const { data: profiles, error } = await supabase
         .from("profiles")
         .select("id, nickname, avatar_url, game_elo, is_admin_profile")
-        .order("game_elo", { ascending: false });
+        .order("game_elo", { ascending: false })
+        .limit(200);
 
       if (error) throw error;
 
