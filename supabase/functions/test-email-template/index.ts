@@ -169,21 +169,39 @@ serve(async (req) => {
     
     const resend = new Resend(resendApiKey);
 
-    const emailResult = await resend.emails.send({
-      from: "LoveableConnect 💕 <noreply@loveableconnect.com>",
-      to: [testEmail],
-      subject: `[TEST] ${subject}`,
-      html: `
-        <div style="background: #fff3cd; border: 2px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 8px; text-align: center;">
-          <strong style="color: #856404;">⚠️ EMAIL DI TEST</strong>
-          <p style="margin: 5px 0; color: #856404; font-size: 14px;">
-            Questa è un'email di prova del template "${template.template_name}".<br/>
-            I dati mostrati sono solo di esempio.
-          </p>
-        </div>
-        ${html}
-      `,
-    });
+    let emailResult;
+    try {
+      emailResult = await resend.emails.send({
+        from: "LoveableConnect 💕 <noreply@loveableconnect.com>",
+        to: [testEmail],
+        subject: `[TEST] ${subject}`,
+        html: `
+          <div style="background: #fff3cd; border: 2px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 8px; text-align: center;">
+            <strong style="color: #856404;">⚠️ EMAIL DI TEST</strong>
+            <p style="margin: 5px 0; color: #856404; font-size: 14px;">
+              Questa è un'email di prova del template "${template.template_name}".<br/>
+              I dati mostrati sono solo di esempio.
+            </p>
+          </div>
+          ${html}
+        `,
+      });
+    } catch (sendError: any) {
+      // Gestisce errore specifico di sandbox mode
+      const errorMsg = sendError?.message || String(sendError);
+      if (errorMsg.includes('testing emails') || errorMsg.includes('verify a domain')) {
+        throw new Error(
+          `🔒 Il dominio loveableconnect.com è in modalità Sandbox su Resend.\n\n` +
+          `📧 Per testare ora, usa l'email: loveableconnect@hotmail.com\n\n` +
+          `✅ Per inviare ad altri destinatari:\n` +
+          `1. Vai su resend.com/domains\n` +
+          `2. Clicca su loveableconnect.com\n` +
+          `3. Attiva il dominio per produzione\n\n` +
+          `Dettaglio errore: ${errorMsg}`
+        );
+      }
+      throw sendError;
+    }
 
     console.log(`Resend response:`, emailResult);
     
