@@ -1134,7 +1134,7 @@ export const RisikoBoard = ({ onGameEnd, userProfile, opponentProfile }: RisikoB
               {gameState.territories.filter(t => t.owner === 'red').reduce((sum, t) => sum + t.troops, 0)} truppe
             </p>
             <p className="text-xs text-red-400 font-semibold">
-              ELO: {opponentProfile?.game_elo || 1200}
+              ELO: {(() => { try { if (opponentProfile?.id) { const s = localStorage.getItem('elo_leaderboard_data'); if (s) { const d = JSON.parse(s) as { adminElos: Record<string, number> }; const v = d?.adminElos?.[opponentProfile.id]; if (typeof v === 'number') return Math.round(v/10)*10; } } } catch {} return Math.round(((opponentProfile?.game_elo || 1200))/10)*10; })()}
             </p>
           </div>
           <div className="relative">

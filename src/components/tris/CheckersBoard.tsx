@@ -78,7 +78,23 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     initializeBoard();
     fetchCurrentUserProfile();
     startBotEmojiSystem();
-    setOpponentElo(Math.floor(Math.random() * 601) + 1000);
+    // Set opponent ELO from leaderboard (admin bots) or fallback to opponent prop
+    try {
+      const stored = localStorage.getItem('elo_leaderboard_data');
+      if (stored && opponent?.id) {
+        const data = JSON.parse(stored) as { adminElos: Record<string, number> };
+        const lbElo = data?.adminElos?.[opponent.id];
+        if (typeof lbElo === 'number') {
+          setOpponentElo(Math.round(lbElo / 10) * 10);
+        } else {
+          setOpponentElo(Math.round(((opponent.game_elo || 1200)) / 10) * 10);
+        }
+      } else {
+        setOpponentElo(Math.round(((opponent.game_elo || 1200)) / 10) * 10);
+      }
+    } catch {
+      setOpponentElo(Math.round(((opponent.game_elo || 1200)) / 10) * 10);
+    }
 
     // Realtime ELO updates
     let channel: ReturnType<typeof supabase.channel> | null = null;
