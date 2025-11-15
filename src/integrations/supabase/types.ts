@@ -191,6 +191,42 @@ export type Database = {
         }
         Relationships: []
       }
+      email_templates: {
+        Row: {
+          created_at: string | null
+          default_html_content: string
+          description: string | null
+          html_content: string
+          id: string
+          subject: string
+          template_key: string
+          template_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          default_html_content: string
+          description?: string | null
+          html_content: string
+          id?: string
+          subject: string
+          template_key: string
+          template_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          default_html_content?: string
+          description?: string | null
+          html_content?: string
+          id?: string
+          subject?: string
+          template_key?: string
+          template_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       hidden_matches: {
         Row: {
           hidden_at: string
