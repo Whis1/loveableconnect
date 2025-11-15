@@ -54,7 +54,7 @@ const handler = async (req: Request): Promise<Response> => {
     const resetUrl = linkData.properties.action_link;
 
     const emailResponse = await resend.emails.send({
-      from: "LoveableConnect 💕 <onboarding@resend.dev>",
+      from: "LoveableConnect 💕 <noreply@loveableconnect.com>",
       to: [email],
       subject: "🔐 Reimposta la tua Password - LoveableConnect",
       html: `
