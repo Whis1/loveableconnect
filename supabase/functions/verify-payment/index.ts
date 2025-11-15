@@ -114,7 +114,7 @@ serve(async (req) => {
       const amountEur = (purchase.amount_cents / 100).toFixed(2);
       
       await resend.emails.send({
-        from: "LoveableConnect <onboarding@resend.dev>",
+        from: "LoveableConnect <noreply@loveableconnect.com>",
         to: [user.email!],
         subject: "💰 Crediti Acquistati con Successo - LoveableConnect",
         html: `
