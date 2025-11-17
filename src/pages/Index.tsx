@@ -18,6 +18,19 @@ const Index = () => {
     let lastUpdateTime = 0;
     const UPDATE_THROTTLE = 30000; // Update max once every 30 seconds
 
+    // Detect if we're on an OAuth callback URL (avoid redirecting away before tokens are processed)
+    const isAuthCallback = (() => {
+      if (typeof window === 'undefined') return false;
+      const hash = window.location.hash || '';
+      const params = new URLSearchParams(window.location.search);
+      return (
+        hash.includes('access_token') ||
+        params.has('code') ||
+        params.has('access_token') ||
+        params.has('provider_token')
+      );
+    })();
+
     const updateLastActive = async () => {
       const now = Date.now();
       if (now - lastUpdateTime < UPDATE_THROTTLE) {
@@ -34,19 +47,24 @@ const Index = () => {
     };
 
     // 1) Listen to auth state changes FIRST to avoid race conditions
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         setIsAuthenticated(true);
         // Defer side-effects to avoid blocking the callback
         setTimeout(() => {
           updateLastActive();
         }, 0);
+        setLoading(false);
       } else {
-        setIsAuthenticated(false);
-        navigate('/auth');
+        // If we're on the OAuth callback, don't navigate away yet
+        if (isAuthCallback) {
+          setLoading(true);
+        } else {
+          setIsAuthenticated(false);
+          navigate('/auth');
+          setLoading(false);
+        }
       }
-      // Ensure we clear loading state on any auth event
-      setLoading(false);
     });
 
     // 2) Then check for an existing session
@@ -56,15 +74,21 @@ const Index = () => {
         setTimeout(() => {
           updateLastActive();
         }, 0);
+        setLoading(false);
       } else {
-        setIsAuthenticated(false);
-        navigate('/auth');
+        // If this is an OAuth return URL, wait for Supabase to finish processing tokens
+        if (isAuthCallback) {
+          setLoading(true);
+        } else {
+          setIsAuthenticated(false);
+          navigate('/auth');
+          setLoading(false);
+        }
       }
-      setLoading(false);
     }).catch(() => setLoading(false));
 
     // Safety net: never keep the spinner forever
-    const loadingTimeout = setTimeout(() => setLoading(false), 4000);
+    const loadingTimeout = setTimeout(() => setLoading(false), 8000);
 
     // Update last_active every minute
     const activityInterval = setInterval(() => setTimeout(updateLastActive, 0), 60000);
