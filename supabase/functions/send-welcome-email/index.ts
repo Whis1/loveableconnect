@@ -13,45 +13,17 @@ serve(async (req) => {
   }
 
   try {
-    const { userId, subscriptionType, tier, expiresAt } = await req.json();
+    const { userId, email, nickname } = await req.json();
 
-    if (!userId || !subscriptionType) {
-      throw new Error("userId e subscriptionType sono obbligatori");
+    if (!userId || !email) {
+      throw new Error("userId e email sono obbligatori");
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get user email from auth
-    const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(userId);
-    
-    if (userError || !user?.email) {
-      console.error("User not found or no email:", userError);
-      return new Response(JSON.stringify({ success: false, error: "User not found" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 404,
-      });
-    }
-
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
-    let planName = "Premium";
-    let planEmoji = "✨";
-    
-    if (subscriptionType === "monthly") {
-      planName = tier === "gold" ? "Gold Mensile" : tier === "platinum" ? "Platinum Mensile" : "Premium Mensile";
-      planEmoji = tier === "gold" ? "🥇" : tier === "platinum" ? "💎" : "✨";
-    } else if (subscriptionType === "yearly") {
-      planName = tier === "gold" ? "Gold Annuale" : tier === "platinum" ? "Platinum Annuale" : "Premium Annuale";
-      planEmoji = tier === "gold" ? "🥇" : tier === "platinum" ? "💎" : "✨";
-    }
-
-    const formattedDate = expiresAt ? new Date(expiresAt).toLocaleDateString('it-IT', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    }) : '';
 
     // Helper: replace {{placeholders}}
     const replaceVars = (text: string, vars: Record<string, string>) =>
@@ -61,16 +33,14 @@ serve(async (req) => {
     const { data: tmpl } = await supabase
       .from('email_templates')
       .select('*')
-      .eq('template_key', 'subscription_renewed')
+      .eq('template_key', 'welcome')
       .maybeSingle();
 
     const variables = {
-      subscriptionType: planName,
-      tier: tier || '',
-      expiresAt: formattedDate,
+      nickname: nickname || 'Utente',
     } as Record<string, string>;
 
-    const subject = tmpl ? replaceVars(tmpl.subject, variables) : "Il tuo abbonamento è stato rinnovato! 🎉";
+    const subject = tmpl ? replaceVars(tmpl.subject, variables) : "Benvenuto su LoveableConnect! 💕";
     const html = tmpl ? replaceVars(tmpl.html_content, variables) : `
         <!DOCTYPE html>
         <html lang="it">
@@ -81,12 +51,15 @@ serve(async (req) => {
           <body style="margin:0; padding:0; background:linear-gradient(135deg,#fde2e4,#f3e8ff); font-family:'Segoe UI',Roboto,Arial,sans-serif;">
             <div style="max-width:600px; margin:40px auto; background:white; border-radius:20px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.1);">
               <div style="background:linear-gradient(135deg,#ec4899,#9333ea); padding:40px 20px; text-align:center;">
-                <h1 style="color:white; margin:10px 0 0; font-size:32px; font-weight:800;">Abbonamento Rinnovato! ${planEmoji}</h1>
+                <h1 style="color:white; margin:10px 0 0; font-size:32px; font-weight:800;">Benvenuto su LoveableConnect! 💕</h1>
               </div>
               <div style="padding:40px 30px;">
-                <p>Il tuo abbonamento <strong>${planName}</strong> è stato rinnovato con successo!</p>
-                ${formattedDate ? `<p>Nuova scadenza: <strong>${formattedDate}</strong></p>` : ''}
-                <p>Continua a godere di tutti i vantaggi premium! ✨</p>
+                <p>Ciao <strong>${nickname || 'Utente'}</strong>!</p>
+                <p>Siamo felici di averti con noi! Il tuo account è stato creato con successo.</p>
+                <p>Inizia subito a esplorare e trovare nuove connessioni! ✨</p>
+                <div style="text-align:center; margin:30px 0;">
+                  <a href="https://loveableconnect.com" style="display:inline-block; background:linear-gradient(135deg,#ec4899,#9333ea); color:white; padding:15px 40px; border-radius:25px; text-decoration:none; font-weight:bold;">Inizia Ora</a>
+                </div>
               </div>
             </div>
           </body>
@@ -94,7 +67,7 @@ serve(async (req) => {
 
     await resend.emails.send({
       from: "LoveableConnect 💕 <noreply@loveableconnect.com>",
-      to: [user.email],
+      to: [email],
       subject,
       html,
     });
@@ -104,7 +77,7 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    console.error("Errore nell'invio dell'email di rinnovo abbonamento:", error);
+    console.error("Errore nell'invio dell'email di benvenuto:", error);
     const msg = error instanceof Error ? error.message : "Errore sconosciuto";
     return new Response(JSON.stringify({ error: msg }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
