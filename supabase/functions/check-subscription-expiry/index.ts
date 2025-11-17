@@ -58,7 +58,7 @@ serve(async (req) => {
 
         try {
           await resend.emails.send({
-            from: "LoveableConnect <noreply@loveableconnect.com>",
+            from: "LoveableConnect <onboarding@resend.dev>",
             to: [user.email],
             subject: "⚠️ Il tuo Premium sta per scadere - LoveableConnect",
             html: `
@@ -181,7 +181,7 @@ serve(async (req) => {
 
         try {
           await resend.emails.send({
-            from: "LoveableConnect <noreply@loveableconnect.com>",
+            from: "LoveableConnect <onboarding@resend.dev>",
             to: [user.email],
             subject: "💔 Il tuo Premium è scaduto - LoveableConnect",
             html: `
