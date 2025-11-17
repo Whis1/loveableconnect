@@ -28,7 +28,6 @@ import AdminSupport from "./pages/AdminSupport";
 import AdminCreateProfile from "./pages/AdminCreateProfile";
 import Chats from "./pages/Chats";
 import ChattorsLogin from "./pages/ChattorsLogin";
-import AuthCallback from "./pages/AuthCallback";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -73,7 +72,6 @@ const App = () => (
             <Route path="/admin/create-profile" element={<AdminCreateProfile />} />
             <Route path="/chattors-login" element={<ChattorsLogin />} />
             <Route path="/chattors" element={<Chats />} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
