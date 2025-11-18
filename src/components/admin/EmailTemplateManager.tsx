@@ -30,10 +30,10 @@ export function EmailTemplateManager() {
   const [editedSubject, setEditedSubject] = useState("");
   const [editedContent, setEditedContent] = useState("");
   const [saving, setSaving] = useState(false);
-  const [sendingTest, setSendingTest] = useState(false);
-  const [testEmailDialogOpen, setTestEmailDialogOpen] = useState(false);
-  const [testEmail, setTestEmail] = useState("");
-  const [selectedTestTemplate, setSelectedTestTemplate] = useState<string | null>(null);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [recipientEmail, setRecipientEmail] = useState("");
+  const [selectedEmailTemplate, setSelectedEmailTemplate] = useState<string | null>(null);
 
   useEffect(() => {
     loadTemplates();
@@ -121,33 +121,36 @@ export function EmailTemplateManager() {
     }
   };
 
-  const openTestEmailDialog = (templateKey: string) => {
-    setSelectedTestTemplate(templateKey);
-    setTestEmailDialogOpen(true);
+  const openEmailDialog = (templateKey: string) => {
+    setSelectedEmailTemplate(templateKey);
+    setEmailDialogOpen(true);
   };
 
-  const sendTestEmail = async () => {
-    if (!testEmail || !selectedTestTemplate) return;
+  const sendEmail = async () => {
+    if (!recipientEmail || !selectedEmailTemplate) {
+      toast.error("Inserisci un indirizzo email valido");
+      return;
+    }
 
-    setSendingTest(true);
+    setSendingEmail(true);
     try {
       const { error } = await supabase.functions.invoke('test-email-template', {
         body: { 
-          templateKey: selectedTestTemplate,
-          testEmail: testEmail 
-        }
+          templateKey: selectedEmailTemplate,
+          recipientEmail: recipientEmail 
+        },
       });
 
       if (error) throw error;
 
-      toast.success(`Email di test inviata a ${testEmail}!`);
-      setTestEmailDialogOpen(false);
-      setTestEmail("");
-      setSelectedTestTemplate(null);
+      toast.success("Email inviata con successo!");
+      setEmailDialogOpen(false);
+      setRecipientEmail("");
+      setSelectedEmailTemplate(null);
     } catch (error: any) {
-      toast.error("Errore nell'invio dell'email di test: " + error.message);
+      toast.error("Errore nell'invio dell'email: " + error.message);
     } finally {
-      setSendingTest(false);
+      setSendingEmail(false);
     }
   };
 
@@ -195,11 +198,11 @@ export function EmailTemplateManager() {
                         className="w-full flex items-center gap-2"
                         onClick={(e) => {
                           e.stopPropagation();
-                          openTestEmailDialog(template.template_key);
+                          openEmailDialog(template.template_key);
                         }}
                       >
                         <Send className="w-3 h-3" />
-                        Invia Test
+                        Invia Email
                       </Button>
                     </CardContent>
                   </Card>
@@ -327,31 +330,31 @@ export function EmailTemplateManager() {
         </CardContent>
       </Card>
 
-      <Dialog open={testEmailDialogOpen} onOpenChange={setTestEmailDialogOpen}>
+      <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Invia Email di Test</DialogTitle>
+            <DialogTitle>Invia Email</DialogTitle>
             <DialogDescription>
-              Inserisci l'indirizzo email a cui inviare il template di test
+              Inserisci l'indirizzo email del destinatario
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="test-email">Email destinatario</Label>
+              <Label htmlFor="recipient-email">Email destinatario</Label>
               <Input
-                id="test-email"
+                id="recipient-email"
                 type="email"
                 placeholder="esempio@email.com"
-                value={testEmail}
-                onChange={(e) => setTestEmail(e.target.value)}
+                value={recipientEmail}
+                onChange={(e) => setRecipientEmail(e.target.value)}
               />
             </div>
             <Button 
-              onClick={sendTestEmail} 
-              disabled={sendingTest || !testEmail}
+              onClick={sendEmail} 
+              disabled={sendingEmail || !recipientEmail}
               className="w-full"
             >
-              {sendingTest ? "Invio..." : "Invia Email di Test"}
+              {sendingEmail ? "Invio..." : "Invia Email"}
             </Button>
           </div>
         </DialogContent>
