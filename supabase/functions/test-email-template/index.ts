@@ -13,14 +13,14 @@ serve(async (req) => {
   }
 
   try {
-    const { templateKey, testEmail } = await req.json();
+    const { templateKey, recipientEmail } = await req.json();
 
     if (!templateKey) {
       throw new Error("templateKey è obbligatorio");
     }
 
-    if (!testEmail) {
-      throw new Error("testEmail è obbligatorio");
+    if (!recipientEmail) {
+      throw new Error("recipientEmail è obbligatorio");
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -136,7 +136,7 @@ serve(async (req) => {
       
       case 'support_email':
         variables = {
-          userEmail: testEmail,
+          userEmail: recipientEmail,
           message: 'Questo è un messaggio di test per il supporto.',
         };
         break;
@@ -165,7 +165,7 @@ serve(async (req) => {
       throw new Error("RESEND_API_KEY non configurata");
     }
 
-    console.log(`Attempting to send test email for template: ${templateKey} to ${testEmail}`);
+    console.log(`Attempting to send test email for template: ${templateKey} to ${recipientEmail}`);
     
     const resend = new Resend(resendApiKey);
 
@@ -173,7 +173,7 @@ serve(async (req) => {
     try {
       emailResult = await resend.emails.send({
         from: "LoveableConnect 💕 <noreply@loveableconnect.com>",
-        to: [testEmail],
+        to: [recipientEmail],
         subject: `[TEST] ${subject}`,
         html: `
           <div style="background: #fff3cd; border: 2px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 8px; text-align: center;">
@@ -214,7 +214,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       success: true, 
-      message: `Email di test inviata a ${testEmail}` 
+      message: `Email di test inviata a ${recipientEmail}` 
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
