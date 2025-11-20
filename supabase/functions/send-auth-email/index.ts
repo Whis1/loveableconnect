@@ -13,223 +13,264 @@ serve(async (req) => {
   }
 
   try {
-    const payload = await req.json();
-    console.log("Auth email webhook payload:", payload);
-
-    const {
-      user,
-      email_data,
-    } = payload;
-
-    if (!user || !user.email) {
-      throw new Error("User email not found in payload");
-    }
-
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const { user, email_data } = await req.json();
+    
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-    // Helper: replace {{placeholders}}
-    const replaceVars = (text: string, vars: Record<string, string>) =>
-      Object.entries(vars).reduce((acc, [k, v]) => acc.replaceAll(`{{${k}}}`, v ?? ''), text);
-
-    // Determina il tipo di email e il template key
-    let templateKey = '';
+    let emailType = email_data.email_action_type || 'signup';
     let subject = '';
-    let defaultHtml = '';
-    const variables: Record<string, string> = {
-      email: user.email,
-      nickname: user.user_metadata?.nickname || user.user_metadata?.full_name || 'Utente',
-    };
+    let htmlContent = '';
 
-    // Email di conferma registrazione
-    if (email_data?.token_hash && email_data?.email_action_type === 'signup') {
-      templateKey = 'email_confirmation';
-      const confirmUrl = `${email_data.site_url}/auth/confirm?token_hash=${email_data.token_hash}&type=signup`;
-      variables.confirmation_url = confirmUrl;
-      variables.token = email_data.token || '';
+    // Template per conferma email (signup)
+    if (emailType === 'signup' || emailType === 'magiclink') {
+      const confirmationUrl = email_data.confirmation_url || 
+        `${supabaseUrl}/auth/v1/verify?token=${email_data.token_hash}&type=${emailType}&redirect_to=${email_data.redirect_to || ''}`;
       
-      subject = "Conferma il tuo account - LoveableConnect 💕";
-      defaultHtml = `
-        <!DOCTYPE html>
-        <html lang="it">
-          <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-          <body style="margin:0; padding:0; background:linear-gradient(135deg,#fde2e4,#f3e8ff); font-family:'Segoe UI',Roboto,Arial,sans-serif;">
-            <div style="max-width:600px; margin:40px auto; background:white; border-radius:20px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.1);">
-              <div style="background:linear-gradient(135deg,#ec4899,#9333ea); padding:40px 20px; text-align:center;">
-                <h1 style="color:white; margin:10px 0 0; font-size:32px; font-weight:800;">Conferma il tuo account 💕</h1>
-              </div>
-              <div style="padding:40px 30px;">
-                <p>Ciao <strong>${variables.nickname}</strong>!</p>
-                <p>Benvenuto su LoveableConnect! Per completare la registrazione, conferma il tuo indirizzo email:</p>
-                <div style="text-align:center; margin:30px 0;">
-                  <a href="${confirmUrl}" style="display:inline-block; background:linear-gradient(135deg,#ec4899,#9333ea); color:white; padding:15px 40px; border-radius:25px; text-decoration:none; font-weight:bold;">Conferma Email</a>
-                </div>
-                <p style="font-size:12px; color:#666;">Se il pulsante non funziona, copia questo link: ${confirmUrl}</p>
-              </div>
-            </div>
-          </body>
-        </html>`;
+      subject = '💌 Conferma la tua Email - LoveableConnect';
+      htmlContent = `
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>LoveableConnect - Conferma Email</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fff5f8;
+      color: #333;
+      padding: 40px;
+      margin: 0;
     }
-    // Email di reset password
-    else if (email_data?.token_hash && (email_data?.email_action_type === 'recovery' || email_data?.email_action_type === 'magiclink')) {
-      templateKey = 'password_reset';
-      const resetUrl = `${email_data.site_url}/reset-password?token_hash=${email_data.token_hash}&type=recovery`;
-      variables.reset_url = resetUrl;
-      variables.token = email_data.token || '';
-      
-      subject = "Reset della Password - LoveableConnect 💕";
-      defaultHtml = `
-        <!DOCTYPE html>
-        <html lang="it">
-          <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-          <body style="margin:0; padding:0; background:linear-gradient(135deg,#fde2e4,#f3e8ff); font-family:'Segoe UI',Roboto,Arial,sans-serif;">
-            <div style="max-width:600px; margin:40px auto; background:white; border-radius:20px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.1);">
-              <div style="background:linear-gradient(135deg,#ec4899,#9333ea); padding:40px 20px; text-align:center;">
-                <h1 style="color:white; margin:10px 0 0; font-size:32px; font-weight:800;">Reset Password 🔒</h1>
-              </div>
-              <div style="padding:40px 30px;">
-                <p>Ciao <strong>${variables.nickname}</strong>!</p>
-                <p>Hai richiesto di reimpostare la tua password. Clicca sul pulsante qui sotto per procedere:</p>
-                <div style="text-align:center; margin:30px 0;">
-                  <a href="${resetUrl}" style="display:inline-block; background:linear-gradient(135deg,#ec4899,#9333ea); color:white; padding:15px 40px; border-radius:25px; text-decoration:none; font-weight:bold;">Reimposta Password</a>
-                </div>
-                <p style="font-size:12px; color:#666;">Se non hai richiesto questo reset, ignora questa email.</p>
-                <p style="font-size:12px; color:#666;">Link: ${resetUrl}</p>
-              </div>
-            </div>
-          </body>
-        </html>`;
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 30px;
+      text-align: center;
     }
-    // Magic Link
-    else if (email_data?.token_hash && email_data?.email_action_type === 'magiclink') {
-      templateKey = 'magic_link';
-      const magicUrl = `${email_data.site_url}/auth/confirm?token_hash=${email_data.token_hash}&type=magiclink`;
-      variables.magic_url = magicUrl;
-      variables.token = email_data.token || '';
-      
-      subject = "Il tuo Magic Link - LoveableConnect ✨";
-      defaultHtml = `
-        <!DOCTYPE html>
-        <html lang="it">
-          <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-          <body style="margin:0; padding:0; background:linear-gradient(135deg,#fde2e4,#f3e8ff); font-family:'Segoe UI',Roboto,Arial,sans-serif;">
-            <div style="max-width:600px; margin:40px auto; background:white; border-radius:20px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.1);">
-              <div style="background:linear-gradient(135deg,#ec4899,#9333ea); padding:40px 20px; text-align:center;">
-                <h1 style="color:white; margin:10px 0 0; font-size:32px; font-weight:800;">Accedi con Magic Link ✨</h1>
-              </div>
-              <div style="padding:40px 30px;">
-                <p>Ciao <strong>${variables.nickname}</strong>!</p>
-                <p>Clicca sul pulsante qui sotto per accedere al tuo account:</p>
-                <div style="text-align:center; margin:30px 0;">
-                  <a href="${magicUrl}" style="display:inline-block; background:linear-gradient(135deg,#ec4899,#9333ea); color:white; padding:15px 40px; border-radius:25px; text-decoration:none; font-weight:bold;">Accedi Ora</a>
-                </div>
-                <p style="font-size:12px; color:#666;">Se non hai richiesto questo link, ignora questa email.</p>
-              </div>
-            </div>
-          </body>
-        </html>`;
+    .logo {
+      display: block;
+      margin: 0 auto 20px auto;
+      width: 140px;
+      border-radius: 12px;
     }
-    // Email cambio indirizzo
-    else if (email_data?.token_hash && email_data?.email_action_type === 'email_change') {
-      templateKey = 'email_change';
-      const changeUrl = `${email_data.site_url}/auth/confirm?token_hash=${email_data.token_hash}&type=email_change`;
-      variables.change_url = changeUrl;
-      variables.new_email = email_data.new_email || user.email;
-      
-      subject = "Conferma cambio email - LoveableConnect 📧";
-      defaultHtml = `
-        <!DOCTYPE html>
-        <html lang="it">
-          <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-          <body style="margin:0; padding:0; background:linear-gradient(135deg,#fde2e4,#f3e8ff); font-family:'Segoe UI',Roboto,Arial,sans-serif;">
-            <div style="max-width:600px; margin:40px auto; background:white; border-radius:20px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.1);">
-              <div style="background:linear-gradient(135deg,#ec4899,#9333ea); padding:40px 20px; text-align:center;">
-                <h1 style="color:white; margin:10px 0 0; font-size:32px; font-weight:800;">Conferma cambio email 📧</h1>
-              </div>
-              <div style="padding:40px 30px;">
-                <p>Ciao <strong>${variables.nickname}</strong>!</p>
-                <p>Hai richiesto di cambiare il tuo indirizzo email. Conferma il nuovo indirizzo:</p>
-                <div style="text-align:center; margin:30px 0;">
-                  <a href="${changeUrl}" style="display:inline-block; background:linear-gradient(135deg,#ec4899,#9333ea); color:white; padding:15px 40px; border-radius:25px; text-decoration:none; font-weight:bold;">Conferma Cambio</a>
-                </div>
-              </div>
-            </div>
-          </body>
-        </html>`;
+    h1 {
+      color: #e6397d;
     }
-    // Invito
-    else if (email_data?.token_hash && email_data?.email_action_type === 'invite') {
-      templateKey = 'invite';
-      const inviteUrl = `${email_data.site_url}/auth/confirm?token_hash=${email_data.token_hash}&type=invite`;
-      variables.invite_url = inviteUrl;
-      variables.inviter_name = email_data.inviter_name || 'Un membro';
-      
-      subject = "Sei stato invitato! - LoveableConnect 💌";
-      defaultHtml = `
-        <!DOCTYPE html>
-        <html lang="it">
-          <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-          <body style="margin:0; padding:0; background:linear-gradient(135deg,#fde2e4,#f3e8ff); font-family:'Segoe UI',Roboto,Arial,sans-serif;">
-            <div style="max-width:600px; margin:40px auto; background:white; border-radius:20px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.1);">
-              <div style="background:linear-gradient(135deg,#ec4899,#9333ea); padding:40px 20px; text-align:center;">
-                <h1 style="color:white; margin:10px 0 0; font-size:32px; font-weight:800;">Sei stato invitato! 💌</h1>
-              </div>
-              <div style="padding:40px 30px;">
-                <p><strong>${variables.inviter_name}</strong> ti ha invitato a unirti a LoveableConnect!</p>
-                <p>Clicca sul pulsante per accettare l'invito:</p>
-                <div style="text-align:center; margin:30px 0;">
-                  <a href="${inviteUrl}" style="display:inline-block; background:linear-gradient(135deg,#ec4899,#9333ea); color:white; padding:15px 40px; border-radius:25px; text-decoration:none; font-weight:bold;">Accetta Invito</a>
-                </div>
-              </div>
-            </div>
-          </body>
-        </html>`;
+    p {
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    .btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 14px 28px;
+      background-color: #e6397d;
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 8px;
+      transition: background-color 0.3s ease;
+    }
+    .btn:hover {
+      background-color: #c02765;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 12px;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="https://i.imgur.com/L9g9qMA.png" alt="LoveableConnect Logo" class="logo">
+    
+    <h1>💌 Conferma la tua Email</h1>
+    <p>Ciao! Grazie per esserti registrato su <strong>LoveableConnect</strong>, il luogo dove le connessioni diventano realtà.</p>
+    <p>Per completare la registrazione e iniziare la tua avventura romantica, clicca sul pulsante qui sotto:</p>
+    <a href="${confirmationUrl}" class="btn">✅ Conferma il tuo Account</a>
+    <div class="footer">
+      <p>Se non hai effettuato tu la registrazione, ignora questa email.</p>
+      <p>Con affetto, il team di LoveableConnect 💖</p>
+    </div>
+  </div>
+</body>
+</html>
+      `;
     }
 
-    // Se non abbiamo identificato il tipo, usa un template generico
-    if (!templateKey) {
-      console.log("Unknown email type, using generic template");
-      templateKey = 'generic_auth';
-      subject = "LoveableConnect - Notifica 💕";
-      defaultHtml = `
-        <!DOCTYPE html>
-        <html lang="it">
-          <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-          <body style="margin:0; padding:0; background:linear-gradient(135deg,#fde2e4,#f3e8ff); font-family:'Segoe UI',Roboto,Arial,sans-serif;">
-            <div style="max-width:600px; margin:40px auto; background:white; border-radius:20px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.1);">
-              <div style="background:linear-gradient(135deg,#ec4899,#9333ea); padding:40px 20px; text-align:center;">
-                <h1 style="color:white; margin:10px 0 0; font-size:32px; font-weight:800;">LoveableConnect 💕</h1>
-              </div>
-              <div style="padding:40px 30px;">
-                <p>Ciao ${variables.nickname}!</p>
-                <p>Hai ricevuto questa email da LoveableConnect.</p>
-              </div>
-            </div>
-          </body>
-        </html>`;
+    // Template per reset password
+    if (emailType === 'recovery') {
+      const resetUrl = email_data.confirmation_url || 
+        `${supabaseUrl}/auth/v1/verify?token=${email_data.token_hash}&type=recovery&redirect_to=${email_data.redirect_to || ''}`;
+      
+      subject = '🔒 Reimposta la tua Password - LoveableConnect';
+      htmlContent = `
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>LoveableConnect - Reset Password</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fff5f8;
+      color: #333;
+      padding: 40px;
+      margin: 0;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 30px;
+      text-align: center;
+    }
+    .logo {
+      display: block;
+      margin: 0 auto 20px auto;
+      width: 140px;
+      border-radius: 12px;
+    }
+    h1 {
+      color: #e6397d;
+    }
+    p {
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    .btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 14px 28px;
+      background-color: #e6397d;
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 8px;
+      transition: background-color 0.3s ease;
+    }
+    .btn:hover {
+      background-color: #c02765;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 12px;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="https://i.imgur.com/L9g9qMA.png" alt="LoveableConnect Logo" class="logo">
+    
+    <h1>💖 Reimposta la tua Password</h1>
+    <p>Ciao! Abbiamo ricevuto la tua richiesta di cambio password su <strong>LoveableConnect</strong>.</p>
+    <p>Per continuare clicca sul pulsante qui sotto:</p>
+    <a href="${resetUrl}" class="btn">🔒 Reimposta Password</a>
+    <div class="footer">
+      <p>Se non hai richiesto tu il cambio password, ignora questa email.</p>
+      <p>Con affetto, il team di LoveableConnect 💌</p>
+    </div>
+  </div>
+</body>
+</html>
+      `;
     }
 
-    // Prova a caricare il template dal database
-    const { data: tmpl } = await supabase
-      .from('email_templates')
-      .select('*')
-      .eq('template_key', templateKey)
-      .maybeSingle();
+    // Template per cambio email
+    if (emailType === 'email_change') {
+      const confirmationUrl = email_data.confirmation_url || 
+        `${supabaseUrl}/auth/v1/verify?token=${email_data.token_hash}&type=email_change&redirect_to=${email_data.redirect_to || ''}`;
+      
+      subject = '📧 Conferma il Cambio Email - LoveableConnect';
+      htmlContent = `
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>LoveableConnect - Cambio Email</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fff5f8;
+      color: #333;
+      padding: 40px;
+      margin: 0;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 30px;
+      text-align: center;
+    }
+    .logo {
+      display: block;
+      margin: 0 auto 20px auto;
+      width: 140px;
+      border-radius: 12px;
+    }
+    h1 {
+      color: #e6397d;
+    }
+    p {
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    .btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 14px 28px;
+      background-color: #e6397d;
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 8px;
+      transition: background-color 0.3s ease;
+    }
+    .btn:hover {
+      background-color: #c02765;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 12px;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="https://i.imgur.com/L9g9qMA.png" alt="LoveableConnect Logo" class="logo">
+    
+    <h1>📧 Conferma il Cambio Email</h1>
+    <p>Ciao! Hai richiesto di modificare l'indirizzo email associato al tuo account <strong>LoveableConnect</strong>.</p>
+    <p>Per confermare il cambio, clicca sul pulsante qui sotto:</p>
+    <a href="${confirmationUrl}" class="btn">✅ Conferma Cambio Email</a>
+    <div class="footer">
+      <p>Se non hai richiesto tu questa modifica, contattaci immediatamente.</p>
+      <p>Con affetto, il team di LoveableConnect 💌</p>
+    </div>
+  </div>
+</body>
+</html>
+      `;
+    }
 
-    const finalSubject = tmpl ? replaceVars(tmpl.subject, variables) : subject;
-    const finalHtml = tmpl ? replaceVars(tmpl.html_content, variables) : defaultHtml;
-
-    // Invia l'email
     await resend.emails.send({
       from: "LoveableConnect 💕 <noreply@loveableconnect.com>",
       to: [user.email],
-      subject: finalSubject,
-      html: finalHtml,
+      subject: subject,
+      html: htmlContent,
     });
-
-    console.log(`Email sent successfully: ${templateKey} to ${user.email}`);
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
