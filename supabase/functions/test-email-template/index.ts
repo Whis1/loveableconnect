@@ -124,13 +124,25 @@ serve(async (req) => {
       
       case 'confirmation_email':
         variables = {
-          confirmLink: 'https://loveable.app/confirm?token=test123456',
+          confirmLink: 'https://loveableconnect.com/auth/confirm?token=test123456',
         };
         break;
       
       case 'reset_password':
         variables = {
-          resetLink: 'https://loveable.app/reset-password?token=test123456',
+          resetLink: 'https://loveableconnect.com/reset-password?token=test123456',
+        };
+        break;
+      
+      case 'subscription_expiring':
+        variables = {
+          subscriptionType: 'Premium Mensile',
+          daysRemaining: '3',
+          expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('it-IT', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+          }),
         };
         break;
       
