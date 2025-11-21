@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Heart, Lock, Sparkles } from "lucide-react";
+import { ArrowLeft, Heart, Lock, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useTextTranslation } from "@/hooks/useTranslation";
 import { MatchBanner } from "@/components/MatchBanner";
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import likesHeartIcon from "@/assets/likes-heart-icon.png";
-import likesBackground from "@/assets/likes-background.png";
+import { useCredits } from "@/hooks/useCredits";
 
 interface LikeWithProfile {
   id: string;
@@ -39,53 +40,6 @@ interface LikeWithProfile {
   };
 }
 
-// Helper function to normalize gender/orientation values to standard codes
-const normalizeValue = (value: string | null | undefined): string | null => {
-  if (!value) return null;
-  const normalized = value.toLowerCase().trim();
-  
-  // Gender mappings
-  const genderMap: Record<string, string> = {
-    'male': 'male', 'man': 'male', 'uomo': 'male', 'homme': 'male', 'mann': 'male', 'hombre': 'male',
-    'female': 'female', 'woman': 'female', 'donna': 'female', 'femme': 'female', 'frau': 'female', 'mujer': 'female',
-    'non-binary': 'non-binary', 'nonbinary': 'non-binary', 'non binario': 'non-binary', 'nicht-binär': 'non-binary',
-    'transexual': 'transexual', 'transessuale': 'transexual', 'transsexuell': 'transexual',
-    'transgender': 'transgender', 'transgenre': 'transgender',
-    'genderfluid': 'genderfluid', 'genre fluide': 'genderfluid'
-  };
-  
-  // Orientation mappings
-  const orientationMap: Record<string, string> = {
-    'heterosexual': 'heterosexual', 'eterosessuale': 'heterosexual', 'hétérosexuel': 'heterosexual', 'heterosexuell': 'heterosexual',
-    'homosexual': 'homosexual', 'omosessuale': 'homosexual', 'homosexuel': 'homosexual', 'homosexuell': 'homosexual',
-    'bisexual': 'bisexual', 'bisessuale': 'bisexual', 'bisexuel': 'bisexual', 'bisexuell': 'bisexual',
-    'pansexual': 'pansexual', 'pansessuale': 'pansexual', 'pansexuel': 'pansexual', 'pansexuell': 'pansexual',
-    'asexual': 'asexual', 'asessuale': 'asexual', 'asexuel': 'asexual', 'asexuell': 'asexual',
-    'other': 'other', 'altro': 'other', 'autre': 'other', 'sonstiges': 'other'
-  };
-  
-  // Relationship status mappings
-  const relationshipStatusMap: Record<string, string> = {
-    'single': 'single', 'singolo': 'single', 'célibataire': 'single', 'ledig': 'single',
-    'in relationship': 'in_relationship', 'in_relationship': 'in_relationship', 'in una relazione': 'in_relationship',
-    'married': 'married', 'sposato': 'married', 'marié': 'married', 'verheiratet': 'married',
-    'divorced': 'divorced', 'divorziato': 'divorced', 'divorcé': 'divorced', 'geschieden': 'divorced',
-    'widowed': 'widowed', 'vedovo': 'widowed', 'veuf': 'widowed', 'verwitwet': 'widowed',
-    'prefer not say': 'prefer_not_say', 'prefer_not_say': 'prefer_not_say', 'preferisco non dire': 'prefer_not_say'
-  };
-  
-  // Relationship type mappings
-  const relationshipMap: Record<string, string> = {
-    'serious': 'serious', 'seria': 'serious', 'sérieuse': 'serious', 'ernsthafte': 'serious',
-    'casual': 'casual', 'occasionale': 'casual', 'occasionnel': 'casual', 'zwanglos': 'casual',
-    'friendship': 'friendship', 'amicizia': 'friendship', 'amitié': 'friendship', 'freundschaft': 'friendship',
-    'not-sure': 'not-sure', 'non sono sicuro': 'not-sure', 'pas sûr': 'not-sure', 'unsicher': 'not-sure'
-  };
-  
-  // Try all mappings
-  return genderMap[normalized] || orientationMap[normalized] || relationshipStatusMap[normalized] || relationshipMap[normalized] || null;
-};
-
 const toPublicAvatarUrl = (path: string | null) => {
   if (!path) return null;
   if (/^https?:\/\//.test(path)) return path;
@@ -97,18 +51,20 @@ const Likes = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
   const { translateText, translateArray, currentLanguage } = useTextTranslation();
+  const { credits, refetch: refetchCredits } = useCredits();
   const [likes, setLikes] = useState<LikeWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [hasUnlocked, setHasUnlocked] = useState(false);
-  const [checkingUnlock, setCheckingUnlock] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [isPremium, setIsPremium] = useState(false);
+  const [unlockedProfiles, setUnlockedProfiles] = useState<Set<string>>(new Set());
   const [matchBanner, setMatchBanner] = useState<{ show: boolean; userName: string; userAvatar: string | null }>({
     show: false,
     userName: "",
     userAvatar: null,
   });
   const [likingUserId, setLikingUserId] = useState<string | null>(null);
+  const [unlockingProfileId, setUnlockingProfileId] = useState<string | null>(null);
+  const [showUnlockDialog, setShowUnlockDialog] = useState(false);
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -121,33 +77,15 @@ const Likes = () => {
 
       setCurrentUserId(session.user.id);
 
-      // Check if user has monthly subscription (only monthly users can see likes for free)
-      const { data: creditsData } = await supabase
-        .from("user_credits")
-        .select("is_premium, premium_expires_at, subscription_type")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
+      // Fetch unlocked profiles
+      const { data: unlockedData } = await supabase
+        .from("unlocked_like_profiles")
+        .select("unlocked_profile_id")
+        .eq("user_id", session.user.id);
 
-      const hasMonthlySubscription = creditsData?.is_premium && 
-        creditsData?.subscription_type === 'monthly' &&
-        (!creditsData.premium_expires_at || new Date(creditsData.premium_expires_at) > new Date());
-
-      setIsPremium(!!hasMonthlySubscription);
-
-      // Check if user has unlocked likes (or is premium)
-      const { data: unlockData } = await supabase
-        .from("likes_unlocked")
-        .select("*")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
-
-      // Check if unlock is still valid (not expired)
-      const unlockIsValid = unlockData && 
-        (!unlockData.expires_at || new Date(unlockData.expires_at) > new Date());
-
-      // User has access if monthly subscriber OR has valid unlock
-      setHasUnlocked(!!hasMonthlySubscription || !!unlockIsValid);
-      setCheckingUnlock(false);
+      if (unlockedData) {
+        setUnlockedProfiles(new Set(unlockedData.map(u => u.unlocked_profile_id)));
+      }
 
       // Fetch likes
       const { data: likesData, error } = await supabase
@@ -177,12 +115,10 @@ const Likes = () => {
             .single();
 
           if (profile) {
-            // Translate bio and interests
             const translatedBio = profile.bio ? await translateText(profile.bio) : null;
             const translatedInterests = profile.interests ? await translateArray(profile.interests) : null;
             const translatedLookingFor = profile.looking_for ? await translateArray(profile.looking_for) : null;
 
-            // Normalize and translate gender, orientation, relationship_type
             const genderCodes = ['male','female','non-binary','transexual','transgender','genderfluid'];
             const orientationCodes = ['heterosexual','homosexual','bisexual','pansexual','asexual','other'];
             const relationshipTypeCodes = ['serious','casual','friendship','not-sure','prefer-not-say'];
@@ -243,78 +179,8 @@ const Likes = () => {
     fetchData();
   }, [navigate, toast, currentLanguage, translateText, translateArray, t]);
 
-  const handleUnlockLikes = async () => {
-    if (!currentUserId) return;
-
-    try {
-      const { data, error } = await supabase.functions.invoke('create-unlock-payment');
-      
-      if (error) throw error;
-      
-      if (data?.url) {
-        window.open(data.url, '_blank');
-      }
-      
-    } catch (error: any) {
-      toast({
-        title: t("likes.error"),
-        description: t("likes.errorStartingPayment"),
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Verify unlock payment after redirect
+  // Realtime listener for deleted likes (when matches are created)
   useEffect(() => {
-    const verifyUnlock = async () => {
-      const params = new URLSearchParams(window.location.search);
-      const sessionId = params.get('session_id');
-      const unlockStatus = params.get('unlock');
-      
-      if (sessionId && currentUserId) {
-        try {
-          const { data, error } = await supabase.functions.invoke('verify-unlock-payment', {
-            body: { session_id: sessionId }
-          });
-
-          if (error) throw error;
-
-          if (data.success) {
-            toast({
-              title: t("likes.paymentCompleted"),
-              description: t("likes.paymentCompletedDescription"),
-            });
-            setHasUnlocked(true);
-          } else {
-            toast({
-              title: t("likes.error"),
-              description: t("likes.paymentNotCompleted"),
-              variant: "destructive",
-            });
-          }
-        } catch (error) {
-          console.error("Error verifying unlock:", error);
-          toast({
-            title: t("likes.error"),
-            description: t("likes.errorVerifyingPayment"),
-            variant: "destructive",
-          });
-        }
-        
-        window.history.replaceState({}, '', '/likes');
-      } else if (unlockStatus === 'cancel') {
-        toast({
-          title: t("likes.paymentCancelled"),
-          description: t("likes.paymentCancelledDescription"),
-          variant: "destructive",
-        });
-        window.history.replaceState({}, '', '/likes');
-      }
-    };
-
-    verifyUnlock();
-
-    // Realtime listener for deleted likes (when matches are created)
     const likesDeleteChannel = supabase
       .channel('likes-page-delete-channel')
       .on(
@@ -327,7 +193,6 @@ const Likes = () => {
         async (payload) => {
           const deletedLike = payload.old as any;
           if (deletedLike.to_user_id === currentUserId) {
-            // A like received by this user was deleted, remove it from the list
             setLikes(prev => prev.filter(like => like.id !== deletedLike.id));
           }
         }
@@ -337,7 +202,77 @@ const Likes = () => {
     return () => {
       supabase.removeChannel(likesDeleteChannel);
     };
-  }, [toast, currentUserId, t]);
+  }, [currentUserId]);
+
+  const handleProfileClick = (profileId: string) => {
+    if (unlockedProfiles.has(profileId)) {
+      // Already unlocked, navigate to profile
+      navigate(`/profile/${profileId}`);
+    } else {
+      // Show unlock dialog
+      setSelectedProfileId(profileId);
+      setShowUnlockDialog(true);
+    }
+  };
+
+  const handleUnlockProfile = async () => {
+    if (!currentUserId || !selectedProfileId) return;
+
+    // Check if user has enough credits
+    if (!credits || credits.balance < 8) {
+      toast({
+        title: "Crediti insufficienti",
+        description: "Non hai abbastanza crediti per visualizzare questo profilo.",
+        variant: "destructive",
+      });
+      setShowUnlockDialog(false);
+      return;
+    }
+
+    setUnlockingProfileId(selectedProfileId);
+
+    try {
+      // Deduct credits
+      const { error: deductError } = await supabase.rpc("deduct_credits", {
+        _user_id: currentUserId,
+        _amount: 8,
+      });
+
+      if (deductError) throw deductError;
+
+      // Insert unlock record
+      const { error: unlockError } = await supabase
+        .from("unlocked_like_profiles")
+        .insert({
+          user_id: currentUserId,
+          unlocked_profile_id: selectedProfileId,
+          credits_used: 8,
+        });
+
+      if (unlockError) throw unlockError;
+
+      // Update local state
+      setUnlockedProfiles(prev => new Set([...prev, selectedProfileId]));
+      refetchCredits();
+
+      toast({
+        title: "Profilo sbloccato",
+        description: "Hai sbloccato il profilo con successo!",
+      });
+
+      setShowUnlockDialog(false);
+      navigate(`/profile/${selectedProfileId}`);
+    } catch (error: any) {
+      console.error("Error unlocking profile:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile sbloccare il profilo. Riprova.",
+        variant: "destructive",
+      });
+    } finally {
+      setUnlockingProfileId(null);
+    }
+  };
 
   const handleLikeBack = async (likeId: string, userId: string, userName: string) => {
     if (!currentUserId || likingUserId) return;
@@ -345,7 +280,6 @@ const Likes = () => {
     setLikingUserId(userId);
 
     try {
-      // Check if there's already a like from this user to the other user
       const { data: existingLike } = await supabase
         .from("likes")
         .select("id")
@@ -362,7 +296,6 @@ const Likes = () => {
         return;
       }
 
-      // Use the edge function to handle the like properly
       const { data, error } = await supabase.functions.invoke('admin-manage-like', {
         body: {
           action: 'add',
@@ -375,14 +308,10 @@ const Likes = () => {
         throw new Error(error?.message || data?.error || 'Failed to like back');
       }
 
-      // Check if a match was created
       if (data.match_created) {
-        // Match was created! Show banner with avatar
         const matchedLike = likes.find(l => l.from_user_id === userId);
         const userAvatar = matchedLike ? toPublicAvatarUrl(matchedLike.profile.avatar_url) : null;
         setMatchBanner({ show: true, userName, userAvatar });
-        
-        // Remove this like from the list
         setLikes((prev) => prev.filter((l) => l.id !== likeId));
       } else {
         toast({
@@ -402,7 +331,7 @@ const Likes = () => {
     }
   };
 
-  if (loading || checkingUnlock) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <p className="text-muted-foreground">{t("likes.loading")}</p>
@@ -419,6 +348,38 @@ const Likes = () => {
           onClose={() => setMatchBanner({ show: false, userName: "", userAvatar: null })}
         />
       )}
+
+      <AlertDialog open={showUnlockDialog} onOpenChange={setShowUnlockDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5 text-primary" />
+              Visualizza Profilo
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3 pt-2">
+              <p>Vuoi visualizzare questo profilo?</p>
+              <div className="p-4 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-200/50">
+                <p className="text-lg font-semibold text-foreground">Costo: 8 crediti</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Crediti disponibili: {credits?.balance || 0}
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={() => setShowUnlockDialog(false)}>
+              Annulla
+            </Button>
+            <Button 
+              onClick={handleUnlockProfile}
+              disabled={unlockingProfileId !== null || !credits || credits.balance < 8}
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+            >
+              {unlockingProfileId ? "Sblocco..." : "Visualizza"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       
       <div className="container mx-auto max-w-4xl">
         <div className="mb-6">
@@ -438,178 +399,98 @@ const Likes = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {!hasUnlocked && !isPremium && likes.length > 0 && (
-              <div className="p-8 bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-rose-500/10 dark:from-purple-500/20 dark:via-pink-500/20 dark:to-rose-500/20 rounded-2xl text-center border border-purple-200/50 dark:border-purple-500/30 shadow-lg">
-                <div className="inline-flex p-4 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 mb-4 shadow-xl">
-                  <Lock className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-2xl font-bold mb-3 bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
-                  {t("likes.unlockTitle")}
-                </h3>
-                <p className="text-base text-foreground/70 mb-6 max-w-md mx-auto">
-                  {t("likes.unlockMessage", { count: likes.length })}
-                </p>
-                <Button 
-                  size="lg"
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-xl hover:shadow-2xl transition-all duration-300 text-base px-8 py-6 h-auto"
-                  onClick={handleUnlockLikes}
-                >
-                  <Sparkles className="h-5 w-5 mr-2" />
-                  {t("likes.unlockNow")}
-                </Button>
-              </div>
-            )}
-
             {likes.length === 0 ? (
-              <div className="text-center py-16 space-y-4">
-                <div className="inline-flex p-6 rounded-full bg-muted/50 mb-4">
-                  <Heart className="h-16 w-16 text-muted-foreground/50" />
-                </div>
-                <p className="text-lg text-muted-foreground max-w-md mx-auto">
+              <div className="text-center py-12">
+                <Heart className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
+                <p className="text-xl font-medium text-muted-foreground">
                   {t("likes.noLikes")}
                 </p>
-                <Button 
-                  onClick={() => navigate("/explore")}
-                  className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 shadow-lg"
-                >
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  {t("likes.exploreProfiles")}
-                </Button>
+                <p className="text-sm text-muted-foreground/70 mt-2">
+                  {t("likes.noLikesDescription")}
+                </p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {likes.map((like) => (
-                  <Card 
-                    key={like.id} 
-                    className={`overflow-hidden transition-all duration-300 hover:shadow-xl border-0 bg-cover bg-center ${!hasUnlocked ? 'relative' : ''}`}
-                    style={{ backgroundImage: `url(${likesBackground})` }}
-                  >
-                    {!hasUnlocked && (
-                      <div className="absolute inset-0 backdrop-blur-md bg-background/40 z-10 flex items-center justify-center">
-                        <div className="p-4 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 shadow-2xl">
-                          <Lock className="h-8 w-8 text-white" />
-                        </div>
-                      </div>
-                    )}
-                    <CardContent className="p-5 bg-background/80 backdrop-blur-sm">
-                      <div className="flex items-center gap-4">
-                        <div className="relative">
-                          <Avatar className="h-20 w-20 ring-2 ring-primary/20 shadow-lg">
-                            <AvatarImage 
-                              src={like.profile.avatar_url || undefined} 
-                            />
-                            <AvatarFallback className="text-xl bg-gradient-to-br from-pink-500/20 to-purple-500/20">
-                              {hasUnlocked ? (like.profile.nickname?.charAt(0) || like.profile.full_name.charAt(0)) : '?'}
-                            </AvatarFallback>
-                          </Avatar>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-xl truncate bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                              {hasUnlocked ? like.profile.nickname : '???'}
-                            </h3>
-                            {hasUnlocked && (
-                              <img src={likesHeartIcon} alt="Like" className="h-5 w-5 md:h-6 md:w-6 object-contain shrink-0" />
+              <div className="grid gap-4">
+                {likes.map((like) => {
+                  const isUnlocked = unlockedProfiles.has(like.from_user_id);
+                  
+                  return (
+                    <Card 
+                      key={like.id} 
+                      className="overflow-hidden hover:shadow-lg transition-all cursor-pointer border border-border/50"
+                      onClick={() => handleProfileClick(like.from_user_id)}
+                    >
+                      <CardContent className="p-6">
+                        <div className="flex items-start gap-4">
+                          <div className="relative">
+                            <Avatar className={`h-20 w-20 border-4 border-pink-200/50 dark:border-pink-800/50 ${!isUnlocked ? 'blur-sm' : ''}`}>
+                              <AvatarImage src={like.profile.avatar_url || undefined} />
+                              <AvatarFallback className="bg-gradient-to-br from-pink-400 to-purple-400 text-white text-xl">
+                                {like.profile.nickname?.[0]?.toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            {!isUnlocked && (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <Lock className="h-8 w-8 text-foreground/70" />
+                              </div>
                             )}
                           </div>
-                          {hasUnlocked && like.profile.age && (
-                            <p className="text-sm text-muted-foreground font-medium">
-                              {like.profile.age} {t("common.years")}
-                            </p>
-                          )}
                           
-                          {/* Info aggiuntive: genere, orientamento, stato, cerca */}
-                          {hasUnlocked && (
-                            <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-xs">
-                              <div className="flex items-start gap-1">
-                                <span className="font-medium text-foreground/70">{t("common.gender")}</span>
-                                <span className="text-muted-foreground">
-                                  {like.profile.gender ? (() => {
-                                    const normalized = normalizeValue(like.profile.gender);
-                                    switch(normalized) {
-                                      case 'male': return t("common.male");
-                                      case 'female': return t("common.female");
-                                      case 'non-binary': return t("common.nonBinary");
-                                      case 'transexual': return t("common.transexual");
-                                      case 'transgender': return t("common.transgender");
-                                      case 'genderfluid': return t("common.genderfluid");
-                                      default: return like.profile.translatedGender || like.profile.gender;
-                                    }
-                                  })() : "Non specificato"}
-                                </span>
-                              </div>
-                             
-                              <div className="flex items-start gap-1">
-                                <span className="font-medium text-foreground/70">{t("common.orientation")}</span>
-                                <span className="text-muted-foreground">
-                                  {like.profile.sexual_orientation ? (() => {
-                                    const normalized = normalizeValue(like.profile.sexual_orientation);
-                                    switch(normalized) {
-                                      case 'heterosexual': return t("common.heterosexual");
-                                      case 'homosexual': return t("common.homosexual");
-                                      case 'bisexual': return t("common.bisexual");
-                                      case 'pansexual': return t("common.pansexual");
-                                      case 'asexual': return t("common.asexual");
-                                      case 'other': return t("common.other");
-                                      default: return like.profile.translatedOrientation || like.profile.sexual_orientation;
-                                    }
-                                  })() : "Non specificato"}
-                                </span>
-                              </div>
-                             
-                              <div className="flex items-start gap-1">
-                                <span className="font-medium text-foreground/70">{t("common.relationshipStatus")}</span>
-                                <span className="text-muted-foreground">
-                                  {like.profile.relationship_status ? (() => {
-                                    const normalized = normalizeValue(like.profile.relationship_status);
-                                    switch(normalized) {
-                                      case 'single': return t("common.single");
-                                      case 'in_relationship': return t("common.inRelationship");
-                                      case 'married': return t("common.married");
-                                      case 'divorced': return t("common.divorced");
-                                      case 'widowed': return t("common.widowed");
-                                      case 'prefer_not_say': return t("common.preferNotSay");
-                                      default: return like.profile.relationship_status;
-                                    }
-                                  })() : "Non specificato"}
-                                </span>
-                              </div>
-                             
-                              <div className="flex items-start gap-1">
-                                <span className="font-medium text-foreground/70">{t("common.lookingFor")}</span>
-                                <span className="text-muted-foreground">
-                                  {like.profile.looking_for && like.profile.looking_for.length > 0 
-                                    ? (like.profile.translatedLookingFor?.join(", ") || like.profile.looking_for.join(", "))
-                                    : "Non specificato"}
-                                </span>
-                              </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className={`font-semibold text-lg truncate ${!isUnlocked ? 'blur-sm' : ''}`}>
+                                {like.profile.nickname}
+                              </h3>
+                              {like.profile.age && (
+                                <Badge variant="secondary" className={!isUnlocked ? 'blur-sm' : ''}>
+                                  {like.profile.age}
+                                </Badge>
+                              )}
                             </div>
-                          )}
-                          
-                          {hasUnlocked && like.profile.translatedBio && (
-                            <p className="text-sm text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
-                              {like.profile.translatedBio}
-                            </p>
-                          )}
-                          <p className="text-xs text-muted-foreground/70 mt-3 flex items-center gap-1">
-                            <Sparkles className="h-3 w-3" />
-                            {t("likes.likeReceived")} {new Date(like.created_at).toLocaleDateString()}
-                          </p>
+                            
+                            {!isUnlocked ? (
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                <Lock className="h-4 w-4" />
+                                <p className="text-sm">Clicca per visualizzare (8 crediti)</p>
+                              </div>
+                            ) : (
+                              <>
+                                {(like.profile.translatedBio || like.profile.bio) && (
+                                  <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                                    {like.profile.translatedBio || like.profile.bio}
+                                  </p>
+                                )}
+                                
+                                {like.profile.translatedInterests && like.profile.translatedInterests.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mb-3">
+                                    {like.profile.translatedInterests.slice(0, 3).map((interest, idx) => (
+                                      <Badge key={idx} variant="outline" className="text-xs">
+                                        {interest}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+
+                                <Button
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleLikeBack(like.id, like.from_user_id, like.profile.nickname);
+                                  }}
+                                  disabled={likingUserId === like.from_user_id}
+                                  className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600"
+                                >
+                                  <Heart className="h-4 w-4 mr-2" />
+                                  {likingUserId === like.from_user_id ? t("likes.liking") : t("likes.likeBack")}
+                                </Button>
+                              </>
+                            )}
+                          </div>
                         </div>
-                        {hasUnlocked && (
-                          <Button 
-                            onClick={() => handleLikeBack(like.id, like.from_user_id, like.profile.nickname)}
-                            disabled={likingUserId === like.from_user_id}
-                            className="bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 shadow-lg hover:shadow-xl transition-all duration-300 px-6"
-                          >
-                            <Heart className={`h-4 w-4 mr-2 ${likingUserId === like.from_user_id ? '' : 'fill-white'}`} />
-                            {likingUserId === like.from_user_id ? t("likes.liking") : t("likes.likeBack")}
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </CardContent>

@@ -311,30 +311,6 @@ export type Database = {
           },
         ]
       }
-      likes_unlocked: {
-        Row: {
-          expires_at: string | null
-          id: string
-          stripe_payment_id: string | null
-          unlocked_at: string | null
-          user_id: string
-        }
-        Insert: {
-          expires_at?: string | null
-          id?: string
-          stripe_payment_id?: string | null
-          unlocked_at?: string | null
-          user_id: string
-        }
-        Update: {
-          expires_at?: string | null
-          id?: string
-          stripe_payment_id?: string | null
-          unlocked_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       matches: {
         Row: {
           created_at: string
@@ -866,6 +842,30 @@ export type Database = {
           id?: string
           last_reset_date?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      unlocked_like_profiles: {
+        Row: {
+          credits_used: number | null
+          id: string
+          unlocked_at: string | null
+          unlocked_profile_id: string
+          user_id: string
+        }
+        Insert: {
+          credits_used?: number | null
+          id?: string
+          unlocked_at?: string | null
+          unlocked_profile_id: string
+          user_id: string
+        }
+        Update: {
+          credits_used?: number | null
+          id?: string
+          unlocked_at?: string | null
+          unlocked_profile_id?: string
           user_id?: string
         }
         Relationships: []

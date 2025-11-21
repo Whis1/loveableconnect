@@ -216,50 +216,9 @@ export const UserCreditsManager = () => {
 
     setLoadingUnlock(true);
     try {
-      const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 24);
-
-      // Check if user already has an unlock
-      const { data: existing } = await supabase
-        .from("likes_unlocked")
-        .select("id")
-        .eq("user_id", userId)
-        .single();
-
-      if (existing) {
-        // Update existing record
-        const { error } = await supabase
-          .from("likes_unlocked")
-          .update({ 
-            expires_at: expiresAt.toISOString(),
-            unlocked_at: new Date().toISOString()
-          })
-          .eq("user_id", userId);
-
-        if (error) throw error;
-      } else {
-        // Insert new record
-        const { error } = await supabase
-          .from("likes_unlocked")
-          .insert({ 
-            user_id: userId,
-            expires_at: expiresAt.toISOString()
-          });
-
-        if (error) throw error;
-      }
-
       toast({
-        title: "Likes Sbloccati",
-        description: "Accesso likes sbloccato per 24 ore",
-      });
-
-      setUserId("");
-    } catch (error: any) {
-      console.error("Error unlocking likes:", error);
-      toast({
-        title: "Errore",
-        description: error.message,
+        title: "Funzionalità rimossa",
+        description: "Il sistema di unlock globale è stato sostituito con lo sblocco per-profilo da 8 crediti",
         variant: "destructive",
       });
     } finally {
