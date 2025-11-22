@@ -179,30 +179,75 @@ const Likes = () => {
     fetchData();
   }, [navigate, toast, currentLanguage, translateText, translateArray, t]);
 
-  // Realtime listener for deleted likes (when matches are created)
+  // Realtime listener for likes changes (updates count in real-time)
   useEffect(() => {
-    const likesDeleteChannel = supabase
-      .channel('likes-page-delete-channel')
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'likes',
-        },
-        async (payload) => {
-          const deletedLike = payload.old as any;
-          if (deletedLike.to_user_id === currentUserId) {
-            setLikes(prev => prev.filter(like => like.id !== deletedLike.id));
+    const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!session?.user) return;
+
+      const likesChannel = supabase
+        .channel('likes-page-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'likes',
+            filter: `to_user_id=eq.${session.user.id}`,
+          },
+          async (payload) => {
+            // Refresh likes data on any change (INSERT, DELETE, UPDATE)
+            const { data: likesData } = await supabase
+              .from("likes")
+              .select("id, from_user_id, created_at")
+              .eq("to_user_id", session.user.id)
+              .order("created_at", { ascending: false });
+
+            if (likesData) {
+              const likesWithProfiles: LikeWithProfile[] = [];
+              for (const like of likesData) {
+                const { data: profile } = await supabase
+                  .from("profiles")
+                  .select("*")
+                  .eq("id", like.from_user_id)
+                  .single();
+
+                if (profile) {
+                  const translatedBio = await translateText(profile.bio || '');
+                  const translatedInterests = await translateArray(profile.interests || []);
+                  const translatedGender = await translateText(profile.gender || '');
+                  const translatedOrientation = await translateText(profile.sexual_orientation || '');
+                  const translatedRelationshipType = await translateText(profile.relationship_type || '');
+                  const translatedLookingFor = await translateArray(profile.looking_for || []);
+
+                  likesWithProfiles.push({
+                    ...like,
+                    profile: {
+                      ...profile,
+                      translatedBio,
+                      translatedInterests,
+                      translatedGender,
+                      translatedOrientation,
+                      translatedRelationshipType,
+                      translatedLookingFor,
+                    },
+                  });
+                }
+              }
+              setLikes(likesWithProfiles);
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(likesChannel);
+      };
+    });
 
     return () => {
-      supabase.removeChannel(likesDeleteChannel);
+      authSub?.unsubscribe();
     };
-  }, [currentUserId]);
+  }, [currentLanguage, translateText, translateArray]);
 
   const handleProfileClick = (profileId: string) => {
     if (unlockedProfiles.has(profileId)) {
