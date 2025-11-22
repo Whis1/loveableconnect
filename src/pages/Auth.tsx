@@ -276,16 +276,14 @@ const Auth = () => {
 
   const handleGoogleSignIn = async () => {
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`,
-          skipBrowserRedirect: true,
+          redirectTo: `${window.location.origin}/auth/callback`,
         }
       });
 
       if (error) throw error;
-      if (data?.url) window.location.assign(data.url);
     } catch (error: any) {
       toast({
         title: t('auth.errorSignIn'),
