@@ -74,7 +74,7 @@ const Explore = () => {
   });
   const ignoreNextRealtimeRef = useRef(false);
   
-  const PROFILES_PER_PAGE = 24;
+  const PROFILES_PER_PAGE = 100; // Batch più grande per caricamento più fluido
 
   const genderOptions = [
     { value: "male", label: "Uomo" },
@@ -338,7 +338,7 @@ const Explore = () => {
     const handleScroll = () => {
       if (
         window.innerHeight + document.documentElement.scrollTop
-        >= document.documentElement.offsetHeight - 100
+        >= document.documentElement.offsetHeight - 800 // Trigger più anticipato
         && hasMore
         && !loading
       ) {
@@ -687,9 +687,14 @@ const Explore = () => {
                 ))}
               </div>
 
-              {loading && (
-                <div className="text-center py-6 md:py-8">
-                  <p className="text-muted-foreground text-sm md:text-base">{t("explore.loading")}</p>
+              {/* Loading skeleton per prossime card */}
+              {loading && hasMore && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-6">
+                  {[...Array(8)].map((_, i) => (
+                    <div key={`skeleton-${i}`} className="animate-pulse">
+                      <div className="bg-muted rounded-lg h-[400px]" />
+                    </div>
+                  ))}
                 </div>
               )}
 
