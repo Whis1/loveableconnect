@@ -64,6 +64,9 @@ const Explore = () => {
   const [hasMore, setHasMore] = useState(true);
   const [showGeoLoader, setShowGeoLoader] = useState(true);
   
+  // Pre-caricare matches e hidden matches per performance
+  const [matchedProfileIds, setMatchedProfileIds] = useState<Set<string>>(new Set());
+  
   const [ageRange, setAgeRange] = useState([18, 90]);
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
   const [selectedOrientations, setSelectedOrientations] = useState<string[]>([]);
@@ -132,8 +135,21 @@ const Explore = () => {
 
       setCurrentUser(session.user.id);
       
+      // Pre-carica matches per performance
+      const { data: matchesData } = await supabase
+        .from("matches")
+        .select("user1_id, user2_id")
+        .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`);
+
+      const matches = new Set(
+        (matchesData || []).map(match => 
+          match.user1_id === session.user.id ? match.user2_id : match.user1_id
+        )
+      );
+      setMatchedProfileIds(matches);
+      
       // Load all profiles automatically
-      await loadAllProfiles(session.user.id);
+      await loadAllProfiles(session.user.id, matches);
       
       setLoading(false);
       
@@ -246,21 +262,27 @@ const Explore = () => {
     };
   }, [navigate, currentUser]);
 
-  const loadAllProfiles = async (userId: string) => {
+  const loadAllProfiles = async (userId: string, preloadedMatches?: Set<string>) => {
     setLoading(true);
     
     try {
-      // Get user's matches to exclude them
-      const { data: matchesData } = await supabase
-        .from("matches")
-        .select("user1_id, user2_id")
-        .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
+      // Use preloaded matches se disponibili
+      let matchedUserIds: Set<string>;
+      if (preloadedMatches) {
+        matchedUserIds = preloadedMatches;
+      } else {
+        const { data: matchesData } = await supabase
+          .from("matches")
+          .select("user1_id, user2_id")
+          .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
 
-      const matchedUserIds = new Set(
-        (matchesData || []).map(match => 
-          match.user1_id === userId ? match.user2_id : match.user1_id
-        )
-      );
+        matchedUserIds = new Set(
+          (matchesData || []).map(match => 
+            match.user1_id === userId ? match.user2_id : match.user1_id
+          )
+        );
+        setMatchedProfileIds(matchedUserIds);
+      }
 
       const { data: profilesData, error } = await supabase
         .from("profiles")
@@ -681,6 +703,7 @@ const Explore = () => {
                     profile={profile}
                     currentUserId={currentUser!}
                     likedProfileIds={likedProfileIds}
+                    hasActiveMatch={matchedProfileIds.has(profile.id)}
                     onLike={handleProfileLike}
                     onMatch={(name, avatar) => { ignoreNextRealtimeRef.current = true; handleMatch(name, avatar); }}
                   />
