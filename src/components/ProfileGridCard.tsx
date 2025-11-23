@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Heart, MessageCircle, MapPin } from "lucide-react";
@@ -41,17 +41,18 @@ interface ProfileGridCardProps {
   profile: Profile;
   currentUserId: string;
   likedProfileIds?: Set<string>;
+  hasActiveMatch?: boolean; // Pre-caricato da pagina parent
   onLike: (profileId: string) => void;
   onMatch?: (profileName: string, profileAvatar: string | null) => void;
 }
 
-export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLike, onMatch }: ProfileGridCardProps) => {
+const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, hasActiveMatch = false, onLike, onMatch }: ProfileGridCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation();
   const [isLiking, setIsLiking] = useState(false);
-  const [hasLiked, setHasLiked] = useState(false);
-  const [hasActiveMatch, setHasActiveMatch] = useState(false);
+  const [hasLiked, setHasLiked] = useState(likedProfileIds?.has(profile.id) || false);
+  // hasActiveMatch ora viene passato come prop, non più calcolato qui
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [showLikesExhausted, setShowLikesExhausted] = useState(false);
   const [showChatConfirmation, setShowChatConfirmation] = useState(false);
@@ -179,86 +180,12 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
     return parts.join(" • ");
   };
 
-  // Check if user already liked this profile or has an active match
+  // Aggiorna hasLiked solo quando cambiano likedProfileIds (più veloce)
   useEffect(() => {
-    const checkLikeAndMatch = async () => {
-      // Se abbiamo già i like pre-caricati, usali (fast path)
-      if (likedProfileIds) {
-        setHasLiked(likedProfileIds.has(profile.id));
-      } else {
-        // Fallback: carica dal database solo se necessario
-        const { data: likeData } = await supabase
-          .from("likes")
-          .select("id")
-          .eq("from_user_id", currentUserId)
-          .eq("to_user_id", profile.id)
-          .maybeSingle();
-        
-        setHasLiked(!!likeData);
-      }
-
-      // Check for match - OPTIMIZED: check both match existence and hidden status
-      const { data: matchData } = await supabase
-        .from("matches")
-        .select("id")
-        .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profile.id}),and(user1_id.eq.${profile.id},user2_id.eq.${currentUserId})`)
-        .maybeSingle();
-
-      if (matchData) {
-        // Check if match is hidden with 'both'
-        const { data: hiddenData } = await supabase
-          .from("hidden_matches")
-          .select("hidden_from")
-          .eq("match_id", matchData.id)
-          .eq("user_id", currentUserId)
-          .eq("hidden_from", "both")
-          .maybeSingle();
-        
-        setHasActiveMatch(!hiddenData);
-      } else {
-        setHasActiveMatch(false);
-      }
-    };
-    
-    checkLikeAndMatch();
-
-    // Subscribe to changes in likes and matches
-    const likesChannel = supabase
-      .channel(`likes-${currentUserId}-${profile.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'likes',
-          filter: `from_user_id=eq.${currentUserId}`
-        },
-        () => checkLikeAndMatch()
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'matches'
-        },
-        () => checkLikeAndMatch()
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'hidden_matches'
-        },
-        () => checkLikeAndMatch()
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(likesChannel);
-    };
-  }, [currentUserId, profile.id, likedProfileIds]);
+    if (likedProfileIds) {
+      setHasLiked(likedProfileIds.has(profile.id));
+    }
+  }, [likedProfileIds, profile.id]);
 
   // Use pre-translated bio if available, otherwise translate on mount
   useEffect(() => {
@@ -713,3 +640,6 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
     </>
   );
 };
+
+// Esporta versione memoizzata per performance
+export const ProfileGridCard = memo(ProfileGridCardComponent);
