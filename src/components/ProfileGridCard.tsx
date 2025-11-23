@@ -277,6 +277,14 @@ export const ProfileGridCard = ({ profile, currentUserId, likedProfileIds, onLik
     ? supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl
     : null;
 
+  // Preload avatar per rendering più veloce
+  useEffect(() => {
+    if (avatarUrl) {
+      const img = new Image();
+      img.src = avatarUrl;
+    }
+  }, [avatarUrl]);
+
   const handleLike = async (e: React.MouseEvent, useCredits: boolean = false) => {
     e.stopPropagation();
 
