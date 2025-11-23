@@ -56,12 +56,9 @@ const Explore = () => {
   const { likedProfileIds, loading: likesLoading } = useLikes();
   const { profiles: cachedProfiles, loading: profilesLoading } = useProfiles();
   const [currentUser, setCurrentUser] = useState<string | null>(null);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [displayedProfiles, setDisplayedProfiles] = useState<Profile[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]); // TUTTI i profili, caricati subito
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
   const [showGeoLoader, setShowGeoLoader] = useState(true);
   
   // Pre-caricare matches e hidden matches per performance
@@ -76,8 +73,6 @@ const Explore = () => {
     userAvatar: null,
   });
   const ignoreNextRealtimeRef = useRef(false);
-  
-  const PROFILES_PER_PAGE = 100; // Batch più grande per caricamento più fluido
 
   const genderOptions = [
     { value: "male", label: "Uomo" },
@@ -185,9 +180,6 @@ const Explore = () => {
             const updated = updatedProfile as Profile;
             
             setProfiles(prev => prev.map(p => 
-              p.id === updated.id ? updated : p
-            ));
-            setDisplayedProfiles(prev => prev.map(p => 
               p.id === updated.id ? updated : p
             ));
           }
@@ -321,10 +313,8 @@ const Explore = () => {
         return dateB - dateA;
       });
 
+      // CARICA TUTTI i profili subito, no paginazione
       setProfiles(allProfiles);
-      setDisplayedProfiles([]);
-      setPage(1);
-      setHasMore(true);
     } catch (error: any) {
       toast({
         title: "Errore",
@@ -336,41 +326,7 @@ const Explore = () => {
     }
   };
 
-  const loadMoreProfiles = useCallback(() => {
-    const startIdx = (page - 1) * PROFILES_PER_PAGE;
-    const endIdx = startIdx + PROFILES_PER_PAGE;
-    const newProfiles = profiles.slice(startIdx, endIdx);
-    
-    if (newProfiles.length === 0) {
-      setHasMore(false);
-      return;
-    }
-    
-    setDisplayedProfiles(prev => [...prev, ...newProfiles]);
-    setPage(prev => prev + 1);
-  }, [page, profiles]);
-
-  useEffect(() => {
-    if (profiles.length > 0 && displayedProfiles.length === 0) {
-      loadMoreProfiles();
-    }
-  }, [profiles, displayedProfiles, loadMoreProfiles]);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (
-        window.innerHeight + document.documentElement.scrollTop
-        >= document.documentElement.offsetHeight - 800 // Trigger più anticipato
-        && hasMore
-        && !loading
-      ) {
-        loadMoreProfiles();
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [hasMore, loading, loadMoreProfiles]);
+  // RIMOSSO: loadMoreProfiles - ora carichi tutto subito
 
   const applyFilters = async () => {
     if (!currentUser) return;
@@ -446,11 +402,8 @@ const Explore = () => {
         return dateB - dateA;
       });
 
-      // Don't translate all profiles upfront - translate on demand for better performance
+      // CARICA TUTTI i profili filtrati subito
       setProfiles(filteredProfiles);
-      setDisplayedProfiles([]);
-      setPage(1);
-      setHasMore(true);
     } catch (error: any) {
       toast({
         title: "Errore",
@@ -693,48 +646,21 @@ const Explore = () => {
           {/* Tris Game Banner */}
           <TrisGameBanner />
 
-          {/* Results Grid */}
-          {displayedProfiles.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-6">
-                {displayedProfiles.map((profile) => (
-                  <ProfileGridCard
-                    key={profile.id}
-                    profile={profile}
-                    currentUserId={currentUser!}
-                    likedProfileIds={likedProfileIds}
-                    hasActiveMatch={matchedProfileIds.has(profile.id)}
-                    onLike={handleProfileLike}
-                    onMatch={(name, avatar) => { ignoreNextRealtimeRef.current = true; handleMatch(name, avatar); }}
-                  />
-                ))}
-              </div>
-
-              {/* Loading skeleton per prossime card */}
-              {loading && hasMore && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-6">
-                  {[...Array(8)].map((_, i) => (
-                    <div key={`skeleton-${i}`} className="animate-pulse">
-                      <div className="bg-muted rounded-lg h-[400px]" />
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {!hasMore && displayedProfiles.length > 0 && (
-                <div className="text-center py-6 md:py-8">
-                  <p className="text-muted-foreground text-sm md:text-base">{t("explore.noMoreToShow")}</p>
-                  <Button 
-                    onClick={() => navigate("/")} 
-                    variant="outline" 
-                    size="sm"
-                    className="mt-3 md:mt-4"
-                  >
-                    {t("explore.backToDashboard")}
-                  </Button>
-                </div>
-              )}
-            </>
+          {/* Results Grid - TUTTI I PROFILI CARICATI SUBITO */}
+          {profiles.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-6">
+              {profiles.map((profile) => (
+                <ProfileGridCard
+                  key={profile.id}
+                  profile={profile}
+                  currentUserId={currentUser!}
+                  likedProfileIds={likedProfileIds}
+                  hasActiveMatch={matchedProfileIds.has(profile.id)}
+                  onLike={handleProfileLike}
+                  onMatch={(name, avatar) => { ignoreNextRealtimeRef.current = true; handleMatch(name, avatar); }}
+                />
+              ))}
+            </div>
           ) : (
             !loading && (
               <Card className="text-center p-6 md:p-12">
