@@ -6,10 +6,12 @@ interface OnlineIndicatorProps {
   userId: string | null | undefined;
   className?: string;
   size?: "sm" | "md" | "lg";
+  preloadedStatus?: { isOnline: boolean; showStatus: boolean };
 }
 
-const OnlineIndicator = ({ userId, className, size = "md" }: OnlineIndicatorProps) => {
-  const { isOnline, showStatus } = useOnlineStatus(userId);
+const OnlineIndicator = ({ userId, className, size = "md", preloadedStatus }: OnlineIndicatorProps) => {
+  const hookStatus = useOnlineStatus(userId);
+  const { isOnline, showStatus } = preloadedStatus || hookStatus;
 
   // Don't show anything if user has disabled status visibility
   if (!showStatus) return null;
