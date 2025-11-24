@@ -250,6 +250,12 @@ const Likes = () => {
   }, [currentLanguage, translateText, translateArray]);
 
   const handleProfileClick = (profileId: string) => {
+    // Don't navigate if the user just matched (profile was removed from likes)
+    const profileStillInLikes = likes.some(l => l.from_user_id === profileId);
+    if (!profileStillInLikes) {
+      return; // Profile was just removed (match created), don't navigate
+    }
+
     if (unlockedProfiles.has(profileId)) {
       // Already unlocked, navigate to profile
       navigate(`/profile/${profileId}`);
