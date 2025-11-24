@@ -456,9 +456,6 @@ const Likes = () => {
                 <p className="text-xl font-medium text-muted-foreground">
                   {t("likes.noLikes")}
                 </p>
-                <p className="text-sm text-muted-foreground/70 mt-2">
-                  {t("likes.noLikesDescription")}
-                </p>
               </div>
             ) : (
               <div className="grid gap-4">
