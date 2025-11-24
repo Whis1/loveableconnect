@@ -43,6 +43,7 @@ const Matches = () => {
   const [matches, setMatches] = useState<MatchWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [onlineStatuses, setOnlineStatuses] = useState<Map<string, { isOnline: boolean; showStatus: boolean }>>(new Map());
   const { unreadCounts, getUnreadForMatch } = useUnreadMessages(currentUserId);
 
   useEffect(() => {
@@ -144,6 +145,38 @@ const Matches = () => {
       );
 
       setMatches(matchesWithProfiles);
+
+      // Load online statuses for all profiles
+      const profileIds = matchesWithProfiles.map(m => m.otherUser.id);
+      if (profileIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("id, show_online_status, is_admin_profile, last_active, manual_online_status")
+          .in("id", profileIds);
+
+        if (profilesData) {
+          const statusMap = new Map<string, { isOnline: boolean; showStatus: boolean }>();
+          profilesData.forEach(profile => {
+            let isOnline = false;
+            const showStatus = profile.show_online_status ?? true;
+
+            if (profile.manual_online_status !== null) {
+              isOnline = profile.manual_online_status;
+            } else if (profile.is_admin_profile) {
+              isOnline = true;
+            } else if (profile.last_active) {
+              const lastActive = new Date(profile.last_active);
+              const now = new Date();
+              const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
+              isOnline = lastActive > twoMinutesAgo;
+            }
+
+            statusMap.set(profile.id, { isOnline, showStatus });
+          });
+          setOnlineStatuses(statusMap);
+        }
+      }
+
       setLoading(false);
 
       // Set up realtime subscription for new matches and messages
@@ -324,10 +357,10 @@ const Matches = () => {
                               <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-xl">
                                 {match.otherUser.nickname.charAt(0)}
                               </AvatarFallback>
-                            </Avatar>
-                            <div className="absolute -bottom-1 -right-1">
-                              <OnlineIndicator userId={match.otherUser.id} size="md" />
-                            </div>
+                          </Avatar>
+                          <div className="absolute -bottom-1 -right-1">
+                            <OnlineIndicator userId={match.otherUser.id} size="md" preloadedStatus={onlineStatuses.get(match.otherUser.id)} />
+                          </div>
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">

@@ -42,11 +42,12 @@ interface ProfileGridCardProps {
   currentUserId: string;
   likedProfileIds?: Set<string>;
   hasActiveMatch?: boolean; // Pre-caricato da pagina parent
+  onlineStatus?: { isOnline: boolean; showStatus: boolean }; // Pre-caricato da pagina parent
   onLike: (profileId: string) => void;
   onMatch?: (profileName: string, profileAvatar: string | null) => void;
 }
 
-const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, hasActiveMatch = false, onLike, onMatch }: ProfileGridCardProps) => {
+const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, hasActiveMatch = false, onlineStatus, onLike, onMatch }: ProfileGridCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -533,7 +534,7 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
 
             {/* Online Indicator */}
             <div className="absolute top-3 left-3">
-              <OnlineIndicator userId={profile.id} size="lg" />
+              <OnlineIndicator userId={profile.id} size="lg" preloadedStatus={onlineStatus} />
             </div>
 
             {/* Distance Badge */}

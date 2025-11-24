@@ -69,6 +69,7 @@ const Chat = () => {
   const [showGiftBanner, setShowGiftBanner] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
+  const [otherUserOnlineStatus, setOtherUserOnlineStatus] = useState<{ isOnline: boolean; showStatus: boolean } | undefined>();
 
   // Check for gift payment result in URL params
   useEffect(() => {
@@ -192,10 +193,10 @@ const Chat = () => {
         ? match.user2_id 
         : match.user1_id;
 
-      // Fetch other user's profile
+      // Fetch other user's profile with online status info
       const { data: profile } = await supabase
         .from("profiles")
-        .select("id, full_name, nickname, is_admin_profile, avatar_url")
+        .select("id, full_name, nickname, is_admin_profile, avatar_url, show_online_status, last_active, manual_online_status")
         .eq("id", otherUserId)
         .single();
 
@@ -209,15 +210,35 @@ const Chat = () => {
         return;
       }
 
-      // Convert avatar path to public URL
+      // Convert avatar path to public URL and calculate online status
       const profileWithPublicAvatar = {
-        ...profile,
+        id: profile.id,
+        full_name: profile.full_name,
+        nickname: profile.nickname,
+        is_admin_profile: profile.is_admin_profile,
         avatar_url: profile.avatar_url
           ? supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl
           : null
       };
 
       setOtherUser(profileWithPublicAvatar);
+
+      // Determine online status
+      let isOnline = false;
+      const showStatus = profile.show_online_status ?? true;
+
+      if (profile.manual_online_status !== null) {
+        isOnline = profile.manual_online_status;
+      } else if (profile.is_admin_profile) {
+        isOnline = true;
+      } else if (profile.last_active) {
+        const lastActive = new Date(profile.last_active);
+        const now = new Date();
+        const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
+        isOnline = lastActive > twoMinutesAgo;
+      }
+
+      setOtherUserOnlineStatus({ isOnline, showStatus });
 
       // Verifica se l'utente è bloccato
       await checkBlockStatus(session.user.id, otherUserId);
@@ -652,10 +673,10 @@ const Chat = () => {
                         <AvatarFallback>
                           {otherUser.nickname.charAt(0)}
                         </AvatarFallback>
-                      </Avatar>
-                      <div className="absolute bottom-0 right-0">
-                        <OnlineIndicator userId={otherUser.id} size="sm" />
-                      </div>
+                    </Avatar>
+                    <div className="absolute bottom-0 right-0">
+                      <OnlineIndicator userId={otherUser.id} size="sm" preloadedStatus={otherUserOnlineStatus} />
+                    </div>
                     </div>
                     <span className="font-semibold text-sm md:text-base truncate">
                       {otherUser.nickname}
