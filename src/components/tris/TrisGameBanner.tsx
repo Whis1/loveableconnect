@@ -179,7 +179,10 @@ export const TrisGameBanner = () => {
   };
 
   const handleOpponentFound = (foundOpponent: Profile) => {
+    console.log('🎮 TrisGameBanner - Opponent found:', foundOpponent);
+    console.log('🎮 TrisGameBanner - Selected game:', selectedGame);
     setOpponent(foundOpponent);
+    console.log('🎮 TrisGameBanner - Setting gameState to playing');
     setGameState("playing");
   };
 
@@ -390,18 +393,24 @@ export const TrisGameBanner = () => {
   }
 
   if (gameState === "searching") {
+    console.log('🎮 Rendering OpponentSearch, selectedGame:', selectedGame);
     return <OpponentSearch onOpponentFound={handleOpponentFound} />;
   }
 
+  console.log('🎮 Current state:', { gameState, opponent: opponent?.nickname, selectedGame });
+
   if (gameState === "playing" && opponent && selectedGame === "tris") {
+    console.log('🎮 Rendering TrisBoard');
     return <TrisBoard opponent={opponent} onGameEnd={handleGameEnd} />;
   }
 
   if (gameState === "playing" && opponent && selectedGame === "dama") {
+    console.log('🎮 Rendering CheckersBoard');
     return <CheckersBoard opponent={opponent} onGameEnd={handleGameEnd} />;
   }
 
   if (gameState === "playing" && opponent && selectedGame === "risiko" && currentUserProfile) {
+    console.log('🎮 Rendering RisikoBoard');
     return <RisikoBoard userProfile={currentUserProfile} opponentProfile={opponent} onGameEnd={(won) => handleGameEnd(won ? "win" : "lose")} />;
   }
 
