@@ -64,6 +64,9 @@ const Explore = () => {
   // Pre-caricare matches e hidden matches per performance
   const [matchedProfileIds, setMatchedProfileIds] = useState<Set<string>>(new Set());
   
+  // Pre-caricare gli stati online
+  const [onlineStatuses, setOnlineStatuses] = useState<Map<string, { isOnline: boolean; showStatus: boolean }>>(new Map());
+  
   const [ageRange, setAgeRange] = useState([18, 90]);
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
   const [selectedOrientations, setSelectedOrientations] = useState<string[]>([]);
@@ -315,6 +318,9 @@ const Explore = () => {
 
       // CARICA TUTTI i profili subito, no paginazione
       setProfiles(allProfiles);
+      
+      // Pre-carica gli stati online di tutti i profili
+      await loadOnlineStatuses(allProfiles.map(p => p.id));
     } catch (error: any) {
       toast({
         title: "Errore",
@@ -323,6 +329,57 @@ const Explore = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadOnlineStatuses = async (profileIds: string[]) => {
+    if (profileIds.length === 0) return;
+
+    try {
+      // Fetch all profiles with online status data
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, show_online_status, is_admin_profile, last_active, manual_online_status')
+        .in('id', profileIds);
+
+      if (!profilesData) return;
+
+      const statusMap = new Map<string, { isOnline: boolean; showStatus: boolean }>();
+      const now = new Date();
+      const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
+
+      profilesData.forEach(profile => {
+        // Check manual_online_status first
+        if (profile.manual_online_status !== null) {
+          statusMap.set(profile.id, {
+            isOnline: profile.manual_online_status,
+            showStatus: profile.show_online_status ?? true,
+          });
+          return;
+        }
+
+        // Admin profiles are always online
+        if (profile.is_admin_profile) {
+          statusMap.set(profile.id, {
+            isOnline: true,
+            showStatus: true,
+          });
+          return;
+        }
+
+        // Check last_active
+        const lastActive = profile.last_active ? new Date(profile.last_active) : null;
+        const isOnline = lastActive ? lastActive > twoMinutesAgo : false;
+
+        statusMap.set(profile.id, {
+          isOnline,
+          showStatus: profile.show_online_status ?? true,
+        });
+      });
+
+      setOnlineStatuses(statusMap);
+    } catch (error) {
+      console.error('Error loading online statuses:', error);
     }
   };
 
@@ -404,6 +461,9 @@ const Explore = () => {
 
       // CARICA TUTTI i profili filtrati subito
       setProfiles(filteredProfiles);
+      
+      // Pre-carica gli stati online dei profili filtrati
+      await loadOnlineStatuses(filteredProfiles.map(p => p.id));
     } catch (error: any) {
       toast({
         title: "Errore",
@@ -656,6 +716,7 @@ const Explore = () => {
                   currentUserId={currentUser!}
                   likedProfileIds={likedProfileIds}
                   hasActiveMatch={matchedProfileIds.has(profile.id)}
+                  onlineStatus={onlineStatuses.get(profile.id)}
                   onLike={handleProfileLike}
                   onMatch={(name, avatar) => { ignoreNextRealtimeRef.current = true; handleMatch(name, avatar); }}
                 />
