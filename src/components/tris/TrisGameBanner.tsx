@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Trophy, X } from "lucide-react";
+import { Trophy, X, Loader2 } from "lucide-react";
 import { OpponentSearch } from "./OpponentSearch";
 import { TrisBoard } from "./TrisBoard";
 import { CheckersBoard } from "./CheckersBoard";
@@ -40,14 +40,18 @@ export const TrisGameBanner = () => {
       if (session) {
         setCurrentUserId(session.user.id);
         
+        console.log('🎮 Fetching current user profile for:', session.user.id);
         // Fetch current user profile
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", session.user.id)
           .single();
         
-        if (profile) {
+        if (error) {
+          console.error('❌ Error fetching profile:', error);
+        } else if (profile) {
+          console.log('✅ Current user profile loaded:', profile.nickname);
           setCurrentUserProfile(profile);
         }
       }
@@ -174,6 +178,18 @@ export const TrisGameBanner = () => {
   };
 
   const handleGameSelect = (game: "tris" | "dama" | "risiko") => {
+    console.log('🎮 Game selected:', game, 'currentUserProfile:', currentUserProfile);
+    
+    // Per Risiko, assicuriamoci che currentUserProfile sia caricato
+    if (game === "risiko" && !currentUserProfile) {
+      console.log('⚠️ Waiting for currentUserProfile to load for Risiko...');
+      toast({
+        title: "Caricamento profilo...",
+        description: "Attendere prego",
+      });
+      return;
+    }
+    
     setSelectedGame(game);
     setGameState("searching");
   };
@@ -409,7 +425,19 @@ export const TrisGameBanner = () => {
     return <CheckersBoard opponent={opponent} onGameEnd={handleGameEnd} />;
   }
 
-  if (gameState === "playing" && opponent && selectedGame === "risiko" && currentUserProfile) {
+  if (gameState === "playing" && opponent && selectedGame === "risiko") {
+    console.log('🎮 Attempting to render RisikoBoard, currentUserProfile:', currentUserProfile);
+    
+    if (!currentUserProfile) {
+      console.log('⚠️ currentUserProfile not loaded yet, showing loader...');
+      return (
+        <Card className="p-8 text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
+          <p>Preparazione partita...</p>
+        </Card>
+      );
+    }
+    
     console.log('🎮 Rendering RisikoBoard');
     return <RisikoBoard userProfile={currentUserProfile} opponentProfile={opponent} onGameEnd={(won) => handleGameEnd(won ? "win" : "lose")} />;
   }
