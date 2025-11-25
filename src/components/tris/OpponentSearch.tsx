@@ -75,7 +75,10 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
         // Check if opponent is in TOP 5 leaderboard and use that ELO
         const leaderboardOpponent = getOpponentWithLeaderboardElo(selectedOpponent);
         
+        console.log('🎮 Opponent found:', leaderboardOpponent);
+        
         setTimeout(() => {
+          console.log('🎮 Calling onOpponentFound with:', leaderboardOpponent);
           onOpponentFound(leaderboardOpponent);
         }, 500);
       }
