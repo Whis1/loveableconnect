@@ -29,6 +29,7 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
   const [searchDuration] = useState(
     Math.floor(Math.random() * 2000) + 3000
   ); // 3-5 secondi
+  const [animationStarted, setAnimationStarted] = useState(false);
 
   useEffect(() => {
     fetchProfiles();
@@ -43,7 +44,11 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
 
     if (adminProfiles && adminProfiles.length > 0) {
       setProfiles(adminProfiles);
-      startAnimation(adminProfiles);
+      // Avvia l'animazione solo se non è già partita
+      if (!animationStarted) {
+        setAnimationStarted(true);
+        startAnimation(adminProfiles);
+      }
     }
   };
 
