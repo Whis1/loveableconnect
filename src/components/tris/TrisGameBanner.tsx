@@ -180,16 +180,6 @@ export const TrisGameBanner = () => {
   const handleGameSelect = (game: "tris" | "dama" | "risiko") => {
     console.log('🎮 Game selected:', game, 'currentUserProfile:', currentUserProfile);
     
-    // Per Risiko, assicuriamoci che currentUserProfile sia caricato
-    if (game === "risiko" && !currentUserProfile) {
-      console.log('⚠️ Waiting for currentUserProfile to load for Risiko...');
-      toast({
-        title: "Caricamento profilo...",
-        description: "Attendere prego",
-      });
-      return;
-    }
-    
     setSelectedGame(game);
     setGameState("searching");
   };
