@@ -177,8 +177,25 @@ export const TrisGameBanner = () => {
     setGameState("selecting");
   };
 
-  const handleGameSelect = (game: "tris" | "dama" | "risiko") => {
+  const handleGameSelect = async (game: "tris" | "dama" | "risiko") => {
     console.log('🎮 Game selected:', game, 'currentUserProfile:', currentUserProfile);
+    
+    // Per Risiko, assicuriamoci che currentUserProfile sia caricato subito
+    if (game === "risiko" && !currentUserProfile) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", session.user.id)
+          .single();
+        
+        if (profile) {
+          console.log('✅ Loaded current user profile for Risiko:', profile.nickname);
+          setCurrentUserProfile(profile);
+        }
+      }
+    }
     
     setSelectedGame(game);
     setGameState("searching");
@@ -416,19 +433,22 @@ export const TrisGameBanner = () => {
   }
 
   if (gameState === "playing" && opponent && selectedGame === "risiko") {
-    console.log('🎮 Attempting to render RisikoBoard, currentUserProfile:', currentUserProfile);
+    console.log('🎮 Rendering RisikoBoard, currentUserProfile:', currentUserProfile);
     
+    // Se currentUserProfile non è ancora caricato, renderizza comunque RisikoBoard
+    // RisikoBoard gestirà internamente eventuali stati di caricamento
     if (!currentUserProfile) {
-      console.log('⚠️ currentUserProfile not loaded yet, showing loader...');
-      return (
-        <Card className="p-8 text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
-          <p>Preparazione partita...</p>
-        </Card>
-      );
+      console.log('⚠️ currentUserProfile not loaded, using fallback');
+      // Usa un profilo temporaneo con dati minimi dalla sessione
+      const tempProfile = {
+        id: currentUserId || '',
+        nickname: 'Tu',
+        game_elo: 1200,
+      } as any;
+      return <RisikoBoard userProfile={tempProfile} opponentProfile={opponent} onGameEnd={(won) => handleGameEnd(won ? "win" : "lose")} />;
     }
     
-    console.log('🎮 Rendering RisikoBoard');
+    console.log('🎮 Rendering RisikoBoard with full profile');
     return <RisikoBoard userProfile={currentUserProfile} opponentProfile={opponent} onGameEnd={(won) => handleGameEnd(won ? "win" : "lose")} />;
   }
 
