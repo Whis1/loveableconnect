@@ -10,6 +10,7 @@ interface Profile {
   avatar_url: string | null;
   photos: string[] | null;
   game_elo?: number;
+  is_admin_profile?: boolean;
 }
 
 interface OpponentSearchProps {
@@ -92,18 +93,29 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
         const data: StoredLeaderboardData = JSON.parse(stored);
         // If this opponent has an ELO in the leaderboard, use that instead
         if (data.adminElos[opponent.id]) {
-          console.log(`Using leaderboard ELO ${data.adminElos[opponent.id]} for ${opponent.nickname} (DB ELO: ${opponent.game_elo})`);
+          console.log(`✅ Using leaderboard ELO ${data.adminElos[opponent.id]} for ${opponent.nickname} (DB ELO: ${opponent.game_elo})`);
           return {
             ...opponent,
             game_elo: data.adminElos[opponent.id]
           };
         }
       }
+      
+      // If not in leaderboard but is admin, generate a realistic ELO
+      if (opponent.is_admin_profile) {
+        const randomElo = Math.floor(Math.random() * 700) + 1800; // 1800-2500
+        const roundedElo = Math.round(randomElo / 10) * 10;
+        console.log(`🎲 Generated new ELO ${roundedElo} for ${opponent.nickname}`);
+        return {
+          ...opponent,
+          game_elo: roundedElo
+        };
+      }
     } catch (error) {
       console.error("Error reading leaderboard data:", error);
     }
     
-    // Fallback to database ELO
+    // Fallback to database ELO for non-admin profiles
     return opponent;
   };
 
