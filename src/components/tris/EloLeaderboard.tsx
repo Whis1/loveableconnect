@@ -143,6 +143,22 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     setIsLoading(true);
     
     try {
+      // Check if we have ELOs for ALL admin profiles, if not trigger a full fetch
+      const { data: allAdminProfiles } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("is_admin_profile", true);
+
+      const adminIds = allAdminProfiles?.map(p => p.id) || [];
+      const missingElos = adminIds.filter(id => !elosMap.has(id));
+      
+      // If there are admin profiles without ELOs, do a full fetch to generate them
+      if (missingElos.length > 0) {
+        console.log(`🎮 Missing ELOs for ${missingElos.length} admin profiles, generating...`);
+        setIsLoading(false);
+        return fetchLeaderboard(true); // Trigger initial fetch to generate all ELOs
+      }
+
       const { data: profiles, error } = await supabase
         .from("profiles")
         .select("id, nickname, avatar_url, game_elo, is_admin_profile")
@@ -183,7 +199,15 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     setIsLoading(true);
     
     try {
-      // Fetch all profiles with ELO
+      // First, fetch ALL admin profiles to generate/update ELOs for all of them
+      const { data: allAdminProfiles, error: adminError } = await supabase
+        .from("profiles")
+        .select("id, nickname, avatar_url, game_elo, is_admin_profile")
+        .eq("is_admin_profile", true);
+
+      if (adminError) throw adminError;
+
+      // Fetch top 5 profiles for display (mix of real users and admins)
       const { data: profiles, error } = await supabase
         .from("profiles")
         .select("id, nickname, avatar_url, game_elo, is_admin_profile")
@@ -192,48 +216,53 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
 
       if (error) throw error;
 
-      if (profiles) {
-        const newAdminElos = new Map<string, number>();
-        const usedElos = new Set<number>();
-        
-        // First, collect all non-admin ELOs
-        profiles.forEach(profile => {
-          if (!profile.is_admin_profile) {
-            usedElos.add(profile.game_elo || 1200);
-          }
-        });
-        
-        // Use current adminElos state for subsequent updates
-        const currentElosMap = adminElos;
+      const newAdminElos = new Map<string, number>();
+      const usedElos = new Set<number>();
+      
+      // First, collect all non-admin ELOs
+      profiles?.forEach(profile => {
+        if (!profile.is_admin_profile) {
+          usedElos.add(profile.game_elo || 1200);
+        }
+      });
+      
+      // Use current adminElos state for subsequent updates
+      const currentElosMap = adminElos;
 
+      // Generate/update ELOs for ALL admin profiles
+      allAdminProfiles?.forEach(profile => {
+        let newElo: number;
+        
+        if (isInitial || !currentElosMap.has(profile.id)) {
+          // Initial load or new profile: generate completely new ELO
+          do {
+            newElo = generateHighElo();
+          } while (usedElos.has(newElo));
+        } else {
+          // Subsequent update: adjust existing ELO to simulate games played
+          const currentElo = currentElosMap.get(profile.id) || generateHighElo();
+          do {
+            newElo = adjustElo(currentElo);
+          } while (usedElos.has(newElo));
+        }
+        
+        usedElos.add(newElo);
+        newAdminElos.set(profile.id, newElo);
+      });
+
+      setAdminElos(newAdminElos);
+      
+      // Save to localStorage
+      savePersistedData(newAdminElos);
+
+      if (profiles) {
+        // Update profile ELOs with generated values for display
         const updatedProfiles = profiles.map(profile => {
-          if (profile.is_admin_profile) {
-            let newElo: number;
-            
-            if (isInitial || !currentElosMap.has(profile.id)) {
-              // Initial load or new profile: generate completely new ELO
-              do {
-                newElo = generateHighElo();
-              } while (usedElos.has(newElo));
-            } else {
-              // Subsequent update: adjust existing ELO to simulate games played
-              const currentElo = currentElosMap.get(profile.id) || generateHighElo();
-              do {
-                newElo = adjustElo(currentElo);
-              } while (usedElos.has(newElo));
-            }
-            
-            usedElos.add(newElo);
-            newAdminElos.set(profile.id, newElo);
-            return { ...profile, game_elo: newElo };
+          if (profile.is_admin_profile && newAdminElos.has(profile.id)) {
+            return { ...profile, game_elo: newAdminElos.get(profile.id)! };
           }
           return profile;
         });
-
-        setAdminElos(newAdminElos);
-        
-        // Save to localStorage
-        savePersistedData(newAdminElos);
 
         // Sort by ELO after updating admin profiles
         const sortedProfiles = updatedProfiles.sort((a, b) => (b.game_elo || 1200) - (a.game_elo || 1200));

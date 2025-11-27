@@ -40,15 +40,20 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
     // Fetch ALL admin profiles - sono bot, sempre disponibili
     const { data: adminProfiles } = await supabase
       .from("profiles")
-      .select("id, nickname, avatar_url, photos, game_elo")
+      .select("id, nickname, avatar_url, photos, game_elo, is_admin_profile")
       .eq("is_admin_profile", true);
 
     if (adminProfiles && adminProfiles.length > 0) {
-      setProfiles(adminProfiles);
+      // Mark all as admin profiles explicitly
+      const profilesWithAdmin = adminProfiles.map(p => ({
+        ...p,
+        is_admin_profile: true
+      }));
+      setProfiles(profilesWithAdmin);
       // Avvia l'animazione solo se non è già partita
       if (!animationStarted) {
         setAnimationStarted(true);
-        startAnimation(adminProfiles);
+        startAnimation(profilesWithAdmin);
       }
     }
   };
@@ -89,9 +94,11 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
   const getOpponentWithLeaderboardElo = (opponent: Profile): Profile => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
+      let data: StoredLeaderboardData | null = null;
+      
       if (stored) {
-        const data: StoredLeaderboardData = JSON.parse(stored);
-        // If this opponent has an ELO in the leaderboard, use that instead
+        data = JSON.parse(stored);
+        // If this opponent has an ELO in the leaderboard, use that
         if (data.adminElos[opponent.id]) {
           console.log(`✅ Using leaderboard ELO ${data.adminElos[opponent.id]} for ${opponent.nickname} (DB ELO: ${opponent.game_elo})`);
           return {
@@ -101,11 +108,20 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
         }
       }
       
-      // If not in leaderboard but is admin, generate a realistic ELO
+      // If admin profile but not in leaderboard storage, generate and save ELO
       if (opponent.is_admin_profile) {
         const randomElo = Math.floor(Math.random() * 700) + 1800; // 1800-2500
         const roundedElo = Math.round(randomElo / 10) * 10;
         console.log(`🎲 Generated new ELO ${roundedElo} for ${opponent.nickname}`);
+        
+        // Save to localStorage for consistency
+        const newData: StoredLeaderboardData = {
+          adminElos: data?.adminElos || {},
+          lastUpdate: data?.lastUpdate || new Date().toISOString()
+        };
+        newData.adminElos[opponent.id] = roundedElo;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
+        
         return {
           ...opponent,
           game_elo: roundedElo
