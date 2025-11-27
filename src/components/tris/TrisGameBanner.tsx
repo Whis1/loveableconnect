@@ -177,28 +177,29 @@ export const TrisGameBanner = () => {
     setGameState("selecting");
   };
 
-  const handleGameSelect = async (game: "tris" | "dama" | "risiko") => {
-    console.log('🎮 Game selected:', game, 'currentUserProfile:', currentUserProfile);
-    
-    // Per Risiko, assicuriamoci che currentUserProfile sia caricato subito
-    if (game === "risiko" && !currentUserProfile) {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", session.user.id)
-          .single();
-        
-        if (profile) {
-          console.log('✅ Loaded current user profile for Risiko:', profile.nickname);
-          setCurrentUserProfile(profile);
-        }
-      }
-    }
-    
+  const handleGameSelect = (game: "tris" | "dama" | "risiko") => {
+    console.log('🎮 Game selected:', game);
     setSelectedGame(game);
     setGameState("searching");
+    
+    // Per Risiko, carica il profilo in background se non è già caricato
+    if (game === "risiko" && !currentUserProfile) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", session.user.id)
+            .single()
+            .then(({ data: profile }) => {
+              if (profile) {
+                console.log('✅ Loaded current user profile for Risiko:', profile.nickname);
+                setCurrentUserProfile(profile);
+              }
+            });
+        }
+      });
+    }
   };
 
   const handleOpponentFound = (foundOpponent: Profile) => {
