@@ -37,20 +37,19 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
   }, []);
 
   const fetchProfiles = async () => {
-    // Fetch ALL admin profiles - sono bot, sempre disponibili
+    // Fetch only a few admin profiles - NOT all (causes freeze!)
     const { data: adminProfiles } = await supabase
       .from("profiles")
       .select("id, nickname, avatar_url, photos, game_elo, is_admin_profile")
-      .eq("is_admin_profile", true);
+      .eq("is_admin_profile", true)
+      .limit(20); // Limit to prevent performance issues
 
     if (adminProfiles && adminProfiles.length > 0) {
-      // Mark all as admin profiles explicitly
       const profilesWithAdmin = adminProfiles.map(p => ({
         ...p,
         is_admin_profile: true
       }));
       setProfiles(profilesWithAdmin);
-      // Avvia l'animazione solo se non è già partita
       if (!animationStarted) {
         setAnimationStarted(true);
         startAnimation(profilesWithAdmin);
