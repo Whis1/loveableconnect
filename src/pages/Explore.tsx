@@ -262,7 +262,7 @@ const Explore = () => {
       supabase.removeChannel(channel);
       supabase.removeChannel(matchChannel);
     };
-  }, [navigate, currentUser, cachedProfiles.length, profilesLoading]);
+  }, [navigate]);
 
   const loadAllProfiles = async (userId: string, preloadedMatches?: Set<string>) => {
     setLoading(true);
