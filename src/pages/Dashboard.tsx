@@ -53,159 +53,152 @@ const Dashboard = () => {
     let profileChannel: ReturnType<typeof supabase.channel> | null = null;
     let hiddenMatchesChannel: ReturnType<typeof supabase.channel> | null = null;
     const fetchUserData = async () => {
-      try {
-        const {
-          data: {
-            session
-          }
-        } = await supabase.auth.getSession();
-        if (!session) {
-          navigate("/auth");
-          return;
+      const {
+        data: {
+          session
         }
-        const userId = session.user.id;
-        setUser(session.user);
-
-        // Fetch profile
-        const {
-          data: profileData,
-          error
-        } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
-
-        // If profile doesn't exist, redirect to auth
-        if (error || !profileData) {
-          console.error("Profile not found, redirecting to auth");
-          navigate("/auth", {
-            replace: true
-          });
-          return;
-        }
-
-        // Check if profile is incomplete (missing birthdate or location)
-        if (!profileData.birthdate || !profileData.city) {
-          navigate("/profile/edit", {
-            state: {
-              requiresCompletion: true
-            },
-            replace: true
-          });
-          return;
-        }
-        setProfile(profileData);
-
-        // Check if tutorial should be shown
-        if (!profileData.tutorial_completed) {
-          setShowTutorial(true);
-        }
-
-        // Fetch role
-        const {
-          data: roleData
-        } = await supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
-        setUserRole(roleData?.role || null);
-
-        // Fetch matches
-        const {
-          data: matchesData
-        } = await supabase.from("matches").select("*").or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
-
-        // Get hidden matches for current user (only those hidden from matches page)
-        const {
-          data: hiddenMatches
-        } = await supabase.from("hidden_matches").select("match_id").eq("user_id", userId).in("hidden_from", ["matches", "both"]);
-        const hiddenMatchIds = new Set(hiddenMatches?.map(h => h.match_id) || []);
-
-        // Filter out hidden matches
-        const visibleMatches = (matchesData || []).filter(match => !hiddenMatchIds.has(match.id));
-        setMatches(visibleMatches);
-
-        // Fetch likes received
-        const {
-          data: likesData
-        } = await supabase.from("likes").select("*").eq("to_user_id", userId);
-        setLikesReceived(likesData || []);
-
-        // Set up realtime subscription for profile updates
-        profileChannel = supabase.channel('dashboard-profile').on('postgres_changes', {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'profiles',
-          filter: `id=eq.${userId}`
-        }, payload => {
-          console.log('Profile updated in dashboard:', payload.new);
-          setProfile(payload.new as Profile);
-        }).subscribe();
-
-        // Set up realtime subscription for new matches
-        matchesChannel = supabase.channel('dashboard-matches').on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'matches'
-        }, payload => {
-          const newMatch = payload.new as any;
-          if (newMatch.user1_id === userId || newMatch.user2_id === userId) {
-            setMatches(prev => [newMatch, ...prev]);
-            toast({
-              title: t("dashboard.newMatch"),
-              description: t("dashboard.newMatchDescription")
-            });
-          }
-        }).subscribe();
-
-        // Set up realtime subscription for new likes
-        likesChannel = supabase.channel('dashboard-likes').on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'likes'
-        }, payload => {
-          const newLike = payload.new as any;
-          if (newLike.to_user_id === userId) {
-            setLikesReceived(prev => [newLike, ...prev]);
-          }
-        }).on('postgres_changes', {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'likes'
-        }, async payload => {
-          const deletedLike = payload.old as any;
-          // When a like is deleted, it might mean a match was created
-          // Refresh matches to show the new match
-          if (deletedLike.to_user_id === userId || deletedLike.from_user_id === userId) {
-            const {
-              data: matchesData
-            } = await supabase.from("matches").select("*").or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
-            const {
-              data: hiddenMatches
-            } = await supabase.from("hidden_matches").select("match_id").eq("user_id", userId).in("hidden_from", ["matches", "both"]);
-            const hiddenMatchIds = new Set(hiddenMatches?.map(h => h.match_id) || []);
-            const visibleMatches = (matchesData || []).filter(match => !hiddenMatchIds.has(match.id));
-            setMatches(visibleMatches);
-
-            // Also update likes list
-            const {
-              data: likesData
-            } = await supabase.from("likes").select("*").eq("to_user_id", userId);
-            setLikesReceived(likesData || []);
-          }
-        }).subscribe();
-
-        // Set up realtime subscription for hidden matches
-        hiddenMatchesChannel = supabase.channel('dashboard-hidden-matches').on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'hidden_matches'
-        }, payload => {
-          const hiddenMatch = payload.new as any;
-          if (hiddenMatch.user_id === userId) {
-            setMatches(prev => prev.filter(m => m.id !== hiddenMatch.match_id));
-          }
-        }).subscribe();
-
-      } catch (err) {
-        console.error("Error fetching dashboard data:", err);
-      } finally {
-        setLoading(false);
+      } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/auth");
+        return;
       }
+      setUser(session.user);
+
+      // Fetch profile
+      const {
+        data: profileData,
+        error
+      } = await supabase.from("profiles").select("*").eq("id", session.user.id).maybeSingle();
+
+      // If profile doesn't exist, redirect to auth
+      if (error || !profileData) {
+        console.error("Profile not found, redirecting to auth");
+        navigate("/auth", {
+          replace: true
+        });
+        return;
+      }
+
+      // Check if profile is incomplete (missing birthdate or location)
+      if (!profileData.birthdate || !profileData.city) {
+        navigate("/profile/edit", {
+          state: {
+            requiresCompletion: true
+          },
+          replace: true
+        });
+        return;
+      }
+      setProfile(profileData);
+
+      // Check if tutorial should be shown
+      if (!profileData.tutorial_completed) {
+        setShowTutorial(true);
+      }
+
+      // Fetch role
+      const {
+        data: roleData
+      } = await supabase.from("user_roles").select("role").eq("user_id", session.user.id).maybeSingle();
+      setUserRole(roleData?.role || null);
+
+      // Fetch matches
+      const {
+        data: matchesData
+      } = await supabase.from("matches").select("*").or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`);
+
+      // Get hidden matches for current user (only those hidden from matches page)
+      const {
+        data: hiddenMatches
+      } = await supabase.from("hidden_matches").select("match_id").eq("user_id", session.user.id).in("hidden_from", ["matches", "both"]);
+      const hiddenMatchIds = new Set(hiddenMatches?.map(h => h.match_id) || []);
+
+      // Filter out hidden matches
+      const visibleMatches = (matchesData || []).filter(match => !hiddenMatchIds.has(match.id));
+      setMatches(visibleMatches);
+
+      // Fetch likes received
+      const {
+        data: likesData
+      } = await supabase.from("likes").select("*").eq("to_user_id", session.user.id);
+      setLikesReceived(likesData || []);
+      setLoading(false);
+
+      // Set up realtime subscription for profile updates
+      profileChannel = supabase.channel('dashboard-profile').on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'profiles',
+        filter: `id=eq.${session.user.id}`
+      }, payload => {
+        console.log('Profile updated in dashboard:', payload.new);
+        setProfile(payload.new as Profile);
+      }).subscribe();
+
+      // Set up realtime subscription for new matches
+      matchesChannel = supabase.channel('dashboard-matches').on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'matches'
+      }, payload => {
+        const newMatch = payload.new as any;
+        if (newMatch.user1_id === session.user.id || newMatch.user2_id === session.user.id) {
+          setMatches(prev => [newMatch, ...prev]);
+          toast({
+            title: t("dashboard.newMatch"),
+            description: t("dashboard.newMatchDescription")
+          });
+        }
+      }).subscribe();
+
+      // Set up realtime subscription for new likes
+      likesChannel = supabase.channel('dashboard-likes').on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'likes'
+      }, payload => {
+        const newLike = payload.new as any;
+        if (newLike.to_user_id === session.user.id) {
+          setLikesReceived(prev => [newLike, ...prev]);
+        }
+      }).on('postgres_changes', {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'likes'
+      }, async payload => {
+        const deletedLike = payload.old as any;
+        // When a like is deleted, it might mean a match was created
+        // Refresh matches to show the new match
+        if (deletedLike.to_user_id === session.user.id || deletedLike.from_user_id === session.user.id) {
+          const {
+            data: matchesData
+          } = await supabase.from("matches").select("*").or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`);
+          const {
+            data: hiddenMatches
+          } = await supabase.from("hidden_matches").select("match_id").eq("user_id", session.user.id).in("hidden_from", ["matches", "both"]);
+          const hiddenMatchIds = new Set(hiddenMatches?.map(h => h.match_id) || []);
+          const visibleMatches = (matchesData || []).filter(match => !hiddenMatchIds.has(match.id));
+          setMatches(visibleMatches);
+
+          // Also update likes list
+          const {
+            data: likesData
+          } = await supabase.from("likes").select("*").eq("to_user_id", session.user.id);
+          setLikesReceived(likesData || []);
+        }
+      }).subscribe();
+
+      // Set up realtime subscription for hidden matches
+      hiddenMatchesChannel = supabase.channel('dashboard-hidden-matches').on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'hidden_matches'
+      }, payload => {
+        const hiddenMatch = payload.new as any;
+        if (hiddenMatch.user_id === session.user.id) {
+          setMatches(prev => prev.filter(m => m.id !== hiddenMatch.match_id));
+        }
+      }).subscribe();
     };
     fetchUserData();
 
