@@ -146,15 +146,22 @@ const Explore = () => {
       );
       setMatchedProfileIds(matches);
       
-      // Load all profiles automatically
-      await loadAllProfiles(session.user.id, matches);
+      // Use cached profiles from useProfiles hook if available
+      if (cachedProfiles.length > 0 && !profilesLoading) {
+        const filteredProfiles = cachedProfiles
+          .filter(p => !matches.has(p.id)) as Profile[];
+        setProfiles(filteredProfiles);
+        setLoading(false);
+      } else {
+        // Load profiles only if cache is empty
+        await loadAllProfiles(session.user.id, matches);
+        setLoading(false);
+      }
       
-      setLoading(false);
-      
-      // Show geolocation loader for 5 seconds
+      // Show geolocation loader for 2 seconds (reduced from 5)
       setTimeout(() => {
         setShowGeoLoader(false);
-      }, 5000);
+      }, 2000);
     };
 
     initializeExplore();
@@ -255,7 +262,7 @@ const Explore = () => {
       supabase.removeChannel(channel);
       supabase.removeChannel(matchChannel);
     };
-  }, [navigate, currentUser]);
+  }, [navigate, currentUser, cachedProfiles.length, profilesLoading]);
 
   const loadAllProfiles = async (userId: string, preloadedMatches?: Set<string>) => {
     setLoading(true);
