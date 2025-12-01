@@ -138,27 +138,12 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     }
   };
 
-  // Build leaderboard from existing ELOs without fetching or modifying
+  // Build leaderboard from existing ELOs without fetching ALL admin profiles
   const buildLeaderboardFromExistingElos = async (elosMap: Map<string, number>) => {
     setIsLoading(true);
     
     try {
-      // Check if we have ELOs for ALL admin profiles, if not trigger a full fetch
-      const { data: allAdminProfiles } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("is_admin_profile", true);
-
-      const adminIds = allAdminProfiles?.map(p => p.id) || [];
-      const missingElos = adminIds.filter(id => !elosMap.has(id));
-      
-      // If there are admin profiles without ELOs, do a full fetch to generate them
-      if (missingElos.length > 0) {
-        console.log(`🎮 Missing ELOs for ${missingElos.length} admin profiles, generating...`);
-        setIsLoading(false);
-        return fetchLeaderboard(true); // Trigger initial fetch to generate all ELOs
-      }
-
+      // Only fetch top 5 profiles - don't check ALL admin profiles (causes freeze!)
       const { data: profiles, error } = await supabase
         .from("profiles")
         .select("id, nickname, avatar_url, game_elo, is_admin_profile")
@@ -168,23 +153,32 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
       if (error) throw error;
 
       if (profiles) {
-        // Use persisted ELOs for admin profiles, real ELOs for users
+        // Use persisted ELOs for admin profiles, generate if missing
         const updatedProfiles = profiles.map(profile => {
-          if (profile.is_admin_profile && elosMap.has(profile.id)) {
-            return { ...profile, game_elo: elosMap.get(profile.id)! };
+          if (profile.is_admin_profile) {
+            if (elosMap.has(profile.id)) {
+              return { ...profile, game_elo: elosMap.get(profile.id)! };
+            } else {
+              // Generate ELO on-the-fly for this profile
+              const newElo = Math.round((Math.floor(Math.random() * 700) + 1800) / 10) * 10;
+              elosMap.set(profile.id, newElo);
+              return { ...profile, game_elo: newElo };
+            }
           }
           return profile;
         });
 
+        // Save any newly generated ELOs
+        savePersistedData(elosMap);
+
         // Sort by ELO
         const sortedProfiles = updatedProfiles.sort((a, b) => (b.game_elo || 1200) - (a.game_elo || 1200));
         
-        // Get top 5
         setTopPlayers(sortedProfiles.slice(0, 5));
 
-        // Compute user's rank via count, independent of top 5
+        // Compute user's rank asynchronously
         if (userId) {
-          await computeUserEloAndRank();
+          computeUserEloAndRank();
         }
       }
     } catch (error) {
@@ -199,15 +193,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     setIsLoading(true);
     
     try {
-      // First, fetch ALL admin profiles to generate/update ELOs for all of them
-      const { data: allAdminProfiles, error: adminError } = await supabase
-        .from("profiles")
-        .select("id, nickname, avatar_url, game_elo, is_admin_profile")
-        .eq("is_admin_profile", true);
-
-      if (adminError) throw adminError;
-
-      // Fetch top 5 profiles for display (mix of real users and admins)
+      // Only fetch top 5 profiles - NOT all admin profiles (causes freeze!)
       const { data: profiles, error } = await supabase
         .from("profiles")
         .select("id, nickname, avatar_url, game_elo, is_admin_profile")
@@ -216,63 +202,48 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
 
       if (error) throw error;
 
-      const newAdminElos = new Map<string, number>();
+      const newAdminElos = new Map<string, number>(adminElos);
       const usedElos = new Set<number>();
       
-      // First, collect all non-admin ELOs
-      profiles?.forEach(profile => {
-        if (!profile.is_admin_profile) {
-          usedElos.add(profile.game_elo || 1200);
-        }
-      });
-      
-      // Use current adminElos state for subsequent updates
-      const currentElosMap = adminElos;
-
-      // Generate/update ELOs for ALL admin profiles
-      allAdminProfiles?.forEach(profile => {
-        let newElo: number;
-        
-        if (isInitial || !currentElosMap.has(profile.id)) {
-          // Initial load or new profile: generate completely new ELO
-          do {
-            newElo = generateHighElo();
-          } while (usedElos.has(newElo));
-        } else {
-          // Subsequent update: adjust existing ELO to simulate games played
-          const currentElo = currentElosMap.get(profile.id) || generateHighElo();
-          do {
-            newElo = adjustElo(currentElo);
-          } while (usedElos.has(newElo));
-        }
-        
-        usedElos.add(newElo);
-        newAdminElos.set(profile.id, newElo);
-      });
-
-      setAdminElos(newAdminElos);
-      
-      // Save to localStorage
-      savePersistedData(newAdminElos);
+      // Collect existing ELOs to avoid duplicates
+      newAdminElos.forEach(elo => usedElos.add(elo));
 
       if (profiles) {
-        // Update profile ELOs with generated values for display
+        // Generate/update ELOs only for admin profiles in top 5
         const updatedProfiles = profiles.map(profile => {
-          if (profile.is_admin_profile && newAdminElos.has(profile.id)) {
-            return { ...profile, game_elo: newAdminElos.get(profile.id)! };
+          if (profile.is_admin_profile) {
+            let newElo: number;
+            
+            if (isInitial || !newAdminElos.has(profile.id)) {
+              // Generate new ELO
+              do {
+                newElo = generateHighElo();
+              } while (usedElos.has(newElo));
+            } else {
+              // Adjust existing ELO
+              const currentElo = newAdminElos.get(profile.id)!;
+              do {
+                newElo = adjustElo(currentElo);
+              } while (usedElos.has(newElo) && newElo !== currentElo);
+            }
+            
+            usedElos.add(newElo);
+            newAdminElos.set(profile.id, newElo);
+            return { ...profile, game_elo: newElo };
           }
           return profile;
         });
 
-        // Sort by ELO after updating admin profiles
+        setAdminElos(newAdminElos);
+        savePersistedData(newAdminElos);
+
+        // Sort by ELO
         const sortedProfiles = updatedProfiles.sort((a, b) => (b.game_elo || 1200) - (a.game_elo || 1200));
-        
-        // Get top 5
         setTopPlayers(sortedProfiles.slice(0, 5));
 
-        // Compute user's rank via count, independent of top 5
+        // Compute user's rank asynchronously
         if (userId) {
-          await computeUserEloAndRank();
+          computeUserEloAndRank();
         }
       }
     } catch (error) {
