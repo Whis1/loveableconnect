@@ -29,10 +29,8 @@ export const useLikes = () => {
   const { data: likedProfileIds = new Set(), isLoading, error } = useQuery({
     queryKey: ["user-likes"],
     queryFn: fetchUserLikes,
-    staleTime: 5 * 60 * 1000, // 5 minuti - navigazione istantanea
-    gcTime: 30 * 60 * 1000, // 30 minuti in cache
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    staleTime: 30 * 1000, // 30 secondi
+    refetchInterval: 60 * 1000, // Ricarica ogni minuto
   });
 
   // Realtime updates per i like

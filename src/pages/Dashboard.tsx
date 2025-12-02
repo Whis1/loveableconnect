@@ -15,8 +15,6 @@ import { GeolocationBanner } from "@/components/GeolocationBanner";
 import { NotificationPermissionBanner } from "@/components/NotificationPermissionBanner";
 import { InboxDropdown } from "@/components/InboxDropdown";
 import { Tutorial } from "@/components/Tutorial";
-import { useMatches } from "@/hooks/useMatches";
-import { useReceivedLikes } from "@/hooks/useReceivedLikes";
 import loveIcon from "@/assets/love-icon.png";
 interface Profile {
   id: string;
@@ -34,29 +32,32 @@ interface UserRole {
 }
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { t } = useTranslation();
-  useBanCheck();
-  
-  // Usa hooks con cache per navigazione istantanea
-  const { matches: cachedMatches, loading: matchesLoading } = useMatches();
-  const { receivedLikes: cachedLikes, loading: likesLoading } = useReceivedLikes();
-  
+  const {
+    toast
+  } = useToast();
+  const {
+    t
+  } = useTranslation();
+  useBanCheck(); // Check if user is banned
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false); // Inizia false per mostrare subito dati cached
+  const [loading, setLoading] = useState(true);
+  const [matches, setMatches] = useState<any[]>([]);
+  const [likesReceived, setLikesReceived] = useState<any[]>([]);
   const [showGeolocationBanner, setShowGeolocationBanner] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
-  const [hiddenMatchIds, setHiddenMatchIds] = useState<Set<string>>(new Set());
-  
-  // Filtra i match nascosti
-  const matches = cachedMatches.filter(match => !hiddenMatchIds.has(match.id));
   useEffect(() => {
+    let matchesChannel: ReturnType<typeof supabase.channel> | null = null;
+    let likesChannel: ReturnType<typeof supabase.channel> | null = null;
     let profileChannel: ReturnType<typeof supabase.channel> | null = null;
-    
+    let hiddenMatchesChannel: ReturnType<typeof supabase.channel> | null = null;
     const fetchUserData = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: {
+          session
+        }
+      } = await supabase.auth.getSession();
       if (!session) {
         navigate("/auth");
         return;
@@ -64,23 +65,26 @@ const Dashboard = () => {
       setUser(session.user);
 
       // Fetch profile
-      const { data: profileData, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", session.user.id)
-        .maybeSingle();
+      const {
+        data: profileData,
+        error
+      } = await supabase.from("profiles").select("*").eq("id", session.user.id).maybeSingle();
 
       // If profile doesn't exist, redirect to auth
       if (error || !profileData) {
         console.error("Profile not found, redirecting to auth");
-        navigate("/auth", { replace: true });
+        navigate("/auth", {
+          replace: true
+        });
         return;
       }
 
-      // Check if profile is incomplete
+      // Check if profile is incomplete (missing birthdate or location)
       if (!profileData.birthdate || !profileData.city) {
         navigate("/profile/edit", {
-          state: { requiresCompletion: true },
+          state: {
+            requiresCompletion: true
+          },
           replace: true
         });
         return;
@@ -93,58 +97,151 @@ const Dashboard = () => {
       }
 
       // Fetch role
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
+      const {
+        data: roleData
+      } = await supabase.from("user_roles").select("role").eq("user_id", session.user.id).maybeSingle();
       setUserRole(roleData?.role || null);
 
-      // Fetch hidden matches
-      const { data: hiddenMatches } = await supabase
-        .from("hidden_matches")
-        .select("match_id")
-        .eq("user_id", session.user.id)
-        .in("hidden_from", ["matches", "both"]);
-      setHiddenMatchIds(new Set(hiddenMatches?.map(h => h.match_id) || []));
+      // Fetch matches
+      const {
+        data: matchesData
+      } = await supabase.from("matches").select("*").or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`);
 
-      // Set up realtime subscription for profile updates only
-      profileChannel = supabase
-        .channel('dashboard-profile')
-        .on('postgres_changes', {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'profiles',
-          filter: `id=eq.${session.user.id}`
-        }, payload => {
-          setProfile(payload.new as Profile);
-        })
-        .on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'hidden_matches'
-        }, payload => {
-          const hiddenMatch = payload.new as any;
-          if (hiddenMatch.user_id === session.user.id) {
-            setHiddenMatchIds(prev => new Set([...prev, hiddenMatch.match_id]));
-          }
-        })
-        .subscribe();
+      // Get hidden matches for current user (only those hidden from matches page)
+      const {
+        data: hiddenMatches
+      } = await supabase.from("hidden_matches").select("match_id").eq("user_id", session.user.id).in("hidden_from", ["matches", "both"]);
+      const hiddenMatchIds = new Set(hiddenMatches?.map(h => h.match_id) || []);
+
+      // Filter out hidden matches
+      const visibleMatches = (matchesData || []).filter(match => !hiddenMatchIds.has(match.id));
+      setMatches(visibleMatches);
+
+      // Fetch likes received
+      const {
+        data: likesData
+      } = await supabase.from("likes").select("*").eq("to_user_id", session.user.id);
+      setLikesReceived(likesData || []);
+      setLoading(false);
+
+      // Set up realtime subscription for profile updates
+      profileChannel = supabase.channel('dashboard-profile').on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'profiles',
+        filter: `id=eq.${session.user.id}`
+      }, payload => {
+        console.log('Profile updated in dashboard:', payload.new);
+        setProfile(payload.new as Profile);
+      }).subscribe();
+
+      // Set up realtime subscription for new matches
+      matchesChannel = supabase.channel('dashboard-matches').on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'matches'
+      }, payload => {
+        const newMatch = payload.new as any;
+        if (newMatch.user1_id === session.user.id || newMatch.user2_id === session.user.id) {
+          setMatches(prev => [newMatch, ...prev]);
+          toast({
+            title: t("dashboard.newMatch"),
+            description: t("dashboard.newMatchDescription")
+          });
+        }
+      }).subscribe();
+
+      // Set up realtime subscription for new likes
+      likesChannel = supabase.channel('dashboard-likes').on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'likes'
+      }, payload => {
+        const newLike = payload.new as any;
+        if (newLike.to_user_id === session.user.id) {
+          setLikesReceived(prev => [newLike, ...prev]);
+        }
+      }).on('postgres_changes', {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'likes'
+      }, async payload => {
+        const deletedLike = payload.old as any;
+        // When a like is deleted, it might mean a match was created
+        // Refresh matches to show the new match
+        if (deletedLike.to_user_id === session.user.id || deletedLike.from_user_id === session.user.id) {
+          const {
+            data: matchesData
+          } = await supabase.from("matches").select("*").or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`);
+          const {
+            data: hiddenMatches
+          } = await supabase.from("hidden_matches").select("match_id").eq("user_id", session.user.id).in("hidden_from", ["matches", "both"]);
+          const hiddenMatchIds = new Set(hiddenMatches?.map(h => h.match_id) || []);
+          const visibleMatches = (matchesData || []).filter(match => !hiddenMatchIds.has(match.id));
+          setMatches(visibleMatches);
+
+          // Also update likes list
+          const {
+            data: likesData
+          } = await supabase.from("likes").select("*").eq("to_user_id", session.user.id);
+          setLikesReceived(likesData || []);
+        }
+      }).subscribe();
+
+      // Set up realtime subscription for hidden matches
+      hiddenMatchesChannel = supabase.channel('dashboard-hidden-matches').on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'hidden_matches'
+      }, payload => {
+        const hiddenMatch = payload.new as any;
+        if (hiddenMatch.user_id === session.user.id) {
+          setMatches(prev => prev.filter(m => m.id !== hiddenMatch.match_id));
+        }
+      }).subscribe();
     };
-    
     fetchUserData();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    // Refetch data when window regains focus (user returns to dashboard)
+    const handleFocus = () => {
+      fetchUserData();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    // Realtime listener for deleted likes (when matches are created)
+    const likesDeleteChannel = supabase.channel('likes-delete-channel').on('postgres_changes', {
+      event: 'DELETE',
+      schema: 'public',
+      table: 'likes'
+    }, async payload => {
+      // When a like is deleted, refresh user data
+      await fetchUserData();
+    }).subscribe();
+    const {
+      data: {
+        subscription
+      }
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
         navigate("/auth");
       }
     });
-
     return () => {
+      window.removeEventListener('focus', handleFocus);
       subscription.unsubscribe();
       if (profileChannel) {
         supabase.removeChannel(profileChannel);
       }
+      if (matchesChannel) {
+        supabase.removeChannel(matchesChannel);
+      }
+      if (likesChannel) {
+        supabase.removeChannel(likesChannel);
+      }
+      if (hiddenMatchesChannel) {
+        supabase.removeChannel(hiddenMatchesChannel);
+      }
+      supabase.removeChannel(likesDeleteChannel);
     };
   }, [navigate, toast]);
   const handleExploreClick = () => {
@@ -263,7 +360,7 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent className="relative">
                   <div className="text-6xl font-black mb-4 drop-shadow-lg">
-                    {cachedLikes.length}
+                    {likesReceived.length}
                   </div>
                   <Button className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold shadow-lg group-hover:shadow-xl transition-all duration-300" onClick={() => navigate("/likes")}>
                     {t("dashboard.seeWhoLikes")}

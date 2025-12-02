@@ -40,13 +40,10 @@ const fetchProfiles = async (): Promise<Profile[]> => {
 export const useProfiles = () => {
   const queryClient = useQueryClient();
 
-  const { data: profiles = [], isLoading, error, isFetching } = useQuery({
+  const { data: profiles = [], isLoading, error } = useQuery({
     queryKey: ["profiles"],
     queryFn: fetchProfiles,
-    staleTime: 10 * 60 * 1000, // 10 minuti - dati sempre freschi per navigazione istantanea
-    gcTime: 30 * 60 * 1000, // 30 minuti in cache
-    refetchOnWindowFocus: false, // Non ricaricare quando si torna alla finestra
-    refetchOnMount: false, // Non ricaricare quando il componente si monta se i dati sono in cache
+    staleTime: 2 * 60 * 1000, // 2 minuti
   });
 
   // Realtime updates per i profili
