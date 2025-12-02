@@ -56,8 +56,8 @@ const Explore = () => {
   const { likedProfileIds, loading: likesLoading } = useLikes();
   const { profiles: cachedProfiles, loading: profilesLoading } = useProfiles();
   const [currentUser, setCurrentUser] = useState<string | null>(null);
-  const [profiles, setProfiles] = useState<Profile[]>([]); // TUTTI i profili, caricati subito
-  const [loading, setLoading] = useState(true);
+  const [profiles, setProfiles] = useState<Profile[]>(cachedProfiles as Profile[]); // Usa cache subito
+  const [loading, setLoading] = useState(false); // No loading iniziale se abbiamo cache
   const [showFilters, setShowFilters] = useState(false);
   const [showGeoLoader, setShowGeoLoader] = useState(true);
   
@@ -108,6 +108,13 @@ const Explore = () => {
     "pansexual": ["pansexual", "pansessuale", "pansexuale", "pan"],
   };
 
+  // Usa profili dalla cache se disponibili per navigazione istantanea
+  useEffect(() => {
+    if (cachedProfiles.length > 0 && profiles.length === 0) {
+      setProfiles(cachedProfiles as Profile[]);
+    }
+  }, [cachedProfiles]);
+
   useEffect(() => {
     const initializeExplore = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -133,7 +140,7 @@ const Explore = () => {
 
       setCurrentUser(session.user.id);
       
-      // Pre-carica matches per performance
+      // Pre-carica matches per performance (in background)
       const { data: matchesData } = await supabase
         .from("matches")
         .select("user1_id, user2_id")
@@ -146,15 +153,19 @@ const Explore = () => {
       );
       setMatchedProfileIds(matches);
       
-      // Load all profiles automatically
-      await loadAllProfiles(session.user.id, matches);
+      // Carica profili solo se cache è vuota
+      if (profiles.length === 0) {
+        await loadAllProfiles(session.user.id, matches);
+      } else {
+        // Filtra profili già in cache per rimuovere matches
+        setProfiles(prev => prev.filter(p => !matches.has(p.id)));
+        setShowGeoLoader(false);
+      }
       
-      setLoading(false);
-      
-      // Show geolocation loader for 5 seconds
+      // Show geolocation loader for max 3 seconds
       setTimeout(() => {
         setShowGeoLoader(false);
-      }, 5000);
+      }, 3000);
     };
 
     initializeExplore();
