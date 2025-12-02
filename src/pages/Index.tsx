@@ -7,6 +7,7 @@ import { useProfiles } from "@/hooks/useProfiles";
 import { useLikes } from "@/hooks/useLikes";
 import { useCredits } from "@/hooks/useCredits";
 import { useDailyLikes } from "@/hooks/useDailyLikes";
+import { useAppPrefetch } from "@/hooks/useAppPrefetch";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -126,7 +127,11 @@ const Index = () => {
 
 // Componente che carica i dati solo dopo l'autenticazione
 const AuthenticatedApp = () => {
+  // Prefetch globale per navigazione istantanea
+  useAppPrefetch();
+  
   // Pre-carica tutti i dati necessari solo dopo l'autenticazione
+  // Questi hook ora usano cache aggressiva per navigazione istantanea
   useProfiles();
   useLikes();
   useCredits();
