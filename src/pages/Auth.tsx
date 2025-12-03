@@ -151,6 +151,22 @@ const Auth = () => {
       if (error) throw error;
 
       if (data.user) {
+        // Send custom confirmation email via Edge Function
+        try {
+          await supabase.functions.invoke('send-auth-email', {
+            body: {
+              user: { email },
+              email_data: {
+                email_action_type: 'signup',
+                redirect_to: `${window.location.origin}/`,
+                confirmation_url: `${window.location.origin}/auth/callback?type=signup`
+              }
+            }
+          });
+        } catch (emailError) {
+          console.error('Error sending custom confirmation email:', emailError);
+        }
+
         setEmailSent(true);
         toast({
           title: "📧 Email di Conferma Inviata",
@@ -188,6 +204,21 @@ const Auth = () => {
       });
 
       if (error) throw error;
+
+      // Send custom reset password email via Edge Function
+      try {
+        await supabase.functions.invoke('send-auth-email', {
+          body: {
+            user: { email },
+            email_data: {
+              email_action_type: 'recovery',
+              redirect_to: `${window.location.origin}/reset-password`
+            }
+          }
+        });
+      } catch (emailError) {
+        console.error('Error sending custom reset password email:', emailError);
+      }
 
       toast({
         title: t('auth.emailSent'),
