@@ -132,3 +132,8 @@ verify_jwt = false
 [functions.get-vapid-key]
 verify_jwt = false
 
+[functions.custom-signup]
+verify_jwt = false
+
+[functions.custom-reset-password]
+verify_jwt = false
