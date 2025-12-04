@@ -132,47 +132,29 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            nickname,
-            birthdate,
-            city,
-            gender,
-            sexual_orientation: sexualOrientation,
-            relationship_status: relationshipStatus,
-          }
-        },
+      // Use custom signup edge function that handles everything
+      const { data, error } = await supabase.functions.invoke('custom-signup', {
+        body: {
+          email,
+          password,
+          nickname,
+          birthdate,
+          city,
+          gender,
+          sexual_orientation: sexualOrientation,
+          relationship_status: relationshipStatus,
+          redirect_to: `${window.location.origin}/`,
+        }
       });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      if (data.user) {
-        // Send custom confirmation email via Edge Function
-        try {
-          await supabase.functions.invoke('send-auth-email', {
-            body: {
-              user: { email },
-              email_data: {
-                email_action_type: 'signup',
-                redirect_to: `${window.location.origin}/`,
-                confirmation_url: `${window.location.origin}/auth/callback?type=signup`
-              }
-            }
-          });
-        } catch (emailError) {
-          console.error('Error sending custom confirmation email:', emailError);
-        }
-
-        setEmailSent(true);
-        toast({
-          title: "📧 Email di Conferma Inviata",
-          description: "Controlla la tua casella email per confermare l'account prima di fare login.",
-        });
-      }
+      setEmailSent(true);
+      toast({
+        title: "📧 Email di Conferma Inviata",
+        description: "Controlla la tua casella email per confermare l'account prima di fare login.",
+      });
     } catch (error: any) {
       toast({
         title: t('auth.errorSignUp'),
@@ -199,26 +181,16 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      // Use custom reset password edge function
+      const { data, error } = await supabase.functions.invoke('custom-reset-password', {
+        body: {
+          email,
+          redirect_to: `${window.location.origin}/reset-password`,
+        }
       });
 
       if (error) throw error;
-
-      // Send custom reset password email via Edge Function
-      try {
-        await supabase.functions.invoke('send-auth-email', {
-          body: {
-            user: { email },
-            email_data: {
-              email_action_type: 'recovery',
-              redirect_to: `${window.location.origin}/reset-password`
-            }
-          }
-        });
-      } catch (emailError) {
-        console.error('Error sending custom reset password email:', emailError);
-      }
+      if (data?.error) throw new Error(data.error);
 
       toast({
         title: t('auth.emailSent'),
