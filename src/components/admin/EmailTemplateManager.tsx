@@ -251,6 +251,15 @@ export function EmailTemplateManager() {
                             <div className="text-xs text-muted-foreground">
                               <strong>Variabili disponibili:</strong>
                               <ul className="list-disc list-inside mt-1">
+                                {template.template_key === 'confirmation_email' && (
+                                  <li>{'{{confirmLink}}'} - Link di conferma email</li>
+                                )}
+                                {template.template_key === 'reset_password' && (
+                                  <li>{'{{resetLink}}'} - Link di reset password</li>
+                                )}
+                                {template.template_key === 'welcome_email' && (
+                                  <li>{'{{nickname}}'} - Nickname dell'utente</li>
+                                )}
                                 {template.template_key === 'like_notification' && (
                                   <li>{'{{likerNickname}}'} - Nickname di chi ha messo like</li>
                                 )}

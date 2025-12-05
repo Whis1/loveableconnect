@@ -38,6 +38,8 @@ const Auth = () => {
   const [showCookieBanner, setShowCookieBanner] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [ageConsent, setAgeConsent] = useState(false);
+  const [resendingEmail, setResendingEmail] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   useEffect(() => {
     // Check cookie consent
@@ -86,6 +88,47 @@ const Auth = () => {
       subscription.unsubscribe();
     };
   }, [navigate]);
+
+  // Cooldown timer for resend email
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
+
+  const handleResendEmail = async () => {
+    if (resendCooldown > 0 || !email) return;
+    
+    setResendingEmail(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('resend-confirmation-email', {
+        body: {
+          email,
+          redirect_to: `${window.location.origin}/`,
+        }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({
+        title: "📧 Email Inviata!",
+        description: "Ti abbiamo inviato nuovamente l'email di conferma.",
+      });
+      
+      // Start 60 second cooldown
+      setResendCooldown(60);
+    } catch (error: any) {
+      toast({
+        title: "Errore",
+        description: error.message || "Impossibile inviare l'email. Riprova più tardi.",
+        variant: "destructive",
+      });
+    } finally {
+      setResendingEmail(false);
+    }
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -461,25 +504,42 @@ const Auth = () => {
                     <p>📍 Controlla anche nella cartella spam/posta indesiderata</p>
                     <p>⏰ Il link scadrà tra 24 ore</p>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    className="w-full mt-4"
-                    onClick={() => {
-                      setEmailSent(false);
-                      setEmail("");
-                      setPassword("");
-                      setNickname("");
-                      setBirthDay("");
-                      setBirthMonth("");
-                      setBirthYear("");
-                      setCity("");
-                      setGender("");
-                      setSexualOrientation("");
-                      setRelationshipStatus("");
-                    }}
-                  >
-                    ← Torna alla registrazione
-                  </Button>
+                  <div className="flex flex-col gap-2">
+                    <Button 
+                      variant="default" 
+                      className="w-full"
+                      onClick={handleResendEmail}
+                      disabled={resendingEmail || resendCooldown > 0}
+                    >
+                      {resendingEmail ? (
+                        "📧 Invio in corso..."
+                      ) : resendCooldown > 0 ? (
+                        `⏳ Riprova tra ${resendCooldown}s`
+                      ) : (
+                        "📧 Invia nuovamente E-mail"
+                      )}
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => {
+                        setEmailSent(false);
+                        setEmail("");
+                        setPassword("");
+                        setNickname("");
+                        setBirthDay("");
+                        setBirthMonth("");
+                        setBirthYear("");
+                        setCity("");
+                        setGender("");
+                        setSexualOrientation("");
+                        setRelationshipStatus("");
+                        setResendCooldown(0);
+                      }}
+                    >
+                      ← Torna alla registrazione
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <form onSubmit={handleSignUp} className="space-y-4">

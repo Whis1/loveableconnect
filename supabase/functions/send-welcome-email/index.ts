@@ -33,7 +33,7 @@ serve(async (req) => {
     const { data: tmpl } = await supabase
       .from('email_templates')
       .select('*')
-      .eq('template_key', 'welcome')
+      .eq('template_key', 'welcome_email')
       .maybeSingle();
 
     const variables = {
