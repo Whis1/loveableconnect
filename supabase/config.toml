@@ -137,3 +137,6 @@ verify_jwt = false
 
 [functions.custom-reset-password]
 verify_jwt = false
+
+[functions.resend-confirmation-email]
+verify_jwt = false
