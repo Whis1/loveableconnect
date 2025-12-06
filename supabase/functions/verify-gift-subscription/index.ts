@@ -119,7 +119,7 @@ serve(async (req) => {
 
     logStep("Purchase record created");
 
-    // Invia email al destinatario
+    // Invia email al destinatario usando template dal database
     try {
       const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
       
@@ -138,12 +138,66 @@ serve(async (req) => {
 
       if (recipientEmail) {
         const expiryDate = new Date(subscription.current_period_end * 1000);
+        const formattedDate = expiryDate.toLocaleDateString('it-IT');
         
-        await resend.emails.send({
-          from: "LoveableConnect <noreply@loveableconnect.com>",
-          to: [recipientEmail],
-          subject: "🎁 Hai ricevuto un Regalo Premium! - LoveableConnect",
-          html: `
+        // Carica template dal database
+        const { data: template } = await supabaseClient
+          .from("email_templates")
+          .select("subject, html_content")
+          .eq("template_key", "gift_subscription")
+          .single();
+
+        // Prepara i benefits HTML
+        const benefitsHtml = `
+          <div style="display: flex; align-items: start; margin-bottom: 12px;">
+            <span style="font-size: 24px; margin-right: 12px;">💬</span>
+            <div>
+              <strong style="color: #9333ea;">Crediti Illimitati</strong><br>
+              <span style="font-size: 14px;">Invia messaggi senza limiti</span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: start; margin-bottom: 12px;">
+            <span style="font-size: 24px; margin-right: 12px;">❤️</span>
+            <div>
+              <strong style="color: #ec4899;">Accesso Completo ai Likes</strong><br>
+              <span style="font-size: 14px;">Vedi tutti i likes ricevuti</span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: start; margin-bottom: 12px;">
+            <span style="font-size: 24px; margin-right: 12px;">⭐</span>
+            <div>
+              <strong style="color: #f59e0b;">Priorità nella Visualizzazione</strong><br>
+              <span style="font-size: 14px;">Appari più in alto nei risultati</span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: start;">
+            <span style="font-size: 24px; margin-right: 12px;">👑</span>
+            <div>
+              <strong style="color: #f59e0b;">Badge Premium</strong><br>
+              <span style="font-size: 14px;">Spicca con il badge esclusivo</span>
+            </div>
+          </div>
+        `;
+
+        let emailSubject: string;
+        let emailHtml: string;
+
+        if (template) {
+          // Usa template dal database
+          emailSubject = template.subject
+            .replace(/{{senderNickname}}/g, senderName);
+          
+          emailHtml = template.html_content
+            .replace(/{{senderNickname}}/g, senderName)
+            .replace(/{{expiresAt}}/g, formattedDate)
+            .replace(/{{benefits}}/g, benefitsHtml);
+          
+          logStep("Using database template for gift email");
+        } else {
+          // Fallback HTML hardcoded
+          logStep("Template not found, using fallback HTML");
+          emailSubject = "🎁 Hai ricevuto un Regalo Premium! - LoveableConnect";
+          emailHtml = `
             <!DOCTYPE html>
             <html>
             <head>
@@ -152,78 +206,39 @@ serve(async (req) => {
             </head>
             <body style="margin: 0; padding: 0; background: linear-gradient(135deg, #fce7f3 0%, #e9d5ff 100%);">
               <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(147, 51, 234, 0.15);">
-                
-                <div style="background: linear-gradient(135deg, #ec4899 0%, #d946ef 100%); padding: 40px 20px; text-align: center; position: relative;">
+                <div style="background: linear-gradient(135deg, #ec4899 0%, #d946ef 100%); padding: 40px 20px; text-align: center;">
                   <div style="font-size: 64px; margin-bottom: 10px;">🎁</div>
-                  <h1 style="color: white; font-size: 28px; margin: 0; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">Hai ricevuto un Regalo!</h1>
-                  <p style="color: rgba(255,255,255,0.95); margin: 10px 0 0 0; font-size: 16px;">${senderName} ti ha regalato Premium</p>
-                  <div style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px; backdrop-filter: blur(10px);">
-                    <span style="color: white; font-weight: 700; font-size: 14px;">👑 PREMIUM</span>
-                  </div>
+                  <h1 style="color: white; font-size: 28px; margin: 0;">Hai ricevuto un Regalo!</h1>
+                  <p style="color: rgba(255,255,255,0.95); margin: 10px 0 0 0;">${senderName} ti ha regalato Premium</p>
                 </div>
-
                 <div style="padding: 40px 30px;">
-                  <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0 0 25px 0;">
-                    🎉 <strong>${senderName}</strong> ti ha regalato un abbonamento <strong style="color: #ec4899;">Premium Mensile</strong>! Il tuo account è stato aggiornato e ora hai accesso a tutti i vantaggi Premium!
+                  <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+                    🎉 <strong>${senderName}</strong> ti ha regalato un abbonamento <strong style="color: #ec4899;">Premium Mensile</strong>!
                   </p>
-
-                  <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 4px solid #f59e0b;">
-                    <h3 style="color: #92400e; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">📋 Dettagli Regalo</h3>
-                    <div style="color: #78350f; font-size: 15px; line-height: 1.8;">
-                      <p style="margin: 8px 0;"><strong>Piano:</strong> Premium Mensile 👑</p>
-                      <p style="margin: 8px 0;"><strong>Regalo da:</strong> ${senderName}</p>
-                      <p style="margin: 8px 0;"><strong>Valido fino:</strong> ${expiryDate.toLocaleDateString('it-IT')}</p>
-                    </div>
+                  <div style="background: #fef3c7; padding: 25px; border-radius: 12px; margin: 25px 0;">
+                    <p><strong>Piano:</strong> Premium Mensile 👑</p>
+                    <p><strong>Regalo da:</strong> ${senderName}</p>
+                    <p><strong>Valido fino:</strong> ${formattedDate}</p>
                   </div>
-
-                  <div style="background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 100%); padding: 25px; border-radius: 12px; margin: 25px 0;">
-                    <h3 style="color: #9333ea; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">✨ I tuoi Vantaggi Premium</h3>
-                    <div style="color: #6b7280; line-height: 1.8;">
-                      <div style="display: flex; align-items: start; margin-bottom: 12px;">
-                        <span style="font-size: 24px; margin-right: 12px;">💬</span>
-                        <div>
-                          <strong style="color: #9333ea;">Crediti Illimitati</strong><br>
-                          <span style="font-size: 14px;">Invia messaggi senza limiti</span>
-                        </div>
-                      </div>
-                      <div style="display: flex; align-items: start; margin-bottom: 12px;">
-                        <span style="font-size: 24px; margin-right: 12px;">❤️</span>
-                        <div>
-                          <strong style="color: #ec4899;">Accesso Completo ai Likes</strong><br>
-                          <span style="font-size: 14px;">Vedi tutti i likes ricevuti</span>
-                        </div>
-                      </div>
-                      <div style="display: flex; align-items: start; margin-bottom: 12px;">
-                        <span style="font-size: 24px; margin-right: 12px;">⭐</span>
-                        <div>
-                          <strong style="color: #f59e0b;">Priorità nella Visualizzazione</strong><br>
-                          <span style="font-size: 14px;">Appari più in alto nei risultati</span>
-                        </div>
-                      </div>
-                      <div style="display: flex; align-items: start;">
-                        <span style="font-size: 24px; margin-right: 12px;">👑</span>
-                        <div>
-                          <strong style="color: #f59e0b;">Badge Premium</strong><br>
-                          <span style="font-size: 14px;">Spicca con il badge esclusivo</span>
-                        </div>
-                      </div>
-                    </div>
+                  <div style="background: #f3e8ff; padding: 25px; border-radius: 12px;">
+                    <h3 style="color: #9333ea;">✨ I tuoi Vantaggi Premium</h3>
+                    ${benefitsHtml}
                   </div>
-
-                  <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 25px 0 0 0;">
-                    Grazie per essere parte di LoveableConnect! 💖
-                  </p>
                 </div>
-
-                <div style="background: #f9fafb; padding: 25px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
-                  <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-                    💕 <strong style="color: #ec4899;">LoveableConnect</strong> - Connessioni autentiche, storie vere
-                  </p>
+                <div style="background: #f9fafb; padding: 25px; text-align: center;">
+                  <p style="color: #9ca3af; font-size: 12px;">💕 <strong style="color: #ec4899;">LoveableConnect</strong></p>
                 </div>
               </div>
             </body>
             </html>
-          `,
+          `;
+        }
+        
+        await resend.emails.send({
+          from: "LoveableConnect <noreply@loveableconnect.com>",
+          to: [recipientEmail],
+          subject: emailSubject,
+          html: emailHtml,
         });
         logStep("Email sent to recipient");
       }
