@@ -109,11 +109,36 @@ serve(async (req) => {
     });
 
     if (emailError) {
-      console.error("Error sending email:", emailError);
+      console.error("Error sending confirmation email:", emailError);
       throw emailError;
     }
 
     console.log("Confirmation email sent to:", email);
+
+    // Invia email di benvenuto
+    const { data: welcomeTemplate } = await supabaseAdmin
+      .from("email_templates")
+      .select("subject, html_content")
+      .eq("template_key", "welcome_email")
+      .single();
+
+    if (welcomeTemplate) {
+      const welcomeHtml = welcomeTemplate.html_content.replace(/{{nickname}}/g, nickname);
+      
+      const { error: welcomeEmailError } = await resend.emails.send({
+        from: "Lovable Connect <noreply@loveableconnect.com>",
+        to: [email],
+        subject: welcomeTemplate.subject,
+        html: welcomeHtml,
+      });
+
+      if (welcomeEmailError) {
+        console.error("Error sending welcome email:", welcomeEmailError);
+        // Non bloccare la registrazione se l'email di benvenuto fallisce
+      } else {
+        console.log("Welcome email sent to:", email);
+      }
+    }
 
     return new Response(
       JSON.stringify({ 
