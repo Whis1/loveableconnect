@@ -677,7 +677,6 @@ const Auth = () => {
                       <SelectItem value="divorziato">{t('profile.divorced')}</SelectItem>
                       <SelectItem value="vedovo">{t('profile.widowed')}</SelectItem>
                       <SelectItem value="preferisco_non_dirlo">{t('profile.preferNotToSay')}</SelectItem>
-                      <SelectItem value="scoprilo">{t('profile.findOut')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
