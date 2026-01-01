@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Volume2, X } from "lucide-react";
+import { Volume2, X, Play } from "lucide-react";
 
 interface TutorialStep {
   audio: string;
@@ -23,6 +23,7 @@ const tutorialSteps: TutorialStep[] = [
 ];
 
 export const Tutorial = () => {
+  const [isStarted, setIsStarted] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showControls, setShowControls] = useState(false);
@@ -33,16 +34,17 @@ export const Tutorial = () => {
   const preloadAudioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
-    playCurrentStep();
-    // Precarica l'audio successivo
-    preloadNextAudio();
-  }, [currentStep]);
+    if (isStarted) {
+      playCurrentStep();
+      preloadNextAudio();
+    }
+  }, [currentStep, isStarted]);
 
   useEffect(() => {
-    if (currentStepData?.target) {
+    if (isStarted && currentStepData?.target) {
       updateHighlightPosition();
     }
-  }, [currentStep]);
+  }, [currentStep, isStarted]);
 
   const preloadNextAudio = () => {
     const nextStep = currentStep + 1;
@@ -74,13 +76,31 @@ export const Tutorial = () => {
     });
   };
 
-  const playCurrentStep = () => {
+  const playCurrentStep = async () => {
     if (audioRef.current && currentStep < tutorialSteps.length) {
       const step = tutorialSteps[currentStep];
       audioRef.current.src = step.audio;
-      audioRef.current.play();
-      setIsPlaying(true);
-      setShowControls(false);
+      
+      try {
+        await audioRef.current.play();
+        setIsPlaying(true);
+        setShowControls(false);
+      } catch (error) {
+        console.log("Audio autoplay blocked, showing controls");
+        setIsPlaying(false);
+        if (step.showControls) {
+          setShowControls(true);
+        } else {
+          // Auto-advance for non-control steps if audio fails
+          setTimeout(() => {
+            if (currentStep === tutorialSteps.length - 1) {
+              completeTutorial();
+            } else {
+              setCurrentStep(prev => prev + 1);
+            }
+          }, 2000);
+        }
+      }
     }
   };
 
@@ -112,6 +132,10 @@ export const Tutorial = () => {
     setCurrentStep(prev => prev + 1);
   };
 
+  const handleStartTutorial = () => {
+    setIsStarted(true);
+  };
+
   const completeTutorial = async () => {
     setIsCompleting(true);
     const { data: { user } } = await supabase.auth.getUser();
@@ -135,6 +159,51 @@ export const Tutorial = () => {
 
   if (isCompleting) {
     return null;
+  }
+
+  // Welcome screen before tutorial starts
+  if (!isStarted) {
+    return (
+      <>
+        <div className="fixed inset-0 bg-black/60 z-[100] pointer-events-auto" />
+        
+        <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-auto">
+          <div className="bg-background rounded-2xl p-8 max-w-md w-full text-center shadow-2xl border border-border/50">
+            <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Play className="w-10 h-10 text-primary" />
+            </div>
+            
+            <h2 className="text-2xl font-bold text-foreground mb-3">
+              Benvenuto su Arrettu!
+            </h2>
+            
+            <p className="text-muted-foreground mb-8">
+              Ti guideremo attraverso le funzionalità principali dell'app con un breve tutorial audio.
+            </p>
+            
+            <div className="flex flex-col gap-3">
+              <Button
+                onClick={handleStartTutorial}
+                size="lg"
+                className="w-full"
+              >
+                <Volume2 className="mr-2 h-5 w-5" />
+                Inizia Tutorial
+              </Button>
+              
+              <Button
+                onClick={skipTutorial}
+                variant="ghost"
+                size="lg"
+                className="w-full text-muted-foreground"
+              >
+                Salta Tutorial
+              </Button>
+            </div>
+          </div>
+        </div>
+      </>
+    );
   }
 
   return (
