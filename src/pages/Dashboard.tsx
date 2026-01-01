@@ -12,7 +12,7 @@ import { CreditsDisplay } from "@/components/CreditsDisplay";
 import { useBanCheck } from "@/hooks/useBanCheck";
 import { DashboardControls } from "@/components/DashboardControls";
 import { GeolocationBanner } from "@/components/GeolocationBanner";
-import { NotificationPermissionBanner } from "@/components/NotificationPermissionBanner";
+
 import { InboxDropdown } from "@/components/InboxDropdown";
 import { Tutorial } from "@/components/Tutorial";
 import loveIcon from "@/assets/love-icon.png";
@@ -439,9 +439,6 @@ const Dashboard = () => {
 
       {/* Geolocation Banner */}
       {showGeolocationBanner && <GeolocationBanner onActivate={handleActivateGeolocation} onClose={handleCloseGeolocationBanner} />}
-
-      {/* Notification Permission Banner */}
-      <NotificationPermissionBanner />
     </div>;
 };
 export default Dashboard;
