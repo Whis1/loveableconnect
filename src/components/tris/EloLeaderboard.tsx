@@ -94,21 +94,42 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     // We will refresh ELOs only on mount or when userId changes
   }, [userId]);
 
-  const generateHighElo = () => {
-    // Generate random high ELO between 1800-2500 for admin profiles, rounded to nearest 10
-    const elo = Math.floor(Math.random() * 700) + 1800;
-    return Math.round(elo / 10) * 10;
+  // Generate unique high ELO with offset to avoid duplicates
+  const generateHighElo = (existingElos: Set<number>, baseOffset: number = 0): number => {
+    // Generate random high ELO between 1800-2500, ensuring uniqueness
+    let attempts = 0;
+    let elo: number;
+    do {
+      // Add baseOffset * 5 to spread out values more
+      elo = Math.floor(Math.random() * 700) + 1800 + (baseOffset * 5);
+      // Round to nearest 10 but add small variance (0-9) to prevent exact duplicates
+      elo = Math.round(elo / 10) * 10 + (attempts % 10);
+      // Keep in reasonable bounds
+      elo = Math.min(2590, Math.max(1800, elo));
+      attempts++;
+    } while (existingElos.has(elo) && attempts < 50);
+    
+    return elo;
   };
 
-  const adjustElo = (currentElo: number): number => {
-    // Simulate ELO changes: ±10 to ±30 points (multiples of 10)
+  const adjustElo = (currentElo: number, existingElos: Set<number>): number => {
+    // Simulate ELO changes: ±10 to ±30 points
     const change = (Math.floor(Math.random() * 3) + 1) * 10; // 10, 20, or 30
     const isIncrease = Math.random() > 0.5;
-    const newElo = isIncrease ? currentElo + change : currentElo - change;
+    let newElo = isIncrease ? currentElo + change : currentElo - change;
     
-    // Keep ELO in reasonable bounds (1700-2600) and ensure it's a multiple of 10
-    const boundedElo = Math.max(1700, Math.min(2600, newElo));
-    return Math.round(boundedElo / 10) * 10;
+    // Keep ELO in reasonable bounds (1700-2600)
+    newElo = Math.max(1700, Math.min(2600, newElo));
+    
+    // If duplicate, add small variance
+    let attempts = 0;
+    while (existingElos.has(newElo) && attempts < 20) {
+      newElo += (attempts % 2 === 0 ? 1 : -1) * (attempts + 1);
+      newElo = Math.max(1700, Math.min(2600, newElo));
+      attempts++;
+    }
+    
+    return newElo;
   };
 
   // Compute user's ELO and global rank efficiently (no heavy client sorting)
@@ -153,14 +174,25 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
       if (error) throw error;
 
       if (profiles) {
-        // Use persisted ELOs for admin profiles, generate if missing
-        const updatedProfiles = profiles.map(profile => {
+        // Use persisted ELOs for admin profiles, generate if missing (with uniqueness)
+        const usedElos = new Set<number>();
+        // First pass: collect existing ELOs
+        profiles.forEach(profile => {
+          if (profile.is_admin_profile && elosMap.has(profile.id)) {
+            usedElos.add(elosMap.get(profile.id)!);
+          } else if (!profile.is_admin_profile) {
+            usedElos.add(profile.game_elo || 1200);
+          }
+        });
+
+        const updatedProfiles = profiles.map((profile, idx) => {
           if (profile.is_admin_profile) {
             if (elosMap.has(profile.id)) {
               return { ...profile, game_elo: elosMap.get(profile.id)! };
             } else {
-              // Generate ELO on-the-fly for this profile
-              const newElo = Math.round((Math.floor(Math.random() * 700) + 1800) / 10) * 10;
+              // Generate unique ELO for this profile
+              const newElo = generateHighElo(usedElos, idx);
+              usedElos.add(newElo);
               elosMap.set(profile.id, newElo);
               return { ...profile, game_elo: newElo };
             }
@@ -209,22 +241,31 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
       newAdminElos.forEach(elo => usedElos.add(elo));
 
       if (profiles) {
+        const newAdminElos = new Map<string, number>(adminElos);
+        const usedElos = new Set<number>();
+        
+        // Collect existing non-admin ELOs first
+        profiles.forEach(p => {
+          if (!p.is_admin_profile) {
+            usedElos.add(p.game_elo || 1200);
+          }
+        });
+        
+        // Collect already assigned admin ELOs
+        newAdminElos.forEach(elo => usedElos.add(elo));
+
         // Generate/update ELOs only for admin profiles in top 5
-        const updatedProfiles = profiles.map(profile => {
+        const updatedProfiles = profiles.map((profile, idx) => {
           if (profile.is_admin_profile) {
             let newElo: number;
             
             if (isInitial || !newAdminElos.has(profile.id)) {
-              // Generate new ELO
-              do {
-                newElo = generateHighElo();
-              } while (usedElos.has(newElo));
+              // Generate new unique ELO
+              newElo = generateHighElo(usedElos, idx);
             } else {
-              // Adjust existing ELO
+              // Adjust existing ELO with uniqueness check
               const currentElo = newAdminElos.get(profile.id)!;
-              do {
-                newElo = adjustElo(currentElo);
-              } while (usedElos.has(newElo) && newElo !== currentElo);
+              newElo = adjustElo(currentElo, usedElos);
             }
             
             usedElos.add(newElo);

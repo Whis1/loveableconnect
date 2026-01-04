@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { GameResultOverlay } from "./GameResultOverlay";
 
 interface Profile {
   id: string;
@@ -73,6 +74,8 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const leaveIntentRef = useRef<"reload" | "back" | null>(null);
   const allowNavigateRef = useRef(false);
+  const [showResultOverlay, setShowResultOverlay] = useState(false);
+  const [lastEloChange, setLastEloChange] = useState(0);
 
   useEffect(() => {
     initializeBoard();
@@ -452,9 +455,10 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     if (checkWin(newBoard, "red")) {
       setGameOver(true);
       setWinner("player");
-      gameCompletedRef.current = true; // Mark game as completed normally
+      gameCompletedRef.current = true;
       updateUserElo(20);
-      onGameEnd("win");
+      setLastEloChange(20);
+      setShowResultOverlay(true);
       return;
     }
     
@@ -895,7 +899,8 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
       setWinner("player");
       gameCompletedRef.current = true;
       updateUserElo(20);
-      onGameEnd("win");
+      setLastEloChange(20);
+      setShowResultOverlay(true);
       return;
     }
     
@@ -906,9 +911,10 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     if (checkWin(newBoard, "black")) {
       setGameOver(true);
       setWinner("bot");
-      gameCompletedRef.current = true; // Mark game as completed normally
+      gameCompletedRef.current = true;
       updateUserElo(-10);
-      onGameEnd("lose");
+      setLastEloChange(-10);
+      setShowResultOverlay(true);
       return;
     }
     
@@ -1200,13 +1206,26 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
             </div>
           </div>
         )}
-        {gameOver && winner === "player" && (
+        {gameOver && winner === "player" && !showResultOverlay && (
           <p className="text-xl font-bold text-primary">🎉 Hai vinto! +6 crediti</p>
         )}
-        {gameOver && winner === "bot" && (
+        {gameOver && winner === "bot" && !showResultOverlay && (
           <p className="text-xl font-bold text-destructive">😔 Hai perso!</p>
         )}
       </div>
+
+      {/* Game Result Overlay */}
+      {showResultOverlay && winner && (
+        <GameResultOverlay
+          result={winner === "player" ? "win" : winner === "bot" ? "lose" : "draw"}
+          creditsEarned={winner === "player" ? 6 : 0}
+          eloChange={lastEloChange}
+          onClose={() => {
+            setShowResultOverlay(false);
+            onGameEnd(winner === "player" ? "win" : winner === "bot" ? "lose" : "draw");
+          }}
+        />
+      )}
 
       {showLeaveConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">

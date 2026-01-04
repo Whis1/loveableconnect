@@ -5,14 +5,12 @@ import { Trophy, X, Loader2 } from "lucide-react";
 import { OpponentSearch } from "./OpponentSearch";
 import { TrisBoard } from "./TrisBoard";
 import { CheckersBoard } from "./CheckersBoard";
-import { RisikoBoard } from "../risiko/RisikoBoard";
 import { EloLeaderboard } from "./EloLeaderboard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCredits } from "@/hooks/useCredits";
 import trisIcon from "@/assets/tris-icon.png";
 import damaIcon from "@/assets/dama-icon.png";
-import risikoIcon from "@/assets/risiko-icon.png";
 
 interface Profile {
   id: string;
@@ -24,7 +22,7 @@ interface Profile {
 export const TrisGameBanner = () => {
   const [showBanner, setShowBanner] = useState(false);
   const [gameState, setGameState] = useState<"idle" | "selecting" | "searching" | "playing">("idle");
-  const [selectedGame, setSelectedGame] = useState<"tris" | "dama" | "risiko" | null>(null);
+  const [selectedGame, setSelectedGame] = useState<"tris" | "dama" | null>(null);
   const [opponent, setOpponent] = useState<Profile | null>(null);
   const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
   const [gamesPlayed, setGamesPlayed] = useState(0);
@@ -177,29 +175,10 @@ export const TrisGameBanner = () => {
     setGameState("selecting");
   };
 
-  const handleGameSelect = (game: "tris" | "dama" | "risiko") => {
+  const handleGameSelect = (game: "tris" | "dama") => {
     console.log('🎮 Game selected:', game);
     setSelectedGame(game);
     setGameState("searching");
-    
-    // Per Risiko, carica il profilo in background se non è già caricato
-    if (game === "risiko" && !currentUserProfile) {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-          supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", session.user.id)
-            .single()
-            .then(({ data: profile }) => {
-              if (profile) {
-                console.log('✅ Loaded current user profile for Risiko:', profile.nickname);
-                setCurrentUserProfile(profile);
-              }
-            });
-        }
-      });
-    }
   };
 
   const handleOpponentFound = (foundOpponent: Profile) => {
@@ -359,7 +338,7 @@ export const TrisGameBanner = () => {
         </div>
         
         {/* Game Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Button
             onClick={() => handleGameSelect("tris")}
             className="h-auto p-6 flex flex-col items-center gap-4 bg-gradient-to-br from-blue-500/20 via-blue-600/15 to-blue-700/20 hover:from-blue-500/30 hover:via-blue-600/25 hover:to-blue-700/30 border-2 border-blue-500/40 hover:border-blue-400/60 transition-all duration-300 hover:scale-105 group relative overflow-hidden"
@@ -386,21 +365,6 @@ export const TrisGameBanner = () => {
             <div className="text-center z-10">
               <span className="text-2xl font-black tracking-wider uppercase bg-gradient-to-r from-purple-400 via-purple-300 to-purple-500 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(168,85,247,0.5)]">
                 DAMA
-              </span>
-            </div>
-          </Button>
-
-          <Button
-            onClick={() => handleGameSelect("risiko")}
-            className="h-auto p-6 flex flex-col items-center gap-4 bg-gradient-to-br from-red-500/20 via-orange-600/15 to-yellow-700/20 hover:from-red-500/30 hover:via-orange-600/25 hover:to-yellow-700/30 border-2 border-red-500/40 hover:border-red-400/60 transition-all duration-300 hover:scale-105 group relative overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-            <div className="w-20 h-20 flex items-center justify-center">
-              <img src={risikoIcon} alt="Conquistiator" className="w-full h-full object-contain drop-shadow-lg" />
-            </div>
-            <div className="text-center z-10">
-              <span className="text-2xl font-black tracking-wider uppercase bg-gradient-to-r from-red-400 via-orange-300 to-yellow-400 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(239,68,68,0.5)]">
-                CONQUISTIATOR
               </span>
             </div>
           </Button>
@@ -433,25 +397,6 @@ export const TrisGameBanner = () => {
     return <CheckersBoard opponent={opponent} onGameEnd={handleGameEnd} />;
   }
 
-  if (gameState === "playing" && opponent && selectedGame === "risiko") {
-    console.log('🎮 Rendering RisikoBoard, currentUserProfile:', currentUserProfile);
-    
-    // Se currentUserProfile non è ancora caricato, renderizza comunque RisikoBoard
-    // RisikoBoard gestirà internamente eventuali stati di caricamento
-    if (!currentUserProfile) {
-      console.log('⚠️ currentUserProfile not loaded, using fallback');
-      // Usa un profilo temporaneo con dati minimi dalla sessione
-      const tempProfile = {
-        id: currentUserId || '',
-        nickname: 'Tu',
-        game_elo: 1200,
-      } as any;
-      return <RisikoBoard userProfile={tempProfile} opponentProfile={opponent} onGameEnd={(won) => handleGameEnd(won ? "win" : "lose")} />;
-    }
-    
-    console.log('🎮 Rendering RisikoBoard with full profile');
-    return <RisikoBoard userProfile={currentUserProfile} opponentProfile={opponent} onGameEnd={(won) => handleGameEnd(won ? "win" : "lose")} />;
-  }
 
   return (
     <Card className="mb-6 p-6 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
