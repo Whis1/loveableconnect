@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { X as XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { GameResultOverlay } from "./GameResultOverlay";
 
 interface Profile {
   id: string;
@@ -69,6 +70,8 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const leaveIntentRef = useRef<"reload" | "back" | null>(null);
   const allowNavigateRef = useRef(false);
+  const [showResultOverlay, setShowResultOverlay] = useState(false);
+  const [lastEloChange, setLastEloChange] = useState(0);
 
   useEffect(() => {
     fetchCurrentUserProfile();
@@ -267,11 +270,13 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
           if (isPlayerTurn) {
             setWinner("bot");
             updateUserElo(-10);
-            onGameEnd("lose");
+            setLastEloChange(-10);
+            setShowResultOverlay(true);
           } else {
             setWinner("player");
             updateUserElo(20);
-            onGameEnd("win");
+            setLastEloChange(20);
+            setShowResultOverlay(true);
           }
           return 0;
         }
@@ -331,18 +336,19 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
     if (win === "X") {
       setGameOver(true);
       setWinner("player");
-      gameCompletedRef.current = true; // Mark game as completed normally
-      // Update ELO on win (+20 points)
+      gameCompletedRef.current = true;
       updateUserElo(20);
-      onGameEnd("win");
+      setLastEloChange(20);
+      setShowResultOverlay(true);
       return;
     }
 
     if (isBoardFull(newBoard)) {
       setGameOver(true);
       setWinner("draw");
-      gameCompletedRef.current = true; // Mark game as completed normally
-      onGameEnd("draw");
+      gameCompletedRef.current = true;
+      setLastEloChange(0);
+      setShowResultOverlay(true);
       return;
     }
 
@@ -388,18 +394,19 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
     if (win === "O") {
       setGameOver(true);
       setWinner("bot");
-      gameCompletedRef.current = true; // Mark game as completed normally
-      // Lose: -10 ELO points
+      gameCompletedRef.current = true;
       updateUserElo(-10);
-      onGameEnd("lose");
+      setLastEloChange(-10);
+      setShowResultOverlay(true);
       return;
     }
 
     if (isBoardFull(newBoard)) {
       setGameOver(true);
       setWinner("draw");
-      gameCompletedRef.current = true; // Mark game as completed normally
-      onGameEnd("draw");
+      gameCompletedRef.current = true;
+      setLastEloChange(0);
+      setShowResultOverlay(true);
       return;
     }
 
@@ -594,16 +601,29 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
             </div>
           </div>
         )}
-        {gameOver && winner === "player" && (
+        {gameOver && winner === "player" && !showResultOverlay && (
           <p className="text-xl font-bold text-primary">🎉 Hai vinto! +6 crediti</p>
         )}
-        {gameOver && winner === "bot" && (
+        {gameOver && winner === "bot" && !showResultOverlay && (
           <p className="text-xl font-bold text-destructive">😔 Hai perso!</p>
         )}
-        {gameOver && winner === "draw" && (
+        {gameOver && winner === "draw" && !showResultOverlay && (
           <p className="text-xl font-bold text-muted-foreground">🤝 Pareggio!</p>
         )}
       </div>
+
+      {/* Game Result Overlay */}
+      {showResultOverlay && winner && (
+        <GameResultOverlay
+          result={winner === "player" ? "win" : winner === "bot" ? "lose" : "draw"}
+          creditsEarned={winner === "player" ? 6 : 0}
+          eloChange={lastEloChange}
+          onClose={() => {
+            setShowResultOverlay(false);
+            onGameEnd(winner === "player" ? "win" : winner === "bot" ? "lose" : "draw");
+          }}
+        />
+      )}
       {showLeaveConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <Card className="w-[90%] max-w-md p-6 shadow-lg">
