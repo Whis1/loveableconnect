@@ -17,13 +17,6 @@ interface OpponentSearchProps {
   onOpponentFound: (opponent: Profile) => void;
 }
 
-const STORAGE_KEY = 'elo_leaderboard_data';
-
-interface StoredLeaderboardData {
-  adminElos: Record<string, number>;
-  lastUpdate: string;
-}
-
 export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -37,12 +30,13 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
   }, []);
 
   const fetchProfiles = async () => {
-    // Fetch only a few admin profiles - NOT all (causes freeze!)
+    // Fetch admin profiles ordered by game_elo (now stored in DB)
     const { data: adminProfiles } = await supabase
       .from("profiles")
       .select("id, nickname, avatar_url, photos, game_elo, is_admin_profile")
       .eq("is_admin_profile", true)
-      .limit(20); // Limit to prevent performance issues
+      .order("game_elo", { ascending: false })
+      .limit(20);
 
     if (adminProfiles && adminProfiles.length > 0) {
       const profilesWithAdmin = adminProfiles.map(p => ({
@@ -74,64 +68,17 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
       if (elapsed >= searchDuration) {
         clearInterval(interval);
         
-        // Usa il profilo su cui si è fermata l'animazione
+        // Usa il profilo su cui si è fermata l'animazione con l'ELO dal DB
         const selectedOpponent = profileList[finalIndex];
         
-        // Check if opponent is in TOP 5 leaderboard and use that ELO
-        const leaderboardOpponent = getOpponentWithLeaderboardElo(selectedOpponent);
-        
-        console.log('🎮 Opponent found:', leaderboardOpponent);
+        console.log('🎮 Opponent found from DB:', selectedOpponent.nickname, 'ELO:', selectedOpponent.game_elo);
         
         setTimeout(() => {
-          console.log('🎮 Calling onOpponentFound with:', leaderboardOpponent);
-          onOpponentFound(leaderboardOpponent);
+          console.log('🎮 Calling onOpponentFound with:', selectedOpponent);
+          onOpponentFound(selectedOpponent);
         }, 500);
       }
     }, 150);
-  };
-
-  const getOpponentWithLeaderboardElo = (opponent: Profile): Profile => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      let data: StoredLeaderboardData | null = null;
-      
-      if (stored) {
-        data = JSON.parse(stored);
-        // If this opponent has an ELO in the leaderboard, use that
-        if (data.adminElos[opponent.id]) {
-          console.log(`✅ Using leaderboard ELO ${data.adminElos[opponent.id]} for ${opponent.nickname} (DB ELO: ${opponent.game_elo})`);
-          return {
-            ...opponent,
-            game_elo: data.adminElos[opponent.id]
-          };
-        }
-      }
-      
-      // If admin profile but not in leaderboard storage, generate and save ELO
-      if (opponent.is_admin_profile) {
-        const randomElo = Math.floor(Math.random() * 700) + 1800; // 1800-2500
-        const roundedElo = Math.round(randomElo / 10) * 10;
-        console.log(`🎲 Generated new ELO ${roundedElo} for ${opponent.nickname}`);
-        
-        // Save to localStorage for consistency
-        const newData: StoredLeaderboardData = {
-          adminElos: data?.adminElos || {},
-          lastUpdate: data?.lastUpdate || new Date().toISOString()
-        };
-        newData.adminElos[opponent.id] = roundedElo;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
-        
-        return {
-          ...opponent,
-          game_elo: roundedElo
-        };
-      }
-    } catch (error) {
-      console.error("Error reading leaderboard data:", error);
-    }
-    
-    // Fallback to database ELO for non-admin profiles
-    return opponent;
   };
 
   if (profiles.length === 0) {
@@ -164,7 +111,7 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
         </Avatar>
         <div>
           <p className="font-bold text-lg">{profiles[currentIndex]?.nickname}</p>
-          <p className="text-sm text-muted-foreground">Cercando...</p>
+          <p className="text-sm text-muted-foreground">ELO: {profiles[currentIndex]?.game_elo || 1200}</p>
         </div>
       </div>
     </Card>
