@@ -181,9 +181,36 @@ export const TrisGameBanner = () => {
     setGameState("searching");
   };
 
-  const handleOpponentFound = (foundOpponent: Profile) => {
+  // Incrementa le partite giocate all'inizio della partita
+  const incrementGamesPlayed = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const newGamesPlayed = gamesPlayed + 1;
+    await supabase
+      .from("tris_games")
+      .update({ games_played_today: newGamesPlayed })
+      .eq("user_id", session.user.id);
+
+    setGamesPlayed(newGamesPlayed);
+    console.log('🎮 Games played incremented to:', newGamesPlayed);
+
+    // Check if reached free limit
+    const limit = getGameLimit();
+    if (newGamesPlayed >= limit && !(credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium'))) {
+      const today = new Date();
+      today.setDate(today.getDate() + 1);
+      setNextResetTime(today);
+    }
+  };
+
+  const handleOpponentFound = async (foundOpponent: Profile) => {
     console.log('🎮 TrisGameBanner - Opponent found:', foundOpponent);
     console.log('🎮 TrisGameBanner - Selected game:', selectedGame);
+    
+    // Incrementa le partite all'INIZIO della partita
+    await incrementGamesPlayed();
+    
     setOpponent(foundOpponent);
     console.log('🎮 TrisGameBanner - Setting gameState to playing');
     setGameState("playing");
@@ -192,15 +219,6 @@ export const TrisGameBanner = () => {
   const handleGameEnd = async (result: "win" | "lose" | "draw") => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
-
-    // Update games played
-    const newGamesPlayed = gamesPlayed + 1;
-    await supabase
-      .from("tris_games")
-      .update({ games_played_today: newGamesPlayed })
-      .eq("user_id", session.user.id);
-
-    setGamesPlayed(newGamesPlayed);
 
     // Award credits if win
     if (result === "win") {
@@ -233,14 +251,6 @@ export const TrisGameBanner = () => {
         title: "Hai perso!",
         description: "Non arrenderti, riprova la prossima volta.",
       });
-    }
-
-    // Check if reached free limit
-    const limit = getGameLimit();
-    if (newGamesPlayed >= limit && !(credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium'))) {
-      const today = new Date();
-      today.setDate(today.getDate() + 1);
-      setNextResetTime(today);
     }
 
     // Reset game

@@ -16,216 +16,54 @@ interface EloLeaderboardProps {
   userId?: string;
 }
 
-const STORAGE_KEY = 'elo_leaderboard_data';
-const UPDATE_INTERVAL = 20 * 60 * 1000; // 20 minutes in milliseconds
-
-interface StoredLeaderboardData {
-  adminElos: Record<string, number>;
-  lastUpdate: string;
-}
-
 export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
   const [topPlayers, setTopPlayers] = useState<LeaderboardProfile[]>([]);
   const [userElo, setUserElo] = useState<number>(1200);
   const [userRank, setUserRank] = useState<number | null>(null);
-  const [adminElos, setAdminElos] = useState<Map<string, number>>(new Map());
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Load persisted data from localStorage
-  const loadPersistedData = (): StoredLeaderboardData | null => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        return JSON.parse(stored);
-      }
-    } catch (error) {
-      console.error("Error loading persisted leaderboard data:", error);
-    }
-    return null;
-  };
-
-  // Save data to localStorage
-  const savePersistedData = (adminElosMap: Map<string, number>) => {
-    try {
-      const data: StoredLeaderboardData = {
-        adminElos: Object.fromEntries(adminElosMap),
-        lastUpdate: new Date().toISOString(),
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch (error) {
-      console.error("Error saving persisted leaderboard data:", error);
-    }
-  };
-
-  // Check if update is needed based on time
-  const shouldUpdate = (): boolean => {
-    const persisted = loadPersistedData();
-    if (!persisted) return true; // No data, need initial load
-
-    const lastUpdateTime = new Date(persisted.lastUpdate).getTime();
-    const now = new Date().getTime();
-    const timeSinceUpdate = now - lastUpdateTime;
-
-    // Add 5 minutes random variance (20-25 minutes total)
-    const randomVariance = Math.random() * 5 * 60 * 1000;
-    return timeSinceUpdate > (UPDATE_INTERVAL + randomVariance);
-  };
-
   useEffect(() => {
-    if (isLoading) return; // Prevent multiple simultaneous calls
-    
-    // Load persisted data or fetch new data
-    const persisted = loadPersistedData();
-    const needsUpdate = shouldUpdate();
-
-    if (persisted && !needsUpdate) {
-      // Use persisted data WITHOUT modifications
-      const elosMap = new Map(Object.entries(persisted.adminElos));
-      setAdminElos(elosMap);
-      // Build leaderboard directly from persisted data
-      buildLeaderboardFromExistingElos(elosMap);
-    } else {
-      // Time to update: adjust ELOs or generate new ones
-      fetchLeaderboard(!persisted); // true if no persisted data (initial), false if updating
-    }
-
-    // Periodic updates disabled to prevent UI stalls
-    // We will refresh ELOs only on mount or when userId changes
+    if (isLoading) return;
+    fetchLeaderboard();
   }, [userId]);
 
-  // Generate unique high ELO with offset to avoid duplicates
-  const generateHighElo = (existingElos: Set<number>, baseOffset: number = 0): number => {
-    // Generate random high ELO between 1800-2500, ensuring uniqueness
-    let attempts = 0;
-    let elo: number;
-    do {
-      // Add baseOffset * 5 to spread out values more
-      elo = Math.floor(Math.random() * 700) + 1800 + (baseOffset * 5);
-      // Round to nearest 10 but add small variance (0-9) to prevent exact duplicates
-      elo = Math.round(elo / 10) * 10 + (attempts % 10);
-      // Keep in reasonable bounds
-      elo = Math.min(2590, Math.max(1800, elo));
-      attempts++;
-    } while (existingElos.has(elo) && attempts < 50);
-    
-    return elo;
-  };
-
-  const adjustElo = (currentElo: number, existingElos: Set<number>): number => {
-    // Simulate ELO changes: ±10 to ±30 points
-    const change = (Math.floor(Math.random() * 3) + 1) * 10; // 10, 20, or 30
-    const isIncrease = Math.random() > 0.5;
-    let newElo = isIncrease ? currentElo + change : currentElo - change;
-    
-    // Keep ELO in reasonable bounds (1700-2600)
-    newElo = Math.max(1700, Math.min(2600, newElo));
-    
-    // If duplicate, add small variance
-    let attempts = 0;
-    while (existingElos.has(newElo) && attempts < 20) {
-      newElo += (attempts % 2 === 0 ? 1 : -1) * (attempts + 1);
-      newElo = Math.max(1700, Math.min(2600, newElo));
-      attempts++;
-    }
-    
-    return newElo;
-  };
-
-  // Compute user's ELO and global rank efficiently (no heavy client sorting)
+  // Compute user's ELO and global rank efficiently
   const computeUserEloAndRank = async () => {
     try {
       if (!userId) return;
+      
       // Fetch user's ELO
       const { data: userProfile, error: userErr } = await supabase
         .from('profiles')
         .select('game_elo')
         .eq('id', userId)
         .maybeSingle();
+      
       if (userErr) throw userErr;
       const elo = userProfile?.game_elo ?? 1200;
       setUserElo(elo);
+      
       // Count how many users have strictly higher ELO to compute rank
       const { count } = await supabase
         .from('profiles')
         .select('id', { count: 'exact', head: true })
         .gt('game_elo', elo);
+      
       const higher = count ?? 0;
       setUserRank(higher + 1);
     } catch (e) {
       console.error('Error computing user rank:', e);
-      // Fallback if something goes wrong
       setUserRank(null);
     }
   };
 
-  // Build leaderboard from existing ELOs without fetching ALL admin profiles
-  const buildLeaderboardFromExistingElos = async (elosMap: Map<string, number>) => {
-    setIsLoading(true);
-    
-    try {
-      // Only fetch top 5 profiles - don't check ALL admin profiles (causes freeze!)
-      const { data: profiles, error } = await supabase
-        .from("profiles")
-        .select("id, nickname, avatar_url, game_elo, is_admin_profile")
-        .order("game_elo", { ascending: false })
-        .limit(5);
-
-      if (error) throw error;
-
-      if (profiles) {
-        // Use persisted ELOs for admin profiles, generate if missing (with uniqueness)
-        const usedElos = new Set<number>();
-        // First pass: collect existing ELOs
-        profiles.forEach(profile => {
-          if (profile.is_admin_profile && elosMap.has(profile.id)) {
-            usedElos.add(elosMap.get(profile.id)!);
-          } else if (!profile.is_admin_profile) {
-            usedElos.add(profile.game_elo || 1200);
-          }
-        });
-
-        const updatedProfiles = profiles.map((profile, idx) => {
-          if (profile.is_admin_profile) {
-            if (elosMap.has(profile.id)) {
-              return { ...profile, game_elo: elosMap.get(profile.id)! };
-            } else {
-              // Generate unique ELO for this profile
-              const newElo = generateHighElo(usedElos, idx);
-              usedElos.add(newElo);
-              elosMap.set(profile.id, newElo);
-              return { ...profile, game_elo: newElo };
-            }
-          }
-          return profile;
-        });
-
-        // Save any newly generated ELOs
-        savePersistedData(elosMap);
-
-        // Sort by ELO
-        const sortedProfiles = updatedProfiles.sort((a, b) => (b.game_elo || 1200) - (a.game_elo || 1200));
-        
-        setTopPlayers(sortedProfiles.slice(0, 5));
-
-        // Compute user's rank asynchronously
-        if (userId) {
-          computeUserEloAndRank();
-        }
-      }
-    } catch (error) {
-      console.error("Error building leaderboard:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchLeaderboard = async (isInitial: boolean = false) => {
+  const fetchLeaderboard = async () => {
     if (isLoading) return;
     setIsLoading(true);
     
     try {
-      // Only fetch top 5 profiles - NOT all admin profiles (causes freeze!)
+      // Fetch top 5 profiles by game_elo directly from DB
       const { data: profiles, error } = await supabase
         .from("profiles")
         .select("id, nickname, avatar_url, game_elo, is_admin_profile")
@@ -234,53 +72,12 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
 
       if (error) throw error;
 
-      const newAdminElos = new Map<string, number>(adminElos);
-      const usedElos = new Set<number>();
-      
-      // Collect existing ELOs to avoid duplicates
-      newAdminElos.forEach(elo => usedElos.add(elo));
-
       if (profiles) {
-        const newAdminElos = new Map<string, number>(adminElos);
-        const usedElos = new Set<number>();
-        
-        // Collect existing non-admin ELOs first
-        profiles.forEach(p => {
-          if (!p.is_admin_profile) {
-            usedElos.add(p.game_elo || 1200);
-          }
-        });
-        
-        // Collect already assigned admin ELOs
-        newAdminElos.forEach(elo => usedElos.add(elo));
-
-        // Generate/update ELOs only for admin profiles in top 5
-        const updatedProfiles = profiles.map((profile, idx) => {
-          if (profile.is_admin_profile) {
-            let newElo: number;
-            
-            if (isInitial || !newAdminElos.has(profile.id)) {
-              // Generate new unique ELO
-              newElo = generateHighElo(usedElos, idx);
-            } else {
-              // Adjust existing ELO with uniqueness check
-              const currentElo = newAdminElos.get(profile.id)!;
-              newElo = adjustElo(currentElo, usedElos);
-            }
-            
-            usedElos.add(newElo);
-            newAdminElos.set(profile.id, newElo);
-            return { ...profile, game_elo: newElo };
-          }
-          return profile;
-        });
-
-        setAdminElos(newAdminElos);
-        savePersistedData(newAdminElos);
-
-        // Sort by ELO
-        const sortedProfiles = updatedProfiles.sort((a, b) => (b.game_elo || 1200) - (a.game_elo || 1200));
-        setTopPlayers(sortedProfiles.slice(0, 5));
+        // Use ELOs directly from database - no client-side generation
+        setTopPlayers(profiles.map(p => ({
+          ...p,
+          game_elo: p.game_elo || 1200
+        })));
 
         // Compute user's rank asynchronously
         if (userId) {
