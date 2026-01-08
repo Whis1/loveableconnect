@@ -89,7 +89,7 @@ export const TrisGameBanner = () => {
       .from("tris_games")
       .select("*")
       .eq("user_id", session.user.id)
-      .single();
+      .maybeSingle();
 
     if (error && error.code !== "PGRST116") {
       console.error("Error checking games:", error);
@@ -98,25 +98,34 @@ export const TrisGameBanner = () => {
 
     if (!data) {
       // Create new record
-      await supabase.from("tris_games").insert({
+      const { error: insertError } = await supabase.from("tris_games").insert({
         user_id: session.user.id,
         games_played_today: 0,
         last_reset_date: new Date().toISOString().split("T")[0],
       });
+      
+      if (insertError) {
+        console.error("Error creating tris_games record:", insertError);
+      }
       setGamesPlayed(0);
     } else {
       const today = new Date().toISOString().split("T")[0];
       if (data.last_reset_date !== today) {
         // Reset games
-        await supabase
+        const { error: updateError } = await supabase
           .from("tris_games")
           .update({
             games_played_today: 0,
             last_reset_date: today,
           })
           .eq("user_id", session.user.id);
+          
+        if (updateError) {
+          console.error("Error resetting daily games:", updateError);
+        }
         setGamesPlayed(0);
       } else {
+        console.log('🎮 Loaded games played:', data.games_played_today);
         setGamesPlayed(data.games_played_today);
         const limit = getGameLimit();
         if (data.games_played_today >= limit) {
@@ -184,16 +193,26 @@ export const TrisGameBanner = () => {
   // Incrementa le partite giocate all'inizio della partita
   const incrementGamesPlayed = async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+    if (!session) {
+      console.error('❌ No session found');
+      return false;
+    }
 
     const newGamesPlayed = gamesPlayed + 1;
-    await supabase
+    console.log('🎮 Incrementing games from', gamesPlayed, 'to', newGamesPlayed);
+    
+    const { error } = await supabase
       .from("tris_games")
       .update({ games_played_today: newGamesPlayed })
       .eq("user_id", session.user.id);
 
+    if (error) {
+      console.error('❌ Error incrementing games:', error);
+      return false;
+    }
+
+    console.log('✅ Games incremented successfully in DB');
     setGamesPlayed(newGamesPlayed);
-    console.log('🎮 Games played incremented to:', newGamesPlayed);
 
     // Check if reached free limit
     const limit = getGameLimit();
@@ -202,17 +221,29 @@ export const TrisGameBanner = () => {
       today.setDate(today.getDate() + 1);
       setNextResetTime(today);
     }
+    
+    return true;
   };
 
-  const handleOpponentFound = (foundOpponent: Profile) => {
+  const handleOpponentFound = async (foundOpponent: Profile) => {
     console.log('🎮 TrisGameBanner - Opponent found:', foundOpponent);
     console.log('🎮 TrisGameBanner - Selected game:', selectedGame);
     
-    // Incrementa le partite all'INIZIO (non blocca il cambio di stato)
-    incrementGamesPlayed();
+    // CRITICAL: Aspetta che l'incremento completi PRIMA di procedere
+    const success = await incrementGamesPlayed();
+    if (!success) {
+      console.error('❌ Failed to increment games');
+      toast({
+        title: "Errore",
+        description: "Impossibile iniziare la partita. Riprova.",
+        variant: "destructive",
+      });
+      setGameState("idle");
+      return;
+    }
     
+    console.log('✅ Games incremented, starting game');
     setOpponent(foundOpponent);
-    console.log('🎮 TrisGameBanner - Setting gameState to playing');
     setGameState("playing");
   };
 
