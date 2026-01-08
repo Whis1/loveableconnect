@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,13 +20,19 @@ interface OpponentSearchProps {
 export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [searchDuration] = useState(
-    Math.floor(Math.random() * 2000) + 3000
-  ); // 3-5 secondi
-  const [animationStarted, setAnimationStarted] = useState(false);
+  const searchDuration = useRef(Math.floor(Math.random() * 1000) + 2000); // 2-3 secondi
+  const animationStarted = useRef(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     fetchProfiles();
+    
+    // Cleanup interval on unmount
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, []);
 
   const fetchProfiles = async () => {
@@ -44,8 +50,8 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
         is_admin_profile: true
       }));
       setProfiles(profilesWithAdmin);
-      if (!animationStarted) {
-        setAnimationStarted(true);
+      if (!animationStarted.current) {
+        animationStarted.current = true;
         startAnimation(profilesWithAdmin);
       }
     }
@@ -53,30 +59,33 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
 
   const startAnimation = (profileList: Profile[]) => {
     let elapsed = 0;
-    let finalIndex = Math.floor(Math.random() * profileList.length);
+    const finalIndex = Math.floor(Math.random() * profileList.length);
+    const duration = searchDuration.current;
     
-    const interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       setCurrentIndex((prev) => {
         // Negli ultimi secondi, rallenta verso il profilo finale
-        if (elapsed >= searchDuration - 1000) {
+        if (elapsed >= duration - 800) {
           return finalIndex;
         }
         return (prev + 1) % profileList.length;
       });
       elapsed += 150;
 
-      if (elapsed >= searchDuration) {
-        clearInterval(interval);
+      if (elapsed >= duration) {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
         
         // Usa il profilo su cui si è fermata l'animazione con l'ELO dal DB
         const selectedOpponent = profileList[finalIndex];
         
         console.log('🎮 Opponent found from DB:', selectedOpponent.nickname, 'ELO:', selectedOpponent.game_elo);
         
-        setTimeout(() => {
-          console.log('🎮 Calling onOpponentFound with:', selectedOpponent);
-          onOpponentFound(selectedOpponent);
-        }, 500);
+        // Chiama immediatamente senza setTimeout aggiuntivo
+        console.log('🎮 Calling onOpponentFound with:', selectedOpponent);
+        onOpponentFound(selectedOpponent);
       }
     }, 150);
   };
