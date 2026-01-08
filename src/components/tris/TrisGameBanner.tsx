@@ -204,12 +204,12 @@ export const TrisGameBanner = () => {
     }
   };
 
-  const handleOpponentFound = async (foundOpponent: Profile) => {
+  const handleOpponentFound = (foundOpponent: Profile) => {
     console.log('🎮 TrisGameBanner - Opponent found:', foundOpponent);
     console.log('🎮 TrisGameBanner - Selected game:', selectedGame);
     
-    // Incrementa le partite all'INIZIO della partita
-    await incrementGamesPlayed();
+    // Incrementa le partite all'INIZIO (non blocca il cambio di stato)
+    incrementGamesPlayed();
     
     setOpponent(foundOpponent);
     console.log('🎮 TrisGameBanner - Setting gameState to playing');
