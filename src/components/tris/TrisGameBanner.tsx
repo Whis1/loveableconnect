@@ -61,6 +61,13 @@ export const TrisGameBanner = () => {
     checkGamesRemaining();
   }, []);
 
+  // Ricarica i dati quando il banner si riapre
+  useEffect(() => {
+    if (showBanner && gameState === "idle") {
+      checkGamesRemaining();
+    }
+  }, [showBanner, gameState]);
+
   // Mantieni il saldo locale sincronizzato per feedback immediato
   useEffect(() => {
     if (credits?.balance !== undefined) {
@@ -276,6 +283,9 @@ export const TrisGameBanner = () => {
         description: "Non arrenderti, riprova la prossima volta.",
       });
     }
+
+    // Ricarica i dati dal DB prima di resettare
+    await checkGamesRemaining();
 
     // Reset game
     setTimeout(() => {
