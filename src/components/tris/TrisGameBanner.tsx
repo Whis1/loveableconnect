@@ -206,12 +206,16 @@ export const TrisGameBanner = () => {
       }
 
       const newGamesPlayed = gamesPlayed + 1;
-      console.log('🎮 Incrementing games from', gamesPlayed, 'to', newGamesPlayed);
+      const today = new Date().toISOString().split("T")[0];
+      console.log('🎮 Incrementing games from', gamesPlayed, 'to', newGamesPlayed, 'for date', today);
       
-      // Update DB in background - non-blocking
+      // Update DB in background - aggiorna sia games_played_today CHE last_reset_date
       supabase
         .from("tris_games")
-        .update({ games_played_today: newGamesPlayed })
+        .update({ 
+          games_played_today: newGamesPlayed,
+          last_reset_date: today
+        })
         .eq("user_id", session.user.id)
         .then(({ error }) => {
           if (error) {
