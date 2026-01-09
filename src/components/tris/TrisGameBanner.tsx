@@ -191,58 +191,51 @@ export const TrisGameBanner = () => {
   };
 
   // Incrementa le partite giocate all'inizio della partita
-  const incrementGamesPlayed = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      console.error('❌ No session found');
-      return false;
-    }
+  const incrementGamesPlayed = () => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        console.error('❌ No session found');
+        return;
+      }
 
-    const newGamesPlayed = gamesPlayed + 1;
-    console.log('🎮 Incrementing games from', gamesPlayed, 'to', newGamesPlayed);
-    
-    const { error } = await supabase
-      .from("tris_games")
-      .update({ games_played_today: newGamesPlayed })
-      .eq("user_id", session.user.id);
+      const newGamesPlayed = gamesPlayed + 1;
+      console.log('🎮 Incrementing games from', gamesPlayed, 'to', newGamesPlayed);
+      
+      // Update DB in background - non-blocking
+      supabase
+        .from("tris_games")
+        .update({ games_played_today: newGamesPlayed })
+        .eq("user_id", session.user.id)
+        .then(({ error }) => {
+          if (error) {
+            console.error('❌ Error incrementing games:', error);
+          } else {
+            console.log('✅ Games incremented successfully in DB');
+          }
+        });
 
-    if (error) {
-      console.error('❌ Error incrementing games:', error);
-      return false;
-    }
+      // Update local state immediately
+      setGamesPlayed(newGamesPlayed);
 
-    console.log('✅ Games incremented successfully in DB');
-    setGamesPlayed(newGamesPlayed);
-
-    // Check if reached free limit
-    const limit = getGameLimit();
-    if (newGamesPlayed >= limit && !(credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium'))) {
-      const today = new Date();
-      today.setDate(today.getDate() + 1);
-      setNextResetTime(today);
-    }
-    
-    return true;
+      // Check if reached free limit
+      const limit = getGameLimit();
+      if (newGamesPlayed >= limit && !(credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium'))) {
+        const today = new Date();
+        today.setDate(today.getDate() + 1);
+        setNextResetTime(today);
+      }
+    });
   };
 
-  const handleOpponentFound = async (foundOpponent: Profile) => {
+  const handleOpponentFound = (foundOpponent: Profile) => {
     console.log('🎮 TrisGameBanner - Opponent found:', foundOpponent);
     console.log('🎮 TrisGameBanner - Selected game:', selectedGame);
     
-    // CRITICAL: Aspetta che l'incremento completi PRIMA di procedere
-    const success = await incrementGamesPlayed();
-    if (!success) {
-      console.error('❌ Failed to increment games');
-      toast({
-        title: "Errore",
-        description: "Impossibile iniziare la partita. Riprova.",
-        variant: "destructive",
-      });
-      setGameState("idle");
-      return;
-    }
+    // Increment games immediately in background (non-blocking)
+    incrementGamesPlayed();
     
-    console.log('✅ Games incremented, starting game');
+    // Start game immediately
+    console.log('✅ Starting game with opponent:', foundOpponent.nickname);
     setOpponent(foundOpponent);
     setGameState("playing");
   };
