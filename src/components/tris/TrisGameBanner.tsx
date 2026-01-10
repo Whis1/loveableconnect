@@ -328,15 +328,30 @@ export const TrisGameBanner = () => {
   }, [nextResetTime]);
 
   if (!showBanner && gameState === "idle") {
+    const limit = getDisplayLimit();
+    const remaining = limit ? Math.max(0, limit - gamesPlayed) : null;
+    const isPremiumUnlimited = credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium');
+    
     return (
       <div className="flex justify-center mb-6">
-        <Button
-          onClick={() => setShowBanner(true)}
-          className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
-        >
-          <Trophy className="w-4 h-4 mr-2" />
-          Sfida
-        </Button>
+        <div className="flex flex-col items-center gap-2">
+          <Button
+            onClick={() => setShowBanner(true)}
+            className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+          >
+            <Trophy className="w-4 h-4 mr-2" />
+            Sfida
+          </Button>
+          {remaining !== null && (
+            <p className="text-xs text-muted-foreground">
+              {isPremiumUnlimited ? (
+                <span className="text-primary font-semibold">♾️ Illimitato</span>
+              ) : (
+                <>Partite oggi: <span className="font-bold text-primary">{remaining}/{limit}</span></>
+              )}
+            </p>
+          )}
+        </div>
       </div>
     );
   }
