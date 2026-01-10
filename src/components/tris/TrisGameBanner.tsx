@@ -89,9 +89,14 @@ export const TrisGameBanner = () => {
   };
 
   const checkGamesRemaining = async () => {
+    console.log('🔍 checkGamesRemaining - START');
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+    if (!session) {
+      console.log('❌ checkGamesRemaining - No session');
+      return;
+    }
 
+    console.log('🔍 Querying tris_games for user:', session.user.id);
     const { data, error } = await supabase
       .from("tris_games")
       .select("*")
@@ -99,12 +104,12 @@ export const TrisGameBanner = () => {
       .maybeSingle();
 
     if (error && error.code !== "PGRST116") {
-      console.error("Error checking games:", error);
+      console.error("❌ Error checking games:", error);
       return;
     }
 
     if (!data) {
-      // Create new record
+      console.log('📝 No tris_games record found, creating new one');
       const { error: insertError } = await supabase.from("tris_games").insert({
         user_id: session.user.id,
         games_played_today: 0,
@@ -112,13 +117,20 @@ export const TrisGameBanner = () => {
       });
       
       if (insertError) {
-        console.error("Error creating tris_games record:", insertError);
+        console.error("❌ Error creating tris_games record:", insertError);
       }
+      console.log('✅ Setting gamesPlayed to 0');
       setGamesPlayed(0);
     } else {
       const today = new Date().toISOString().split("T")[0];
+      console.log('📊 Found tris_games data:', {
+        games_played_today: data.games_played_today,
+        last_reset_date: data.last_reset_date,
+        today: today
+      });
+      
       if (data.last_reset_date !== today) {
-        // Reset games
+        console.log('🔄 Date mismatch - resetting games');
         const { error: updateError } = await supabase
           .from("tris_games")
           .update({
@@ -128,11 +140,12 @@ export const TrisGameBanner = () => {
           .eq("user_id", session.user.id);
           
         if (updateError) {
-          console.error("Error resetting daily games:", updateError);
+          console.error("❌ Error resetting daily games:", updateError);
         }
+        console.log('✅ Setting gamesPlayed to 0 (reset)');
         setGamesPlayed(0);
       } else {
-        console.log('🎮 Loaded games played:', data.games_played_today);
+        console.log('✅ Date matches - setting gamesPlayed to:', data.games_played_today);
         setGamesPlayed(data.games_played_today);
         const limit = getGameLimit();
         if (data.games_played_today >= limit) {
@@ -142,6 +155,7 @@ export const TrisGameBanner = () => {
         }
       }
     }
+    console.log('🔍 checkGamesRemaining - END');
   };
 
   const handleStartGame = async () => {
@@ -199,15 +213,16 @@ export const TrisGameBanner = () => {
 
   // Incrementa le partite giocate all'inizio della partita
   const incrementGamesPlayed = () => {
+    console.log('🚀 incrementGamesPlayed - START (current gamesPlayed:', gamesPlayed, ')');
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
-        console.error('❌ No session found');
+        console.error('❌ incrementGamesPlayed - No session found');
         return;
       }
 
       const newGamesPlayed = gamesPlayed + 1;
       const today = new Date().toISOString().split("T")[0];
-      console.log('🎮 Incrementing games from', gamesPlayed, 'to', newGamesPlayed, 'for date', today);
+      console.log('🎮 incrementGamesPlayed - Updating from', gamesPlayed, 'to', newGamesPlayed, 'for date', today);
       
       // Update DB in background - aggiorna sia games_played_today CHE last_reset_date
       supabase
@@ -217,15 +232,16 @@ export const TrisGameBanner = () => {
           last_reset_date: today
         })
         .eq("user_id", session.user.id)
-        .then(({ error }) => {
+        .then(({ error, data: updateData }) => {
           if (error) {
-            console.error('❌ Error incrementing games:', error);
+            console.error('❌ incrementGamesPlayed - DB update error:', error);
           } else {
-            console.log('✅ Games incremented successfully in DB');
+            console.log('✅ incrementGamesPlayed - DB updated successfully, response:', updateData);
           }
         });
 
       // Update local state immediately
+      console.log('✅ incrementGamesPlayed - Setting local state to:', newGamesPlayed);
       setGamesPlayed(newGamesPlayed);
 
       // Check if reached free limit
@@ -235,6 +251,7 @@ export const TrisGameBanner = () => {
         today.setDate(today.getDate() + 1);
         setNextResetTime(today);
       }
+      console.log('🚀 incrementGamesPlayed - END');
     });
   };
 
@@ -331,6 +348,8 @@ export const TrisGameBanner = () => {
     const limit = getDisplayLimit();
     const remaining = limit ? Math.max(0, limit - gamesPlayed) : null;
     const isPremiumUnlimited = credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium');
+    
+    console.log('🎯 Rendering main button - gamesPlayed:', gamesPlayed, 'limit:', limit, 'remaining:', remaining);
     
     return (
       <div className="flex justify-center mb-6">
