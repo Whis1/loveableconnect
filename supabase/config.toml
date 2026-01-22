@@ -140,3 +140,6 @@ verify_jwt = false
 
 [functions.resend-confirmation-email]
 verify_jwt = false
+
+[functions.reset-daily-games]
+verify_jwt = false
