@@ -211,61 +211,74 @@ export const TrisGameBanner = () => {
     setGameState("searching");
   };
 
-  // Incrementa le partite giocate all'inizio della partita
-  const incrementGamesPlayed = () => {
-    console.log('🚀 incrementGamesPlayed - START (current gamesPlayed:', gamesPlayed, ')');
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        console.error('❌ incrementGamesPlayed - No session found');
-        return;
-      }
+   // Incrementa le partite giocate - ASYNC per garantire persistenza
+   const incrementGamesPlayed = async (): Promise<number> => {
+     const { data: { session } } = await supabase.auth.getSession();
+     if (!session) throw new Error('No session');
+ 
+     const newGamesPlayed = gamesPlayed + 1;
+     const today = new Date().toISOString().split("T")[0];
+     
+     // CRITICO: Attendere l'aggiornamento del database prima di procedere
+     const { error } = await supabase
+       .from("tris_games")
+       .update({ 
+         games_played_today: newGamesPlayed,
+         last_reset_date: today
+       })
+       .eq("user_id", session.user.id);
+     
+     if (error) throw error;
+     
+     // Aggiorna lo stato locale SOLO dopo il successo del database
+     setGamesPlayed(newGamesPlayed);
+ 
+     // Check if reached free limit
+     const limit = getGameLimit();
+     if (newGamesPlayed >= limit && !(credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium'))) {
+       const tomorrow = new Date();
+       tomorrow.setDate(tomorrow.getDate() + 1);
+       setNextResetTime(tomorrow);
+     }
+ 
+     return newGamesPlayed;
+   };
+ 
+   // Retry mechanism per incrementGamesPlayed
+   const incrementGamesPlayedWithRetry = async (retries = 3): Promise<number> => {
+     for (let i = 0; i < retries; i++) {
+       try {
+         return await incrementGamesPlayed();
+       } catch (error) {
+         if (i === retries - 1) throw error;
+         await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s between retries
+       }
+     }
+     throw new Error('Max retries reached');
+   };
 
-      const newGamesPlayed = gamesPlayed + 1;
-      const today = new Date().toISOString().split("T")[0];
-      console.log('🎮 incrementGamesPlayed - Updating from', gamesPlayed, 'to', newGamesPlayed, 'for date', today);
-      
-      // Update DB in background - aggiorna sia games_played_today CHE last_reset_date
-      supabase
-        .from("tris_games")
-        .update({ 
-          games_played_today: newGamesPlayed,
-          last_reset_date: today
-        })
-        .eq("user_id", session.user.id)
-        .then(({ error, data: updateData }) => {
-          if (error) {
-            console.error('❌ incrementGamesPlayed - DB update error:', error);
-          } else {
-            console.log('✅ incrementGamesPlayed - DB updated successfully, response:', updateData);
-          }
-        });
-
-      // Update local state immediately
-      console.log('✅ incrementGamesPlayed - Setting local state to:', newGamesPlayed);
-      setGamesPlayed(newGamesPlayed);
-
-      // Check if reached free limit
-      const limit = getGameLimit();
-      if (newGamesPlayed >= limit && !(credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium'))) {
-        const today = new Date();
-        today.setDate(today.getDate() + 1);
-        setNextResetTime(today);
-      }
-      console.log('🚀 incrementGamesPlayed - END');
-    });
-  };
-
-  const handleOpponentFound = (foundOpponent: Profile) => {
-    console.log('🎮 TrisGameBanner - Opponent found:', foundOpponent);
-    console.log('🎮 TrisGameBanner - Selected game:', selectedGame);
-    
-    // Increment games immediately in background (non-blocking)
-    incrementGamesPlayed();
-    
-    // Start game immediately
-    console.log('✅ Starting game with opponent:', foundOpponent.nickname);
-    setOpponent(foundOpponent);
-    setGameState("playing");
+   const handleOpponentFound = async (foundOpponent: Profile) => {
+     try {
+       // CRITICO: Attendere l'aggiornamento PRIMA di avviare il gioco
+       await incrementGamesPlayedWithRetry();
+       
+       setOpponent(foundOpponent);
+       setGameState("playing");
+       
+       const remaining = getGameLimit() - gamesPlayed;
+       toast({
+         title: "Partita avviata!",
+         description: `Partite rimanenti oggi: ${remaining}/${getGameLimit()}`,
+       });
+     } catch (error) {
+       console.error('Errore aggiornamento partite:', error);
+       toast({
+         title: "Errore",
+         description: "Impossibile avviare la partita. Riprova.",
+         variant: "destructive",
+       });
+       setGameState("idle");
+     }
   };
 
   const handleGameEnd = async (result: "win" | "lose" | "draw") => {

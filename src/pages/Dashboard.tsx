@@ -1,3 +1,4 @@
+import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -265,9 +266,44 @@ const Dashboard = () => {
     setShowGeolocationBanner(false);
   };
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">{t("dashboard.loading")}</p>
-      </div>;
+     return (
+       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-950 dark:via-purple-950 dark:to-indigo-950 p-6">
+         <div className="max-w-6xl mx-auto space-y-6">
+           {/* Header skeleton */}
+           <div className="flex items-center justify-between">
+             <Skeleton className="h-10 w-48" />
+             <Skeleton className="h-10 w-32" />
+           </div>
+           
+           {/* Profile card skeleton */}
+           <Card>
+             <CardContent className="p-6">
+               <div className="flex items-center gap-4">
+                 <Skeleton className="h-24 w-24 rounded-full" />
+                 <div className="flex-1 space-y-3">
+                   <Skeleton className="h-6 w-48" />
+                   <Skeleton className="h-4 w-64" />
+                   <Skeleton className="h-4 w-32" />
+                 </div>
+               </div>
+             </CardContent>
+           </Card>
+           
+           {/* Stats cards skeleton */}
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+             {[1, 2, 3].map((i) => (
+               <Card key={i}>
+                 <CardContent className="p-6 space-y-3">
+                   <Skeleton className="h-12 w-12 rounded-full" />
+                   <Skeleton className="h-5 w-full" />
+                   <Skeleton className="h-4 w-3/4" />
+                 </CardContent>
+               </Card>
+             ))}
+           </div>
+         </div>
+       </div>
+     );
   }
   return <div className="min-h-screen relative bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-950 dark:via-purple-950 dark:to-indigo-950">
       {showTutorial && <Tutorial />}
