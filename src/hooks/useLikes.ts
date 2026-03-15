@@ -1,68 +1,76 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
-interface Like {
-  id: string;
-  from_user_id: string;
-  to_user_id: string;
-  created_at: string;
-}
-
-const fetchUserLikes = async (): Promise<Set<string>> => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) return new Set();
-
+const fetchUserLikes = async (userId: string): Promise<Set<string>> => {
   const { data, error } = await supabase
     .from("likes")
     .select("to_user_id")
-    .eq("from_user_id", session.user.id);
+    .eq("from_user_id", userId);
 
   if (error) throw error;
-  
-  return new Set(data?.map(like => like.to_user_id) || []);
+
+  return new Set(data?.map((like) => like.to_user_id) || []);
 };
 
 export const useLikes = () => {
   const queryClient = useQueryClient();
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const { data: likedProfileIds = new Set(), isLoading, error } = useQuery({
-    queryKey: ["user-likes"],
-    queryFn: fetchUserLikes,
-    staleTime: 30 * 1000, // 30 secondi
-    refetchInterval: 60 * 1000, // Ricarica ogni minuto
-  });
-
-  // Realtime updates per i like
   useEffect(() => {
-    const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!session?.user) return;
+    let isMounted = true;
 
-      const channel = supabase
-        .channel("user_likes_changes")
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "likes",
-            filter: `from_user_id=eq.${session.user.id}`,
-          },
-          () => {
-            queryClient.invalidateQueries({ queryKey: ["user-likes"] });
-          }
-        )
-        .subscribe();
+    const initializeUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (isMounted) {
+        setUserId(session?.user?.id ?? null);
+      }
+    };
 
-      return () => {
-        supabase.removeChannel(channel);
-      };
+    initializeUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id ?? null);
+      queryClient.invalidateQueries({ queryKey: ["user-likes"] });
     });
 
     return () => {
-      authSubscription?.unsubscribe();
+      isMounted = false;
+      subscription.unsubscribe();
     };
   }, [queryClient]);
+
+  const { data: likedProfileIds = new Set(), isLoading, error } = useQuery({
+    queryKey: ["user-likes", userId],
+    queryFn: () => fetchUserLikes(userId as string),
+    enabled: !!userId,
+    staleTime: 30 * 1000,
+    refetchInterval: 60 * 1000,
+  });
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`user_likes_changes_${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "likes",
+          filter: `from_user_id=eq.${userId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["user-likes", userId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient, userId]);
 
   return {
     likedProfileIds,
