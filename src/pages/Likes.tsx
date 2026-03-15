@@ -347,19 +347,28 @@ const Likes = () => {
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('admin-manage-like', {
-        body: {
-          action: 'add',
-          fromUserId: currentUserId,
-          toUserId: userId
-        }
-      });
+      const { error: insertError } = await supabase
+        .from("likes")
+        .insert({ from_user_id: currentUserId, to_user_id: userId });
 
-      if (error || !data?.success) {
-        throw new Error(error?.message || data?.error || 'Failed to like back');
+      if (insertError) {
+        // Duplicate is ok
+        if ((insertError as any)?.code !== '23505') {
+          throw insertError;
+        }
       }
 
-      if (data.match_created) {
+      // Check if a match was created by the trigger
+      const user1 = currentUserId < userId ? currentUserId : userId;
+      const user2 = currentUserId < userId ? userId : currentUserId;
+      const { data: matchData } = await supabase
+        .from("matches")
+        .select("id")
+        .eq("user1_id", user1)
+        .eq("user2_id", user2)
+        .maybeSingle();
+
+      if (matchData) {
         const matchedLike = likes.find(l => l.from_user_id === userId);
         const userAvatar = matchedLike ? toPublicAvatarUrl(matchedLike.profile.avatar_url) : null;
         setMatchBanner({ show: true, userName, userAvatar });

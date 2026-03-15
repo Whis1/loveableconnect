@@ -36,8 +36,8 @@ export const PlacesAutocomplete = ({
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [hasSelected, setHasSelected] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
-  const blurTimeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     // Se l'utente ha selezionato, non fare più ricerche
