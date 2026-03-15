@@ -254,59 +254,57 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
       });
     }
 
-    // Fire backend in background - non blocca l'UI
-    (async () => {
-      try {
-        if (useCredits) {
-          const { data: likeResult, error: likeFnError } = await supabase.rpc(
-            'like_with_credits',
-            { _to_user_id: profile.id, _cost: 2 }
-          );
+    try {
+      if (useCredits) {
+        const { data: likeResult, error: likeFnError } = await supabase.rpc(
+          'like_with_credits',
+          { _to_user_id: profile.id, _cost: 2 }
+        );
 
-          if (likeFnError) throw likeFnError;
+        if (likeFnError) throw likeFnError;
 
-          const result = Array.isArray(likeResult) ? likeResult[0] : likeResult;
-          if (!result?.success) {
-            // Rollback: non aveva crediti
-            setHasLiked(false);
-            setShowCreditsBanner(true);
-            return;
-          }
-          return;
-        }
-
-        // Like giornalieri
-        const { success } = await consumeLike(false);
-        if (!success) {
+        const result = Array.isArray(likeResult) ? likeResult[0] : likeResult;
+        if (!result?.success) {
+          // Rollback: non aveva crediti
           setHasLiked(false);
-          setShowLikesExhausted(true);
+          setShowCreditsBanner(true);
           return;
         }
 
-        const { error: insertError } = await supabase
-          .from("likes")
-          .insert({ from_user_id: currentUserId, to_user_id: profile.id });
+        queryClient.invalidateQueries({ queryKey: ["user-likes", currentUserId] });
+        return;
+      }
 
-        if (insertError) {
-          // Duplicate = già piaciuto, ok
-          if ((insertError as any)?.code === '23505') {
-            return;
-          }
+      // Like giornalieri
+      const { success } = await consumeLike(false);
+      if (!success) {
+        setHasLiked(false);
+        setShowLikesExhausted(true);
+        return;
+      }
+
+      const { error: insertError } = await supabase
+        .from("likes")
+        .insert({ from_user_id: currentUserId, to_user_id: profile.id });
+
+      if (insertError) {
+        // Duplicate = già piaciuto, ok
+        if ((insertError as any)?.code !== '23505') {
           throw insertError;
         }
-
-        // Invalidate likes cache
-        queryClient.invalidateQueries({ queryKey: ["user-likes"] });
-      } catch (error: any) {
-        // Rollback completo su errore
-        setHasLiked(false);
-        toast({
-          title: t('common.error'),
-          description: error.message,
-          variant: 'destructive',
-        });
       }
-    })();
+
+      // Invalidate likes cache
+      queryClient.invalidateQueries({ queryKey: ["user-likes", currentUserId] });
+    } catch (error: any) {
+      // Rollback completo su errore
+      setHasLiked(false);
+      toast({
+        title: t('common.error'),
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleUseCreditsForLike = async () => {
