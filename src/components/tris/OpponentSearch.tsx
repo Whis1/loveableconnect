@@ -22,7 +22,7 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const searchDuration = useRef(Math.floor(Math.random() * 1000) + 2000); // 2-3 secondi
   const animationStarted = useRef(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     fetchProfiles();

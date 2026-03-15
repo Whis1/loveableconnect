@@ -51,6 +51,7 @@ interface ProfileGridCardProps {
 const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, hasActiveMatch = false, onlineStatus, onLike, onMatch }: ProfileGridCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { t } = useTranslation();
   const [isLiking, setIsLiking] = useState(false);
   const [hasLiked, setHasLiked] = useState(likedProfileIds?.has(profile.id) || false);
