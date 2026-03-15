@@ -281,25 +281,20 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
           return;
         }
 
-        const { data: likeData, error: likeError } = await supabase.functions.invoke(
-          'admin-manage-like',
-          {
-            body: {
-              action: 'add',
-              fromUserId: currentUserId,
-              toUserId: profile.id
-            }
-          }
-        );
+        const { error: insertError } = await supabase
+          .from("likes")
+          .insert({ from_user_id: currentUserId, to_user_id: profile.id });
 
-        if (likeError) {
-          const msg = (likeError as any)?.message || '';
+        if (insertError) {
           // Duplicate = già piaciuto, ok
-          if (msg.includes('duplicate key') || (likeError as any)?.code === '23505') {
+          if ((insertError as any)?.code === '23505') {
             return;
           }
-          throw likeError;
+          throw insertError;
         }
+
+        // Invalidate likes cache
+        queryClient.invalidateQueries({ queryKey: ["user-likes"] });
       } catch (error: any) {
         // Rollback completo su errore
         setHasLiked(false);
