@@ -14,6 +14,7 @@ import { ArrowLeft, MapPin, Search as SearchIcon, RotateCcw, Heart, MessageCircl
 import { Checkbox } from "@/components/ui/checkbox";
 import { getGenericLocationPhrase } from "@/lib/utils";
 import { useLikes } from "@/hooks/useLikes";
+import { useSendLike } from "@/hooks/useSendLike";
 
 interface Profile {
   id: string;

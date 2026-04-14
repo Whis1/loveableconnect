@@ -9,8 +9,8 @@ import { useTranslation } from "react-i18next";
 import { useTextTranslation } from "@/hooks/useTranslation";
 import { ProfileDialog } from "./ProfileDialog";
 import { getGenericLocationPhrase } from "@/lib/utils";
-import { useDailyLikes } from "@/hooks/useDailyLikes";
 import { useCredits } from "@/hooks/useCredits";
+import { useSendLike } from "@/hooks/useSendLike";
 import { useWeeklyFreeChats } from "@/hooks/useWeeklyFreeChats";
 import { DailyLikesExhaustedBanner } from "./DailyLikesExhaustedBanner";
 import { ChatConfirmationBanner } from "./ChatConfirmationBanner";
@@ -63,8 +63,8 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
   const [showCreditsBanner, setShowCreditsBanner] = useState(false);
   const [translatedBio, setTranslatedBio] = useState<string>('');
   const { translateText } = useTextTranslation();
-  const { consumeLike, likesRemaining, resetAt } = useDailyLikes();
   const { credits } = useCredits();
+  const { sendLike } = useSendLike(currentUserId);
   const { chatsRemaining, consumeFreeChat } = useWeeklyFreeChats();
 
   const getGenderLabel = (gender: string | null) => {
@@ -220,113 +220,37 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
 
     if (hasLiked || isLiking) return;
 
-    const syncLikedCache = (liked: boolean) => {
-      queryClient.setQueryData<Set<string>>(["user-likes", currentUserId], (prev) => {
-        const next = new Set(prev ? Array.from(prev) : []);
-
-        if (liked) {
-          next.add(profile.id);
-        } else {
-          next.delete(profile.id);
-        }
-
-        return next;
-      });
-    };
-
     setIsLiking(true);
-
-    // Check istantaneo: niente like? banner subito
-    if (!useCredits && likesRemaining <= 0) {
-      setShowLikesExhausted(true);
-      setIsLiking(false);
-      return;
-    }
-
-    // CONTROLLO ISTANTANEO MATCH: verifica se l'altro ha già messo like
-    const { data: reciprocalLike } = await supabase
-      .from("likes")
-      .select("id")
-      .eq("from_user_id", profile.id)
-      .eq("to_user_id", currentUserId)
-      .maybeSingle();
-
-    const willBeMatch = !!reciprocalLike;
-
-    // TUTTO ISTANTANEO: aggiorna UI + mostra notifica subito
-    setHasLiked(true);
-    
-    // Se sarà un match, mostra il banner IMMEDIATAMENTE
-    if (willBeMatch && onMatch) {
-      const avatarUrl = profile.avatar_url && /^https?:\/\//.test(profile.avatar_url) 
-        ? profile.avatar_url 
-        : (profile.avatar_url 
-          ? supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl 
-          : null);
-      onMatch(profile.nickname || profile.full_name, avatarUrl);
-    } else {
-      toast({
-        title: t('search.likeSent'),
-        description: `${t('search.likedProfile')} ${profile.nickname || profile.full_name}`,
-      });
-    }
+    setHasLiked(true); // Optimistic — will be rolled back on failure
 
     try {
-      if (useCredits) {
-        const { data: likeResult, error: likeFnError } = await supabase.rpc(
-          'like_with_credits',
-          { _to_user_id: profile.id, _cost: 2 }
-        );
+      const result = await sendLike(profile.id, useCredits);
 
-        if (likeFnError) throw likeFnError;
-
-        const result = Array.isArray(likeResult) ? likeResult[0] : likeResult;
-        if (!result?.success) {
-          // Rollback: non aveva crediti
-          setHasLiked(false);
-          syncLikedCache(false);
-          setShowCreditsBanner(true);
-          return;
-        }
-
-        if (!willBeMatch) {
-          syncLikedCache(true);
-        }
-
-        queryClient.invalidateQueries({ queryKey: ["user-likes", currentUserId] });
-        return;
-      }
-
-      // Like giornalieri
-      const { success } = await consumeLike(false);
-      if (!success) {
+      if (!result.success) {
         setHasLiked(false);
-        syncLikedCache(false);
-        setShowLikesExhausted(true);
+        if (result.likes_remaining <= 0 && !useCredits) {
+          setShowLikesExhausted(true);
+        } else {
+          setShowCreditsBanner(true);
+        }
         return;
       }
 
-      const { error: insertError } = await supabase
-        .from("likes")
-        .insert({ from_user_id: currentUserId, to_user_id: profile.id });
-
-      if (insertError) {
-        // Duplicate = già piaciuto, ok
-        if ((insertError as any)?.code !== '23505') {
-          throw insertError;
-        }
+      if (result.match_created && onMatch) {
+        const matchAvatar = profile.avatar_url && /^https?:\/\//.test(profile.avatar_url)
+          ? profile.avatar_url
+          : (profile.avatar_url
+            ? supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl
+            : null);
+        onMatch(profile.nickname || profile.full_name, matchAvatar);
+      } else if (!result.already_exists) {
+        toast({
+          title: t('search.likeSent'),
+          description: `${t('search.likedProfile')} ${profile.nickname || profile.full_name}`,
+        });
       }
-
-      if (!willBeMatch) {
-        syncLikedCache(true);
-      }
-
-      // Invalidate likes cache
-      queryClient.invalidateQueries({ queryKey: ["user-likes", currentUserId] });
     } catch (error: any) {
-      // Rollback completo su errore
       setHasLiked(false);
-      syncLikedCache(false);
       toast({
         title: t('common.error'),
         description: error.message,
@@ -339,13 +263,12 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
 
   const handleUseCreditsForLike = async () => {
     setShowLikesExhausted(false);
-    
-    // Check if user has enough credits BEFORE attempting
+
     if ((credits?.balance ?? 0) < 2) {
       setShowCreditsBanner(true);
       return;
     }
-    
+
     await handleLike({ stopPropagation: () => {} } as React.MouseEvent, true);
   };
 
