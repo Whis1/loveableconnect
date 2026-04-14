@@ -13,6 +13,7 @@ import { MatchBanner } from "@/components/MatchBanner";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import likesHeartIcon from "@/assets/likes-heart-icon.png";
 import { useCredits } from "@/hooks/useCredits";
+import { useSendLike } from "@/hooks/useSendLike";
 
 interface LikeWithProfile {
   id: string;
@@ -62,6 +63,7 @@ const Likes = () => {
     userAvatar: null,
   });
   const [likingUserId, setLikingUserId] = useState<string | null>(null);
+  const { sendLike } = useSendLike(currentUserId);
   const [unlockingProfileId, setUnlockingProfileId] = useState<string | null>(null);
   const [showUnlockDialog, setShowUnlockDialog] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
@@ -331,49 +333,23 @@ const Likes = () => {
     setLikingUserId(userId);
 
     try {
-      const { data: existingLike } = await supabase
-        .from("likes")
-        .select("id")
-        .eq("from_user_id", currentUserId)
-        .eq("to_user_id", userId)
-        .maybeSingle();
+      const result = await sendLike(userId, false);
 
-      if (existingLike) {
+      if (!result.success) {
         toast({
-          title: t("search.likeSent"),
-          description: t("search.likedProfile") + " " + userName,
+          title: t("likes.error"),
+          description: t("likes.errorLikingBack"),
+          variant: "destructive",
         });
-        setLikingUserId(null);
         return;
       }
 
-      const { error: insertError } = await supabase
-        .from("likes")
-        .insert({ from_user_id: currentUserId, to_user_id: userId });
-
-      if (insertError) {
-        // Duplicate is ok
-        if ((insertError as any)?.code !== '23505') {
-          throw insertError;
-        }
-      }
-
-      // Check if a match was created by the trigger
-      const user1 = currentUserId < userId ? currentUserId : userId;
-      const user2 = currentUserId < userId ? userId : currentUserId;
-      const { data: matchData } = await supabase
-        .from("matches")
-        .select("id")
-        .eq("user1_id", user1)
-        .eq("user2_id", user2)
-        .maybeSingle();
-
-      if (matchData) {
+      if (result.match_created) {
         const matchedLike = likes.find(l => l.from_user_id === userId);
         const userAvatar = matchedLike ? toPublicAvatarUrl(matchedLike.profile.avatar_url) : null;
         setMatchBanner({ show: true, userName, userAvatar });
         setLikes((prev) => prev.filter((l) => l.id !== likeId));
-      } else {
+      } else if (!result.already_exists) {
         toast({
           title: t("search.likeSent"),
           description: t("search.likedProfile") + " " + userName,

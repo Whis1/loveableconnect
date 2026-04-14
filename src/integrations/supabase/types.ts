@@ -1076,6 +1076,17 @@ export type Database = {
         }[]
       }
       reset_daily_credits: { Args: never; Returns: undefined }
+      send_like: {
+        Args: { _to_user_id: string; _use_credits?: boolean }
+        Returns: {
+          already_exists: boolean
+          credits_used: boolean
+          likes_remaining: number
+          match_created: boolean
+          new_balance: number
+          success: boolean
+        }[]
+      }
       unlock_birthdate_for_user: {
         Args: { p_user_id: string }
         Returns: undefined
