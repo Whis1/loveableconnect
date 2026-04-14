@@ -218,11 +218,28 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
   const handleLike = async (e: React.MouseEvent, useCredits: boolean = false) => {
     e.stopPropagation();
 
-    if (hasLiked) return;
+    if (hasLiked || isLiking) return;
+
+    const syncLikedCache = (liked: boolean) => {
+      queryClient.setQueryData<Set<string>>(["user-likes", currentUserId], (prev) => {
+        const next = new Set(prev ? Array.from(prev) : []);
+
+        if (liked) {
+          next.add(profile.id);
+        } else {
+          next.delete(profile.id);
+        }
+
+        return next;
+      });
+    };
+
+    setIsLiking(true);
 
     // Check istantaneo: niente like? banner subito
     if (!useCredits && likesRemaining <= 0) {
       setShowLikesExhausted(true);
+      setIsLiking(false);
       return;
     }
 
@@ -267,8 +284,13 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
         if (!result?.success) {
           // Rollback: non aveva crediti
           setHasLiked(false);
+          syncLikedCache(false);
           setShowCreditsBanner(true);
           return;
+        }
+
+        if (!willBeMatch) {
+          syncLikedCache(true);
         }
 
         queryClient.invalidateQueries({ queryKey: ["user-likes", currentUserId] });
@@ -279,6 +301,7 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
       const { success } = await consumeLike(false);
       if (!success) {
         setHasLiked(false);
+        syncLikedCache(false);
         setShowLikesExhausted(true);
         return;
       }
@@ -294,16 +317,23 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
         }
       }
 
+      if (!willBeMatch) {
+        syncLikedCache(true);
+      }
+
       // Invalidate likes cache
       queryClient.invalidateQueries({ queryKey: ["user-likes", currentUserId] });
     } catch (error: any) {
       // Rollback completo su errore
       setHasLiked(false);
+      syncLikedCache(false);
       toast({
         title: t('common.error'),
         description: error.message,
         variant: 'destructive',
       });
+    } finally {
+      setIsLiking(false);
     }
   };
 

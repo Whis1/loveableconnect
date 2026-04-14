@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const fetchUserLikes = async (userId: string): Promise<Set<string>> => {
   const { data, error } = await supabase
@@ -16,22 +16,35 @@ const fetchUserLikes = async (userId: string): Promise<Set<string>> => {
 export const useLikes = () => {
   const queryClient = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const emptyLikedProfileIds = useMemo(() => new Set<string>(), []);
 
   useEffect(() => {
     let isMounted = true;
 
     const initializeUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (isMounted) {
-        setUserId(session?.user?.id ?? null);
-      }
+      if (!isMounted) return;
+
+      setUserId(session?.user?.id ?? null);
+      setAuthReady(true);
     };
 
     initializeUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUserId(session?.user?.id ?? null);
-      queryClient.invalidateQueries({ queryKey: ["user-likes"] });
+      if (!isMounted) return;
+
+      const nextUserId = session?.user?.id ?? null;
+      setUserId(nextUserId);
+      setAuthReady(true);
+
+      if (!nextUserId) {
+        queryClient.removeQueries({ queryKey: ["user-likes"] });
+        return;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["user-likes", nextUserId] });
     });
 
     return () => {
@@ -40,16 +53,20 @@ export const useLikes = () => {
     };
   }, [queryClient]);
 
-  const { data: likedProfileIds = new Set(), isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["user-likes", userId],
     queryFn: () => fetchUserLikes(userId as string),
-    enabled: !!userId,
-    staleTime: 30 * 1000,
+    enabled: authReady && !!userId,
+    staleTime: 0,
     refetchInterval: 60 * 1000,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
+  const likedProfileIds = data ?? emptyLikedProfileIds;
+
   useEffect(() => {
-    if (!userId) return;
+    if (!authReady || !userId) return;
 
     const channel = supabase
       .channel(`user_likes_changes_${userId}`)
@@ -74,7 +91,7 @@ export const useLikes = () => {
 
   return {
     likedProfileIds,
-    loading: isLoading,
+    loading: !authReady || (!!userId && isLoading),
     error,
   };
 };
