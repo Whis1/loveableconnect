@@ -46,12 +46,11 @@ const Search = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
   const { likedProfileIds, loading: likesLoading } = useLikes();
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [likingProfileIds, setLikingProfileIds] = useState<Set<string>>(new Set());
+  const { sendLike } = useSendLike(currentUser);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [locationPermission, setLocationPermission] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -309,46 +308,29 @@ const Search = () => {
   const handleLikeProfile = async (profile: Profile) => {
     if (!currentUser || likedProfileIds.has(profile.id)) return;
 
-    setLikingProfileIds((prev) => {
-      const next = new Set(prev);
-      next.add(profile.id);
-      return next;
-    });
-
     try {
-      const { error: insertError } = await supabase
-        .from("likes")
-        .insert({
-          from_user_id: currentUser,
-          to_user_id: profile.id,
-        });
+      const result = await sendLike(profile.id, false);
 
-      if (insertError && (insertError as { code?: string }).code !== "23505") {
-        throw insertError;
+      if (!result.success) {
+        toast({
+          title: t('search.error'),
+          description: t('likes.errorLikingBack'),
+          variant: "destructive",
+        });
+        return;
       }
 
-      queryClient.setQueryData<Set<string>>(["user-likes", currentUser], (prev) => {
-        const next = new Set(prev ? Array.from(prev) : []);
-        next.add(profile.id);
-        return next;
-      });
-      queryClient.invalidateQueries({ queryKey: ["user-likes", currentUser] });
-
-      toast({
-        title: t('search.likeSent'),
-        description: `${t('search.likedProfile')} ${profile.nickname || profile.full_name}`,
-      });
+      if (!result.already_exists) {
+        toast({
+          title: t('search.likeSent'),
+          description: `${t('search.likedProfile')} ${profile.nickname || profile.full_name}`,
+        });
+      }
     } catch (error: any) {
       toast({
         title: t('search.error'),
         description: error.message || t('likes.errorLikingBack'),
         variant: "destructive",
-      });
-    } finally {
-      setLikingProfileIds((prev) => {
-        const next = new Set(prev);
-        next.delete(profile.id);
-        return next;
       });
     }
   };
