@@ -556,7 +556,6 @@ const Search = () => {
                     <div className="flex gap-2">
                       {(() => {
                         const isLiked = likedProfileIds.has(profile.id);
-                        const isLiking = likingProfileIds.has(profile.id);
 
                         return (
                           <Button 
@@ -564,7 +563,7 @@ const Search = () => {
                             variant={isLiked ? "secondary" : "outline"}
                             className="flex-1"
                             onClick={() => handleLikeProfile(profile)}
-                            disabled={isLiked || isLiking}
+                            disabled={isLiked}
                           >
                             <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
                           </Button>
