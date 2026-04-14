@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { useTextTranslation } from "@/hooks/useTranslation";
 import { ProfileDialog } from "./ProfileDialog";
 import { getGenericLocationPhrase } from "@/lib/utils";
+import { useDailyLikes } from "@/hooks/useDailyLikes";
 import { useCredits } from "@/hooks/useCredits";
 import { useSendLike } from "@/hooks/useSendLike";
 import { useWeeklyFreeChats } from "@/hooks/useWeeklyFreeChats";
@@ -63,6 +64,7 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
   const [showCreditsBanner, setShowCreditsBanner] = useState(false);
   const [translatedBio, setTranslatedBio] = useState<string>('');
   const { translateText } = useTextTranslation();
+  const { likesRemaining, resetAt } = useDailyLikes();
   const { credits } = useCredits();
   const { sendLike } = useSendLike(currentUserId);
   const { chatsRemaining, consumeFreeChat } = useWeeklyFreeChats();
