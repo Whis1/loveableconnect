@@ -276,19 +276,22 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
 
   const handleChat = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    // Check if there's a match first
-    const { data: matchData } = await supabase
-      .from("matches")
-      .select("*")
-      .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profile.id}),and(user1_id.eq.${profile.id},user2_id.eq.${currentUserId})`)
-      .maybeSingle();
+    if (isCreatingChat) return;
+    setIsCreatingChat(true);
 
-    if (matchData) {
-      // Navigate to chat
-      navigate(`/chat/${matchData.id}`);
-    } else {
-      // Check if user has premium tier (€399.99 subscription)
+    try {
+      const { data: matchData } = await supabase
+        .from("matches")
+        .select("*")
+        .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profile.id}),and(user1_id.eq.${profile.id},user2_id.eq.${currentUserId})`)
+        .maybeSingle();
+
+      if (matchData) {
+        navigate(`/chat/${matchData.id}`);
+        setIsCreatingChat(false);
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         const { data: userCreditsData } = await supabase
@@ -296,21 +299,23 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
           .select("subscription_type, premium_tier, is_premium, premium_expires_at")
           .eq("user_id", session.user.id)
           .single();
-        
-        const hasPremiumTier = userCreditsData?.is_premium && 
-                               userCreditsData?.subscription_type === 'monthly' && 
-                               userCreditsData?.premium_tier === 'premium' &&
-                               (!userCreditsData?.premium_expires_at || new Date(userCreditsData.premium_expires_at) > new Date());
-        
+
+        const hasPremiumTier = userCreditsData?.is_premium &&
+          userCreditsData?.subscription_type === 'monthly' &&
+          userCreditsData?.premium_tier === 'premium' &&
+          (!userCreditsData?.premium_expires_at || new Date(userCreditsData.premium_expires_at) > new Date());
+
         if (hasPremiumTier) {
-          // Premium users bypass the confirmation banner and go directly to chat
           await handleConfirmChat();
           return;
         }
       }
-      
-      // Show chat confirmation banner for non-premium users
+
       setShowChatConfirmation(true);
+      setIsCreatingChat(false);
+    } catch (error) {
+      console.error('handleChat error:', error);
+      setIsCreatingChat(false);
     }
   };
 
@@ -556,8 +561,13 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
                 size="sm"
                 className={`${hasLiked || hasActiveMatch ? 'w-full' : 'flex-1'} h-9 text-xs bg-gradient-to-r from-primary to-primary/80`}
                 onClick={handleChat}
+                disabled={isCreatingChat}
               >
-                <MessageCircle className="h-3.5 w-3.5 mr-1" />
+                {isCreatingChat ? (
+                  <span className="h-3.5 w-3.5 mr-1 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                ) : (
+                  <MessageCircle className="h-3.5 w-3.5 mr-1" />
+                )}
                 {t("explore.chatButton")}
               </Button>
             </div>
