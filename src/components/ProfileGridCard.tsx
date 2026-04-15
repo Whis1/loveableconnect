@@ -217,6 +217,13 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
     }
   }, [avatarUrl]);
 
+  const hasPremiumDirectChat = Boolean(
+    credits?.is_premium &&
+    credits.subscription_type === "monthly" &&
+    credits.premium_tier === "premium" &&
+    (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date())
+  );
+
   const handleLike = async (e: React.MouseEvent, useCredits: boolean = false) => {
     e.stopPropagation();
 
@@ -276,45 +283,48 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
 
   const handleChat = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isCreatingChat) return;
+
+    if (showChatConfirmation || isCreatingChat) return;
+
+    if (!hasActiveMatch) {
+      if (hasPremiumDirectChat) {
+        await handleConfirmChat();
+      } else {
+        setShowChatConfirmation(true);
+      }
+      return;
+    }
+
     setIsCreatingChat(true);
 
     try {
-      const { data: matchData } = await supabase
+      const { data: matchData, error: matchError } = await supabase
         .from("matches")
-        .select("*")
+        .select("id")
         .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profile.id}),and(user1_id.eq.${profile.id},user2_id.eq.${currentUserId})`)
         .maybeSingle();
 
+      if (matchError) throw matchError;
+
       if (matchData) {
         navigate(`/chat/${matchData.id}`);
-        setIsCreatingChat(false);
         return;
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const { data: userCreditsData } = await supabase
-          .from("user_credits")
-          .select("subscription_type, premium_tier, is_premium, premium_expires_at")
-          .eq("user_id", session.user.id)
-          .single();
-
-        const hasPremiumTier = userCreditsData?.is_premium &&
-          userCreditsData?.subscription_type === 'monthly' &&
-          userCreditsData?.premium_tier === 'premium' &&
-          (!userCreditsData?.premium_expires_at || new Date(userCreditsData.premium_expires_at) > new Date());
-
-        if (hasPremiumTier) {
-          await handleConfirmChat();
-          return;
-        }
+      if (hasPremiumDirectChat) {
+        await handleConfirmChat();
+        return;
       }
 
       setShowChatConfirmation(true);
-      setIsCreatingChat(false);
-    } catch (error) {
-      console.error('handleChat error:', error);
+    } catch (error: any) {
+      console.error("handleChat error:", error);
+      toast({
+        title: t("common.error"),
+        description: error.message || "Si è verificato un errore",
+        variant: "destructive",
+      });
+    } finally {
       setIsCreatingChat(false);
     }
   };
