@@ -22,6 +22,7 @@ import { useCredits } from "@/hooks/useCredits";
 import { useTranslation } from "react-i18next";
 import OnlineIndicator from "@/components/OnlineIndicator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Message {
   id: string;
@@ -203,6 +204,7 @@ const Chat = () => {
   const [otherUserOnlineStatus, setOtherUserOnlineStatus] = useState<{ isOnline: boolean; showStatus: boolean } | undefined>();
   const [resolvedMatchId, setResolvedMatchId] = useState<string | null>(matchId ?? null);
   const activeMatchId = matchId ?? resolvedMatchId;
+  const isChatPending = loading || !activeMatchId;
   const { deductCredits, credits, refetch: refetchCredits } = useCredits();
 
   // Check for gift payment result in URL params
@@ -827,14 +829,6 @@ const Chat = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">{t("chat.loading")}</p>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900">
       {showGiftBanner && otherUser && (
@@ -863,7 +857,7 @@ const Chat = () => {
                 >
                   <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
                 </Button>
-                {otherUser && (
+                {otherUser ? (
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     <div className="relative shrink-0">
                       <Avatar className="h-9 w-9 md:h-10 md:w-10">
@@ -879,6 +873,14 @@ const Chat = () => {
                     <span className="font-semibold text-sm md:text-base truncate">
                       {otherUser.nickname}
                     </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <Skeleton className="h-9 w-9 md:h-10 md:w-10 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-28" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
                   </div>
                 )}
               </div>
@@ -947,8 +949,30 @@ const Chat = () => {
           <CardContent className="flex-1 overflow-hidden p-0">
             <ScrollArea className="h-full p-3 md:p-6">
               <div className="space-y-3 md:space-y-4">
+                {isChatPending && messages.length === 0 && (
+                  <div className="space-y-4 py-2">
+                    <div className="flex justify-start">
+                      <div className="space-y-2 max-w-[75%]">
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-16 w-48 rounded-2xl" />
+                      </div>
+                    </div>
+                    <div className="flex justify-end">
+                      <div className="space-y-2 max-w-[75%]">
+                        <Skeleton className="ml-auto h-4 w-12" />
+                        <Skeleton className="h-16 w-40 rounded-2xl" />
+                      </div>
+                    </div>
+                    <div className="flex justify-start">
+                      <div className="space-y-2 max-w-[75%]">
+                        <Skeleton className="h-4 w-14" />
+                        <Skeleton className="h-20 w-56 rounded-2xl" />
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {/* Message Suggestions - shown only for first message */}
-                {showSuggestions && messages.length === 0 && !hasUserInteracted && !isBlocked && (
+                {!isChatPending && showSuggestions && messages.length === 0 && !hasUserInteracted && !isBlocked && (
                   <MessageSuggestions
                     onSuggestionSelect={handleSuggestionSelect}
                     onDismiss={() => {
@@ -1017,7 +1041,7 @@ const Chat = () => {
                     variant="ghost" 
                     size="icon"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading || !!recordedAudio}
+                    disabled={isChatPending || uploading || !!recordedAudio}
                     className="shrink-0 h-9 w-9 md:h-10 md:w-10"
                   >
                     <Paperclip className="h-4 w-4 md:h-5 md:w-5" />
@@ -1027,19 +1051,19 @@ const Chat = () => {
                   <Input
                     value={newMessage}
                     onChange={handleInputChange}
-                    placeholder={t("chat.writeMessage")}
+                    placeholder={isChatPending ? "..." : t("chat.writeMessage")}
                     className="flex-1 text-sm md:text-base"
-                    disabled={!!recordedAudio}
+                    disabled={isChatPending || !!recordedAudio}
                   />
                   <VoiceRecorder 
                     onRecordingComplete={handleVoiceRecording}
-                    disabled={uploading || !!recordedAudio}
+                    disabled={isChatPending || uploading || !!recordedAudio}
                     isPremiumMonthly={credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium')}
                     onPremiumRequired={() => setShowVoicePremiumBanner(true)}
                   />
                   <Button 
                     type="submit" 
-                    disabled={!newMessage.trim() || uploading || !!recordedAudio}
+                    disabled={isChatPending || !newMessage.trim() || uploading || !!recordedAudio}
                     className="shrink-0 h-9 w-9 md:h-10 md:w-10"
                     size="icon"
                   >
