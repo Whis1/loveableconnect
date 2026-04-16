@@ -1,5 +1,4 @@
 import { useState, useEffect, memo } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Heart, MessageCircle, MapPin } from "lucide-react";
@@ -52,7 +51,6 @@ interface ProfileGridCardProps {
 const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, hasActiveMatch = false, onlineStatus, onLike, onMatch }: ProfileGridCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const { t } = useTranslation();
   const [isLiking, setIsLiking] = useState(false);
   const [hasLiked, setHasLiked] = useState(likedProfileIds?.has(profile.id) || false);
@@ -67,7 +65,7 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
   const { likesRemaining, resetAt } = useDailyLikes();
   const { credits } = useCredits();
   const { sendLike } = useSendLike(currentUserId);
-  const { chatsRemaining, consumeFreeChat } = useWeeklyFreeChats();
+  const { chatsRemaining } = useWeeklyFreeChats();
 
   const getGenderLabel = (gender: string | null) => {
     if (!gender) return t('common.notSpecified');
@@ -288,7 +286,7 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
 
     if (!hasActiveMatch) {
       if (hasPremiumDirectChat) {
-        await handleConfirmChat();
+          handleConfirmChat();
       } else {
         setShowChatConfirmation(true);
       }
@@ -312,7 +310,7 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
       }
 
       if (hasPremiumDirectChat) {
-        await handleConfirmChat();
+        handleConfirmChat();
         return;
       }
 
@@ -329,106 +327,18 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
     }
   };
 
-  const handleConfirmChat = async () => {
-    if (isCreatingChat) return;
-    
-    setIsCreatingChat(true);
-    
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        setIsCreatingChat(false);
-        return;
-      }
+  const handleConfirmChat = () => {
+    const isPremiumTier = credits?.subscription_type === 'monthly' && credits?.premium_tier === 'premium';
+    const chatCostCredits = isPremiumTier ? 0 : (chatsRemaining > 0 ? 0 : 6);
 
-      // 1) Check if a match already exists (no charge)
-      const { data: existingMatch } = await supabase
-        .from("matches")
-        .select("id")
-        .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profile.id}),and(user1_id.eq.${profile.id},user2_id.eq.${currentUserId})`)
-        .maybeSingle();
-
-      if (existingMatch) {
-        setShowChatConfirmation(false);
-        navigate(`/chat/${existingMatch.id}`);
-        return;
-      }
-
-      // 2) Quick credit check BEFORE creating match (use cached data)
-      const isPremiumTier = credits?.subscription_type === 'monthly' && credits?.premium_tier === 'premium';
-      const chatCostCredits = isPremiumTier ? 0 : (chatsRemaining > 0 ? 0 : 6);
-
-      if (chatCostCredits > 0 && (!credits || credits.balance < chatCostCredits)) {
-        setShowChatConfirmation(false);
-        setShowCreditsBanner(true);
-        setIsCreatingChat(false);
-        return;
-      }
-
-      // 3) Create the match
-      const user1Id = currentUserId < profile.id ? currentUserId : profile.id;
-      const user2Id = currentUserId < profile.id ? profile.id : currentUserId;
-
-      const { data: matchData, error: matchError } = await supabase
-        .from('matches')
-        .insert({ user1_id: user1Id, user2_id: user2Id })
-        .select('id')
-        .single();
-
-      if (matchError) {
-        const code = (matchError as any)?.code;
-        if (code === '23505') {
-          const { data: m } = await supabase
-            .from("matches")
-            .select("id")
-            .or(`and(user1_id.eq.${user1Id},user2_id.eq.${user2Id}),and(user1_id.eq.${user2Id},user2_id.eq.${user1Id})`)
-            .maybeSingle();
-          if (m) {
-            setShowChatConfirmation(false);
-            navigate(`/chat/${m.id}`);
-            return;
-          }
-        }
-        throw matchError;
-      }
-
-      const createdMatchId = matchData.id as string;
-
-      // 4) Navigate IMMEDIATELY — handle costs in background
+    if (chatCostCredits > 0 && (!credits || credits.balance < chatCostCredits)) {
       setShowChatConfirmation(false);
-      navigate(`/chat/${createdMatchId}`);
-
-      // Fire-and-forget: deduct credits or consume free chat
-      (async () => {
-        try {
-          if (isPremiumTier) return;
-          
-          if (chatsRemaining > 0) {
-            await consumeFreeChat();
-          } else if (chatCostCredits > 0) {
-            const { data: deductSuccess, error: deductError } = await supabase.rpc(
-              'deduct_credits',
-              { _user_id: session.user.id, _amount: chatCostCredits }
-            );
-            if (deductError || !deductSuccess) {
-              console.error('Background credit deduction failed:', deductError);
-            }
-          }
-          queryClient.invalidateQueries({ queryKey: ["user-credits"] });
-          queryClient.invalidateQueries({ queryKey: ["weekly-free-chats"] });
-        } catch (err) {
-          console.error('Background cost handling error:', err);
-        }
-      })();
-    } catch (error) {
-      console.error('Errore:', error);
-      toast({
-        title: t("common.error"),
-        description: "Si è verificato un errore",
-        variant: "destructive",
-      });
-      setIsCreatingChat(false);
+      setShowCreditsBanner(true);
+      return;
     }
+
+    setShowChatConfirmation(false);
+    navigate(`/chat/new/${profile.id}`);
   };
 
   const handleCardClick = () => {
