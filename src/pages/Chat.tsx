@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -44,8 +44,140 @@ interface Profile {
   avatar_url: string | null;
 }
 
+type DirectChatSettlement = {
+  creditCost: number;
+  mode: "premium" | "free" | "credits";
+};
+
+type ResolvedDirectChat = {
+  matchId: string;
+  settlement: DirectChatSettlement | null;
+  wasCreated: boolean;
+};
+
+const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> =>
+  Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs);
+    }),
+  ]);
+
+const resolveDirectChatSettlement = async (userId: string): Promise<DirectChatSettlement> => {
+  const [{ data: creditsSnapshot, error: creditsSnapshotError }, { data: creditsMeta, error: creditsMetaError }, { data: freeChatsSnapshot, error: freeChatsError }] = await Promise.all([
+    supabase.rpc("check_and_reset_user_credits", { _user_id: userId }),
+    supabase
+      .from("user_credits")
+      .select("subscription_type, premium_tier, premium_expires_at")
+      .eq("user_id", userId)
+      .maybeSingle(),
+    supabase.rpc("check_and_reset_daily_free_chats", { _user_id: userId }),
+  ]);
+
+  if (creditsSnapshotError) throw creditsSnapshotError;
+  if (creditsMetaError) throw creditsMetaError;
+  if (freeChatsError) throw freeChatsError;
+
+  const balance = creditsSnapshot?.[0]?.balance ?? 0;
+  const chatsRemaining = freeChatsSnapshot?.[0]?.chats_remaining ?? 0;
+  const isPremiumTier = Boolean(
+    creditsSnapshot?.[0]?.is_premium &&
+      creditsMeta?.subscription_type === "monthly" &&
+      creditsMeta?.premium_tier === "premium" &&
+      (!creditsMeta?.premium_expires_at || new Date(creditsMeta.premium_expires_at) > new Date())
+  );
+
+  if (isPremiumTier) {
+    return { mode: "premium", creditCost: 0 };
+  }
+
+  if (chatsRemaining > 0) {
+    return { mode: "free", creditCost: 0 };
+  }
+
+  if (balance >= 6) {
+    return { mode: "credits", creditCost: 6 };
+  }
+
+  throw new Error("INSUFFICIENT_DIRECT_CHAT_CREDITS");
+};
+
+const resolveOrCreateDirectChat = async (currentUserId: string, otherUserId: string): Promise<ResolvedDirectChat> => {
+  const user1Id = currentUserId < otherUserId ? currentUserId : otherUserId;
+  const user2Id = currentUserId < otherUserId ? otherUserId : currentUserId;
+
+  const { data: existingMatch, error: existingMatchError } = await supabase
+    .from("matches")
+    .select("id")
+    .eq("user1_id", user1Id)
+    .eq("user2_id", user2Id)
+    .maybeSingle();
+
+  if (existingMatchError) throw existingMatchError;
+
+  if (existingMatch?.id) {
+    return { matchId: existingMatch.id, settlement: null, wasCreated: false };
+  }
+
+  const settlement = await resolveDirectChatSettlement(currentUserId);
+
+  const { data: newMatch, error: createMatchError } = await supabase
+    .from("matches")
+    .insert({ user1_id: user1Id, user2_id: user2Id })
+    .select("id")
+    .single();
+
+  if (createMatchError) {
+    if ((createMatchError as { code?: string })?.code === "23505") {
+      const { data: concurrentMatch, error: concurrentMatchError } = await supabase
+        .from("matches")
+        .select("id")
+        .eq("user1_id", user1Id)
+        .eq("user2_id", user2Id)
+        .maybeSingle();
+
+      if (concurrentMatchError) throw concurrentMatchError;
+
+      if (concurrentMatch?.id) {
+        return { matchId: concurrentMatch.id, settlement: null, wasCreated: false };
+      }
+    }
+
+    throw createMatchError;
+  }
+
+  return {
+    matchId: newMatch.id,
+    settlement,
+    wasCreated: true,
+  };
+};
+
+const settleDirectChatCost = async (userId: string, settlement: DirectChatSettlement) => {
+  if (settlement.mode === "premium") return;
+
+  if (settlement.mode === "free") {
+    const { data, error } = await supabase.rpc("consume_free_chat", { _user_id: userId });
+
+    if (error || !data?.[0]?.success) {
+      throw error ?? new Error("Unable to consume free direct chat");
+    }
+
+    return;
+  }
+
+  const { data, error } = await supabase.rpc("deduct_credits", {
+    _user_id: userId,
+    _amount: settlement.creditCost,
+  });
+
+  if (error || !data) {
+    throw error ?? new Error("Unable to deduct direct chat credits");
+  }
+};
+
 const Chat = () => {
-  const { matchId } = useParams<{ matchId: string }>();
+  const { matchId, otherUserId } = useParams<{ matchId?: string; otherUserId?: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -70,6 +202,9 @@ const Chat = () => {
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const [otherUserOnlineStatus, setOtherUserOnlineStatus] = useState<{ isOnline: boolean; showStatus: boolean } | undefined>();
+  const [resolvedMatchId, setResolvedMatchId] = useState<string | null>(matchId ?? null);
+  const activeMatchId = matchId ?? resolvedMatchId;
+  const { deductCredits, credits, refetch: refetchCredits } = useCredits();
 
   // Check for gift payment result in URL params
   useEffect(() => {
@@ -123,7 +258,12 @@ const Chat = () => {
   }, [toast]);
 
   useEffect(() => {
+    setResolvedMatchId(matchId ?? null);
+  }, [matchId]);
+
+  useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
+    let cancelled = false;
 
     const checkBlockStatus = async (userId: string, otherUserId: string) => {
       const { data, error } = await supabase
@@ -140,189 +280,248 @@ const Chat = () => {
     };
 
     const initChat = async () => {
-      console.log('[Chat] initChat start', { matchId });
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
-
-      if (!matchId) {
-        navigate("/matches");
-        return;
-      }
-
-      setCurrentUser(session.user.id);
-
-      // Load current user's avatar
       try {
-        const { data: myProfile } = await supabase
+        console.log('[Chat] initChat start', { matchId, otherUserId });
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session) {
+          navigate("/auth");
+          return;
+        }
+
+        let targetMatchId = matchId ?? null;
+        let directChatSettlement: DirectChatSettlement | null = null;
+        let createdDirectChat = false;
+
+        if (!targetMatchId) {
+          if (!otherUserId) {
+            navigate("/matches");
+            return;
+          }
+
+          const resolvedChat = await withTimeout(
+            resolveOrCreateDirectChat(session.user.id, otherUserId),
+            12000,
+            "DIRECT_CHAT_TIMEOUT"
+          );
+
+          targetMatchId = resolvedChat.matchId;
+          directChatSettlement = resolvedChat.settlement;
+          createdDirectChat = resolvedChat.wasCreated;
+
+          if (!cancelled) {
+            setResolvedMatchId(resolvedChat.matchId);
+            navigate(`/chat/${resolvedChat.matchId}`, { replace: true });
+          }
+        }
+
+        if (!targetMatchId) {
+          navigate("/matches");
+          return;
+        }
+
+        if (cancelled) return;
+
+        setCurrentUser(session.user.id);
+
+        try {
+          const { data: myProfile } = await supabase
+            .from("profiles")
+            .select("avatar_url")
+            .eq("id", session.user.id)
+            .maybeSingle();
+
+          const myAvatarUrl = myProfile?.avatar_url
+            ? supabase.storage.from('profile-images').getPublicUrl(myProfile.avatar_url).data.publicUrl
+            : null;
+
+          if (!cancelled) {
+            setMyAvatar(myAvatarUrl);
+          }
+        } catch (e) {
+          console.warn('[Chat] Could not load my avatar', e);
+        }
+
+        const { data: match } = await supabase
+          .from("matches")
+          .select("user1_id, user2_id")
+          .eq("id", targetMatchId)
+          .single();
+
+        if (!match) {
+          toast({
+            title: t("chat.error"),
+            description: t("chat.matchNotFound"),
+            variant: "destructive",
+          });
+          navigate("/matches");
+          return;
+        }
+
+        const otherProfileId = match.user1_id === session.user.id
+          ? match.user2_id
+          : match.user1_id;
+
+        const { data: profile } = await supabase
           .from("profiles")
-          .select("avatar_url")
-          .eq("id", session.user.id)
-          .maybeSingle();
-        
-        // Convert path to public URL
-        const myAvatarUrl = myProfile?.avatar_url
-          ? supabase.storage.from('profile-images').getPublicUrl(myProfile.avatar_url).data.publicUrl
-          : null;
-        setMyAvatar(myAvatarUrl);
-      } catch (e) {
-        console.warn('[Chat] Could not load my avatar', e);
-      }
+          .select("id, full_name, nickname, is_admin_profile, avatar_url, show_online_status, last_active, manual_online_status")
+          .eq("id", otherProfileId)
+          .single();
 
-      // Fetch match to find other user
-      const { data: match } = await supabase
-        .from("matches")
-        .select("user1_id, user2_id")
-        .eq("id", matchId)
-        .single();
+        if (!profile) {
+          toast({
+            title: t("chat.error"),
+            description: t("chat.profileNotFound"),
+            variant: "destructive",
+          });
+          navigate("/matches");
+          return;
+        }
 
-      if (!match) {
-        toast({
-          title: t("chat.error"),
-          description: t("chat.matchNotFound"),
-          variant: "destructive",
-        });
-        navigate("/matches");
-        return;
-      }
+        const profileWithPublicAvatar = {
+          id: profile.id,
+          full_name: profile.full_name,
+          nickname: profile.nickname,
+          is_admin_profile: profile.is_admin_profile,
+          avatar_url: profile.avatar_url
+            ? supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl
+            : null
+        };
 
-      const otherUserId = match.user1_id === session.user.id 
-        ? match.user2_id 
-        : match.user1_id;
+        if (!cancelled) {
+          setOtherUser(profileWithPublicAvatar);
+        }
 
-      // Fetch other user's profile with online status info
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, full_name, nickname, is_admin_profile, avatar_url, show_online_status, last_active, manual_online_status")
-        .eq("id", otherUserId)
-        .single();
+        let isOnline = false;
+        const showStatus = profile.show_online_status ?? true;
 
-      if (!profile) {
-        toast({
-          title: t("chat.error"),
-          description: t("chat.profileNotFound"),
-          variant: "destructive",
-        });
-        navigate("/matches");
-        return;
-      }
+        if (profile.manual_online_status !== null) {
+          isOnline = profile.manual_online_status;
+        } else if (profile.is_admin_profile) {
+          isOnline = true;
+        } else if (profile.last_active) {
+          const lastActive = new Date(profile.last_active);
+          const now = new Date();
+          const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
+          isOnline = lastActive > twoMinutesAgo;
+        }
 
-      // Convert avatar path to public URL and calculate online status
-      const profileWithPublicAvatar = {
-        id: profile.id,
-        full_name: profile.full_name,
-        nickname: profile.nickname,
-        is_admin_profile: profile.is_admin_profile,
-        avatar_url: profile.avatar_url
-          ? supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl
-          : null
-      };
+        if (!cancelled) {
+          setOtherUserOnlineStatus({ isOnline, showStatus });
+        }
 
-      setOtherUser(profileWithPublicAvatar);
+        await checkBlockStatus(session.user.id, otherProfileId);
 
-      // Determine online status
-      let isOnline = false;
-      const showStatus = profile.show_online_status ?? true;
+        const { data: messagesData } = await supabase
+          .from("messages")
+          .select("*")
+          .eq("match_id", targetMatchId)
+          .order("created_at", { ascending: true });
 
-      if (profile.manual_online_status !== null) {
-        isOnline = profile.manual_online_status;
-      } else if (profile.is_admin_profile) {
-        isOnline = true;
-      } else if (profile.last_active) {
-        const lastActive = new Date(profile.last_active);
-        const now = new Date();
-        const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
-        isOnline = lastActive > twoMinutesAgo;
-      }
+        if (!cancelled) {
+          setMessages((messagesData || []) as Message[]);
+          setLoading(false);
+        }
 
-      setOtherUserOnlineStatus({ isOnline, showStatus });
+        await supabase
+          .from("messages")
+          .update({ read: true })
+          .eq("match_id", targetMatchId)
+          .eq("receiver_id", session.user.id)
+          .eq("read", false);
 
-      // Verifica se l'utente è bloccato
-      await checkBlockStatus(session.user.id, otherUserId);
-
-      // Fetch messages
-      const { data: messagesData } = await supabase
-        .from("messages")
-        .select("*")
-        .eq("match_id", matchId)
-        .order("created_at", { ascending: true });
-
-      // Use original messages without translation
-      const originalMessages = messagesData || [];
-
-      setMessages(originalMessages as Message[]);
-
-      // Mark messages as read
-      await supabase
-        .from("messages")
-        .update({ read: true })
-        .eq("match_id", matchId)
-        .eq("receiver_id", session.user.id)
-        .eq("read", false);
-
-      setLoading(false);
-
-      // Subscribe to new messages with realtime
-      channel = supabase
-        .channel(`messages-${matchId}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "messages",
-            filter: `match_id=eq.${matchId}`,
-          },
-          async (payload) => {
-            const newMsg = payload.new as Message;
-            console.log('[Chat] Realtime INSERT', newMsg);
-            
-            // Append new message as-is (no translation)
-            setMessages((prev) => {
-              const exists = prev.some(m => m.id === newMsg.id);
-              if (exists) return prev;
-              return [...prev, newMsg];
+        if (createdDirectChat && directChatSettlement) {
+          void settleDirectChatCost(session.user.id, directChatSettlement)
+            .then(() => {
+              refetchCredits();
+            })
+            .catch((error) => {
+              console.error("[Chat] Direct chat cost settlement failed", error);
             });
-            
-            // Mark as read if received
-            if (newMsg.receiver_id === session.user.id) {
-              supabase
-                .from("messages")
-                .update({ read: true })
-                .eq("id", newMsg.id);
+        }
+
+        channel = supabase
+          .channel(`messages-${targetMatchId}`)
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "messages",
+              filter: `match_id=eq.${targetMatchId}`,
+            },
+            async (payload) => {
+              const newMsg = payload.new as Message;
+              console.log('[Chat] Realtime INSERT', newMsg);
+
+              setMessages((prev) => {
+                const exists = prev.some(m => m.id === newMsg.id);
+                if (exists) return prev;
+                return [...prev, newMsg];
+              });
+
+              if (newMsg.receiver_id === session.user.id) {
+                supabase
+                  .from("messages")
+                  .update({ read: true })
+                  .eq("id", newMsg.id);
+              }
             }
-          }
-        )
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "blocked_users",
-          },
-          async (payload) => {
-            console.log('[Chat] Block status changed:', payload);
-            // Ricontrolla lo stato del blocco ogni volta che cambia la tabella
-            await checkBlockStatus(session.user.id, otherUserId);
-          }
-        )
-        .subscribe((status) => {
-          console.log('[Chat] Channel status:', status);
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "blocked_users",
+            },
+            async (payload) => {
+              console.log('[Chat] Block status changed:', payload);
+              await checkBlockStatus(session.user.id, otherProfileId);
+            }
+          )
+          .subscribe((status) => {
+            console.log('[Chat] Channel status:', status);
+          });
+      } catch (error: any) {
+        console.error('[Chat] initChat error', error);
+
+        if (cancelled) return;
+
+        setLoading(false);
+
+        if (error?.message === "INSUFFICIENT_DIRECT_CHAT_CREDITS") {
+          setShowCreditsBanner(true);
+          toast({
+            title: t("common.error"),
+            description: "Crediti insufficienti per aprire la chat",
+            variant: "destructive",
+          });
+          navigate("/credits");
+          return;
+        }
+
+        toast({
+          title: t("common.error"),
+          description: error?.message === "DIRECT_CHAT_TIMEOUT"
+            ? "La chat sta impiegando troppo tempo ad aprirsi"
+            : "Si è verificato un errore nell'apertura della chat",
+          variant: "destructive",
         });
+        navigate("/matches");
+      }
     };
 
     initChat();
 
     return () => {
+      cancelled = true;
       if (channel) {
         console.log('[Chat] removing channel');
         supabase.removeChannel(channel);
       }
     };
-  }, [matchId, navigate, toast, t]);
+  }, [matchId, otherUserId, navigate, toast, t, refetchCredits]);
 
   useEffect(() => {
     // Scroll to bottom when messages change
@@ -348,7 +547,7 @@ const Chat = () => {
     if (e) e.preventDefault();
     
     const messageContent = content || newMessage.trim();
-    if (!messageContent || !currentUser || !otherUser || !matchId) return;
+    if (!messageContent || !currentUser || !otherUser || !activeMatchId) return;
 
     // CRITICAL: Blocca l'invio se l'utente è bloccato
     if (isBlocked) {
@@ -374,7 +573,7 @@ const Chat = () => {
     // Crea il messaggio temporaneo per mostrarlo subito
     const tempMessage: Message = {
       id: `temp-${Date.now()}`,
-      match_id: matchId,
+      match_id: activeMatchId,
       sender_id: currentUser,
       receiver_id: otherUser.id,
       content: messageContent,
@@ -392,7 +591,7 @@ const Chat = () => {
       const { data, error } = await supabase
         .from("messages")
         .insert({
-          match_id: matchId,
+          match_id: activeMatchId,
           sender_id: currentUser,
           receiver_id: otherUser.id,
           content: messageContent,
@@ -577,14 +776,14 @@ const Chat = () => {
   };
 
   const handleConfirmGift = async () => {
-    if (!otherUser || !currentUser || !matchId) return;
+    if (!otherUser || !currentUser || !activeMatchId) return;
 
     setGiftingSubscription(true);
     try {
       const { data, error } = await supabase.functions.invoke('gift-subscription', {
         body: { 
           recipient_id: otherUser.id,
-          match_id: matchId 
+          match_id: activeMatchId 
         }
       });
 
@@ -685,7 +884,7 @@ const Chat = () => {
                 )}
               </div>
               <div className="flex items-center gap-1">
-                {otherUser && matchId && (
+                {otherUser && activeMatchId && (
                   <>
                     <Button
                       variant="ghost"
@@ -725,7 +924,7 @@ const Chat = () => {
                     <ReportUserDialog
                       reportedUserId={otherUser.id}
                       reportedUserName={otherUser.nickname}
-                      matchId={matchId}
+                      matchId={activeMatchId}
                     />
                   </>
                 )}
