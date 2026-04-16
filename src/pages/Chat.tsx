@@ -191,7 +191,6 @@ const Chat = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { deductCredits, credits } = useCredits();
   const [showCreditsBanner, setShowCreditsBanner] = useState(false);
   const [showVoicePremiumBanner, setShowVoicePremiumBanner] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
