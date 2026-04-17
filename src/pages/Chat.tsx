@@ -52,7 +52,6 @@ type DirectChatSettlement = {
 
 type ResolvedDirectChat = {
   matchId: string;
-  settlement: DirectChatSettlement | null;
   wasCreated: boolean;
 };
 
@@ -117,10 +116,8 @@ const resolveOrCreateDirectChat = async (currentUserId: string, otherUserId: str
   if (existingMatchError) throw existingMatchError;
 
   if (existingMatch?.id) {
-    return { matchId: existingMatch.id, settlement: null, wasCreated: false };
+    return { matchId: existingMatch.id, wasCreated: false };
   }
-
-  const settlement = await resolveDirectChatSettlement(currentUserId);
 
   const { data: newMatch, error: createMatchError } = await supabase
     .from("matches")
@@ -140,7 +137,7 @@ const resolveOrCreateDirectChat = async (currentUserId: string, otherUserId: str
       if (concurrentMatchError) throw concurrentMatchError;
 
       if (concurrentMatch?.id) {
-        return { matchId: concurrentMatch.id, settlement: null, wasCreated: false };
+        return { matchId: concurrentMatch.id, wasCreated: false };
       }
     }
 
@@ -149,7 +146,6 @@ const resolveOrCreateDirectChat = async (currentUserId: string, otherUserId: str
 
   return {
     matchId: newMatch.id,
-    settlement,
     wasCreated: true,
   };
 };
