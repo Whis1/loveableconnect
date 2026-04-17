@@ -203,9 +203,15 @@ const Chat = () => {
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const [otherUserOnlineStatus, setOtherUserOnlineStatus] = useState<{ isOnline: boolean; showStatus: boolean } | undefined>();
   const [resolvedMatchId, setResolvedMatchId] = useState<string | null>(matchId ?? null);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const activeMatchId = matchId ?? resolvedMatchId;
-  const isChatPending = loading || !activeMatchId;
+  // Chat is "usable" as soon as we have current user, match, and other user — history can keep loading.
+  const isChatPending = !currentUser || !activeMatchId || !otherUser;
   const { deductCredits, credits, refetch: refetchCredits } = useCredits();
+  const refetchCreditsRef = useRef(refetchCredits);
+  useEffect(() => {
+    refetchCreditsRef.current = refetchCredits;
+  }, [refetchCredits]);
 
   // Check for gift payment result in URL params
   useEffect(() => {
@@ -290,6 +296,11 @@ const Chat = () => {
           return;
         }
 
+        const userId = session.user.id;
+
+        // Set current user immediately so the composer can mount
+        if (!cancelled) setCurrentUser(userId);
+
         let targetMatchId = matchId ?? null;
         let directChatSettlement: DirectChatSettlement | null = null;
         let createdDirectChat = false;
@@ -301,7 +312,7 @@ const Chat = () => {
           }
 
           const resolvedChat = await withTimeout(
-            resolveOrCreateDirectChat(session.user.id, otherUserId),
+            resolveOrCreateDirectChat(userId, otherUserId),
             12000,
             "DIRECT_CHAT_TIMEOUT"
           );
@@ -323,26 +334,7 @@ const Chat = () => {
 
         if (cancelled) return;
 
-        setCurrentUser(session.user.id);
-
-        try {
-          const { data: myProfile } = await supabase
-            .from("profiles")
-            .select("avatar_url")
-            .eq("id", session.user.id)
-            .maybeSingle();
-
-          const myAvatarUrl = myProfile?.avatar_url
-            ? supabase.storage.from('profile-images').getPublicUrl(myProfile.avatar_url).data.publicUrl
-            : null;
-
-          if (!cancelled) {
-            setMyAvatar(myAvatarUrl);
-          }
-        } catch (e) {
-          console.warn('[Chat] Could not load my avatar', e);
-        }
-
+        // Fetch match to determine the "other" user id, then load everything in parallel.
         const { data: match } = await supabase
           .from("matches")
           .select("user1_id, user2_id")
@@ -359,16 +351,36 @@ const Chat = () => {
           return;
         }
 
-        const otherProfileId = match.user1_id === session.user.id
-          ? match.user2_id
-          : match.user1_id;
+        const otherProfileId = match.user1_id === userId ? match.user2_id : match.user1_id;
 
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("id, full_name, nickname, is_admin_profile, avatar_url, show_online_status, last_active, manual_online_status")
-          .eq("id", otherProfileId)
-          .single();
+        // PARALLEL fetch: my avatar, other profile, block status, messages history
+        const [myProfileRes, otherProfileRes, blockedRes, messagesRes] = await Promise.all([
+          supabase.from("profiles").select("avatar_url").eq("id", userId).maybeSingle(),
+          supabase
+            .from("profiles")
+            .select("id, full_name, nickname, is_admin_profile, avatar_url, show_online_status, last_active, manual_online_status")
+            .eq("id", otherProfileId)
+            .single(),
+          supabase
+            .from("blocked_users")
+            .select("id")
+            .or(`and(blocker_id.eq.${userId},blocked_id.eq.${otherProfileId}),and(blocker_id.eq.${otherProfileId},blocked_id.eq.${userId})`)
+            .maybeSingle(),
+          supabase
+            .from("messages")
+            .select("*")
+            .eq("match_id", targetMatchId)
+            .order("created_at", { ascending: true }),
+        ]);
 
+        if (cancelled) return;
+
+        const myAvatarUrl = myProfileRes.data?.avatar_url
+          ? supabase.storage.from('profile-images').getPublicUrl(myProfileRes.data.avatar_url).data.publicUrl
+          : null;
+        setMyAvatar(myAvatarUrl);
+
+        const profile = otherProfileRes.data;
         if (!profile) {
           toast({
             title: t("chat.error"),
@@ -379,62 +391,47 @@ const Chat = () => {
           return;
         }
 
-        const profileWithPublicAvatar = {
+        setOtherUser({
           id: profile.id,
           full_name: profile.full_name,
           nickname: profile.nickname,
           is_admin_profile: profile.is_admin_profile,
           avatar_url: profile.avatar_url
             ? supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl
-            : null
-        };
-
-        if (!cancelled) {
-          setOtherUser(profileWithPublicAvatar);
-        }
+            : null,
+        });
 
         let isOnline = false;
         const showStatus = profile.show_online_status ?? true;
-
         if (profile.manual_online_status !== null) {
           isOnline = profile.manual_online_status;
         } else if (profile.is_admin_profile) {
           isOnline = true;
         } else if (profile.last_active) {
           const lastActive = new Date(profile.last_active);
-          const now = new Date();
-          const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
-          isOnline = lastActive > twoMinutesAgo;
+          isOnline = lastActive > new Date(Date.now() - 2 * 60 * 1000);
         }
+        setOtherUserOnlineStatus({ isOnline, showStatus });
 
-        if (!cancelled) {
-          setOtherUserOnlineStatus({ isOnline, showStatus });
-        }
+        setIsBlocked(Boolean(blockedRes.data));
 
-        await checkBlockStatus(session.user.id, otherProfileId);
+        setMessages((messagesRes.data || []) as Message[]);
+        setIsLoadingHistory(false);
+        setLoading(false);
 
-        const { data: messagesData } = await supabase
-          .from("messages")
-          .select("*")
-          .eq("match_id", targetMatchId)
-          .order("created_at", { ascending: true });
-
-        if (!cancelled) {
-          setMessages((messagesData || []) as Message[]);
-          setLoading(false);
-        }
-
-        await supabase
+        // Background: mark messages as read (non-blocking)
+        void supabase
           .from("messages")
           .update({ read: true })
           .eq("match_id", targetMatchId)
-          .eq("receiver_id", session.user.id)
+          .eq("receiver_id", userId)
           .eq("read", false);
 
+        // Background: settle direct chat cost (non-blocking)
         if (createdDirectChat && directChatSettlement) {
-          void settleDirectChatCost(session.user.id, directChatSettlement)
+          void settleDirectChatCost(userId, directChatSettlement)
             .then(() => {
-              refetchCredits();
+              refetchCreditsRef.current?.();
             })
             .catch((error) => {
               console.error("[Chat] Direct chat cost settlement failed", error);
@@ -461,7 +458,7 @@ const Chat = () => {
                 return [...prev, newMsg];
               });
 
-              if (newMsg.receiver_id === session.user.id) {
+              if (newMsg.receiver_id === userId) {
                 supabase
                   .from("messages")
                   .update({ read: true })
@@ -478,7 +475,12 @@ const Chat = () => {
             },
             async (payload) => {
               console.log('[Chat] Block status changed:', payload);
-              await checkBlockStatus(session.user.id, otherProfileId);
+              const { data } = await supabase
+                .from("blocked_users")
+                .select("id")
+                .or(`and(blocker_id.eq.${userId},blocked_id.eq.${otherProfileId}),and(blocker_id.eq.${otherProfileId},blocked_id.eq.${userId})`)
+                .maybeSingle();
+              setIsBlocked(Boolean(data));
             }
           )
           .subscribe((status) => {
@@ -490,6 +492,7 @@ const Chat = () => {
         if (cancelled) return;
 
         setLoading(false);
+        setIsLoadingHistory(false);
 
         if (error?.message === "INSUFFICIENT_DIRECT_CHAT_CREDITS") {
           setShowCreditsBanner(true);
@@ -522,7 +525,7 @@ const Chat = () => {
         supabase.removeChannel(channel);
       }
     };
-  }, [matchId, otherUserId, navigate, toast, t, refetchCredits]);
+  }, [matchId, otherUserId, navigate, toast, t]);
 
   useEffect(() => {
     // Scroll to bottom when messages change
