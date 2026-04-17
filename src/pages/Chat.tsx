@@ -203,9 +203,15 @@ const Chat = () => {
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const [otherUserOnlineStatus, setOtherUserOnlineStatus] = useState<{ isOnline: boolean; showStatus: boolean } | undefined>();
   const [resolvedMatchId, setResolvedMatchId] = useState<string | null>(matchId ?? null);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const activeMatchId = matchId ?? resolvedMatchId;
-  const isChatPending = loading || !activeMatchId;
+  // Chat is "usable" as soon as we have current user, match, and other user — history can keep loading.
+  const isChatPending = !currentUser || !activeMatchId || !otherUser;
   const { deductCredits, credits, refetch: refetchCredits } = useCredits();
+  const refetchCreditsRef = useRef(refetchCredits);
+  useEffect(() => {
+    refetchCreditsRef.current = refetchCredits;
+  }, [refetchCredits]);
 
   // Check for gift payment result in URL params
   useEffect(() => {
