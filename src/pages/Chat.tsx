@@ -52,7 +52,6 @@ type DirectChatSettlement = {
 
 type ResolvedDirectChat = {
   matchId: string;
-  settlement: DirectChatSettlement | null;
   wasCreated: boolean;
 };
 
@@ -117,10 +116,8 @@ const resolveOrCreateDirectChat = async (currentUserId: string, otherUserId: str
   if (existingMatchError) throw existingMatchError;
 
   if (existingMatch?.id) {
-    return { matchId: existingMatch.id, settlement: null, wasCreated: false };
+    return { matchId: existingMatch.id, wasCreated: false };
   }
-
-  const settlement = await resolveDirectChatSettlement(currentUserId);
 
   const { data: newMatch, error: createMatchError } = await supabase
     .from("matches")
@@ -140,7 +137,7 @@ const resolveOrCreateDirectChat = async (currentUserId: string, otherUserId: str
       if (concurrentMatchError) throw concurrentMatchError;
 
       if (concurrentMatch?.id) {
-        return { matchId: concurrentMatch.id, settlement: null, wasCreated: false };
+        return { matchId: concurrentMatch.id, wasCreated: false };
       }
     }
 
@@ -149,7 +146,6 @@ const resolveOrCreateDirectChat = async (currentUserId: string, otherUserId: str
 
   return {
     matchId: newMatch.id,
-    settlement,
     wasCreated: true,
   };
 };
@@ -302,7 +298,6 @@ const Chat = () => {
         if (!cancelled) setCurrentUser(userId);
 
         let targetMatchId = matchId ?? null;
-        let directChatSettlement: DirectChatSettlement | null = null;
         let createdDirectChat = false;
 
         if (!targetMatchId) {
@@ -318,7 +313,6 @@ const Chat = () => {
           );
 
           targetMatchId = resolvedChat.matchId;
-          directChatSettlement = resolvedChat.settlement;
           createdDirectChat = resolvedChat.wasCreated;
 
           if (!cancelled) {
@@ -334,7 +328,6 @@ const Chat = () => {
 
         if (cancelled) return;
 
-        // Fetch match to determine the "other" user id, then load everything in parallel.
         const { data: match } = await supabase
           .from("matches")
           .select("user1_id, user2_id")
@@ -353,7 +346,6 @@ const Chat = () => {
 
         const otherProfileId = match.user1_id === userId ? match.user2_id : match.user1_id;
 
-        // PARALLEL fetch: my avatar, other profile, block status, messages history
         const [myProfileRes, otherProfileRes, blockedRes, messagesRes] = await Promise.all([
           supabase.from("profiles").select("avatar_url").eq("id", userId).maybeSingle(),
           supabase
@@ -414,12 +406,10 @@ const Chat = () => {
         setOtherUserOnlineStatus({ isOnline, showStatus });
 
         setIsBlocked(Boolean(blockedRes.data));
-
         setMessages((messagesRes.data || []) as Message[]);
         setIsLoadingHistory(false);
         setLoading(false);
 
-        // Background: mark messages as read (non-blocking)
         void supabase
           .from("messages")
           .update({ read: true })
@@ -427,9 +417,9 @@ const Chat = () => {
           .eq("receiver_id", userId)
           .eq("read", false);
 
-        // Background: settle direct chat cost (non-blocking)
-        if (createdDirectChat && directChatSettlement) {
-          void settleDirectChatCost(userId, directChatSettlement)
+        if (createdDirectChat) {
+          void resolveDirectChatSettlement(userId)
+            .then((settlement) => settleDirectChatCost(userId, settlement))
             .then(() => {
               refetchCreditsRef.current?.();
             })
