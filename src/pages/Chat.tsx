@@ -467,11 +467,11 @@ const Chat = () => {
         toast({
           title: t("common.error"),
           description: error?.message === "DIRECT_CHAT_TIMEOUT"
-            ? "La chat sta impiegando troppo tempo ad aprirsi"
+            ? "La chat sta impiegando troppo tempo ad aprirsi. Riprova."
             : "Si è verificato un errore nell'apertura della chat",
           variant: "destructive",
         });
-        navigate("/matches");
+        // Stay on the page so the user can retry — don't bounce them back
       }
     };
 
