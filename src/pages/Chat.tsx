@@ -103,51 +103,16 @@ const resolveDirectChatSettlement = async (userId: string): Promise<DirectChatSe
 };
 
 const resolveOrCreateDirectChat = async (currentUserId: string, otherUserId: string): Promise<ResolvedDirectChat> => {
-  const user1Id = currentUserId < otherUserId ? currentUserId : otherUserId;
-  const user2Id = currentUserId < otherUserId ? otherUserId : currentUserId;
+  const { data, error } = await supabase.rpc("get_or_create_direct_chat", {
+    _other_user_id: otherUserId,
+  });
 
-  const { data: existingMatch, error: existingMatchError } = await supabase
-    .from("matches")
-    .select("id")
-    .eq("user1_id", user1Id)
-    .eq("user2_id", user2Id)
-    .maybeSingle();
+  if (error) throw error;
 
-  if (existingMatchError) throw existingMatchError;
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row?.match_id) throw new Error("Unable to resolve direct chat");
 
-  if (existingMatch?.id) {
-    return { matchId: existingMatch.id, wasCreated: false };
-  }
-
-  const { data: newMatch, error: createMatchError } = await supabase
-    .from("matches")
-    .insert({ user1_id: user1Id, user2_id: user2Id })
-    .select("id")
-    .single();
-
-  if (createMatchError) {
-    if ((createMatchError as { code?: string })?.code === "23505") {
-      const { data: concurrentMatch, error: concurrentMatchError } = await supabase
-        .from("matches")
-        .select("id")
-        .eq("user1_id", user1Id)
-        .eq("user2_id", user2Id)
-        .maybeSingle();
-
-      if (concurrentMatchError) throw concurrentMatchError;
-
-      if (concurrentMatch?.id) {
-        return { matchId: concurrentMatch.id, wasCreated: false };
-      }
-    }
-
-    throw createMatchError;
-  }
-
-  return {
-    matchId: newMatch.id,
-    wasCreated: true,
-  };
+  return { matchId: row.match_id as string, wasCreated: Boolean(row.was_created) };
 };
 
 const settleDirectChatCost = async (userId: string, settlement: DirectChatSettlement) => {
