@@ -317,7 +317,8 @@ const Chat = () => {
 
           if (!cancelled) {
             setResolvedMatchId(resolvedChat.matchId);
-            navigate(`/chat/${resolvedChat.matchId}`, { replace: true });
+            // Update URL without remounting the component (avoid AnimatePresence key change)
+            window.history.replaceState({}, '', `/chat/${resolvedChat.matchId}`);
           }
         }
 
