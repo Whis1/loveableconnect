@@ -375,7 +375,7 @@ const Chat = () => {
         }
         setOtherUserOnlineStatus({ isOnline, showStatus });
 
-        setIsBlocked(Boolean(blockedRes.data));
+        setIsBlocked(Array.isArray(blockedRes.data) && blockedRes.data.length > 0);
         setMessages((messagesRes.data || []) as Message[]);
         setIsLoadingHistory(false);
         setLoading(false);
