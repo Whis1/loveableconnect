@@ -264,6 +264,7 @@ const Chat = () => {
 
         let targetMatchId = matchId ?? null;
         let createdDirectChat = false;
+        let otherProfileId: string | null = null;
 
         if (!targetMatchId) {
           if (!otherUserId) {
@@ -273,16 +274,16 @@ const Chat = () => {
 
           const resolvedChat = await withTimeout(
             resolveOrCreateDirectChat(userId, otherUserId),
-            12000,
+            20000,
             "DIRECT_CHAT_TIMEOUT"
           );
 
           targetMatchId = resolvedChat.matchId;
           createdDirectChat = resolvedChat.wasCreated;
+          otherProfileId = otherUserId;
 
           if (!cancelled) {
             setResolvedMatchId(resolvedChat.matchId);
-            // Update URL without remounting the component (avoid AnimatePresence key change)
             window.history.replaceState({}, '', `/chat/${resolvedChat.matchId}`);
           }
         }
@@ -294,23 +295,25 @@ const Chat = () => {
 
         if (cancelled) return;
 
-        const { data: match } = await supabase
-          .from("matches")
-          .select("user1_id, user2_id")
-          .eq("id", targetMatchId)
-          .single();
+        if (!otherProfileId) {
+          const { data: match } = await supabase
+            .from("matches")
+            .select("user1_id, user2_id")
+            .eq("id", targetMatchId)
+            .single();
 
-        if (!match) {
-          toast({
-            title: t("chat.error"),
-            description: t("chat.matchNotFound"),
-            variant: "destructive",
-          });
-          navigate("/matches");
-          return;
+          if (!match) {
+            toast({
+              title: t("chat.error"),
+              description: t("chat.matchNotFound"),
+              variant: "destructive",
+            });
+            navigate("/matches");
+            return;
+          }
+
+          otherProfileId = match.user1_id === userId ? match.user2_id : match.user1_id;
         }
-
-        const otherProfileId = match.user1_id === userId ? match.user2_id : match.user1_id;
 
         const [myProfileRes, otherProfileRes, blockedRes, messagesRes] = await Promise.all([
           supabase.from("profiles").select("avatar_url").eq("id", userId).maybeSingle(),
