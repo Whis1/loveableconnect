@@ -326,12 +326,13 @@ const Chat = () => {
             .from("blocked_users")
             .select("id")
             .or(`and(blocker_id.eq.${userId},blocked_id.eq.${otherProfileId}),and(blocker_id.eq.${otherProfileId},blocked_id.eq.${userId})`)
-            .maybeSingle(),
+            .limit(1),
           supabase
             .from("messages")
             .select("*")
             .eq("match_id", targetMatchId)
-            .order("created_at", { ascending: true }),
+            .order("created_at", { ascending: true })
+            .limit(200),
         ]);
 
         if (cancelled) return;
