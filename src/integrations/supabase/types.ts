@@ -1048,6 +1048,13 @@ export type Database = {
         Returns: boolean
       }
       deduct_message_credits: { Args: { _user_id: string }; Returns: boolean }
+      get_or_create_direct_chat: {
+        Args: { _other_user_id: string }
+        Returns: {
+          match_id: string
+          was_created: boolean
+        }[]
+      }
       get_subscription_types: {
         Args: { profile_ids: string[] }
         Returns: {

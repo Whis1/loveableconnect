@@ -103,51 +103,16 @@ const resolveDirectChatSettlement = async (userId: string): Promise<DirectChatSe
 };
 
 const resolveOrCreateDirectChat = async (currentUserId: string, otherUserId: string): Promise<ResolvedDirectChat> => {
-  const user1Id = currentUserId < otherUserId ? currentUserId : otherUserId;
-  const user2Id = currentUserId < otherUserId ? otherUserId : currentUserId;
+  const { data, error } = await supabase.rpc("get_or_create_direct_chat", {
+    _other_user_id: otherUserId,
+  });
 
-  const { data: existingMatch, error: existingMatchError } = await supabase
-    .from("matches")
-    .select("id")
-    .eq("user1_id", user1Id)
-    .eq("user2_id", user2Id)
-    .maybeSingle();
+  if (error) throw error;
 
-  if (existingMatchError) throw existingMatchError;
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row?.match_id) throw new Error("Unable to resolve direct chat");
 
-  if (existingMatch?.id) {
-    return { matchId: existingMatch.id, wasCreated: false };
-  }
-
-  const { data: newMatch, error: createMatchError } = await supabase
-    .from("matches")
-    .insert({ user1_id: user1Id, user2_id: user2Id })
-    .select("id")
-    .single();
-
-  if (createMatchError) {
-    if ((createMatchError as { code?: string })?.code === "23505") {
-      const { data: concurrentMatch, error: concurrentMatchError } = await supabase
-        .from("matches")
-        .select("id")
-        .eq("user1_id", user1Id)
-        .eq("user2_id", user2Id)
-        .maybeSingle();
-
-      if (concurrentMatchError) throw concurrentMatchError;
-
-      if (concurrentMatch?.id) {
-        return { matchId: concurrentMatch.id, wasCreated: false };
-      }
-    }
-
-    throw createMatchError;
-  }
-
-  return {
-    matchId: newMatch.id,
-    wasCreated: true,
-  };
+  return { matchId: row.match_id as string, wasCreated: Boolean(row.was_created) };
 };
 
 const settleDirectChatCost = async (userId: string, settlement: DirectChatSettlement) => {
@@ -299,6 +264,7 @@ const Chat = () => {
 
         let targetMatchId = matchId ?? null;
         let createdDirectChat = false;
+        let otherProfileId: string | null = null;
 
         if (!targetMatchId) {
           if (!otherUserId) {
@@ -308,16 +274,16 @@ const Chat = () => {
 
           const resolvedChat = await withTimeout(
             resolveOrCreateDirectChat(userId, otherUserId),
-            12000,
+            20000,
             "DIRECT_CHAT_TIMEOUT"
           );
 
           targetMatchId = resolvedChat.matchId;
           createdDirectChat = resolvedChat.wasCreated;
+          otherProfileId = otherUserId;
 
           if (!cancelled) {
             setResolvedMatchId(resolvedChat.matchId);
-            // Update URL without remounting the component (avoid AnimatePresence key change)
             window.history.replaceState({}, '', `/chat/${resolvedChat.matchId}`);
           }
         }
@@ -329,23 +295,25 @@ const Chat = () => {
 
         if (cancelled) return;
 
-        const { data: match } = await supabase
-          .from("matches")
-          .select("user1_id, user2_id")
-          .eq("id", targetMatchId)
-          .single();
+        if (!otherProfileId) {
+          const { data: match } = await supabase
+            .from("matches")
+            .select("user1_id, user2_id")
+            .eq("id", targetMatchId)
+            .single();
 
-        if (!match) {
-          toast({
-            title: t("chat.error"),
-            description: t("chat.matchNotFound"),
-            variant: "destructive",
-          });
-          navigate("/matches");
-          return;
+          if (!match) {
+            toast({
+              title: t("chat.error"),
+              description: t("chat.matchNotFound"),
+              variant: "destructive",
+            });
+            navigate("/matches");
+            return;
+          }
+
+          otherProfileId = match.user1_id === userId ? match.user2_id : match.user1_id;
         }
-
-        const otherProfileId = match.user1_id === userId ? match.user2_id : match.user1_id;
 
         const [myProfileRes, otherProfileRes, blockedRes, messagesRes] = await Promise.all([
           supabase.from("profiles").select("avatar_url").eq("id", userId).maybeSingle(),
@@ -499,11 +467,11 @@ const Chat = () => {
         toast({
           title: t("common.error"),
           description: error?.message === "DIRECT_CHAT_TIMEOUT"
-            ? "La chat sta impiegando troppo tempo ad aprirsi"
+            ? "La chat sta impiegando troppo tempo ad aprirsi. Riprova."
             : "Si è verificato un errore nell'apertura della chat",
           variant: "destructive",
         });
-        navigate("/matches");
+        // Stay on the page so the user can retry — don't bounce them back
       }
     };
 
