@@ -326,12 +326,13 @@ const Chat = () => {
             .from("blocked_users")
             .select("id")
             .or(`and(blocker_id.eq.${userId},blocked_id.eq.${otherProfileId}),and(blocker_id.eq.${otherProfileId},blocked_id.eq.${userId})`)
-            .maybeSingle(),
+            .limit(1),
           supabase
             .from("messages")
             .select("*")
             .eq("match_id", targetMatchId)
-            .order("created_at", { ascending: true }),
+            .order("created_at", { ascending: true })
+            .limit(200),
         ]);
 
         if (cancelled) return;
@@ -374,7 +375,7 @@ const Chat = () => {
         }
         setOtherUserOnlineStatus({ isOnline, showStatus });
 
-        setIsBlocked(Boolean(blockedRes.data));
+        setIsBlocked(Array.isArray(blockedRes.data) && blockedRes.data.length > 0);
         setMessages((messagesRes.data || []) as Message[]);
         setIsLoadingHistory(false);
         setLoading(false);
@@ -484,7 +485,8 @@ const Chat = () => {
         supabase.removeChannel(channel);
       }
     };
-  }, [matchId, otherUserId, navigate, toast, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matchId, otherUserId]);
 
   useEffect(() => {
     // Scroll to bottom when messages change
