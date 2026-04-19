@@ -327,9 +327,12 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
     }
   };
 
-  const handleConfirmChat = () => {
+  const handleConfirmChat = async () => {
+    if (isCreatingChat) return;
+
     const isPremiumTier = credits?.subscription_type === 'monthly' && credits?.premium_tier === 'premium';
-    const chatCostCredits = isPremiumTier ? 0 : (chatsRemaining > 0 ? 0 : 6);
+    const isFreeChat = isPremiumTier || chatsRemaining > 0;
+    const chatCostCredits = isFreeChat ? 0 : 6;
 
     if (chatCostCredits > 0 && (!credits || credits.balance < chatCostCredits)) {
       setShowChatConfirmation(false);
@@ -337,8 +340,46 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
       return;
     }
 
-    setShowChatConfirmation(false);
-    navigate(`/chat/new/${profile.id}`);
+    setIsCreatingChat(true);
+
+    try {
+      // 1) Resolve or create the match BEFORE navigating
+      const { data, error } = await supabase.rpc('get_or_create_direct_chat', {
+        _other_user_id: profile.id,
+      });
+
+      if (error) throw error;
+
+      const row = Array.isArray(data) ? data[0] : (data as any);
+      const matchId = row?.match_id as string | undefined;
+      const wasCreated = Boolean(row?.was_created);
+
+      if (!matchId) throw new Error('Impossibile aprire la chat');
+
+      // 2) Settle the cost in the background (non-blocking)
+      if (wasCreated) {
+        if (isPremiumTier) {
+          // free for premium
+        } else if (chatsRemaining > 0) {
+          void supabase.rpc('consume_free_chat', { _user_id: currentUserId });
+        } else {
+          void supabase.rpc('deduct_credits', { _user_id: currentUserId, _amount: chatCostCredits });
+        }
+      }
+
+      // 3) Navigate directly to the real matchId — single mount, no replaceState
+      setShowChatConfirmation(false);
+      navigate(`/chat/${matchId}`);
+    } catch (err: any) {
+      console.error('handleConfirmChat error:', err);
+      toast({
+        title: t('common.error'),
+        description: err?.message || 'Impossibile aprire la chat',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCreatingChat(false);
+    }
   };
 
   const handleCardClick = () => {
