@@ -39,7 +39,6 @@ export const AnimatedRoutes = () => {
         <Route path="/matches" element={<PageTransition><Matches /></PageTransition>} />
         <Route path="/likes" element={<PageTransition><Likes /></PageTransition>} />
         <Route path="/messages" element={<PageTransition><Messages /></PageTransition>} />
-        <Route path="/chat/new/:otherUserId" element={<PageTransition><Chat /></PageTransition>} />
         <Route path="/chat/:matchId" element={<PageTransition><Chat /></PageTransition>} />
         <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
         <Route path="/terms" element={<PageTransition><TermsAndConditions /></PageTransition>} />

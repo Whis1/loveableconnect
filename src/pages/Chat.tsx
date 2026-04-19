@@ -45,101 +45,10 @@ interface Profile {
   avatar_url: string | null;
 }
 
-type DirectChatSettlement = {
-  creditCost: number;
-  mode: "premium" | "free" | "credits";
-};
-
-type ResolvedDirectChat = {
-  matchId: string;
-  wasCreated: boolean;
-};
-
-const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> =>
-  Promise.race([
-    promise,
-    new Promise<T>((_, reject) => {
-      setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs);
-    }),
-  ]);
-
-const resolveDirectChatSettlement = async (userId: string): Promise<DirectChatSettlement> => {
-  const [{ data: creditsSnapshot, error: creditsSnapshotError }, { data: creditsMeta, error: creditsMetaError }, { data: freeChatsSnapshot, error: freeChatsError }] = await Promise.all([
-    supabase.rpc("check_and_reset_user_credits", { _user_id: userId }),
-    supabase
-      .from("user_credits")
-      .select("subscription_type, premium_tier, premium_expires_at")
-      .eq("user_id", userId)
-      .maybeSingle(),
-    supabase.rpc("check_and_reset_daily_free_chats", { _user_id: userId }),
-  ]);
-
-  if (creditsSnapshotError) throw creditsSnapshotError;
-  if (creditsMetaError) throw creditsMetaError;
-  if (freeChatsError) throw freeChatsError;
-
-  const balance = creditsSnapshot?.[0]?.balance ?? 0;
-  const chatsRemaining = freeChatsSnapshot?.[0]?.chats_remaining ?? 0;
-  const isPremiumTier = Boolean(
-    creditsSnapshot?.[0]?.is_premium &&
-      creditsMeta?.subscription_type === "monthly" &&
-      creditsMeta?.premium_tier === "premium" &&
-      (!creditsMeta?.premium_expires_at || new Date(creditsMeta.premium_expires_at) > new Date())
-  );
-
-  if (isPremiumTier) {
-    return { mode: "premium", creditCost: 0 };
-  }
-
-  if (chatsRemaining > 0) {
-    return { mode: "free", creditCost: 0 };
-  }
-
-  if (balance >= 6) {
-    return { mode: "credits", creditCost: 6 };
-  }
-
-  throw new Error("INSUFFICIENT_DIRECT_CHAT_CREDITS");
-};
-
-const resolveOrCreateDirectChat = async (currentUserId: string, otherUserId: string): Promise<ResolvedDirectChat> => {
-  const { data, error } = await supabase.rpc("get_or_create_direct_chat", {
-    _other_user_id: otherUserId,
-  });
-
-  if (error) throw error;
-
-  const row = Array.isArray(data) ? data[0] : data;
-  if (!row?.match_id) throw new Error("Unable to resolve direct chat");
-
-  return { matchId: row.match_id as string, wasCreated: Boolean(row.was_created) };
-};
-
-const settleDirectChatCost = async (userId: string, settlement: DirectChatSettlement) => {
-  if (settlement.mode === "premium") return;
-
-  if (settlement.mode === "free") {
-    const { data, error } = await supabase.rpc("consume_free_chat", { _user_id: userId });
-
-    if (error || !data?.[0]?.success) {
-      throw error ?? new Error("Unable to consume free direct chat");
-    }
-
-    return;
-  }
-
-  const { data, error } = await supabase.rpc("deduct_credits", {
-    _user_id: userId,
-    _amount: settlement.creditCost,
-  });
-
-  if (error || !data) {
-    throw error ?? new Error("Unable to deduct direct chat credits");
-  }
-};
+// (Direct-chat resolution and cost settlement happen in ProfileGridCard before navigation.)
 
 const Chat = () => {
-  const { matchId, otherUserId } = useParams<{ matchId?: string; otherUserId?: string }>();
+  const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -163,9 +72,8 @@ const Chat = () => {
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const [otherUserOnlineStatus, setOtherUserOnlineStatus] = useState<{ isOnline: boolean; showStatus: boolean } | undefined>();
-  const [resolvedMatchId, setResolvedMatchId] = useState<string | null>(matchId ?? null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
-  const activeMatchId = matchId ?? resolvedMatchId;
+  const activeMatchId = matchId ?? null;
   // Chat is "usable" as soon as we have current user, match, and other user — history can keep loading.
   const isChatPending = !currentUser || !activeMatchId || !otherUser;
   const { deductCredits, credits, refetch: refetchCredits } = useCredits();
@@ -225,9 +133,7 @@ const Chat = () => {
     }
   }, [toast]);
 
-  useEffect(() => {
-    setResolvedMatchId(matchId ?? null);
-  }, [matchId]);
+  // (matchId is the only source of truth — provided by the URL.)
 
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -249,7 +155,13 @@ const Chat = () => {
 
     const initChat = async () => {
       try {
-        console.log('[Chat] initChat start', { matchId, otherUserId });
+        console.log('[Chat] initChat start', { matchId });
+
+        if (!matchId) {
+          navigate("/matches");
+          return;
+        }
+
         const { data: { session } } = await supabase.auth.getSession();
 
         if (!session) {
@@ -262,58 +174,28 @@ const Chat = () => {
         // Set current user immediately so the composer can mount
         if (!cancelled) setCurrentUser(userId);
 
-        let targetMatchId = matchId ?? null;
-        let createdDirectChat = false;
-        let otherProfileId: string | null = null;
+        // Get the other participant from the match
+        const { data: match, error: matchError } = await supabase
+          .from("matches")
+          .select("user1_id, user2_id")
+          .eq("id", matchId)
+          .maybeSingle();
 
-        if (!targetMatchId) {
-          if (!otherUserId) {
-            navigate("/matches");
-            return;
-          }
+        if (matchError) throw matchError;
 
-          const resolvedChat = await withTimeout(
-            resolveOrCreateDirectChat(userId, otherUserId),
-            20000,
-            "DIRECT_CHAT_TIMEOUT"
-          );
-
-          targetMatchId = resolvedChat.matchId;
-          createdDirectChat = resolvedChat.wasCreated;
-          otherProfileId = otherUserId;
-
-          if (!cancelled) {
-            setResolvedMatchId(resolvedChat.matchId);
-            window.history.replaceState({}, '', `/chat/${resolvedChat.matchId}`);
-          }
-        }
-
-        if (!targetMatchId) {
+        if (!match) {
+          toast({
+            title: t("chat.error"),
+            description: t("chat.matchNotFound"),
+            variant: "destructive",
+          });
           navigate("/matches");
           return;
         }
 
+        const otherProfileId = match.user1_id === userId ? match.user2_id : match.user1_id;
+
         if (cancelled) return;
-
-        if (!otherProfileId) {
-          const { data: match } = await supabase
-            .from("matches")
-            .select("user1_id, user2_id")
-            .eq("id", targetMatchId)
-            .single();
-
-          if (!match) {
-            toast({
-              title: t("chat.error"),
-              description: t("chat.matchNotFound"),
-              variant: "destructive",
-            });
-            navigate("/matches");
-            return;
-          }
-
-          otherProfileId = match.user1_id === userId ? match.user2_id : match.user1_id;
-        }
 
         const [myProfileRes, otherProfileRes, blockedRes, messagesRes] = await Promise.all([
           supabase.from("profiles").select("avatar_url").eq("id", userId).maybeSingle(),
@@ -330,7 +212,7 @@ const Chat = () => {
           supabase
             .from("messages")
             .select("*")
-            .eq("match_id", targetMatchId)
+            .eq("match_id", matchId)
             .order("created_at", { ascending: true })
             .limit(200),
         ]);
@@ -383,20 +265,11 @@ const Chat = () => {
         void supabase
           .from("messages")
           .update({ read: true })
-          .eq("match_id", targetMatchId)
+          .eq("match_id", matchId)
           .eq("receiver_id", userId)
           .eq("read", false);
 
-        if (createdDirectChat) {
-          void resolveDirectChatSettlement(userId)
-            .then((settlement) => settleDirectChatCost(userId, settlement))
-            .then(() => {
-              refetchCreditsRef.current?.();
-            })
-            .catch((error) => {
-              console.error("[Chat] Direct chat cost settlement failed", error);
-            });
-        }
+        const targetMatchId = matchId;
 
         channel = supabase
           .channel(`messages-${targetMatchId}`)
@@ -485,8 +358,7 @@ const Chat = () => {
         supabase.removeChannel(channel);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [matchId, otherUserId]);
+  }, [matchId]);
 
   useEffect(() => {
     // Scroll to bottom when messages change
