@@ -358,8 +358,7 @@ const Chat = () => {
         supabase.removeChannel(channel);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [matchId, otherUserId]);
+  }, [matchId]);
 
   useEffect(() => {
     // Scroll to bottom when messages change
