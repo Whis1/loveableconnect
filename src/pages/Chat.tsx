@@ -197,32 +197,14 @@ const Chat = () => {
 
         if (cancelled) return;
 
-        const [myProfileRes, otherProfileRes, blockedRes, messagesRes] = await Promise.all([
-          supabase.from("profiles").select("avatar_url").eq("id", userId).maybeSingle(),
-          supabase
-            .from("profiles")
-            .select("id, full_name, nickname, is_admin_profile, avatar_url, show_online_status, last_active, manual_online_status")
-            .eq("id", otherProfileId)
-            .single(),
-          supabase
-            .from("blocked_users")
-            .select("id")
-            .or(`and(blocker_id.eq.${userId},blocked_id.eq.${otherProfileId}),and(blocker_id.eq.${otherProfileId},blocked_id.eq.${userId})`)
-            .limit(1),
-          supabase
-            .from("messages")
-            .select("*")
-            .eq("match_id", matchId)
-            .order("created_at", { ascending: true })
-            .limit(200),
-        ]);
+        // Fetch other profile FIRST and unlock the UI as soon as we have it.
+        const otherProfileRes = await supabase
+          .from("profiles")
+          .select("id, full_name, nickname, is_admin_profile, avatar_url, show_online_status, last_active, manual_online_status")
+          .eq("id", otherProfileId)
+          .single();
 
         if (cancelled) return;
-
-        const myAvatarUrl = myProfileRes.data?.avatar_url
-          ? supabase.storage.from('profile-images').getPublicUrl(myProfileRes.data.avatar_url).data.publicUrl
-          : null;
-        setMyAvatar(myAvatarUrl);
 
         const profile = otherProfileRes.data;
         if (!profile) {
@@ -257,17 +239,43 @@ const Chat = () => {
         }
         setOtherUserOnlineStatus({ isOnline, showStatus });
 
-        setIsBlocked(Array.isArray(blockedRes.data) && blockedRes.data.length > 0);
-        setMessages((messagesRes.data || []) as Message[]);
-        setIsLoadingHistory(false);
+        // UI is usable now — unlock immediately.
         setLoading(false);
 
-        void supabase
-          .from("messages")
-          .update({ read: true })
-          .eq("match_id", matchId)
-          .eq("receiver_id", userId)
-          .eq("read", false);
+        // Fetch the rest in the background (non-blocking).
+        void (async () => {
+          const [myProfileRes, blockedRes, messagesRes] = await Promise.all([
+            supabase.from("profiles").select("avatar_url").eq("id", userId).maybeSingle(),
+            supabase
+              .from("blocked_users")
+              .select("id")
+              .or(`and(blocker_id.eq.${userId},blocked_id.eq.${otherProfileId}),and(blocker_id.eq.${otherProfileId},blocked_id.eq.${userId})`)
+              .limit(1),
+            supabase
+              .from("messages")
+              .select("*")
+              .eq("match_id", matchId)
+              .order("created_at", { ascending: true })
+              .limit(200),
+          ]);
+
+          if (cancelled) return;
+
+          const myAvatarUrl = myProfileRes.data?.avatar_url
+            ? supabase.storage.from('profile-images').getPublicUrl(myProfileRes.data.avatar_url).data.publicUrl
+            : null;
+          setMyAvatar(myAvatarUrl);
+          setIsBlocked(Array.isArray(blockedRes.data) && blockedRes.data.length > 0);
+          setMessages((messagesRes.data || []) as Message[]);
+          setIsLoadingHistory(false);
+
+          void supabase
+            .from("messages")
+            .update({ read: true })
+            .eq("match_id", matchId)
+            .eq("receiver_id", userId)
+            .eq("read", false);
+        })();
 
         const targetMatchId = matchId;
 
