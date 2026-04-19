@@ -284,47 +284,13 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
 
     if (showChatConfirmation || isCreatingChat) return;
 
-    if (!hasActiveMatch) {
-      if (hasPremiumDirectChat) {
-          handleConfirmChat();
-      } else {
-        setShowChatConfirmation(true);
-      }
+    // Premium con direct chat o match già attivo: apri direttamente la chat
+    if (hasActiveMatch || hasPremiumDirectChat) {
+      await handleConfirmChat();
       return;
     }
 
-    setIsCreatingChat(true);
-
-    try {
-      const { data: matchData, error: matchError } = await supabase
-        .from("matches")
-        .select("id")
-        .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profile.id}),and(user1_id.eq.${profile.id},user2_id.eq.${currentUserId})`)
-        .maybeSingle();
-
-      if (matchError) throw matchError;
-
-      if (matchData) {
-        navigate(`/chat/${matchData.id}`);
-        return;
-      }
-
-      if (hasPremiumDirectChat) {
-        handleConfirmChat();
-        return;
-      }
-
-      setShowChatConfirmation(true);
-    } catch (error: any) {
-      console.error("handleChat error:", error);
-      toast({
-        title: t("common.error"),
-        description: error.message || "Si è verificato un errore",
-        variant: "destructive",
-      });
-    } finally {
-      setIsCreatingChat(false);
-    }
+    setShowChatConfirmation(true);
   };
 
   const handleConfirmChat = async () => {
