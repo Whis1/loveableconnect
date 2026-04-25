@@ -1,0 +1,93 @@
+{
+  "theme": "Ethereal/Dreamy Magical (Dark Theme, Italian UI)",
+  "archetype": "Archetype 5 (Jewel & Luxury) - Celestial Variant",
+  "design_philosophy": "A magical, stunning ('stupendo') dating experience. Avoid standard corporate SaaS looks. Utilize a dark celestial palette (midnight blue, starlight gold) without relying on generic AI purple/teal gradients. Emphasize deep space, auroras, moonlight, and soft glowing accents.",
+  "colors": {
+    "background": "#040710",
+    "foreground": "#F0F3F5",
+    "card": "#0D1526",
+    "card_foreground": "#F0F3F5",
+    "popover": "#0D1526",
+    "popover_foreground": "#F0F3F5",
+    "primary": "#E6C998",
+    "primary_foreground": "#040710",
+    "secondary": "#475B7A",
+    "secondary_foreground": "#F0F3F5",
+    "muted": "#162032",
+    "muted_foreground": "#8F9CAE",
+    "accent": "#233045",
+    "accent_foreground": "#E6C998",
+    "destructive": "#8F3A44",
+    "destructive_foreground": "#F0F3F5",
+    "border": "#233045",
+    "input": "#162032",
+    "ring": "#E6C998"
+  },
+  "typography": {
+    "heading_font": "Cormorant Garamond",
+    "body_font": "Outfit",
+    "rules": [
+      "Headings (H1-H3) MUST use 'Cormorant Garamond' with tight letter spacing (tracking-tight). DO NOT use Inter or Roboto.",
+      "H1 size maximum is text-5xl sm:text-6xl. Ensure elegant, fluid typography.",
+      "Body text MUST use 'Outfit' (text-sm to text-base) for clean readability.",
+      "Overlines and small labels MUST be uppercase, text-xs, with wide spacing (tracking-[0.2em])."
+    ]
+  },
+  "layout_and_spacing": {
+    "spacing_scale": "Use generous spacing. Tailwind p-6, p-8, p-12 for containers to provide breathing room.",
+    "containers": "All containers/cards must use the 'Crystal Glass' variant: bg-[#0D1526]/80 backdrop-blur-md, with a subtle border-white/10. Must have internal padding (e.g., p-6) to avoid text collision.",
+    "grids": "The 'Bacheca' (Profile Board) should use a bento-style or balanced grid (grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 or 4) with gap-6.",
+    "mobile_first": true
+  },
+  "components_strategy": {
+    "navigation": "Sticky glassmorphism header (backdrop-blur-xl bg-[#040710]/70 border-b border-white/10) to maintain context over scrolling magical backgrounds.",
+    "buttons": "Primary CTA must be Solid Starlight Gold (bg-primary text-primary-foreground). Hover state must elevate slightly (-translate-y-0.5) and add a magical glow (shadow-[0_0_15px_rgba(230,201,152,0.3)]).",
+    "forms_and_inputs": "Use customized Shadcn UI components. Inputs should have bg-input/50, border-border, and focus states with focus:ring-1 focus:ring-primary.",
+    "modals": "Use Shadcn Dialog with a heavily blurred overlay (bg-black/60 backdrop-blur-sm) to keep the ethereal feel."
+  },
+  "media": {
+    "hero_background": {
+      "url": "https://images.unsplash.com/photo-1599148400620-8e1ff0bf28d8?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA0MTJ8MHwxfHNlYXJjaHw0fHxuaWdodCUyMHNreSUyMHN0YXJzfGVufDB8fHx8MTc3NzEwNDY3Nnww&ixlib=rb-4.1.0&q=85",
+      "description": "Starry night sky. MUST be used with a dark overlay (e.g., bg-black/50 or bg-gradient-to-b from-[#040710]/80 to-[#040710]) to ensure text readability.",
+      "category": "hero_background"
+    },
+    "aurora_accent": {
+      "url": "https://images.unsplash.com/photo-1483347756197-71ef80e95f73?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODB8MHwxfHNlYXJjaHwyfHxhdXJvcmElMjBib3JlYWxpc3xlbnwwfHx8fDE3NzcxMDQ2Nzd8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Subtle aurora borealis. Use as a blurred background image for the 'Bacheca' or specific feature sections.",
+      "category": "section_background"
+    },
+    "profile_images": [
+      {
+        "url": "https://images.unsplash.com/photo-1713080940331-024370331d73?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNTl8MHwxfHNlYXJjaHw0fHxwb3J0cmFpdCUyMG5pZ2h0JTIwZ2xvd2luZyUyMGxpZ2h0fGVufDB8fHx8MTc3NzEwNDY2MXww&ixlib=rb-4.1.0&q=85",
+        "description": "Magical night portrait of a user",
+        "category": "user_profile_placeholder"
+      },
+      {
+        "url": "https://images.pexels.com/photos/29894331/pexels-photo-29894331.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Artistic portrait of a user illuminated by night lights",
+        "category": "user_profile_placeholder"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1768404405643-a1835b1d29a1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNTl8MHwxfHNlYXJjaHwzfHxwb3J0cmFpdCUyMG5pZ2h0JTIwZ2xvd2luZyUyMGxpZ2h0fGVufDB8fHx8MTc3NzEwNDY2MXww&ixlib=rb-4.1.0&q=85",
+        "description": "Night portrait colorful light",
+        "category": "user_profile_placeholder"
+      }
+    ]
+  },
+  "motion_and_effects": {
+    "hover_states": "All interactive elements must transition smoothly using duration-300 ease-out.",
+    "particles_and_3d": "Implement tsparticles (or similar lightweight library) for a subtle floating stardust effect in the background of the main landing and bacheca pages. Ensure low opacity to prevent distraction.",
+    "glass_shimmer": "Apply a subtle hover glow (box-shadow) on profile cards to emphasize the 'magical' interactions."
+  },
+  "accessibility_and_testing": {
+    "contrast": "Ensure all text meets WCAG AA contrast ratios against backgrounds. Use text-shadow on hero texts over images.",
+    "testing_attributes": "CRITICAL: All interactive and key informational elements MUST include a 'data-testid' attribute in kebab-case (e.g., data-testid='google-login-btn', data-testid='profile-card-like')."
+  },
+  "pages_instructions": {
+    "landing": "Italian UI. Hero section needs an ethereal starlight background. Call to action should be 'Accedi alla Magia' or 'Entra'. MUST include both standard email/password form AND Emergent Google Auth button.",
+    "bacheca": "The 'Bacheca' (Profile Board) displays all users as magical cards. MUST include filters: 'Età' (Age), 'Genere' (Gender), 'Città' (City), 'Interessi' (Interests).",
+    "home_dashboard": "'Il mio Profilo' (My Profile) page where users can upload photos (using object storage mock) and edit bio, interests, age, gender, and city.",
+    "matches_and_chat": "Implement a Like/Match system. When a mutual like occurs, show a 'Connessione Stellare' (Stellar Connection) notification. Include a basic chat interface between matched users.",
+    "profile_detail": "Clicking a card in the Bacheca opens a modal or detail page showcasing a photo gallery and full bio."
+  }
+}
