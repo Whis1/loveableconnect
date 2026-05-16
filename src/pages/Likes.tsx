@@ -68,90 +68,54 @@ const Likes = () => {
   const [showUnlockDialog, setShowUnlockDialog] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        navigate("/auth");
-        return;
+  // Carica i like ricevuti con i profili associati, in modo robusto.
+  const loadLikes = async (userId: string): Promise<LikeWithProfile[]> => {
+    const { data: likesData, error } = await supabase
+      .from("likes")
+      .select("id, from_user_id, created_at")
+      .eq("to_user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    const rows = likesData || [];
+    if (rows.length === 0) return [];
+
+    // Un'unica query per tutti i profili: niente .single() per riga (falliva a caso).
+    const fromIds = [...new Set(rows.map((l) => l.from_user_id))];
+    const { data: profilesData } = await supabase
+      .from("profiles")
+      .select("id, full_name, nickname, avatar_url, bio, age, interests, gender, sexual_orientation, relationship_status, relationship_type, looking_for")
+      .in("id", fromIds);
+    const profileMap = new Map((profilesData || []).map((p) => [p.id, p]));
+
+    // Traduzioni resilienti: un errore di traduzione non rompe il caricamento.
+    const safeText = async (txt: string | null) => {
+      if (!txt) return null;
+      try {
+        return await translateText(txt);
+      } catch {
+        return txt;
       }
-
-      setCurrentUserId(session.user.id);
-
-      // Fetch unlocked profiles
-      const { data: unlockedData } = await supabase
-        .from("unlocked_like_profiles")
-        .select("unlocked_profile_id")
-        .eq("user_id", session.user.id);
-
-      if (unlockedData) {
-        setUnlockedProfiles(new Set(unlockedData.map(u => u.unlocked_profile_id)));
+    };
+    const safeArray = async (arr: string[] | null) => {
+      if (!arr) return null;
+      try {
+        return await translateArray(arr);
+      } catch {
+        return arr;
       }
+    };
 
-      // Fetch likes
-      const { data: likesData, error } = await supabase
-        .from("likes")
-        .select("id, from_user_id, created_at")
-        .eq("to_user_id", session.user.id)
-        .order("created_at", { ascending: false });
+    const genderCodes = ['male','female','non-binary','transexual','transgender','genderfluid'];
+    const orientationCodes = ['heterosexual','homosexual','bisexual','pansexual','asexual','other'];
+    const relationshipTypeCodes = ['serious','casual','friendship','not-sure','prefer-not-say'];
 
-      if (error) {
-        console.error("Error fetching likes:", error);
-        toast({
-          title: t("likes.error"),
-          description: t("likes.errorLoadingLikes"),
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
-      }
+    return Promise.all(
+      rows.map(async (like) => {
+        const profile = profileMap.get(like.from_user_id);
 
-      // Fetch profiles for each like and translate
-      const likesWithProfiles = await Promise.all(
-        (likesData || []).map(async (like) => {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("id, full_name, nickname, avatar_url, bio, age, interests, gender, sexual_orientation, relationship_status, relationship_type, looking_for")
-            .eq("id", like.from_user_id)
-            .single();
-
-          if (profile) {
-            const translatedBio = profile.bio ? await translateText(profile.bio) : null;
-            const translatedInterests = profile.interests ? await translateArray(profile.interests) : null;
-            const translatedLookingFor = profile.looking_for ? await translateArray(profile.looking_for) : null;
-
-            const genderCodes = ['male','female','non-binary','transexual','transgender','genderfluid'];
-            const orientationCodes = ['heterosexual','homosexual','bisexual','pansexual','asexual','other'];
-            const relationshipTypeCodes = ['serious','casual','friendship','not-sure','prefer-not-say'];
-
-            const translatedGender = profile.gender && !genderCodes.includes(profile.gender)
-              ? await translateText(profile.gender)
-              : null;
-            const translatedOrientation = profile.sexual_orientation && !orientationCodes.includes(profile.sexual_orientation)
-              ? await translateText(profile.sexual_orientation)
-              : null;
-            const translatedRelationshipType = profile.relationship_type && !relationshipTypeCodes.includes(profile.relationship_type)
-              ? await translateText(profile.relationship_type)
-              : null;
-
-            return {
-              id: like.id,
-              from_user_id: like.from_user_id,
-              created_at: like.created_at,
-              profile: {
-                ...profile,
-                avatar_url: toPublicAvatarUrl(profile.avatar_url),
-                translatedBio,
-                translatedInterests,
-                translatedGender,
-                translatedOrientation,
-                translatedRelationshipType,
-                translatedLookingFor,
-              },
-            };
-          }
-
+        if (!profile) {
           return {
             id: like.id,
             from_user_id: like.from_user_id,
@@ -171,101 +135,124 @@ const Likes = () => {
               looking_for: null,
             },
           };
-        })
-      );
+        }
 
-      setLikes(likesWithProfiles);
-      setLoading(false);
+        const translatedGender = profile.gender && !genderCodes.includes(profile.gender)
+          ? await safeText(profile.gender)
+          : null;
+        const translatedOrientation = profile.sexual_orientation && !orientationCodes.includes(profile.sexual_orientation)
+          ? await safeText(profile.sexual_orientation)
+          : null;
+        const translatedRelationshipType = profile.relationship_type && !relationshipTypeCodes.includes(profile.relationship_type)
+          ? await safeText(profile.relationship_type)
+          : null;
+
+        return {
+          id: like.id,
+          from_user_id: like.from_user_id,
+          created_at: like.created_at,
+          profile: {
+            ...profile,
+            avatar_url: toPublicAvatarUrl(profile.avatar_url),
+            translatedBio: await safeText(profile.bio),
+            translatedInterests: await safeArray(profile.interests),
+            translatedGender,
+            translatedOrientation,
+            translatedRelationshipType,
+            translatedLookingFor: await safeArray(profile.looking_for),
+          },
+        };
+      })
+    );
+  };
+
+  // Caricamento iniziale (e ri-traduzione al cambio lingua).
+  useEffect(() => {
+    let cancelled = false;
+
+    const init = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+      if (cancelled) return;
+      setCurrentUserId(session.user.id);
+
+      const { data: unlockedData } = await supabase
+        .from("unlocked_like_profiles")
+        .select("unlocked_profile_id")
+        .eq("user_id", session.user.id);
+      if (!cancelled && unlockedData) {
+        setUnlockedProfiles(new Set(unlockedData.map((u) => u.unlocked_profile_id)));
+      }
+
+      try {
+        const result = await loadLikes(session.user.id);
+        if (!cancelled) setLikes(result);
+      } catch (e) {
+        console.error("Error fetching likes:", e);
+        if (!cancelled) {
+          toast({
+            title: t("likes.error"),
+            description: t("likes.errorLoadingLikes"),
+            variant: "destructive",
+          });
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     };
 
-    fetchData();
-  }, [navigate, toast, currentLanguage, translateText, translateArray, t]);
+    init();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLanguage]);
 
-  // Realtime listener for likes changes (updates count in real-time)
+  // Aggiornamento in tempo reale quando arrivano o spariscono dei like.
   useEffect(() => {
-    const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!session?.user) return;
+    if (!currentUserId) return;
 
-      const likesChannel = supabase
-        .channel('likes-page-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'likes',
-            filter: `to_user_id=eq.${session.user.id}`,
-          },
-          async (payload) => {
-            // Refresh likes data on any change (INSERT, DELETE, UPDATE)
-            const { data: likesData } = await supabase
-              .from("likes")
-              .select("id, from_user_id, created_at")
-              .eq("to_user_id", session.user.id)
-              .order("created_at", { ascending: false });
-
-            if (likesData) {
-              const likesWithProfiles: LikeWithProfile[] = [];
-              for (const like of likesData) {
-                const { data: profile } = await supabase
-                  .from("profiles")
-                  .select("*")
-                  .eq("id", like.from_user_id)
-                  .single();
-
-                if (profile) {
-                  const translatedBio = await translateText(profile.bio || '');
-                  const translatedInterests = await translateArray(profile.interests || []);
-                  const translatedGender = await translateText(profile.gender || '');
-                  const translatedOrientation = await translateText(profile.sexual_orientation || '');
-                  const translatedRelationshipType = await translateText(profile.relationship_type || '');
-                  const translatedLookingFor = await translateArray(profile.looking_for || []);
-
-                  likesWithProfiles.push({
-                    ...like,
-                    profile: {
-                      ...profile,
-                      translatedBio,
-                      translatedInterests,
-                      translatedGender,
-                      translatedOrientation,
-                      translatedRelationshipType,
-                      translatedLookingFor,
-                    },
-                  });
-                }
-              }
-              setLikes(likesWithProfiles);
-            }
+    const channel = supabase
+      .channel("likes-page-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "likes",
+          filter: `to_user_id=eq.${currentUserId}`,
+        },
+        async () => {
+          try {
+            const result = await loadLikes(currentUserId);
+            setLikes(result);
+          } catch (e) {
+            console.error("Error refreshing likes:", e);
           }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(likesChannel);
-      };
-    });
+        }
+      )
+      .subscribe();
 
     return () => {
-      authSub?.unsubscribe();
+      supabase.removeChannel(channel);
     };
-  }, [currentLanguage, translateText, translateArray]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUserId, currentLanguage]);
 
   const handleProfileClick = (profileId: string) => {
-    // Don't navigate if the user just matched (profile was removed from likes)
+    // Il profilo potrebbe essere stato rimosso (match appena creato)
     const profileStillInLikes = likes.some(l => l.from_user_id === profileId);
-    if (!profileStillInLikes) {
-      return; // Profile was just removed (match created), don't navigate
-    }
+    if (!profileStillInLikes) return;
 
-    if (unlockedProfiles.has(profileId)) {
-      // Already unlocked, navigate to profile
-      navigate(`/profile/${profileId}`);
-    } else {
-      // Show unlock dialog
-      setSelectedProfileId(profileId);
-      setShowUnlockDialog(true);
-    }
+    // Se è già sbloccato i dati sono già mostrati nella card: niente da fare.
+    if (unlockedProfiles.has(profileId)) return;
+
+    // Altrimenti mostra la finestra di sblocco.
+    setSelectedProfileId(profileId);
+    setShowUnlockDialog(true);
   };
 
   const handleUnlockProfile = async () => {
@@ -314,7 +301,6 @@ const Likes = () => {
       });
 
       setShowUnlockDialog(false);
-      navigate(`/profile/${selectedProfileId}`);
     } catch (error: any) {
       console.error("Error unlocking profile:", error);
       toast({
