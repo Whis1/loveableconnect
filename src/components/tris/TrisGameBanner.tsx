@@ -297,20 +297,15 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
 
     // Award credits if win
     if (result === "win") {
-      const { data: credits } = await supabase
-        .from("user_credits")
-        .select("balance")
-        .eq("user_id", session.user.id)
-        .single();
+      // Accredita 6 crediti tramite la RPC (importo negativo = aggiunta):
+      // l'update diretto su user_credits è bloccato dalle policy di sicurezza.
+      const { error: awardError } = await supabase.rpc("deduct_credits", {
+        _user_id: session.user.id,
+        _amount: -6,
+      });
 
-      if (credits) {
-        await supabase
-          .from("user_credits")
-          .update({ balance: credits.balance + 6 })
-          .eq("user_id", session.user.id);
-
-        setUserCredits(credits.balance + 6);
-
+      if (!awardError) {
+        setUserCredits((prev) => prev + 6);
         toast({
           title: "🎉 Complimenti!",
           description: "Hai vinto la sfida e guadagnato +6 crediti!",
