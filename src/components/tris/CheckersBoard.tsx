@@ -51,6 +51,85 @@ const EMOJIS = [
   "💯", "🆚", "🔝", "🔱", "⚔️", "🛡️", "🏹", "🗡️", "🔫", "💣", "🧨",
 ];
 
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+interface CaptureHop {
+  from: number;
+  to: number;
+  captured: number;
+}
+
+// Ricostruisce la sequenza di salti di una cattura confrontando la board
+// prima e dopo la mossa. Restituisce null se la mossa non era una cattura.
+function reconstructCapture(prev: Board, next: Board): CaptureHop[] | null {
+  const removed: number[] = [];
+  const added: number[] = [];
+  for (let i = 0; i < 64; i++) {
+    const p = prev[i] ?? null;
+    const n = next[i] ?? null;
+    if (p && !n) removed.push(i);
+    if (!p && n) added.push(i);
+  }
+  if (added.length !== 1) return null;
+  const final = added[0];
+  const moverIsRed = (next[final] || "").includes("red");
+  const origin = removed.find((i) => {
+    const piece = prev[i] || "";
+    return moverIsRed ? piece.includes("red") : piece.includes("black");
+  });
+  if (origin === undefined) return null;
+  const captured = removed.filter((i) => i !== origin);
+  if (captured.length === 0) return null;
+
+  const remaining = new Set(captured);
+  const hops: CaptureHop[] = [];
+  let cur = origin;
+  let guard = 0;
+  while (remaining.size > 0 && guard++ < 24) {
+    const row = Math.floor(cur / 8);
+    const col = cur % 8;
+    let advanced = false;
+    for (const [dr, dc] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
+      const mr = row + dr;
+      const mc = col + dc;
+      const lr = row + dr * 2;
+      const lc = col + dc * 2;
+      if (mr < 0 || mr > 7 || mc < 0 || mc > 7) continue;
+      if (lr < 0 || lr > 7 || lc < 0 || lc > 7) continue;
+      const mid = mr * 8 + mc;
+      if (!remaining.has(mid)) continue;
+      hops.push({ from: cur, to: lr * 8 + lc, captured: mid });
+      remaining.delete(mid);
+      cur = lr * 8 + lc;
+      advanced = true;
+      break;
+    }
+    if (!advanced) break;
+  }
+  return hops.length > 0 ? hops : null;
+}
+
+// Disegno di una singola pedina (riusato dalle caselle e dall'animazione).
+function renderPiece(piece: PieceType) {
+  if (piece === "red")
+    return <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-700 border-2 border-red-900" />;
+  if (piece === "black")
+    return <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-800 to-black border-2 border-gray-950" />;
+  if (piece === "red-king")
+    return (
+      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-700 border-2 border-red-900 flex items-center justify-center text-yellow-300 text-xl">
+        👑
+      </div>
+    );
+  if (piece === "black-king")
+    return (
+      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-800 to-black border-2 border-gray-950 flex items-center justify-center text-yellow-300 text-xl">
+        👑
+      </div>
+    );
+  return null;
+}
+
 
 export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
   const [board, setBoard] = useState<Board>([]);
@@ -76,6 +155,12 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
   const allowNavigateRef = useRef(false);
   const [showResultOverlay, setShowResultOverlay] = useState(false);
   const [lastEloChange, setLastEloChange] = useState(0);
+  const [displayBoard, setDisplayBoard] = useState<Board>([]);
+  const [animOverlay, setAnimOverlay] = useState<{ piece: PieceType; index: number } | null>(null);
+  const [vanishing, setVanishing] = useState<Set<number>>(new Set());
+  const [isAnimating, setIsAnimating] = useState(false);
+  const prevBoardRef = useRef<Board | null>(null);
+  const animatingRef = useRef(false);
 
   useEffect(() => {
     initializeBoard();
@@ -347,7 +432,7 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
   };
 
   const handleSquareClick = (index: number) => {
-    if (!isPlayerTurn || gameOver) return;
+    if (!isPlayerTurn || gameOver || animatingRef.current) return;
 
     // If in multi-capture mode, only the capturing piece can be selected
     if (isMultiCapture && capturingPiece !== null) {
@@ -975,6 +1060,62 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     return !currentBoard.some(piece => piece && piece.includes(opponentColor));
   };
 
+  // Anima le catture: la pedina che mangia scorre sopra le pedine catturate,
+  // che spariscono una alla volta.
+  const animateCapture = async (prev: Board, next: Board, hops: CaptureHop[]) => {
+    animatingRef.current = true;
+    setIsAnimating(true);
+
+    const HOP_MS = 380;
+    const CAPTURE_MS = 220;
+    const startIndex = hops[0].from;
+    const movingPiece = prev[startIndex];
+
+    const base = [...prev];
+    base[startIndex] = null;
+    setDisplayBoard(base);
+    setVanishing(new Set());
+    setAnimOverlay({ piece: movingPiece, index: startIndex });
+    await sleep(40);
+
+    for (const hop of hops) {
+      setAnimOverlay({ piece: movingPiece, index: hop.to });
+      await sleep(HOP_MS);
+      setVanishing((v) => {
+        const s = new Set(v);
+        s.add(hop.captured);
+        return s;
+      });
+      await sleep(CAPTURE_MS);
+    }
+
+    await sleep(60);
+    setDisplayBoard(next);
+    setVanishing(new Set());
+    setAnimOverlay(null);
+    setIsAnimating(false);
+    animatingRef.current = false;
+  };
+
+  // Mantiene la board mostrata allineata a quella di gioco, animando le catture.
+  useEffect(() => {
+    const prev = prevBoardRef.current;
+    prevBoardRef.current = board;
+    if (board.length === 0) return;
+    if (!prev || prev.length === 0) {
+      setDisplayBoard(board);
+      return;
+    }
+    if (animatingRef.current) return;
+    const hops = reconstructCapture(prev, board);
+    if (hops) {
+      animateCapture(prev, board, hops);
+    } else {
+      setDisplayBoard(board);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [board]);
+
   useEffect(() => {
     if (!isPlayerTurn && !gameOver) {
       // Only allow bot to move if board is initialized (has pieces)
@@ -1125,8 +1266,8 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
       )}
 
       {/* Checkers Board */}
-      <div className="grid grid-cols-8 gap-0 mb-6 max-w-md mx-auto border-4 border-purple-800/50 rounded-lg overflow-hidden">
-        {board.map((piece, index) => {
+      <div className="relative grid grid-cols-8 gap-0 mb-6 max-w-md mx-auto border-4 border-purple-800/50 rounded-lg overflow-hidden">
+        {displayBoard.map((piece, index) => {
           const row = Math.floor(index / 8);
           const col = index % 8;
           const isDark = (row + col) % 2 === 1;
@@ -1137,7 +1278,7 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
             <button
               key={index}
               onClick={() => handleSquareClick(index)}
-              disabled={!isPlayerTurn || gameOver}
+              disabled={!isPlayerTurn || gameOver || isAnimating}
               className={cn(
                 "aspect-square flex items-center justify-center text-3xl transition-all relative",
                 isDark ? "bg-purple-800/40" : "bg-purple-200/20",
@@ -1146,21 +1287,36 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
                 !isPlayerTurn && "cursor-not-allowed opacity-50"
               )}
             >
-              {piece === "red" && <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-700 border-2 border-red-900" />}
-              {piece === "black" && <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-800 to-black border-2 border-gray-950" />}
-              {piece === "red-king" && (
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-700 border-2 border-red-900 flex items-center justify-center text-yellow-300 text-xl">
-                  👑
-                </div>
-              )}
-              {piece === "black-king" && (
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-800 to-black border-2 border-gray-950 flex items-center justify-center text-yellow-300 text-xl">
-                  👑
+              {piece && (
+                <div
+                  className={cn(
+                    "transition-all duration-200",
+                    vanishing.has(index) && "scale-0 opacity-0"
+                  )}
+                >
+                  {renderPiece(piece)}
                 </div>
               )}
             </button>
           );
         })}
+
+        {animOverlay && (
+          <div
+            className="pointer-events-none absolute z-20 flex items-center justify-center"
+            style={{
+              width: "12.5%",
+              height: "12.5%",
+              left: `${(animOverlay.index % 8) * 12.5}%`,
+              top: `${Math.floor(animOverlay.index / 8) * 12.5}%`,
+              transition: "left 360ms ease-in-out, top 360ms ease-in-out",
+            }}
+          >
+            <div className="scale-110 drop-shadow-[0_6px_10px_rgba(0,0,0,0.55)]">
+              {renderPiece(animOverlay.piece)}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="text-center">
