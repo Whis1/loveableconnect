@@ -97,6 +97,10 @@ const Dashboard = () => {
         setShowTutorial(true);
       }
 
+      // La pagina è già utilizzabile: mostra subito l'interfaccia.
+      // I dati restanti (match, like, ecc.) si caricano senza bloccare la UI.
+      setLoading(false);
+
       // Fetch role
       const {
         data: roleData
@@ -123,7 +127,6 @@ const Dashboard = () => {
         data: likesData
       } = await supabase.from("likes").select("*").eq("to_user_id", session.user.id);
       setLikesReceived(likesData || []);
-      setLoading(false);
 
       // Set up realtime subscription for profile updates
       profileChannel = supabase.channel('dashboard-profile').on('postgres_changes', {
@@ -203,6 +206,9 @@ const Dashboard = () => {
     };
     fetchUserData();
 
+    // Rete di sicurezza: non lasciare mai la pagina bloccata sul caricamento.
+    const loadingSafety = setTimeout(() => setLoading(false), 6000);
+
     // Refetch data when window regains focus (user returns to dashboard)
     const handleFocus = () => {
       fetchUserData();
@@ -228,6 +234,7 @@ const Dashboard = () => {
       }
     });
     return () => {
+      clearTimeout(loadingSafety);
       window.removeEventListener('focus', handleFocus);
       subscription.unsubscribe();
       if (profileChannel) {
