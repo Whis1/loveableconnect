@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { GameResultOverlay } from "./GameResultOverlay";
+import { getDisplayElo, formatElo } from "@/lib/elo";
 
 interface Profile {
   id: string;
@@ -81,23 +82,8 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     initializeBoard();
     fetchCurrentUserProfile();
     startBotEmojiSystem();
-    // Set opponent ELO from leaderboard (admin bots) or fallback to opponent prop
-    try {
-      const stored = localStorage.getItem('elo_leaderboard_data');
-      if (stored && opponent?.id) {
-        const data = JSON.parse(stored) as { adminElos: Record<string, number> };
-        const lbElo = data?.adminElos?.[opponent.id];
-        if (typeof lbElo === 'number') {
-          setOpponentElo(Math.round(lbElo / 10) * 10);
-        } else {
-          setOpponentElo(Math.round(((opponent.game_elo || 1200)) / 10) * 10);
-        }
-      } else {
-        setOpponentElo(Math.round(((opponent.game_elo || 1200)) / 10) * 10);
-      }
-    } catch {
-      setOpponentElo(Math.round(((opponent.game_elo || 1200)) / 10) * 10);
-    }
+    // ELO avversario: stessa fonte della classifica (vedi src/lib/elo.ts)
+    setOpponentElo(getDisplayElo({ id: opponent.id, game_elo: opponent.game_elo, is_admin_profile: true }));
 
     // Realtime ELO updates
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -1086,7 +1072,7 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
           <div>
             <p className="font-bold">{currentUserProfile?.nickname || "Tu"}</p>
             <p className="text-xs text-muted-foreground">Tu</p>
-            <p className="text-xs font-semibold text-primary">ELO: {userElo}</p>
+            <p className="text-xs font-semibold text-primary">ELO: {formatElo(userElo)}</p>
           </div>
         </div>
 
@@ -1105,7 +1091,7 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
           <div>
             <p className="font-bold text-right">{opponent.nickname}</p>
             <p className="text-xs text-muted-foreground text-right">Sfidante</p>
-            <p className="text-xs font-semibold text-destructive text-right">ELO: {opponentElo}</p>
+            <p className="text-xs font-semibold text-destructive text-right">ELO: {formatElo(opponentElo)}</p>
           </div>
           <div className="relative">
             <Avatar className="w-14 h-14 border-2 border-destructive">
