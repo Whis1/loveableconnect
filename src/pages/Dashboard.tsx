@@ -6,7 +6,7 @@ import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, Users, Sparkles, Search, MessageCircle } from "lucide-react";
+import { Heart, Users, Sparkles, Search, MessageCircle, Trophy } from "lucide-react";
 import { UserProfileCard } from "@/components/UserProfileCard";
 import { useTranslation } from "react-i18next";
 import { CreditsDisplay } from "@/components/CreditsDisplay";
@@ -330,6 +330,15 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 order-1 md:order-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/sfida")}
+              className="h-12 w-12"
+              aria-label="Sfida"
+            >
+              <Trophy className="h-6 w-6 text-primary" />
+            </Button>
             <InboxDropdown />
             <div id="credits-display">
               <CreditsDisplay />

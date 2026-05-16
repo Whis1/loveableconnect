@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Trophy, X, Loader2 } from "lucide-react";
@@ -19,8 +20,8 @@ interface Profile {
   game_elo?: number;
 }
 
-export const TrisGameBanner = () => {
-  const [showBanner, setShowBanner] = useState(false);
+export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "page" }) => {
+  const [showBanner, setShowBanner] = useState(variant === "page");
   const [gameState, setGameState] = useState<"idle" | "selecting" | "searching" | "playing">("idle");
   const [selectedGame, setSelectedGame] = useState<"tris" | "dama" | null>(null);
   const [opponent, setOpponent] = useState<Profile | null>(null);
@@ -31,6 +32,13 @@ export const TrisGameBanner = () => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const { toast } = useToast();
   const { credits } = useCredits();
+  const navigate = useNavigate();
+
+  // In modalità pagina la chiusura riporta alla home; come banner nasconde il riquadro.
+  const exitGames = () => {
+    if (variant === "page") navigate("/");
+    else setShowBanner(false);
+  };
 
   useEffect(() => {
     const fetchUserId = async () => {
@@ -326,7 +334,7 @@ export const TrisGameBanner = () => {
       setGameState("idle");
       setSelectedGame(null);
       setOpponent(null);
-      setShowBanner(false);
+      if (variant !== "page") setShowBanner(false);
     }, 3000);
   };
 
@@ -405,7 +413,7 @@ export const TrisGameBanner = () => {
             size="icon"
             onClick={() => {
               setGameState("idle");
-              setShowBanner(false);
+              if (variant !== "page") setShowBanner(false);
             }}
             className="hover:bg-primary/10"
           >
@@ -500,7 +508,7 @@ export const TrisGameBanner = () => {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setShowBanner(false)}
+          onClick={exitGames}
         >
           <X className="w-4 h-4" />
         </Button>

@@ -24,6 +24,7 @@ import AdminCreateProfile from "@/pages/AdminCreateProfile";
 import Chats from "@/pages/Chats";
 import ChattorsLogin from "@/pages/ChattorsLogin";
 import AuthCallback from "@/pages/AuthCallback";
+import Sfida from "@/pages/Sfida";
 
 export const AnimatedRoutes = () => {
   const location = useLocation();
@@ -53,6 +54,7 @@ export const AnimatedRoutes = () => {
         <Route path="/chattors-login" element={<PageTransition><ChattorsLogin /></PageTransition>} />
         <Route path="/chattors" element={<PageTransition><Chats /></PageTransition>} />
         <Route path="/auth/callback" element={<PageTransition><AuthCallback /></PageTransition>} />
+        <Route path="/sfida" element={<PageTransition><Sfida /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
