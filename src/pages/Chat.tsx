@@ -368,6 +368,36 @@ const Chat = () => {
     };
   }, [matchId]);
 
+  // Fallback realtime: ricarica i messaggi a intervalli regolari, così i nuovi
+  // messaggi compaiono da soli anche se la consegna in tempo reale non funziona.
+  useEffect(() => {
+    if (!activeMatchId) return;
+    const interval = setInterval(async () => {
+      const { data } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("match_id", activeMatchId)
+        .order("created_at", { ascending: true })
+        .limit(200);
+      if (!data) return;
+      setMessages((prev) => {
+        const temps = prev.filter((m) => m.id.startsWith("temp-"));
+        const prevReal = prev.filter((m) => !m.id.startsWith("temp-"));
+        const server = data as Message[];
+        // Nessun cambiamento: mantieni lo stato attuale (evita re-render inutili).
+        if (
+          temps.length === 0 &&
+          server.length === prevReal.length &&
+          server[server.length - 1]?.id === prevReal[prevReal.length - 1]?.id
+        ) {
+          return prev;
+        }
+        return [...server, ...temps];
+      });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [activeMatchId]);
+
   useEffect(() => {
     // Scroll to bottom when messages change
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -842,6 +872,7 @@ const Chat = () => {
                       receiverId={message.receiver_id}
                       matchId={message.match_id}
                       senderAvatarUrl={senderAvatar}
+                      sideLayout
                     />
                   );
                 })}

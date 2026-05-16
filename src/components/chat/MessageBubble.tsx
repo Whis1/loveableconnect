@@ -15,6 +15,7 @@ interface MessageBubbleProps {
   senderAvatarUrl?: string | null;
   senderNickname?: string;
   showAdminLabel?: boolean;
+  sideLayout?: boolean;
 }
 
 export const MessageBubble = ({ 
@@ -29,7 +30,8 @@ export const MessageBubble = ({
   matchId,
   senderAvatarUrl,
   senderNickname,
-  showAdminLabel = false
+  showAdminLabel = false,
+  sideLayout = false
 }: MessageBubbleProps) => {
   const renderContent = () => {
     switch (messageType) {
@@ -66,6 +68,60 @@ export const MessageBubble = ({
         return <p className="break-words whitespace-pre-wrap">{content?.trim() ? content : 'Messaggio vuoto'}</p>;
     }
   };
+
+  // Layout "a lati": i propri messaggi a sinistra, quelli dell'altro utente a destra.
+  if (sideLayout) {
+    return (
+      <div className={`flex w-full items-end gap-2 px-2 md:px-4 ${isOwn ? "justify-start" : "justify-end"}`}>
+        {isOwn && (
+          <Avatar className="h-12 w-12 shrink-0">
+            <AvatarImage src={senderAvatarUrl || undefined} alt="Profile" />
+            <AvatarFallback>
+              <User className="h-5 w-5" />
+            </AvatarFallback>
+          </Avatar>
+        )}
+        <div
+          className={`max-w-[85%] sm:max-w-[75%] md:max-w-[68%] w-fit rounded-lg px-4 py-2 ${
+            messageType === 'emoji' ? 'bg-transparent' :
+            isOwn
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted text-foreground"
+          }`}
+        >
+          {renderContent()}
+          <p
+            className={`text-xs mt-1 ${
+              messageType === 'emoji' ? 'text-muted-foreground text-center' :
+              isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
+            }`}
+          >
+            {new Date(timestamp).toLocaleString('it-IT', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: false
+            }).replace(',', '')}
+            {showAdminLabel && senderNickname && (
+              <span className="ml-2 font-medium">
+                • {senderNickname}
+              </span>
+            )}
+          </p>
+        </div>
+        {!isOwn && (
+          <Avatar className="h-12 w-12 shrink-0">
+            <AvatarImage src={senderAvatarUrl || undefined} alt="Profile" />
+            <AvatarFallback>
+              <User className="h-5 w-5" />
+            </AvatarFallback>
+          </Avatar>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-full px-2 md:px-4">
