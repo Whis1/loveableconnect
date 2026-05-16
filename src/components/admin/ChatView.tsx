@@ -71,6 +71,35 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
     scrollToBottom();
   }, [messages, conversation?.matchId]);
 
+  // Fallback realtime: ricontrolla i messaggi ogni 3 secondi, così i nuovi
+  // messaggi compaiono da soli anche se la consegna in tempo reale non funziona.
+  useEffect(() => {
+    if (!conversation) return;
+    const matchId = conversation.matchId;
+    const interval = setInterval(async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("admin-list-messages", {
+          body: { match_id: matchId },
+        });
+        if (error || !data) return;
+        const server = (data.messages || []) as Message[];
+        setMessages((prev) => {
+          // Nessun cambiamento: mantieni lo stato attuale (evita re-render/scroll).
+          if (
+            server.length === prev.length &&
+            server[server.length - 1]?.id === prev[prev.length - 1]?.id
+          ) {
+            return prev;
+          }
+          return server;
+        });
+      } catch {
+        // ignora errori temporanei del polling
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [conversation?.matchId]);
+
   const fetchMessages = async () => {
     if (!conversation) return;
 
@@ -153,6 +182,7 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
       if (error) throw error;
 
       setNewMessage("");
+      await fetchMessages();
       setTimeout(scrollToBottom, 100);
     } catch (error) {
       console.error("Error sending message:", error);
