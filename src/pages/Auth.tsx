@@ -17,6 +17,19 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import authHeartBg from "@/assets/auth-heart-background.png";
 import authLogo from "@/assets/auth-logo.png";
 
+// In caso di errore una Edge Function restituisce il motivo reale nel corpo
+// della risposta; senza leggerlo il client mostra solo il generico
+// "Edge Function returned a non-2xx status code".
+const getEdgeFunctionError = async (error: any, fallback: string): Promise<string> => {
+  try {
+    const body = await error?.context?.json();
+    if (body?.error) return body.error;
+  } catch {
+    /* corpo della risposta non leggibile come JSON */
+  }
+  return error?.message || fallback;
+};
+
 const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -109,7 +122,7 @@ const Auth = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) throw new Error(await getEdgeFunctionError(error, "Impossibile inviare l'email. Riprova più tardi."));
       if (data?.error) throw new Error(data.error);
 
       toast({
@@ -190,7 +203,7 @@ const Auth = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) throw new Error(await getEdgeFunctionError(error, t('auth.errorSignUp')));
       if (data?.error) throw new Error(data.error);
 
       setEmailSent(true);
@@ -232,7 +245,7 @@ const Auth = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) throw new Error(await getEdgeFunctionError(error, t('auth.errorSignUp')));
       if (data?.error) throw new Error(data.error);
 
       toast({
