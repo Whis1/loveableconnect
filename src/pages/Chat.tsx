@@ -851,7 +851,7 @@ const Chat = () => {
                   </div>
                 )}
                 {/* Message Suggestions - shown only for first message */}
-                {!isChatPending && showSuggestions && messages.length === 0 && !hasUserInteracted && !isBlocked && (
+                {!isChatPending && !isLoadingHistory && showSuggestions && messages.length === 0 && !hasUserInteracted && !isBlocked && (
                   <MessageSuggestions
                     onSuggestionSelect={handleSuggestionSelect}
                     onDismiss={() => {
