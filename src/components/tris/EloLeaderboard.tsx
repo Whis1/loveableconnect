@@ -3,7 +3,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy, ChevronDown, ChevronUp } from "lucide-react";
-import { getDisplayElo, formatElo } from "@/lib/elo";
 
 interface LeaderboardProfile {
   id: string;
@@ -11,7 +10,6 @@ interface LeaderboardProfile {
   avatar_url: string | null;
   game_elo: number;
   is_admin_profile: boolean;
-  displayElo: number;
 }
 
 interface EloLeaderboardProps {
@@ -65,29 +63,20 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     setIsLoading(true);
     
     try {
-      // Recupera abbastanza profili da coprire i veri top 5 dopo il calcolo ELO
+      // Fetch top 5 profiles by game_elo directly from DB
       const { data: profiles, error } = await supabase
         .from("profiles")
         .select("id, nickname, avatar_url, game_elo, is_admin_profile")
         .order("game_elo", { ascending: false })
-        .limit(40);
+        .limit(5);
 
       if (error) throw error;
 
       if (profiles) {
-        const ranked = profiles
-          .map(p => ({
-            ...p,
-            game_elo: p.game_elo || 1200,
-            displayElo: getDisplayElo({
-              id: p.id,
-              game_elo: p.game_elo,
-              is_admin_profile: p.is_admin_profile,
-            }),
-          }))
-          .sort((a, b) => b.displayElo - a.displayElo)
-          .slice(0, 5);
-        setTopPlayers(ranked);
+        setTopPlayers(profiles.map(p => ({
+          ...p,
+          game_elo: p.game_elo || 1200
+        })));
 
         // Compute user's rank asynchronously
         if (userId) {
@@ -176,7 +165,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Il tuo ELO</p>
-              <p className="text-3xl font-bold text-primary">{formatElo(userElo)}</p>
+              <p className="text-3xl font-bold text-primary">{userElo}</p>
             </div>
             <div className="text-right">
               <p className="text-sm text-muted-foreground">Posizione classifica</p>
@@ -246,7 +235,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
                 <div className="text-right">
                   <p className="text-xs text-muted-foreground">ELO</p>
                   <p className="font-bold text-lg text-primary">
-                    {formatElo(player.displayElo)}
+                    {player.game_elo || 1200}
                   </p>
                 </div>
               </div>

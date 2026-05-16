@@ -5,7 +5,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { GameResultOverlay } from "./GameResultOverlay";
-import { getDisplayElo, formatElo } from "@/lib/elo";
 
 interface Profile {
   id: string;
@@ -82,8 +81,8 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     initializeBoard();
     fetchCurrentUserProfile();
     startBotEmojiSystem();
-    // ELO avversario: stessa fonte della classifica (vedi src/lib/elo.ts)
-    setOpponentElo(getDisplayElo({ id: opponent.id, game_elo: opponent.game_elo, is_admin_profile: true }));
+    // ELO avversario: stesso valore del profilo, coerente con la classifica
+    setOpponentElo(opponent.game_elo || 1200);
 
     // Realtime ELO updates
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -1072,7 +1071,7 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
           <div>
             <p className="font-bold">{currentUserProfile?.nickname || "Tu"}</p>
             <p className="text-xs text-muted-foreground">Tu</p>
-            <p className="text-xs font-semibold text-primary">ELO: {formatElo(userElo)}</p>
+            <p className="text-xs font-semibold text-primary">ELO: {userElo}</p>
           </div>
         </div>
 
@@ -1091,7 +1090,7 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
           <div>
             <p className="font-bold text-right">{opponent.nickname}</p>
             <p className="text-xs text-muted-foreground text-right">Sfidante</p>
-            <p className="text-xs font-semibold text-destructive text-right">ELO: {formatElo(opponentElo)}</p>
+            <p className="text-xs font-semibold text-destructive text-right">ELO: {opponentElo}</p>
           </div>
           <div className="relative">
             <Avatar className="w-14 h-14 border-2 border-destructive">

@@ -3,7 +3,6 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { getDisplayElo, formatElo } from "@/lib/elo";
 
 interface Profile {
   id: string;
@@ -121,7 +120,7 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
         </Avatar>
         <div>
           <p className="font-bold text-lg">{profiles[currentIndex]?.nickname}</p>
-          <p className="text-sm text-muted-foreground">ELO: {profiles[currentIndex] ? formatElo(getDisplayElo(profiles[currentIndex])) : "—"}</p>
+          <p className="text-sm text-muted-foreground">ELO: {profiles[currentIndex]?.game_elo || 1200}</p>
         </div>
       </div>
     </Card>
