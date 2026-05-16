@@ -10,38 +10,29 @@ export const useUnreadMessages = (userId: string | null) => {
 
   useEffect(() => {
     if (!userId) return;
+    let cancelled = false;
 
+    // Conta i messaggi non letti ricevuti dall'utente, raggruppati per match.
     const fetchUnreadCounts = async () => {
-      // Get all matches for the user
-      const { data: matches } = await supabase
-        .from("matches")
-        .select("id")
-        .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
-
-      if (!matches) return;
-
-      // For each match, count unread messages
+      const { data } = await supabase
+        .from("messages")
+        .select("match_id")
+        .eq("receiver_id", userId)
+        .eq("read", false);
+      if (cancelled) return;
       const counts: UnreadCount = {};
-      
-      await Promise.all(
-        matches.map(async (match) => {
-          const { count } = await supabase
-            .from("messages")
-            .select("*", { count: "exact", head: true })
-            .eq("match_id", match.id)
-            .eq("receiver_id", userId)
-            .eq("read", false);
-
-          counts[match.id] = count || 0;
-        })
-      );
-
+      (data || []).forEach((m: { match_id: string }) => {
+        counts[m.match_id] = (counts[m.match_id] || 0) + 1;
+      });
       setUnreadCounts(counts);
     };
 
     fetchUnreadCounts();
 
-    // Subscribe to new messages
+    // Aggiornamento periodico: il badge resta allineato al database anche se la
+    // consegna in tempo reale non funziona (es. dopo aver letto i messaggi).
+    const interval = setInterval(fetchUnreadCounts, 10000);
+
     const channel = supabase
       .channel("unread-messages")
       .on(
@@ -53,7 +44,7 @@ export const useUnreadMessages = (userId: string | null) => {
           filter: `receiver_id=eq.${userId}`,
         },
         (payload) => {
-          const newMessage = payload.new as any;
+          const newMessage = payload.new as { match_id: string };
           setUnreadCounts((prev) => ({
             ...prev,
             [newMessage.match_id]: (prev[newMessage.match_id] || 0) + 1,
@@ -68,19 +59,16 @@ export const useUnreadMessages = (userId: string | null) => {
           table: "messages",
           filter: `receiver_id=eq.${userId}`,
         },
-        (payload) => {
-          const updatedMessage = payload.new as any;
-          if (updatedMessage.read) {
-            setUnreadCounts((prev) => ({
-              ...prev,
-              [updatedMessage.match_id]: Math.max(0, (prev[updatedMessage.match_id] || 0) - 1),
-            }));
-          }
+        () => {
+          // Un messaggio è cambiato (es. segnato come letto): ricalcola.
+          fetchUnreadCounts();
         }
       )
       .subscribe();
 
     return () => {
+      cancelled = true;
+      clearInterval(interval);
       supabase.removeChannel(channel);
     };
   }, [userId]);

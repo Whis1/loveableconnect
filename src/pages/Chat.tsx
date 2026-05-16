@@ -242,6 +242,18 @@ const Chat = () => {
         // UI is usable now — unlock immediately.
         setLoading(false);
 
+        // Segna come letti i messaggi ricevuti: operazione indipendente, viene
+        // eseguita anche se l'utente esce subito dalla chat.
+        supabase
+          .from("messages")
+          .update({ read: true })
+          .eq("match_id", matchId)
+          .eq("receiver_id", userId)
+          .eq("read", false)
+          .then(({ error }) => {
+            if (error) console.error("[Chat] Errore nel segnare i messaggi come letti:", error);
+          });
+
         // Fetch the rest in the background (non-blocking).
         void (async () => {
           const [myProfileRes, blockedRes, messagesRes] = await Promise.all([
@@ -268,13 +280,6 @@ const Chat = () => {
           setIsBlocked(Array.isArray(blockedRes.data) && blockedRes.data.length > 0);
           setMessages((messagesRes.data || []) as Message[]);
           setIsLoadingHistory(false);
-
-          void supabase
-            .from("messages")
-            .update({ read: true })
-            .eq("match_id", matchId)
-            .eq("receiver_id", userId)
-            .eq("read", false);
         })();
 
         const targetMatchId = matchId;
