@@ -186,29 +186,31 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
         return;
       }
 
-      // Deduct 2 credits
+      // Scala 2 crediti tramite la funzione RPC: l'update diretto sulla
+      // tabella user_credits è bloccato dalle policy di sicurezza.
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const { data: credits } = await supabase
-        .from("user_credits")
-        .select("balance")
-        .eq("user_id", session.user.id)
-        .single();
+      const { data: deducted, error: deductError } = await supabase.rpc("deduct_credits", {
+        _user_id: session.user.id,
+        _amount: 2,
+      });
 
-      if (credits) {
-        await supabase
-          .from("user_credits")
-          .update({ balance: credits.balance - 2 })
-          .eq("user_id", session.user.id);
-
-        setUserCredits(credits.balance - 2);
-
+      if (deductError || deducted !== true) {
         toast({
-          title: "Partita extra",
-          description: "Hai speso 2 crediti per giocare un'altra partita!",
+          title: "Crediti insufficienti",
+          description: "Non è stato possibile usare i 2 crediti. Riprova.",
+          variant: "destructive",
         });
+        return;
       }
+
+      setUserCredits((prev) => Math.max(0, prev - 2));
+
+      toast({
+        title: "Partita extra",
+        description: "Hai speso 2 crediti per giocare un'altra partita!",
+      });
     }
     setGameState("selecting");
   };
