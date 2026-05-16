@@ -3,13 +3,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy, ChevronDown, ChevronUp } from "lucide-react";
+import { computeAdminElos } from "@/lib/adminElo";
 
 interface LeaderboardProfile {
   id: string;
   nickname: string;
   avatar_url: string | null;
-  game_elo: number;
-  is_admin_profile: boolean;
+  elo: number;
 }
 
 interface EloLeaderboardProps {
@@ -28,60 +28,68 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     fetchLeaderboard();
   }, [userId]);
 
-  // Compute user's ELO and global rank efficiently
-  const computeUserEloAndRank = async () => {
-    try {
-      if (!userId) return;
-      
-      // Fetch user's ELO
-      const { data: userProfile, error: userErr } = await supabase
-        .from('profiles')
-        .select('game_elo')
-        .eq('id', userId)
-        .maybeSingle();
-      
-      if (userErr) throw userErr;
-      const elo = userProfile?.game_elo ?? 1200;
-      setUserElo(elo);
-      
-      // Count how many users have strictly higher ELO to compute rank
-      const { count } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .gt('game_elo', elo);
-      
-      const higher = count ?? 0;
-      setUserRank(higher + 1);
-    } catch (e) {
-      console.error('Error computing user rank:', e);
-      setUserRank(null);
-    }
-  };
-
   const fetchLeaderboard = async () => {
     if (isLoading) return;
     setIsLoading(true);
-    
+
     try {
-      // Fetch top 5 profiles by game_elo directly from DB
-      const { data: profiles, error } = await supabase
+      // Tutti i profili admin + i migliori utenti reali
+      const { data: admins } = await supabase
         .from("profiles")
-        .select("id, nickname, avatar_url, game_elo, is_admin_profile")
+        .select("id, nickname, avatar_url, game_elo")
+        .eq("is_admin_profile", true);
+
+      const { data: realUsers } = await supabase
+        .from("profiles")
+        .select("id, nickname, avatar_url, game_elo")
+        .eq("is_admin_profile", false)
         .order("game_elo", { ascending: false })
-        .limit(5);
+        .limit(10);
 
-      if (error) throw error;
+      // ELO simulati degli admin (cambiano ogni 3 ore)
+      const adminElos = computeAdminElos(admins ?? []);
 
-      if (profiles) {
-        setTopPlayers(profiles.map(p => ({
-          ...p,
-          game_elo: p.game_elo || 1200
-        })));
+      const entries: LeaderboardProfile[] = [
+        ...(admins ?? []).map(p => ({
+          id: p.id,
+          nickname: p.nickname,
+          avatar_url: p.avatar_url,
+          elo: adminElos.get(p.id) ?? 1200,
+        })),
+        ...(realUsers ?? []).map(p => ({
+          id: p.id,
+          nickname: p.nickname,
+          avatar_url: p.avatar_url,
+          elo: p.game_elo ?? 1200,
+        })),
+      ].sort((a, b) => b.elo - a.elo);
 
-        // Compute user's rank asynchronously
-        if (userId) {
-          computeUserEloAndRank();
+      setTopPlayers(entries.slice(0, 5));
+
+      // ELO e posizione dell'utente corrente
+      if (userId) {
+        const mine = entries.find(e => e.id === userId);
+        let myElo = mine?.elo;
+        if (myElo === undefined) {
+          const { data: myProfile } = await supabase
+            .from("profiles")
+            .select("game_elo")
+            .eq("id", userId)
+            .maybeSingle();
+          myElo = myProfile?.game_elo ?? 1200;
         }
+        setUserElo(myElo);
+
+        let higher = 0;
+        adminElos.forEach(e => {
+          if (e > (myElo as number)) higher++;
+        });
+        const { count } = await supabase
+          .from("profiles")
+          .select("id", { count: "exact", head: true })
+          .eq("is_admin_profile", false)
+          .gt("game_elo", myElo);
+        setUserRank(higher + (count ?? 0) + 1);
       }
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
@@ -235,7 +243,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
                 <div className="text-right">
                   <p className="text-xs text-muted-foreground">ELO</p>
                   <p className="font-bold text-lg text-primary">
-                    {player.game_elo || 1200}
+                    {player.elo}
                   </p>
                 </div>
               </div>

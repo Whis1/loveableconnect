@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { computeAdminElos } from "@/lib/adminElo";
 
 interface Profile {
   id: string;
@@ -36,23 +37,24 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
   }, []);
 
   const fetchProfiles = async () => {
-    // Fetch admin profiles ordered by game_elo (now stored in DB)
+    // Tutti i profili admin: serve l'elenco completo per calcolare gli ELO
     const { data: adminProfiles } = await supabase
       .from("profiles")
       .select("id, nickname, avatar_url, photos, game_elo, is_admin_profile")
-      .eq("is_admin_profile", true)
-      .order("game_elo", { ascending: false })
-      .limit(20);
+      .eq("is_admin_profile", true);
 
     if (adminProfiles && adminProfiles.length > 0) {
-      const profilesWithAdmin = adminProfiles.map(p => ({
+      // ELO simulati: stesso valore mostrato in classifica
+      const adminElos = computeAdminElos(adminProfiles);
+      const profilesWithElo = adminProfiles.map(p => ({
         ...p,
-        is_admin_profile: true
+        is_admin_profile: true,
+        game_elo: adminElos.get(p.id) ?? 1200,
       }));
-      setProfiles(profilesWithAdmin);
+      setProfiles(profilesWithElo);
       if (!animationStarted.current) {
         animationStarted.current = true;
-        startAnimation(profilesWithAdmin);
+        startAnimation(profilesWithElo);
       }
     }
   };
