@@ -145,7 +145,7 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
   const [lastOpponentEmoji, setLastOpponentEmoji] = useState<string | null>(null);
   const [userElo, setUserElo] = useState<number>(1200);
   const [opponentElo, setOpponentElo] = useState<number>(1200);
-  const [timeLeft, setTimeLeft] = useState<number>(30);
+  const [timeLeft, setTimeLeft] = useState<number>(40);
   const [isMultiCapture, setIsMultiCapture] = useState(false);
   const [capturingPiece, setCapturingPiece] = useState<number | null>(null);
   const gameCompletedRef = useRef(false);
@@ -1136,18 +1136,30 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
   useEffect(() => {
     if (gameOver) return;
 
-    setTimeLeft(30); // Reset timer when turn changes
-    
+    setTimeLeft(40); // Reset timer when turn changes
+
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          // Tempo scaduto: passa il turno senza assegnare la vittoria
           setIsMultiCapture(false);
           setCapturingPiece(null);
           setSelectedSquare(null);
           setValidMoves([]);
-          setIsPlayerTurn((prevTurn) => !prevTurn);
+          if (isPlayerTurn) {
+            // Tempo scaduto per l'utente: ha perso la partita
+            if (!gameCompletedRef.current) {
+              gameCompletedRef.current = true;
+              setGameOver(true);
+              setWinner("bot");
+              updateUserElo(-10);
+              setLastEloChange(-10);
+              setShowResultOverlay(true);
+            }
+          } else {
+            // Tempo scaduto per l'avversario: passa il turno all'utente
+            setIsPlayerTurn(true);
+          }
           return 0;
         }
         return prev - 1;
