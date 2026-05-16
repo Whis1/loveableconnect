@@ -1,14 +1,15 @@
-// Simulazione ELO dei profili admin.
-// Ogni 3 ore alcuni profili "giocano": coppie adiacenti in classifica si
-// scambiano di posizione (chi sale +20, chi scende -20). I punteggi restano
-// sempre numeri pari, tutti diversi tra loro, e identici tra classifica e
-// partite (il calcolo è deterministico in base all'orario).
+// Simulazione ELO "reale" dei profili admin.
+// Ogni profilo parte da un ELO casuale ma fisso e ogni 3 ore "gioca" una
+// partita: vince (+20) o perde (-10), come un giocatore vero. I punteggi
+// risultano sparsi e diversi (es. 450, 930, 1540, 2010, 2870...).
+// Il calcolo è deterministico in base all'orario, quindi lo stesso valore
+// compare identico in classifica e durante le partite.
 
 const THREE_HOURS = 3 * 60 * 60 * 1000;
 // Epoca fissa di riferimento per contare i periodi da 3 ore.
 const EPOCH = Date.UTC(2026, 0, 1);
-const TOP_ELO = 2800;
-const STEP = 20;
+const FLOOR = 300;
+const CEIL = 2950;
 
 // Hash deterministico (FNV-1a) -> intero senza segno a 32 bit.
 function hash(str: string): number {
@@ -22,39 +23,29 @@ function hash(str: string): number {
 
 interface AdminSeed {
   id: string;
-  game_elo?: number | null;
 }
 
-// Restituisce una mappa id -> ELO simulato corrente per i profili admin.
-export function computeAdminElos(admins: AdminSeed[]): Map<string, number> {
-  const result = new Map<string, number>();
-  const n = admins.length;
-  if (n === 0) return result;
-
-  // Ordine iniziale: dal game_elo più alto, con l'id come spareggio stabile.
-  const ordered = [...admins].sort((a, b) => {
-    const d = (b.game_elo ?? 1200) - (a.game_elo ?? 1200);
-    return d !== 0 ? d : a.id < b.id ? -1 : 1;
-  });
-
-  // rankToIndex[rango] = posizione del profilo in `ordered`.
-  const rankToIndex = ordered.map((_, i) => i);
+// ELO simulato corrente di un singolo profilo admin.
+function eloForId(id: string): number {
+  // ELO di partenza casuale ma stabile, multiplo di 10.
+  const steps = (CEIL - FLOOR) / 10;
+  let elo = FLOOR + (hash(id) % (steps + 1)) * 10;
 
   const buckets = Math.max(0, Math.floor((Date.now() - EPOCH) / THREE_HOURS));
-  if (n >= 2) {
-    for (let b = 1; b <= buckets; b++) {
-      const swapCount = 3 + (hash(`c${b}`) % 4); // 3..6 scambi ogni 3 ore
-      for (let s = 0; s < swapCount; s++) {
-        const pos = hash(`b${b}.${s}`) % (n - 1);
-        const tmp = rankToIndex[pos];
-        rankToIndex[pos] = rankToIndex[pos + 1];
-        rankToIndex[pos + 1] = tmp;
-      }
-    }
+  for (let k = 1; k <= buckets; k++) {
+    // 1 partita ogni 3 ore: 1 vittoria su 3 (+20), altrimenti sconfitta (-10).
+    const delta = hash(`${id}#${k}`) % 3 === 0 ? 20 : -10;
+    let next = elo + delta;
+    // Rimbalza ai bordi per restare in un intervallo plausibile.
+    if (next > CEIL || next < FLOOR) next = elo - delta;
+    elo = next;
   }
+  return elo;
+}
 
-  for (let rank = 0; rank < n; rank++) {
-    result.set(ordered[rankToIndex[rank]].id, TOP_ELO - rank * STEP);
-  }
+// Mappa id -> ELO simulato corrente per i profili admin passati.
+export function computeAdminElos(admins: AdminSeed[]): Map<string, number> {
+  const result = new Map<string, number>();
+  for (const a of admins) result.set(a.id, eloForId(a.id));
   return result;
 }
