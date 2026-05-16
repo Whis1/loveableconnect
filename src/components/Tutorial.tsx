@@ -30,6 +30,7 @@ export const Tutorial = () => {
   const [isCompleting, setIsCompleting] = useState(false);
   const [highlightStyle, setHighlightStyle] = useState<React.CSSProperties>({});
   const [arrowStyle, setArrowStyle] = useState<React.CSSProperties>({});
+  const [userName, setUserName] = useState("");
   const audioRef = useRef<HTMLAudioElement>(null);
   const preloadAudioRef = useRef<HTMLAudioElement>(null);
 
@@ -45,6 +46,21 @@ export const Tutorial = () => {
       updateHighlightPosition();
     }
   }, [currentStep, isStarted]);
+
+  // Carica il nome dell'utente per il messaggio di benvenuto.
+  useEffect(() => {
+    const loadName = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("nickname, full_name")
+        .eq("id", user.id)
+        .maybeSingle();
+      setUserName(data?.nickname || data?.full_name || "");
+    };
+    loadName();
+  }, []);
 
   const preloadNextAudio = () => {
     const nextStep = currentStep + 1;
@@ -174,7 +190,7 @@ export const Tutorial = () => {
             </div>
             
             <h2 className="text-2xl font-bold text-foreground mb-3">
-              Benvenuto su Arrettu!
+              {userName ? `Benvenuto, ${userName}!` : "Benvenuto!"}
             </h2>
             
             <p className="text-muted-foreground mb-8">
