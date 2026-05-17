@@ -58,24 +58,42 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
   }, []);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout>;
 
-      if (data) {
-        setProfile({
-          ...data,
-          favorite_songs: data.favorite_songs as any[] | null
-        });
-        if (data.avatar_url) {
-          const { data: urlData } = supabase.storage
-            .from('profile-images')
-            .getPublicUrl(data.avatar_url);
-          setAvatarUrl(urlData.publicUrl);
+    const applyProfile = (data: any) => {
+      setProfile({
+        ...data,
+        favorite_songs: data.favorite_songs as any[] | null,
+      });
+      if (data.avatar_url) {
+        const { data: urlData } = supabase.storage
+          .from("profile-images")
+          .getPublicUrl(data.avatar_url);
+        setAvatarUrl(urlData.publicUrl);
+      } else {
+        setAvatarUrl(null);
+      }
+    };
+
+    // Caricamento del profilo con timeout + retry: se una query si blocca,
+    // viene riprovata con una richiesta nuova invece di restare in attesa.
+    const fetchProfile = async (attempt = 0) => {
+      try {
+        const result = (await Promise.race([
+          supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 6000)),
+        ])) as { data: any; error: unknown };
+        if (cancelled) return;
+        if (result.error) throw result.error;
+        if (result.data) {
+          applyProfile(result.data);
+          return;
         }
+        if (attempt < 6) retryTimer = setTimeout(() => fetchProfile(attempt + 1), 1500);
+      } catch {
+        if (cancelled) return;
+        if (attempt < 6) retryTimer = setTimeout(() => fetchProfile(attempt + 1), 1500);
       }
     };
 
@@ -93,14 +111,12 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
           filter: `id=eq.${userId}`
         },
         (payload) => {
-          console.log('Profile updated in UserProfileCard:', payload.new);
           const updatedProfile = {
             ...payload.new,
             favorite_songs: payload.new.favorite_songs as any[] | null
           } as Profile;
           setProfile(updatedProfile);
-          
-          // Update avatar URL if changed
+
           if (updatedProfile.avatar_url) {
             const { data: urlData } = supabase.storage
               .from('profile-images')
@@ -114,6 +130,8 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
       .subscribe();
 
     return () => {
+      cancelled = true;
+      clearTimeout(retryTimer);
       supabase.removeChannel(channel);
     };
   }, [userId]);
@@ -193,7 +211,36 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
     return labels[key] || status;
   };
 
-  if (!profile) return null;
+  // Mentre il profilo carica, mostra comunque il pannello (scheletro): così
+  // non "sparisce" mai dalla home.
+  if (!profile) {
+    return (
+      <Card className="overflow-hidden relative border-0 shadow-xl bg-gradient-to-br from-white/90 to-white/70 dark:from-gray-900/90 dark:to-gray-900/70 backdrop-blur-sm">
+        <div
+          className="absolute inset-0 w-full h-full"
+          style={{
+            backgroundImage: `url(${profileBackground})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            opacity: 0.15,
+          }}
+        />
+        <CardContent className="p-8 relative z-10">
+          <div className="flex flex-col items-center text-center space-y-6">
+            <div className="h-36 w-36 rounded-full bg-muted/60 animate-pulse" />
+            <div className="h-8 w-40 rounded-lg bg-muted/60 animate-pulse" />
+            <Button
+              onClick={() => navigate("/profile/edit")}
+              className="w-full mt-4 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border-0"
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              {t("dashboard.editProfile")}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const favoriteSongs = profile.favorite_songs 
     ? (typeof profile.favorite_songs === 'string' 
