@@ -227,6 +227,45 @@ export type Database = {
         }
         Relationships: []
       }
+      email_templates_backup_20260517: {
+        Row: {
+          backed_up_at: string | null
+          created_at: string | null
+          default_html_content: string | null
+          description: string | null
+          html_content: string | null
+          id: string | null
+          subject: string | null
+          template_key: string | null
+          template_name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          created_at?: string | null
+          default_html_content?: string | null
+          description?: string | null
+          html_content?: string | null
+          id?: string | null
+          subject?: string | null
+          template_key?: string | null
+          template_name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          created_at?: string | null
+          default_html_content?: string | null
+          description?: string | null
+          html_content?: string | null
+          id?: string | null
+          subject?: string | null
+          template_key?: string | null
+          template_name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       hidden_matches: {
         Row: {
           hidden_at: string
@@ -537,6 +576,8 @@ export type Database = {
           birthdate_locked: boolean | null
           city: string | null
           created_at: string
+          email_like_notifications: boolean
+          email_message_notifications: boolean
           favorite_songs: Json | null
           full_name: string
           game_elo: number | null
@@ -568,6 +609,8 @@ export type Database = {
           birthdate_locked?: boolean | null
           city?: string | null
           created_at?: string
+          email_like_notifications?: boolean
+          email_message_notifications?: boolean
           favorite_songs?: Json | null
           full_name: string
           game_elo?: number | null
@@ -599,6 +642,8 @@ export type Database = {
           birthdate_locked?: boolean | null
           city?: string | null
           created_at?: string
+          email_like_notifications?: boolean
+          email_message_notifications?: boolean
           favorite_songs?: Json | null
           full_name?: string
           game_elo?: number | null
@@ -1071,6 +1116,10 @@ export type Database = {
       }
       is_user_blocked: {
         Args: { user1_id: string; user2_id: string }
+        Returns: boolean
+      }
+      lc_is_offline_for_email: {
+        Args: { _offline_after?: string; _profile_id: string }
         Returns: boolean
       }
       like_with_credits: {
