@@ -364,8 +364,15 @@ const Chat = () => {
 
     initChat();
 
+    // Rete di sicurezza: non lasciare la chat bloccata sul caricamento.
+    const loadingSafety = setTimeout(() => {
+      setLoading(false);
+      setIsLoadingHistory(false);
+    }, 6000);
+
     return () => {
       cancelled = true;
+      clearTimeout(loadingSafety);
       if (channel) {
         console.log('[Chat] removing channel');
         supabase.removeChannel(channel);

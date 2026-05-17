@@ -333,10 +333,9 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
         }
       }
 
-      // 3) Navigate to /matches — the chat is already created and visible there.
-      // The user can then tap it to enter (avoids the stuck-loading issue on direct /chat/:id nav).
+      // 3) Vai direttamente alla chat appena creata o risolta.
       setShowChatConfirmation(false);
-      navigate('/matches');
+      navigate(`/chat/${matchId}`);
     } catch (err: any) {
       console.error('handleConfirmChat error:', err);
       toast({
