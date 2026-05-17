@@ -37,7 +37,7 @@ const Sfida = () => {
                 Sfida
               </h1>
               <p className="text-xs md:text-sm text-muted-foreground">
-                Gioca a Tris o Dama e scala la classifica
+                Gioca e scala la classifica
               </p>
             </div>
           </div>
