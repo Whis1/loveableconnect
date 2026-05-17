@@ -333,9 +333,20 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
         }
       }
 
-      // 3) Vai direttamente alla chat appena creata o risolta.
+      // 3) Vai direttamente alla chat: passo il profilo così si apre subito,
+      //    senza aspettare query lato pagina chat.
       setShowChatConfirmation(false);
-      navigate(`/chat/${matchId}`);
+      navigate(`/chat/${matchId}`, {
+        state: {
+          otherUserProfile: {
+            id: profile.id,
+            nickname: profile.nickname,
+            full_name: profile.full_name,
+            avatar_url: profile.avatar_url,
+            is_admin_profile: (profile as { is_admin_profile?: boolean }).is_admin_profile,
+          },
+        },
+      });
     } catch (err: any) {
       console.error('handleConfirmChat error:', err);
       toast({

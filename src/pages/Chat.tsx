@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +50,7 @@ interface Profile {
 const Chat = () => {
   const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { t } = useTranslation();
   const [currentUser, setCurrentUser] = useState<string | null>(null);
@@ -135,6 +136,36 @@ const Chat = () => {
 
   // (matchId is the only source of truth — provided by the URL.)
 
+  // Se la chat è aperta dalla bacheca profili, il profilo dell'altro utente è
+  // già disponibile: mostralo subito, senza aspettare le query.
+  useEffect(() => {
+    const passed = (location.state as {
+      otherUserProfile?: {
+        id: string;
+        nickname?: string;
+        full_name?: string;
+        avatar_url?: string | null;
+        is_admin_profile?: boolean;
+      };
+    } | null)?.otherUserProfile;
+    if (passed?.id) {
+      setOtherUser({
+        id: passed.id,
+        full_name: passed.full_name ?? passed.nickname ?? "",
+        nickname: passed.nickname ?? "",
+        is_admin_profile: !!passed.is_admin_profile,
+        avatar_url: passed.avatar_url
+          ? (/^https?:\/\//.test(passed.avatar_url)
+              ? passed.avatar_url
+              : supabase.storage.from("profile-images").getPublicUrl(passed.avatar_url).data.publicUrl)
+          : null,
+      });
+      setOtherUserOnlineStatus({ isOnline: !!passed.is_admin_profile, showStatus: true });
+      setLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
     let cancelled = false;
@@ -189,7 +220,6 @@ const Chat = () => {
             description: t("chat.matchNotFound"),
             variant: "destructive",
           });
-          navigate("/matches");
           return;
         }
 
@@ -213,7 +243,6 @@ const Chat = () => {
             description: t("chat.profileNotFound"),
             variant: "destructive",
           });
-          navigate("/matches");
           return;
         }
 
