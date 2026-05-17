@@ -391,7 +391,7 @@ const TermsAndConditions = () => {
                     <h3 className="text-lg font-semibold">8. MINIGAME E CLASSIFICA</h3>
                     <p className="font-semibold">Funzionamento dei minigame</p>
                     <p>
-                      All'interno del sito LoveableConnect sono disponibili minigame come Tris, Dama e Conquistatior. Partecipando a queste sfide, gli utenti possono guadagnare crediti e punti ELO.
+                      All'interno del sito LoveableConnect sono disponibili minigame come Tris e Dama. Partecipando a queste sfide, gli utenti possono guadagnare crediti e punti ELO.
                     </p>
                     <ul className="list-disc list-inside space-y-2 pl-4">
                       <li><strong>Vittoria:</strong> +6 crediti e +20 punti ELO</li>

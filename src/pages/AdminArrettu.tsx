@@ -9,9 +9,8 @@ import { UserCreditsManager } from "@/components/admin/UserCreditsManager";
 import { UserBanManager } from "@/components/admin/UserBanManager";
 import { UserReportsMonitor } from "@/components/admin/UserReportsMonitor";
 import { BannerManager } from "@/components/admin/BannerManager";
-import { TerritoryConnectionsManager } from "@/components/admin/TerritoryConnectionsManager";
 import { EmailTemplateManager } from "@/components/admin/EmailTemplateManager";
-import { Shield, LogOut, MessageSquare, UserPlus, Map, Mail, Megaphone } from "lucide-react";
+import { Shield, LogOut, MessageSquare, UserPlus, Mail, Megaphone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -23,7 +22,6 @@ export default function AdminArrettu() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
-  const [risikoDialogOpen, setRisikoDialogOpen] = useState(false);
   const [inboxAllDialogOpen, setInboxAllDialogOpen] = useState(false);
   const [broadcastMessage, setBroadcastMessage] = useState("");
   const [sendingBroadcast, setSendingBroadcast] = useState(false);
@@ -195,20 +193,6 @@ export default function AdminArrettu() {
               <MessageSquare className="h-5 w-5 mr-2" />
               Supporto Clienti
             </Button>
-            <Dialog open={risikoDialogOpen} onOpenChange={setRisikoDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Map className="h-5 w-5 mr-2" />
-                  Conquistiator
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-6xl max-h-[90vh]">
-                <DialogHeader>
-                  <DialogTitle>Gestione Territori Conquistiator</DialogTitle>
-                </DialogHeader>
-                <TerritoryConnectionsManager />
-              </DialogContent>
-            </Dialog>
             <Dialog open={inboxAllDialogOpen} onOpenChange={setInboxAllDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline">
