@@ -454,27 +454,16 @@ export const SupportChatMonitor = () => {
     setNewMessage("");
 
     try {
-      // Invio tramite edge function (gira lato server, evita i blocchi di sicurezza).
-      const { data, error } = await supabase.functions.invoke('admin-send-support-message', {
-        body: {
-          userId: selectedUserId,
-          userEmail: selectedConv.user_email,
+      // Inserimento diretto: il database ora consente le risposte di supporto.
+      const { error } = await supabase
+        .from('support_messages')
+        .insert({
+          user_id: selectedUserId,
+          user_email: selectedConv.user_email,
           message: messageToSend,
-        },
-      });
-
-      if (error || !data?.success) {
-        // Ripiego: inserimento diretto (se la edge function non è ancora disponibile).
-        const { error: insertError } = await supabase
-          .from('support_messages')
-          .insert({
-            user_id: selectedUserId,
-            user_email: selectedConv.user_email,
-            message: messageToSend,
-            is_admin_response: true,
-          });
-        if (insertError) throw insertError;
-      }
+          is_admin_response: true,
+        });
+      if (error) throw error;
 
       await fetchMessages(selectedUserId);
       fetchConversations();
@@ -482,14 +471,14 @@ export const SupportChatMonitor = () => {
         title: "Risposta inviata",
         description: "La tua risposta è stata inviata all'utente",
       });
-    } catch (error) {
-      console.error('Error sending message:', error);
+    } catch (error: any) {
+      console.error('Error sending support message:', error);
       // Rimuovi il messaggio temporaneo e ripristina il testo.
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
       setNewMessage(messageToSend);
       toast({
         title: "Errore",
-        description: "Impossibile inviare la risposta",
+        description: error?.message || error?.error_description || "Impossibile inviare la risposta",
         variant: "destructive",
       });
     } finally {
