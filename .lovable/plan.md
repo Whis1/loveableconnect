@@ -1,69 +1,87 @@
+# Hardening sicurezza flussi Stripe
 
+Obiettivo: rendere i pagamenti e gli abbonamenti affidabili e a prova di manomissione, e garantire l'accredito anche se l'utente non torna alla pagina di success.
 
-## Diagnosi vera (finalmente)
+## Cosa cambia (in breve, non tecnico)
 
-Ho trovato la causa reale del loop di caricamento. Non è il bootstrap, non è l'RPC, non sono i crediti. È un problema **di routing**.
+- Quando un utente paga, l'app verifica che la sessione di pagamento appartenga **davvero** a lui (no furti di sessione).
+- I crediti e gli abbonamenti vengono accreditati anche se l'utente chiude la pagina dopo il pagamento, grazie a un **webhook Stripe**.
+- Errori di scrittura sul database non vengono più ignorati: se qualcosa non va, l'operazione fallisce in modo visibile.
+- Quando si attiva un abbonamento, il record dei crediti utente viene **creato se manca** (upsert).
+- I metadati `user_id` vengono salvati anche sul `PaymentIntent` e sulla `Subscription` (non solo sulla Session), così il webhook può sempre risalire all'utente.
+- Il vincolo sui tipi di prodotto in `purchases` è già corretto: nessuna migrazione necessaria per quel punto.
 
-In `src/components/AnimatedRoutes.tsx`:
-```tsx
-<Routes location={location} key={location.pathname}>
-```
+## Modifiche per file
 
-Il `key={location.pathname}` significa: **ogni volta che cambia la URL, AnimatePresence smonta e rimonta TUTTA la pagina**.
+### 1. `purchase-credits/index.ts`
+- Aggiungere `metadata` anche su `payment_intent_data` (oltre alla session).
+- Verificare l'`error` di insert sulla riga `purchases` e fallire se presente.
+- Mantenere `user_id`, `package_type`, `credits_amount` nei metadata della session.
 
-Cosa succede oggi quando l'utente clicca "Conferma":
-1. `ProfileGridCard` → `navigate('/chat/new/:otherUserId')` → Chat si monta
-2. `initChat` chiama l'RPC, ottiene `matchId`, fa `window.history.replaceState('/chat/:matchId')` per "evitare il rimount"
-3. **Ma `replaceState` NON aggiorna `location.pathname` di React Router** → React Router pensa ancora di essere su `/chat/new/:otherUserId`
-4. Le query partono, completano, settano `otherUser`, `messages`, etc.
-5. **Problema**: qualunque cosa successivamente provochi un re-render dei `Routes` con la `location` aggiornata (focus, hot reload, qualsiasi `useLocation` che cambia, o un secondo navigate) fa scattare il rimount → tutto lo stato della chat viene buttato → ricomincia da zero → loop.
-6. Inoltre, se la sessione auth fa un refresh durante il bootstrap, `initChat` può vedere risultati inconsistenti.
+### 2. `verify-payment/index.ts`
+- Recuperare la session ed esigere `session.metadata.user_id === user.id` (oltre al filtro `eq("user_id", user.id)` sulla query). Se non combacia → 403.
+- Controllare gli errori di `update` su `purchases` e `update/insert` su `user_credits` e `credit_transactions`.
+- Sostituire il blocco update-or-insert su `user_credits` con un **upsert** atomico.
 
-A peggiorare: oggi `Chat.tsx` ha 2 effetti collegati a `matchId`/`otherUserId` (riga 228 e 232) e il componente esiste sia come `/chat/new/:otherUserId` che `/chat/:matchId` — due route distinte → garantito un rimount appena qualcosa "sincronizza" la URL.
+### 3. `subscribe-premium/index.ts`
+- Aggiungere `subscription_data.metadata` con `user_id`, `subscription_type`, `tier`, così il webhook può accreditare via `invoice.paid` futuri.
+- Controllare l'errore dell'`upsert` su `user_credits` (per `stripe_customer_id`).
 
-## Piano: ricominciare da zero, super semplice
+### 4. `verify-subscription/index.ts`
+- Esigere `session.metadata.user_id === user.id` → 403 se non combacia.
+- Convertire l'`update` su `user_credits` in **upsert** (`onConflict: "user_id"`) per coprire utenti senza riga preesistente.
+- Verificare errori su `upsert` e `insert` (`purchases`).
+- Idempotenza: se esiste già un `purchases` con `stripe_session_id` = session.id e `status = 'completed'`, ritornare success senza riapplicare.
 
-Obiettivo dichiarato dall'utente:
-> "Un pulsante che se cliccato scala quei tot crediti e reindirizza alla chat con quel profilo per poter chattare."
+### 5. `verify-gift-subscription/index.ts`
+- Esigere che `session.metadata.gift_sender_id === user.id` (il chiamante deve essere il mittente del regalo).
+- Idempotenza come sopra (controllo su `purchases.stripe_session_id`).
+- Verificare errori su `update`/`insert`.
 
-### 1. Spostare la creazione del match PRIMA della navigazione
-In `src/components/ProfileGridCard.tsx`, dentro `handleConfirmChat`:
-- Mostrare un piccolo spinner sul bottone Conferma (max 1-2s)
-- Chiamare `supabase.rpc('get_or_create_direct_chat', { _other_user_id: profile.id })` — ritorna subito `match_id`
-- Chiamare in background `consume_free_chat` o `deduct_credits` (non bloccante)
-- `navigate('/chat/<match_id>')` — **direttamente con il vero matchId**, senza passare da `/chat/new/...`
-- Eliminato totalmente lo step "redirect, poi risolvi, poi sostituisci URL"
+### 6. Nuovo: `stripe-webhook/index.ts`
+- Edge function pubblica (`verify_jwt = false` via `supabase/config.toml`).
+- Verifica firma con `STRIPE_WEBHOOK_SECRET` (nuovo secret da aggiungere).
+- Gestisce gli eventi:
+  - `checkout.session.completed` → per `mode = payment` accredita i crediti (stessa logica di `verify-payment`); per `mode = subscription` attiva il premium o il gift (stessa logica di `verify-subscription` / `verify-gift-subscription`).
+  - `invoice.paid` → ad ogni rinnovo abbonamento estende `premium_expires_at` e ricarica i crediti del piano (weekly: 40, standard monthly: 70; premium monthly: illimitato → nessun reset balance).
+  - `customer.subscription.deleted` → segna `is_premium = false`, `subscription_type = 'none'`.
+- Tutta la scrittura usa **service role**, tutta la logica è **idempotente** via `stripe_session_id` / `stripe_subscription_id`.
+- Risale all'utente leggendo `metadata.user_id` da session/subscription (per questo serve il punto sui metadata propagati).
 
-Risultato: la pagina Chat si monta UNA volta, con il `matchId` corretto già nei params. Niente `replaceState`, niente rimount.
+## Dettagli tecnici
 
-### 2. Semplificare `src/pages/Chat.tsx`
-- Rimuovere tutto il path `/chat/new/:otherUserId`: la pagina si occupa SOLO di una chat con `matchId` già esistente
-- Rimuovere `resolveOrCreateDirectChat`, `resolveDirectChatSettlement`, `settleDirectChatCost`, `withTimeout` — non servono più qui
-- `initChat` diventa lineare e veloce:
-  1. `supabase.auth.getSession()` (con guard se manca)
-  2. `Promise.all`: profilo altro utente + status block + ultimi 200 messaggi + avatar mio
-  3. Set state, `setLoading(false)`
-  4. Subscribe realtime
-- Niente `window.history.replaceState`, niente settlement in background dentro Chat
-- Effect dipende SOLO da `matchId`
+### Nuovo secret richiesto
+- `STRIPE_WEBHOOK_SECRET` (firma webhook Stripe — formato `whsec_...`). Sarà aggiunto via `add_secret` dopo l'approvazione.
 
-### 3. Aggiornare il route
-In `src/components/AnimatedRoutes.tsx`:
-- Rimuovere la route `'/chat/new/:otherUserId'`
-- Lasciare solo `'/chat/:matchId'`
-- (Lasciamo il `key={location.pathname}` perché ora la URL non cambia più dopo il mount)
+### Configurazione lato Stripe (passi manuali per te dopo il deploy)
+1. Dashboard Stripe → Developers → Webhooks → Add endpoint.
+2. URL: `https://tcmhvrlsaggyuukdscue.supabase.co/functions/v1/stripe-webhook`.
+3. Eventi: `checkout.session.completed`, `invoice.paid`, `customer.subscription.deleted`.
+4. Copia il *Signing secret* e incollalo come `STRIPE_WEBHOOK_SECRET`.
 
-### 4. Gestione errori chiara
-Se l'RPC fallisce o crediti insufficienti, l'utente RESTA sulla card con un toast — non viene mai mandato in una chat "vuota in caricamento".
+### Migration database
+- Nessuna migration necessaria sui constraint (già allineati). Solo eventuale aggiunta di un indice unico su `purchases.stripe_session_id` per garantire idempotenza pulita:
+  ```text
+  CREATE UNIQUE INDEX IF NOT EXISTS purchases_stripe_session_id_key
+    ON public.purchases (stripe_session_id)
+    WHERE stripe_session_id IS NOT NULL;
+  ```
 
-## File coinvolti
-- `src/components/ProfileGridCard.tsx` — `handleConfirmChat` esegue RPC + deduct, poi naviga
-- `src/pages/Chat.tsx` — semplificare, una sola modalità (matchId)
-- `src/components/AnimatedRoutes.tsx` — rimuovere route `/chat/new/...`
+### Configurazione `supabase/config.toml`
+- Aggiungere blocco per la nuova funzione:
+  ```text
+  [functions.stripe-webhook]
+  verify_jwt = false
+  ```
 
-## Perché stavolta funziona
-- La pagina Chat si monta una volta sola, con il matchId reale
-- Niente trucchi `replaceState` che confondono React Router
-- Niente effetti che si rieseguono per dipendenze instabili
-- Il "caricamento infinito" sparisce perché non c'è più niente da risolvere lato Chat: il match esiste già quando arrivi
+## Ordine di esecuzione
+1. Migration: indice unico su `purchases.stripe_session_id`.
+2. Modifiche alle 5 edge function esistenti.
+3. Creazione `stripe-webhook` + aggiornamento `config.toml`.
+4. Richiesta del secret `STRIPE_WEBHOOK_SECRET`.
+5. Tu configuri l'endpoint webhook su Stripe Dashboard e incolli il secret.
 
+## Cosa NON viene toccato
+- Logica di calcolo crediti/like/chat per piano (resta come oggi).
+- Template email (continuano a funzionare).
+- Front-end (Credits, PremiumSuccess, PurchaseSuccess, gift): nessuna modifica necessaria — la verify-* resta come fallback "veloce" lato client, il webhook è la rete di sicurezza.
