@@ -84,7 +84,7 @@ export const SupportChatMonitor = () => {
         if (!acc[msg.user_id]) {
           acc[msg.user_id] = {
             user_id: msg.user_id,
-            user_email: msg.user_email,
+            user_email: msg.user_email || '',
             nickname: msg.profiles?.nickname || 'N/A',
             unread_count: 0,
             last_message: msg.message,
@@ -203,7 +203,7 @@ export const SupportChatMonitor = () => {
         .from('support_messages')
         .insert({
           user_id: msg.user_id,
-          user_email: msg.user_email,
+          user_email: msg.user_email || '',
           message: `✅ La tua richiesta di cambio location a "${msg.request_data.city}" è stata approvata!`,
           is_admin_response: true,
         });
@@ -242,7 +242,7 @@ export const SupportChatMonitor = () => {
         .from('support_messages')
         .insert({
           user_id: msg.user_id,
-          user_email: msg.user_email,
+          user_email: msg.user_email || '',
           message: `❌ La tua richiesta di cambio location è stata rifiutata. Per maggiori informazioni contatta il supporto.`,
           is_admin_response: true,
         });
@@ -299,7 +299,7 @@ export const SupportChatMonitor = () => {
         .from('support_messages')
         .insert({
           user_id: msg.user_id,
-          user_email: msg.user_email,
+          user_email: msg.user_email || '',
           message: `✅ La tua richiesta di cambio data di nascita a "${formattedDate}" è stata approvata!`,
           is_admin_response: true,
         });
@@ -338,7 +338,7 @@ export const SupportChatMonitor = () => {
         .from('support_messages')
         .insert({
           user_id: msg.user_id,
-          user_email: msg.user_email,
+          user_email: msg.user_email || '',
           message: `❌ La tua richiesta di cambio data di nascita è stata rifiutata. Per maggiori informazioni contatta il supporto.`,
           is_admin_response: true,
         });
@@ -409,7 +409,7 @@ export const SupportChatMonitor = () => {
         .from('support_messages')
         .insert({
           user_id: msg.user_id,
-          user_email: msg.user_email,
+          user_email: msg.user_email || '',
           message: `❌ La tua richiesta di eliminazione account è stata rifiutata. Per maggiori informazioni contatta il supporto.`,
           is_admin_response: true,
         });
@@ -444,7 +444,7 @@ export const SupportChatMonitor = () => {
     const tempMsg: SupportMessage = {
       id: tempId,
       user_id: selectedUserId,
-      user_email: selectedConv.user_email,
+      user_email: selectedConv.user_email || '',
       message: messageToSend,
       is_admin_response: true,
       created_at: new Date().toISOString(),
@@ -459,7 +459,7 @@ export const SupportChatMonitor = () => {
         .from('support_messages')
         .insert({
           user_id: selectedUserId,
-          user_email: selectedConv.user_email,
+          user_email: selectedConv.user_email || '',
           message: messageToSend,
           is_admin_response: true,
         });
