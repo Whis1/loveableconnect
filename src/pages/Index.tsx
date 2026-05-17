@@ -7,12 +7,16 @@ import { useProfiles } from "@/hooks/useProfiles";
 import { useLikes } from "@/hooks/useLikes";
 import { useCredits } from "@/hooks/useCredits";
 import { useDailyLikes } from "@/hooks/useDailyLikes";
+import { getStoredUserId } from "@/lib/storedSession";
 
 const Index = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Controlla subito (in modo sincrono) se c'è una sessione salvata: così la
+  // home appare all'istante, senza aspettare getSession() che può bloccarsi.
+  const [hasStoredSession] = useState(() => getStoredUserId() !== null);
+  const [loading, setLoading] = useState(!hasStoredSession);
+  const [isAuthenticated, setIsAuthenticated] = useState(hasStoredSession);
 
   useEffect(() => {
     let lastUpdateTime = 0;

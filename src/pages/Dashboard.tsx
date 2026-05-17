@@ -16,6 +16,7 @@ import { GeolocationBanner } from "@/components/GeolocationBanner";
 
 import { InboxDropdown } from "@/components/InboxDropdown";
 import { Tutorial } from "@/components/Tutorial";
+import { getStoredUserId } from "@/lib/storedSession";
 import loveIcon from "@/assets/love-icon.png";
 interface Profile {
   id: string;
@@ -40,7 +41,10 @@ const Dashboard = () => {
     t
   } = useTranslation();
   useBanCheck(); // Check if user is banned
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    const id = getStoredUserId();
+    return id ? ({ id } as User) : null;
+  });
   const [profile, setProfile] = useState<Profile | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
