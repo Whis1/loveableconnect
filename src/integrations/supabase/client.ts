@@ -13,5 +13,10 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
+    // MODIFICA MANUALE: lock "no-op". Il lock predefinito (Web Locks API) poteva
+    // bloccarsi e lasciare query/sessione in attesa per minuti durante la
+    // navigazione tra le pagine. Eseguendo l'operazione direttamente il
+    // problema sparisce.
+    lock: (_name: string, _acquireTimeout: number, fn: () => Promise<unknown>) => fn(),
   }
 });
