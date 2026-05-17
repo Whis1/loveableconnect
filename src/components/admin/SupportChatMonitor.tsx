@@ -435,42 +435,58 @@ export const SupportChatMonitor = () => {
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedUserId) return;
 
+    const selectedConv = conversations.find(c => c.user_id === selectedUserId);
+    if (!selectedConv) return;
+
     setLoading(true);
+    const tempId = `temp-${Date.now()}`;
+    const messageToSend = newMessage;
+    const tempMsg: SupportMessage = {
+      id: tempId,
+      user_id: selectedUserId,
+      user_email: selectedConv.user_email,
+      message: messageToSend,
+      is_admin_response: true,
+      created_at: new Date().toISOString(),
+      read: true,
+    };
+    setMessages((prev) => [...prev, tempMsg]);
+    setNewMessage("");
+
     try {
-      const selectedConv = conversations.find(c => c.user_id === selectedUserId);
-      if (!selectedConv) return;
+      // Invio tramite edge function (gira lato server, evita i blocchi di sicurezza).
+      const { data, error } = await supabase.functions.invoke('admin-send-support-message', {
+        body: {
+          userId: selectedUserId,
+          userEmail: selectedConv.user_email,
+          message: messageToSend,
+        },
+      });
 
-      // Optimistic UI update
-      const tempMsg: SupportMessage = {
-        id: `temp-${Date.now()}`,
-        user_id: selectedUserId,
-        user_email: selectedConv.user_email,
-        message: newMessage,
-        is_admin_response: true,
-        created_at: new Date().toISOString(),
-        read: true,
-      };
-      setMessages((prev) => [...prev, tempMsg]);
-      setNewMessage("");
+      if (error || !data?.success) {
+        // Ripiego: inserimento diretto (se la edge function non è ancora disponibile).
+        const { error: insertError } = await supabase
+          .from('support_messages')
+          .insert({
+            user_id: selectedUserId,
+            user_email: selectedConv.user_email,
+            message: messageToSend,
+            is_admin_response: true,
+          });
+        if (insertError) throw insertError;
+      }
 
-      const { error } = await supabase
-        .from('support_messages')
-        .insert({
-          user_id: selectedUserId,
-          user_email: selectedConv.user_email,
-          message: tempMsg.message,
-          is_admin_response: true,
-        });
-
-      if (error) throw error;
-
-      setNewMessage("");
+      await fetchMessages(selectedUserId);
+      fetchConversations();
       toast({
         title: "Risposta inviata",
         description: "La tua risposta è stata inviata all'utente",
       });
     } catch (error) {
       console.error('Error sending message:', error);
+      // Rimuovi il messaggio temporaneo e ripristina il testo.
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      setNewMessage(messageToSend);
       toast({
         title: "Errore",
         description: "Impossibile inviare la risposta",

@@ -90,6 +90,9 @@ verify_jwt = false
 [functions.admin-delete-support-conversation]
 verify_jwt = false
 
+[functions.admin-send-support-message]
+verify_jwt = false
+
 [functions.send-confirmation-email]
 verify_jwt = false
 
