@@ -64,25 +64,51 @@ serve(async (req) => {
     const senderId = session.metadata?.gift_sender_id;
     if (!recipientId) throw new Error("Recipient ID not found in metadata");
 
+    // Ownership check: only the gift sender can verify
+    if (senderId && senderId !== user.id) {
+      return new Response(
+        JSON.stringify({ error: "Session does not belong to this user" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+      );
+    }
+
+    // Idempotency
+    const { data: existingGiftPurchase } = await supabaseClient
+      .from("purchases")
+      .select("id, status")
+      .eq("stripe_session_id", session_id)
+      .maybeSingle();
+    if (existingGiftPurchase && existingGiftPurchase.status === "completed") {
+      return new Response(
+        JSON.stringify({ success: true, premium_active: true, is_gift: true, message: "Already processed" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
+
     logStep("Gift metadata found", { recipientId, senderId });
 
     const subscriptionId = session.subscription as string;
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     logStep("Subscription retrieved", { subscriptionId });
 
-    // Aggiorna il destinatario con Premium
+    // Aggiorna il destinatario con Premium mensile illimitato
     const updateData: any = {
+      user_id: recipientId,
       is_premium: true,
       premium_expires_at: new Date(subscription.current_period_end * 1000).toISOString(),
       stripe_subscription_id: subscriptionId,
       subscription_type: "monthly",
+      premium_tier: "premium",
+      balance: 999999,
+      daily_likes_remaining: 999999,
+      daily_free_chats_remaining: 999999,
+      credits_depleted_at: null,
       updated_at: new Date().toISOString(),
     };
 
     const { error: updateError } = await supabaseClient
       .from("user_credits")
-      .update(updateData)
-      .eq("user_id", recipientId);
+      .upsert(updateData, { onConflict: "user_id" });
 
     if (updateError) {
       logStep("ERROR updating recipient credits", { error: updateError });
@@ -106,7 +132,7 @@ serve(async (req) => {
     }
 
     // Crea record purchase
-    await supabaseClient.from("purchases").insert({
+    const { error: giftPurchaseErr } = await supabaseClient.from("purchases").insert({
       user_id: senderId || user.id,
       product_type: "gift_premium_monthly",
       amount_cents: session.amount_total || 29999,
@@ -116,6 +142,10 @@ serve(async (req) => {
       status: "completed",
       completed_at: new Date().toISOString(),
     });
+    if (giftPurchaseErr && !String(giftPurchaseErr.message || "").includes("duplicate")) {
+      logStep("ERROR inserting gift purchase", { error: giftPurchaseErr });
+      throw giftPurchaseErr;
+    }
 
     logStep("Purchase record created");
 
