@@ -77,10 +77,17 @@ serve(async (req) => {
         package_type,
         credits_amount: packageInfo.credits.toString(),
       },
+      payment_intent_data: {
+        metadata: {
+          user_id: user.id,
+          package_type,
+          credits_amount: packageInfo.credits.toString(),
+        },
+      },
     });
 
     // Create pending purchase record
-    await supabaseClient.from("purchases").insert({
+    const { error: insertError } = await supabaseClient.from("purchases").insert({
       user_id: user.id,
       product_type: package_type,
       amount_cents: packageInfo.amount,
@@ -89,6 +96,10 @@ serve(async (req) => {
       stripe_session_id: session.id,
       status: "pending",
     });
+    if (insertError) {
+      console.error("Error inserting pending purchase:", insertError);
+      throw new Error(`Failed to record pending purchase: ${insertError.message}`);
+    }
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
