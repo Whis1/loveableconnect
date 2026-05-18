@@ -1,87 +1,102 @@
-# Hardening sicurezza flussi Stripe
+# Fix flussi Stripe — crediti, abbonamenti, regali, webhook
 
-Obiettivo: rendere i pagamenti e gli abbonamenti affidabili e a prova di manomissione, e garantire l'accredito anche se l'utente non torna alla pagina di success.
+Obiettivo: quando un utente paga, deve ricevere immediatamente e in modo affidabile esattamente il servizio acquistato, anche se chiude la pagina dopo il pagamento.
 
-## Cosa cambia (in breve, non tecnico)
+## Stato verificato
 
-- Quando un utente paga, l'app verifica che la sessione di pagamento appartenga **davvero** a lui (no furti di sessione).
-- I crediti e gli abbonamenti vengono accreditati anche se l'utente chiude la pagina dopo il pagamento, grazie a un **webhook Stripe**.
-- Errori di scrittura sul database non vengono più ignorati: se qualcosa non va, l'operazione fallisce in modo visibile.
-- Quando si attiva un abbonamento, il record dei crediti utente viene **creato se manca** (upsert).
-- I metadati `user_id` vengono salvati anche sul `PaymentIntent` e sulla `Subscription` (non solo sulla Session), così il webhook può sempre risalire all'utente.
-- Il vincolo sui tipi di prodotto in `purchases` è già corretto: nessuna migrazione necessaria per quel punto.
+- `STRIPE_SECRET_KEY` è già configurata nei secret di Lovable Cloud — punto 10 OK, nessuna azione.
+- Il vincolo `purchases.product_type` include già `credits_130`, `credits_220`, `premium_weekly`, `standard_monthly`, `gift_premium_monthly` — punto 8 OK lato DB.
+
+## Cosa cambia (linguaggio semplice)
+
+- L'app verifica che ogni sessione di pagamento appartenga davvero all'utente loggato (no scambio di sessioni).
+- Ogni errore di scrittura su crediti/abbonamenti/acquisti viene rilevato e fa fallire l'operazione invece di essere ignorato.
+- I crediti vengono accreditati subito al pagamento del pacchetto.
+- Gli abbonamenti attivano subito tutti i benefici corretti:
+  - **Platino/Standard mensile**: 70 crediti + 40 like al giorno.
+  - **Premium settimanale**: 40 crediti + 30 like + 5 chat gratis al giorno (+ trial).
+  - **Premium mensile**: illimitato (nessun reset balance, like a 999999, nessun limite chat).
+- Un nuovo **webhook Stripe** garantisce l'accredito anche se l'utente non torna alla pagina di success.
 
 ## Modifiche per file
 
-### 1. `purchase-credits/index.ts`
-- Aggiungere `metadata` anche su `payment_intent_data` (oltre alla session).
-- Verificare l'`error` di insert sulla riga `purchases` e fallire se presente.
-- Mantenere `user_id`, `package_type`, `credits_amount` nei metadata della session.
+### 1. `supabase/functions/purchase-credits/index.ts`
+- Mantiene `metadata.user_id` sulla session.
+- Aggiunge `payment_intent_data.metadata` con `user_id`, `package_type`, `credits_amount` (per il webhook).
+- Verifica l'errore della insert su `purchases` (pending) e fallisce se non riesce.
+- Usa **service role** (è già così di fatto perché scrive su `purchases` — già OK; resto invariato).
 
-### 2. `verify-payment/index.ts`
-- Recuperare la session ed esigere `session.metadata.user_id === user.id` (oltre al filtro `eq("user_id", user.id)` sulla query). Se non combacia → 403.
-- Controllare gli errori di `update` su `purchases` e `update/insert` su `user_credits` e `credit_transactions`.
-- Sostituire il blocco update-or-insert su `user_credits` con un **upsert** atomico.
+### 2. `supabase/functions/verify-payment/index.ts`
+- Richiede `session.metadata.user_id === user.id` → 403 altrimenti.
+- Sostituisce update/insert manuale su `user_credits` con un **upsert atomico** (`onConflict: "user_id"`), sommando `credits_amount` al saldo esistente in modo sicuro (rilettura prima dell'upsert).
+- Controlla TUTTI gli errori di `update`/`upsert`/`insert` (purchases, user_credits, credit_transactions) e li propaga.
+- Idempotenza già garantita dal check `status === 'completed'`.
 
-### 3. `subscribe-premium/index.ts`
-- Aggiungere `subscription_data.metadata` con `user_id`, `subscription_type`, `tier`, così il webhook può accreditare via `invoice.paid` futuri.
-- Controllare l'errore dell'`upsert` su `user_credits` (per `stripe_customer_id`).
+### 3. `supabase/functions/subscribe-premium/index.ts`
+- Aggiunge `subscription_data.metadata` con `user_id`, `subscription_type`, `tier` (così il webhook su `invoice.paid` futuri può accreditare).
+- Verifica errore dell'upsert su `user_credits` (per `stripe_customer_id`).
 
-### 4. `verify-subscription/index.ts`
-- Esigere `session.metadata.user_id === user.id` → 403 se non combacia.
-- Convertire l'`update` su `user_credits` in **upsert** (`onConflict: "user_id"`) per coprire utenti senza riga preesistente.
-- Verificare errori su `upsert` e `insert` (`purchases`).
-- Idempotenza: se esiste già un `purchases` con `stripe_session_id` = session.id e `status = 'completed'`, ritornare success senza riapplicare.
+### 4. `supabase/functions/verify-subscription/index.ts`
+- Richiede `session.metadata.user_id === user.id` → 403 altrimenti.
+- Converte l'`update` su `user_credits` in **upsert** (`onConflict: "user_id"`), così funziona anche se la riga non esiste.
+- Imposta esplicitamente i benefici per tier:
+  - weekly: balance=40, daily_likes_remaining=30, daily_free_chats_remaining=5, has_used_weekly_trial=true.
+  - monthly standard: balance=70, daily_likes_remaining=40.
+  - monthly premium: balance=999999, daily_likes_remaining=999999, daily_free_chats_remaining=999999 (illimitato dove promesso dal frontend).
+- Idempotenza: se esiste già `purchases.stripe_session_id === session.id` con `status='completed'`, ritorna success senza riapplicare.
+- Controlla tutti gli errori di upsert/insert.
 
-### 5. `verify-gift-subscription/index.ts`
-- Esigere che `session.metadata.gift_sender_id === user.id` (il chiamante deve essere il mittente del regalo).
-- Idempotenza come sopra (controllo su `purchases.stripe_session_id`).
-- Verificare errori su `update`/`insert`.
+### 5. `supabase/functions/verify-gift-subscription/index.ts`
+- Richiede `session.metadata.gift_sender_id === user.id` → 403 altrimenti.
+- Upsert (non update) su `user_credits` del destinatario con i benefici Premium mensile illimitati.
+- Imposta `premium_tier='premium'` esplicitamente (oggi manca).
+- Idempotenza tramite check su `purchases.stripe_session_id`.
+- Controlla tutti gli errori.
 
-### 6. Nuovo: `stripe-webhook/index.ts`
-- Edge function pubblica (`verify_jwt = false` via `supabase/config.toml`).
-- Verifica firma con `STRIPE_WEBHOOK_SECRET` (nuovo secret da aggiungere).
-- Gestisce gli eventi:
-  - `checkout.session.completed` → per `mode = payment` accredita i crediti (stessa logica di `verify-payment`); per `mode = subscription` attiva il premium o il gift (stessa logica di `verify-subscription` / `verify-gift-subscription`).
-  - `invoice.paid` → ad ogni rinnovo abbonamento estende `premium_expires_at` e ricarica i crediti del piano (weekly: 40, standard monthly: 70; premium monthly: illimitato → nessun reset balance).
-  - `customer.subscription.deleted` → segna `is_premium = false`, `subscription_type = 'none'`.
-- Tutta la scrittura usa **service role**, tutta la logica è **idempotente** via `stripe_session_id` / `stripe_subscription_id`.
-- Risale all'utente leggendo `metadata.user_id` da session/subscription (per questo serve il punto sui metadata propagati).
+### 6. Nuova edge function: `supabase/functions/stripe-webhook/index.ts`
+- Pubblica (`verify_jwt = false` in `supabase/config.toml`).
+- Verifica la firma con `STRIPE_WEBHOOK_SECRET` (nuovo secret da aggiungere).
+- Gestisce:
+  - **`checkout.session.completed`**:
+    - mode `payment` → stessa logica di `verify-payment` (accredita crediti, completa purchase, log transaction).
+    - mode `subscription` con `metadata.is_gift === 'true'` → stessa logica di `verify-gift-subscription`.
+    - mode `subscription` standard → stessa logica di `verify-subscription`.
+  - **`invoice.paid`** (rinnovi futuri):
+    - Estende `premium_expires_at` e ricarica i crediti del piano (weekly 40 / standard monthly 70 / premium monthly illimitato).
+  - **`customer.subscription.deleted`**:
+    - `is_premium=false`, `subscription_type='none'`, `premium_tier='none'`.
+- Tutto con **service role** e idempotente su `stripe_session_id` / `stripe_subscription_id`.
+- Risale all'utente da `metadata.user_id` (per questo i metadata sono propagati anche su `subscription_data` / `payment_intent_data`).
 
-## Dettagli tecnici
-
-### Nuovo secret richiesto
-- `STRIPE_WEBHOOK_SECRET` (firma webhook Stripe — formato `whsec_...`). Sarà aggiunto via `add_secret` dopo l'approvazione.
-
-### Configurazione lato Stripe (passi manuali per te dopo il deploy)
-1. Dashboard Stripe → Developers → Webhooks → Add endpoint.
-2. URL: `https://tcmhvrlsaggyuukdscue.supabase.co/functions/v1/stripe-webhook`.
-3. Eventi: `checkout.session.completed`, `invoice.paid`, `customer.subscription.deleted`.
-4. Copia il *Signing secret* e incollalo come `STRIPE_WEBHOOK_SECRET`.
-
-### Migration database
-- Nessuna migration necessaria sui constraint (già allineati). Solo eventuale aggiunta di un indice unico su `purchases.stripe_session_id` per garantire idempotenza pulita:
+## Migration DB
+- Aggiunta di un indice unico su `purchases.stripe_session_id` per garantire idempotenza robusta:
   ```text
   CREATE UNIQUE INDEX IF NOT EXISTS purchases_stripe_session_id_key
     ON public.purchases (stripe_session_id)
     WHERE stripe_session_id IS NOT NULL;
   ```
+- Nessuna modifica al constraint `product_type` (già completo).
 
-### Configurazione `supabase/config.toml`
-- Aggiungere blocco per la nuova funzione:
+## Configurazione richiesta
+- Aggiunta blocco in `supabase/config.toml`:
   ```text
   [functions.stripe-webhook]
   verify_jwt = false
   ```
+- Nuovo secret: **`STRIPE_WEBHOOK_SECRET`** (formato `whsec_...`). Sarà richiesto via tool dopo l'approvazione del piano.
+- Tu dovrai poi (manualmente su Stripe Dashboard):
+  1. Developers → Webhooks → Add endpoint.
+  2. URL: `https://tcmhvrlsaggyuukdscue.supabase.co/functions/v1/stripe-webhook`.
+  3. Eventi: `checkout.session.completed`, `invoice.paid`, `customer.subscription.deleted`.
+  4. Copiare il *Signing secret* e incollarlo come `STRIPE_WEBHOOK_SECRET`.
 
 ## Ordine di esecuzione
 1. Migration: indice unico su `purchases.stripe_session_id`.
 2. Modifiche alle 5 edge function esistenti.
 3. Creazione `stripe-webhook` + aggiornamento `config.toml`.
-4. Richiesta del secret `STRIPE_WEBHOOK_SECRET`.
-5. Tu configuri l'endpoint webhook su Stripe Dashboard e incolli il secret.
+4. Richiesta secret `STRIPE_WEBHOOK_SECRET`.
+5. Tu configuri l'endpoint su Stripe Dashboard.
 
 ## Cosa NON viene toccato
-- Logica di calcolo crediti/like/chat per piano (resta come oggi).
-- Template email (continuano a funzionare).
-- Front-end (Credits, PremiumSuccess, PurchaseSuccess, gift): nessuna modifica necessaria — la verify-* resta come fallback "veloce" lato client, il webhook è la rete di sicurezza.
+- Front-end (Credits, PurchaseSuccess, PremiumSuccess, gift flow): nessuna modifica — i flussi `verify-*` restano e funzionano come prima, il webhook è la rete di sicurezza.
+- Template email, logica di calcolo crediti/like esistente nelle funzioni RPC, prezzi Stripe.
