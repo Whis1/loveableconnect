@@ -34,6 +34,27 @@ serve(async (req) => {
     // Retrieve checkout session
     const session = await stripe.checkout.sessions.retrieve(session_id);
 
+    // Ownership check
+    if (session.metadata?.user_id && session.metadata.user_id !== user.id) {
+      return new Response(
+        JSON.stringify({ error: "Session does not belong to this user" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+      );
+    }
+
+    // Idempotency: already processed?
+    const { data: existingPurchase } = await supabaseClient
+      .from("purchases")
+      .select("id, status")
+      .eq("stripe_session_id", session_id)
+      .maybeSingle();
+    if (existingPurchase && existingPurchase.status === "completed") {
+      return new Response(
+        JSON.stringify({ success: true, premium_active: true, message: "Already processed" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
+
     if (session.payment_status !== "paid") {
       return new Response(
         JSON.stringify({ success: false, message: "Payment not completed" }),
