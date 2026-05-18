@@ -100,6 +100,13 @@ serve(async (req) => {
         subscription_type: subscription_type,
         tier: subscription_type === "monthly" ? tier : "none",
       },
+      subscription_data: {
+        metadata: {
+          user_id: user.id,
+          subscription_type: subscription_type,
+          tier: subscription_type === "monthly" ? tier : "none",
+        },
+      },
     };
 
     // Apply trial coupon for weekly subscription if not used yet
@@ -113,12 +120,16 @@ serve(async (req) => {
     const session = await stripe.checkout.sessions.create(sessionConfig);
 
     // Update user credits with customer ID
-    await supabaseClient
+    const { error: upsertErr } = await supabaseClient
       .from("user_credits")
       .upsert({
         user_id: user.id,
         stripe_customer_id: customerId,
       }, { onConflict: "user_id" });
+    if (upsertErr) {
+      console.error("Error upserting stripe_customer_id:", upsertErr);
+      throw new Error(`Failed to save customer id: ${upsertErr.message}`);
+    }
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -34,6 +34,27 @@ serve(async (req) => {
     // Retrieve checkout session
     const session = await stripe.checkout.sessions.retrieve(session_id);
 
+    // Ownership check
+    if (session.metadata?.user_id && session.metadata.user_id !== user.id) {
+      return new Response(
+        JSON.stringify({ error: "Session does not belong to this user" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+      );
+    }
+
+    // Idempotency: already processed?
+    const { data: existingPurchase } = await supabaseClient
+      .from("purchases")
+      .select("id, status")
+      .eq("stripe_session_id", session_id)
+      .maybeSingle();
+    if (existingPurchase && existingPurchase.status === "completed") {
+      return new Response(
+        JSON.stringify({ success: true, premium_active: true, message: "Already processed" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
+
     if (session.payment_status !== "paid") {
       return new Response(
         JSON.stringify({ success: false, message: "Payment not completed" }),
@@ -65,32 +86,38 @@ serve(async (req) => {
       initialCredits = 70;
       initialLikes = 40;
       initialFreeChats = 0;
+    } else {
+      // monthly premium → unlimited
+      initialCredits = 999999;
+      initialLikes = 999999;
+      initialFreeChats = 999999;
     }
 
     // Update user credits with premium status
     const updateData: any = {
+      user_id: user.id,
       is_premium: true,
       premium_expires_at: new Date(subscription.current_period_end * 1000).toISOString(),
       stripe_subscription_id: subscriptionId,
       subscription_type: subscriptionType,
       premium_tier: subscriptionType === "monthly" ? tier : "none",
+      balance: initialCredits,
+      daily_likes_remaining: initialLikes,
+      daily_free_chats_remaining: initialFreeChats,
+      credits_depleted_at: null,
       updated_at: new Date().toISOString(),
     };
-
     if (isWeekly) {
-      updateData.balance = initialCredits;
-      updateData.daily_likes_remaining = initialLikes;
-      updateData.daily_free_chats_remaining = initialFreeChats;
       updateData.has_used_weekly_trial = true;
-    } else if (subscriptionType === "monthly" && tier === "standard") {
-      updateData.balance = initialCredits;
-      updateData.daily_likes_remaining = initialLikes;
     }
 
-    await supabaseClient
+    const { error: upsertCreditsErr } = await supabaseClient
       .from("user_credits")
-      .update(updateData)
-      .eq("user_id", user.id);
+      .upsert(updateData, { onConflict: "user_id" });
+    if (upsertCreditsErr) {
+      console.error("Error upserting user_credits:", upsertCreditsErr);
+      throw new Error(`Failed to activate subscription: ${upsertCreditsErr.message}`);
+    }
 
     // Create purchase record with actual amount from session
     let productType = "premium_monthly";
@@ -100,7 +127,7 @@ serve(async (req) => {
       productType = "standard_monthly";
     }
     
-    await supabaseClient.from("purchases").insert({
+    const { error: purchaseInsErr } = await supabaseClient.from("purchases").insert({
       user_id: user.id,
       product_type: productType,
       amount_cents: session.amount_total || (isWeekly ? 699 : (tier === "standard" ? 6999 : 39999)),
@@ -110,6 +137,10 @@ serve(async (req) => {
       status: "completed",
       completed_at: new Date().toISOString(),
     });
+    if (purchaseInsErr && !String(purchaseInsErr.message || "").includes("duplicate")) {
+      console.error("Error inserting purchase:", purchaseInsErr);
+      throw new Error(`Failed to record purchase: ${purchaseInsErr.message}`);
+    }
 
     // Send confirmation email
     try {
