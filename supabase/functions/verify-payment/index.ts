@@ -35,6 +35,14 @@ serve(async (req) => {
     // Retrieve checkout session
     const session = await stripe.checkout.sessions.retrieve(session_id);
 
+    // Ownership check: the Checkout Session MUST belong to this user
+    if (session.metadata?.user_id && session.metadata.user_id !== user.id) {
+      return new Response(
+        JSON.stringify({ error: "Session does not belong to this user" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+      );
+    }
+
     if (session.payment_status !== "paid") {
       return new Response(
         JSON.stringify({ success: false, message: "Payment not completed" }),
@@ -68,7 +76,7 @@ serve(async (req) => {
     }
 
     // Update purchase status
-    await supabaseClient
+    const { error: updPurchaseErr } = await supabaseClient
       .from("purchases")
       .update({
         status: "completed",
@@ -76,37 +84,60 @@ serve(async (req) => {
         stripe_payment_intent_id: session.payment_intent as string,
       })
       .eq("id", purchase.id);
+    if (updPurchaseErr) {
+      console.error("Error updating purchase:", updPurchaseErr);
+      throw new Error(`Failed to mark purchase completed: ${updPurchaseErr.message}`);
+    }
 
     // Add credits to user balance
-    const { data: userCredits } = await supabaseClient
+    const { data: userCredits, error: readCreditsErr } = await supabaseClient
       .from("user_credits")
       .select("*")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
+    if (readCreditsErr) {
+      console.error("Error reading user_credits:", readCreditsErr);
+      throw new Error(`Failed to read credits: ${readCreditsErr.message}`);
+    }
 
+    let newBalance: number;
     if (userCredits) {
-      await supabaseClient
+      newBalance = (userCredits.balance ?? 0) + purchase.credits_amount;
+      const { error: updCreditsErr } = await supabaseClient
         .from("user_credits")
         .update({
-          balance: userCredits.balance + purchase.credits_amount,
+          balance: newBalance,
           updated_at: new Date().toISOString(),
         })
         .eq("user_id", user.id);
+      if (updCreditsErr) {
+        console.error("Error updating user_credits:", updCreditsErr);
+        throw new Error(`Failed to update credits: ${updCreditsErr.message}`);
+      }
     } else {
-      await supabaseClient.from("user_credits").insert({
+      newBalance = 16 + purchase.credits_amount;
+      const { error: insCreditsErr } = await supabaseClient.from("user_credits").insert({
         user_id: user.id,
-        balance: 40 + purchase.credits_amount,
+        balance: newBalance,
       });
+      if (insCreditsErr) {
+        console.error("Error inserting user_credits:", insCreditsErr);
+        throw new Error(`Failed to create credits row: ${insCreditsErr.message}`);
+      }
     }
 
     // Log transaction
-    await supabaseClient.from("credit_transactions").insert({
+    const { error: txErr } = await supabaseClient.from("credit_transactions").insert({
       user_id: user.id,
       amount: purchase.credits_amount,
       transaction_type: "purchase",
       reason: `Purchased ${purchase.credits_amount} credits`,
       order_id: purchase.id,
     });
+    if (txErr) {
+      console.error("Error inserting credit_transactions:", txErr);
+      // do not throw: credits already applied
+    }
 
     // Send confirmation email
     try {
@@ -143,7 +174,7 @@ serve(async (req) => {
                   <div style="color: #1e3a8a; font-size: 15px; line-height: 1.8;">
                     <p style="margin: 8px 0;"><strong>Crediti Acquistati:</strong> <span style="font-size: 24px; color: #3b82f6;">+${purchase.credits_amount}</span></p>
                     <p style="margin: 8px 0;"><strong>Importo Pagato:</strong> €${amountEur}</p>
-                    <p style="margin: 8px 0;"><strong>Nuovo Saldo:</strong> <span style="color: #16a34a; font-weight: 700;">${userCredits.balance + purchase.credits_amount} crediti</span></p>
+                    <p style="margin: 8px 0;"><strong>Nuovo Saldo:</strong> <span style="color: #16a34a; font-weight: 700;">${newBalance} crediti</span></p>
                     <p style="margin: 8px 0; font-size: 12px; opacity: 0.8;"><strong>ID Transazione:</strong> ${session.payment_intent}</p>
                     <p style="margin: 8px 0; font-size: 12px; opacity: 0.8;"><strong>Data:</strong> ${new Date().toLocaleDateString('it-IT')}</p>
                   </div>
