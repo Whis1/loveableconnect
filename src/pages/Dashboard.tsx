@@ -45,11 +45,48 @@ const Dashboard = () => {
     const id = getStoredUserId();
     return id ? ({ id } as User) : null;
   });
-  const [profile, setProfile] = useState<Profile | null>(null);
+
+  // Cache helpers: la dashboard si smonta quando navighi via, e si rimonta
+  // tornando indietro. Per evitare l'effetto "i pannelli appaiono dal nulla"
+  // (profile vuoto, matches=0, likes=0 finche' le query non rispondono),
+  // salviamo gli ultimi valori in localStorage e li leggiamo sincronamente
+  // al primo render. Poi le query li aggiornano in background.
+  const cachedUserId = (() => {
+    try { return getStoredUserId(); } catch { return null; }
+  })();
+  const CACHE_KEY = (k: string) => `dash_cache_v1_${cachedUserId || 'anon'}_${k}`;
+  const readCache = <T,>(key: string, fallback: T): T => {
+    try {
+      const raw = localStorage.getItem(CACHE_KEY(key));
+      return raw ? (JSON.parse(raw) as T) : fallback;
+    } catch {
+      return fallback;
+    }
+  };
+  const writeCache = (key: string, value: unknown) => {
+    try {
+      localStorage.setItem(CACHE_KEY(key), JSON.stringify(value));
+    } catch {
+      /* localStorage pieno o non disponibile: ignora */
+    }
+  };
+
+  const [profile, setProfile] = useState<Profile | null>(() =>
+    cachedUserId ? readCache<Profile | null>("profile", null) : null
+  );
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [matches, setMatches] = useState<any[]>([]);
-  const [likesReceived, setLikesReceived] = useState<any[]>([]);
+  // Se abbiamo gia' un profilo in cache, partiamo con loading=false: niente
+  // skeleton, i pannelli appaiono subito coi valori dell'ultima visita.
+  const [loading, setLoading] = useState(() => {
+    if (!cachedUserId) return true;
+    return readCache<Profile | null>("profile", null) === null;
+  });
+  const [matches, setMatches] = useState<any[]>(() =>
+    cachedUserId ? readCache<any[]>("matches", []) : []
+  );
+  const [likesReceived, setLikesReceived] = useState<any[]>(() =>
+    cachedUserId ? readCache<any[]>("likes", []) : []
+  );
   const [showGeolocationBanner, setShowGeolocationBanner] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   useEffect(() => {
@@ -110,6 +147,7 @@ const Dashboard = () => {
         return;
       }
       setProfile(profileData);
+      writeCache("profile", profileData);
 
       // Check if tutorial should be shown
       if (!profileData.tutorial_completed) {
@@ -166,8 +204,11 @@ const Dashboard = () => {
       const hiddenMatchIds = new Set((hiddenRes.data || []).map((h: any) => h.match_id));
       const visibleMatches = (matchesRes.data || []).filter((match: any) => !hiddenMatchIds.has(match.id));
       setMatches(visibleMatches);
+      writeCache("matches", visibleMatches);
 
-      setLikesReceived(likesRes.data || []);
+      const likesData = likesRes.data || [];
+      setLikesReceived(likesData);
+      writeCache("likes", likesData);
 
       // Set up realtime subscription for profile updates
       profileChannel = supabase.channel('dashboard-profile').on('postgres_changes', {
@@ -367,7 +408,7 @@ const Dashboard = () => {
       
       <div className="container mx-auto p-3 md:p-4 max-w-7xl relative z-10 pt-16 md:pt-4">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between md:justify-end items-center gap-4 md:gap-6 mb-6 md:mb-8 animate-fade-in">
+        <div className="flex flex-col md:flex-row justify-between md:justify-end items-center gap-4 md:gap-6 mb-6 md:mb-8">
           <div className="flex items-center gap-3 order-2 md:order-1">
             <img src={loveIcon} alt="Love Icon" className="h-12 w-12 md:h-14 md:w-14" />
             <div>
@@ -396,18 +437,14 @@ const Dashboard = () => {
 
         <div className="grid gap-6 lg:grid-cols-3 mb-8">
           {/* User Profile Card - Redesigned */}
-          <div id="user-profile-card" className="lg:col-span-1 animate-fade-in" style={{
-          animationDelay: '0.1s'
-        }}>
+          <div id="user-profile-card" className="lg:col-span-1">
             {user && <UserProfileCard userId={user.id} />}
           </div>
 
           {/* Stats and Messages */}
           <div className="lg:col-span-2 space-y-6">
             {/* Stats Cards - Redesigned */}
-            <div className="grid gap-4 md:grid-cols-2 animate-fade-in" style={{
-            animationDelay: '0.2s'
-          }}>
+            <div className="grid gap-4 md:grid-cols-2">
               {/* Matches Card */}
               <Card id="matches-card" className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-pink-500 to-rose-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
                 {/* Card Background */}
@@ -466,9 +503,7 @@ const Dashboard = () => {
             </div>
 
             {/* Discover and Support */}
-            <div className="grid gap-4 md:grid-cols-2 animate-fade-in" style={{
-            animationDelay: '0.3s'
-          }}>
+            <div className="grid gap-4 md:grid-cols-2">
               {/* Discover Card */}
               <Card id="discover-card" className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer" onClick={handleExploreClick}>
                 {/* Card Background */}
