@@ -12,9 +12,11 @@ import { useBanCheck } from "@/hooks/useBanCheck";
 import { ArrowLeft, MapPin, Filter, RotateCcw, Search as SearchIcon, Heart, MessageCircle } from "lucide-react";
 import { ProfileGridCard } from "@/components/ProfileGridCard";
 import { MatchBanner } from "@/components/MatchBanner";
+import { PageLoader } from "@/components/PageLoader";
 import { useTextTranslation } from "@/hooks/useTranslation";
 import { useLikes } from "@/hooks/useLikes";
 import { useProfiles } from "@/hooks/useProfiles";
+import { withFallback, withTimeout } from "@/lib/async";
 
 interface Profile {
   id: string;
@@ -52,8 +54,8 @@ const Explore = () => {
   const { t } = useTranslation();
   const { translateProfiles } = useTextTranslation();
   useBanCheck(); // Check if user is banned
-  const { likedProfileIds, loading: likesLoading } = useLikes();
-  const { profiles: cachedProfiles, loading: profilesLoading } = useProfiles();
+  const { likedProfileIds } = useLikes();
+  const { profiles: cachedProfiles } = useProfiles();
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]); // TUTTI i profili, caricati subito
   const [loading, setLoading] = useState(true);
@@ -107,9 +109,23 @@ const Explore = () => {
     "pansexual": ["pansexual", "pansessuale", "pansexuale", "pan"],
   };
 
+  // Timer indipendente per chiudere il loader della geolocalizzazione: parte
+  // sempre al montaggio del componente, non aspetta che le query Supabase
+  // tornino. Risolve il bug per cui se getSession/loadAllProfiles si
+  // piantavano, il loader restava visibile per sempre.
   useEffect(() => {
+    const t = setTimeout(() => setShowGeoLoader(false), 5000);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadingSafety = setTimeout(() => {
+      if (!cancelled) setLoading(false);
+    }, 3500);
+
     const initializeExplore = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await withTimeout(supabase.auth.getSession(), 3000);
       
       if (!session) {
         navigate("/auth");
@@ -133,10 +149,14 @@ const Explore = () => {
       setCurrentUser(session.user.id);
       
       // Pre-carica matches per performance
-      const { data: matchesData } = await supabase
-        .from("matches")
-        .select("user1_id, user2_id")
-        .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`);
+      const { data: matchesData } = await withFallback(
+        supabase
+          .from("matches")
+          .select("user1_id, user2_id")
+          .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`),
+        { data: [], error: null },
+        4500
+      );
 
       const matches = new Set(
         (matchesData || []).map(match => 
@@ -144,19 +164,24 @@ const Explore = () => {
         )
       );
       setMatchedProfileIds(matches);
+      if (!cancelled && cachedProfiles.length > 0) {
+        setProfiles((cachedProfiles as Profile[]).filter((profile) => !matches.has(profile.id)));
+        setLoading(false);
+      }
       
       // Load all profiles automatically
       await loadAllProfiles(session.user.id, matches);
-      
-      setLoading(false);
-      
-      // Show geolocation loader for 5 seconds
-      setTimeout(() => {
-        setShowGeoLoader(false);
-      }, 5000);
+
+      if (!cancelled) setLoading(false);
+      // Nota: il setTimeout per chiudere showGeoLoader e' stato spostato
+      // in un useEffect separato qui sotto, cosi' parte sempre anche se
+      // questa async function si pianta su getSession o loadAllProfiles.
     };
 
-    initializeExplore();
+    initializeExplore().catch((error) => {
+      console.error("Error initializing explore:", error);
+      if (!cancelled) setLoading(false);
+    });
 
     // Realtime subscription for profile updates
     const channel = supabase
@@ -196,9 +221,7 @@ const Explore = () => {
         },
         async (payload) => {
           // When a match is deleted, the profiles should reappear
-          if (currentUser) {
-            await loadAllProfiles(currentUser);
-          }
+          await loadAllProfiles(session.user.id);
         }
       )
       .subscribe();
@@ -218,8 +241,8 @@ const Explore = () => {
           const newMatch = payload.new as any;
           
           // Check if this match involves the current user
-          if (currentUser && (newMatch.user1_id === currentUser || newMatch.user2_id === currentUser)) {
-            const otherUserId = newMatch.user1_id === currentUser ? newMatch.user2_id : newMatch.user1_id;
+          if (newMatch.user1_id === session.user.id || newMatch.user2_id === session.user.id) {
+            const otherUserId = newMatch.user1_id === session.user.id ? newMatch.user2_id : newMatch.user1_id;
             
             if (ignoreNextRealtimeRef.current) {
               console.log('⚠️ Ignoring realtime match banner due to immediate onMatch');
@@ -253,11 +276,13 @@ const Explore = () => {
     return () => {
       supabase.removeChannel(channel);
       supabase.removeChannel(matchChannel);
+      clearTimeout(loadingSafety);
     };
-  }, [navigate, currentUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate]);
 
   const loadAllProfiles = async (userId: string, preloadedMatches?: Set<string>) => {
-    setLoading(true);
+    if (profiles.length === 0) setLoading(true);
     
     try {
       // Use preloaded matches se disponibili
@@ -265,10 +290,14 @@ const Explore = () => {
       if (preloadedMatches) {
         matchedUserIds = preloadedMatches;
       } else {
-        const { data: matchesData } = await supabase
-          .from("matches")
-          .select("user1_id, user2_id")
-          .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
+        const { data: matchesData } = await withFallback(
+          supabase
+            .from("matches")
+            .select("user1_id, user2_id")
+            .or(`user1_id.eq.${userId},user2_id.eq.${userId}`),
+          { data: [], error: null },
+          4500
+        );
 
         matchedUserIds = new Set(
           (matchesData || []).map(match => 
@@ -278,10 +307,13 @@ const Explore = () => {
         setMatchedProfileIds(matchedUserIds);
       }
 
-      const { data: profilesData, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .neq("id", userId);
+      const { data: profilesData, error } = await withTimeout(
+        supabase
+          .from("profiles")
+          .select("*")
+          .neq("id", userId),
+        6000
+      );
 
       if (error) throw error;
 
@@ -291,7 +323,11 @@ const Explore = () => {
       
       // Fetch subscription types via RPC (bypasses RLS safely)
       const profileIds = allProfiles.map(p => p.id);
-      const { data: subsData } = await supabase.rpc('get_subscription_types', { profile_ids: profileIds });
+      const { data: subsData } = await withFallback(
+        supabase.rpc('get_subscription_types', { profile_ids: profileIds }),
+        { data: [], error: null },
+        3500
+      );
       const creditsMap = new Map<string, string>((subsData || []).map((c: any) => [c.user_id, c.subscription_type]));
       
       // Sort profiles: monthly subscribers first, then admin profiles, then by last_active
@@ -319,7 +355,7 @@ const Explore = () => {
       setProfiles(allProfiles);
       
       // Pre-carica gli stati online di tutti i profili
-      await loadOnlineStatuses(allProfiles.map(p => p.id));
+      void loadOnlineStatuses(allProfiles.map(p => p.id));
     } catch (error: any) {
       toast({
         title: "Errore",
@@ -336,10 +372,14 @@ const Explore = () => {
 
     try {
       // Fetch all profiles with online status data
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('id, show_online_status, is_admin_profile, last_active, manual_online_status')
-        .in('id', profileIds);
+      const { data: profilesData } = await withFallback(
+        supabase
+          .from('profiles')
+          .select('id, show_online_status, is_admin_profile, last_active, manual_online_status')
+          .in('id', profileIds),
+        { data: [], error: null },
+        3500
+      );
 
       if (!profilesData) return;
 
@@ -392,10 +432,14 @@ const Explore = () => {
 
     try {
       // Get user's matches to exclude them
-      const { data: matchesData } = await supabase
-        .from("matches")
-        .select("user1_id, user2_id")
-        .or(`user1_id.eq.${currentUser},user2_id.eq.${currentUser}`);
+      const { data: matchesData } = await withFallback(
+        supabase
+          .from("matches")
+          .select("user1_id, user2_id")
+          .or(`user1_id.eq.${currentUser},user2_id.eq.${currentUser}`),
+        { data: [], error: null },
+        4500
+      );
 
       const matchedUserIds = new Set(
         (matchesData || []).map(match => 
@@ -424,7 +468,7 @@ const Explore = () => {
         query = query.in("sexual_orientation", orientationValues);
       }
 
-      const { data: profilesData, error } = await query;
+      const { data: profilesData, error } = await withTimeout(query, 6000);
 
       if (error) throw error;
 
@@ -434,7 +478,11 @@ const Explore = () => {
 
       // Fetch subscription types via RPC (bypasses RLS safely)
       const profileIds = filteredProfiles.map(p => p.id);
-      const { data: subsData } = await supabase.rpc('get_subscription_types', { profile_ids: profileIds });
+      const { data: subsData } = await withFallback(
+        supabase.rpc('get_subscription_types', { profile_ids: profileIds }),
+        { data: [], error: null },
+        3500
+      );
       const creditsMap = new Map<string, string>((subsData || []).map((c: any) => [c.user_id, c.subscription_type]));
       
       // Sort profiles: monthly subscribers first, then admin profiles, then by last_active
@@ -462,7 +510,7 @@ const Explore = () => {
       setProfiles(filteredProfiles);
       
       // Pre-carica gli stati online dei profili filtrati
-      await loadOnlineStatuses(filteredProfiles.map(p => p.id));
+      void loadOnlineStatuses(filteredProfiles.map(p => p.id));
     } catch (error: any) {
       toast({
         title: "Errore",
@@ -509,12 +557,8 @@ const Explore = () => {
     setMatchBanner({ show: true, userName, userAvatar });
   };
 
-  if (loading || likesLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">{t("explore.loading")}</p>
-      </div>
-    );
+  if (loading) {
+    return <PageLoader />;
   }
 
 
