@@ -1,5 +1,6 @@
 import { useState, useEffect, memo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Heart, MessageCircle, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,6 +51,7 @@ interface ProfileGridCardProps {
 
 const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, hasActiveMatch = false, onlineStatus, onLike, onMatch }: ProfileGridCardProps) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const { t } = useTranslation();
   const [isLiking, setIsLiking] = useState(false);
@@ -65,7 +67,7 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
   const { likesRemaining, resetAt } = useDailyLikes();
   const { credits } = useCredits();
   const { sendLike } = useSendLike(currentUserId);
-  const { chatsRemaining } = useWeeklyFreeChats();
+  const { chatsRemaining, consumeFreeChat } = useWeeklyFreeChats();
 
   const getGenderLabel = (gender: string | null) => {
     if (!gender) return t('common.notSpecified');
@@ -218,7 +220,7 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
   const hasPremiumDirectChat = Boolean(
     credits?.is_premium &&
     credits.subscription_type === "monthly" &&
-    credits.premium_tier === "premium" &&
+    (!credits.premium_tier || credits.premium_tier === "premium") &&
     (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date())
   );
 
@@ -296,7 +298,12 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
   const handleConfirmChat = async () => {
     if (isCreatingChat) return;
 
-    const isPremiumTier = credits?.subscription_type === 'monthly' && credits?.premium_tier === 'premium';
+    const isPremiumTier = Boolean(
+      credits?.is_premium &&
+      credits.subscription_type === 'monthly' &&
+      (!credits.premium_tier || credits.premium_tier === 'premium') &&
+      (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date())
+    );
     const isFreeChat = isPremiumTier || chatsRemaining > 0;
     const chatCostCredits = isFreeChat ? 0 : 6;
 
@@ -308,11 +315,34 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
 
     setIsCreatingChat(true);
 
+    // Helper: corre una promessa contro un timeout. Se la chiamata RPC di
+    // Supabase non risponde entro X ms (succede ogni tanto: rete lenta o
+    // function in cold start), invece di lasciare il bottone in
+    // "Caricamento..." all'infinito alziamo un errore chiaro all'utente.
+    const withTimeout = <T,>(
+      p: Promise<T>,
+      ms: number,
+      label: string
+    ): Promise<T> =>
+      Promise.race<T>([
+        p,
+        new Promise<T>((_, reject) =>
+          setTimeout(
+            () => reject(new Error(`TIMEOUT_${label}`)),
+            ms
+          )
+        ),
+      ]);
+
     try {
       // 1) Resolve or create the match BEFORE navigating
-      const { data, error } = await supabase.rpc('get_or_create_direct_chat', {
-        _other_user_id: profile.id,
-      });
+      const { data, error } = await withTimeout(
+        supabase.rpc('get_or_create_direct_chat', {
+          _other_user_id: profile.id,
+        }),
+        8000,
+        'GET_OR_CREATE_CHAT'
+      );
 
       if (error) throw error;
 
@@ -322,15 +352,47 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
 
       if (!matchId) throw new Error('Impossibile aprire la chat');
 
-      // 2) Settle the cost in the background (non-blocking)
+      // 2) Old backend compatibility: if the RPC reports a newly-created chat,
+      // settle the cost before navigation. The updated backend settles atomically
+      // and returns was_created=false to avoid double charging old clients.
       if (wasCreated) {
         if (isPremiumTier) {
           // free for premium
         } else if (chatsRemaining > 0) {
-          void supabase.rpc('consume_free_chat', { _user_id: currentUserId });
+          const freeChatResult = await consumeFreeChat();
+          if (!freeChatResult.success) {
+            if (!credits || credits.balance < 6) {
+              throw new Error('INSUFFICIENT_DIRECT_CHAT_CREDITS');
+            }
+
+            const { data: deducted, error: deductError } = await withTimeout(
+              supabase.rpc('deduct_credits', {
+                _user_id: currentUserId,
+                _amount: 6,
+              }),
+              6000,
+              'DEDUCT_CREDITS'
+            );
+
+            if (deductError) throw deductError;
+            if (!deducted) throw new Error('INSUFFICIENT_DIRECT_CHAT_CREDITS');
+          }
         } else {
-          void supabase.rpc('deduct_credits', { _user_id: currentUserId, _amount: chatCostCredits });
+          const { data: deducted, error: deductError } = await withTimeout(
+            supabase.rpc('deduct_credits', {
+              _user_id: currentUserId,
+              _amount: chatCostCredits,
+            }),
+            6000,
+            'DEDUCT_CREDITS'
+          );
+
+          if (deductError) throw deductError;
+          if (!deducted) throw new Error('INSUFFICIENT_DIRECT_CHAT_CREDITS');
         }
+
+        queryClient.invalidateQueries({ queryKey: ["user-credits"] });
+        queryClient.invalidateQueries({ queryKey: ["weekly-free-chats"] });
       }
 
       // 3) Vai direttamente alla chat: passo il profilo così si apre subito,
@@ -349,9 +411,22 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
       });
     } catch (err: any) {
       console.error('handleConfirmChat error:', err);
+      const msg = typeof err?.message === 'string' ? err.message : '';
+      let description: string;
+      if (msg === 'INSUFFICIENT_DIRECT_CHAT_CREDITS') {
+        description = 'Crediti insufficienti per aprire la chat';
+      } else if (msg.startsWith('TIMEOUT_')) {
+        // Il server non ha risposto in tempo. Niente crediti scalati
+        // (la transazione lato DB e' una sola RPC atomica), quindi
+        // l'utente puo' semplicemente riprovare.
+        description =
+          'Il server e\' lento a rispondere. Nessun credito e\' stato scalato. Riprova tra qualche secondo.';
+      } else {
+        description = msg || 'Impossibile aprire la chat';
+      }
       toast({
         title: t('common.error'),
-        description: err?.message || 'Impossibile aprire la chat',
+        description,
         variant: 'destructive',
       });
     } finally {
