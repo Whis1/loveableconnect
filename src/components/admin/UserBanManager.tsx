@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Ban, ShieldCheck, RefreshCw, Send } from "lucide-react";
+import { Search, Ban, ShieldCheck, RefreshCw, Send, AlertTriangle, EyeOff, Eye, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -24,18 +24,29 @@ export function UserBanManager() {
   const [bannedUsersMap, setBannedUsersMap] = useState<Map<string, any>>(new Map());
   const [inboxMessage, setInboxMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
+  // Profili senza account auth corrispondente (orfani): quando un account
+  // viene cancellato da Lovable Cloud (auth.users), la riga in `profiles`
+  // resta. Li individuiamo verificando in background ogni profilo con
+  // admin-get-user-details: se non torna auth_email, e' orfano.
+  const [orphanIds, setOrphanIds] = useState<Set<string>>(new Set());
+  const [orphanCheckRunning, setOrphanCheckRunning] = useState(false);
+  const [showOrphans, setShowOrphans] = useState(false);
+  const [deletingOrphan, setDeletingOrphan] = useState(false);
 
   useEffect(() => {
     loadAllUsers();
   }, []);
 
   useEffect(() => {
+    const base = showOrphans
+      ? allUsers
+      : allUsers.filter((u) => !orphanIds.has(u.id));
     if (searchQuery.trim() === "") {
-      setFilteredUsers(allUsers);
+      setFilteredUsers(base);
     } else {
       const query = searchQuery.toLowerCase();
       setFilteredUsers(
-        allUsers.filter(
+        base.filter(
           (user) =>
             user.nickname.toLowerCase().includes(query) ||
             user.full_name.toLowerCase().includes(query) ||
@@ -43,7 +54,7 @@ export function UserBanManager() {
         )
       );
     }
-  }, [searchQuery, allUsers]);
+  }, [searchQuery, allUsers, orphanIds, showOrphans]);
 
   const loadAllUsers = async () => {
     setLoading(true);
@@ -73,6 +84,8 @@ export function UserBanManager() {
       setAllUsers(profiles);
       setFilteredUsers(profiles);
       setBannedUsersMap(bannedMap);
+      // Lancia il controllo orfani in background (non blocca la UI).
+      void checkOrphans(profiles);
     } catch (error: any) {
       console.error('Error loading users:', error);
       toast({
@@ -82,6 +95,82 @@ export function UserBanManager() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Verifica quali profili non hanno piu' un account auth.users corrispondente.
+  // Fa una chiamata a admin-get-user-details per ogni profilo (in batch da 5
+  // per non saturare le edge function). I profili senza auth_email vengono
+  // marcati come orfani: nella lista vengono nascosti di default.
+  const checkOrphans = async (profiles: any[]) => {
+    if (profiles.length === 0) return;
+    setOrphanCheckRunning(true);
+    const detected = new Set<string>();
+    const BATCH_SIZE = 5;
+    try {
+      for (let i = 0; i < profiles.length; i += BATCH_SIZE) {
+        const batch = profiles.slice(i, i + BATCH_SIZE);
+        const results = await Promise.all(
+          batch.map(async (p) => {
+            try {
+              const { data, error } = await supabase.functions.invoke(
+                'admin-get-user-details',
+                { body: { user_id: p.id } }
+              );
+              if (error || !data?.success) return { id: p.id, orphan: false };
+              // auth_email mancante o vuoto = utente cancellato da auth.users
+              const hasAuth = Boolean(data?.auth_email);
+              return { id: p.id, orphan: !hasAuth };
+            } catch {
+              return { id: p.id, orphan: false };
+            }
+          })
+        );
+        results.forEach((r) => {
+          if (r.orphan) detected.add(r.id);
+        });
+      }
+      setOrphanIds(detected);
+    } finally {
+      setOrphanCheckRunning(false);
+    }
+  };
+
+  // Tenta di eliminare un profilo orfano direttamente dalla tabella profiles.
+  // Funziona solo se le RLS permettono ai admin il DELETE su profiles. In
+  // caso contrario mostra un errore chiaro: l'eliminazione definitiva andra'
+  // fatta da Lovable Cloud via SQL.
+  const handleDeleteOrphan = async () => {
+    if (!selectedUser) return;
+    if (!orphanIds.has(selectedUser.id)) return;
+    if (!confirm(`Eliminare definitivamente il profilo orfano "${selectedUser.nickname}"?`)) return;
+    setDeletingOrphan(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', selectedUser.id);
+      if (error) throw error;
+      toast({
+        title: 'Profilo eliminato',
+        description: `Il profilo orfano "${selectedUser.nickname}" e' stato rimosso dal database.`,
+      });
+      setSelectedUser(null);
+      setUserDetails(null);
+      await loadAllUsers();
+    } catch (error: any) {
+      console.error('Error deleting orphan profile:', error);
+      toast({
+        title: 'Eliminazione non riuscita',
+        description:
+          error?.message ||
+          "Impossibile eliminare il profilo. Probabilmente serve eseguire la cancellazione da Lovable Cloud (SQL): DELETE FROM profiles WHERE id = '" +
+            selectedUser.id +
+            "'",
+        variant: 'destructive',
+      });
+    } finally {
+      setDeletingOrphan(false);
     }
   };
 
@@ -248,7 +337,42 @@ export function UserBanManager() {
             <RefreshCw className="h-4 w-4 mr-2" />
             Ricarica
           </Button>
+          <Button
+            onClick={() => setShowOrphans((v) => !v)}
+            variant="outline"
+            className="mt-6"
+            title={
+              showOrphans
+                ? 'Nascondi profili senza account auth'
+                : 'Mostra anche profili senza account auth (orfani)'
+            }
+          >
+            {showOrphans ? (
+              <EyeOff className="h-4 w-4 mr-2" />
+            ) : (
+              <Eye className="h-4 w-4 mr-2" />
+            )}
+            {showOrphans ? 'Nascondi cancellati' : 'Mostra cancellati'}
+          </Button>
         </div>
+
+        {/* Riassunto orfani */}
+        {(orphanIds.size > 0 || orphanCheckRunning) && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 rounded-md px-3 py-2">
+            {orphanCheckRunning ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin flex-shrink-0" />
+            ) : (
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
+            )}
+            <span>
+              {orphanCheckRunning
+                ? 'Verifica profili in corso...'
+                : showOrphans
+                  ? `${orphanIds.size} profili orfani (senza account auth) visibili nella lista.`
+                  : `${orphanIds.size} profili orfani nascosti (account auth gia' cancellato).`}
+            </span>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Lista utenti */}
@@ -268,6 +392,7 @@ export function UserBanManager() {
                   {filteredUsers.map((user) => {
                     const isUserBanned = bannedUsersMap.has(user.id);
                     const isSelected = selectedUser?.id === user.id;
+                    const isOrphan = orphanIds.has(user.id);
                     return (
                       <div
                         key={user.id}
@@ -275,7 +400,9 @@ export function UserBanManager() {
                         className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                           isSelected
                             ? "bg-primary/10 border-primary"
-                            : "hover:bg-muted/50"
+                            : isOrphan
+                              ? "border-amber-500/40 bg-amber-500/5 hover:bg-amber-500/10"
+                              : "hover:bg-muted/50"
                         }`}
                       >
                         <div className="flex items-center gap-3">
@@ -292,6 +419,15 @@ export function UserBanManager() {
                               </p>
                               {isUserBanned && (
                                 <Ban className="h-4 w-4 text-destructive flex-shrink-0" />
+                              )}
+                              {isOrphan && (
+                                <span
+                                  className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400 flex-shrink-0"
+                                  title="Profilo senza account auth (orfano)"
+                                >
+                                  <AlertTriangle className="h-3 w-3" />
+                                  CANCELLATO
+                                </span>
                               )}
                             </div>
                             <p className="text-xs text-muted-foreground truncate">
@@ -343,6 +479,40 @@ export function UserBanManager() {
                         </div>
                       )}
                     </div>
+
+                    {orphanIds.has(selectedUser.id) && (
+                      <div className="border border-amber-500/40 bg-amber-500/10 rounded-lg p-3 space-y-2">
+                        <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                          <AlertTriangle className="h-4 w-4" />
+                          <span className="font-semibold text-sm">Profilo orfano</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          L'account auth.users di questo utente e' stato cancellato (probabilmente da
+                          Lovable Cloud), ma la riga in <code>profiles</code> e' rimasta. Puoi tentare
+                          la rimozione qui sotto. Se l'operazione non e' permessa dalle RLS, esegui
+                          su Lovable Cloud: <code>DELETE FROM profiles WHERE id = '{selectedUser.id}';</code>
+                        </p>
+                        <Button
+                          onClick={handleDeleteOrphan}
+                          disabled={deletingOrphan}
+                          variant="destructive"
+                          size="sm"
+                          className="w-full"
+                        >
+                          {deletingOrphan ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Eliminazione in corso...
+                            </>
+                          ) : (
+                            <>
+                              <Ban className="h-4 w-4 mr-2" />
+                              Elimina profilo orfano dal database
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
 
                     <div className="space-y-3 border-t pt-3">
                       <h4 className="font-semibold text-sm">Informazioni Base</h4>
