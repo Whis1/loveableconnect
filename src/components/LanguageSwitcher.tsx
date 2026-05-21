@@ -18,6 +18,12 @@ const languages = [
 ];
 
 export const LanguageSwitcher = () => {
+  // TEMPORANEAMENTE NASCOSTO: per ora il sito e' solo in italiano.
+  // Per riabilitare la selezione lingua basta rimuovere il return null
+  // qui sotto (la logica del dropdown e' lasciata intatta).
+  return null;
+
+  // eslint-disable-next-line no-unreachable
   const { i18n } = useTranslation();
 
   const changeLanguage = (lng: string) => {

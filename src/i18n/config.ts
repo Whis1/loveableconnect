@@ -1,6 +1,5 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
 
 import en from './locales/en.json';
 import it from './locales/it.json';
@@ -16,8 +15,18 @@ import interestsEs from './locales/interests_es.json';
 import interestsFr from './locales/interests_fr.json';
 import interestsAr from './locales/interests_ar.json';
 
+// Per chi avesse una lingua diversa salvata in localStorage da una visita
+// precedente: la sovrascriviamo a 'it' al volo, cosi' la pagina parte
+// sempre in italiano finche' il selettore lingua resta nascosto.
+try {
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem('i18nextLng', 'it');
+  }
+} catch {
+  /* localStorage non disponibile: ignora */
+}
+
 i18n
-  .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources: {
@@ -28,13 +37,13 @@ i18n
       fr: { translation: { ...fr, ...interestsFr } },
       ar: { translation: { ...ar, ...interestsAr } },
     },
-    fallbackLng: 'en',
+    // Lingua forzata a italiano finche' il LanguageSwitcher e' nascosto.
+    // Per riabilitare il multi-lingua: rimetti LanguageDetector e togli
+    // il blocco localStorage qui sopra.
+    lng: 'it',
+    fallbackLng: 'it',
     interpolation: {
       escapeValue: false,
-    },
-    detection: {
-      order: ['localStorage', 'navigator'],
-      caches: ['localStorage'],
     },
     react: {
       useSuspense: false,
