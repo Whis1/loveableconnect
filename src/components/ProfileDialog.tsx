@@ -347,11 +347,17 @@ export const ProfileDialog = ({
                 </div>
               </div>
 
-              {/* Location */}
-              <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                <MapPin className="h-4 w-4" />
-                <span className="text-sm">{getGenericLocationPhrase()}</span>
-              </div>
+              {/* Location: il "vicino alle tue parti" e' una frase generica
+                  pensata per quando un utente guarda IL PROFILO DI UN ALTRO.
+                  Se invece l'utente sta guardando il proprio profilo
+                  (anteprima dalla home), nascondiamo questa riga perche'
+                  e' bruttina e priva di senso ("sei vicino a te stesso?"). */}
+              {profileId !== currentUserId && (
+                <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                  <MapPin className="h-4 w-4" />
+                  <span className="text-sm">{getGenericLocationPhrase()}</span>
+                </div>
+              )}
             </div>
 
             {/* Photo Gallery */}
