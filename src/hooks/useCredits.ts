@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import { getStoredUserId } from "@/lib/storedSession";
 
 interface UserCredits {
   balance: number;
@@ -101,16 +102,28 @@ export const useCredits = () => {
 
   const deductCredits = async (): Promise<boolean> => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return false;
+      // Leggiamo l'id utente in modo SINCRONO dal localStorage invece di
+      // chiamare supabase.auth.getSession(): quella chiamata su Supabase v2
+      // ogni tanto si pianta per minuti e bloccava completamente l'invio
+      // del messaggio (il modo classico in cui si manifestava il bug era
+      // "non mi fa inviare messaggi se non ricarico la pagina").
+      const userId = getStoredUserId();
+      if (!userId) {
+        console.warn('deductCredits: nessuna sessione utente trovata in localStorage');
+        return false;
+      }
 
-      const { data, error } = await supabase.rpc("deduct_message_credits", {
-        _user_id: session.user.id,
-      });
+      // Timeout: se l'RPC non risponde entro 6 secondi, niente messaggio
+      // bloccato all'infinito. L'utente vedra' un toast e potra' riprovare.
+      const result = (await Promise.race([
+        supabase.rpc("deduct_message_credits", { _user_id: userId }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('TIMEOUT_DEDUCT_MESSAGE_CREDITS')), 6000)
+        ),
+      ])) as { data: boolean | null; error: unknown };
 
-      if (error) throw error;
-
-      if (!data) {
+      if (result.error) throw result.error;
+      if (!result.data) {
         return false;
       }
 
@@ -118,9 +131,12 @@ export const useCredits = () => {
       return true;
     } catch (error: any) {
       console.error("Error deducting credits:", error);
+      const msg = typeof error?.message === 'string' ? error.message : '';
       toast({
         title: "Errore",
-        description: "Impossibile detrarre i crediti",
+        description: msg.startsWith('TIMEOUT_')
+          ? "Il server e' lento a rispondere. Riprova tra qualche secondo."
+          : "Impossibile detrarre i crediti",
         variant: "destructive",
       });
       return false;
