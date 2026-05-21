@@ -437,7 +437,7 @@ const Dashboard = () => {
 
         <div className="grid gap-6 lg:grid-cols-3 mb-8">
           {/* User Profile Card - Redesigned */}
-          <div id="user-profile-card" className="lg:col-span-1">
+          <div id="user-profile-card" className="lg:col-span-1 h-full">
             {user && <UserProfileCard userId={user.id} />}
           </div>
 

@@ -219,7 +219,7 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
   // non "sparisce" mai dalla home.
   if (!profile) {
     return (
-      <Card className="overflow-hidden relative border-0 shadow-xl bg-gradient-to-br from-white/90 to-white/70 dark:from-gray-900/90 dark:to-gray-900/70 backdrop-blur-sm">
+      <Card className="h-full flex flex-col overflow-hidden relative border-0 shadow-xl bg-gradient-to-br from-white/90 to-white/70 dark:from-gray-900/90 dark:to-gray-900/70 backdrop-blur-sm">
         <div
           className="absolute inset-0 w-full h-full"
           style={{
@@ -229,13 +229,15 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
             opacity: 0.15,
           }}
         />
-        <CardContent className="p-8 relative z-10">
+        <CardContent className="p-8 relative z-10 flex-1 flex flex-col">
           <div className="flex flex-col items-center text-center space-y-6">
             <div className="h-36 w-36 rounded-full bg-muted/60 animate-pulse" />
             <div className="h-8 w-40 rounded-lg bg-muted/60 animate-pulse" />
+          </div>
+          <div className="flex-1 flex flex-col justify-center w-full space-y-3 pt-8">
             <Button
               onClick={() => navigate("/profile/edit")}
-              className="w-full mt-4 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border-0"
+              className="w-full bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border-0"
             >
               <Edit className="h-4 w-4 mr-2" />
               {t("dashboard.editProfile")}
@@ -250,8 +252,8 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
   // dialog "Anteprima Profilo" che riusa ProfileDialog.
 
   return (
-    <Card className="overflow-hidden relative border-0 shadow-xl bg-gradient-to-br from-white/90 to-white/70 dark:from-gray-900/90 dark:to-gray-900/70 backdrop-blur-sm">
-      <div 
+    <Card className="h-full flex flex-col overflow-hidden relative border-0 shadow-xl bg-gradient-to-br from-white/90 to-white/70 dark:from-gray-900/90 dark:to-gray-900/70 backdrop-blur-sm">
+      <div
         className="absolute inset-0 w-full h-full"
         style={{
           backgroundImage: `url(${profileBackground})`,
@@ -260,8 +262,12 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
           opacity: 0.15
         }}
       />
-      
-      <CardContent className="p-8 relative z-10">
+
+      {/* CardContent occupa tutta l'altezza disponibile: il pannello del
+          profilo cosi' arriva fino al bordo basso della riga della griglia,
+          allineato con i pannelli a destra. */}
+      <CardContent className="p-8 relative z-10 flex-1 flex flex-col">
+        {/* Blocco superiore: avatar + nickname, ancorato in alto */}
         <div className="flex flex-col items-center text-center space-y-6">
           {/* Avatar with gradient border */}
           <div className="relative">
@@ -273,23 +279,24 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
               </AvatarFallback>
             </Avatar>
           </div>
-          
+
           {/* Nickname */}
           <div className="space-y-1">
             <h2 className="text-3xl font-black bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
               {profile.nickname}
             </h2>
           </div>
+        </div>
 
-          {/* Le canzoni preferite NON vengono piu' mostrate qui dentro: il
-              pannello deve avere sempre la stessa altezza compatta, con o
-              senza canzone selezionata. Le canzoni si vedono nella card
-              completa del profilo (Anteprima Profilo qui sotto). */}
-
+        {/* Blocco inferiore: i due pulsanti centrati verticalmente nello
+            spazio rimasto. Cosi' non sono attaccati al nickname ne' incollati
+            sul fondo, ma "fluttuano" piu' o meno al centro della parte bassa
+            del pannello. */}
+        <div className="flex-1 flex flex-col justify-center w-full space-y-3 pt-8">
           {/* Edit Button */}
           <Button
             onClick={() => navigate("/profile/edit")}
-            className="w-full mt-4 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border-0"
+            className="w-full bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border-0"
           >
             <Edit className="h-4 w-4 mr-2" />
             {t("dashboard.editProfile")}
