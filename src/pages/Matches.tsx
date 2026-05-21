@@ -388,13 +388,10 @@ const Matches = () => {
           <CardContent className="p-2 md:p-6">
             {matches.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 md:py-16 text-center">
-                {/* Nessuna card di sfondo: lasciamo che il cuore dell'immagine
-                    di background si veda tutto. Per la leggibilita' usiamo un
-                    testo bianco grosso con drop-shadow scuro, sufficiente a
-                    staccarsi senza coprire l'immagine. */}
-                <div className="mb-5 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-purple-600 shadow-[0_8px_24px_rgba(190,24,93,0.55)] ring-4 ring-white/30">
-                  <Heart className="h-8 w-8 text-white fill-current" />
-                </div>
+                {/* Nessuna card e nessun cuoricino: il cuore grande
+                    dell'immagine di sfondo basta come elemento visivo. Il
+                    testo e' bianco grosso con drop-shadow scuro per essere
+                    sempre leggibile. */}
                 <p
                   className="mb-6 text-lg md:text-2xl font-extrabold text-white max-w-md"
                   style={{
