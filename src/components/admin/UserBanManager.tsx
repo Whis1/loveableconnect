@@ -31,7 +31,7 @@ export function UserBanManager() {
   const [orphanIds, setOrphanIds] = useState<Set<string>>(new Set());
   const [orphanCheckRunning, setOrphanCheckRunning] = useState(false);
   const [showOrphans, setShowOrphans] = useState(false);
-  const [deletingOrphan, setDeletingOrphan] = useState(false);
+  const [deletingUser, setDeletingUser] = useState(false);
 
   useEffect(() => {
     loadAllUsers();
@@ -136,15 +136,27 @@ export function UserBanManager() {
     }
   };
 
-  // Tenta di eliminare un profilo orfano direttamente dalla tabella profiles.
-  // Funziona solo se le RLS permettono ai admin il DELETE su profiles. In
+  // Tenta di eliminare un utente direttamente dalla tabella profiles.
+  // Funziona solo se le RLS permettono agli admin il DELETE su profiles. In
   // caso contrario mostra un errore chiaro: l'eliminazione definitiva andra'
   // fatta da Lovable Cloud via SQL.
-  const handleDeleteOrphan = async () => {
+  //
+  // Per i profili orfani (auth gia' cancellato) la rimozione e' definitiva.
+  // Per gli utenti normali questa azione cancella solo la riga profile: il
+  // record auth.users resta su Lovable Cloud finche' non lo elimini da li'.
+  const handleDeleteUser = async () => {
     if (!selectedUser) return;
-    if (!orphanIds.has(selectedUser.id)) return;
-    if (!confirm(`Eliminare definitivamente il profilo orfano "${selectedUser.nickname}"?`)) return;
-    setDeletingOrphan(true);
+    const isOrphan = orphanIds.has(selectedUser.id);
+    const confirmMsg = isOrphan
+      ? `Eliminare definitivamente il profilo orfano "${selectedUser.nickname}"?`
+      : `Eliminare definitivamente l'utente "${selectedUser.nickname}"?\n\n` +
+        `Questa operazione cancella la riga del profilo dal database.\n` +
+        `L'account auth (e-mail di login) NON viene rimosso da qui: per\n` +
+        `cancellarlo del tutto vai anche su Lovable Cloud > Authentication\n` +
+        `e rimuovi l'utente da li'.\n\n` +
+        `Continuare?`;
+    if (!confirm(confirmMsg)) return;
+    setDeletingUser(true);
     try {
       const { error } = await supabase
         .from('profiles')
@@ -152,14 +164,16 @@ export function UserBanManager() {
         .eq('id', selectedUser.id);
       if (error) throw error;
       toast({
-        title: 'Profilo eliminato',
-        description: `Il profilo orfano "${selectedUser.nickname}" e' stato rimosso dal database.`,
+        title: isOrphan ? 'Profilo eliminato' : 'Utente eliminato',
+        description: isOrphan
+          ? `Il profilo orfano "${selectedUser.nickname}" e' stato rimosso dal database.`
+          : `Profilo di "${selectedUser.nickname}" rimosso. Ricordati di cancellare anche l'account auth da Lovable Cloud per la rimozione completa.`,
       });
       setSelectedUser(null);
       setUserDetails(null);
       await loadAllUsers();
     } catch (error: any) {
-      console.error('Error deleting orphan profile:', error);
+      console.error('Error deleting user profile:', error);
       toast({
         title: 'Eliminazione non riuscita',
         description:
@@ -170,7 +184,7 @@ export function UserBanManager() {
         variant: 'destructive',
       });
     } finally {
-      setDeletingOrphan(false);
+      setDeletingUser(false);
     }
   };
 
@@ -493,13 +507,13 @@ export function UserBanManager() {
                           su Lovable Cloud: <code>DELETE FROM profiles WHERE id = '{selectedUser.id}';</code>
                         </p>
                         <Button
-                          onClick={handleDeleteOrphan}
-                          disabled={deletingOrphan}
+                          onClick={handleDeleteUser}
+                          disabled={deletingUser}
                           variant="destructive"
                           size="sm"
                           className="w-full"
                         >
-                          {deletingOrphan ? (
+                          {deletingUser ? (
                             <>
                               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                               Eliminazione in corso...
@@ -704,6 +718,39 @@ export function UserBanManager() {
                         </Button>
                       )}
                     </div>
+
+                    {/* Eliminazione utente: azione distruttiva, separata dal
+                        ban perche' rimuove il profilo dal database. Per i
+                        profili orfani il blocco ambra in alto resta la via
+                        principale, ma questo bottone funziona ugualmente. */}
+                    {!orphanIds.has(selectedUser.id) && (
+                      <div className="border border-destructive/30 bg-destructive/5 rounded-lg p-3 space-y-2">
+                        <p className="text-xs text-muted-foreground">
+                          Cancella la riga del profilo dal database. <strong>L'account
+                          auth (e-mail di login) non viene rimosso da qui</strong>: per
+                          eliminarlo del tutto vai anche su Lovable Cloud &gt;
+                          Authentication.
+                        </p>
+                        <Button
+                          onClick={handleDeleteUser}
+                          disabled={deletingUser || loading}
+                          variant="destructive"
+                          className="w-full"
+                        >
+                          {deletingUser ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Eliminazione in corso...
+                            </>
+                          ) : (
+                            <>
+                              <Ban className="h-4 w-4 mr-2" />
+                              Elimina Utente
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
 
                     <div className="space-y-2 border-t pt-3">
                       <Label htmlFor="inboxMessage">Invia messaggio all'utente</Label>
