@@ -387,13 +387,25 @@ const Matches = () => {
           </CardHeader>
           <CardContent className="p-2 md:p-6">
             {matches.length === 0 ? (
-              <div className="text-center py-8 md:py-12">
-                <p className="text-muted-foreground mb-4 text-sm md:text-base">
-                  {t("matches.noMatches")}
-                </p>
-                <Button onClick={() => navigate("/explore")} size="sm">
-                  {t("matches.exploreProfiles")}
-                </Button>
+              <div className="flex justify-center py-8 md:py-12">
+                {/* Card con backdrop blur per rendere il testo leggibile sopra
+                    il background dell'immagine del cuore. Stile in tema
+                    LoveableConnect: gradiente rosa/viola, bordi morbidi. */}
+                <div className="max-w-md w-full text-center px-6 py-8 md:py-10 rounded-2xl border border-pink-200/50 dark:border-pink-800/40 bg-white/85 dark:bg-gray-900/80 backdrop-blur-md shadow-xl">
+                  <div className="mx-auto mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-purple-600 shadow-lg">
+                    <Heart className="h-7 w-7 text-white fill-current" />
+                  </div>
+                  <p className="mb-5 text-base md:text-lg font-semibold bg-gradient-to-r from-pink-600 via-fuchsia-600 to-purple-600 bg-clip-text text-transparent">
+                    {t("matches.noMatches")}
+                  </p>
+                  <Button
+                    onClick={() => navigate("/explore")}
+                    size="sm"
+                    className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white shadow-md"
+                  >
+                    {t("matches.exploreProfiles")}
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="space-y-3 md:space-y-4">
