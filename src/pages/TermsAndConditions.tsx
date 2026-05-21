@@ -9,7 +9,6 @@ import { useLanguageDetection } from "@/hooks/useLanguageDetection";
 // Costanti centralizzate: se cambia il titolare, l'email o l'indirizzo,
 // basta aggiornare qui.
 const TITOLARE_NOME = "Giuseppe Chighini";
-const TITOLARE_LUOGO = "Sassari (SS), Italia";
 const TITOLARE_EMAIL = "loveableconnect@hotmail.com";
 const NOME_SITO = "LoveableConnect";
 const URL_SITO = "https://loveableconnect.vercel.app";
@@ -73,7 +72,7 @@ const TermsAndConditions = () => {
                     <h3 className="text-lg font-semibold">1. Titolare del trattamento</h3>
                     <p>
                       Il Titolare del trattamento dei dati personali è {TITOLARE_NOME},
-                      con sede in {TITOLARE_LUOGO}, contattabile all'indirizzo e-mail{" "}
+                      contattabile all'indirizzo e-mail{" "}
                       <a
                         href={`mailto:${TITOLARE_EMAIL}`}
                         className="text-primary hover:underline"
@@ -399,8 +398,8 @@ const TermsAndConditions = () => {
                       sistema di punteggio ELO.
                     </p>
                     <p>
-                      Il servizio è erogato dal Titolare ({TITOLARE_NOME},{" "}
-                      {TITOLARE_LUOGO}) ed è raggiungibile all'indirizzo{" "}
+                      Il servizio è erogato dal Titolare ({TITOLARE_NOME}) ed è
+                      raggiungibile all'indirizzo{" "}
                       <a
                         href={URL_SITO}
                         target="_blank"
@@ -910,11 +909,11 @@ const TermsAndConditions = () => {
                   <div className="space-y-3">
                     <h3 className="text-lg font-semibold">18. Legge applicabile e foro competente</h3>
                     <p>
-                      I presenti Termini sono regolati dalla legge italiana. Per qualsiasi
-                      controversia è competente, in via esclusiva, il Foro di Sassari,
-                      salvo il diritto del consumatore, ove applicabile, di rivolgersi al
-                      foro del luogo di propria residenza o domicilio ai sensi dell'art.
-                      66-bis del Codice del Consumo.
+                      I presenti Termini sono regolati dalla legge italiana. Per
+                      qualsiasi controversia è competente il Foro del luogo in cui ha
+                      sede il Titolare, salvo il diritto del consumatore, ove applicabile,
+                      di rivolgersi al foro del luogo di propria residenza o domicilio ai
+                      sensi dell'art. 66-bis del Codice del Consumo.
                     </p>
                     <p>
                       Resta ferma la possibilità per il consumatore di ricorrere alla
