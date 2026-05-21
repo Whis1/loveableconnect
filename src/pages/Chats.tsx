@@ -52,6 +52,23 @@ const Chats = () => {
       console.error("Persistenza keepData fallita:", e);
     }
   };
+  // Conversazioni archiviate dal chattors: vengono nascoste localmente
+  // anche se il server continua a restituirle (es. perche' contengono
+  // ancora messaggi recenti). Persistenti in localStorage.
+  const storageArchivedKeyRef = useRef<string>("archived_conversations_default");
+  const archivedRef = useRef<Set<string>>(new Set());
+  const persistArchived = () => {
+    try {
+      localStorage.setItem(
+        storageArchivedKeyRef.current,
+        JSON.stringify(Array.from(archivedRef.current))
+      );
+    } catch (e) {
+      console.error("Persistenza archived fallita:", e);
+    }
+  };
+  const convKey = (c: { matchId: string; userId: string }) =>
+    `${c.matchId}-${c.userId}`;
 
   useEffect(() => {
     // Verifica sessione chattors
@@ -69,6 +86,7 @@ const Chats = () => {
       // Inizializza storage keys e carica le conversazioni fissate da localStorage
       storageKeyRef.current = `keep_conversations_${parsed?.nickname || 'default'}`;
       storageDataKeyRef.current = `keep_conversations_data_${parsed?.nickname || 'default'}`;
+      storageArchivedKeyRef.current = `archived_conversations_${parsed?.nickname || 'default'}`;
       try {
         const saved = JSON.parse(localStorage.getItem(storageKeyRef.current) || '[]');
         if (Array.isArray(saved)) {
@@ -86,15 +104,31 @@ const Chats = () => {
       } catch (e) {
         console.error('Errore caricamento dati conversazioni fissate:', e);
       }
-      // Mostra subito le conversazioni fissate salvate in locale
-      const initial = Object.values(keepDataRef.current || {});
-      if (initial.length > 0) {
+      try {
+        const savedArchived = JSON.parse(localStorage.getItem(storageArchivedKeyRef.current) || '[]');
+        if (Array.isArray(savedArchived)) {
+          archivedRef.current = new Set(savedArchived);
+        }
+      } catch (e) {
+        console.error('Errore caricamento conversazioni archiviate:', e);
+      }
+      // Mostra subito le conversazioni fissate salvate in locale,
+      // escludendo quelle gia' archiviate.
+      const initial = Object.values(keepDataRef.current || {}).filter(
+        (c: any) => !archivedRef.current.has(convKey(c))
+      );
+      const hasInitialData = initial.length > 0;
+      if (hasInitialData) {
         setConversations(
           initial.sort((a: any, b: any) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime())
         );
+        // Niente skeleton: la UI mostra subito qualcosa.
+        setLoading(false);
       }
-      // Avvia fetch in background senza bloccare la UI
-      fetchConversations(false);
+      // Avvia fetch in background. Se gia' mostriamo dati persistiti, il
+      // fetch e' silent (no skeleton). Altrimenti mostra lo skeleton finche'
+      // arrivano i dati dal server.
+      fetchConversations(hasInitialData);
       cleanup = subscribeToUpdates();
     } catch (error) {
       console.error("Sessione non valida:", error);
@@ -131,14 +165,18 @@ const Chats = () => {
       }
 
       const list = data.conversations || [];
-      const sorted = [...list].sort(
-        (a: any, b: any) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
-      );
+      // Filtra le conversazioni archiviate localmente: il server puo' ancora
+      // restituirle (es. messaggi recenti), ma il chattors le ha nascoste.
+      const sorted = [...list]
+        .filter((c: any) => !archivedRef.current.has(convKey(c)))
+        .sort(
+          (a: any, b: any) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
+        );
       // Aggiungi tutte le conversazioni arrivate dal server al set e ai dati persistenti
       const keep = keepInListRef.current;
       const keepData = keepDataRef.current;
       sorted.forEach((c: any) => {
-        const key = `${c.matchId}-${c.userId}`;
+        const key = convKey(c);
         keep.add(key);
         keepData[key] = c;
       });
@@ -290,13 +328,20 @@ const Chats = () => {
           onSelectConversation={handleSelectConversation}
           onRefresh={fetchConversations}
           onArchived={(conv) => {
-            // Rimuovi la conversazione dal set delle "da mantenere"
-            const key = `${conv.matchId}-${conv.userId}`;
+            const key = convKey(conv);
+            // 1. Marca la conversazione come archiviata localmente, cosi'
+            //    i prossimi fetch non la rimettono in lista.
+            archivedRef.current.add(key);
+            persistArchived();
+            // 2. Rimuovi dai set "da mantenere".
             keepInListRef.current.delete(key);
             persistKeepSet();
             delete keepDataRef.current[key];
             persistKeepData();
-            
+            // 3. Rimuovi SUBITO dalla lista visibile: l'utente vede la chat
+            //    sparire in tempo reale senza dover aspettare il prossimo fetch.
+            setConversations((prev) => prev.filter((c) => convKey(c) !== key));
+
             if (
               selectedConversation &&
               selectedConversation.matchId === conv.matchId &&
