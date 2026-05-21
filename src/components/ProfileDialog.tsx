@@ -63,11 +63,15 @@ export const ProfileDialog = ({
     if (!open || !profileId) return;
 
     const fetchProfile = async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", profileId)
-        .single();
+      // Timeout sulla fetch: se la query si pianta (es. cold start
+      // Supabase), il dialog non resta vuoto in eterno.
+      const result = (await Promise.race([
+        supabase.from("profiles").select("*").eq("id", profileId).single(),
+        new Promise((resolve) =>
+          setTimeout(() => resolve({ data: null, error: { message: "profile_dialog_timeout" } }), 6000)
+        ),
+      ])) as { data: any; error: any };
+      const data = result.data;
 
       if (data) {
         // Parse favorite_songs from Json
@@ -271,16 +275,41 @@ export const ProfileDialog = ({
     return labels[key] || status;
   };
 
-  if (!profile) return null;
+  // PRIMA c'era "if (!profile) return null;" qui. Era un bug: se la fetch
+  // del profilo era lenta o si piantava, il dialog non si apriva per niente
+  // anche se open=true → l'utente cliccava sulla card e NON succedeva
+  // nulla. Adesso il dialog si apre comunque mostrando uno scheletro.
+  if (!open) return null;
 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent 
+        <DialogContent
           className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 bg-gradient-to-br from-background via-background to-primary/5"
         >
           <DialogTitle className="sr-only">Profilo utente</DialogTitle>
           <DialogDescription className="sr-only">Dettagli del profilo e azioni</DialogDescription>
+
+          {/* Scheletro mostrato finche' la fetch del profilo non completa */}
+          {!profile && (
+            <div className="p-8 space-y-4">
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-72 h-80 rounded-3xl bg-muted/40 animate-pulse" />
+                <div className="h-7 w-40 rounded-md bg-muted/40 animate-pulse" />
+                <div className="flex gap-2">
+                  <div className="h-7 w-20 rounded-full bg-muted/40 animate-pulse" />
+                  <div className="h-7 w-24 rounded-full bg-muted/40 animate-pulse" />
+                  <div className="h-7 w-28 rounded-full bg-muted/40 animate-pulse" />
+                </div>
+              </div>
+              <div className="h-24 rounded-2xl bg-muted/30 animate-pulse" />
+              <div className="h-24 rounded-2xl bg-muted/30 animate-pulse" />
+            </div>
+          )}
+
+          {/* Contenuto vero del profilo quando i dati sono pronti */}
+          {profile && (
+          <>
           {/* Hero Section with Avatar Rectangle */}
           <div className="relative p-6 bg-gradient-to-br from-primary/20 via-primary/10 to-background overflow-hidden">
             <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIHN0cm9rZT0iY3VycmVudENvbG9yIiBzdHJva2Utb3BhY2l0eT0iLjEiLz48L2c+PC9zdmc+')] opacity-20"></div>
@@ -482,6 +511,8 @@ export const ProfileDialog = ({
             )}
 
           </div>
+          </>
+          )}
         </DialogContent>
       </Dialog>
 
