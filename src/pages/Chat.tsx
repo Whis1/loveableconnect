@@ -61,10 +61,52 @@ const Chat = () => {
   // handleSendMessage scarta silenziosamente il messaggio. La initChat
   // successiva confermera' comunque l'id dall'API.
   const [currentUser, setCurrentUser] = useState<string | null>(() => getStoredUserId());
-  const [otherUser, setOtherUser] = useState<Profile | null>(null);
+  // Inizializziamo otherUser SINCRONICAMENTE dai dati passati via navigate
+  // state dalla bacheca profili. Senza questa lazy init, otherUser resta null
+  // al primo render (l'useEffect che lo setta gira DOPO il render), e
+  // l'input dei messaggi appare disabled per qualche millisecondo perche'
+  // isChatPending = !currentUser || !activeMatchId || !otherUser. Risultato:
+  // l'utente puo' cliccare l'input ma trovarselo disabled e quindi non
+  // riuscire a scrivere finche' non ricarica la pagina.
+  const [otherUser, setOtherUser] = useState<Profile | null>(() => {
+    try {
+      const passed = (location.state as {
+        otherUserProfile?: {
+          id: string;
+          nickname?: string;
+          full_name?: string;
+          avatar_url?: string | null;
+          is_admin_profile?: boolean;
+        };
+      } | null)?.otherUserProfile;
+      if (!passed?.id) return null;
+      return {
+        id: passed.id,
+        full_name: passed.full_name ?? passed.nickname ?? "",
+        nickname: passed.nickname ?? "",
+        is_admin_profile: !!passed.is_admin_profile,
+        avatar_url: passed.avatar_url
+          ? /^https?:\/\//.test(passed.avatar_url)
+            ? passed.avatar_url
+            : supabase.storage.from("profile-images").getPublicUrl(passed.avatar_url).data.publicUrl
+          : null,
+      };
+    } catch {
+      return null;
+    }
+  });
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const [loading, setLoading] = useState(true);
+  // Se gia' abbiamo otherUser dal navigate state, possiamo partire senza
+  // skeleton: l'interfaccia mostra subito qualcosa di sensato.
+  const [loading, setLoading] = useState(() => {
+    try {
+      const passed = (location.state as { otherUserProfile?: { id?: string } } | null)?.otherUserProfile;
+      return !passed?.id;
+    } catch {
+      return true;
+    }
+  });
   const [uploading, setUploading] = useState(false);
   const [myAvatar, setMyAvatar] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -470,7 +512,19 @@ const Chat = () => {
     if (e) e.preventDefault();
     
     const messageContent = content || newMessage.trim();
-    if (!messageContent || !currentUser || !otherUser || !activeMatchId) return;
+    if (!messageContent) return;
+
+    // Se per qualsiasi motivo la chat non e' ancora pronta (currentUser,
+    // otherUser o matchId mancanti) avvisa l'utente invece di scartare
+    // silenziosamente il messaggio.
+    if (!currentUser || !otherUser || !activeMatchId) {
+      toast({
+        title: t("chat.error"),
+        description: "Chat ancora in caricamento, riprova tra un istante.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // CRITICAL: Blocca l'invio se l'utente è bloccato
     if (isBlocked) {
@@ -974,9 +1028,9 @@ const Chat = () => {
                   <Input
                     value={newMessage}
                     onChange={handleInputChange}
-                    placeholder={isChatPending ? "..." : t("chat.writeMessage")}
+                    placeholder={t("chat.writeMessage")}
                     className="flex-1 text-sm md:text-base"
-                    disabled={isChatPending || !!recordedAudio}
+                    disabled={!!recordedAudio}
                   />
                   <VoiceRecorder 
                     onRecordingComplete={handleVoiceRecording}
@@ -989,9 +1043,9 @@ const Chat = () => {
                     )}
                     onPremiumRequired={() => setShowVoicePremiumBanner(true)}
                   />
-                  <Button 
-                    type="submit" 
-                    disabled={isChatPending || !newMessage.trim() || uploading || !!recordedAudio}
+                  <Button
+                    type="submit"
+                    disabled={!newMessage.trim() || uploading || !!recordedAudio}
                     className="shrink-0 h-9 w-9 md:h-10 md:w-10"
                     size="icon"
                   >
