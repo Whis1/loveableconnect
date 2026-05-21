@@ -32,7 +32,8 @@ export const AdBanner = () => {
   // Check if user has premium subscription (monthly or weekly)
   useEffect(() => {
     if (!loading && credits) {
-      const isPremium = credits.is_premium;
+      const isPremium = credits.is_premium &&
+        (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date());
       const subscriptionType = credits.subscription_type;
       
       // Disable ads for monthly and weekly premium users
@@ -69,8 +70,22 @@ export const AdBanner = () => {
     setIsVisible(false);
   };
 
-  // Hide ads on auth page or if conditions not met
-  if (location.pathname === '/auth' || !shouldShowAds || !isVisible || banners.length === 0) {
+  // Pagine in cui i banner promozionali NON devono mai apparire (login, area
+  // admin, pagine legali, ecc.). Per aggiungere/rimuovere pagine basta
+  // modificare le due liste qui sotto.
+  const HIDE_AD_EXACT_PATHS = [
+    '/auth',
+    '/terms',
+    '/chattors-login',
+    '/adminarrettu',
+  ];
+  const HIDE_AD_PATH_PREFIXES = ['/admin/'];
+
+  const isHiddenPage =
+    HIDE_AD_EXACT_PATHS.includes(location.pathname) ||
+    HIDE_AD_PATH_PREFIXES.some((prefix) => location.pathname.startsWith(prefix));
+
+  if (isHiddenPage || !shouldShowAds || !isVisible || banners.length === 0) {
     return null;
   }
 
