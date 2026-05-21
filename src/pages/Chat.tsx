@@ -23,6 +23,7 @@ import { useTranslation } from "react-i18next";
 import OnlineIndicator from "@/components/OnlineIndicator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getStoredUserId } from "@/lib/storedSession";
 
 interface Message {
   id: string;
@@ -53,7 +54,13 @@ const Chat = () => {
   const location = useLocation();
   const { toast } = useToast();
   const { t } = useTranslation();
-  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  // Inizializziamo currentUser SUBITO leggendo l'id dell'utente dalla sessione
+  // Supabase salvata in localStorage. Evita il bug in cui, appena navigati alla
+  // chat (es. dopo aver speso 6 crediti dalla bacheca), currentUser e' ancora
+  // null perche' supabase.auth.getSession() non e' ancora tornata, e
+  // handleSendMessage scarta silenziosamente il messaggio. La initChat
+  // successiva confermera' comunque l'id dall'API.
+  const [currentUser, setCurrentUser] = useState<string | null>(() => getStoredUserId());
   const [otherUser, setOtherUser] = useState<Profile | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -974,7 +981,12 @@ const Chat = () => {
                   <VoiceRecorder 
                     onRecordingComplete={handleVoiceRecording}
                     disabled={isChatPending || uploading || !!recordedAudio}
-                    isPremiumMonthly={credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium')}
+                    isPremiumMonthly={Boolean(
+                      credits?.is_premium &&
+                      credits.subscription_type === 'monthly' &&
+                      (!credits.premium_tier || credits.premium_tier === 'premium') &&
+                      (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date())
+                    )}
                     onPremiumRequired={() => setShowVoicePremiumBanner(true)}
                   />
                   <Button 
