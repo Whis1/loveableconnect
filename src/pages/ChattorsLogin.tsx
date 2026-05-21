@@ -21,6 +21,15 @@ const ChattorsLogin = () => {
     if (session) {
       navigate("/chattors");
     }
+    // Pre-warm: scalda la edge function delle conversazioni cosi' quando
+    // l'utente fara' login il primo fetch su /chattors sara' veloce.
+    // Fire-and-forget: ignoriamo l'esito (probabilmente Unauthorized senza
+    // sessione valida, ma il container Supabase si scalda comunque).
+    supabase.functions
+      .invoke("admin-secondary-get-conversations", { body: {} })
+      .catch(() => {
+        /* pre-warm: errori ignorati di proposito */
+      });
   }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -64,6 +73,14 @@ const ChattorsLogin = () => {
       }));
 
       toast.success("Accesso effettuato");
+      // Secondo pre-warm fire-and-forget: ora abbiamo la sessione valida,
+      // chiamiamo subito get-conversations cosi' quando /chattors monta
+      // trova la funzione gia' "calda" e i dati gia' (o quasi) pronti.
+      supabase.functions
+        .invoke("admin-secondary-get-conversations", { body: {} })
+        .catch(() => {
+          /* pre-warm: errori ignorati di proposito */
+        });
       navigate("/chattors");
     } catch (error: any) {
       const message = typeof error?.message === "string" ? error.message : "";
