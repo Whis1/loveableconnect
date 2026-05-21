@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Edit, MapPin, Heart, Music } from "lucide-react";
+import { Edit, MapPin, Heart, Music, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -12,6 +12,7 @@ import profileBackground from "@/assets/profile-background.png";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { SpotifySongCard } from "@/components/SpotifySongCard";
 import { calculateAge } from "@/lib/utils";
+import { ProfileDialog } from "@/components/ProfileDialog";
 
 interface Profile {
   id: string;
@@ -45,6 +46,9 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [translatedBio, setTranslatedBio] = useState<string>('');
   const [translatedInterests, setTranslatedInterests] = useState<string[]>([]);
+  // Apertura del "Anteprima Profilo": mostra la card del proprio profilo
+  // come la vedrebbero gli altri utenti dalla bacheca.
+  const [showPreview, setShowPreview] = useState(false);
   const { translateText, translateArray } = useTextTranslation();
 
   useEffect(() => {
@@ -242,11 +246,8 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
     );
   }
 
-  const favoriteSongs = profile.favorite_songs 
-    ? (typeof profile.favorite_songs === 'string' 
-        ? JSON.parse(profile.favorite_songs) 
-        : profile.favorite_songs)
-    : [];
+  // favoriteSongs non e' piu' usata qui: le canzoni vengono mostrate nel
+  // dialog "Anteprima Profilo" che riusa ProfileDialog.
 
   return (
     <Card className="overflow-hidden relative border-0 shadow-xl bg-gradient-to-br from-white/90 to-white/70 dark:from-gray-900/90 dark:to-gray-900/70 backdrop-blur-sm">
@@ -280,46 +281,43 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
             </h2>
           </div>
 
-          {/* Favorite Songs */}
-          {favoriteSongs && favoriteSongs.length > 0 && (
-            <div className="w-full space-y-3 pt-2">
-              <div className="flex items-center justify-center gap-2">
-                <div className="p-2 bg-gradient-to-br from-pink-500/10 to-purple-500/10 rounded-lg">
-                  <Music className="h-5 w-5 text-primary" />
-                </div>
-                <p className="text-base font-bold text-foreground">{t("profile.favoriteSongs")}</p>
-              </div>
-              <div className="w-full overflow-x-auto">
-                <div className="flex gap-3 pb-2 px-1 min-w-max justify-center">
-                  {favoriteSongs.map((song: any, index: number) => (
-                    <SpotifySongCard
-                      key={index}
-                      song={{
-                        id: song.id || `song-${index}`,
-                        name: song.name || song.title,
-                        artist: song.artist || song.artists,
-                        album: song.album || '',
-                        image_url: song.albumArt || song.image || song.album_art || song.image_url || '',
-                        preview_url: song.preview_url || '',
-                      }}
-                      size="medium"
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Le canzoni preferite NON vengono piu' mostrate qui dentro: il
+              pannello deve avere sempre la stessa altezza compatta, con o
+              senza canzone selezionata. Le canzoni si vedono nella card
+              completa del profilo (Anteprima Profilo qui sotto). */}
 
           {/* Edit Button */}
-          <Button 
+          <Button
             onClick={() => navigate("/profile/edit")}
             className="w-full mt-4 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border-0"
           >
             <Edit className="h-4 w-4 mr-2" />
             {t("dashboard.editProfile")}
           </Button>
+
+          {/* Anteprima Profilo: apre il dialog con la card del proprio
+              profilo come la vedrebbero gli altri utenti nella bacheca. */}
+          <Button
+            onClick={() => setShowPreview(true)}
+            variant="outline"
+            className="w-full bg-background/40 backdrop-blur-sm border-pink-300/40 dark:border-pink-700/40 hover:bg-background/60 font-semibold"
+          >
+            <Eye className="h-4 w-4 mr-2" />
+            Anteprima Profilo
+          </Button>
         </div>
       </CardContent>
+
+      {/* Dialog: stesso ProfileDialog usato in bacheca/likes, mostra il
+          profilo completo (foto, bio, interessi, canzoni preferite, ecc.) */}
+      {showPreview && currentUserId && (
+        <ProfileDialog
+          profileId={userId}
+          currentUserId={currentUserId}
+          open={showPreview}
+          onOpenChange={setShowPreview}
+        />
+      )}
     </Card>
   );
 };
