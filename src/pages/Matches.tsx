@@ -11,7 +11,10 @@ import { useTranslation } from "react-i18next";
 import { useTextTranslation } from "@/hooks/useTranslation";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import OnlineIndicator from "@/components/OnlineIndicator";
+import { PageLoader } from "@/components/PageLoader";
 import matchHeartIcon from "@/assets/match-heart.png";
+import { withFallback } from "@/lib/async";
+import { getStoredUserId } from "@/lib/storedSession";
 
 interface MatchWithProfile {
   id: string;
@@ -48,34 +51,45 @@ const Matches = () => {
 
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
+    let cancelled = false;
+    const loadingSafety = setTimeout(() => {
+      if (!cancelled) setLoading(false);
+    }, 12000);
 
     const setupRealtimeAndFetch = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
+      // Leggiamo l'id utente in modo SINCRONO dal localStorage invece di
+      // chiamare supabase.auth.getSession(): su Supabase v2 quella chiamata
+      // si pianta per minuti e la pagina restava in "Caricamento" senza
+      // mostrare nessun match.
+      const userId = getStoredUserId();
+      if (!userId) {
         navigate("/auth");
         return;
       }
+      // Simuliamo l'oggetto session per il resto del codice esistente.
+      const session = { user: { id: userId } } as { user: { id: string } };
 
+      if (cancelled) return;
       setCurrentUserId(session.user.id);
 
-      // Fetch matches with profile data
-      const { data: matchesData, error } = await supabase
-        .from("matches")
-        .select(`
-          id,
-          created_at,
-          user1_id,
-          user2_id
-        `)
-        .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`);
+      const [matchesResult, hiddenResult] = await Promise.all([
+        supabase
+          .from("matches")
+          .select("id, created_at, user1_id, user2_id")
+          .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`),
+        withFallback(
+          supabase
+            .from("hidden_matches")
+            .select("match_id")
+            .eq("user_id", session.user.id)
+            .in("hidden_from", ["matches", "both"]),
+          { data: [], error: null },
+          3500
+        ),
+      ]);
 
-      // Get hidden matches for current user (only those hidden from matches page)
-      const { data: hiddenMatches } = await supabase
-        .from("hidden_matches")
-        .select("match_id")
-        .eq("user_id", session.user.id)
-        .in("hidden_from", ["matches", "both"]);
+      const { data: matchesData, error } = matchesResult;
+      const { data: hiddenMatches } = hiddenResult;
       
       const hiddenMatchIds = new Set(hiddenMatches?.map(h => h.match_id) || []);
       
@@ -93,34 +107,56 @@ const Matches = () => {
         return;
       }
 
-      // For each match, fetch the other user's profile and last message timestamp
+      const otherUserIds = visibleMatches.map((match) =>
+        match.user1_id === session.user.id ? match.user2_id : match.user1_id
+      );
+      const matchIds = visibleMatches.map((match) => match.id);
+
+      const [profilesResult, messagesResult] = await Promise.all([
+        otherUserIds.length > 0
+          ? withFallback(
+              supabase
+                .from("profiles")
+                .select("id, full_name, nickname, is_admin_profile, avatar_url, bio, city, show_online_status, last_active, manual_online_status")
+                .in("id", otherUserIds),
+              { data: [], error: null },
+              7000
+            )
+          : Promise.resolve({ data: [], error: null }),
+        matchIds.length > 0
+          ? withFallback(
+              supabase
+                .from("messages")
+                .select("match_id, created_at")
+                .in("match_id", matchIds)
+                .order("created_at", { ascending: false })
+                .limit(500),
+              { data: [], error: null },
+              7000
+            )
+          : Promise.resolve({ data: [], error: null }),
+      ]);
+
+      const profileMap = new Map((profilesResult.data || []).map((profile) => [profile.id, profile]));
+      const lastMessageMap = new Map<string, string>();
+      (messagesResult.data || []).forEach((message) => {
+        if (!lastMessageMap.has(message.match_id)) {
+          lastMessageMap.set(message.match_id, message.created_at);
+        }
+      });
+
       const matchesWithProfiles = await Promise.all(
         visibleMatches.map(async (match) => {
-          const otherUserId = match.user1_id === session.user.id 
-            ? match.user2_id 
-            : match.user1_id;
-
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("id, full_name, nickname, is_admin_profile, avatar_url, bio, city")
-            .eq("id", otherUserId)
-            .single();
-
-          // Get last message timestamp for sorting
-          const { data: lastMessage } = await supabase
-            .from("messages")
-            .select("created_at")
-            .eq("match_id", match.id)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-          const translatedBio = profile?.bio ? await translateText(profile.bio) : null;
+          const otherUserId = match.user1_id === session.user.id ? match.user2_id : match.user1_id;
+          const profile = profileMap.get(otherUserId);
+          const translatedBio = profile?.bio
+            ? await withFallback(translateText(profile.bio), profile.bio, 700)
+            : null;
 
           return {
             id: match.id,
             created_at: match.created_at,
-            last_message_at: lastMessage?.created_at || match.created_at,
+            last_message_at: lastMessageMap.get(match.id) || match.created_at,
             otherUser: profile ? {
               ...profile,
               avatar_url: toPublicAvatarUrl(profile.avatar_url),
@@ -144,38 +180,27 @@ const Matches = () => {
         new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime()
       );
 
+      if (cancelled) return;
       setMatches(matchesWithProfiles);
 
-      // Load online statuses for all profiles
-      const profileIds = matchesWithProfiles.map(m => m.otherUser.id);
-      if (profileIds.length > 0) {
-        const { data: profilesData } = await supabase
-          .from("profiles")
-          .select("id, show_online_status, is_admin_profile, last_active, manual_online_status")
-          .in("id", profileIds);
+      const statusMap = new Map<string, { isOnline: boolean; showStatus: boolean }>();
+      const now = new Date();
+      const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
+      (profilesResult.data || []).forEach(profile => {
+        let isOnline = false;
+        const showStatus = profile.show_online_status ?? true;
 
-        if (profilesData) {
-          const statusMap = new Map<string, { isOnline: boolean; showStatus: boolean }>();
-          profilesData.forEach(profile => {
-            let isOnline = false;
-            const showStatus = profile.show_online_status ?? true;
-
-            if (profile.manual_online_status !== null) {
-              isOnline = profile.manual_online_status;
-            } else if (profile.is_admin_profile) {
-              isOnline = true;
-            } else if (profile.last_active) {
-              const lastActive = new Date(profile.last_active);
-              const now = new Date();
-              const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
-              isOnline = lastActive > twoMinutesAgo;
-            }
-
-            statusMap.set(profile.id, { isOnline, showStatus });
-          });
-          setOnlineStatuses(statusMap);
+        if (profile.manual_online_status !== null) {
+          isOnline = profile.manual_online_status;
+        } else if (profile.is_admin_profile) {
+          isOnline = true;
+        } else if (profile.last_active) {
+          isOnline = new Date(profile.last_active) > twoMinutesAgo;
         }
-      }
+
+        statusMap.set(profile.id, { isOnline, showStatus });
+      });
+      setOnlineStatuses(statusMap);
 
       setLoading(false);
 
@@ -279,9 +304,24 @@ const Matches = () => {
         .subscribe();
     };
 
-    setupRealtimeAndFetch();
+    setupRealtimeAndFetch()
+      .catch((error) => {
+        console.error("Error loading matches:", error);
+        if (!cancelled) {
+          toast({
+            title: t("matches.error"),
+            description: t("matches.errorLoadingMatches"),
+            variant: "destructive",
+          });
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
     return () => {
+      cancelled = true;
+      clearTimeout(loadingSafety);
       if (channel) {
         supabase.removeChannel(channel);
       }
@@ -313,11 +353,7 @@ const Matches = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">{t("matches.loading")}</p>
-      </div>
-    );
+    return <PageLoader />;
   }
 
   return (
