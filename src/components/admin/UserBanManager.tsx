@@ -9,6 +9,7 @@ import { Search, Ban, ShieldCheck, RefreshCw, Send, AlertTriangle, EyeOff, Eye, 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 export function UserBanManager() {
   const { toast } = useToast();
@@ -32,6 +33,11 @@ export function UserBanManager() {
   const [orphanCheckRunning, setOrphanCheckRunning] = useState(false);
   const [showOrphans, setShowOrphans] = useState(false);
   const [deletingUser, setDeletingUser] = useState(false);
+  // Quando il delete fallisce mostriamo un dialog con SQL pronto da copiare,
+  // perche' il toast scompare troppo in fretta per essere utile.
+  const [deleteErrorInfo, setDeleteErrorInfo] = useState<
+    { nickname: string; userId: string; message: string } | null
+  >(null);
 
   useEffect(() => {
     loadAllUsers();
@@ -158,11 +164,25 @@ export function UserBanManager() {
     if (!confirm(confirmMsg)) return;
     setDeletingUser(true);
     try {
-      const { error } = await supabase
+      // IMPORTANTE: usa .select() per sapere quante righe sono state davvero
+      // cancellate. Senza .select(), supabase non torna errore neanche quando
+      // le RLS bloccano il DELETE (silently fails: 0 righe affette, ma
+      // "successo"). Con .select() data e' [] se nessuna riga e' stata
+      // cancellata, e possiamo lanciare un errore chiaro all'utente.
+      const { data: deletedRows, error } = await supabase
         .from('profiles')
         .delete()
-        .eq('id', selectedUser.id);
+        .eq('id', selectedUser.id)
+        .select();
       if (error) throw error;
+      const affected = Array.isArray(deletedRows) ? deletedRows.length : 0;
+      if (affected === 0) {
+        throw new Error(
+          'RLS_BLOCKED: la cancellazione e\' stata bloccata dalle policy ' +
+          'di sicurezza del database (Row Level Security). Vedi i dettagli ' +
+          'sotto per sapere come risolvere.'
+        );
+      }
       toast({
         title: isOrphan ? 'Profilo eliminato' : 'Utente eliminato',
         description: isOrphan
@@ -174,17 +194,32 @@ export function UserBanManager() {
       await loadAllUsers();
     } catch (error: any) {
       console.error('Error deleting user profile:', error);
-      toast({
-        title: 'Eliminazione non riuscita',
-        description:
-          error?.message ||
-          "Impossibile eliminare il profilo. Probabilmente serve eseguire la cancellazione da Lovable Cloud (SQL): DELETE FROM profiles WHERE id = '" +
-            selectedUser.id +
-            "'",
-        variant: 'destructive',
+      // Salviamo i dati dell'errore in stato cosi' apriamo un dialog con il
+      // testo SQL gia' pronto da copiare per Lovable Cloud (toast troppo
+      // breve e scompare).
+      setDeleteErrorInfo({
+        nickname: selectedUser.nickname,
+        userId: selectedUser.id,
+        message: typeof error?.message === 'string' ? error.message : '',
       });
     } finally {
       setDeletingUser(false);
+    }
+  };
+
+  // Copia negli appunti il comando SQL di cancellazione per Lovable Cloud.
+  const copyDeleteSql = async () => {
+    if (!deleteErrorInfo) return;
+    const sql = `DELETE FROM profiles WHERE id = '${deleteErrorInfo.userId}';`;
+    try {
+      await navigator.clipboard.writeText(sql);
+      toast({ title: 'SQL copiato', description: sql });
+    } catch {
+      toast({
+        title: 'Copia non riuscita',
+        description: sql,
+        variant: 'destructive',
+      });
     }
   };
 
@@ -781,6 +816,112 @@ export function UserBanManager() {
           </div>
         </div>
       </CardContent>
+
+      {/* Dialog mostrato quando l'eliminazione fallisce (RLS o altro errore).
+          Il toast scompare in 5 secondi, ma qui l'utente puo' leggere con
+          calma il problema e copiare l'SQL da incollare su Lovable Cloud. */}
+      <Dialog
+        open={!!deleteErrorInfo}
+        onOpenChange={(open) => {
+          if (!open) setDeleteErrorInfo(null);
+        }}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Eliminazione bloccata
+            </DialogTitle>
+            <DialogDescription>
+              Non sono riuscito a cancellare il profilo di{" "}
+              <strong>{deleteErrorInfo?.nickname}</strong> direttamente dal sito.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 text-sm">
+            <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
+              <p className="font-semibold text-amber-700 dark:text-amber-400">
+                Perche' non funziona?
+              </p>
+              <p className="text-muted-foreground">
+                Le policy di sicurezza del database (Row Level Security) non
+                permettono al client di cancellare righe dalla tabella{" "}
+                <code className="text-foreground">profiles</code>. E' una
+                protezione voluta: senza questa policy chiunque potrebbe
+                cancellare account altrui. Per le cancellazioni serve passare
+                da Lovable Cloud.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="font-semibold">Soluzione rapida (1 minuto):</p>
+              <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+                <li>Apri Lovable Cloud per il progetto LoveableConnect.</li>
+                <li>
+                  Vai su <strong>SQL Editor</strong> (o &laquo;Database &gt; SQL&raquo;).
+                </li>
+                <li>Incolla ed esegui il comando qui sotto.</li>
+                <li>
+                  Torna su questa pagina e premi <strong>Ricarica</strong>: il
+                  profilo sara' sparito.
+                </li>
+              </ol>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase text-muted-foreground">
+                Comando SQL da eseguire
+              </p>
+              <div className="rounded-lg bg-muted p-3 font-mono text-xs break-all border">
+                DELETE FROM profiles WHERE id = '{deleteErrorInfo?.userId}';
+              </div>
+              <Button
+                onClick={copyDeleteSql}
+                variant="outline"
+                size="sm"
+                className="w-full"
+              >
+                Copia comando SQL
+              </Button>
+            </div>
+
+            <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+              <p className="font-semibold">
+                Soluzione definitiva (consigliata)
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Chiedi a Lovable di aggiungere una RLS policy che permette agli
+                admin di cancellare i profili. Cosi' il bottone &laquo;Elimina
+                Utente&raquo; funzionera' direttamente da qui, senza dover
+                passare ogni volta dal SQL Editor. Vedi nella chat con
+                l'assistente il testo gia' pronto da inviargli.
+              </p>
+            </div>
+
+            {deleteErrorInfo?.message &&
+              !deleteErrorInfo.message.startsWith('RLS_BLOCKED') && (
+                <div className="rounded-lg border bg-muted/20 p-3">
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">
+                    Dettagli tecnici dell'errore
+                  </p>
+                  <p className="text-xs font-mono break-all">
+                    {deleteErrorInfo.message}
+                  </p>
+                </div>
+              )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteErrorInfo(null)}
+              className="w-full"
+            >
+              Chiudi
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
