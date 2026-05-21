@@ -69,11 +69,26 @@ const Dashboard = () => {
       const session = { user: { id: userId } } as { user: { id: string } };
       setUser(session.user as unknown as User);
 
-      // Fetch profile
-      const {
-        data: profileData,
-        error
-      } = await supabase.from("profiles").select("*").eq("id", session.user.id).maybeSingle();
+      // Fetch profile (con timeout: se la query si pianta dopo 6s, non
+      // blocchiamo tutto. Senza questo, tornare velocemente alla home
+      // poteva lasciare profile e likes vuoti per minuti.)
+      const profileResult = (await Promise.race([
+        supabase.from("profiles").select("*").eq("id", session.user.id).maybeSingle(),
+        new Promise((resolve) =>
+          setTimeout(() => resolve({ data: null, error: { message: "profile_timeout" } }), 6000)
+        ),
+      ])) as { data: Profile | null; error: any };
+      const profileData = profileResult.data;
+      const error = profileResult.error;
+
+      // Se c'e' un timeout, NON redirigere ad /auth: aspetta che la rete
+      // risponda. L'utente probabilmente ha solo una rete lenta o Supabase
+      // ha avuto un cold start. La pagina si caricheranno al prossimo
+      // refetch (focus della finestra) o navigando.
+      if (error?.message === "profile_timeout") {
+        console.warn("Profile fetch timeout: la home restera' in skeleton finche' la rete non torna.");
+        return;
+      }
 
       // If profile doesn't exist, redirect to auth
       if (error || !profileData) {
@@ -105,32 +120,54 @@ const Dashboard = () => {
       // I dati restanti (match, like, ecc.) si caricano senza bloccare la UI.
       setLoading(false);
 
-      // Fetch role
-      const {
-        data: roleData
-      } = await supabase.from("user_roles").select("role").eq("user_id", session.user.id).maybeSingle();
-      setUserRole(roleData?.role || null);
+      // Helper: una promessa di Supabase con timeout. Se la query non
+      // risponde entro N secondi, la consideriamo "vuota" invece di lasciare
+      // la pagina bloccata. Ogni query e' indipendente: il fallimento di
+      // una NON impedisce alle altre di completare.
+      const withTimeoutFallback = <T,>(
+        p: PromiseLike<T>,
+        ms: number,
+        fallback: T
+      ): Promise<T> =>
+        Promise.race<T>([
+          Promise.resolve(p),
+          new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+        ]);
 
-      // Fetch matches
-      const {
-        data: matchesData
-      } = await supabase.from("matches").select("*").or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`);
+      // Lanciamo tutte e 4 le query in PARALLELO. Se una sola si pianta o e'
+      // lenta, le altre arrivano comunque, e il counter "Like Ricevuti" e
+      // "I Tuoi Match" sulla home non restano piu' a 0 dopo una navigazione
+      // rapida.
+      const [roleRes, matchesRes, hiddenRes, likesRes] = await Promise.all([
+        withTimeoutFallback(
+          supabase.from("user_roles").select("role").eq("user_id", session.user.id).maybeSingle(),
+          5000,
+          { data: null } as { data: { role: string } | null }
+        ),
+        withTimeoutFallback(
+          supabase.from("matches").select("*").or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`),
+          5000,
+          { data: [] } as { data: any[] }
+        ),
+        withTimeoutFallback(
+          supabase.from("hidden_matches").select("match_id").eq("user_id", session.user.id).in("hidden_from", ["matches", "both"]),
+          5000,
+          { data: [] } as { data: { match_id: string }[] }
+        ),
+        withTimeoutFallback(
+          supabase.from("likes").select("*").eq("to_user_id", session.user.id),
+          5000,
+          { data: [] } as { data: any[] }
+        ),
+      ]);
 
-      // Get hidden matches for current user (only those hidden from matches page)
-      const {
-        data: hiddenMatches
-      } = await supabase.from("hidden_matches").select("match_id").eq("user_id", session.user.id).in("hidden_from", ["matches", "both"]);
-      const hiddenMatchIds = new Set(hiddenMatches?.map(h => h.match_id) || []);
+      setUserRole(roleRes.data?.role || null);
 
-      // Filter out hidden matches
-      const visibleMatches = (matchesData || []).filter(match => !hiddenMatchIds.has(match.id));
+      const hiddenMatchIds = new Set((hiddenRes.data || []).map((h: any) => h.match_id));
+      const visibleMatches = (matchesRes.data || []).filter((match: any) => !hiddenMatchIds.has(match.id));
       setMatches(visibleMatches);
 
-      // Fetch likes received
-      const {
-        data: likesData
-      } = await supabase.from("likes").select("*").eq("to_user_id", session.user.id);
-      setLikesReceived(likesData || []);
+      setLikesReceived(likesRes.data || []);
 
       // Set up realtime subscription for profile updates
       profileChannel = supabase.channel('dashboard-profile').on('postgres_changes', {
