@@ -153,9 +153,29 @@ const Chats = () => {
     try {
       if (!silent) setLoading(true);
 
+      // Passa esplicitamente i dati della sessione chattors nel body cosi'
+      // la edge function puo' identificare quale chattors sta chiedendo le
+      // conversazioni, anche quando il browser non ha alcuna sessione
+      // Supabase attiva (succedeva su Chrome con cache vuota: il server
+      // restituiva 0 conversazioni perche' non sapeva chi fosse l'utente).
+      let chattorsBody: Record<string, unknown> = {};
+      try {
+        const raw = sessionStorage.getItem("chattors_session");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          chattorsBody = {
+            chattorsId: parsed?.id,
+            id: parsed?.id,
+            nickname: parsed?.nickname,
+          };
+        }
+      } catch (e) {
+        console.warn("Impossibile leggere chattors_session per il body:", e);
+      }
+
       const { data, error } = await supabase.functions.invoke(
         "admin-secondary-get-conversations",
-        { body: {} }
+        { body: chattorsBody }
       );
 
       if (error) throw error;

@@ -74,10 +74,18 @@ const ChattorsLogin = () => {
 
       toast.success("Accesso effettuato");
       // Secondo pre-warm fire-and-forget: ora abbiamo la sessione valida,
-      // chiamiamo subito get-conversations cosi' quando /chattors monta
-      // trova la funzione gia' "calda" e i dati gia' (o quasi) pronti.
+      // chiamiamo subito get-conversations con i dati della sessione cosi'
+      // quando /chattors monta trova la funzione gia' "calda" e l'utente
+      // identificato (utile soprattutto sui browser senza Supabase auth
+      // attiva, dove altrimenti il server non sa chi sta chiedendo).
       supabase.functions
-        .invoke("admin-secondary-get-conversations", { body: {} })
+        .invoke("admin-secondary-get-conversations", {
+          body: {
+            chattorsId: data.account.id,
+            id: data.account.id,
+            nickname: data.account.nickname,
+          },
+        })
         .catch(() => {
           /* pre-warm: errori ignorati di proposito */
         });

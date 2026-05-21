@@ -77,9 +77,10 @@ export const AdBanner = () => {
     '/auth',
     '/terms',
     '/chattors-login',
+    '/chattors',
     '/adminarrettu',
   ];
-  const HIDE_AD_PATH_PREFIXES = ['/admin/'];
+  const HIDE_AD_PATH_PREFIXES = ['/admin/', '/chattors/'];
 
   const isHiddenPage =
     HIDE_AD_EXACT_PATHS.includes(location.pathname) ||
