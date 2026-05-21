@@ -242,17 +242,51 @@ const Chat = () => {
           return;
         }
 
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (!session) {
+        // Leggiamo l'id utente SINCRONICAMENTE dal localStorage invece di
+        // chiamare supabase.auth.getSession() che si pianta. Senza questo
+        // fix initChat restava bloccato, e di conseguenza: i messaggi
+        // ricevuti non venivano marcati come letti (notifica fantasma),
+        // la cronologia non si caricava (scroll in ritardo) e lo
+        // "spezza ghiaccio" non appariva.
+        const userId = getStoredUserId();
+        if (!userId) {
           navigate("/auth");
           return;
         }
 
-        const userId = session.user.id;
-
         // Set current user immediately so the composer can mount
         if (!cancelled) setCurrentUser(userId);
+
+        // Marca SUBITO i messaggi come letti, in background: non aspetta
+        // ne' la query del match ne' quella della cronologia. Cosi' la
+        // notifica scompare appena l'utente apre la chat, anche se esce
+        // dopo un istante.
+        supabase
+          .from("messages")
+          .update({ read: true })
+          .eq("match_id", matchId)
+          .eq("receiver_id", userId)
+          .eq("read", false)
+          .then(({ error }) => {
+            if (error) console.error("[Chat] Errore mark-as-read iniziale:", error);
+          });
+
+        // Avvia SUBITO il fetch della cronologia messaggi in parallelo:
+        // la query non dipende ne' dal match ne' dal profilo, basta il
+        // matchId che abbiamo gia'. Cosi' lo spezza-ghiaccio appare il
+        // prima possibile (quando messages.length === 0) o i messaggi
+        // esistenti compaiono subito.
+        supabase
+          .from("messages")
+          .select("*")
+          .eq("match_id", matchId)
+          .order("created_at", { ascending: true })
+          .limit(200)
+          .then(({ data: msgs }) => {
+            if (cancelled) return;
+            setMessages((msgs || []) as Message[]);
+            setIsLoadingHistory(false);
+          });
 
         // Get the other participant from the match
         const { data: match, error: matchError } = await supabase
@@ -320,33 +354,18 @@ const Chat = () => {
         // UI is usable now — unlock immediately.
         setLoading(false);
 
-        // Segna come letti i messaggi ricevuti: operazione indipendente, viene
-        // eseguita anche se l'utente esce subito dalla chat.
-        supabase
-          .from("messages")
-          .update({ read: true })
-          .eq("match_id", matchId)
-          .eq("receiver_id", userId)
-          .eq("read", false)
-          .then(({ error }) => {
-            if (error) console.error("[Chat] Errore nel segnare i messaggi come letti:", error);
-          });
+        // (mark-as-read iniziale gia' eseguito sopra appena ottenuto userId)
 
-        // Fetch the rest in the background (non-blocking).
+        // Fetch dati secondari in parallelo (la cronologia messaggi
+        // l'abbiamo gia' avviata all'inizio di initChat).
         void (async () => {
-          const [myProfileRes, blockedRes, messagesRes] = await Promise.all([
+          const [myProfileRes, blockedRes] = await Promise.all([
             supabase.from("profiles").select("avatar_url").eq("id", userId).maybeSingle(),
             supabase
               .from("blocked_users")
               .select("id")
               .or(`and(blocker_id.eq.${userId},blocked_id.eq.${otherProfileId}),and(blocker_id.eq.${otherProfileId},blocked_id.eq.${userId})`)
               .limit(1),
-            supabase
-              .from("messages")
-              .select("*")
-              .eq("match_id", matchId)
-              .order("created_at", { ascending: true })
-              .limit(200),
           ]);
 
           if (cancelled) return;
@@ -356,8 +375,6 @@ const Chat = () => {
             : null;
           setMyAvatar(myAvatarUrl);
           setIsBlocked(Array.isArray(blockedRes.data) && blockedRes.data.length > 0);
-          setMessages((messagesRes.data || []) as Message[]);
-          setIsLoadingHistory(false);
         })();
 
         const targetMatchId = matchId;
@@ -488,18 +505,26 @@ const Chat = () => {
     return () => clearInterval(interval);
   }, [activeMatchId]);
 
+  // Il primo scroll a fondo lo facciamo ISTANTANEO (no animazione): cosi'
+  // quando si apre una chat con tanti messaggi non si vede partire lo
+  // scrolling lento dall'alto. I messaggi successivi usano scroll smooth.
+  const isFirstScrollRef = useRef(true);
+
   useEffect(() => {
-    // Scroll to bottom when messages change
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messages.length === 0) return;
+    const behavior = isFirstScrollRef.current ? "auto" : "smooth";
+    messagesEndRef.current?.scrollIntoView({ behavior });
+    if (isFirstScrollRef.current) isFirstScrollRef.current = false;
   }, [messages]);
 
-  // Scroll to bottom on initial load
+  // Scroll to bottom on initial load (fallback, nel caso messages venga
+  // settato prima che il ref sia montato)
   useEffect(() => {
     if (!loading && messages.length > 0) {
       // Small timeout to ensure DOM has updated
       setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
+        messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+      }, 50);
     }
   }, [loading]);
 
