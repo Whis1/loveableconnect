@@ -109,7 +109,14 @@
     "suggested": "Suggested:",
     "maxInterestsNote": "Maximum 6 interests",
     "loading": "Loading...",
-    "favoriteSongs": "Favorite Songs"
+    "favoriteSongs": "Favorite Songs",
+    "showOnlineStatus": "Show online status",
+    "showOnlineStatusDescription": "Allow other users to see when you are online",
+    "emailNotifications": "Email notifications",
+    "emailLikeNotifications": "Emails for new Likes",
+    "emailLikeNotificationsDescription": "Receive an email when someone likes your profile while you are offline.",
+    "emailMessageNotifications": "Emails for new messages",
+    "emailMessageNotificationsDescription": "Receive an email when someone writes to you while you are offline."
   },
   "terms": {
     "link": "Privacy - Terms and Conditions - Cookies",
@@ -266,7 +273,7 @@
     "unlockMessage_one": "{{count}} person interested in you! Unlock to see who liked you.",
     "unlockMessage_other": "{{count}} people interested in you! Unlock to see who liked you.",
     "unlockNow": "Unlock Now - €2.99",
-    "noLikes": "You haven't received any likes yet. Keep exploring!",
+    "noLikes": "No likes for now. The more active you are, the more you get noticed. Keep exploring!",
     "exploreProfiles": "Explore Profiles",
     "likeReceived": "Like received",
     "explore": "Explore",

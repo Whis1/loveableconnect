@@ -87,7 +87,14 @@
     "saving": "جاري الحفظ...",
     "profileUpdated": "تم تحديث الملف الشخصي!",
     "profileUpdateSuccess": "تم حفظ التغييرات بنجاح",
-    "favoriteSongs": "الأغاني المفضلة"
+    "favoriteSongs": "الأغاني المفضلة",
+    "showOnlineStatus": "إظهار حالة الاتصال",
+    "showOnlineStatusDescription": "اسمح للمستخدمين الآخرين بمعرفة متى تكون متصلا",
+    "emailNotifications": "إشعارات البريد الإلكتروني",
+    "emailLikeNotifications": "رسائل إعجاب جديدة",
+    "emailLikeNotificationsDescription": "استلم بريدا إلكترونيا عندما يضع شخص إعجابا على ملفك وأنت غير متصل.",
+    "emailMessageNotifications": "رسائل البريد للمحادثات",
+    "emailMessageNotificationsDescription": "استلم بريدا إلكترونيا عندما يراسلك شخص وأنت غير متصل."
   },
   "terms": {
     "link": "الخصوصية - الشروط والأحكام - ملفات تعريف الارتباط",
@@ -371,7 +378,7 @@
     "unlockMessage_one": "{{count}} شخص مهتم بك! افتح لترى من أعجب بك.",
     "unlockMessage_other": "{{count}} أشخاص مهتمون بك! افتح لترى من أعجب بك.",
     "unlockNow": "افتح الآن - €2.99",
-    "noLikes": "لم تتلق أي إعجابات بعد. استمر في الاستكشاف!",
+    "noLikes": "لا إعجابات في الوقت الحالي. كلما كنت أكثر نشاطًا، زادت ملاحظتك. استمر في الاستكشاف!",
     "exploreProfiles": "استكشف الملفات الشخصية",
     "likeReceived": "تم استلام الإعجاب",
     "explore": "استكشف",

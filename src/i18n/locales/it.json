@@ -111,7 +111,12 @@
     "locationLocked": "⚠️ La location è bloccata. Puoi richiedere una modifica tramite supporto clienti.",
     "requestLocationChange": "Richiedi Cambio Location",
     "showOnlineStatus": "Mostra stato online",
-    "showOnlineStatusDescription": "Permetti ad altri utenti di vedere quando sei online"
+    "showOnlineStatusDescription": "Permetti ad altri utenti di vedere quando sei online",
+    "emailNotifications": "Notifiche email",
+    "emailLikeNotifications": "Email per nuovi Like",
+    "emailLikeNotificationsDescription": "Ricevi una email quando qualcuno mette Like al tuo profilo mentre sei offline.",
+    "emailMessageNotifications": "Email per nuovi messaggi",
+    "emailMessageNotificationsDescription": "Ricevi una email quando qualcuno ti scrive mentre sei offline."
   },
   "terms": {
     "link": "Privacy - Termini e condizioni - Cookie",
@@ -316,7 +321,7 @@
     "unlockMessage_one": "{{count}} persona interessata a te! Sblocca per 24 ore per vedere chi ti ha messo like.",
     "unlockMessage_other": "{{count}} persone interessate a te! Sblocca per 24 ore per vedere chi ti ha messo like.",
     "unlockNow": "Sblocca per 24H - €2.99",
-    "noLikes": "Non hai ancora ricevuto like. Continua a esplorare!",
+    "noLikes": "Nessun like al momento. Più sei attivo, più ti notano. Continua a esplorare!",
     "exploreProfiles": "Esplora Profili",
     "likeReceived": "Like ricevuto",
     "explore": "Esplora",
