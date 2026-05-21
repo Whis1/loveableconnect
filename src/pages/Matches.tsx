@@ -38,6 +38,18 @@ const toPublicAvatarUrl = (path: string | null) => {
   return supabase.storage.from('profile-images').getPublicUrl(path).data.publicUrl;
 };
 
+// Fallback: se l'utente non ha un avatar_url ma ha foto nella galleria,
+// usiamo la prima foto come avatar nei cerchi della lista match.
+const resolveAvatarOrFirstPhoto = (
+  avatar_url: string | null,
+  photos: string[] | null | undefined
+): string | null => {
+  const direct = toPublicAvatarUrl(avatar_url);
+  if (direct) return direct;
+  if (photos && photos.length > 0) return toPublicAvatarUrl(photos[0]);
+  return null;
+};
+
 const Matches = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -117,7 +129,7 @@ const Matches = () => {
           ? withFallback(
               supabase
                 .from("profiles")
-                .select("id, full_name, nickname, is_admin_profile, avatar_url, bio, city, show_online_status, last_active, manual_online_status")
+                .select("id, full_name, nickname, is_admin_profile, avatar_url, photos, bio, city, show_online_status, last_active, manual_online_status")
                 .in("id", otherUserIds),
               { data: [], error: null },
               7000
@@ -159,7 +171,10 @@ const Matches = () => {
             last_message_at: lastMessageMap.get(match.id) || match.created_at,
             otherUser: profile ? {
               ...profile,
-              avatar_url: toPublicAvatarUrl(profile.avatar_url),
+              avatar_url: resolveAvatarOrFirstPhoto(
+                profile.avatar_url,
+                (profile as { photos?: string[] | null }).photos ?? null
+              ),
               translatedBio,
             } : {
               id: otherUserId,
@@ -228,7 +243,7 @@ const Matches = () => {
 
             const { data: profile } = await supabase
               .from("profiles")
-              .select("id, full_name, nickname, is_admin_profile, avatar_url, bio, city")
+              .select("id, full_name, nickname, is_admin_profile, avatar_url, photos, bio, city")
               .eq("id", otherUserId)
               .single();
 

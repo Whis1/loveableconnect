@@ -10,10 +10,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useTextTranslation } from "@/hooks/useTranslation";
 import { MatchBanner } from "@/components/MatchBanner";
+import { PageLoader } from "@/components/PageLoader";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import likesHeartIcon from "@/assets/likes-heart-icon.png";
 import { useCredits } from "@/hooks/useCredits";
 import { useSendLike } from "@/hooks/useSendLike";
+import { withFallback, withTimeout } from "@/lib/async";
+import { ProfileDialog } from "@/components/ProfileDialog";
 
 interface LikeWithProfile {
   id: string;
@@ -47,6 +50,19 @@ const toPublicAvatarUrl = (path: string | null) => {
   return supabase.storage.from('profile-images').getPublicUrl(path).data.publicUrl;
 };
 
+// Quando un profilo non ha avatar_url ma ha foto nella galleria, usiamo la
+// prima foto come "avatar di fallback" cosi' i cerchi nei like ricevuti
+// non restano vuoti.
+const resolveAvatarOrFirstPhoto = (
+  avatar_url: string | null,
+  photos: string[] | null
+): string | null => {
+  const direct = toPublicAvatarUrl(avatar_url);
+  if (direct) return direct;
+  if (photos && photos.length > 0) return toPublicAvatarUrl(photos[0]);
+  return null;
+};
+
 const Likes = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -67,14 +83,24 @@ const Likes = () => {
   const [unlockingProfileId, setUnlockingProfileId] = useState<string | null>(null);
   const [showUnlockDialog, setShowUnlockDialog] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
+  // Dialog "Apri profilo" (mostra il profilo completo come nella bacheca)
+  const [profileDialogId, setProfileDialogId] = useState<string | null>(null);
+  const hasPremiumLikeAccess = Boolean(
+    credits?.is_premium &&
+    (credits.subscription_type === "monthly" || credits.subscription_type === "weekly") &&
+    (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date())
+  );
 
   // Carica i like ricevuti con i profili associati, in modo robusto.
   const loadLikes = async (userId: string): Promise<LikeWithProfile[]> => {
-    const { data: likesData, error } = await supabase
-      .from("likes")
-      .select("id, from_user_id, created_at")
-      .eq("to_user_id", userId)
-      .order("created_at", { ascending: false });
+    const { data: likesData, error } = await withTimeout(
+      supabase
+        .from("likes")
+        .select("id, from_user_id, created_at")
+        .eq("to_user_id", userId)
+        .order("created_at", { ascending: false }),
+      5500
+    );
 
     if (error) throw error;
 
@@ -83,17 +109,21 @@ const Likes = () => {
 
     // Un'unica query per tutti i profili: niente .single() per riga (falliva a caso).
     const fromIds = [...new Set(rows.map((l) => l.from_user_id))];
-    const { data: profilesData } = await supabase
-      .from("profiles")
-      .select("id, full_name, nickname, avatar_url, bio, age, interests, gender, sexual_orientation, relationship_status, relationship_type, looking_for")
-      .in("id", fromIds);
+    const { data: profilesData } = await withFallback(
+      supabase
+        .from("profiles")
+        .select("id, full_name, nickname, avatar_url, photos, bio, age, interests, gender, sexual_orientation, relationship_status, relationship_type, looking_for")
+        .in("id", fromIds),
+      { data: [], error: null },
+      5000
+    );
     const profileMap = new Map((profilesData || []).map((p) => [p.id, p]));
 
     // Traduzioni resilienti: un errore di traduzione non rompe il caricamento.
     const safeText = async (txt: string | null) => {
       if (!txt) return null;
       try {
-        return await translateText(txt);
+        return await withFallback(translateText(txt), txt, 700);
       } catch {
         return txt;
       }
@@ -101,7 +131,7 @@ const Likes = () => {
     const safeArray = async (arr: string[] | null) => {
       if (!arr) return null;
       try {
-        return await translateArray(arr);
+        return await withFallback(translateArray(arr), arr, 700);
       } catch {
         return arr;
       }
@@ -153,7 +183,10 @@ const Likes = () => {
           created_at: like.created_at,
           profile: {
             ...profile,
-            avatar_url: toPublicAvatarUrl(profile.avatar_url),
+            avatar_url: resolveAvatarOrFirstPhoto(
+              profile.avatar_url,
+              (profile as { photos?: string[] | null }).photos ?? null
+            ),
             translatedBio: await safeText(profile.bio),
             translatedInterests: await safeArray(profile.interests),
             translatedGender,
@@ -169,9 +202,12 @@ const Likes = () => {
   // Caricamento iniziale (e ri-traduzione al cambio lingua).
   useEffect(() => {
     let cancelled = false;
+    const loadingSafety = setTimeout(() => {
+      if (!cancelled) setLoading(false);
+    }, 3500);
 
     const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await withTimeout(supabase.auth.getSession(), 3000);
       if (!session) {
         navigate("/auth");
         return;
@@ -179,10 +215,14 @@ const Likes = () => {
       if (cancelled) return;
       setCurrentUserId(session.user.id);
 
-      const { data: unlockedData } = await supabase
-        .from("unlocked_like_profiles")
-        .select("unlocked_profile_id")
-        .eq("user_id", session.user.id);
+      const { data: unlockedData } = await withFallback(
+        supabase
+          .from("unlocked_like_profiles")
+          .select("unlocked_profile_id")
+          .eq("user_id", session.user.id),
+        { data: [], error: null },
+        3500
+      );
       if (!cancelled && unlockedData) {
         setUnlockedProfiles(new Set(unlockedData.map((u) => u.unlocked_profile_id)));
       }
@@ -204,9 +244,13 @@ const Likes = () => {
       }
     };
 
-    init();
+    init().catch((error) => {
+      console.error("Error initializing likes:", error);
+      if (!cancelled) setLoading(false);
+    });
     return () => {
       cancelled = true;
+      clearTimeout(loadingSafety);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentLanguage]);
@@ -248,7 +292,7 @@ const Likes = () => {
     if (!profileStillInLikes) return;
 
     // Se è già sbloccato i dati sono già mostrati nella card: niente da fare.
-    if (unlockedProfiles.has(profileId)) return;
+    if (hasPremiumLikeAccess || unlockedProfiles.has(profileId)) return;
 
     // Altrimenti mostra la finestra di sblocco.
     setSelectedProfileId(profileId);
@@ -354,11 +398,7 @@ const Likes = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">{t("likes.loading")}</p>
-      </div>
-    );
+    return <PageLoader />;
   }
 
   return (
@@ -411,6 +451,18 @@ const Likes = () => {
           </Button>
         </div>
 
+        {/* Dialog "Apri profilo": mostra il profilo completo (come nella bacheca) */}
+        {profileDialogId && currentUserId && (
+          <ProfileDialog
+            profileId={profileDialogId}
+            currentUserId={currentUserId}
+            open={!!profileDialogId}
+            onOpenChange={(open) => {
+              if (!open) setProfileDialogId(null);
+            }}
+          />
+        )}
+
         <Card className="border-0 shadow-2xl bg-background/95 backdrop-blur">
           <CardHeader className="space-y-1 pb-4">
             <CardTitle className="text-3xl font-bold flex items-center gap-3">
@@ -431,7 +483,7 @@ const Likes = () => {
             ) : (
               <div className="grid gap-4">
                 {likes.map((like) => {
-                  const isUnlocked = unlockedProfiles.has(like.from_user_id);
+                  const isUnlocked = hasPremiumLikeAccess || unlockedProfiles.has(like.from_user_id);
                   
                   return (
                     <Card 
@@ -456,40 +508,19 @@ const Likes = () => {
                           </div>
                           
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-2">
+                            <div className="flex items-center gap-2 mb-3">
                               <h3 className={`font-semibold text-lg truncate ${!isUnlocked ? 'blur-sm' : ''}`}>
                                 {like.profile.nickname}
                               </h3>
-                              {like.profile.age && (
-                                <Badge variant="secondary" className={!isUnlocked ? 'blur-sm' : ''}>
-                                  {like.profile.age}
-                                </Badge>
-                              )}
                             </div>
-                            
+
                             {!isUnlocked ? (
                               <div className="flex items-center gap-2 text-muted-foreground">
                                 <Lock className="h-4 w-4" />
                                 <p className="text-sm">Clicca per visualizzare (8 crediti)</p>
                               </div>
                             ) : (
-                              <>
-                                {(like.profile.translatedBio || like.profile.bio) && (
-                                  <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                                    {like.profile.translatedBio || like.profile.bio}
-                                  </p>
-                                )}
-                                
-                                {like.profile.translatedInterests && like.profile.translatedInterests.length > 0 && (
-                                  <div className="flex flex-wrap gap-1 mb-3">
-                                    {like.profile.translatedInterests.slice(0, 3).map((interest, idx) => (
-                                      <Badge key={idx} variant="outline" className="text-xs">
-                                        {interest}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                )}
-
+                              <div className="flex flex-wrap gap-2">
                                 <Button
                                   size="sm"
                                   onClick={(e) => {
@@ -502,7 +533,18 @@ const Likes = () => {
                                   <Heart className="h-4 w-4 mr-2" />
                                   {likingUserId === like.from_user_id ? t("likes.liking") : t("likes.likeBack")}
                                 </Button>
-                              </>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setProfileDialogId(like.from_user_id);
+                                  }}
+                                >
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  Apri profilo
+                                </Button>
+                              </div>
                             )}
                           </div>
                         </div>

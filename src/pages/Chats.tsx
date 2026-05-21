@@ -192,6 +192,33 @@ const Chats = () => {
         .sort(
           (a: any, b: any) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
         );
+
+      // Riempie gli avatar mancanti: l'edge function admin-secondary-get-conversations
+      // a volte ritorna userAvatar null. Andiamo a recuperare il primo elemento
+      // di photos dal profilo dell'utente. In batch, una sola query.
+      const idsWithoutAvatar = sorted
+        .filter((c: any) => !c.userAvatar)
+        .map((c: any) => c.userId);
+      if (idsWithoutAvatar.length > 0) {
+        try {
+          const { data: profs } = await supabase
+            .from("profiles")
+            .select("id, avatar_url, photos")
+            .in("id", idsWithoutAvatar);
+          const photoMap = new Map<string, string>();
+          (profs || []).forEach((p: any) => {
+            const path = p.avatar_url || (Array.isArray(p.photos) && p.photos[0]) || null;
+            if (path) photoMap.set(p.id, path);
+          });
+          sorted.forEach((c: any) => {
+            if (!c.userAvatar && photoMap.has(c.userId)) {
+              c.userAvatar = photoMap.get(c.userId);
+            }
+          });
+        } catch (e) {
+          console.warn("Fallback avatar profile fetch failed:", e);
+        }
+      }
       // Aggiungi tutte le conversazioni arrivate dal server al set e ai dati persistenti
       const keep = keepInListRef.current;
       const keepData = keepDataRef.current;
