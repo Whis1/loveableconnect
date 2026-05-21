@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
+import { getStoredUserId } from "@/lib/storedSession";
 
 interface Profile {
   id: string;
@@ -24,13 +25,16 @@ interface Profile {
 }
 
 const fetchProfiles = async (): Promise<Profile[]> => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) return [];
+  // Leggiamo l'id utente in modo SINCRONO dal localStorage invece di
+  // chiamare supabase.auth.getSession(): senza questo fix, quando
+  // getSession() si pianta la bacheca profili rimane vuota.
+  const userId = getStoredUserId();
+  if (!userId) return [];
 
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
-    .neq("id", session.user.id)
+    .neq("id", userId)
     .order("last_active", { ascending: false });
 
   if (error) throw error;

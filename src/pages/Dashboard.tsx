@@ -58,16 +58,16 @@ const Dashboard = () => {
     let profileChannel: ReturnType<typeof supabase.channel> | null = null;
     let hiddenMatchesChannel: ReturnType<typeof supabase.channel> | null = null;
     const fetchUserData = async () => {
-      const {
-        data: {
-          session
-        }
-      } = await supabase.auth.getSession();
-      if (!session) {
+      // Leggiamo l'id utente in modo SINCRONO dal localStorage: evita
+      // l'hang di supabase.auth.getSession() che lasciava la dashboard
+      // in caricamento per minuti.
+      const userId = getStoredUserId();
+      if (!userId) {
         navigate("/auth");
         return;
       }
-      setUser(session.user);
+      const session = { user: { id: userId } } as { user: { id: string } };
+      setUser(session.user as unknown as User);
 
       // Fetch profile
       const {

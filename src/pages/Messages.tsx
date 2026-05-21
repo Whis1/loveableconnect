@@ -10,6 +10,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useBanCheck } from "@/hooks/useBanCheck";
 import OnlineIndicator from "@/components/OnlineIndicator";
+import { PageLoader } from "@/components/PageLoader";
+import { withFallback } from "@/lib/async";
+import { getStoredUserId } from "@/lib/storedSession";
 
 interface MatchWithMessages {
   id: string;
@@ -41,30 +44,43 @@ const Messages = () => {
 
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
+    let cancelled = false;
+    const loadingSafety = setTimeout(() => {
+      if (!cancelled) setLoading(false);
+    }, 12000);
 
     const fetchMatchesWithMessages = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
+      // Leggiamo l'id utente in modo SINCRONO dal localStorage: evita
+      // l'hang di supabase.auth.getSession() che lasciava la pagina vuota.
+      const userId = getStoredUserId();
+      if (!userId) {
         navigate("/auth");
         return;
       }
+      const session = { user: { id: userId } } as { user: { id: string } };
 
+      if (cancelled) return;
       setCurrentUserId(session.user.id);
 
-      // Fetch matches
-      const { data: matchesData, error } = await supabase
-        .from("matches")
-        .select("id, created_at, user1_id, user2_id")
-        .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`)
-        .order("created_at", { ascending: false });
+      const [matchesResult, hiddenResult] = await Promise.all([
+        supabase
+          .from("matches")
+          .select("id, created_at, user1_id, user2_id")
+          .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`)
+          .order("created_at", { ascending: false }),
+        withFallback(
+          supabase
+            .from("hidden_matches")
+            .select("match_id")
+            .eq("user_id", session.user.id)
+            .in("hidden_from", ["messages", "both"]),
+          { data: [], error: null },
+          3500
+        ),
+      ]);
 
-      // Get hidden conversations for current user (only those hidden from messages page)
-      const { data: hiddenMatches } = await supabase
-        .from("hidden_matches")
-        .select("match_id")
-        .eq("user_id", session.user.id)
-        .in("hidden_from", ["messages", "both"]);
+      const { data: matchesData, error } = matchesResult;
+      const { data: hiddenMatches } = hiddenResult;
       
       const hiddenMatchIds = new Set(hiddenMatches?.map(h => h.match_id) || []);
       
@@ -82,57 +98,85 @@ const Messages = () => {
         return;
       }
 
-      // For each match, fetch profile and messages
-      const matchesWithMessages = await Promise.all(
-        visibleMatches.map(async (match) => {
-          const otherUserId = match.user1_id === session.user.id 
-            ? match.user2_id 
-            : match.user1_id;
-
-          // Fetch other user's profile
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("id, full_name, nickname, is_admin_profile, avatar_url")
-            .eq("id", otherUserId)
-            .single();
-
-          // Fetch last message
-          const { data: messagesData } = await supabase
-            .from("messages")
-            .select("content, created_at, read, receiver_id")
-            .eq("match_id", match.id)
-            .order("created_at", { ascending: false })
-            .limit(1);
-
-          // Count unread messages
-          const { count: unreadCount } = await supabase
-            .from("messages")
-            .select("*", { count: 'exact', head: true })
-            .eq("match_id", match.id)
-            .eq("receiver_id", session.user.id)
-            .eq("read", false);
-
-          return {
-            id: match.id,
-            created_at: match.created_at,
-            otherUser: profile || {
-              id: otherUserId,
-              full_name: t("messages.unknownUser"),
-              nickname: t("messages.unknownUser"),
-              is_admin_profile: false,
-              avatar_url: null,
-            },
-            lastMessage: messagesData && messagesData.length > 0 
-              ? {
-                  content: messagesData[0].content,
-                  created_at: messagesData[0].created_at,
-                  read: messagesData[0].receiver_id === session.user.id ? messagesData[0].read : true,
-                }
-              : null,
-            unreadCount: unreadCount || 0,
-          };
-        })
+      const otherUserIds = visibleMatches.map((match) =>
+        match.user1_id === session.user.id ? match.user2_id : match.user1_id
       );
+      const matchIds = visibleMatches.map((match) => match.id);
+
+      const [profilesResult, messagesResult, unreadResult] = await Promise.all([
+        otherUserIds.length > 0
+          ? withFallback(
+              supabase
+                .from("profiles")
+                .select("id, full_name, nickname, is_admin_profile, avatar_url, show_online_status, last_active, manual_online_status")
+                .in("id", otherUserIds),
+              { data: [], error: null },
+              7000
+            )
+          : Promise.resolve({ data: [], error: null }),
+        matchIds.length > 0
+          ? withFallback(
+              supabase
+                .from("messages")
+                .select("match_id, content, created_at, read, receiver_id")
+                .in("match_id", matchIds)
+                .order("created_at", { ascending: false })
+                .limit(500),
+              { data: [], error: null },
+              7000
+            )
+          : Promise.resolve({ data: [], error: null }),
+        matchIds.length > 0
+          ? withFallback(
+              supabase
+                .from("messages")
+                .select("match_id")
+                .in("match_id", matchIds)
+                .eq("receiver_id", session.user.id)
+                .eq("read", false),
+              { data: [], error: null },
+              7000
+            )
+          : Promise.resolve({ data: [], error: null }),
+      ]);
+
+      const profileMap = new Map((profilesResult.data || []).map((profile) => [profile.id, profile]));
+      const lastMessageMap = new Map<string, any>();
+      (messagesResult.data || []).forEach((message) => {
+        if (!lastMessageMap.has(message.match_id)) {
+          lastMessageMap.set(message.match_id, message);
+        }
+      });
+      const unreadCountMap = new Map<string, number>();
+      (unreadResult.data || []).forEach((message) => {
+        unreadCountMap.set(message.match_id, (unreadCountMap.get(message.match_id) || 0) + 1);
+      });
+
+      const matchesWithMessages = visibleMatches.map((match) => {
+        const otherUserId = match.user1_id === session.user.id ? match.user2_id : match.user1_id;
+        const profile = profileMap.get(otherUserId);
+        const lastMessage = lastMessageMap.get(match.id);
+
+        return {
+          id: match.id,
+          created_at: match.created_at,
+          otherUser: profile || {
+            id: otherUserId,
+            full_name: t("messages.unknownUser"),
+            nickname: t("messages.unknownUser"),
+            is_admin_profile: false,
+            avatar_url: null,
+          },
+          lastMessage: lastMessage
+            ? {
+                content: lastMessage.content,
+                created_at: lastMessage.created_at,
+                read: lastMessage.receiver_id === session.user.id ? lastMessage.read : true,
+              }
+            : null,
+          unreadCount: unreadCountMap.get(match.id) || 0,
+        };
+      });
 
       // Filter out matches without messages and sort by last message
       const matchesWithLastMessage = matchesWithMessages
@@ -142,62 +186,66 @@ const Messages = () => {
           return new Date(b.lastMessage.created_at).getTime() - new Date(a.lastMessage.created_at).getTime();
         });
 
+      if (cancelled) return;
       setMatches(matchesWithLastMessage);
 
-      // Load online statuses for all profiles
-      const profileIds = matchesWithLastMessage.map(m => m.otherUser.id);
-      if (profileIds.length > 0) {
-        const { data: profilesData } = await supabase
-          .from("profiles")
-          .select("id, show_online_status, is_admin_profile, last_active, manual_online_status")
-          .in("id", profileIds);
+      const statusMap = new Map<string, { isOnline: boolean; showStatus: boolean }>();
+      const now = new Date();
+      const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
+      (profilesResult.data || []).forEach(profile => {
+        let isOnline = false;
+        const showStatus = profile.show_online_status ?? true;
 
-        if (profilesData) {
-          const statusMap = new Map<string, { isOnline: boolean; showStatus: boolean }>();
-          profilesData.forEach(profile => {
-            let isOnline = false;
-            const showStatus = profile.show_online_status ?? true;
-
-            if (profile.manual_online_status !== null) {
-              isOnline = profile.manual_online_status;
-            } else if (profile.is_admin_profile) {
-              isOnline = true;
-            } else if (profile.last_active) {
-              const lastActive = new Date(profile.last_active);
-              const now = new Date();
-              const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
-              isOnline = lastActive > twoMinutesAgo;
-            }
-
-            statusMap.set(profile.id, { isOnline, showStatus });
-          });
-          setOnlineStatuses(statusMap);
+        if (profile.manual_online_status !== null) {
+          isOnline = profile.manual_online_status;
+        } else if (profile.is_admin_profile) {
+          isOnline = true;
+        } else if (profile.last_active) {
+          isOnline = new Date(profile.last_active) > twoMinutesAgo;
         }
-      }
+
+        statusMap.set(profile.id, { isOnline, showStatus });
+      });
+      setOnlineStatuses(statusMap);
 
       setLoading(false);
 
-      // Subscribe to new messages
-      channel = supabase
-        .channel('messages-list-channel')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'messages',
-          },
-          () => {
-            // Refetch when new message arrives
-            fetchMatchesWithMessages();
-          }
-        )
-        .subscribe();
+      if (!channel) {
+        channel = supabase
+          .channel('messages-list-channel')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'messages',
+            },
+            () => {
+              void fetchMatchesWithMessages();
+            }
+          )
+          .subscribe();
+      }
     };
 
-    fetchMatchesWithMessages();
+    fetchMatchesWithMessages()
+      .catch((error) => {
+        console.error("Error loading messages:", error);
+        if (!cancelled) {
+          toast({
+            title: t("messages.error"),
+            description: t("messages.errorLoadingMessages"),
+            variant: "destructive",
+          });
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
     return () => {
+      cancelled = true;
+      clearTimeout(loadingSafety);
       if (channel) {
         supabase.removeChannel(channel);
       }
@@ -235,11 +283,7 @@ const Messages = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">{t("messages.loading")}</p>
-      </div>
-    );
+    return <PageLoader />;
   }
 
   return (
