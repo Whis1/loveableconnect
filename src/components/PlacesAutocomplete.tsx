@@ -38,9 +38,21 @@ export const PlacesAutocomplete = ({
   const [hasSelected, setHasSelected] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  // Ref sempre aggiornato di hasSelected: la closure della fetch usava il
+  // valore "vecchio" (al momento del setTimeout), quindi quando l'utente
+  // selezionava una citta' e la fetch in volo tornava, la dropdown si
+  // riapriva perche' la closure leggeva ancora hasSelected=false.
+  const hasSelectedRef = useRef(hasSelected);
+  useEffect(() => {
+    hasSelectedRef.current = hasSelected;
+  }, [hasSelected]);
+  // AbortController per cancellare le fetch in volo quando l'utente
+  // seleziona una voce: senza, la fetch poteva risolversi dopo il click
+  // e riaprire la dropdown con i vecchi risultati.
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    // Se l'utente ha selezionato, non fare più ricerche
+    // Se l'utente ha selezionato, non fare piu' ricerche
     if (hasSelected) {
       return;
     }
@@ -54,6 +66,12 @@ export const PlacesAutocomplete = ({
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
+    // Annulla eventuale fetch precedente ancora in volo.
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+    abortRef.current = new AbortController();
+    const signal = abortRef.current.signal;
 
     timeoutRef.current = setTimeout(async () => {
       setIsLoading(true);
@@ -67,17 +85,25 @@ export const PlacesAutocomplete = ({
           {
             headers: {
               'Accept-Language': i18n.language,
-            }
+            },
+            signal,
           }
         );
 
+        // Se la fetch e' stata cancellata o l'utente ha gia' selezionato
+        // nel frattempo, non aggiorniamo piu' lo stato (eviteremmo di
+        // riaprire la dropdown sopra una selezione gia' fatta).
+        if (signal.aborted || hasSelectedRef.current) return;
+
         const data: NominatimResult[] = await response.json();
-        
+
+        if (signal.aborted || hasSelectedRef.current) return;
+
         const formattedSuggestions = data
           .map((result) => {
             const city = result.address.city || result.address.town || result.address.village || '';
             const province = result.address.province || result.address.state || '';
-            
+
             let label = '';
             if (city && province) {
               // Extract province abbreviation if available (e.g., "MI" from "Milano")
@@ -86,26 +112,31 @@ export const PlacesAutocomplete = ({
             } else {
               label = city || province;
             }
-            
+
             return {
               label,
               lat: parseFloat(result.lat),
               lon: parseFloat(result.lon),
             };
           })
-          .filter((suggestion, index, self) => 
+          .filter((suggestion, index, self) =>
             suggestion.label && self.findIndex(s => s.label === suggestion.label) === index
           );
 
+        // Doppio check: se l'utente ha cliccato mentre processavamo, fermati.
+        if (hasSelectedRef.current) return;
+
         setSuggestions(formattedSuggestions);
-        if (formattedSuggestions.length > 0 && !hasSelected) {
+        if (formattedSuggestions.length > 0 && !hasSelectedRef.current) {
           setShowSuggestions(true);
         }
-      } catch (error) {
-        console.error("Errore nel recupero delle città:", error);
+      } catch (error: any) {
+        // AbortError e' atteso quando l'utente seleziona: non lo logghiamo.
+        if (error?.name === 'AbortError') return;
+        console.error("Errore nel recupero delle citta':", error);
         setSuggestions([]);
       } finally {
-        setIsLoading(false);
+        if (!signal.aborted) setIsLoading(false);
       }
     }, 150);
 
@@ -113,10 +144,20 @@ export const PlacesAutocomplete = ({
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
+      // Cancella anche la fetch eventualmente in corso.
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
     };
   }, [value, i18n.language, hasSelected]);
 
   const handleSelect = useCallback((suggestion: { label: string; lat: number; lon: number }) => {
+    // Importante: marca SUBITO come selezionato (anche nel ref) e cancella
+    // qualsiasi fetch in volo. Senza questo, una fetch lenta poteva tornare
+    // dopo il click e riaprire la dropdown.
+    hasSelectedRef.current = true;
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (abortRef.current) abortRef.current.abort();
     onChange(suggestion.label, suggestion.lat, suggestion.lon);
     setShowSuggestions(false);
     setHasSelected(true);
