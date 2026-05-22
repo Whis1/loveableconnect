@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
@@ -84,11 +84,21 @@ export function InterestsAutocomplete({
   const [inputValue, setInputValue] = useState("");
   const [filteredInterests, setFilteredInterests] = useState<string[]>([]);
 
-  // Get translated interests list
-  const translatedInterests = INTEREST_KEYS.map(key => ({
-    key,
-    label: t(`interests.${key}`, key) // fallback to key if translation missing
-  }));
+  // Get translated interests list — useMemo per stabilizzare la reference.
+  // PRIMA era un .map() inline, ricreato ad ogni render. Essendo nelle
+  // dipendenze del useEffect sotto, faceva girare l'effetto in loop infinito
+  // (setState → re-render → nuovo array → effect → setState → ...): la CPU
+  // restava al 100% e il PC si surriscaldava quando si entrava nel form di
+  // modifica profilo.
+  const translatedInterests = useMemo(
+    () =>
+      INTEREST_KEYS.map((key) => ({
+        key,
+        label: t(`interests.${key}`, key), // fallback to key if translation missing
+      })),
+    // Si rigenera solo se cambia la lingua (cambia la funzione t).
+    [t]
+  );
 
   useEffect(() => {
     if (inputValue.trim()) {
