@@ -575,27 +575,20 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
           </div>
         )}
 
-        {gamesPlayed >= getGameLimit() && userCredits < 2 && !hasUnlimitedGames() ? (
-          <div className="text-center py-4">
-            <p className="text-lg mb-2">Hai esaurito le tue sfide giornaliere!</p>
-            <p className="text-muted-foreground">
-              Torna tra <span className="font-bold text-primary">{getTimeRemaining()}</span> per giocare di nuovo gratuitamente.
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Oppure ottieni più crediti per continuare a giocare!
-            </p>
-          </div>
-        ) : (
-          <Button
-            onClick={handleStartGame}
-            className="w-full bg-primary hover:bg-primary/90"
-          >
-            <Trophy className="w-4 h-4 mr-2" />
-            {gamesPlayed >= getGameLimit() && !hasUnlimitedGames()
-              ? "Gioca con 2 crediti" 
-              : "Iniziare a giocare"}
-          </Button>
-        )}
+        {/* Niente piu' blocco testo "Hai esaurito le tue sfide giornaliere":
+            mostriamo sempre il bottone "Gioca con 2 crediti" quando le
+            partite gratuite sono finite. Se l'utente non ha 2 crediti,
+            handleStartGame fa partire un toast "Crediti insufficienti"
+            (gestione gia' presente). */}
+        <Button
+          onClick={handleStartGame}
+          className="w-full bg-primary hover:bg-primary/90"
+        >
+          <Trophy className="w-4 h-4 mr-2" />
+          {gamesPlayed >= getGameLimit() && !hasUnlimitedGames()
+            ? "Gioca con 2 crediti"
+            : "Iniziare a giocare"}
+        </Button>
       </div>
     </Card>
   );
