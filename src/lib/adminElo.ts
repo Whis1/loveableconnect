@@ -37,12 +37,22 @@ export function computeAdminElos(admins: AdminSeed[]): Map<string, number> {
   const n = admins.length;
   if (n === 0) return result;
 
-  // 1. Graduatoria di n ELO distinti, dal più alto al più basso, con distacchi
-  //    variabili (così la classifica non sembra una scaletta uniforme).
+  // 1. Graduatoria di n ELO distinti, dal piu' alto al piu' basso, con
+  //    distacchi variabili. Importante: alle prime posizioni diamo un
+  //    BONUS di peso che decade esponenzialmente, cosi' il #1 e' molto
+  //    sopra al #2 (es. 50-60 punti), poi i gap si stringono. E' come
+  //    succede nelle classifiche reali (es. Magnus Carlsen ELO 2830 vs
+  //    #2 a 2786 = 44 punti di differenza).
   const pool: number[] = [TOP_ELO];
   if (n > 1) {
     const weights: number[] = [];
-    for (let r = 0; r < n - 1; r++) weights.push(1 + (hash(`gap-${r}`) % 10));
+    for (let r = 0; r < n - 1; r++) {
+      // Bonus decrescente per le prime posizioni: r=0 prende +20, r=1 +14,
+      // r=2 +10, r=3 +7, r=4 +5... fino a 0 dopo la decima posizione.
+      const positionBonus = Math.max(0, Math.floor(20 * Math.exp(-r / 3)));
+      // 1 base + bonus posizione + 0-9 random (per non avere gap identici)
+      weights.push(1 + positionBonus + (hash(`gap-${r}`) % 10));
+    }
     const weightSum = weights.reduce((s, w) => s + w, 0);
     const span = TOP_ELO - BOTTOM_ELO;
     let elo = TOP_ELO;
