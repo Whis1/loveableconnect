@@ -972,6 +972,20 @@ const ProfileEdit = () => {
                 </div>
               )}
 
+              {/* Favorite Songs */}
+              <div className="space-y-2">
+                <Label>🎵 Canzoni Preferite (max 4)</Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Aggiungi le tue canzoni preferite da Spotify per far sapere agli altri i tuoi gusti musicali
+                </p>
+                <SpotifySongSelector
+                  selectedSongs={favoriteSongs}
+                  onSongsChange={setFavoriteSongs}
+                  maxSongs={4}
+                />
+              </div>
+
+              {/* Email Notifications — spostato qui sotto le canzoni preferite */}
               <div className="space-y-4 p-4 border rounded-lg bg-background/40">
                 <div>
                   <Label className="text-base">{t('profile.emailNotifications')}</Label>
@@ -1008,19 +1022,6 @@ const ProfileEdit = () => {
                     onCheckedChange={(checked) => setProfile({ ...profile, email_message_notifications: checked })}
                   />
                 </div>
-              </div>
-
-              {/* Favorite Songs */}
-              <div className="space-y-2">
-                <Label>🎵 Canzoni Preferite (max 4)</Label>
-                <p className="text-sm text-muted-foreground mb-2">
-                  Aggiungi le tue canzoni preferite da Spotify per far sapere agli altri i tuoi gusti musicali
-                </p>
-                <SpotifySongSelector
-                  selectedSongs={favoriteSongs}
-                  onSongsChange={setFavoriteSongs}
-                  maxSongs={4}
-                />
               </div>
 
               <div className="flex gap-3">
