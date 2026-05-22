@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Coins, Crown, Heart, Plus } from "lucide-react";
+import { Coins, Crown, Heart, Plus, XCircle } from "lucide-react";
 
 export const UserCreditsManager = () => {
   const { toast } = useToast();
@@ -18,6 +18,7 @@ export const UserCreditsManager = () => {
   const [loadingPlatinum, setLoadingPlatinum] = useState(false);
   const [loadingUnlock, setLoadingUnlock] = useState(false);
   const [loadingLikes, setLoadingLikes] = useState(false);
+  const [loadingRemoveSub, setLoadingRemoveSub] = useState(false);
 
   const handleAddCredits = async () => {
     if (!userId || !creditsAmount) {
@@ -226,6 +227,61 @@ export const UserCreditsManager = () => {
     }
   };
 
+  // 🔧 Rimuove COMPLETAMENTE l'abbonamento da un account (resetta a free).
+  // Utile quando un account di test era stato settato come Premium Mensile e
+  // di conseguenza tris/dama avevano partite illimitate (counter non scendeva).
+  const handleRemoveSubscription = async () => {
+    if (!userId) {
+      toast({
+        title: "Errore",
+        description: "Inserisci user ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoadingRemoveSub(true);
+    try {
+      const { error } = await supabase
+        .from("user_credits")
+        .update({
+          is_premium: false,
+          subscription_type: 'none',
+          premium_tier: 'none',
+          premium_expires_at: null,
+        })
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      // Reset anche il contatore tris/dama del giorno in modo che parta da 0/5
+      // (free) invece di restare con il counter di una giornata da premium.
+      await supabase
+        .from("tris_games")
+        .update({
+          games_played_today: 0,
+          last_reset_date: new Date().toISOString().split("T")[0],
+        })
+        .eq("user_id", userId);
+
+      toast({
+        title: "Abbonamento rimosso",
+        description: "Account riportato a Free (5 partite/giorno, niente unlimited).",
+      });
+
+      setUserId("");
+    } catch (error: any) {
+      console.error("Error removing subscription:", error);
+      toast({
+        title: "Errore",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingRemoveSub(false);
+    }
+  };
+
   const handleAddLikes = async () => {
     if (!userId || !likesAmount) {
       toast({
@@ -349,23 +405,45 @@ export const UserCreditsManager = () => {
         </div>
         
         <div className="grid grid-cols-2 gap-3">
-          <Button 
-            onClick={handleAssignWeeklyPremium} 
-            disabled={loadingWeeklyPremium} 
+          <Button
+            onClick={handleAssignWeeklyPremium}
+            disabled={loadingWeeklyPremium}
             variant="outline"
           >
             <Crown className="h-4 w-4 mr-2" />
             {loadingWeeklyPremium ? "Assegnando..." : "Premium (7gg)"}
           </Button>
-          
-          <Button 
-            onClick={handleUnlockLikes} 
-            disabled={loadingUnlock} 
+
+          <Button
+            onClick={handleUnlockLikes}
+            disabled={loadingUnlock}
             variant="outline"
           >
             <Heart className="h-4 w-4 mr-2" />
             {loadingUnlock ? "Sbloccando..." : "Sblocca (24h)"}
           </Button>
+        </div>
+
+        {/* 🔧 Reset account a free: utile quando un account è stato
+            settato per errore come Premium Mensile e di conseguenza le
+            partite di tris/dama non scendono (sono unlimited per design). */}
+        <div className="pt-2 border-t border-border/40">
+          <Button
+            onClick={handleRemoveSubscription}
+            disabled={loadingRemoveSub}
+            variant="outline"
+            className="w-full bg-gradient-to-r from-red-500/10 to-orange-500/10 hover:from-red-500/20 hover:to-orange-500/20 border-red-500/30 text-red-600 dark:text-red-400"
+          >
+            <XCircle className="h-4 w-4 mr-2" />
+            {loadingRemoveSub ? "Rimuovendo..." : "Rimuovi Abbonamento (Reset a Free)"}
+          </Button>
+          <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+            Riporta l'account a stato free: <code className="px-1 bg-muted rounded">is_premium=false</code>,
+            <code className="px-1 bg-muted rounded">subscription_type=none</code>,
+            <code className="px-1 bg-muted rounded">premium_tier=none</code>.
+            Risolve il caso in cui tris/dama non scalano le partite giornaliere
+            (Premium Mensile = partite illimitate by design).
+          </p>
         </div>
       </CardContent>
     </Card>

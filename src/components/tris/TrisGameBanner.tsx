@@ -88,10 +88,19 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
     }
   }, [credits?.balance]);
 
-  const hasActiveSubscription = () => Boolean(
-    credits?.is_premium &&
-    (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date())
-  );
+  // Considera attivo SOLO se is_premium=true E (mancante/futuro) premium_expires_at.
+  // Se l'abbonamento è scaduto ma is_premium non e' stato aggiornato (dato sporco),
+  // hasActiveSubscription torna comunque false → niente unlimited di rimbalzo.
+  const hasActiveSubscription = () => {
+    if (!credits?.is_premium) return false;
+    if (!credits.premium_expires_at) {
+      // Senza data di scadenza: lo trattiamo come attivo SOLO se la subscription
+      // è effettivamente settata (monthly o weekly). subscription_type='none'
+      // con is_premium=true è dato sporco e non deve dare unlimited.
+      return credits.subscription_type === 'monthly' || credits.subscription_type === 'weekly';
+    }
+    return new Date(credits.premium_expires_at) > new Date();
+  };
 
   const hasUnlimitedGames = () => Boolean(
     hasActiveSubscription() &&
