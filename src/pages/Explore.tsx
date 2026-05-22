@@ -48,6 +48,31 @@ interface UserLocation {
   longitude: number;
 }
 
+// 🔄 Rotazione profili admin in cima alla bacheca.
+// Ogni ROTATION_HOURS ore, l'ordine degli admin in prima fila cambia
+// in modo deterministico (basato su un hash id+bucket).
+// Gli utenti reali NON sono toccati: per apparire in prima fila devono
+// fare l'abbonamento mensile (rank 0). Gli admin sono rank 1 e ruotano
+// fra loro mantenendosi sempre prima degli altri utenti standard.
+const ROTATION_HOURS = 3;
+const ROTATION_EPOCH = Date.UTC(2026, 0, 1); // 1 Jan 2026 UTC
+const ROTATION_INTERVAL_MS = ROTATION_HOURS * 60 * 60 * 1000;
+
+/** FNV-1a 32-bit hash su stringa, restituisce uint32 deterministico. */
+function rotationHashStr(str: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+/** Calcola il bucket di rotazione corrente (incrementa ogni ROTATION_HOURS). */
+function getRotationBucket(): number {
+  return Math.floor((Date.now() - ROTATION_EPOCH) / ROTATION_INTERVAL_MS);
+}
+
 const Explore = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -369,22 +394,37 @@ const Explore = () => {
       );
       const creditsMap = new Map<string, string>((subsData || []).map((c: any) => [c.user_id, c.subscription_type]));
       
-      // Sort profiles: monthly subscribers first, then admin profiles, then by last_active
+      // Sort profiles: monthly subscribers first, then admin profiles (ROTATED), then by last_active
+      // 🔄 Bucket di rotazione: ogni 3 ore cambiano i profili admin in cima.
+      const rotationBucket = getRotationBucket();
+      const rotationKey = (id: string) => rotationHashStr(`${id}-${rotationBucket}`);
+
       allProfiles.sort((a, b) => {
         const aSub = creditsMap.get(a.id);
         const bSub = creditsMap.get(b.id);
-        
+
         const rank = (p: Profile, sub?: string) => {
           if (sub === 'monthly') return 0; // monthly subscribers first
           if (p.is_admin_profile === true) return 1; // then admin profiles
           return 2; // then everyone else (standard + weekly)
         };
-        
+
         const rA = rank(a, aSub);
         const rB = rank(b, bSub);
         if (rA !== rB) return rA - rB;
-        
-        // Then sort by last active
+
+        // 🔄 Admin profiles: ordinamento ruotato (cambia ogni ROTATION_HOURS ore).
+        // Stessa terna (a.id, b.id, rotationBucket) → stesso ordine.
+        // Bucket diverso → ordine diverso, deterministico, senza randomness lato client.
+        if (rA === 1) {
+          const kA = rotationKey(a.id);
+          const kB = rotationKey(b.id);
+          if (kA !== kB) return kA - kB;
+          // Tie-break stabile sull'id, nel caso (estremamente raro) di collisione hash.
+          return a.id < b.id ? -1 : 1;
+        }
+
+        // Then sort by last active (per monthly subscribers e utenti standard)
         const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
         const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
         return dateB - dateA;
@@ -687,21 +727,33 @@ const Explore = () => {
       );
       const creditsMap = new Map<string, string>((subsData || []).map((c: any) => [c.user_id, c.subscription_type]));
       
-      // Sort profiles: monthly subscribers first, then admin profiles, then by last_active
+      // Sort profiles: monthly subscribers first, then admin profiles (ROTATED), then by last_active
+      // 🔄 Stesso schema di rotazione del primo batch: gli admin in cima ruotano ogni 3 ore.
+      const rotationBucketFiltered = getRotationBucket();
+      const rotationKeyFiltered = (id: string) => rotationHashStr(`${id}-${rotationBucketFiltered}`);
+
       filteredProfiles.sort((a, b) => {
         const aSub = creditsMap.get(a.id);
         const bSub = creditsMap.get(b.id);
-        
+
         const rank = (p: Profile, sub?: string) => {
           if (sub === 'monthly') return 0; // monthly subscribers first
           if (p.is_admin_profile === true) return 1; // then admin profiles
           return 2; // then everyone else (standard + weekly)
         };
-        
+
         const rA = rank(a, aSub);
         const rB = rank(b, bSub);
         if (rA !== rB) return rA - rB;
-        
+
+        // 🔄 Admin profiles: ordinamento ruotato (cambia ogni ROTATION_HOURS ore).
+        if (rA === 1) {
+          const kA = rotationKeyFiltered(a.id);
+          const kB = rotationKeyFiltered(b.id);
+          if (kA !== kB) return kA - kB;
+          return a.id < b.id ? -1 : 1;
+        }
+
         // Then sort by last active
         const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
         const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
