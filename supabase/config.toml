@@ -147,5 +147,8 @@ verify_jwt = false
 [functions.reset-daily-games]
 verify_jwt = false
 
+[functions.admin-reset-account]
+verify_jwt = false
+
 [functions.stripe-webhook]
 verify_jwt = false
