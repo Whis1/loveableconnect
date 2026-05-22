@@ -922,7 +922,7 @@ const ProfileEdit = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="single">{t('profile.single')}</SelectItem>
-                    <SelectItem value="in_relationship">{t('common.inRelationship')}</SelectItem>
+                    <SelectItem value="in_relationship">Fidanzato/a</SelectItem>
                     <SelectItem value="sposato">{t('profile.married')}</SelectItem>
                     <SelectItem value="divorziato">{t('profile.divorced')}</SelectItem>
                     <SelectItem value="vedovo">{t('profile.widowed')}</SelectItem>
