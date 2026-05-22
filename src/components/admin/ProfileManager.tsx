@@ -721,6 +721,20 @@ export const ProfileManager = () => {
               }
             }
 
+            // 4-bis. Pulizia looking_for: le vecchie stringhe italiane
+            // ("Relazione seria", "Amicizia", ecc.) NON appartengono al
+            // campo looking_for (che dovrebbe contenere generi). Le rimuoviamo
+            // cosi' la card della bacheca non mostra piu' duplicati tipo
+            // "Relazione seria • Relazione seria".
+            if (Array.isArray(p.looking_for) && p.looking_for.length > 0) {
+              const cleaned = p.looking_for.filter(
+                (item: string) => item && !(item in LOOKING_FOR_MIGRATION)
+              );
+              if (cleaned.length !== p.looking_for.length) {
+                updates.looking_for = cleaned;
+              }
+            }
+
             // 5. Canzoni preferite: se il profilo non ne ha, aggiungiamo
             //    1-4 brani random pescati dalla pool corrispondente alla
             //    fascia d'eta'. Cosi' i profili admin hanno un'estetica

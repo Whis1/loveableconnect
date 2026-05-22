@@ -164,24 +164,42 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
     return labels[key] || type;
   };
 
+  // Vecchi valori (stringhe italiane) che alcuni profili admin avevano
+  // salvati in looking_for invece che in relationship_type. Filtriamoli
+  // dalla visualizzazione perche' duplicano cio' che gia' c'e' in
+  // relationship_type, creando "Relazione seria • Relazione seria".
+  const OLD_LOOKING_FOR_STRINGS = new Set([
+    "Relazione seria",
+    "Incontri casuali",
+    "Amicizia",
+    "Non specifico",
+    "Non specificato",
+    "Preferisco non dirlo",
+  ]);
+
   const getLookingForLabel = (profile: Profile) => {
-    const hasLookingFor = profile.looking_for && profile.looking_for.length > 0;
+    // Filtra dal looking_for le vecchie stringhe (devono restare solo i
+    // codici/valori di genere, tipo "male", "female", ecc.).
+    const cleanLookingFor = (profile.looking_for || []).filter(
+      (item) => item && !OLD_LOOKING_FOR_STRINGS.has(item)
+    );
+    const hasLookingFor = cleanLookingFor.length > 0;
     const hasRelationshipType = profile.relationship_type;
-    
+
     if (!hasLookingFor && !hasRelationshipType) {
       return t('common.notSpecified');
     }
-    
+
     const parts: string[] = [];
-    
+
     if (hasLookingFor) {
-      parts.push(profile.looking_for!.map((item) => getGenderLabel(item)).join(", "));
+      parts.push(cleanLookingFor.map((item) => getGenderLabel(item)).join(", "));
     }
-    
+
     if (hasRelationshipType) {
       parts.push(getRelationshipTypeLabel(profile.relationship_type));
     }
-    
+
     return parts.join(" • ");
   };
 

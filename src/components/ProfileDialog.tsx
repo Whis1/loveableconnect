@@ -442,12 +442,25 @@ export const ProfileDialog = ({
                 <User className="h-5 w-5 text-primary" />
                 {t('common.lookingFor')}
               </h3>
+              {/* Filtra vecchi valori italiani salvati erroneamente in
+                  looking_for (che dovrebbe contenere solo generi), per
+                  evitare la duplicazione "Relazione seria • Relazione seria". */}
+              {(() => {
+                const OLD_STRINGS = new Set([
+                  "Relazione seria", "Incontri casuali", "Amicizia",
+                  "Non specifico", "Non specificato", "Preferisco non dirlo",
+                ]);
+                const cleanLookingFor = (profile.looking_for || []).filter(
+                  (item) => item && !OLD_STRINGS.has(item)
+                );
+                const hasLookingFor = cleanLookingFor.length > 0;
+                return (
               <div className="space-y-2">
-                {(profile.looking_for && profile.looking_for.length > 0) || profile.relationship_type ? (
+                {hasLookingFor || profile.relationship_type ? (
                   <>
-                    {profile.looking_for && profile.looking_for.length > 0 && (
+                    {hasLookingFor && (
                       <div className="text-base font-medium text-primary">
-                        {profile.looking_for.map((item) => getGenderLabel(item)).join(", ")}
+                        {cleanLookingFor.map((item) => getGenderLabel(item)).join(", ")}
                       </div>
                     )}
                     {profile.relationship_type && (
@@ -462,6 +475,8 @@ export const ProfileDialog = ({
                   </div>
                 )}
               </div>
+                );
+              })()}
             </div>
 
             {/* Interests Section */}
