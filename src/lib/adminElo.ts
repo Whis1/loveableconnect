@@ -8,11 +8,13 @@
 const THREE_HOURS = 3 * 60 * 60 * 1000;
 // Epoca fissa di riferimento per contare i periodi da 3 ore.
 const EPOCH = Date.UTC(2026, 0, 1);
-// Range della classifica simulata. Il top a 3200 e' nella fascia "campione"
-// realistico (i top player chess online arrivano oltre 3000), il bottom a
-// 430 rappresenta un principiante che ha perso tanto. Spread ampio = piu'
-// varieta' nei gap tra le posizioni.
-const TOP_ELO = 3200;
+// Range della classifica simulata.
+// Il TOP_ELO degli admin e' fissato a 3050: vogliamo che 3200 resti una
+// "vetta legendaria" che nemmeno i top profili admin raggiungono, come se
+// stessero ancora combattendo partite per arrivarci. 3050 e' comunque
+// impressionante (oltre la soglia 3000 dei top giocatori chess online).
+// Il bottom a 430 rappresenta un principiante che ha perso tanto.
+const TOP_ELO = 3050;
 const BOTTOM_ELO = 430;
 
 // Hash deterministico (FNV-1a) -> intero senza segno a 32 bit.
