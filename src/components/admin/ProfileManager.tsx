@@ -797,6 +797,65 @@ export const ProfileManager = () => {
   // Pulisce/allinea tutti i profili admin esistenti: tronca interessi a
   // max 4, sostituisce valori vecchi/non validi di genere e orientamento,
   // migra "Cosa cerchi" dal vecchio looking_for[] al nuovo relationship_type.
+  // Svuota le canzoni preferite di tutti i profili admin, una sola query
+  // diretta sulla tabella (RLS permette agli admin update su profiles).
+  const handleClearAdminSongs = async () => {
+    if (
+      !confirm(
+        "Svuotare le canzoni preferite di TUTTI i profili admin? " +
+          "Servira' per testare di nuovo l'Allinea Profili."
+      )
+    )
+      return;
+
+    setAligning(true);
+    try {
+      const { data: adminProfiles, error: fetchError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("is_admin_profile", true);
+
+      if (fetchError) throw fetchError;
+      if (!adminProfiles || adminProfiles.length === 0) {
+        toast({ title: "Nessun profilo admin trovato" });
+        return;
+      }
+
+      let count = 0;
+      const BATCH_SIZE = 8;
+      for (let i = 0; i < adminProfiles.length; i += BATCH_SIZE) {
+        const batch = adminProfiles.slice(i, i + BATCH_SIZE);
+        await Promise.all(
+          batch.map(async (p: any) => {
+            try {
+              await supabase.functions.invoke("admin-update-profile", {
+                body: { profileId: p.id, updates: { favorite_songs: null } },
+              });
+              count++;
+            } catch (e) {
+              console.warn("Clear songs fallito per", p.id, e);
+            }
+          })
+        );
+      }
+
+      toast({
+        title: `Svuotate canzoni di ${count}/${adminProfiles.length} profili admin`,
+        description: "Ora puoi rilanciare 'Allinea Profili' per riassegnarne di uniche.",
+      });
+      await fetchProfiles();
+    } catch (error: any) {
+      console.error("Error clearing admin songs:", error);
+      toast({
+        title: "Errore",
+        description: error?.message || "Impossibile svuotare le canzoni",
+        variant: "destructive",
+      });
+    } finally {
+      setAligning(false);
+    }
+  };
+
   const handleAlignProfiles = async () => {
     if (
       !confirm(
@@ -1032,17 +1091,21 @@ export const ProfileManager = () => {
               />
             </div>
           </div>
-          {/* Pulsante una-tantum: pulisce e allinea tutti i profili admin
-              (interessi >4, valori vecchi di genere/orientamento, vecchio
-              "Cosa cerchi"). Puo' essere lanciato ogni volta serva. */}
-          <div className="pt-2">
+          {/* Pulsanti admin: allineamento e svuota canzoni. */}
+          <div className="pt-2 flex flex-wrap gap-2">
             <Button
               variant="outline"
               onClick={handleAlignProfiles}
               disabled={aligning || loading}
-              className="w-full sm:w-auto"
             >
               {aligning ? "Allineamento in corso..." : "🧹 Allinea Profili Admin"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleClearAdminSongs}
+              disabled={aligning || loading}
+            >
+              🎵 Svuota canzoni admin
             </Button>
           </div>
         </CardHeader>
