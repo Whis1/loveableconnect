@@ -398,7 +398,7 @@ export const ProfileCreator = () => {
             </SelectTrigger>
             <SelectContent className="bg-background z-50">
               <SelectItem value="serious">Relazione seria</SelectItem>
-              <SelectItem value="casual">Frequentazione</SelectItem>
+              <SelectItem value="casual">Incontri casuali</SelectItem>
               <SelectItem value="friendship">Amicizia</SelectItem>
               <SelectItem value="not-sure">Non specificato</SelectItem>
               <SelectItem value="prefer-not-say">Preferisco non dirlo</SelectItem>
