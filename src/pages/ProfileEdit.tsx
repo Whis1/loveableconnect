@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Upload, X, Camera, MapPin, AlertCircle, Calendar } from "lucide-react";
+import { ArrowLeft, Save, Upload, X, Camera, MapPin, AlertCircle, Calendar, User, Heart, Music, Bell, ShieldAlert } from "lucide-react";
 import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
 import { InterestsAutocomplete } from "@/components/InterestsAutocomplete";
 import { SpotifySongSelector } from "@/components/SpotifySongSelector";
@@ -560,7 +560,7 @@ const ProfileEdit = () => {
         }}
       />
       
-      <div className="container mx-auto max-w-4xl relative z-10">
+      <div className="container mx-auto max-w-3xl relative z-10">
         {!requiresCompletion && (
           <div className="mb-4">
             <Button variant="ghost" onClick={() => navigate("/")}>
@@ -570,9 +570,13 @@ const ProfileEdit = () => {
           </div>
         )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('profile.editProfile')}</CardTitle>
+        {/* Card "boutique" con bordo gradient sottile e sfondo leggero
+            tema LoveableConnect (rosa/viola/indaco). */}
+        <Card className="border-2 border-transparent bg-gradient-to-br from-white via-white to-pink-50/40 dark:from-gray-900 dark:via-gray-900 dark:to-purple-950/40 shadow-2xl shadow-pink-500/10 dark:shadow-purple-900/20 [background-clip:padding-box] relative before:absolute before:inset-0 before:rounded-lg before:p-[1px] before:bg-gradient-to-br before:from-pink-500/30 before:via-purple-500/30 before:to-indigo-500/30 before:-z-10 before:[mask:linear-gradient(white,white)_content-box,linear-gradient(white,white)] before:[mask-composite:exclude]">
+          <CardHeader className="border-b border-pink-200/40 dark:border-pink-800/30 pb-5">
+            <CardTitle className="text-3xl font-black bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+              {t('profile.editProfile')}
+            </CardTitle>
             {requiresCompletion && (
               <Alert className="mt-4 bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
                 <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
@@ -584,8 +588,16 @@ const ProfileEdit = () => {
               </Alert>
             )}
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSave} className="space-y-6">
+          <CardContent className="pt-6">
+            <form onSubmit={handleSave} className="space-y-8">
+              {/* Section header: 📸 Foto e Immagini */}
+              <div className="flex items-center gap-3 pb-2 border-b border-pink-200/30 dark:border-pink-800/30">
+                <div className="p-2 rounded-lg bg-gradient-to-br from-pink-500/15 to-purple-500/15">
+                  <Camera className="h-5 w-5 text-pink-600 dark:text-pink-400" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground">Foto e Immagini</h3>
+              </div>
+
               {/* Avatar Section */}
               <div className="space-y-4">
                 <Label>{t('profile.avatar')}</Label>
@@ -696,6 +708,14 @@ const ProfileEdit = () => {
                 <p className="text-sm text-muted-foreground">{t('profile.maxPhotos')}</p>
               </div>
 
+              {/* Section header: 👤 Informazioni Base */}
+              <div className="flex items-center gap-3 pb-2 border-b border-pink-200/30 dark:border-pink-800/30 pt-2">
+                <div className="p-2 rounded-lg bg-gradient-to-br from-pink-500/15 to-purple-500/15">
+                  <User className="h-5 w-5 text-pink-600 dark:text-pink-400" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground">Informazioni Base</h3>
+              </div>
+
               {/* Basic Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -715,7 +735,7 @@ const ProfileEdit = () => {
                     value={profile.relationship_type || ""}
                     onValueChange={(value) => setProfile({ ...profile, relationship_type: value })}
                   >
-                    <SelectTrigger id="relationship-type">
+                    <SelectTrigger id="relationship-type" className="max-w-xs">
                       <SelectValue placeholder={t('profile.selectStatus')} />
                     </SelectTrigger>
                     <SelectContent>
@@ -734,7 +754,7 @@ const ProfileEdit = () => {
                     value={profile.gender || ""}
                     onValueChange={(value) => setProfile({ ...profile, gender: value })}
                   >
-                    <SelectTrigger id="gender">
+                    <SelectTrigger id="gender" className="max-w-xs">
                       <SelectValue placeholder={t('common.selectGender')} />
                     </SelectTrigger>
                     <SelectContent>
@@ -753,7 +773,7 @@ const ProfileEdit = () => {
                     value={profile.sexual_orientation || ""}
                     onValueChange={(value) => setProfile({ ...profile, sexual_orientation: value })}
                   >
-                    <SelectTrigger id="sexual-orientation">
+                    <SelectTrigger id="sexual-orientation" className="max-w-xs">
                       <SelectValue placeholder={t('common.selectOrientation')} />
                     </SelectTrigger>
                     <SelectContent>
@@ -910,6 +930,14 @@ const ProfileEdit = () => {
                 </div>
               </div>
 
+              {/* Section header: ✨ Su di te */}
+              <div className="flex items-center gap-3 pb-2 border-b border-pink-200/30 dark:border-pink-800/30 pt-2">
+                <div className="p-2 rounded-lg bg-gradient-to-br from-pink-500/15 to-purple-500/15">
+                  <Heart className="h-5 w-5 text-pink-600 dark:text-pink-400 fill-pink-500/20" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground">Su di te</h3>
+              </div>
+
               {/* Relationship Status */}
               <div className="space-y-2">
                 <Label htmlFor="relationship-status">{t('profile.relationshipState')}</Label>
@@ -941,6 +969,14 @@ const ProfileEdit = () => {
                   placeholder={t('profile.bioPlaceholder')}
                   rows={4}
                 />
+              </div>
+
+              {/* Section header: 🎵 I tuoi gusti */}
+              <div className="flex items-center gap-3 pb-2 border-b border-pink-200/30 dark:border-pink-800/30 pt-2">
+                <div className="p-2 rounded-lg bg-gradient-to-br from-pink-500/15 to-purple-500/15">
+                  <Music className="h-5 w-5 text-pink-600 dark:text-pink-400" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground">I tuoi gusti</h3>
               </div>
 
               {/* Interests */}
@@ -983,6 +1019,14 @@ const ProfileEdit = () => {
                   onSongsChange={setFavoriteSongs}
                   maxSongs={4}
                 />
+              </div>
+
+              {/* Section header: 🔔 Notifiche */}
+              <div className="flex items-center gap-3 pb-2 border-b border-pink-200/30 dark:border-pink-800/30 pt-2">
+                <div className="p-2 rounded-lg bg-gradient-to-br from-pink-500/15 to-purple-500/15">
+                  <Bell className="h-5 w-5 text-pink-600 dark:text-pink-400" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground">Notifiche</h3>
               </div>
 
               {/* Email Notifications — spostato qui sotto le canzoni preferite */}
