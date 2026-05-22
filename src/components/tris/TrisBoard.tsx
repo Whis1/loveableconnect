@@ -73,6 +73,19 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
   const [showResultOverlay, setShowResultOverlay] = useState(false);
   const [lastEloChange, setLastEloChange] = useState(0);
 
+  // Auto-close della partita 2.5 secondi dopo che il gioco e' finito,
+  // senza piu' overlay popup. L'utente vede il testo "Hai vinto/Hai perso/
+  // Pareggio" sopra la board e poi torniamo automaticamente alla Sfida.
+  useEffect(() => {
+    if (!showResultOverlay || !winner) return;
+    const t = setTimeout(() => {
+      setShowResultOverlay(false);
+      onGameEnd(winner === "player" ? "win" : winner === "bot" ? "lose" : "draw");
+    }, 2500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showResultOverlay, winner]);
+
   useEffect(() => {
     fetchCurrentUserProfile();
     startBotEmojiSystem();
@@ -586,29 +599,20 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
             </div>
           </div>
         )}
-        {gameOver && winner === "player" && !showResultOverlay && (
+        {/* Testi inline a fine partita: mostriamo subito win/perso/pareggio
+            sopra la board, niente piu' overlay popup brutto. Dopo ~2.5s
+            torniamo automaticamente alla pagina Sfida (gestito dall'useEffect
+            "auto-close" qui sotto). */}
+        {gameOver && winner === "player" && (
           <p className="text-xl font-bold text-primary">🎉 Hai vinto! +6 crediti</p>
         )}
-        {gameOver && winner === "bot" && !showResultOverlay && (
+        {gameOver && winner === "bot" && (
           <p className="text-xl font-bold text-destructive">😔 Hai perso!</p>
         )}
-        {gameOver && winner === "draw" && !showResultOverlay && (
+        {gameOver && winner === "draw" && (
           <p className="text-xl font-bold text-muted-foreground">🤝 Pareggio!</p>
         )}
       </div>
-
-      {/* Game Result Overlay */}
-      {showResultOverlay && winner && (
-        <GameResultOverlay
-          result={winner === "player" ? "win" : winner === "bot" ? "lose" : "draw"}
-          creditsEarned={winner === "player" ? 6 : 0}
-          eloChange={lastEloChange}
-          onClose={() => {
-            setShowResultOverlay(false);
-            onGameEnd(winner === "player" ? "win" : winner === "bot" ? "lose" : "draw");
-          }}
-        />
-      )}
       {showLeaveConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <Card className="w-[90%] max-w-md p-6 shadow-lg">

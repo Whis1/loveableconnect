@@ -156,6 +156,19 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
   const [showResultOverlay, setShowResultOverlay] = useState(false);
   const [lastEloChange, setLastEloChange] = useState(0);
   const [displayBoard, setDisplayBoard] = useState<Board>([]);
+
+  // Auto-close della partita 2.5 secondi dopo che il gioco e' finito,
+  // senza piu' overlay popup. L'utente vede il testo "Hai vinto/Hai perso"
+  // sopra la board e poi torniamo automaticamente alla Sfida.
+  useEffect(() => {
+    if (!showResultOverlay || !winner) return;
+    const t = setTimeout(() => {
+      setShowResultOverlay(false);
+      onGameEnd(winner === "player" ? "win" : winner === "bot" ? "lose" : "draw");
+    }, 2500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showResultOverlay, winner]);
   const [animOverlay, setAnimOverlay] = useState<{ piece: PieceType; index: number } | null>(null);
   const [vanishing, setVanishing] = useState<Set<number>>(new Set());
   const [isAnimating, setIsAnimating] = useState(false);
@@ -1359,26 +1372,16 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
             </div>
           </div>
         )}
-        {gameOver && winner === "player" && !showResultOverlay && (
+        {/* Testi inline a fine partita: niente piu' overlay popup, mostriamo
+            il risultato sopra la board e dopo 2.5s torniamo automaticamente
+            alla Sfida (gestito dall'useEffect "auto-close"). */}
+        {gameOver && winner === "player" && (
           <p className="text-xl font-bold text-primary">🎉 Hai vinto! +6 crediti</p>
         )}
-        {gameOver && winner === "bot" && !showResultOverlay && (
+        {gameOver && winner === "bot" && (
           <p className="text-xl font-bold text-destructive">😔 Hai perso!</p>
         )}
       </div>
-
-      {/* Game Result Overlay */}
-      {showResultOverlay && winner && (
-        <GameResultOverlay
-          result={winner === "player" ? "win" : winner === "bot" ? "lose" : "draw"}
-          creditsEarned={winner === "player" ? 6 : 0}
-          eloChange={lastEloChange}
-          onClose={() => {
-            setShowResultOverlay(false);
-            onGameEnd(winner === "player" ? "win" : winner === "bot" ? "lose" : "draw");
-          }}
-        />
-      )}
 
       {showLeaveConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
