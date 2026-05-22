@@ -234,10 +234,10 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
             <div className="h-36 w-36 rounded-full bg-muted/60 animate-pulse" />
             <div className="h-8 w-40 rounded-lg bg-muted/60 animate-pulse" />
           </div>
-          <div className="flex-1 flex flex-col justify-center w-full space-y-3 pt-8">
+          <div className="flex-1 flex flex-col items-center justify-center gap-3 pt-8">
             <Button
               onClick={() => navigate("/profile/edit")}
-              className="w-full bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border-0"
+              className="px-6 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border-0"
             >
               <Edit className="h-4 w-4 mr-2" />
               {t("dashboard.editProfile")}
@@ -289,25 +289,24 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
         </div>
 
         {/* Blocco inferiore: i due pulsanti centrati verticalmente nello
-            spazio rimasto. Cosi' non sono attaccati al nickname ne' incollati
-            sul fondo, ma "fluttuano" piu' o meno al centro della parte bassa
-            del pannello. */}
-        <div className="flex-1 flex flex-col justify-center w-full space-y-3 pt-8">
-          {/* Edit Button */}
+            spazio rimasto, larghi quanto basta al loro contenuto (non a
+            tutta la larghezza del pannello). */}
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 pt-8">
+          {/* Edit Button — gradiente rosa→viola, larghezza auto */}
           <Button
             onClick={() => navigate("/profile/edit")}
-            className="w-full bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border-0"
+            className="px-6 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border-0"
           >
             <Edit className="h-4 w-4 mr-2" />
             {t("dashboard.editProfile")}
           </Button>
 
-          {/* Anteprima Profilo: apre il dialog con la card del proprio
-              profilo come la vedrebbero gli altri utenti nella bacheca. */}
+          {/* Anteprima Profilo: stesso gradiente del bottone Modifica
+              Profilo (richiesta dell'utente), si distingue solo per
+              l'icona occhio. */}
           <Button
             onClick={() => setShowPreview(true)}
-            variant="outline"
-            className="w-full bg-background/40 backdrop-blur-sm border-pink-300/40 dark:border-pink-700/40 hover:bg-background/60 font-semibold"
+            className="px-6 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border-0"
           >
             <Eye className="h-4 w-4 mr-2" />
             Anteprima Profilo
