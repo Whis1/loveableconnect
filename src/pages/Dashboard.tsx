@@ -150,9 +150,9 @@ const Dashboard = () => {
       )
       .subscribe();
 
-    // Polling di sicurezza ogni 15 secondi: anche se Realtime fallisce
+    // Polling di sicurezza ogni 5 secondi: anche se Realtime fallisce
     // (rete instabile, table non in pubblicazione, ecc.), il contatore
-    // si aggiorna comunque entro ~15s.
+    // si aggiorna comunque entro ~5s, che per l'utente sembra istantaneo.
     const pollInterval = setInterval(async () => {
       try {
         const { data } = await supabase
@@ -171,7 +171,95 @@ const Dashboard = () => {
       } catch (e) {
         /* polling silenzioso: niente toast su errori transitori */
       }
-    }, 15000);
+    }, 5000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(pollInterval);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ============================================================
+  // Real-time del contatore "I Tuoi Match" sulla home
+  // ============================================================
+  // Stesso pattern del realtime dei like: useEffect dedicato che parte
+  // subito al mount, niente attese, con polling di sicurezza ogni 5s.
+  useEffect(() => {
+    const userId = getStoredUserId();
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`dashboard-matches-realtime-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "matches",
+        },
+        (payload) => {
+          const newMatch = payload.new as any;
+          // I match interessano solo se siamo uno dei due partecipanti.
+          if (
+            newMatch.user1_id !== userId &&
+            newMatch.user2_id !== userId
+          ) {
+            return;
+          }
+          setMatches((prev) => {
+            if (prev.some((m: any) => m.id === newMatch.id)) return prev;
+            const updated = [newMatch, ...prev];
+            writeCache("matches", updated);
+            return updated;
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "matches",
+        },
+        (payload) => {
+          const deleted = payload.old as any;
+          setMatches((prev) => {
+            if (!prev.some((m: any) => m.id === deleted.id)) return prev;
+            const updated = prev.filter((m: any) => m.id !== deleted.id);
+            writeCache("matches", updated);
+            return updated;
+          });
+        }
+      )
+      .subscribe();
+
+    // Polling di sicurezza ogni 5 secondi (vedi commento likes sopra).
+    const pollInterval = setInterval(async () => {
+      try {
+        const { data } = await supabase
+          .from("matches")
+          .select("*")
+          .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
+        if (data) {
+          // Filtriamo anche dai match nascosti (coerente con fetchUserData).
+          const { data: hidden } = await supabase
+            .from("hidden_matches")
+            .select("match_id")
+            .eq("user_id", userId)
+            .in("hidden_from", ["matches", "both"]);
+          const hiddenIds = new Set((hidden || []).map((h: any) => h.match_id));
+          const visible = data.filter((m: any) => !hiddenIds.has(m.id));
+          setMatches((prev) => {
+            if (prev.length === visible.length) return prev;
+            writeCache("matches", visible);
+            return visible;
+          });
+        }
+      } catch (e) {
+        /* polling silenzioso */
+      }
+    }, 5000);
 
     return () => {
       supabase.removeChannel(channel);
