@@ -10,6 +10,7 @@ import { EloLeaderboard } from "./EloLeaderboard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCredits } from "@/hooks/useCredits";
+import { InsufficientCreditsBanner } from "@/components/chat/InsufficientCreditsBanner";
 import trisIcon from "@/assets/tris-icon.png";
 import damaIcon from "@/assets/dama-icon.png";
 
@@ -29,6 +30,10 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
   const [gamesPlayed, setGamesPlayed] = useState(0);
   const [nextResetTime, setNextResetTime] = useState<Date | null>(null);
   const [userCredits, setUserCredits] = useState(0);
+  // Banner "Crediti insufficienti" mostrato quando l'utente cerca di
+  // giocare una partita extra senza i 2 crediti necessari (al posto del
+  // toast rosso in basso a destra).
+  const [showInsufficientCreditsBanner, setShowInsufficientCreditsBanner] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const { toast } = useToast();
   const { credits } = useCredits();
@@ -189,11 +194,9 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
     if (gamesPlayed >= limit) {
       // Check if user has enough credits to play
       if (userCredits < 2) {
-        toast({
-          title: "Crediti insufficienti",
-          description: "Hai bisogno di 2 crediti per giocare un'altra partita!",
-          variant: "destructive",
-        });
+        // Banner centrato con tasto "Ricarica o Abbonati" al posto del
+        // toast rosso (richiesta utente: piu' visibile e con call-to-action).
+        setShowInsufficientCreditsBanner(true);
         return;
       }
 
@@ -575,23 +578,40 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
           </div>
         )}
 
-        {/* Niente piu' blocco testo "Hai esaurito le tue sfide giornaliere":
-            mostriamo sempre il bottone "Gioca con 2 crediti" quando le
-            partite gratuite sono finite. Se l'utente non ha 2 crediti,
-            handleStartGame fa partire un toast "Crediti insufficienti"
-            (gestione gia' presente). */}
-        <div className="flex justify-center">
-          <Button
-            onClick={handleStartGame}
-            className="px-8 bg-primary hover:bg-primary/90"
-          >
-            <Trophy className="w-4 h-4 mr-2" />
-            {gamesPlayed >= getGameLimit() && !hasUnlimitedGames()
-              ? "Gioca con 2 crediti"
-              : "Iniziare a giocare"}
-          </Button>
-        </div>
+        {/* Bottone gioca: stile diverso quando l'utente non puo' permettersi
+            la partita extra (partite gratuite finite + crediti < 2). Il
+            bottone resta cliccabile per mostrare il banner "Crediti
+            insufficienti" con tasto "Ricarica o Abbonati", non il toast. */}
+        {(() => {
+          const limit = getGameLimit();
+          const needsCredits =
+            gamesPlayed >= limit && !hasUnlimitedGames();
+          const cantAfford = needsCredits && userCredits < 2;
+          return (
+            <div className="flex justify-center">
+              <Button
+                onClick={handleStartGame}
+                className={
+                  cantAfford
+                    ? "px-8 bg-primary/30 hover:bg-primary/40 text-foreground/60 cursor-not-allowed border border-primary/30"
+                    : "px-8 bg-primary hover:bg-primary/90"
+                }
+              >
+                <Trophy className="w-4 h-4 mr-2" />
+                {needsCredits ? "Gioca con 2 crediti" : "Iniziare a giocare"}
+              </Button>
+            </div>
+          );
+        })()}
       </div>
+
+      {/* Banner "Crediti insufficienti" — mostrato quando l'utente
+          tenta di giocare senza i 2 crediti necessari. Contiene il
+          tasto "Ricarica o Abbonati" che porta a /credits. */}
+      <InsufficientCreditsBanner
+        isVisible={showInsufficientCreditsBanner}
+        onClose={() => setShowInsufficientCreditsBanner(false)}
+      />
     </Card>
   );
 };
