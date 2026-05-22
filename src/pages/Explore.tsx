@@ -483,12 +483,24 @@ const Explore = () => {
   // che attiva quando il sentinel e' ancora 400px sotto il viewport
   // (precarico anticipato per evitare "pausa" visiva).
   useEffect(() => {
-    if (!sentinelRef.current || !currentUser) return;
-    if (!hasMore) return;
+    if (!sentinelRef.current || !currentUser) {
+      console.log("🔭 Observer NON creato: sentinelRef o currentUser mancanti");
+      return;
+    }
+    if (!hasMore) {
+      console.log("🔭 Observer NON creato: hasMore=false");
+      return;
+    }
+    console.log("🔭 Observer creato e in ascolto del sentinel");
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting && hasMore && !loadingMore) {
+        const isInView = entries[0]?.isIntersecting;
+        console.log(
+          `🔭 Sentinel intersection: ${isInView}, hasMore=${hasMore}, loadingMore=${loadingMore}, profiles.length=${profiles.length}`
+        );
+        if (isInView && hasMore && !loadingMore) {
+          console.log("🚀 Auto-loading more profiles...");
           loadMoreProfiles();
         }
       },
@@ -897,9 +909,10 @@ const Explore = () => {
                 ))}
               </div>
 
-              {/* Sentinel invisibile: l'IntersectionObserver lo guarda e
-                  scatena loadMoreProfiles quando entra nel viewport */}
-              <div ref={sentinelRef} className="h-1" aria-hidden="true" />
+              {/* Sentinel: l'IntersectionObserver lo guarda e scatena
+                  loadMoreProfiles quando entra nel viewport. Tenuto h-20
+                  per essere ben visibile dall'observer. */}
+              <div ref={sentinelRef} className="h-20" aria-hidden="true" />
 
               {/* Indicatore di caricamento del prossimo batch */}
               {loadingMore && (
@@ -908,6 +921,22 @@ const Explore = () => {
                   <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: '120ms' }} />
                   <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '240ms' }} />
                   <span className="text-sm ml-1">Carico altri profili...</span>
+                </div>
+              )}
+
+              {/* Bottone manuale: rete di sicurezza se l'IntersectionObserver
+                  non si attiva per qualche motivo (es. la pagina e' piu' corta
+                  del viewport o c'e' un layout strano). L'utente puo' sempre
+                  forzare il caricamento del batch successivo. */}
+              {hasMore && !loadingMore && (
+                <div className="text-center py-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => loadMoreProfiles()}
+                    className="bg-background/40 backdrop-blur-sm"
+                  >
+                    Carica altri profili
+                  </Button>
                 </div>
               )}
 
