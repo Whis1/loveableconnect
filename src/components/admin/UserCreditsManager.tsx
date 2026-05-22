@@ -231,9 +231,28 @@ export const UserCreditsManager = () => {
     }
   };
 
+  // Calcola hasActiveSubscription/hasUnlimitedGames con la stessa logica
+  // usata da TrisGameBanner (così se è 'true' qui, il counter NON scenderà).
+  const computeFlags = (credits: any) => {
+    const now = new Date();
+    const hasActiveSub = Boolean(
+      credits?.is_premium &&
+        ((!credits.premium_expires_at &&
+          (credits.subscription_type === 'monthly' || credits.subscription_type === 'weekly')) ||
+          (credits.premium_expires_at && new Date(credits.premium_expires_at) > now))
+    );
+    const hasUnlimited = Boolean(
+      hasActiveSub &&
+        credits?.subscription_type === 'monthly' &&
+        (!credits.premium_tier || credits.premium_tier === 'premium')
+    );
+    return { hasActiveSubscription: hasActiveSub, hasUnlimitedGames: hasUnlimited, now: now.toISOString() };
+  };
+
   // 🔧 Rimuove COMPLETAMENTE l'abbonamento da un account (resetta a free).
-  // Usa l'edge function admin-reset-account (service role) per bypassare le
-  // RLS che bloccavano silenziosamente l'UPDATE client-side su user_credits.
+  // Approccio DIRETTO sul DB con .select() per essere SICURI che l'UPDATE
+  // abbia effettivamente toccato righe (se RLS blocca, length=0 → errore
+  // esplicito invece di silenzioso).
   const handleRemoveSubscription = async () => {
     if (!userId) {
       toast({
@@ -244,33 +263,71 @@ export const UserCreditsManager = () => {
       return;
     }
 
+    const trimmedId = userId.trim();
     setLoadingRemoveSub(true);
     try {
-      const { data, error } = await supabase.functions.invoke('admin-reset-account', {
-        body: { userId: userId.trim(), action: 'reset' },
-      });
+      // 1) Reset user_credits con .select() per sapere se RLS blocca
+      const { data: updatedCredits, error: updateErr } = await supabase
+        .from("user_credits")
+        .update({
+          is_premium: false,
+          subscription_type: 'none',
+          premium_tier: 'none',
+          premium_expires_at: null,
+        })
+        .eq("user_id", trimmedId)
+        .select();
 
-      if (error) throw error;
-      if (!data?.success) {
-        throw new Error(data?.error || 'Reset fallito');
+      if (updateErr) throw updateErr;
+      if (!updatedCredits || updatedCredits.length === 0) {
+        throw new Error(
+          "UPDATE su user_credits non ha modificato nessuna riga. " +
+          "Possibili cause: (a) RLS blocca l'admin, (b) userId errato, " +
+          "(c) la riga non esiste."
+        );
       }
 
-      // CRITICAL: invalida la cache react-query così la UI dell'utente
-      // (es. CreditsDisplay, TrisGameBanner) si aggiorna immediatamente
-      // senza richiedere refresh manuale.
+      // 2) Reset tris_games (azzera contatore odierno)
+      const today = new Date().toISOString().split("T")[0];
+      const { data: updatedTris, error: trisErr } = await supabase
+        .from("tris_games")
+        .update({
+          games_played_today: 0,
+          last_reset_date: today,
+        })
+        .eq("user_id", trimmedId)
+        .select();
+
+      if (trisErr) console.warn("tris_games update error (non bloccante):", trisErr);
+
+      let finalTris = updatedTris?.[0];
+      if (!finalTris) {
+        // Riga inesistente: la creiamo
+        const { data: insertedTris } = await supabase
+          .from("tris_games")
+          .insert({ user_id: trimmedId, games_played_today: 0, last_reset_date: today })
+          .select()
+          .maybeSingle();
+        finalTris = insertedTris ?? { user_id: trimmedId, games_played_today: 0, last_reset_date: today };
+      }
+
+      // 3) Invalida la cache react-query così TrisGameBanner / CreditsDisplay
+      // si aggiornano IMMEDIATAMENTE senza dover ricaricare la pagina.
       queryClient.invalidateQueries({ queryKey: ["user-credits"] });
       queryClient.invalidateQueries({ queryKey: ["daily-likes"] });
 
+      const finalCredits = updatedCredits[0];
       setDiagnoseResult({
-        userCredits: data.userCredits,
-        trisGames: data.trisGames,
+        userCredits: finalCredits,
+        trisGames: finalTris,
+        computed: computeFlags(finalCredits),
         ts: new Date().toISOString(),
         label: '✅ Stato POST-reset',
       });
 
       toast({
         title: "Abbonamento rimosso",
-        description: `Account riportato a Free. is_premium=${data.userCredits?.is_premium}, sub=${data.userCredits?.subscription_type}, tier=${data.userCredits?.premium_tier}.`,
+        description: `is_premium=${finalCredits.is_premium}, sub=${finalCredits.subscription_type}, tier=${finalCredits.premium_tier}. Counter azzerato.`,
       });
     } catch (error: any) {
       console.error("Error removing subscription:", error);
@@ -285,9 +342,8 @@ export const UserCreditsManager = () => {
   };
 
   // 🔍 Diagnostica: mostra lo stato reale del DB per l'userId.
-  // Indispensabile per capire perché il counter partite non scala
-  // (mostra is_premium, subscription_type, premium_tier, expires_at,
-  // games_played_today, last_reset_date, e calcola hasUnlimitedGames).
+  // Query SELECT dirette: se l'utente è loggato come quell'userId
+  // (case "guardo me stesso") l'RLS lo permette sempre.
   const handleDiagnose = async () => {
     if (!userId) {
       toast({
@@ -297,19 +353,28 @@ export const UserCreditsManager = () => {
       });
       return;
     }
+    const trimmedId = userId.trim();
     setLoadingDiagnose(true);
     setDiagnoseResult(null);
     try {
-      const { data, error } = await supabase.functions.invoke('admin-reset-account', {
-        body: { userId: userId.trim(), action: 'diagnose' },
-      });
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || 'Diagnose fallita');
+      const { data: credits, error: credErr } = await supabase
+        .from("user_credits")
+        .select("user_id, balance, is_premium, subscription_type, premium_tier, premium_expires_at, daily_likes_remaining, last_daily_reset")
+        .eq("user_id", trimmedId)
+        .maybeSingle();
+      if (credErr) throw credErr;
+
+      const { data: trisGames, error: trisErr } = await supabase
+        .from("tris_games")
+        .select("user_id, games_played_today, last_reset_date")
+        .eq("user_id", trimmedId)
+        .maybeSingle();
+      if (trisErr) console.warn("tris_games select error (non bloccante):", trisErr);
 
       setDiagnoseResult({
-        userCredits: data.userCredits,
-        trisGames: data.trisGames,
-        computed: data.computed,
+        userCredits: credits,
+        trisGames: trisGames,
+        computed: computeFlags(credits),
         ts: new Date().toISOString(),
         label: '🔍 Stato attuale DB',
       });
