@@ -17,6 +17,7 @@ import { InterestsAutocomplete } from "@/components/InterestsAutocomplete";
 import { SpotifySongSelector } from "@/components/SpotifySongSelector";
 import { LocationChangeRequest } from "@/components/LocationChangeRequest";
 import { BirthdateChangeRequest } from "@/components/BirthdateChangeRequest";
+import { PageLoader } from "@/components/PageLoader";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -45,6 +46,8 @@ interface Profile {
   location_locked: boolean | null;
   birthdate_locked: boolean | null;
   show_online_status: boolean | null;
+  email_like_notifications: boolean | null;
+  email_message_notifications: boolean | null;
   interests: string[] | null;
   avatar_url: string | null;
   photos: string[] | null;
@@ -77,7 +80,12 @@ const ProfileEdit = () => {
   const [birthYear, setBirthYear] = useState("");
   const [requiresCompletion, setRequiresCompletion] = useState(false);
   const [deletionRequested, setDeletionRequested] = useState(false);
-  const [userCredits, setUserCredits] = useState<{ subscription_type: string } | null>(null);
+  const [userCredits, setUserCredits] = useState<{
+    is_premium: boolean;
+    subscription_type: string | null;
+    premium_expires_at: string | null;
+    premium_tier: string | null;
+  } | null>(null);
   const [ageConsent, setAgeConsent] = useState(false);
 
   useEffect(() => {
@@ -92,7 +100,7 @@ const ProfileEdit = () => {
       // Fetch user credits to check subscription
       const { data: creditsData } = await supabase
         .from("user_credits")
-        .select("subscription_type")
+        .select("is_premium, subscription_type, premium_expires_at, premium_tier")
         .eq("user_id", session.user.id)
         .single();
       
@@ -292,6 +300,12 @@ const ProfileEdit = () => {
     setShowLocationRequest(true);
   };
 
+  const hasActiveMonthlySubscription = Boolean(
+    userCredits?.is_premium &&
+    userCredits.subscription_type === "monthly" &&
+    (!userCredits.premium_expires_at || new Date(userCredits.premium_expires_at) > new Date())
+  );
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -402,6 +416,8 @@ const ProfileEdit = () => {
           longitude: profile.longitude,
           location_locked: profile.city && !profile.location_locked ? true : profile.location_locked,
           birthdate_locked: birthdate && !profile.birthdate_locked ? true : profile.birthdate_locked,
+          email_like_notifications: profile.email_like_notifications ?? true,
+          email_message_notifications: profile.email_message_notifications ?? true,
           interests: interests.length > 0 ? interests : null,
           avatar_url: avatarPath,
           photos: photosPaths.length > 0 ? photosPaths : null,
@@ -466,11 +482,7 @@ const ProfileEdit = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">{t('profile.loading')}</p>
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (!profile) return null;
@@ -910,6 +922,7 @@ const ProfileEdit = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="single">{t('profile.single')}</SelectItem>
+                    <SelectItem value="in_relationship">{t('common.inRelationship')}</SelectItem>
                     <SelectItem value="sposato">{t('profile.married')}</SelectItem>
                     <SelectItem value="divorziato">{t('profile.divorced')}</SelectItem>
                     <SelectItem value="vedovo">{t('profile.widowed')}</SelectItem>
@@ -941,7 +954,7 @@ const ProfileEdit = () => {
               </div>
 
               {/* Online Status Toggle - Only for monthly subscribers */}
-              {userCredits?.subscription_type === 'monthly' && (
+              {hasActiveMonthlySubscription && (
                 <div className="flex items-center justify-between space-x-2 p-4 border rounded-lg">
                   <div className="space-y-0.5">
                     <Label htmlFor="show-online-status" className="text-base">
@@ -958,6 +971,44 @@ const ProfileEdit = () => {
                   />
                 </div>
               )}
+
+              <div className="space-y-4 p-4 border rounded-lg bg-background/40">
+                <div>
+                  <Label className="text-base">{t('profile.emailNotifications')}</Label>
+                </div>
+
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="email-like-notifications">
+                      {t('profile.emailLikeNotifications')}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {t('profile.emailLikeNotificationsDescription')}
+                    </p>
+                  </div>
+                  <Switch
+                    id="email-like-notifications"
+                    checked={profile.email_like_notifications ?? true}
+                    onCheckedChange={(checked) => setProfile({ ...profile, email_like_notifications: checked })}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="email-message-notifications">
+                      {t('profile.emailMessageNotifications')}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {t('profile.emailMessageNotificationsDescription')}
+                    </p>
+                  </div>
+                  <Switch
+                    id="email-message-notifications"
+                    checked={profile.email_message_notifications ?? true}
+                    onCheckedChange={(checked) => setProfile({ ...profile, email_message_notifications: checked })}
+                  />
+                </div>
+              </div>
 
               {/* Favorite Songs */}
               <div className="space-y-2">

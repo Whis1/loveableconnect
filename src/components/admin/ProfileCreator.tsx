@@ -37,6 +37,81 @@ export const ProfileCreator = () => {
     setFormData({ ...formData, age, birthdate });
   };
 
+  // Post-processing dei profili admin appena creati:
+  // 1. Tronca interessi a un numero random tra 1 e 4 (la edge function
+  //    seed-profiles a volte ne genera molti di piu')
+  // 2. Aggiunge 1-3 canzoni preferite random a ~50% dei profili che non ne
+  //    hanno, pescando da un "pool" di canzoni gia' usate da altri utenti
+  //    reali (cosi' i dati Spotify sono autentici e gli admin non hanno
+  //    canzoni a caso/duplicate ovunque).
+  const postProcessAdminProfiles = async () => {
+    try {
+      // Fetch di tutti i profili admin
+      const { data: adminProfiles } = await supabase
+        .from('profiles')
+        .select('id, interests, favorite_songs')
+        .eq('is_admin_profile', true);
+
+      if (!adminProfiles || adminProfiles.length === 0) return;
+
+      // Costruisce un pool di canzoni unico, deduplicato per id, prendendo
+      // dai profili (admin o utenti) che gia' hanno favorite_songs popolato.
+      const { data: songSources } = await supabase
+        .from('profiles')
+        .select('favorite_songs')
+        .not('favorite_songs', 'is', null);
+
+      const songPool: any[] = [];
+      const seenIds = new Set<string>();
+      for (const p of songSources || []) {
+        const songs = Array.isArray(p.favorite_songs) ? (p.favorite_songs as any[]) : [];
+        for (const s of songs) {
+          if (s && s.id && !seenIds.has(s.id)) {
+            seenIds.add(s.id);
+            songPool.push(s);
+          }
+        }
+      }
+
+      // Per ogni profilo admin, costruisce l'update se serve
+      const updates: Promise<any>[] = [];
+      for (const p of adminProfiles) {
+        const updateData: Record<string, unknown> = {};
+        let needsUpdate = false;
+
+        // 1) Interessi: se sono piu' di 4, prendine 1-4 random
+        if (Array.isArray(p.interests) && p.interests.length > 4) {
+          const shuffled = [...p.interests].sort(() => Math.random() - 0.5);
+          const keepCount = 1 + Math.floor(Math.random() * 4); // 1..4 incluso
+          updateData.interests = shuffled.slice(0, keepCount);
+          needsUpdate = true;
+        }
+
+        // 2) Canzoni: a ~50% dei profili senza canzoni, aggiungi 1-3 brani
+        //    dal pool. Se il pool e' vuoto, salta.
+        const currentSongs = Array.isArray(p.favorite_songs) ? (p.favorite_songs as any[]) : [];
+        if (currentSongs.length === 0 && songPool.length > 0 && Math.random() < 0.5) {
+          const shuffled = [...songPool].sort(() => Math.random() - 0.5);
+          const count = 1 + Math.floor(Math.random() * 3); // 1..3
+          updateData.favorite_songs = shuffled.slice(0, Math.min(count, songPool.length));
+          needsUpdate = true;
+        }
+
+        if (needsUpdate) {
+          updates.push(
+            supabase.from('profiles').update(updateData).eq('id', p.id) as unknown as Promise<any>
+          );
+        }
+      }
+
+      await Promise.all(updates);
+    } catch (e) {
+      // Non bloccare il flusso: se il post-processing fallisce, i profili
+      // sono comunque stati creati. L'utente puo' rieseguire.
+      console.warn('Post-processing profili admin fallito:', e);
+    }
+  };
+
   const handleSeedProfiles = async () => {
     setSeedLoading(true);
     try {
@@ -44,9 +119,14 @@ export const ProfileCreator = () => {
 
       if (error) throw error;
 
+      // Sistemiamo i profili appena creati: max 4 interessi e qualche
+      // canzone preferita random (la edge function ne crea con criteri
+      // diversi, qui uniformiamo).
+      await postProcessAdminProfiles();
+
       toast({
         title: "Profili caricati",
-        description: `${data.count} profili creati con successo!`,
+        description: `${data.count} profili creati (con interessi limitati a 4 e canzoni random aggiunte)`,
       });
 
       setTimeout(() => window.location.reload(), 1500);
