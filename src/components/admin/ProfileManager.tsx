@@ -37,6 +37,7 @@ interface Profile {
   gender: string | null;
   sexual_orientation: string | null;
   relationship_status: string | null;
+  relationship_type: string | null;
   looking_for: string[] | null;
   interests: string[] | null;
   avatar_url: string | null;
@@ -399,6 +400,7 @@ export const ProfileManager = () => {
               gender: profile.gender,
               sexual_orientation: profile.sexual_orientation,
               relationship_status: profile.relationship_status,
+              relationship_type: profile.relationship_type,
               looking_for: profile.looking_for,
               interests: profile.interests,
               favorite_songs: profile.favorite_songs ? JSON.parse(JSON.stringify(profile.favorite_songs)) : null,
@@ -759,10 +761,9 @@ export const ProfileManager = () => {
                                   <SelectContent className="bg-background z-50">
                                     <SelectItem value="male">Uomo</SelectItem>
                                     <SelectItem value="female">Donna</SelectItem>
-                                    <SelectItem value="non-binary">Non binario</SelectItem>
-                                    <SelectItem value="genderfluid">Genderfluid</SelectItem>
                                     <SelectItem value="transgender">Transgender</SelectItem>
-                                    <SelectItem value="other">Altro</SelectItem>
+                                    <SelectItem value="genderfluid">Genderfluid</SelectItem>
+                                    <SelectItem value="non-binary">Non binario</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -787,8 +788,6 @@ export const ProfileManager = () => {
                                     <SelectItem value="homosexual">Omosessuale</SelectItem>
                                     <SelectItem value="bisexual">Bisessuale</SelectItem>
                                     <SelectItem value="pansexual">Pansessuale</SelectItem>
-                                    <SelectItem value="asexual">Asessuale</SelectItem>
-                                    <SelectItem value="other">Altro</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -808,7 +807,7 @@ export const ProfileManager = () => {
                                   </SelectTrigger>
                                   <SelectContent className="bg-background z-50">
                                     <SelectItem value="single">Single</SelectItem>
-                                    <SelectItem value="in_relationship">In una relazione</SelectItem>
+                                    <SelectItem value="in_relationship">Fidanzato/a</SelectItem>
                                     <SelectItem value="married">Sposato/a</SelectItem>
                                     <SelectItem value="divorced">Divorziato/a</SelectItem>
                                     <SelectItem value="widowed">Vedovo/a</SelectItem>
@@ -817,13 +816,15 @@ export const ProfileManager = () => {
                                 </Select>
                               </div>
 
-                              {/* Cosa Cerchi */}
+                              {/* Cosa Cerchi: stesso campo (relationship_type)
+                                  e stesse opzioni del profilo utente e del
+                                  ProfileCreator admin, per piena coerenza. */}
                               <div className="space-y-2">
                                 <Label>Cosa cerchi</Label>
                                 <Select
-                                  value={(profile.looking_for || [])[0] || ""}
+                                  value={profile.relationship_type || ""}
                                   onValueChange={(value) => {
-                                    const updated = { ...profile, looking_for: value ? [value] : [] };
+                                    const updated = { ...profile, relationship_type: value };
                                     setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
                                   }}
                                 >
@@ -831,11 +832,11 @@ export const ProfileManager = () => {
                                     <SelectValue placeholder="Seleziona cosa cerchi" />
                                   </SelectTrigger>
                                   <SelectContent className="bg-background z-50">
-                                    <SelectItem value="Relazione seria">Relazione seria</SelectItem>
-                                    <SelectItem value="Incontri casuali">Incontri casuali</SelectItem>
-                                    <SelectItem value="Amicizia">Amicizia</SelectItem>
-                                    <SelectItem value="Non specifico">Non specifico</SelectItem>
-                                    <SelectItem value="Preferisco non dirlo">Preferisco non dirlo</SelectItem>
+                                    <SelectItem value="serious">Relazione seria</SelectItem>
+                                    <SelectItem value="casual">Incontri casuali</SelectItem>
+                                    <SelectItem value="friendship">Amicizia</SelectItem>
+                                    <SelectItem value="not-sure">Non specificato</SelectItem>
+                                    <SelectItem value="prefer-not-say">Preferisco non dirlo</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
