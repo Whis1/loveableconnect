@@ -67,11 +67,45 @@ interface UserProfile {
   bio: string | null;
 }
 
+// Valori validi corrispondenti alle opzioni mostrate nei form (admin e
+// utente). Usati per la pulizia/allineamento dei profili esistenti.
+const VALID_GENDERS = new Set(["male", "female", "transgender", "genderfluid", "non-binary"]);
+const VALID_ORIENTATIONS = new Set(["heterosexual", "homosexual", "bisexual", "pansexual"]);
+const VALID_RELATIONSHIP_TYPES = new Set(["serious", "casual", "friendship", "not-sure", "prefer-not-say"]);
+// Nomi italiani maschili che finiscono in 'a' (eccezioni alla regola
+// generale "se finisce in 'a' → femmina"). Lista limitata ai piu' comuni.
+const MALE_NAMES_ENDING_A = new Set([
+  "andrea", "luca", "nicola", "mattia", "elia", "tobia",
+  "giona", "battista", "barnaba", "isaia",
+]);
+// Migrazione di vecchi valori di "Cosa cerchi" salvati come stringhe
+// italiane in looking_for (vecchio admin form) verso i codici nuovi.
+const LOOKING_FOR_MIGRATION: Record<string, string> = {
+  "Relazione seria": "serious",
+  "Incontri casuali": "casual",
+  "Amicizia": "friendship",
+  "Non specifico": "not-sure",
+  "Non specificato": "not-sure",
+  "Preferisco non dirlo": "prefer-not-say",
+};
+
+function inferGenderFromName(nickname: string): string {
+  const lower = (nickname || "").toLowerCase().trim();
+  if (!lower) return Math.random() < 0.5 ? "male" : "female";
+  if (MALE_NAMES_ENDING_A.has(lower)) return "male";
+  const lastChar = lower[lower.length - 1];
+  if (lastChar === "a") return "female";
+  if (lastChar === "o") return "male";
+  // Nomi neutri (finiscono in e/i/u o consonante): scelta random
+  return Math.random() < 0.5 ? "male" : "female";
+}
+
 export const ProfileManager = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [aligning, setAligning] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -500,6 +534,136 @@ export const ProfileManager = () => {
   };
 
 
+  // Pulisce/allinea tutti i profili admin esistenti: tronca interessi a
+  // max 4, sostituisce valori vecchi/non validi di genere e orientamento,
+  // migra "Cosa cerchi" dal vecchio looking_for[] al nuovo relationship_type.
+  const handleAlignProfiles = async () => {
+    if (
+      !confirm(
+        "Vuoi davvero allineare TUTTI i profili admin? L'azione cerca e sistema:\n\n" +
+          "- Interessi > 4 (li tronca a 1-4 random)\n" +
+          "- Genere non valido (lo deduce dal nickname)\n" +
+          "- Orientamento non valido (default: Eterosessuale)\n" +
+          "- 'Cosa cerchi' vecchio formato (migra a relationship_type)"
+      )
+    )
+      return;
+
+    setAligning(true);
+    try {
+      const { data: adminProfiles, error: fetchError } = await supabase
+        .from("profiles")
+        .select(
+          "id, nickname, gender, sexual_orientation, interests, relationship_type, looking_for"
+        )
+        .eq("is_admin_profile", true);
+
+      if (fetchError) throw fetchError;
+      if (!adminProfiles || adminProfiles.length === 0) {
+        toast({ title: "Nessun profilo admin trovato" });
+        return;
+      }
+
+      let countFixed = 0;
+      let countInterests = 0;
+      let countGender = 0;
+      let countOrientation = 0;
+      let countRelType = 0;
+
+      // Eseguiamo in batch da 5 per non saturare la edge function admin-update-profile.
+      const BATCH_SIZE = 5;
+      for (let i = 0; i < adminProfiles.length; i += BATCH_SIZE) {
+        const batch = adminProfiles.slice(i, i + BATCH_SIZE);
+        await Promise.all(
+          batch.map(async (p: any) => {
+            const updates: Record<string, unknown> = {};
+
+            // 1. Interessi: max 4 (tronca a numero random 1..4)
+            if (Array.isArray(p.interests) && p.interests.length > 4) {
+              const shuffled = [...p.interests].sort(() => Math.random() - 0.5);
+              const keep = 1 + Math.floor(Math.random() * 4);
+              updates.interests = shuffled.slice(0, keep);
+              countInterests++;
+            }
+
+            // 2. Genere: se non valido, deduci dal nickname
+            if (!p.gender || !VALID_GENDERS.has(p.gender)) {
+              updates.gender = inferGenderFromName(p.nickname || "");
+              countGender++;
+            }
+
+            // 3. Orientamento: se non valido, default biased verso etero
+            if (
+              !p.sexual_orientation ||
+              !VALID_ORIENTATIONS.has(p.sexual_orientation)
+            ) {
+              const r = Math.random();
+              updates.sexual_orientation =
+                r < 0.7 ? "heterosexual"
+                : r < 0.85 ? "homosexual"
+                : r < 0.93 ? "bisexual"
+                : "pansexual";
+              countOrientation++;
+            }
+
+            // 4. "Cosa cerchi": migra dal vecchio formato a relationship_type
+            if (
+              !p.relationship_type ||
+              !VALID_RELATIONSHIP_TYPES.has(p.relationship_type)
+            ) {
+              const lookingFirst =
+                Array.isArray(p.looking_for) && typeof p.looking_for[0] === "string"
+                  ? p.looking_for[0]
+                  : null;
+              const migrated = lookingFirst && LOOKING_FOR_MIGRATION[lookingFirst];
+              if (migrated) {
+                updates.relationship_type = migrated;
+                countRelType++;
+              } else if (!p.relationship_type) {
+                // Niente da migrare e campo vuoto: imposta un valore random
+                // tra serious/casual/friendship (i piu' usati).
+                const opts = ["serious", "casual", "friendship"];
+                updates.relationship_type = opts[Math.floor(Math.random() * opts.length)];
+                countRelType++;
+              }
+            }
+
+            if (Object.keys(updates).length === 0) return;
+
+            try {
+              await supabase.functions.invoke("admin-update-profile", {
+                body: { profileId: p.id, updates },
+              });
+              countFixed++;
+            } catch (e) {
+              console.warn("Update fallito per profilo", p.id, e);
+            }
+          })
+        );
+      }
+
+      toast({
+        title: `Allineati ${countFixed}/${adminProfiles.length} profili`,
+        description:
+          `Interessi troncati: ${countInterests} | ` +
+          `Genere: ${countGender} | ` +
+          `Orientamento: ${countOrientation} | ` +
+          `Cosa cerchi: ${countRelType}`,
+      });
+
+      await fetchProfiles();
+    } catch (error: any) {
+      console.error("Error aligning profiles:", error);
+      toast({
+        title: "Errore",
+        description: error?.message || "Impossibile allineare i profili",
+        variant: "destructive",
+      });
+    } finally {
+      setAligning(false);
+    }
+  };
+
   const filteredProfiles = profiles.filter((profile) =>
     profile.nickname.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -533,6 +697,19 @@ export const ProfileManager = () => {
                 className="pl-9"
               />
             </div>
+          </div>
+          {/* Pulsante una-tantum: pulisce e allinea tutti i profili admin
+              (interessi >4, valori vecchi di genere/orientamento, vecchio
+              "Cosa cerchi"). Puo' essere lanciato ogni volta serva. */}
+          <div className="pt-2">
+            <Button
+              variant="outline"
+              onClick={handleAlignProfiles}
+              disabled={aligning || loading}
+              className="w-full sm:w-auto"
+            >
+              {aligning ? "Allineamento in corso..." : "🧹 Allinea Profili Admin"}
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
