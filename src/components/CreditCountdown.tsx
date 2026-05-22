@@ -35,8 +35,11 @@ export const CreditCountdown = ({ creditsDepletedAt }: CreditCountdownProps) => 
   }, [creditsDepletedAt]);
 
   return (
-    <div className="flex items-center gap-2 text-sm text-muted-foreground/60">
-      <Clock className="h-4 w-4" />
+    // Stesse dimensioni e colore del "Rinnovo giornaliero" sotto i Like
+    // (text-xs + h-3/w-3 + text-muted-foreground), cosi' i due contatori
+    // hanno la stessa estetica.
+    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+      <Clock className="h-3 w-3" />
       <span>{t("dashboard.dailyRenewal")} {timeLeft}</span>
     </div>
   );

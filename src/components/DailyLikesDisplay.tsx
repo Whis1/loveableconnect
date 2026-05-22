@@ -64,11 +64,13 @@ export const DailyLikesDisplay = ({ likesRemaining, isPremium, resetAt, loading,
   const maxLikes = isMonthlyStandard ? 40 : isWeeklyPremium ? 30 : 8;
 
   return (
-    <div className="flex flex-col gap-1">
+    // items-start: il bottone "1/8 Like" prende solo la larghezza che gli
+    // serve, niente piu' pillola lunga inutile.
+    <div className="flex flex-col items-start gap-1">
       <Button
         variant="outline"
         onClick={() => navigate("/credits")}
-        className={`flex items-center gap-2 ${
+        className={`flex items-center gap-2 w-fit ${
           isMonthlyStandard ? 'bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border-blue-500/20 hover:bg-blue-500/20' :
           isWeeklyPremium ? 'bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/20 hover:bg-purple-500/20' : ''
         }`}

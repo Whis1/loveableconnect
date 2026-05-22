@@ -78,12 +78,14 @@ export const CreditsDisplay = () => {
       />
       
       {/* Credits Display */}
-      <div className="flex flex-col gap-1">
+      {/* items-start: il bottone "X Crediti" prende solo la larghezza che gli
+          serve, identico al bottone Like. */}
+      <div className="flex flex-col items-start gap-1">
         <Button
           variant="outline"
           onClick={() => navigate("/credits")}
-          className={`flex items-center gap-2 ${
-            isMonthlyStandard ? 'bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border-blue-500/20 hover:bg-blue-500/20' : 
+          className={`flex items-center gap-2 w-fit ${
+            isMonthlyStandard ? 'bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border-blue-500/20 hover:bg-blue-500/20' :
             isWeeklyPremium ? 'bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/20 hover:bg-purple-500/20' : ''
           }`}
         >
