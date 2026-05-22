@@ -89,6 +89,96 @@ const LOOKING_FOR_MIGRATION: Record<string, string> = {
   "Preferisco non dirlo": "prefer-not-say",
 };
 
+// Pool di canzoni preferite per fascia d'eta'. Quando un profilo admin non
+// ha canzoni preferite, l'allineamento ne pesca 1-4 dalla fascia giusta:
+// piu' giovane = pop/trap recente, piu' grande = classici/boomer.
+type AgePool = "young" | "millennial" | "genx" | "boomer";
+const SONG_POOLS: Record<AgePool, Array<{ name: string; artist: string; album: string }>> = {
+  // 18-25 (Gen Z): pop/trap/hit recenti
+  young: [
+    { name: "Brividi", artist: "Mahmood & Blanco", album: "Sanremo 2022" },
+    { name: "La dolce vita", artist: "Fedez, Tananai, Mara Sattei", album: "Disumano" },
+    { name: "Mille", artist: "Fedez, Achille Lauro, Orietta Berti", album: "Mille" },
+    { name: "La canzone nostra", artist: "Mace, Blanco, Salmo", album: "OBE" },
+    { name: "Tropicana", artist: "Boomdabash, Annalisa", album: "Don't Worry (Best of)" },
+    { name: "Bellissima", artist: "Annalisa", album: "Bellissima" },
+    { name: "Sesso e samba", artist: "Tony Effe, Gaia", album: "Icon" },
+    { name: "Espresso", artist: "Sabrina Carpenter", album: "Short n' Sweet" },
+    { name: "Houdini", artist: "Dua Lipa", album: "Radical Optimism" },
+    { name: "As It Was", artist: "Harry Styles", album: "Harry's House" },
+    { name: "I Wanna Be Yours", artist: "Arctic Monkeys", album: "AM" },
+    { name: "Cha Cha Cha", artist: "Käärijä", album: "Eurovision 2023" },
+  ],
+  // 26-35 (Millennials): hits 2005-2015
+  millennial: [
+    { name: "Quanto ti amo", artist: "Tiziano Ferro", album: "Ferro" },
+    { name: "La differenza tra me e te", artist: "Tiziano Ferro", album: "Alla mia eta'" },
+    { name: "Andra' tutto bene", artist: "Marracash", album: "Persona" },
+    { name: "Vieni a ballare in Puglia", artist: "Caparezza", album: "Le dimensioni del mio caos" },
+    { name: "Cosa mi manchi a fare", artist: "Calcutta", album: "Mainstream" },
+    { name: "Viva la Vida", artist: "Coldplay", album: "Viva la Vida or Death and All His Friends" },
+    { name: "Rolling in the Deep", artist: "Adele", album: "21" },
+    { name: "Someone Like You", artist: "Adele", album: "21" },
+    { name: "Get Lucky", artist: "Daft Punk, Pharrell Williams", album: "Random Access Memories" },
+    { name: "Sweater Weather", artist: "The Neighbourhood", album: "I Love You" },
+    { name: "Riptide", artist: "Vance Joy", album: "God Loves You When You're Dancing" },
+    { name: "Sex on Fire", artist: "Kings of Leon", album: "Only by the Night" },
+  ],
+  // 36-50 (Gen X): rock/pop anni 80-90
+  genx: [
+    { name: "Vita spericolata", artist: "Vasco Rossi", album: "Bollicine" },
+    { name: "Albachiara", artist: "Vasco Rossi", album: "Non si vive senza..." },
+    { name: "Certe notti", artist: "Ligabue", album: "Buon compleanno Elvis" },
+    { name: "Piccola stella senza cielo", artist: "Ligabue", album: "Lambrusco coltelli rose & pop corn" },
+    { name: "Il bambino con i suoi occhi blu", artist: "883", album: "La donna il sogno & il grande incubo" },
+    { name: "Smells Like Teen Spirit", artist: "Nirvana", album: "Nevermind" },
+    { name: "Wonderwall", artist: "Oasis", album: "(What's the Story) Morning Glory?" },
+    { name: "One", artist: "U2", album: "Achtung Baby" },
+    { name: "Bohemian Rhapsody", artist: "Queen", album: "A Night at the Opera" },
+    { name: "Hotel California", artist: "Eagles", album: "Hotel California" },
+    { name: "Stairway to Heaven", artist: "Led Zeppelin", album: "Led Zeppelin IV" },
+    { name: "Sweet Child o' Mine", artist: "Guns N' Roses", album: "Appetite for Destruction" },
+  ],
+  // 51+ (Boomer): classici italiani e internazionali
+  boomer: [
+    { name: "Il cielo in una stanza", artist: "Mina", album: "Studio Uno" },
+    { name: "La cura", artist: "Franco Battiato", album: "L'imboscata" },
+    { name: "Centro di gravita' permanente", artist: "Franco Battiato", album: "La voce del padrone" },
+    { name: "La canzone del sole", artist: "Lucio Battisti", album: "Umanamente uomo: il sogno" },
+    { name: "Pensieri e parole", artist: "Lucio Battisti", album: "Pensieri e parole" },
+    { name: "Caruso", artist: "Lucio Dalla", album: "DallAmeriCaruso" },
+    { name: "Bocca di rosa", artist: "Fabrizio De Andre'", album: "Volume 1" },
+    { name: "La canzone di Marinella", artist: "Fabrizio De Andre'", album: "Volume III" },
+    { name: "Imagine", artist: "John Lennon", album: "Imagine" },
+    { name: "Yesterday", artist: "The Beatles", album: "Help!" },
+    { name: "Wish You Were Here", artist: "Pink Floyd", album: "Wish You Were Here" },
+    { name: "Hey Jude", artist: "The Beatles", album: "Hey Jude" },
+  ],
+};
+
+function getSongPoolForAge(age: number | null | undefined): AgePool {
+  if (!age || age < 0) return "millennial"; // fallback ragionevole
+  if (age <= 25) return "young";
+  if (age <= 35) return "millennial";
+  if (age <= 50) return "genx";
+  return "boomer";
+}
+
+function pickRandomSongs(
+  pool: Array<{ name: string; artist: string; album: string }>,
+  count: number
+): any[] {
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count).map((s, idx) => ({
+    id: `admin-curated-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 8)}`,
+    name: s.name,
+    artist: s.artist,
+    album: s.album,
+    image_url: "",
+    preview_url: "",
+  }));
+}
+
 function inferGenderFromName(nickname: string): string {
   const lower = (nickname || "").toLowerCase().trim();
   if (!lower) return Math.random() < 0.5 ? "male" : "female";
@@ -544,7 +634,9 @@ export const ProfileManager = () => {
           "- Interessi > 4 (li tronca a 1-4 random)\n" +
           "- Genere non valido (lo deduce dal nickname)\n" +
           "- Orientamento non valido (default: Eterosessuale)\n" +
-          "- 'Cosa cerchi' vecchio formato (migra a relationship_type)"
+          "- 'Cosa cerchi' vecchio formato (migra a relationship_type)\n" +
+          "- Canzoni preferite: aggiunge 1-4 brani random ai profili senza,\n" +
+          "  scelti in base all'eta' (giovani = pop/trap recenti, boomer = classici)"
       )
     )
       return;
@@ -554,7 +646,7 @@ export const ProfileManager = () => {
       const { data: adminProfiles, error: fetchError } = await supabase
         .from("profiles")
         .select(
-          "id, nickname, gender, sexual_orientation, interests, relationship_type, looking_for"
+          "id, nickname, age, gender, sexual_orientation, interests, relationship_type, looking_for, favorite_songs"
         )
         .eq("is_admin_profile", true);
 
@@ -569,6 +661,7 @@ export const ProfileManager = () => {
       let countGender = 0;
       let countOrientation = 0;
       let countRelType = 0;
+      let countSongs = 0;
 
       // Eseguiamo in batch da 5 per non saturare la edge function admin-update-profile.
       const BATCH_SIZE = 5;
@@ -628,6 +721,21 @@ export const ProfileManager = () => {
               }
             }
 
+            // 5. Canzoni preferite: se il profilo non ne ha, aggiungiamo
+            //    1-4 brani random pescati dalla pool corrispondente alla
+            //    fascia d'eta'. Cosi' i profili admin hanno un'estetica
+            //    musicale credibile (i giovani ascoltano roba recente,
+            //    i piu' grandi i classici).
+            const currentSongs = Array.isArray(p.favorite_songs)
+              ? (p.favorite_songs as any[])
+              : [];
+            if (currentSongs.length === 0) {
+              const pool = SONG_POOLS[getSongPoolForAge(p.age)];
+              const howMany = 1 + Math.floor(Math.random() * 4); // 1..4
+              updates.favorite_songs = pickRandomSongs(pool, howMany);
+              countSongs++;
+            }
+
             if (Object.keys(updates).length === 0) return;
 
             try {
@@ -645,10 +753,11 @@ export const ProfileManager = () => {
       toast({
         title: `Allineati ${countFixed}/${adminProfiles.length} profili`,
         description:
-          `Interessi troncati: ${countInterests} | ` +
+          `Interessi: ${countInterests} | ` +
           `Genere: ${countGender} | ` +
           `Orientamento: ${countOrientation} | ` +
-          `Cosa cerchi: ${countRelType}`,
+          `Cosa cerchi: ${countRelType} | ` +
+          `🎵 Canzoni aggiunte: ${countSongs}`,
       });
 
       await fetchProfiles();
