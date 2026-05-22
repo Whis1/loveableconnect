@@ -172,10 +172,56 @@ function pickRandomSongs(
   return shuffled.slice(0, Math.min(count, shuffled.length));
 }
 
+// Cerca un singolo brano via spotify-search; se non torna risultati o
+// fallisce, ripiega su /api/music-search (stesso fallback di
+// SpotifySongSelector). Accetta qualsiasi risultato con almeno image_url
+// o preview_url.
+const searchOneSong = async (query: string): Promise<any | null> => {
+  // 1) Spotify edge function
+  try {
+    const { data, error } = await supabase.functions.invoke("spotify-search", {
+      body: { query },
+    });
+    if (!error) {
+      const tracks = (data?.tracks || []) as any[];
+      if (tracks.length > 0) {
+        const ideal = tracks.find((t) => t.preview_url && t.image_url);
+        if (ideal) return ideal;
+        const onlyImage = tracks.find((t) => t.image_url);
+        if (onlyImage) return onlyImage;
+        const onlyPreview = tracks.find((t) => t.preview_url);
+        if (onlyPreview) return onlyPreview;
+      }
+    }
+  } catch (e) {
+    console.warn(`spotify-search KO per "${query}":`, e);
+  }
+
+  // 2) Fallback API musicale (stesso flow di SpotifySongSelector)
+  try {
+    const response = await fetch(
+      `/api/music-search?query=${encodeURIComponent(query)}`
+    );
+    if (response.ok) {
+      const json = await response.json();
+      const tracks = (json?.tracks || []) as any[];
+      if (tracks.length > 0) {
+        const ideal = tracks.find((t) => t.preview_url && t.image_url);
+        if (ideal) return ideal;
+        const onlyImage = tracks.find((t) => t.image_url);
+        if (onlyImage) return onlyImage;
+        const onlyPreview = tracks.find((t) => t.preview_url);
+        if (onlyPreview) return onlyPreview;
+      }
+    }
+  } catch (e) {
+    console.warn(`/api/music-search KO per "${query}":`, e);
+  }
+
+  return null;
+};
+
 // Arricchisce le pool con dati Spotify reali (copertina + preview audio).
-// Per ogni canzone curata cerca su Spotify e usa il primo risultato con
-// preview e copertina. Se Spotify non risponde, salta quella canzone
-// (l'utente vedra' meno scelte ma TUTTE belle visualmente).
 const enrichSongPoolsWithSpotify = async (): Promise<Record<AgePool, any[]>> => {
   const result: Record<AgePool, any[]> = {
     young: [],
@@ -187,34 +233,22 @@ const enrichSongPoolsWithSpotify = async (): Promise<Record<AgePool, any[]>> => 
 
   for (const pool of pools) {
     const songs = SONG_POOLS[pool];
-    // Batch di 5 in parallelo per non saturare la edge function
+    // Batch di 5 in parallelo per non saturare l'edge function
     for (let i = 0; i < songs.length; i += 5) {
       const batch = songs.slice(i, i + 5);
       const enriched = await Promise.all(
-        batch.map(async (s) => {
-          try {
-            const query = `${s.name} ${s.artist}`;
-            const { data, error } = await supabase.functions.invoke(
-              "spotify-search",
-              { body: { query } }
-            );
-            if (error) return null;
-            const tracks = (data?.tracks || []) as any[];
-            // Preferisci un brano con sia preview che immagine
-            const ideal = tracks.find((t) => t.preview_url && t.image_url);
-            if (ideal) return ideal;
-            // Fallback: almeno la copertina
-            const onlyImage = tracks.find((t) => t.image_url);
-            if (onlyImage) return onlyImage;
-            // Fallback estremo: il primo brano qualsiasi (almeno nome/artista)
-            return tracks[0] || null;
-          } catch {
-            return null;
-          }
-        })
+        batch.map((s) => searchOneSong(`${s.name} ${s.artist}`))
       );
-      enriched.forEach((t) => {
-        if (t) result[pool].push(t);
+      enriched.forEach((t, idx) => {
+        if (t) {
+          // Logga ogni successo per facilitare il debug
+          console.log(
+            `🎵 [${pool}] "${batch[idx].name}" → "${t.name}" by ${t.artist} (img:${!!t.image_url}, preview:${!!t.preview_url})`
+          );
+          result[pool].push(t);
+        } else {
+          console.warn(`❌ [${pool}] Nessun risultato per "${batch[idx].name} - ${batch[idx].artist}"`);
+        }
       });
     }
   }
@@ -709,7 +743,27 @@ export const ProfileManager = () => {
       const totalEnriched =
         enrichedPools.young.length + enrichedPools.millennial.length +
         enrichedPools.genx.length + enrichedPools.boomer.length;
-      console.log(`Spotify enrichment: ${totalEnriched} brani disponibili`);
+      console.log(
+        `🎵 Spotify enrichment totale: ${totalEnriched}/48 brani — ` +
+          `young: ${enrichedPools.young.length}, ` +
+          `millennial: ${enrichedPools.millennial.length}, ` +
+          `genx: ${enrichedPools.genx.length}, ` +
+          `boomer: ${enrichedPools.boomer.length}`
+      );
+      if (totalEnriched === 0) {
+        toast({
+          title: "Spotify non disponibile",
+          description:
+            "Nessun risultato dall'API Spotify (ne' dal fallback). " +
+            "Procedo con l'allineamento senza aggiornare le canzoni — apri la console (F12) per vedere gli errori.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: `✓ ${totalEnriched} brani Spotify trovati`,
+          description: `Distribuiti in 4 pool per eta'. Ora aggiorno i profili.`,
+        });
+      }
 
       let countFixed = 0;
       let countInterests = 0;
