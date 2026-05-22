@@ -443,32 +443,9 @@ const Explore = () => {
         return;
       }
 
-      // Promuovi monthly subscribers e admin nei primi posti del batch
-      const profileIds = batch.map((p) => p.id);
-      const { data: subsData } = await withFallback(
-        supabase.rpc("get_subscription_types", { profile_ids: profileIds }),
-        { data: [], error: null },
-        3500
-      );
-      const creditsMap = new Map<string, string>(
-        (subsData || []).map((c: any) => [c.user_id, c.subscription_type])
-      );
-      batch.sort((a, b) => {
-        const aSub = creditsMap.get(a.id);
-        const bSub = creditsMap.get(b.id);
-        const rank = (p: Profile, sub?: string) => {
-          if (sub === "monthly") return 0;
-          if (p.is_admin_profile === true) return 1;
-          return 2;
-        };
-        const rA = rank(a, aSub);
-        const rB = rank(b, bSub);
-        if (rA !== rB) return rA - rB;
-        const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
-        const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
-        return dateB - dateA;
-      });
-
+      // Niente piu' subscription_types nei batch successivi: il primo batch
+      // gia' mette monthly+admin in cima, dopo si mostra l'ordine server
+      // (last_active DESC). Risparmiamo cosi' una query da ~500ms per batch.
       setProfiles((prev) => [...prev, ...batch]);
       void loadOnlineStatuses(batch.map((p) => p.id));
     } catch (e) {
@@ -478,38 +455,60 @@ const Explore = () => {
     }
   };
 
-  // IntersectionObserver: rileva quando l'utente sta per arrivare in fondo
-  // alla griglia e chiama loadMoreProfiles. rootMargin = 400px significa
-  // che attiva quando il sentinel e' ancora 400px sotto il viewport
-  // (precarico anticipato per evitare "pausa" visiva).
-  useEffect(() => {
-    if (!sentinelRef.current || !currentUser) {
-      console.log("🔭 Observer NON creato: sentinelRef o currentUser mancanti");
-      return;
-    }
-    if (!hasMore) {
-      console.log("🔭 Observer NON creato: hasMore=false");
-      return;
-    }
-    console.log("🔭 Observer creato e in ascolto del sentinel");
+  // Refs sempre aggiornate per leggere lo stato corrente dentro le closure
+  // degli observer/listener senza dipendere dal dependency array (che
+  // causava re-creazioni continue e potenziali eventi persi).
+  const hasMoreRef = useRef(hasMore);
+  const loadingMoreRef = useRef(loadingMore);
+  useEffect(() => { hasMoreRef.current = hasMore; }, [hasMore]);
+  useEffect(() => { loadingMoreRef.current = loadingMore; }, [loadingMore]);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const isInView = entries[0]?.isIntersecting;
-        console.log(
-          `🔭 Sentinel intersection: ${isInView}, hasMore=${hasMore}, loadingMore=${loadingMore}, profiles.length=${profiles.length}`
-        );
-        if (isInView && hasMore && !loadingMore) {
-          console.log("🚀 Auto-loading more profiles...");
-          loadMoreProfiles();
-        }
-      },
-      { rootMargin: "400px" }
-    );
-    observer.observe(sentinelRef.current);
-    return () => observer.disconnect();
+  // Doppia rete: IntersectionObserver + scroll listener come backup.
+  // IntersectionObserver e' piu' efficiente ma a volte non scatta con
+  // layout dinamici (sentinel renderizzato dopo). Il scroll listener
+  // monitora la posizione reale di scroll del documento.
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const tryLoadMore = () => {
+      if (hasMoreRef.current && !loadingMoreRef.current) {
+        loadMoreProfiles();
+      }
+    };
+
+    // 1) IntersectionObserver con rootMargin generoso (precarico anticipato)
+    let observer: IntersectionObserver | null = null;
+    if (sentinelRef.current) {
+      observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0]?.isIntersecting) tryLoadMore();
+        },
+        { rootMargin: "1200px" } // attiva con largo anticipo
+      );
+      observer.observe(sentinelRef.current);
+    }
+
+    // 2) Scroll listener come fallback: se l'utente e' a 1000px dal fondo
+    //    del documento, carica altri profili. Throttle a 200ms.
+    let scrollTimeout: ReturnType<typeof setTimeout> | null = null;
+    const handleScroll = () => {
+      if (scrollTimeout) return;
+      scrollTimeout = setTimeout(() => {
+        scrollTimeout = null;
+        const pos = window.scrollY + window.innerHeight;
+        const docHeight = document.documentElement.scrollHeight;
+        if (pos >= docHeight - 1000) tryLoadMore();
+      }, 200);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("scroll", handleScroll);
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasMore, loadingMore, currentUser, profiles.length]);
+  }, [currentUser, profiles.length]);
 
   const loadOnlineStatuses = async (profileIds: string[]) => {
     if (profileIds.length === 0) return;
@@ -924,21 +923,8 @@ const Explore = () => {
                 </div>
               )}
 
-              {/* Bottone manuale: rete di sicurezza se l'IntersectionObserver
-                  non si attiva per qualche motivo (es. la pagina e' piu' corta
-                  del viewport o c'e' un layout strano). L'utente puo' sempre
-                  forzare il caricamento del batch successivo. */}
-              {hasMore && !loadingMore && (
-                <div className="text-center py-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => loadMoreProfiles()}
-                    className="bg-background/40 backdrop-blur-sm"
-                  >
-                    Carica altri profili
-                  </Button>
-                </div>
-              )}
+              {/* Auto-load: niente piu' bottone manuale. L'IntersectionObserver
+                  + lo scroll listener fanno tutto in automatico. */}
 
               {/* Messaggio "fine lista" quando non ci sono piu' batch */}
               {!hasMore && !loadingMore && (
