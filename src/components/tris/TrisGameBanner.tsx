@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Trophy, X, Loader2 } from "lucide-react";
+import { Trophy, X, Loader2, Clock } from "lucide-react";
 import { OpponentSearch } from "./OpponentSearch";
 import { TrisBoard } from "./TrisBoard";
 import { CheckersBoard } from "./CheckersBoard";
@@ -83,11 +83,22 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
     }
   }, [credits?.balance]);
 
+  const hasActiveSubscription = () => Boolean(
+    credits?.is_premium &&
+    (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date())
+  );
+
+  const hasUnlimitedGames = () => Boolean(
+    hasActiveSubscription() &&
+    credits?.subscription_type === 'monthly' &&
+    (!credits.premium_tier || credits.premium_tier === 'premium')
+  );
+
   // Calcola il limite di partite in base all'abbonamento
   const getGameLimit = () => {
-    if (credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium')) return 999; // Premium illimitato
-    if (credits?.is_premium && credits.subscription_type === 'monthly' && credits.premium_tier === 'standard') return 20; // Platino
-    if (credits?.is_premium && credits.subscription_type === 'weekly') return 10;
+    if (hasUnlimitedGames()) return Number.POSITIVE_INFINITY; // Premium illimitato
+    if (hasActiveSubscription() && credits?.subscription_type === 'monthly' && credits.premium_tier === 'standard') return 20; // Platino
+    if (hasActiveSubscription() && credits?.subscription_type === 'weekly') return 10;
     return 5; // Free
   };
 
@@ -170,7 +181,7 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
     const limit = getGameLimit();
     
     // Solo monthly premium (tier premium) ha giochi illimitati
-    if (credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium')) {
+    if (hasUnlimitedGames()) {
       setGameState("selecting");
       return;
     }
@@ -245,7 +256,7 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
  
      // Check if reached free limit
      const limit = getGameLimit();
-     if (newGamesPlayed >= limit && !(credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium'))) {
+     if (newGamesPlayed >= limit && !hasUnlimitedGames()) {
        const tomorrow = new Date();
        tomorrow.setDate(tomorrow.getDate() + 1);
        setNextResetTime(tomorrow);
@@ -269,16 +280,20 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
 
    const handleOpponentFound = async (foundOpponent: Profile) => {
      try {
-       // CRITICO: Attendere l'aggiornamento PRIMA di avviare il gioco
-       await incrementGamesPlayedWithRetry();
+       // Il Premium mensile e' davvero illimitato: non incrementiamo il contatore giornaliero.
+       if (!hasUnlimitedGames()) {
+         // CRITICO: Attendere l'aggiornamento PRIMA di avviare il gioco
+         await incrementGamesPlayedWithRetry();
+       }
        
        setOpponent(foundOpponent);
        setGameState("playing");
        
-       const remaining = getGameLimit() - gamesPlayed;
+       const remaining = hasUnlimitedGames() ? "∞" : getGameLimit() - gamesPlayed;
+       const limitLabel = hasUnlimitedGames() ? "∞" : getGameLimit();
        toast({
          title: "Partita avviata!",
-         description: `Partite rimanenti oggi: ${remaining}/${getGameLimit()}`,
+         description: `Partite rimanenti oggi: ${remaining}/${limitLabel}`,
        });
      } catch (error) {
        console.error('Errore aggiornamento partite:', error);
@@ -350,6 +365,18 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
       .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   };
 
+  // Formato breve "8h 29m" stile counter Like/Crediti per il countdown
+  // mostrato sotto la riga "Partite gratuite oggi".
+  const getTimeRemainingShort = () => {
+    if (!nextResetTime) return "";
+    const now = new Date();
+    const diff = nextResetTime.getTime() - now.getTime();
+    if (diff <= 0) return "";
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h ${minutes}m`;
+  };
+
   useEffect(() => {
     if (nextResetTime) {
       const interval = setInterval(() => {
@@ -365,7 +392,7 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
   if (!showBanner && gameState === "idle") {
     const limit = getDisplayLimit();
     const remaining = limit ? Math.max(0, limit - gamesPlayed) : null;
-    const isPremiumUnlimited = credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium');
+    const isPremiumUnlimited = hasUnlimitedGames();
     
     console.log('🎯 Rendering main button - gamesPlayed:', gamesPlayed, 'limit:', limit, 'remaining:', remaining);
     
@@ -518,23 +545,37 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
               <div className="h-4 bg-muted rounded w-3/4 mx-auto"></div>
             </div>
           </div>
-        ) : credits.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium') ? (
+        ) : hasUnlimitedGames() ? (
           <p className="text-muted-foreground text-center">
             🌟 <span className="font-bold text-primary">Giochi illimitati</span> con il tuo abbonamento Premium Mensile!
           </p>
         ) : (
-          <p className="text-muted-foreground text-center">
-            Partite gratuite oggi: <span className="font-bold text-primary">{Math.max(0, getGameLimit() - gamesPlayed)}</span>/{getGameLimit()}
-            {credits.is_premium && credits.subscription_type === 'monthly' && credits.premium_tier === 'standard' && (
-              <span className="block text-xs mt-1">💎 Abbonamento Platino</span>
+          <div className="text-center">
+            <p className="text-muted-foreground">
+              Partite gratuite oggi: <span className="font-bold text-primary">{Math.max(0, getGameLimit() - gamesPlayed)}</span>/{getGameLimit()}
+              {hasActiveSubscription() && credits.subscription_type === 'monthly' && credits.premium_tier === 'standard' && (
+                <span className="block text-xs mt-1">💎 Abbonamento Platino</span>
+              )}
+              {hasActiveSubscription() && credits.subscription_type === 'weekly' && (
+                <span className="block text-xs mt-1">✨ Bonus Premium Settimanale</span>
+              )}
+            </p>
+            {/* Countdown 24h stile counter Like/Crediti: mostrato solo se
+                l'utente ha gia' usato almeno una partita gratuita (altrimenti
+                non serve sapere quando si "rinnova"). */}
+            {nextResetTime && gamesPlayed > 0 && (
+              <div
+                className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-1"
+                title="Rinnovo giornaliero"
+              >
+                <Clock className="h-3 w-3" />
+                <span>{getTimeRemainingShort()}</span>
+              </div>
             )}
-            {credits.is_premium && credits.subscription_type === 'weekly' && (
-              <span className="block text-xs mt-1">✨ Bonus Premium Settimanale</span>
-            )}
-          </p>
+          </div>
         )}
 
-        {gamesPlayed >= getGameLimit() && userCredits < 2 && !(credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium')) ? (
+        {gamesPlayed >= getGameLimit() && userCredits < 2 && !hasUnlimitedGames() ? (
           <div className="text-center py-4">
             <p className="text-lg mb-2">Hai esaurito le tue sfide giornaliere!</p>
             <p className="text-muted-foreground">
@@ -550,7 +591,7 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
             className="w-full bg-primary hover:bg-primary/90"
           >
             <Trophy className="w-4 h-4 mr-2" />
-            {gamesPlayed >= getGameLimit() && !(credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium')) 
+            {gamesPlayed >= getGameLimit() && !hasUnlimitedGames()
               ? "Gioca con 2 crediti" 
               : "Iniziare a giocare"}
           </Button>
