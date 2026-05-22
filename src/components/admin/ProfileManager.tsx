@@ -165,19 +165,61 @@ function getSongPoolForAge(age: number | null | undefined): AgePool {
 }
 
 function pickRandomSongs(
-  pool: Array<{ name: string; artist: string; album: string }>,
+  pool: any[],
   count: number
 ): any[] {
   const shuffled = [...pool].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count).map((s, idx) => ({
-    id: `admin-curated-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 8)}`,
-    name: s.name,
-    artist: s.artist,
-    album: s.album,
-    image_url: "",
-    preview_url: "",
-  }));
+  return shuffled.slice(0, Math.min(count, shuffled.length));
 }
+
+// Arricchisce le pool con dati Spotify reali (copertina + preview audio).
+// Per ogni canzone curata cerca su Spotify e usa il primo risultato con
+// preview e copertina. Se Spotify non risponde, salta quella canzone
+// (l'utente vedra' meno scelte ma TUTTE belle visualmente).
+const enrichSongPoolsWithSpotify = async (): Promise<Record<AgePool, any[]>> => {
+  const result: Record<AgePool, any[]> = {
+    young: [],
+    millennial: [],
+    genx: [],
+    boomer: [],
+  };
+  const pools: AgePool[] = ["young", "millennial", "genx", "boomer"];
+
+  for (const pool of pools) {
+    const songs = SONG_POOLS[pool];
+    // Batch di 5 in parallelo per non saturare la edge function
+    for (let i = 0; i < songs.length; i += 5) {
+      const batch = songs.slice(i, i + 5);
+      const enriched = await Promise.all(
+        batch.map(async (s) => {
+          try {
+            const query = `${s.name} ${s.artist}`;
+            const { data, error } = await supabase.functions.invoke(
+              "spotify-search",
+              { body: { query } }
+            );
+            if (error) return null;
+            const tracks = (data?.tracks || []) as any[];
+            // Preferisci un brano con sia preview che immagine
+            const ideal = tracks.find((t) => t.preview_url && t.image_url);
+            if (ideal) return ideal;
+            // Fallback: almeno la copertina
+            const onlyImage = tracks.find((t) => t.image_url);
+            if (onlyImage) return onlyImage;
+            // Fallback estremo: il primo brano qualsiasi (almeno nome/artista)
+            return tracks[0] || null;
+          } catch {
+            return null;
+          }
+        })
+      );
+      enriched.forEach((t) => {
+        if (t) result[pool].push(t);
+      });
+    }
+  }
+  return result;
+};
 
 function inferGenderFromName(nickname: string): string {
   const lower = (nickname || "").toLowerCase().trim();
@@ -656,6 +698,19 @@ export const ProfileManager = () => {
         return;
       }
 
+      // Pre-fetch: cerca su Spotify le canzoni del nostro pool curato per
+      // averne copertine e preview reali. Questa parte impiega qualche secondo
+      // (~48 query Spotify), ma poi i profili admin avranno canzoni "vere".
+      toast({
+        title: "Cerco le canzoni su Spotify...",
+        description: "Sto recuperando copertine e anteprime audio. Un momento.",
+      });
+      const enrichedPools = await enrichSongPoolsWithSpotify();
+      const totalEnriched =
+        enrichedPools.young.length + enrichedPools.millennial.length +
+        enrichedPools.genx.length + enrichedPools.boomer.length;
+      console.log(`Spotify enrichment: ${totalEnriched} brani disponibili`);
+
       let countFixed = 0;
       let countInterests = 0;
       let countGender = 0;
@@ -735,19 +790,35 @@ export const ProfileManager = () => {
               }
             }
 
-            // 5. Canzoni preferite: se il profilo non ne ha, aggiungiamo
-            //    1-4 brani random pescati dalla pool corrispondente alla
-            //    fascia d'eta'. Cosi' i profili admin hanno un'estetica
-            //    musicale credibile (i giovani ascoltano roba recente,
-            //    i piu' grandi i classici).
+            // 5. Canzoni preferite: aggiungiamo (o sostituiamo i vecchi
+            //    placeholder senza copertina) con 1-4 brani arricchiti via
+            //    Spotify, scelti dalla pool della fascia d'eta'. I giovani
+            //    avranno hit recenti, i boomer i classici.
             const currentSongs = Array.isArray(p.favorite_songs)
               ? (p.favorite_songs as any[])
               : [];
-            if (currentSongs.length === 0) {
-              const pool = SONG_POOLS[getSongPoolForAge(p.age)];
-              const howMany = 1 + Math.floor(Math.random() * 4); // 1..4
-              updates.favorite_songs = pickRandomSongs(pool, howMany);
-              countSongs++;
+            // Sostituiamo se: nessuna canzone OPPURE tutte sono placeholder
+            // del nostro pool (id che inizia con "admin-curated-") oppure
+            // tutte senza image_url e preview_url (vecchi inserimenti).
+            const allPlaceholder =
+              currentSongs.length > 0 &&
+              currentSongs.every(
+                (s: any) =>
+                  (typeof s?.id === "string" && s.id.startsWith("admin-curated-")) ||
+                  (!s?.image_url && !s?.preview_url)
+              );
+            const needsSongs = currentSongs.length === 0 || allPlaceholder;
+
+            if (needsSongs) {
+              const pool = enrichedPools[getSongPoolForAge(p.age)];
+              if (pool.length > 0) {
+                const howMany = Math.min(
+                  1 + Math.floor(Math.random() * 4), // 1..4
+                  pool.length
+                );
+                updates.favorite_songs = pickRandomSongs(pool, howMany);
+                countSongs++;
+              }
             }
 
             if (Object.keys(updates).length === 0) return;
