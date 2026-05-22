@@ -57,10 +57,15 @@ const Explore = () => {
   const { likedProfileIds } = useLikes();
   const { profiles: cachedProfiles } = useProfiles();
   const [currentUser, setCurrentUser] = useState<string | null>(null);
-  const [profiles, setProfiles] = useState<Profile[]>([]); // TUTTI i profili, caricati subito
+  // Profili caricati progressivamente con infinite scroll (batch da 60).
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [showGeoLoader, setShowGeoLoader] = useState(true);
+  // Stato per l'infinite scroll
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
   
   // Pre-caricare matches e hidden matches per performance
   const [matchedProfileIds, setMatchedProfileIds] = useState<Set<string>>(new Set());
@@ -281,9 +286,14 @@ const Explore = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
+  // Dimensione di ogni batch dell'infinite scroll. 60 e' un buon compromesso
+  // tra rapidita' di rendering (prima vista immediata) e numero di chiamate
+  // (caricamenti successivi non troppo frequenti).
+  const PROFILES_BATCH_SIZE = 60;
+
   const loadAllProfiles = async (userId: string, preloadedMatches?: Set<string>) => {
     if (profiles.length === 0) setLoading(true);
-    
+
     try {
       // Use preloaded matches se disponibili
       let matchedUserIds: Set<string>;
@@ -300,22 +310,29 @@ const Explore = () => {
         );
 
         matchedUserIds = new Set(
-          (matchesData || []).map(match => 
+          (matchesData || []).map(match =>
             match.user1_id === userId ? match.user2_id : match.user1_id
           )
         );
         setMatchedProfileIds(matchedUserIds);
       }
 
+      // PRIMO BATCH: prendiamo solo i primi N profili. I successivi
+      // arrivano scrollando (vedi loadMoreProfiles).
       const { data: profilesData, error } = await withTimeout(
         supabase
           .from("profiles")
           .select("*")
-          .neq("id", userId),
+          .neq("id", userId)
+          .order("last_active", { ascending: false, nullsFirst: false })
+          .range(0, PROFILES_BATCH_SIZE - 1),
         6000
       );
 
       if (error) throw error;
+
+      // Reset stato infinite scroll all'inizio di un caricamento "iniziale"
+      setHasMore((profilesData || []).length >= PROFILES_BATCH_SIZE);
 
       // Filter out profiles with existing matches
       let allProfiles: Profile[] = (profilesData || [])
@@ -353,7 +370,7 @@ const Explore = () => {
 
       // CARICA TUTTI i profili subito, no paginazione
       setProfiles(allProfiles);
-      
+
       // Pre-carica gli stati online di tutti i profili
       void loadOnlineStatuses(allProfiles.map(p => p.id));
     } catch (error: any) {
@@ -366,6 +383,100 @@ const Explore = () => {
       setLoading(false);
     }
   };
+
+  // Carica il prossimo batch di profili (infinite scroll). Chiamata
+  // dall'IntersectionObserver quando l'utente si avvicina al fondo della
+  // pagina. Aggiunge i nuovi profili a quelli gia' visualizzati senza
+  // resettare la lista.
+  const loadMoreProfiles = async () => {
+    if (!currentUser || loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const offset = profiles.length;
+      const { data: profilesData, error } = await withTimeout(
+        supabase
+          .from("profiles")
+          .select("*")
+          .neq("id", currentUser)
+          .order("last_active", { ascending: false, nullsFirst: false })
+          .range(offset, offset + PROFILES_BATCH_SIZE - 1),
+        6000
+      );
+      if (error) throw error;
+
+      const rawBatch = (profilesData || []) as Profile[];
+      // Se il server restituisce meno di un batch, non ce ne sono altri
+      if (rawBatch.length < PROFILES_BATCH_SIZE) setHasMore(false);
+
+      // Filtra match esistenti + dedup contro profili gia' in lista
+      const existingIds = new Set(profiles.map((p) => p.id));
+      let batch = rawBatch.filter(
+        (p) => !matchedProfileIds.has(p.id) && !existingIds.has(p.id)
+      );
+
+      if (batch.length === 0) {
+        // Nessun profilo nuovo utile (dopo filter): non bloccare hasMore
+        // se il server aveva ancora altri risultati, ma evitiamo di
+        // riprovare in loop chiamando loadMore di nuovo solo allo
+        // scroll successivo dell'utente.
+        return;
+      }
+
+      // Promuovi monthly subscribers e admin nei primi posti del batch
+      const profileIds = batch.map((p) => p.id);
+      const { data: subsData } = await withFallback(
+        supabase.rpc("get_subscription_types", { profile_ids: profileIds }),
+        { data: [], error: null },
+        3500
+      );
+      const creditsMap = new Map<string, string>(
+        (subsData || []).map((c: any) => [c.user_id, c.subscription_type])
+      );
+      batch.sort((a, b) => {
+        const aSub = creditsMap.get(a.id);
+        const bSub = creditsMap.get(b.id);
+        const rank = (p: Profile, sub?: string) => {
+          if (sub === "monthly") return 0;
+          if (p.is_admin_profile === true) return 1;
+          return 2;
+        };
+        const rA = rank(a, aSub);
+        const rB = rank(b, bSub);
+        if (rA !== rB) return rA - rB;
+        const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
+        const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
+        return dateB - dateA;
+      });
+
+      setProfiles((prev) => [...prev, ...batch]);
+      void loadOnlineStatuses(batch.map((p) => p.id));
+    } catch (e) {
+      console.warn("loadMoreProfiles fallito:", e);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  // IntersectionObserver: rileva quando l'utente sta per arrivare in fondo
+  // alla griglia e chiama loadMoreProfiles. rootMargin = 400px significa
+  // che attiva quando il sentinel e' ancora 400px sotto il viewport
+  // (precarico anticipato per evitare "pausa" visiva).
+  useEffect(() => {
+    if (!sentinelRef.current || !currentUser) return;
+    if (!hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasMore && !loadingMore) {
+          loadMoreProfiles();
+        }
+      },
+      { rootMargin: "400px" }
+    );
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMore, loadingMore, currentUser, profiles.length]);
 
   const loadOnlineStatuses = async (profileIds: string[]) => {
     if (profileIds.length === 0) return;
@@ -746,22 +857,46 @@ const Explore = () => {
             </Card>
           )}
 
-          {/* Results Grid - TUTTI I PROFILI CARICATI SUBITO */}
+          {/* Results Grid — infinite scroll: prima 60 profili, poi si
+              auto-caricano altri batch quando l'utente si avvicina al fondo */}
           {profiles.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-6">
-              {profiles.map((profile) => (
-                <ProfileGridCard
-                  key={profile.id}
-                  profile={profile}
-                  currentUserId={currentUser!}
-                  likedProfileIds={likedProfileIds}
-                  hasActiveMatch={matchedProfileIds.has(profile.id)}
-                  onlineStatus={onlineStatuses.get(profile.id)}
-                  onLike={handleProfileLike}
-                  onMatch={(name, avatar) => { ignoreNextRealtimeRef.current = true; handleMatch(name, avatar); }}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-6">
+                {profiles.map((profile) => (
+                  <ProfileGridCard
+                    key={profile.id}
+                    profile={profile}
+                    currentUserId={currentUser!}
+                    likedProfileIds={likedProfileIds}
+                    hasActiveMatch={matchedProfileIds.has(profile.id)}
+                    onlineStatus={onlineStatuses.get(profile.id)}
+                    onLike={handleProfileLike}
+                    onMatch={(name, avatar) => { ignoreNextRealtimeRef.current = true; handleMatch(name, avatar); }}
+                  />
+                ))}
+              </div>
+
+              {/* Sentinel invisibile: l'IntersectionObserver lo guarda e
+                  scatena loadMoreProfiles quando entra nel viewport */}
+              <div ref={sentinelRef} className="h-1" aria-hidden="true" />
+
+              {/* Indicatore di caricamento del prossimo batch */}
+              {loadingMore && (
+                <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
+                  <div className="w-2 h-2 rounded-full bg-pink-500 animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: '120ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '240ms' }} />
+                  <span className="text-sm ml-1">Carico altri profili...</span>
+                </div>
+              )}
+
+              {/* Messaggio "fine lista" quando non ci sono piu' batch */}
+              {!hasMore && !loadingMore && (
+                <div className="text-center py-8 text-sm text-muted-foreground">
+                  ✨ Hai visto tutti i profili disponibili. Torna piu' tardi per nuovi arrivi!
+                </div>
+              )}
+            </>
           ) : (
             !loading && (
               <Card className="text-center p-6 md:p-12">
