@@ -172,10 +172,104 @@ function pickRandomSongs(
   return shuffled.slice(0, Math.min(count, shuffled.length));
 }
 
-// Cerca un singolo brano via spotify-search; se non torna risultati o
-// fallisce, ripiega su /api/music-search (stesso fallback di
-// SpotifySongSelector). Accetta qualsiasi risultato con almeno image_url
-// o preview_url.
+// Seed di query random per fascia d'eta'. Permette di pescare canzoni
+// "a tema generazione" pur restando randomiche (combinati con una
+// lettera, fanno query come "rock x", "anni 80 m", "trap b").
+const RANDOM_QUERY_SEEDS: Record<AgePool, string[]> = {
+  young: ["pop", "trap", "love", "vibe", "summer", "hit", "night", "dance", "italo", "rave", "indie", "rap"],
+  millennial: ["pop", "indie", "rock", "ballad", "love", "summer", "anni 2000", "hit", "you", "tonight", "remix"],
+  genx: ["rock", "anni 90", "italia", "amore", "notte", "sole", "anni 80", "punk", "ligabue", "vasco", "grunge"],
+  boomer: ["classic", "italia", "amore", "vita", "anni 70", "battisti", "mina", "battiato", "queen", "beatles", "de andre"],
+};
+const RANDOM_LETTERS = "abcdefghijklmnopqrstuvwxyz".split("");
+
+function generateRandomQueryForAge(age: number | null | undefined): string {
+  const pool = getSongPoolForAge(age);
+  const seeds = RANDOM_QUERY_SEEDS[pool];
+  const seed = seeds[Math.floor(Math.random() * seeds.length)];
+  const letter = RANDOM_LETTERS[Math.floor(Math.random() * RANDOM_LETTERS.length)];
+  // 3 strategie random per massimizzare varieta':
+  const mode = Math.floor(Math.random() * 3);
+  if (mode === 0) return seed;
+  if (mode === 1) return letter;
+  return `${seed} ${letter}`;
+}
+
+// Cerca brani su Spotify (con fallback /api/music-search) per una query.
+const searchTracks = async (query: string): Promise<any[]> => {
+  try {
+    const { data, error } = await supabase.functions.invoke("spotify-search", {
+      body: { query },
+    });
+    if (!error) {
+      const tracks = (data?.tracks || []) as any[];
+      if (tracks.length > 0) return tracks;
+    }
+  } catch {
+    /* try fallback */
+  }
+  try {
+    const response = await fetch(`/api/music-search?query=${encodeURIComponent(query)}`);
+    if (response.ok) {
+      const json = await response.json();
+      return (json?.tracks || []) as any[];
+    }
+  } catch {
+    /* nothing more */
+  }
+  return [];
+};
+
+// Per un profilo, fa 1-3 ricerche random e pesca count brani UNICI (mai
+// gia' usati da altri profili in questa sessione di allineamento). Usa
+// globalSeenIds come "memoria condivisa" per evitare duplicati tra card.
+const fetchUniqueSongsForProfile = async (
+  age: number | null | undefined,
+  count: number,
+  globalSeenIds: Set<string>
+): Promise<any[]> => {
+  const picked: any[] = [];
+  let attempts = 0;
+  const MAX_ATTEMPTS = 4;
+
+  while (picked.length < count && attempts < MAX_ATTEMPTS) {
+    attempts++;
+    const query = generateRandomQueryForAge(age);
+    const tracks = await searchTracks(query);
+
+    // Shuffle per evitare di pescare sempre il primo
+    const shuffled = [...tracks].sort(() => Math.random() - 0.5);
+    for (const t of shuffled) {
+      if (picked.length >= count) break;
+      if (!t || !t.id) continue;
+      if (globalSeenIds.has(t.id)) continue;
+      // Accetta solo brani con copertina o preview (almeno uno)
+      if (!t.image_url && !t.preview_url) continue;
+      globalSeenIds.add(t.id);
+      picked.push(t);
+    }
+  }
+
+  // Se ancora non bastano, ultima chance: rilassa il globalSeenIds (permetti
+  // duplicati con altri profili) per quel profilo specifico.
+  if (picked.length < count) {
+    const query = generateRandomQueryForAge(age);
+    const tracks = await searchTracks(query);
+    const shuffled = [...tracks].sort(() => Math.random() - 0.5);
+    for (const t of shuffled) {
+      if (picked.length >= count) break;
+      if (!t || !t.id) continue;
+      if (picked.find((s) => s.id === t.id)) continue; // no duplicati interni al profilo
+      if (!t.image_url && !t.preview_url) continue;
+      picked.push(t);
+    }
+  }
+
+  return picked;
+};
+
+// (Legacy) Cerca UN singolo brano da una query — rimasto per compatibilita'
+// ma non piu' usato dall'allineamento (che ora cerca per profilo).
 const searchOneSong = async (query: string): Promise<any | null> => {
   // 1) Spotify edge function
   try {
@@ -732,37 +826,29 @@ export const ProfileManager = () => {
         return;
       }
 
-      // Pre-fetch: cerca su Spotify le canzoni del nostro pool curato per
-      // averne copertine e preview reali. Questa parte impiega qualche secondo
-      // (~48 query Spotify), ma poi i profili admin avranno canzoni "vere".
+      // Niente piu' pre-fetch della pool unica. Adesso ogni profilo fa una
+      // sua ricerca Spotify random (lettera + parola tematica per fascia
+      // d'eta'), cosi' i brani sono potenzialmente UNICI per profilo.
       toast({
-        title: "Cerco le canzoni su Spotify...",
-        description: "Sto recuperando copertine e anteprime audio. Un momento.",
+        title: "Allineamento iniziato",
+        description:
+          "Per ogni profilo cerchero' su Spotify canzoni uniche. Puo' richiedere qualche secondo.",
       });
-      const enrichedPools = await enrichSongPoolsWithSpotify();
-      const totalEnriched =
-        enrichedPools.young.length + enrichedPools.millennial.length +
-        enrichedPools.genx.length + enrichedPools.boomer.length;
-      console.log(
-        `🎵 Spotify enrichment totale: ${totalEnriched}/48 brani — ` +
-          `young: ${enrichedPools.young.length}, ` +
-          `millennial: ${enrichedPools.millennial.length}, ` +
-          `genx: ${enrichedPools.genx.length}, ` +
-          `boomer: ${enrichedPools.boomer.length}`
-      );
-      if (totalEnriched === 0) {
-        toast({
-          title: "Spotify non disponibile",
-          description:
-            "Nessun risultato dall'API Spotify (ne' dal fallback). " +
-            "Procedo con l'allineamento senza aggiornare le canzoni — apri la console (F12) per vedere gli errori.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: `✓ ${totalEnriched} brani Spotify trovati`,
-          description: `Distribuiti in 4 pool per eta'. Ora aggiorno i profili.`,
-        });
+      // Memoria condivisa degli ID gia' usati: tra profili evitiamo doppioni.
+      const globalSongIds = new Set<string>();
+      // Pre-popola con gli ID Spotify gia' presenti nei profili (cosi' non
+      // ri-assegniamo lo stesso brano a un altro profilo).
+      for (const p of adminProfiles as any[]) {
+        const songs = Array.isArray(p.favorite_songs) ? p.favorite_songs : [];
+        for (const s of songs) {
+          if (
+            s?.id &&
+            typeof s.id === "string" &&
+            !s.id.startsWith("admin-curated-")
+          ) {
+            globalSongIds.add(s.id);
+          }
+        }
       }
 
       let countFixed = 0;
@@ -844,16 +930,15 @@ export const ProfileManager = () => {
               }
             }
 
-            // 5. Canzoni preferite: aggiungiamo (o sostituiamo i vecchi
-            //    placeholder senza copertina) con 1-4 brani arricchiti via
-            //    Spotify, scelti dalla pool della fascia d'eta'. I giovani
-            //    avranno hit recenti, i boomer i classici.
+            // 5. Canzoni preferite UNICHE per profilo: ogni profilo fa la
+            //    sua ricerca Spotify random (lettera + parola della sua
+            //    fascia d'eta'). Cosi' nessuna card avra' le stesse canzoni
+            //    di un'altra. Sostituiamo se: nessuna canzone OPPURE
+            //    placeholder del nostro pool vecchio (id "admin-curated-*"
+            //    o senza copertina/preview).
             const currentSongs = Array.isArray(p.favorite_songs)
               ? (p.favorite_songs as any[])
               : [];
-            // Sostituiamo se: nessuna canzone OPPURE tutte sono placeholder
-            // del nostro pool (id che inizia con "admin-curated-") oppure
-            // tutte senza image_url e preview_url (vecchi inserimenti).
             const allPlaceholder =
               currentSongs.length > 0 &&
               currentSongs.every(
@@ -864,13 +949,14 @@ export const ProfileManager = () => {
             const needsSongs = currentSongs.length === 0 || allPlaceholder;
 
             if (needsSongs) {
-              const pool = enrichedPools[getSongPoolForAge(p.age)];
-              if (pool.length > 0) {
-                const howMany = Math.min(
-                  1 + Math.floor(Math.random() * 4), // 1..4
-                  pool.length
-                );
-                updates.favorite_songs = pickRandomSongs(pool, howMany);
+              const howMany = 1 + Math.floor(Math.random() * 4); // 1..4
+              const songs = await fetchUniqueSongsForProfile(
+                p.age,
+                howMany,
+                globalSongIds
+              );
+              if (songs.length > 0) {
+                updates.favorite_songs = songs;
                 countSongs++;
               }
             }
