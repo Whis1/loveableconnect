@@ -1047,7 +1047,7 @@ const ProfileEdit = () => {
               <div className="mt-8 pt-8 border-t border-destructive/20">
                 <div className="space-y-4">
                   <p className="text-sm text-muted-foreground">
-                    Questa azione è permanente e non può essere annullata. Tutti i tuoi dati verranno eliminati definitivamente dopo l'approvazione del supporto.
+                    Questa azione è permanente e non può essere annullata. Tutti i tuoi dati verranno eliminati definitivamente dopo l'approvazione del supporto clienti.
                   </p>
 
                   {deletionRequested ? (
