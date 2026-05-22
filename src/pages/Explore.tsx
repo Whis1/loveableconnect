@@ -66,6 +66,13 @@ const Explore = () => {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  // PREFETCH: dopo ogni caricamento, in background prepariamo gia' il
+  // batch successivo. Cosi' quando l'utente arriva in fondo, l'append e'
+  // ISTANTANEO (niente attesa fetch). Salviamo qui anche l'offset al
+  // momento del prefetch, per scartarlo se nel frattempo la lista e'
+  // cambiata (es. realtime ha aggiunto profili).
+  const prefetchedBatchRef = useRef<{ offset: number; profiles: Profile[] } | null>(null);
+  const prefetchingRef = useRef(false);
   
   // Pre-caricare matches e hidden matches per performance
   const [matchedProfileIds, setMatchedProfileIds] = useState<Set<string>>(new Set());
@@ -388,6 +395,14 @@ const Explore = () => {
 
       // Pre-carica gli stati online di tutti i profili
       void loadOnlineStatuses(allProfiles.map(p => p.id));
+
+      // Dopo il primo batch, avviamo IMMEDIATAMENTE il prefetch del
+      // secondo batch in background. Quando l'utente scrollera' fino al
+      // fondo del primo batch, il secondo sara' gia' pronto e l'append
+      // sara' istantaneo.
+      if ((profilesData || []).length >= PROFILES_BATCH_SIZE) {
+        setTimeout(() => void startBackgroundPrefetch(), 100);
+      }
     } catch (error: any) {
       toast({
         title: "Errore",
@@ -399,55 +414,99 @@ const Explore = () => {
     }
   };
 
-  // Carica il prossimo batch di profili (infinite scroll). Chiamata
-  // dall'IntersectionObserver quando l'utente si avvicina al fondo della
-  // pagina. Aggiunge i nuovi profili a quelli gia' visualizzati senza
-  // resettare la lista.
+  // Funzione interna: scarica un batch di profili da una posizione di
+  // offset. Restituisce { rawCount, batch } dove rawCount e' quanti
+  // profili ha ritornato il server (per capire se ci sono altri batch).
+  const fetchProfilesAtOffset = async (
+    offset: number,
+    existingIds: Set<string>
+  ): Promise<{ rawCount: number; batch: Profile[] } | null> => {
+    if (!currentUser) return null;
+    let query = supabase
+      .from("profiles")
+      .select("*")
+      .neq("id", currentUser);
+    if (matchedProfileIds.size > 0) {
+      const ids = Array.from(matchedProfileIds).map((id) => `"${id}"`).join(",");
+      query = query.not("id", "in", `(${ids})`);
+    }
+    const { data, error } = await withTimeout(
+      query
+        .order("last_active", { ascending: false, nullsFirst: false })
+        .range(offset, offset + PROFILES_BATCH_SIZE - 1),
+      6000
+    );
+    if (error) return null;
+    const rawBatch = (data || []) as Profile[];
+    const batch = rawBatch.filter(
+      (p) => !matchedProfileIds.has(p.id) && !existingIds.has(p.id)
+    );
+    return { rawCount: rawBatch.length, batch };
+  };
+
+  // PREFETCH in background: scarica il prossimo batch SENZA mostrare il
+  // loading indicator. Quando l'utente arriva in fondo, il batch e' gia'
+  // pronto e l'append e' istantaneo.
+  const startBackgroundPrefetch = async () => {
+    if (prefetchingRef.current || prefetchedBatchRef.current) return;
+    if (!currentUser || !hasMoreRef.current) return;
+    prefetchingRef.current = true;
+    try {
+      const offset = profiles.length;
+      const existingIds = new Set(profiles.map((p) => p.id));
+      const result = await fetchProfilesAtOffset(offset, existingIds);
+      if (result && result.batch.length > 0) {
+        prefetchedBatchRef.current = { offset, profiles: result.batch };
+        // Se il server ne ha restituiti meno di un batch, segnaliamo che
+        // dopo questo non ce ne sono piu' altri.
+        if (result.rawCount < PROFILES_BATCH_SIZE) {
+          // Lo memorizzeremo nel loadMore quando consumiamo il prefetch.
+        }
+      }
+    } catch (e) {
+      console.warn("Prefetch fallito (silenzioso):", e);
+    } finally {
+      prefetchingRef.current = false;
+    }
+  };
+
+  // Carica il prossimo batch di profili (infinite scroll). Se c'e' un
+  // prefetch gia' pronto e valido (stesso offset), lo usa istantaneamente.
+  // Altrimenti fa una fetch normale.
   const loadMoreProfiles = async () => {
     if (!currentUser || loadingMore || !hasMore) return;
+
+    // FAST PATH: usa il prefetch se pronto e con offset coerente
+    const prefetch = prefetchedBatchRef.current;
+    if (prefetch && prefetch.offset === profiles.length && prefetch.profiles.length > 0) {
+      console.log("⚡ Append istantaneo dal prefetch (", prefetch.profiles.length, "profili)");
+      prefetchedBatchRef.current = null;
+      const newProfiles = prefetch.profiles;
+      setProfiles((prev) => [...prev, ...newProfiles]);
+      void loadOnlineStatuses(newProfiles.map((p) => p.id));
+      // Avvia immediatamente il prefetch del batch successivo
+      setTimeout(() => void startBackgroundPrefetch(), 50);
+      return;
+    }
+
+    // SLOW PATH: fetch normale con indicatore di loading
     setLoadingMore(true);
     try {
-      // Offset = numero di profili gia' visualizzati. Con filtro server-side
-      // sui match, questo offset e' coerente con la sequenza paginata.
       const offset = profiles.length;
-      let query = supabase
-        .from("profiles")
-        .select("*")
-        .neq("id", currentUser);
-      if (matchedProfileIds.size > 0) {
-        const ids = Array.from(matchedProfileIds).map((id) => `"${id}"`).join(",");
-        query = query.not("id", "in", `(${ids})`);
-      }
-      const { data: profilesData, error } = await withTimeout(
-        query
-          .order("last_active", { ascending: false, nullsFirst: false })
-          .range(offset, offset + PROFILES_BATCH_SIZE - 1),
-        6000
-      );
-      if (error) throw error;
-
-      const rawBatch = (profilesData || []) as Profile[];
-      console.log(
-        `🔍 Explore loadMoreProfiles: offset=${offset}, fetched=${rawBatch.length}, batch=${PROFILES_BATCH_SIZE}`
-      );
-      // Se il server restituisce meno di un batch, non ce ne sono altri
-      if (rawBatch.length < PROFILES_BATCH_SIZE) setHasMore(false);
-
-      // Dedup contro profili gia' in lista (sicurezza per race condition)
       const existingIds = new Set(profiles.map((p) => p.id));
-      let batch = rawBatch.filter(
-        (p) => !matchedProfileIds.has(p.id) && !existingIds.has(p.id)
+      const result = await fetchProfilesAtOffset(offset, existingIds);
+      if (!result) return;
+
+      console.log(
+        `🔍 Explore loadMoreProfiles: offset=${offset}, fetched=${result.rawCount}, batch=${PROFILES_BATCH_SIZE}`
       );
+      if (result.rawCount < PROFILES_BATCH_SIZE) setHasMore(false);
+      if (result.batch.length === 0) return;
 
-      if (batch.length === 0) {
-        return;
-      }
-
-      // Niente piu' subscription_types nei batch successivi: il primo batch
-      // gia' mette monthly+admin in cima, dopo si mostra l'ordine server
-      // (last_active DESC). Risparmiamo cosi' una query da ~500ms per batch.
-      setProfiles((prev) => [...prev, ...batch]);
-      void loadOnlineStatuses(batch.map((p) => p.id));
+      setProfiles((prev) => [...prev, ...result.batch]);
+      void loadOnlineStatuses(result.batch.map((p) => p.id));
+      // Dopo aver appeso, avviamo il prefetch del prossimo batch
+      setTimeout(() => void startBackgroundPrefetch(), 50);
     } catch (e) {
       console.warn("loadMoreProfiles fallito:", e);
     } finally {
