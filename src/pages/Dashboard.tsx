@@ -89,6 +89,97 @@ const Dashboard = () => {
   );
   const [showGeolocationBanner, setShowGeolocationBanner] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
+
+  // ============================================================
+  // Real-time del contatore "Like Ricevuti" sulla home
+  // ============================================================
+  // Effect dedicato che si sottoscrive SUBITO al mount, senza aspettare
+  // che le altre query del dashboard finiscano. Senza questo, se una
+  // qualsiasi query era lenta, il canale realtime non veniva mai
+  // sottoscritto e i nuovi like non comparivano finche' non si
+  // ricaricava la pagina.
+  useEffect(() => {
+    const userId = getStoredUserId();
+    if (!userId) return;
+
+    // Filtro server-side: riceviamo solo gli INSERT che ci riguardano,
+    // niente eventi inutili. Cosi' anche se Realtime ha throttling, ci
+    // arrivano comunque i NOSTRI like.
+    const channel = supabase
+      .channel(`dashboard-likes-realtime-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "likes",
+          filter: `to_user_id=eq.${userId}`,
+        },
+        (payload) => {
+          const newLike = payload.new as any;
+          setLikesReceived((prev) => {
+            // Evita duplicati se l'evento arriva due volte (realtime +
+            // polling possono sovrapporsi).
+            if (prev.some((l: any) => l.id === newLike.id)) return prev;
+            const updated = [newLike, ...prev];
+            // Aggiorna anche la cache localStorage cosi' tornando alla
+            // home si vede subito il count corretto.
+            writeCache("likes", updated);
+            return updated;
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "likes",
+        },
+        (payload) => {
+          const deleted = payload.old as any;
+          // Il filtro server-side non funziona sui DELETE, quindi
+          // filtriamo client-side: rimuoviamo solo se era un nostro like.
+          setLikesReceived((prev) => {
+            if (!prev.some((l: any) => l.id === deleted.id)) return prev;
+            const updated = prev.filter((l: any) => l.id !== deleted.id);
+            writeCache("likes", updated);
+            return updated;
+          });
+        }
+      )
+      .subscribe();
+
+    // Polling di sicurezza ogni 15 secondi: anche se Realtime fallisce
+    // (rete instabile, table non in pubblicazione, ecc.), il contatore
+    // si aggiorna comunque entro ~15s.
+    const pollInterval = setInterval(async () => {
+      try {
+        const { data } = await supabase
+          .from("likes")
+          .select("*")
+          .eq("to_user_id", userId);
+        if (data) {
+          setLikesReceived((prev) => {
+            // Aggiorna solo se il numero e' davvero cambiato, per evitare
+            // re-render inutili.
+            if (prev.length === data.length) return prev;
+            writeCache("likes", data);
+            return data;
+          });
+        }
+      } catch (e) {
+        /* polling silenzioso: niente toast su errori transitori */
+      }
+    }, 15000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(pollInterval);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     let matchesChannel: ReturnType<typeof supabase.channel> | null = null;
     let likesChannel: ReturnType<typeof supabase.channel> | null = null;
