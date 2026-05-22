@@ -319,11 +319,19 @@ const Explore = () => {
 
       // PRIMO BATCH: prendiamo solo i primi N profili. I successivi
       // arrivano scrollando (vedi loadMoreProfiles).
+      // Filtro server-side per ESCLUDERE i profili gia' matchati: cosi'
+      // il .range restituisce esattamente N profili "utili", non N profili
+      // tra cui poi il client deve scartarne meta'.
+      let query = supabase
+        .from("profiles")
+        .select("*")
+        .neq("id", userId);
+      if (matchedUserIds.size > 0) {
+        const ids = Array.from(matchedUserIds).map((id) => `"${id}"`).join(",");
+        query = query.not("id", "in", `(${ids})`);
+      }
       const { data: profilesData, error } = await withTimeout(
-        supabase
-          .from("profiles")
-          .select("*")
-          .neq("id", userId)
+        query
           .order("last_active", { ascending: false, nullsFirst: false })
           .range(0, PROFILES_BATCH_SIZE - 1),
         6000
@@ -331,10 +339,17 @@ const Explore = () => {
 
       if (error) throw error;
 
-      // Reset stato infinite scroll all'inizio di un caricamento "iniziale"
-      setHasMore((profilesData || []).length >= PROFILES_BATCH_SIZE);
+      const fetched = (profilesData || []).length;
+      // hasMore = true SE il server ci ha dato un batch pieno (potrebbero
+      // essercene altri); false se ne ha dati meno di BATCH_SIZE.
+      setHasMore(fetched >= PROFILES_BATCH_SIZE);
+      console.log(
+        `🔍 Explore loadAllProfiles: fetched=${fetched}, batch=${PROFILES_BATCH_SIZE}, hasMore=${fetched >= PROFILES_BATCH_SIZE}, matchedFiltered=${matchedUserIds.size}`
+      );
 
-      // Filter out profiles with existing matches
+      // I match sono gia' esclusi server-side, ma per sicurezza filtriamo
+      // di nuovo client-side (caso edge: race condition con matchedProfileIds
+      // appena aggiornati e non ancora propagati al server).
       let allProfiles: Profile[] = (profilesData || [])
         .filter(profile => !matchedUserIds.has(profile.id)) as Profile[];
       
@@ -392,12 +407,19 @@ const Explore = () => {
     if (!currentUser || loadingMore || !hasMore) return;
     setLoadingMore(true);
     try {
+      // Offset = numero di profili gia' visualizzati. Con filtro server-side
+      // sui match, questo offset e' coerente con la sequenza paginata.
       const offset = profiles.length;
+      let query = supabase
+        .from("profiles")
+        .select("*")
+        .neq("id", currentUser);
+      if (matchedProfileIds.size > 0) {
+        const ids = Array.from(matchedProfileIds).map((id) => `"${id}"`).join(",");
+        query = query.not("id", "in", `(${ids})`);
+      }
       const { data: profilesData, error } = await withTimeout(
-        supabase
-          .from("profiles")
-          .select("*")
-          .neq("id", currentUser)
+        query
           .order("last_active", { ascending: false, nullsFirst: false })
           .range(offset, offset + PROFILES_BATCH_SIZE - 1),
         6000
@@ -405,20 +427,19 @@ const Explore = () => {
       if (error) throw error;
 
       const rawBatch = (profilesData || []) as Profile[];
+      console.log(
+        `🔍 Explore loadMoreProfiles: offset=${offset}, fetched=${rawBatch.length}, batch=${PROFILES_BATCH_SIZE}`
+      );
       // Se il server restituisce meno di un batch, non ce ne sono altri
       if (rawBatch.length < PROFILES_BATCH_SIZE) setHasMore(false);
 
-      // Filtra match esistenti + dedup contro profili gia' in lista
+      // Dedup contro profili gia' in lista (sicurezza per race condition)
       const existingIds = new Set(profiles.map((p) => p.id));
       let batch = rawBatch.filter(
         (p) => !matchedProfileIds.has(p.id) && !existingIds.has(p.id)
       );
 
       if (batch.length === 0) {
-        // Nessun profilo nuovo utile (dopo filter): non bloccare hasMore
-        // se il server aveva ancora altri risultati, ma evitiamo di
-        // riprovare in loop chiamando loadMore di nuovo solo allo
-        // scroll successivo dell'utente.
         return;
       }
 
