@@ -580,15 +580,17 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
             partite gratuite sono finite. Se l'utente non ha 2 crediti,
             handleStartGame fa partire un toast "Crediti insufficienti"
             (gestione gia' presente). */}
-        <Button
-          onClick={handleStartGame}
-          className="w-full bg-primary hover:bg-primary/90"
-        >
-          <Trophy className="w-4 h-4 mr-2" />
-          {gamesPlayed >= getGameLimit() && !hasUnlimitedGames()
-            ? "Gioca con 2 crediti"
-            : "Iniziare a giocare"}
-        </Button>
+        <div className="flex justify-center">
+          <Button
+            onClick={handleStartGame}
+            className="px-8 bg-primary hover:bg-primary/90"
+          >
+            <Trophy className="w-4 h-4 mr-2" />
+            {gamesPlayed >= getGameLimit() && !hasUnlimitedGames()
+              ? "Gioca con 2 crediti"
+              : "Iniziare a giocare"}
+          </Button>
+        </div>
       </div>
     </Card>
   );
