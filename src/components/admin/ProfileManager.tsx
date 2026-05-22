@@ -366,6 +366,9 @@ export const ProfileManager = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [aligning, setAligning] = useState(false);
+  // Id del profilo il cui dialog di modifica e' aperto. Rendiamo il
+  // Dialog "controllato" cosi' possiamo chiuderlo dopo Salva Modifiche.
+  const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -681,7 +684,7 @@ export const ProfileManager = () => {
     }
   };
 
-  const handleUpdateProfile = async (profile: Profile) => {
+  const handleUpdateProfile = async (profile: Profile): Promise<boolean> => {
     try {
       const { data, error } = await supabase.functions.invoke('admin-update-profile', {
         body: {
@@ -714,6 +717,7 @@ export const ProfileManager = () => {
       });
 
       fetchProfiles();
+      return true;
     } catch (error: any) {
       console.error("Error updating profile:", error);
       toast({
@@ -721,6 +725,7 @@ export const ProfileManager = () => {
         description: error.message,
         variant: "destructive",
       });
+      return false;
     }
   };
 
@@ -1191,8 +1196,14 @@ export const ProfileManager = () => {
                     </div>
 
                     <div className="flex gap-2 pt-4">
-                      {/* Dialog Modifica Profilo */}
-                      <Dialog>
+                      {/* Dialog Modifica Profilo — controllato con
+                          editingProfileId per chiuderlo dopo il salvataggio */}
+                      <Dialog
+                        open={editingProfileId === profile.id}
+                        onOpenChange={(open) =>
+                          setEditingProfileId(open ? profile.id : null)
+                        }
+                      >
                         <DialogTrigger asChild>
                           <Button variant="outline" className="flex-1">
                             <Save className="h-4 w-4 mr-2" />
@@ -1497,9 +1508,14 @@ export const ProfileManager = () => {
                                 </div>
                               </div>
 
-                              {/* Pulsante Salva */}
+                              {/* Pulsante Salva — chiude il dialog su successo */}
                               <div className="flex justify-end pt-4 border-t">
-                                <Button onClick={() => handleUpdateProfile(profile)}>
+                                <Button
+                                  onClick={async () => {
+                                    const ok = await handleUpdateProfile(profile);
+                                    if (ok) setEditingProfileId(null);
+                                  }}
+                                >
                                   <Save className="h-4 w-4 mr-2" />
                                   Salva Modifiche
                                 </Button>
