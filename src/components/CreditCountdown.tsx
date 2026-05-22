@@ -35,12 +35,16 @@ export const CreditCountdown = ({ creditsDepletedAt }: CreditCountdownProps) => 
   }, [creditsDepletedAt]);
 
   return (
-    // Stesse dimensioni e colore del "Rinnovo giornaliero" sotto i Like
-    // (text-xs + h-3/w-3 + text-muted-foreground), cosi' i due contatori
-    // hanno la stessa estetica.
-    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+    // Stesse dimensioni e formato del countdown sotto i Like: solo
+    // orologio + tempo, niente la dicitura "Rinnovo giornaliero" che
+    // rendeva la riga piu' larga della pillola sopra. Il testo completo
+    // resta in tooltip per chi ci passa sopra col mouse.
+    <div
+      className="flex items-center gap-1 text-xs text-muted-foreground"
+      title={t("dashboard.dailyRenewal")}
+    >
       <Clock className="h-3 w-3" />
-      <span>{t("dashboard.dailyRenewal")} {timeLeft}</span>
+      <span>{timeLeft}</span>
     </div>
   );
 };

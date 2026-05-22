@@ -83,9 +83,15 @@ export const DailyLikesDisplay = ({ likesRemaining, isPremium, resetAt, loading,
         </span>
       </Button>
       {timeRemaining && likesRemaining < maxLikes && (
-        <div className="flex items-center gap-1 text-xs text-muted-foreground px-2">
+        // Sottotitolo compatto: solo orologio + tempo, niente piu' la dicitura
+        // "Rinnovo giornaliero" che faceva la riga sotto piu' larga della
+        // pillola sopra. L'icona orologio comunica gia' il senso del countdown.
+        <div
+          className="flex items-center gap-1 text-xs text-muted-foreground px-2"
+          title={t("dashboard.dailyRenewal")}
+        >
           <Clock className="h-3 w-3" />
-          <span>{t("dashboard.dailyRenewal")} {timeRemaining}</span>
+          <span>{timeRemaining}</span>
         </div>
       )}
     </div>
