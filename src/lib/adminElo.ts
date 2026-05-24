@@ -37,21 +37,21 @@ export function computeAdminElos(admins: AdminSeed[]): Map<string, number> {
   const n = admins.length;
   if (n === 0) return result;
 
+  const bucket = Math.floor((Date.now() - EPOCH) / THREE_HOURS);
+
   // 1. Graduatoria di n ELO distinti, dal piu' alto al piu' basso, con
-  //    distacchi variabili. Importante: alle prime posizioni diamo un
-  //    BONUS di peso che decade esponenzialmente, cosi' il #1 e' molto
-  //    sopra al #2 (es. 50-60 punti), poi i gap si stringono. E' come
-  //    succede nelle classifiche reali (es. Magnus Carlsen ELO 2830 vs
-  //    #2 a 2786 = 44 punti di differenza).
+  //    distacchi variabili che CAMBIANO OGNI 3 ORE (per dare l'impressione
+  //    che gli ELO oscillino come se i giocatori facessero partite).
+  //    Alle prime posizioni diamo un BONUS di peso che decade esponenzialmente,
+  //    cosi' il #1 e' molto sopra al #2 (es. 50-60 punti), poi i gap si stringono.
   const pool: number[] = [TOP_ELO];
   if (n > 1) {
     const weights: number[] = [];
     for (let r = 0; r < n - 1; r++) {
-      // Bonus decrescente per le prime posizioni: r=0 prende +20, r=1 +14,
-      // r=2 +10, r=3 +7, r=4 +5... fino a 0 dopo la decima posizione.
       const positionBonus = Math.max(0, Math.floor(20 * Math.exp(-r / 3)));
-      // 1 base + bonus posizione + 0-9 random (per non avere gap identici)
-      weights.push(1 + positionBonus + (hash(`gap-${r}`) % 10));
+      // 1 base + bonus posizione + 0-9 random che varia per bucket (cosi'
+      // i gap, e quindi i numeri della classifica, cambiano ogni 3 ore)
+      weights.push(1 + positionBonus + (hash(`gap-${r}-${bucket}`) % 10));
     }
     const weightSum = weights.reduce((s, w) => s + w, 0);
     const span = TOP_ELO - BOTTOM_ELO;
@@ -64,21 +64,27 @@ export function computeAdminElos(admins: AdminSeed[]): Map<string, number> {
     }
   }
 
-  // 2. Ordina i profili: posizione di base stabile + un'oscillazione che cambia
-  //    ogni 3 ore (movimento di poche posizioni, come "partite giocate").
-  const bucket = Math.floor((Date.now() - EPOCH) / THREE_HOURS);
-  const amp = Math.max(1, Math.floor(200000 / n));
+  // 2. Ordina i profili. Prima era 'base stabile + piccolo wobble' → i top
+  //    restavano sempre top. Ora la chiave dipende interamente da hash(id, bucket)
+  //    → ogni 3 ore i profili si rimescolano davvero. Per stabilita' visiva
+  //    teniamo un piccolo "anchor" (10% peso) che fa si' che gli stessi profili
+  //    tendano a stare in zone simili — ma con scambi multi-posizione visibili.
   const ranked = admins
     .map((a) => {
-      const base = hash(a.id) % 1000000;
-      const wobble = (hash(`${a.id}#${bucket}`) % (2 * amp + 1)) - amp;
-      return { id: a.id, key: base + wobble };
+      const anchor = (hash(a.id) % 100000); // peso ridotto, era 1000000
+      const rotation = hash(`${a.id}#bucket#${bucket}`) % 900000; // peso 9x
+      return { id: a.id, key: anchor + rotation };
     })
     .sort((x, y) => (x.key !== y.key ? x.key - y.key : x.id < y.id ? -1 : 1));
 
-  // 3. Ogni profilo riceve un ELO distinto dalla graduatoria, in base alla posizione.
+  // 3. Ogni profilo riceve un ELO distinto dalla graduatoria + un drift ±4
+  //    personale che cambia ogni bucket (simula partite individuali).
+  //    Con gap minimo del pool=10 e drift max ±4, gli ELO restano DISTINTI:
+  //    slot i [pool[i]-4, pool[i]+4], slot i+1 [pool[i+1]-4, pool[i+1]+4],
+  //    differenza minima = 10 - 8 = 2.
   ranked.forEach((p, rank) => {
-    result.set(p.id, pool[rank]);
+    const drift = (hash(`${p.id}#drift#${bucket}`) % 9) - 4; // ±4
+    result.set(p.id, pool[rank] + drift);
   });
 
   return result;
