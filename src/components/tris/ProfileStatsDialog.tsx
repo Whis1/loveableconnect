@@ -3,7 +3,29 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Sword, ShieldOff } from "lucide-react";
+import { Trophy } from "lucide-react";
+
+// 🎨 Icone custom per Vittoria / Sconfitta — più "gaming" delle classiche
+// spada/scudo di lucide-react.
+
+// Vittoria: stella piena con due scintille intorno (celebrazione)
+const VictoryIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="currentColor" stroke="none" aria-hidden>
+    <path d="M12 2.5l2.6 5.76 6.3.65-4.7 4.25 1.3 6.18L12 16.27l-5.5 3.07 1.3-6.18L3.1 8.91l6.3-.65L12 2.5z" />
+    <circle cx="19.5" cy="4.5" r="1.1" opacity="0.85" />
+    <circle cx="21.5" cy="7.5" r="0.7" opacity="0.6" />
+    <circle cx="4.5" cy="20" r="0.7" opacity="0.55" />
+  </svg>
+);
+
+// Sconfitta: X dentro un cerchio tratteggiato (target mancato, fail)
+const DefeatIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <circle cx="12" cy="12" r="9.2" strokeDasharray="3 2.5" opacity="0.75" />
+    <line x1="8" y1="8" x2="16" y2="16" />
+    <line x1="16" y1="8" x2="8" y2="16" />
+  </svg>
+);
 import { computeAdminStats } from "@/lib/adminElo";
 import { renderRankBadge, getRankNicknameClass } from "./EloLeaderboard";
 
@@ -212,14 +234,14 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
 
                   <div className="grid grid-cols-2 gap-2">
                     <div className="flex flex-col items-center p-3 rounded-lg bg-green-500/10 border border-green-500/30">
-                      <Sword className="w-4 h-4 text-green-600 dark:text-green-400 mb-1" />
+                      <VictoryIcon className="w-5 h-5 text-green-600 dark:text-green-400 mb-1 drop-shadow-[0_0_6px_rgba(34,197,94,0.5)]" />
                       <span className="text-xs text-muted-foreground">Vittorie</span>
                       <span className="text-lg font-bold text-green-600 dark:text-green-400">
                         {stats.totalWins}
                       </span>
                     </div>
                     <div className="flex flex-col items-center p-3 rounded-lg bg-red-500/10 border border-red-500/30">
-                      <ShieldOff className="w-4 h-4 text-red-600 dark:text-red-400 mb-1" />
+                      <DefeatIcon className="w-5 h-5 text-red-600 dark:text-red-400 mb-1 drop-shadow-[0_0_6px_rgba(239,68,68,0.4)]" />
                       <span className="text-xs text-muted-foreground">Sconfitte</span>
                       <span className="text-lg font-bold text-red-600 dark:text-red-400">
                         {stats.totalLosses}
