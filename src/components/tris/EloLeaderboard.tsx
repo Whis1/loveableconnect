@@ -18,6 +18,49 @@ interface EloLeaderboardProps {
   userId?: string;
 }
 
+// 🎨 Badge esportato per riuso (ProfileStatsDialog ecc).
+// Gradient e colori coerenti col tema rosa/viola/oro.
+export function renderRankBadge(position: number, size: "sm" | "md" = "sm") {
+  const pad = size === "sm" ? "px-2 py-0.5 text-[10px]" : "px-3 py-1 text-xs";
+  const styles = [
+    {
+      bg: "bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 text-white shadow shadow-yellow-500/40 border border-yellow-300/60",
+      icon: "👑",
+      label: "Campione",
+    },
+    {
+      bg: "bg-gradient-to-r from-gray-300 via-slate-400 to-gray-500 text-white shadow shadow-gray-400/40 border border-gray-300/60",
+      icon: "🥈",
+      label: "2° posto",
+    },
+    {
+      bg: "bg-gradient-to-r from-orange-400 via-amber-600 to-orange-700 text-white shadow shadow-orange-500/40 border border-orange-300/60",
+      icon: "🥉",
+      label: "3° posto",
+    },
+    {
+      bg: "bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-500 text-white shadow shadow-blue-500/40 border border-blue-300/60",
+      icon: "🎖️",
+      label: "4° posto",
+    },
+    {
+      bg: "bg-gradient-to-r from-purple-400 via-pink-500 to-rose-500 text-white shadow shadow-pink-500/40 border border-pink-300/60",
+      icon: "🏅",
+      label: "5° posto",
+    },
+  ];
+  const style = styles[position];
+  if (!style) return null;
+  return (
+    <span
+      className={`inline-flex items-center gap-1 ${pad} rounded-full font-bold tracking-wide ${style.bg}`}
+    >
+      <span>{style.icon}</span>
+      <span>{style.label}</span>
+    </span>
+  );
+}
+
 export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
   const [topPlayers, setTopPlayers] = useState<LeaderboardProfile[]>([]);
   const [userElo, setUserElo] = useState<number>(1200);
@@ -182,6 +225,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     return `${userRank}°`;
   };
 
+
   const selectedProfileIndex = selectedProfile
     ? topPlayers.findIndex((p) => p.id === selectedProfile.id)
     : -1;
@@ -238,7 +282,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
                     {player.nickname}
                     {player.id === userId && <span className="text-xs text-primary ml-2">(Tu)</span>}
                   </p>
-                  <p className="text-xs text-muted-foreground">#{index + 1} in classifica</p>
+                  <div className="mt-0.5">{renderRankBadge(index, "sm")}</div>
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-xs text-muted-foreground">ELO</p>
