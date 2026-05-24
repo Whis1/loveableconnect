@@ -126,11 +126,13 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
       localStorage.setItem("tris_game_active", "1");
     } catch {}
 
-    // If a pending penalty was set (e.g. previous reload), apply it once
+    // If a pending penalty was set (e.g. previous reload), apply it once.
+    // 🛡️ Applica SIA ELO -10 SIA increment_game_stat (lose) per coerenza.
     (async () => {
       try {
         if (localStorage.getItem("tris_pending_penalty") === "1") {
           await updateUserElo(-10);
+          await recordLossStat();
           localStorage.removeItem("tris_pending_penalty");
         }
       } catch (e) {
@@ -170,14 +172,21 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
         try {
           localStorage.setItem("tris_pending_penalty", "1");
         } catch {}
-        // Best-effort immediate penalty (may not complete before unload)
+        // Best-effort immediate penalty (may not complete before unload).
+        // 🛡️ Tenta SIA ELO -10 SIA increment_game_stat (lose); se non fanno
+        // in tempo, il pending_penalty sopra garantisce il recupero al
+        // prossimo mount in TrisBoard.
         supabase.auth.getSession().then(({ data: { session } }) => {
           if (session) {
-            supabase
-              .rpc("update_game_elo", {
-                user_id: session.user.id,
-                elo_change: -10,
-              });
+            supabase.rpc("update_game_elo", {
+              user_id: session.user.id,
+              elo_change: -10,
+            });
+            supabase.rpc("increment_game_stat" as any, {
+              p_user_id: session.user.id,
+              p_game: "tris",
+              p_result: "lose",
+            });
           }
         });
       }
@@ -197,8 +206,9 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
         localStorage.removeItem("tris_game_active");
       } catch {}
       if (!gameCompletedRef.current) {
-        // Game was abandoned - apply penalty
+        // Game was abandoned - apply penalty (ELO + stat sconfitta)
         updateUserElo(-10);
+        recordLossStat();
       }
     };
   }, []);
@@ -458,6 +468,23 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
     }
   };
 
+  // 🛡️ Registra una sconfitta nelle stats partite per anti-evasione.
+  // Chiamata in tutti gli scenari di abbandono (mount-after-reload, unload,
+  // unmount-not-completed, confirmLeave). Best-effort: errori non bloccanti.
+  const recordLossStat = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      await supabase.rpc("increment_game_stat" as any, {
+        p_user_id: session.user.id,
+        p_game: "tris",
+        p_result: "lose",
+      });
+    } catch (e) {
+      console.warn("recordLossStat (tris) non bloccante:", e);
+    }
+  };
+
   const handleEmojiClick = (emoji: string) => {
     setUserEmoji(emoji);
     setShowEmoji(false);
@@ -479,6 +506,7 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
     } catch {}
     try {
       await updateUserElo(-10);
+      await recordLossStat();
     } catch (e) {
       console.error("Failed to apply ELO penalty on leave:", e);
     }

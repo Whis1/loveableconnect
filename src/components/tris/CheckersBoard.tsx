@@ -215,11 +215,13 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
       localStorage.setItem("checkers_game_active", "1");
     } catch {}
 
-    // If a pending penalty was set (e.g. previous reload), apply it once
+    // If a pending penalty was set (e.g. previous reload), apply it once.
+    // 🛡️ Applica SIA ELO -10 SIA increment_game_stat (lose) per coerenza.
     (async () => {
       try {
         if (localStorage.getItem("checkers_pending_penalty") === "1") {
           await updateUserElo(-10);
+          await recordLossStat();
           localStorage.removeItem("checkers_pending_penalty");
         }
       } catch (e) {
@@ -259,14 +261,20 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
         try {
           localStorage.setItem("checkers_pending_penalty", "1");
         } catch {}
-        // Best-effort immediate penalty (may not complete before unload)
+        // Best-effort immediate penalty (may not complete before unload).
+        // 🛡️ Tenta SIA ELO -10 SIA increment_game_stat (lose); il pending
+        // garantisce comunque il recupero al prossimo mount.
         supabase.auth.getSession().then(({ data: { session } }) => {
           if (session) {
-            supabase
-              .rpc("update_game_elo", {
-                user_id: session.user.id,
-                elo_change: -10,
-              });
+            supabase.rpc("update_game_elo", {
+              user_id: session.user.id,
+              elo_change: -10,
+            });
+            supabase.rpc("increment_game_stat" as any, {
+              p_user_id: session.user.id,
+              p_game: "dama",
+              p_result: "lose",
+            });
           }
         });
       }
@@ -286,8 +294,9 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
         localStorage.removeItem("checkers_game_active");
       } catch {}
       if (!gameCompletedRef.current) {
-        // Game was abandoned - apply penalty
+        // Game was abandoned - apply penalty (ELO + stat sconfitta)
         updateUserElo(-10);
+        recordLossStat();
       }
     };
   }, []);
@@ -374,6 +383,22 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
       setUserElo((prev) => Math.max(0, prev + eloChange));
     } catch (error) {
       console.error("Error updating ELO:", error);
+    }
+  };
+
+  // 🛡️ Registra sconfitta dama nelle stats (anti-evasione). Stesso pattern
+  // di TrisBoard.recordLossStat — chiamato in tutti gli scenari di abbandono.
+  const recordLossStat = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      await supabase.rpc("increment_game_stat" as any, {
+        p_user_id: session.user.id,
+        p_game: "dama",
+        p_result: "lose",
+      });
+    } catch (e) {
+      console.warn("recordLossStat (dama) non bloccante:", e);
     }
   };
 
@@ -1206,6 +1231,7 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     } catch {}
     try {
       await updateUserElo(-10);
+      await recordLossStat();
     } catch (e) {
       console.error("Failed to apply ELO penalty on leave:", e);
     }
