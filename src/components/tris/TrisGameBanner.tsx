@@ -36,6 +36,12 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
   // toast rosso in basso a destra).
   const [showInsufficientCreditsBanner, setShowInsufficientCreditsBanner] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  // 🔒 Anti-bypass: vero solo dopo che checkGamesRemaining e' andato a buon fine
+  // almeno una volta. Finche' e' false, il pulsante "Iniziare a giocare" e'
+  // disabilitato con spinner. Altrimenti, mentre la pagina carica, il bottone
+  // mostra il default "Iniziare a giocare" (perche' gamesPlayed=0 e limit=5,
+  // quindi 0<5 e needsCredits=false) e un click rapido bypassava il check crediti.
+  const [gamesDataLoaded, setGamesDataLoaded] = useState(false);
   const { toast } = useToast();
   const { credits } = useCredits();
   const navigate = useNavigate();
@@ -217,12 +223,26 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
         }
       }
     }
+    // Sblocca il pulsante "Iniziare a giocare": ora gamesPlayed riflette
+    // il vero stato del DB e i check di handleStartGame sono affidabili.
+    setGamesDataLoaded(true);
     console.log('🔍 checkGamesRemaining - END');
   };
 
   const handleStartGame = async () => {
+    // 🔒 ANTI-BYPASS: blocca click prima che i dati siano pronti.
+    // Senza questo guard, in fase di caricamento gamesPlayed=0 (default) e
+    // getGameLimit()=5 (default free) → 0<5 → needsCredits=false → il check
+    // 'gamesPlayed >= limit' (sotto) e' false → setGameState('selecting') subito
+    // senza scalare i 2 crediti. Un utente furbo poteva ricaricare la pagina
+    // e cliccare nei millisecondi giusti per giocare gratis.
+    if (!credits || !gamesDataLoaded) {
+      console.warn('⚠️ handleStartGame bloccato: dati non ancora caricati');
+      return;
+    }
+
     const limit = getGameLimit();
-    
+
     // Solo monthly premium (tier premium) ha giochi illimitati
     if (hasUnlimitedGames()) {
       setGameState("selecting");
@@ -677,7 +697,10 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
       </div>
 
       <div className="space-y-4">
-        {!credits ? (
+        {!credits || !gamesDataLoaded ? (
+          // 🔒 Anti-FOUC: skeleton finche' SIA credits SIA gamesPlayed sono pronti.
+          // Senza !gamesDataLoaded mostrava brevemente "5/5" (default) prima del
+          // valore reale, e il pulsante cliccabile in quei ms permetteva il bypass.
           <div className="text-center">
             <div className="animate-pulse">
               <div className="h-4 bg-muted rounded w-3/4 mx-auto"></div>
@@ -716,24 +739,42 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
         {/* Bottone gioca: stile diverso quando l'utente non puo' permettersi
             la partita extra (partite gratuite finite + crediti < 2). Il
             bottone resta cliccabile per mostrare il banner "Crediti
-            insufficienti" con tasto "Ricarica o Abbonati", non il toast. */}
+            insufficienti" con tasto "Ricarica o Abbonati", non il toast.
+
+            🔒 ANTI-BYPASS: finche' credits / gamesDataLoaded non sono pronti
+            il bottone e' DISABILITATO con spinner. Altrimenti per qualche
+            millisecondo si vedeva "Iniziare a giocare" (default state) e un
+            click rapido bypassava il check crediti. */}
         {(() => {
+          const isLoading = !credits || !gamesDataLoaded;
           const limit = getGameLimit();
           const needsCredits =
-            gamesPlayed >= limit && !hasUnlimitedGames();
+            !isLoading && gamesPlayed >= limit && !hasUnlimitedGames();
           const cantAfford = needsCredits && userCredits < 2;
           return (
             <div className="flex justify-center">
               <Button
                 onClick={handleStartGame}
+                disabled={isLoading}
                 className={
-                  cantAfford
+                  isLoading
+                    ? "px-8 bg-primary/40 text-foreground/60 cursor-wait"
+                    : cantAfford
                     ? "px-8 bg-primary/30 hover:bg-primary/40 text-foreground/60 cursor-not-allowed border border-primary/30"
                     : "px-8 bg-primary hover:bg-primary/90"
                 }
               >
-                <Trophy className="w-4 h-4 mr-2" />
-                {needsCredits ? "Gioca con 2 crediti" : "Iniziare a giocare"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Caricamento...
+                  </>
+                ) : (
+                  <>
+                    <Trophy className="w-4 h-4 mr-2" />
+                    {needsCredits ? "Gioca con 2 crediti" : "Iniziare a giocare"}
+                  </>
+                )}
               </Button>
             </div>
           );
