@@ -18,8 +18,11 @@
 const THREE_HOURS = 3 * 60 * 60 * 1000;
 const EPOCH = Date.UTC(2026, 0, 1);
 
-// Drift massimo per bucket di 3 ore: ±60 ELO. Equivalente a 3-6 partite
-// giocate (in cui una vittoria/sconfitta vale tipicamente 10-20 ELO).
+// Drift massimo per bucket di 3 ore: ±60 ELO. Coerente con il sistema
+// utenti reali (+20 ELO per vittoria, -10 ELO per sconfitta):
+//   +60 = 3 vittorie consecutive  (3 × +20)
+//   -60 = 6 sconfitte consecutive (6 × -10)
+//   Realistico per 3 ore di gioco "simulato".
 const MAX_DRIFT = 60;
 
 // Hash deterministico (FNV-1a) -> intero senza segno a 32 bit.
