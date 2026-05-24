@@ -989,25 +989,6 @@ const ProfileEdit = () => {
                 />
               </div>
 
-              {/* Online Status Toggle - Only for monthly subscribers */}
-              {hasActiveMonthlySubscription && (
-                <div className="flex items-center justify-between space-x-2 p-4 border rounded-lg">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="show-online-status" className="text-base">
-                      {t('profile.showOnlineStatus')}
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      {t('profile.showOnlineStatusDescription')}
-                    </p>
-                  </div>
-                  <Switch
-                    id="show-online-status"
-                    checked={profile.show_online_status ?? true}
-                    onCheckedChange={(checked) => setProfile({ ...profile, show_online_status: checked })}
-                  />
-                </div>
-              )}
-
               {/* Favorite Songs */}
               <div className="space-y-2">
                 <Label>🎵 Canzoni Preferite (max 4)</Label>
@@ -1067,6 +1048,26 @@ const ProfileEdit = () => {
                   />
                 </div>
               </div>
+
+              {/* Online Status Toggle — spostato qui sotto le Notifiche email
+                  su richiesta utente. Solo per abbonati mensili. */}
+              {hasActiveMonthlySubscription && (
+                <div className="flex items-center justify-between space-x-2 p-4 border rounded-lg">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="show-online-status" className="text-base">
+                      {t('profile.showOnlineStatus')}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {t('profile.showOnlineStatusDescription')}
+                    </p>
+                  </div>
+                  <Switch
+                    id="show-online-status"
+                    checked={profile.show_online_status ?? true}
+                    onCheckedChange={(checked) => setProfile({ ...profile, show_online_status: checked })}
+                  />
+                </div>
+              )}
 
               <div className="flex gap-3">
                 <Button 
