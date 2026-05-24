@@ -18,9 +18,10 @@ export const AdBanner = () => {
   // setBanners viene rimpiazzato con la lista reale.
   const [banners, setBanners] = useState<string[]>(bannersData.banners);
 
-  // Carica i banner dal DB (tabella app_banners, SELECT pubblica via RLS).
-  // Prima leggevamo da localStorage scritto dall'admin → ogni browser aveva
-  // una lista diversa, le modifiche dell'admin non arrivavano agli utenti.
+  // Carica i banner — priorità: 1) DB app_banners, 2) localStorage (admin in
+  // modalità LOCAL prima della migration), 3) JSON bundled. Prima leggevamo
+  // SOLO localStorage → ogni browser aveva la sua lista, le modifiche admin
+  // non arrivavano agli utenti.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -31,7 +32,20 @@ export const AdBanner = () => {
           .order("position", { ascending: true });
         if (cancelled) return;
         if (error) {
-          console.warn("AdBanner: errore lettura app_banners, uso fallback JSON", error);
+          // Tabella non ancora migrata → fallback localStorage
+          const raw = localStorage.getItem("adBanners");
+          if (raw) {
+            try {
+              const parsed = JSON.parse(raw);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                setBanners(parsed.filter((p) => typeof p === "string"));
+                return;
+              }
+            } catch {
+              // ignore parse error
+            }
+          }
+          console.warn("AdBanner: errore DB e niente localStorage, uso fallback JSON", error);
           return;
         }
         const paths = (data ?? [])
