@@ -52,7 +52,7 @@ export function renderRankBadge(position: number, size: "sm" | "md" = "sm") {
   if (!style) return null;
   return (
     <span
-      className={`inline-flex items-center ${pad} rounded-full font-black tracking-wider uppercase ${style.bg}`}
+      className={`inline-flex items-center ${pad} rounded-full font-black tracking-wide ${style.bg}`}
     >
       {style.label}
     </span>
