@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
-import { Crown, Sword, ShieldOff, Info } from "lucide-react";
+import { Trophy, Sword, ShieldOff } from "lucide-react";
 import { computeAdminStats } from "@/lib/adminElo";
 import { renderRankBadge, getRankNicknameClass } from "./EloLeaderboard";
 
@@ -178,8 +178,12 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
               ) : stats ? (
                 <div className="space-y-4">
                   <div className="text-center">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Score ELO</p>
-                    <p className="text-4xl font-bold text-primary">{stats.elo}</p>
+                    <p className="text-xs uppercase tracking-[0.3em] font-bold bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(244,114,182,0.4)]">
+                      ELO
+                    </p>
+                    <p className="text-4xl font-bold text-primary drop-shadow-[0_0_12px_rgba(244,114,182,0.5)]">
+                      {stats.elo}
+                    </p>
                   </div>
 
                   {/* 🏆 Campione del giorno: trofeo dato a chi e' #1 in classifica
@@ -194,22 +198,18 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
                             type="button"
                             className="w-full flex items-center justify-center gap-2 p-3 rounded-lg bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-500/40 hover:from-yellow-500/30 hover:to-amber-500/30 transition-colors cursor-help"
                           >
-                            <Crown className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                            <Trophy className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
                             <span className="text-sm font-semibold">Campione del giorno:</span>
                             <span className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
                               {stats.top1Trophies}
                             </span>
-                            <span className="text-xl">🏆</span>
-                            <Info className="w-3.5 h-3.5 text-yellow-700/70 dark:text-yellow-300/70" />
                           </button>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-xs text-center leading-relaxed">
-                          🏆 Ogni notte alle ore 00:00 (mezzanotte) il sistema
-                          controlla la classifica ELO. Chi si trova in{" "}
+                          🏆 Ogni notte alle ore 00:00 il sistema controlla la
+                          classifica ELO. Chi si trova in{" "}
                           <strong>prima posizione</strong> in quel momento riceve un
-                          trofeo <strong>Campione del giorno</strong>. Il numero qui
-                          accanto indica quante volte questo profilo è stato il primo
-                          in classifica a fine giornata.
+                          trofeo <strong>Campione del giorno</strong>.
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
