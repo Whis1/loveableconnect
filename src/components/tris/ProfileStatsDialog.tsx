@@ -187,30 +187,28 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
                   </div>
 
                   {/* 🏆 Campione del giorno: trofeo dato a chi e' #1 in classifica
-                      a mezzanotte UTC. Mostrato sempre in classifica, solo se >0
-                      durante le partite. Tooltip cliccabile/hover che spiega
-                      come si ottiene. */}
-                  {(showRank || stats.top1Trophies > 0) && (
-                    <TooltipProvider delayDuration={150}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            type="button"
-                            className="w-full flex items-center justify-center gap-2 p-3 rounded-lg bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-500/40 hover:from-yellow-500/30 hover:to-amber-500/30 transition-colors cursor-help"
-                          >
-                            <Trophy className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-                            <span className="text-sm font-semibold">Campione del giorno:</span>
-                            <span className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
-                              {stats.top1Trophies}
-                            </span>
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-sm text-left leading-relaxed">
-                          Ogni giorno, alle ore 00:00, il sistema verifica la classifica ELO. Il profilo che occupa la prima posizione in quel momento riceve il trofeo <strong>Campione del Giorno</strong>. Il numero riportato indica quante volte il profilo ha concluso la giornata al primo posto in classifica.
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
+                      a mezzanotte UTC. Mostrato SEMPRE (anche con 0 trofei) sia
+                      in classifica che durante le partite, su richiesta utente.
+                      Tooltip cliccabile/hover che spiega come si ottiene. */}
+                  <TooltipProvider delayDuration={150}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="w-full flex items-center justify-center gap-2 p-3 rounded-lg bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-500/40 hover:from-yellow-500/30 hover:to-amber-500/30 transition-colors cursor-help"
+                        >
+                          <Trophy className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                          <span className="text-sm font-semibold">Campione del giorno:</span>
+                          <span className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
+                            {stats.top1Trophies}
+                          </span>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-sm text-left leading-relaxed">
+                        Ogni giorno, alle ore 00:00, il sistema verifica la classifica ELO. Il profilo che occupa la prima posizione in quel momento riceve il trofeo <strong>Campione del Giorno</strong>. Il numero riportato indica quante volte il profilo ha concluso la giornata al primo posto in classifica.
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
 
                   <div className="grid grid-cols-2 gap-2">
                     <div className="flex flex-col items-center p-3 rounded-lg bg-green-500/10 border border-green-500/30">
