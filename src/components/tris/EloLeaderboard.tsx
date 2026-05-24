@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, ChevronDown, ChevronUp, Crown, Sword, ShieldOff, Equal } from "lucide-react";
+import { Trophy, ChevronDown, ChevronUp, Crown, Sword, ShieldOff } from "lucide-react";
 import { computeAdminElos, computeAdminStats } from "@/lib/adminElo";
 
 interface LeaderboardProfile {
@@ -390,8 +390,8 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
                       <span className="text-xl">🏆</span>
                     </div>
 
-                    {/* V / S / P in 3 colonne */}
-                    <div className="grid grid-cols-3 gap-2">
+                    {/* Vittorie / Sconfitte in 2 colonne */}
+                    <div className="grid grid-cols-2 gap-2">
                       <div className="flex flex-col items-center p-3 rounded-lg bg-green-500/10 border border-green-500/30">
                         <Sword className="w-4 h-4 text-green-600 dark:text-green-400 mb-1" />
                         <span className="text-xs text-muted-foreground">Vittorie</span>
@@ -406,31 +406,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
                           {selectedStats.totalLosses}
                         </span>
                       </div>
-                      <div className="flex flex-col items-center p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
-                        <Equal className="w-4 h-4 text-yellow-600 dark:text-yellow-400 mb-1" />
-                        <span className="text-xs text-muted-foreground">Pareggi</span>
-                        <span className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
-                          {selectedStats.totalDraws}
-                        </span>
-                      </div>
                     </div>
-
-                    {/* Win rate */}
-                    {(selectedStats.totalWins + selectedStats.totalLosses + selectedStats.totalDraws) > 0 && (
-                      <div className="text-center text-xs text-muted-foreground">
-                        Win rate:{" "}
-                        <span className="font-semibold text-foreground">
-                          {Math.round(
-                            (selectedStats.totalWins /
-                              (selectedStats.totalWins +
-                                selectedStats.totalLosses +
-                                selectedStats.totalDraws)) *
-                              100
-                          )}
-                          %
-                        </span>
-                      </div>
-                    )}
                   </div>
                 ) : null}
               </div>
