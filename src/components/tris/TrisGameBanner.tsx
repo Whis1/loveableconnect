@@ -728,12 +728,6 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
           </Button>
         </div>
 
-        {/* Stats Footer */}
-        <div className="mt-6 pt-4 border-t border-primary/20 text-center">
-          <p className="text-xs text-muted-foreground">
-            💎 Vinci per guadagnare crediti e aumentare il tuo ELO!
-          </p>
-        </div>
       </Card>
     );
   }
