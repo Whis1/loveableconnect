@@ -16,6 +16,14 @@ const Credits = () => {
   const { t } = useTranslation();
   const [purchasing, setPurchasing] = useState(false);
 
+  // Helper booleane sullo stato abbonamento, usate in piu' punti della pagina
+  // (visibilita' card upgrade, abilitazione 'Acquista Crediti', visibilita'
+  // della sezione crediti per il Premium).
+  const hasActiveSub = !!(credits?.is_premium && (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date()));
+  const hasPremium = hasActiveSub && credits?.subscription_type === 'monthly' && (!credits?.premium_tier || credits?.premium_tier === 'premium');
+  const hasPlatinum = hasActiveSub && credits?.subscription_type === 'monthly' && credits?.premium_tier === 'standard';
+  const hasWeekly = hasActiveSub && credits?.subscription_type === 'weekly';
+
   const PACKAGES = [
     {
       id: "credits_50",
@@ -350,11 +358,6 @@ const Credits = () => {
              Nascondi i piani PARI o INFERIORI a quello attivo, mostra solo
              gli upgrade reali. */}
         {(() => {
-          const hasActiveSub = credits?.is_premium && (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date());
-          const hasPremium = hasActiveSub && credits?.subscription_type === 'monthly' && (!credits?.premium_tier || credits?.premium_tier === 'premium');
-          const hasPlatinum = hasActiveSub && credits?.subscription_type === 'monthly' && credits?.premium_tier === 'standard';
-          const hasWeekly = hasActiveSub && credits?.subscription_type === 'weekly';
-
           const showPremiumCard = !hasPremium;
           const showPlatinumCard = !hasPremium && !hasPlatinum;
           const showWeeklyCard = !hasPremium && !hasPlatinum && !hasWeekly;
@@ -570,53 +573,58 @@ const Credits = () => {
           );
         })()}
 
-        {/* Credit Packages */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-6">{t("credits.buyCredits")}</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {PACKAGES.map((pkg) => (
-              <Card key={pkg.id} className={pkg.popular ? "border-2 border-primary" : ""}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>{pkg.name}</CardTitle>
-                    {pkg.popular && (
-                      <Badge variant="default">{t("credits.popular")}</Badge>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="text-3xl font-bold">{pkg.price}</div>
-                  <Button
-                    onClick={() => handlePurchaseCredits(pkg.id)}
-                    disabled={purchasing || (
-                      credits?.is_premium &&
-                      credits.subscription_type === 'monthly' &&
-                      (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date())
-                    )}
-                    className="w-full"
-                    variant={pkg.popular ? "default" : "outline"}
-                  >
-                    {purchasing ? t("credits.processing") : t("credits.buy")}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+        {/* Credit Packages + Info Section — nascosti se Premium Mensile attivo:
+             chi ha crediti illimitati non deve vedere ne' acquisto crediti ne'
+             la spiegazione "come funzionano i crediti", cosi' rimane in bella
+             vista solo il pannello "Il Tuo Saldo" Premium. Per Platino e
+             Settimanale invece l'acquisto e' ABILITATO (i loro crediti
+             giornalieri sono finiti → l'utente puo' comprarne di piu'). */}
+        {!hasPremium && (
+          <>
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold mb-6">{t("credits.buyCredits")}</h2>
+              <div className="grid md:grid-cols-3 gap-6">
+                {PACKAGES.map((pkg) => (
+                  <Card key={pkg.id} className={pkg.popular ? "border-2 border-primary" : ""}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle>{pkg.name}</CardTitle>
+                        {pkg.popular && (
+                          <Badge variant="default">{t("credits.popular")}</Badge>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="text-3xl font-bold">{pkg.price}</div>
+                      <Button
+                        onClick={() => handlePurchaseCredits(pkg.id)}
+                        disabled={purchasing}
+                        className="w-full"
+                        variant={pkg.popular ? "default" : "outline"}
+                      >
+                        {purchasing ? t("credits.processing") : t("credits.buy")}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
 
-        {/* Info Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("credits.howCreditsWork")}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>{t("credits.freeCreditsDaily")}</p>
-            <p>{t("credits.messageCost")}</p>
-            <p>{t("credits.creditsNoExpire")}</p>
-            <p>{t("credits.premiumUnlimited")}</p>
-            <p>{t("credits.creditsAccumulate")}</p>
-          </CardContent>
-        </Card>
+            {/* Info Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("credits.howCreditsWork")}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm text-muted-foreground">
+                <p>{t("credits.freeCreditsDaily")}</p>
+                <p>{t("credits.messageCost")}</p>
+                <p>{t("credits.creditsNoExpire")}</p>
+                <p>{t("credits.premiumUnlimited")}</p>
+                <p>{t("credits.creditsAccumulate")}</p>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
     </div>
   );
