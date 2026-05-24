@@ -19,33 +19,29 @@ interface EloLeaderboardProps {
 }
 
 // 🎨 Badge esportato per riuso (ProfileStatsDialog ecc).
-// Gradient e colori coerenti col tema rosa/viola/oro.
+// Gradient e colori coerenti col tema rosa/viola/oro. NIENTE emoji nel badge
+// (su richiesta utente: solo testo pulito).
 export function renderRankBadge(position: number, size: "sm" | "md" = "sm") {
-  const pad = size === "sm" ? "px-2 py-0.5 text-[10px]" : "px-3 py-1 text-xs";
+  const pad = size === "sm" ? "px-2.5 py-0.5 text-[10px]" : "px-3 py-1 text-xs";
   const styles = [
     {
       bg: "bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 text-white shadow shadow-yellow-500/40 border border-yellow-300/60",
-      icon: "👑",
       label: "Campione",
     },
     {
       bg: "bg-gradient-to-r from-gray-300 via-slate-400 to-gray-500 text-white shadow shadow-gray-400/40 border border-gray-300/60",
-      icon: "🥈",
       label: "2° posto",
     },
     {
       bg: "bg-gradient-to-r from-orange-400 via-amber-600 to-orange-700 text-white shadow shadow-orange-500/40 border border-orange-300/60",
-      icon: "🥉",
       label: "3° posto",
     },
     {
       bg: "bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-500 text-white shadow shadow-blue-500/40 border border-blue-300/60",
-      icon: "🎖️",
       label: "4° posto",
     },
     {
       bg: "bg-gradient-to-r from-purple-400 via-pink-500 to-rose-500 text-white shadow shadow-pink-500/40 border border-pink-300/60",
-      icon: "🏅",
       label: "5° posto",
     },
   ];
@@ -53,12 +49,31 @@ export function renderRankBadge(position: number, size: "sm" | "md" = "sm") {
   if (!style) return null;
   return (
     <span
-      className={`inline-flex items-center gap-1 ${pad} rounded-full font-bold tracking-wide ${style.bg}`}
+      className={`inline-flex items-center ${pad} rounded-full font-bold tracking-wide ${style.bg}`}
     >
-      <span>{style.icon}</span>
-      <span>{style.label}</span>
+      {style.label}
     </span>
   );
+}
+
+// 🎨 Stile del NOME del profilo nella classifica: gradient text + effetti
+// (drop-shadow / glow) coerenti col rank. SENZA contenitori: il colore del
+// testo cambia direttamente.
+export function getRankNicknameClass(position: number): string {
+  switch (position) {
+    case 0: // Oro Campione — testo gradient + glow giallo
+      return "bg-gradient-to-r from-yellow-400 via-amber-300 to-yellow-500 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(250,204,21,0.7)]";
+    case 1: // Argento — gradient grigio chiaro lucido
+      return "bg-gradient-to-r from-gray-200 via-slate-300 to-gray-400 bg-clip-text text-transparent drop-shadow-[0_0_6px_rgba(148,163,184,0.6)]";
+    case 2: // Bronzo
+      return "bg-gradient-to-r from-orange-400 via-amber-500 to-orange-600 bg-clip-text text-transparent drop-shadow-[0_0_6px_rgba(251,146,60,0.6)]";
+    case 3: // Blu
+      return "bg-gradient-to-r from-blue-300 via-blue-400 to-indigo-500 bg-clip-text text-transparent drop-shadow-[0_0_6px_rgba(96,165,250,0.6)]";
+    case 4: // Viola/Rosa — tema sito
+      return "bg-gradient-to-r from-purple-300 via-pink-400 to-rose-500 bg-clip-text text-transparent drop-shadow-[0_0_6px_rgba(244,114,182,0.6)]";
+    default:
+      return "";
+  }
 }
 
 export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
@@ -278,8 +293,8 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
                   <AvatarFallback>{player.nickname.slice(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold truncate">
-                    {player.nickname}
+                  <p className="font-bold text-base truncate">
+                    <span className={getRankNicknameClass(index)}>{player.nickname}</span>
                     {player.id === userId && <span className="text-xs text-primary ml-2">(Tu)</span>}
                   </p>
                   <div className="mt-0.5">{renderRankBadge(index, "sm")}</div>

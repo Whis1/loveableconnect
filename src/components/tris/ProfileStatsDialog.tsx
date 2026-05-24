@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { supabase } from "@/integrations/supabase/client";
 import { Crown, Sword, ShieldOff, Info } from "lucide-react";
 import { computeAdminStats } from "@/lib/adminElo";
-import { renderRankBadge } from "./EloLeaderboard";
+import { renderRankBadge, getRankNicknameClass } from "./EloLeaderboard";
 
 interface ProfileLike {
   id: string;
@@ -156,8 +156,12 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
                   </AvatarFallback>
                 </Avatar>
                 <div className="text-center">
-                  <h3 className="text-2xl font-bold text-white drop-shadow-lg">
-                    {profile.nickname}
+                  <h3 className="text-2xl font-bold drop-shadow-lg">
+                    {showRank && topIndex !== null && topIndex >= 0 && topIndex < 5 ? (
+                      <span className={getRankNicknameClass(topIndex)}>{profile.nickname}</span>
+                    ) : (
+                      <span className="text-white">{profile.nickname}</span>
+                    )}
                   </h3>
                   {showRank && topIndex !== null && topIndex >= 0 && (
                     <div className="mt-2">{renderRankBadge(topIndex, "md")}</div>
