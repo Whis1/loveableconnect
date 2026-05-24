@@ -8,6 +8,7 @@ import { TrisBoard } from "./TrisBoard";
 import { CheckersBoard } from "./CheckersBoard";
 import { EloLeaderboard } from "./EloLeaderboard";
 import { supabase } from "@/integrations/supabase/client";
+import { getStoredUserId } from "@/lib/storedSession";
 import { useToast } from "@/hooks/use-toast";
 import { useCredits } from "@/hooks/useCredits";
 import { InsufficientCreditsBanner } from "@/components/chat/InsufficientCreditsBanner";
@@ -244,28 +245,79 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
     setGameState("searching");
   };
 
-   // Incrementa le partite giocate - ASYNC per garantire persistenza
+   // Incrementa le partite giocate - ASYNC per garantire persistenza.
+   //
+   // ⚠️ BUG STORICO: la versione precedente faceva UPDATE senza .select(), quindi
+   // se la riga non esisteva (o RLS bloccava) l'UPDATE toccava 0 righe SENZA
+   // dare errore. setGamesPlayed(newGamesPlayed) aggiornava la UI temporaneamente,
+   // ma alla fine partita checkGamesRemaining ri-leggeva dal DB e ripristinava
+   // il counter a 0 — effetto "le partite non scalano".
+   //
+   // FIX: .select() obbligatorio + INSERT di fallback se la riga non esiste +
+   // log dettagliati per diagnostica. Uso getStoredUserId per evitare il
+   // noto hang di supabase.auth.getSession().
    const incrementGamesPlayed = async (): Promise<number> => {
-     const { data: { session } } = await supabase.auth.getSession();
-     if (!session) throw new Error('No session');
- 
+     let userId = getStoredUserId();
+     if (!userId) {
+       const { data: { session } } = await supabase.auth.getSession();
+       userId = session?.user?.id ?? null;
+     }
+     if (!userId) throw new Error('No session');
+
      const newGamesPlayed = gamesPlayed + 1;
      const today = new Date().toISOString().split("T")[0];
-     
-     // CRITICO: Attendere l'aggiornamento del database prima di procedere
-     const { error } = await supabase
+
+     console.log('🎯 incrementGamesPlayed START', {
+       userId,
+       gamesPlayedBefore: gamesPlayed,
+       newGamesPlayed,
+       today,
+     });
+
+     // UPDATE con .select() per verificare che la riga sia stata toccata davvero
+     const { data: updatedRows, error: updateErr } = await supabase
        .from("tris_games")
-       .update({ 
+       .update({
          games_played_today: newGamesPlayed,
-         last_reset_date: today
+         last_reset_date: today,
        })
-       .eq("user_id", session.user.id);
-     
-     if (error) throw error;
-     
+       .eq("user_id", userId)
+       .select();
+
+     if (updateErr) {
+       console.error('❌ incrementGamesPlayed UPDATE error:', updateErr);
+       throw updateErr;
+     }
+
+     console.log('📝 UPDATE result rows:', updatedRows);
+
+     // Se UPDATE non ha trovato la riga, la creiamo con INSERT
+     if (!updatedRows || updatedRows.length === 0) {
+       console.warn('⚠️ tris_games row non trovata, faccio INSERT');
+       const { data: insertedRow, error: insertErr } = await supabase
+         .from("tris_games")
+         .insert({
+           user_id: userId,
+           games_played_today: newGamesPlayed,
+           last_reset_date: today,
+         })
+         .select()
+         .maybeSingle();
+
+       if (insertErr) {
+         console.error('❌ INSERT error:', insertErr);
+         throw new Error(
+           `Impossibile salvare le partite (UPDATE: 0 righe, INSERT errore: ${insertErr.message})`
+         );
+       }
+       console.log('✅ INSERT successful:', insertedRow);
+     } else {
+       console.log('✅ UPDATE successful, new games_played_today:', updatedRows[0].games_played_today);
+     }
+
      // Aggiorna lo stato locale SOLO dopo il successo del database
      setGamesPlayed(newGamesPlayed);
- 
+
      // Check if reached free limit
      const limit = getGameLimit();
      if (newGamesPlayed >= limit && !hasUnlimitedGames()) {
@@ -273,7 +325,7 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
        tomorrow.setDate(tomorrow.getDate() + 1);
        setNextResetTime(tomorrow);
      }
- 
+
      return newGamesPlayed;
    };
  
