@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -42,6 +42,11 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
   // mostra il default "Iniziare a giocare" (perche' gamesPlayed=0 e limit=5,
   // quindi 0<5 e needsCredits=false) e un click rapido bypassava il check crediti.
   const [gamesDataLoaded, setGamesDataLoaded] = useState(false);
+  // 📊 Tipo di pagamento della prossima partita: settato in handleStartGame
+  // ('free' = partite giornaliere free, 'credits' = pagata 2 crediti,
+  // 'premium' = abbonamento illimitato). Salvato in tris_games.last_game_payment_type
+  // quando inizia la partita, mostrato nel pannello admin "Partite".
+  const nextGamePaymentTypeRef = useRef<'free' | 'credits' | 'premium'>('free');
   const { toast } = useToast();
   const { credits } = useCredits();
   const navigate = useNavigate();
@@ -245,6 +250,7 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
 
     // Solo monthly premium (tier premium) ha giochi illimitati
     if (hasUnlimitedGames()) {
+      nextGamePaymentTypeRef.current = 'premium';
       setGameState("selecting");
       return;
     }
@@ -279,10 +285,15 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
 
       setUserCredits((prev) => Math.max(0, prev - 2));
 
+      nextGamePaymentTypeRef.current = 'credits';
+
       toast({
         title: "Partita extra",
         description: "Hai speso 2 crediti per giocare un'altra partita!",
       });
+    } else {
+      // partita free (entro il limite giornaliero)
+      nextGamePaymentTypeRef.current = 'free';
     }
     setGameState("selecting");
   };
@@ -353,7 +364,9 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
          .update({
            games_played_today: newGamesPlayed,
            last_reset_date: today,
-         })
+           last_game_at: new Date().toISOString(),
+           last_game_payment_type: nextGamePaymentTypeRef.current,
+         } as any)
          .eq("id", targetRow.id)
          .select();
 
@@ -379,7 +392,9 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
            user_id: userId,
            games_played_today: newGamesPlayed,
            last_reset_date: today,
-         })
+           last_game_at: new Date().toISOString(),
+           last_game_payment_type: nextGamePaymentTypeRef.current,
+         } as any)
          .select()
          .maybeSingle();
 
@@ -442,6 +457,43 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
          await incrementGamesPlayedWithRetry();
        } else {
          console.warn('⚠️ Increment SKIPPATO perche hasUnlimitedGames=true');
+         // Tracciamo comunque last_game_at + payment_type='premium' su tris_games
+         // per il pannello admin "Partite". Best-effort: errori non bloccanti.
+         try {
+           let pUserId = getStoredUserId();
+           if (!pUserId) {
+             const { data: { session } } = await supabase.auth.getSession();
+             pUserId = session?.user?.id ?? null;
+           }
+           if (pUserId) {
+             const today = new Date().toISOString().split("T")[0];
+             const { data: existing } = await supabase
+               .from("tris_games")
+               .select("id")
+               .eq("user_id", pUserId)
+               .order("updated_at", { ascending: false })
+               .limit(1);
+             if (existing && existing.length > 0) {
+               await supabase
+                 .from("tris_games")
+                 .update({
+                   last_game_at: new Date().toISOString(),
+                   last_game_payment_type: 'premium',
+                 } as any)
+                 .eq("id", existing[0].id);
+             } else {
+               await supabase.from("tris_games").insert({
+                 user_id: pUserId,
+                 games_played_today: 0,
+                 last_reset_date: today,
+                 last_game_at: new Date().toISOString(),
+                 last_game_payment_type: 'premium',
+               } as any);
+             }
+           }
+         } catch (e) {
+           console.warn('Premium last_game tracking (non bloccante):', e);
+         }
        }
        
        setOpponent(foundOpponent);
@@ -467,6 +519,21 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
   const handleGameEnd = async (result: "win" | "lose" | "draw") => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
+
+    // 📊 Incrementa stats vittoria/sconfitta/pareggio per gioco specifico
+    // (tris o dama). Best-effort: errori non bloccanti per non rovinare la UX.
+    if (selectedGame) {
+      try {
+        const { error: statErr } = await supabase.rpc('increment_game_stat' as any, {
+          p_user_id: session.user.id,
+          p_game: selectedGame,
+          p_result: result,
+        });
+        if (statErr) console.warn('increment_game_stat warning (non bloccante):', statErr);
+      } catch (e) {
+        console.warn('increment_game_stat exception (non bloccante):', e);
+      }
+    }
 
     // Award credits if win
     if (result === "win") {

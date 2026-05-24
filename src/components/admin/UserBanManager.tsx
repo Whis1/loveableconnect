@@ -228,7 +228,7 @@ export function UserBanManager() {
     const banData = bannedUsersMap.get(user.id);
     setIsBanned(!!banData);
     setBanReason(banData?.reason || "");
-    
+
     // Load detailed user info
     setDetailsLoading(true);
     try {
@@ -240,7 +240,45 @@ export function UserBanManager() {
         throw new Error(error?.message || data?.error || 'Errore nel caricamento dei dettagli');
       }
 
-      setUserDetails(data);
+      // 📊 Fetch parallelo delle stats partite + posizione classifica.
+      // Best-effort: errori non bloccanti (sezione "Partite" mostrera' N/A).
+      // Richiede la policy "Admin can view all tris games" dalla migration
+      // 20260524174313_user_game_stats.sql.
+      let gameStats: any = null;
+      let leaderboardPosition: number | null = null;
+      try {
+        const [trisRowsRes, profileRowRes] = await Promise.all([
+          (supabase as any)
+            .from('tris_games')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('updated_at', { ascending: false })
+            .limit(1),
+          supabase
+            .from('profiles')
+            .select('game_elo, is_admin_profile')
+            .eq('id', user.id)
+            .maybeSingle(),
+        ]);
+        gameStats = trisRowsRes.data?.[0] ?? null;
+
+        // Posizione in classifica: numero di utenti (non admin profile) con
+        // game_elo > di quello di questo utente, + 1.
+        const userElo = (profileRowRes.data as any)?.game_elo ?? null;
+        const isAdminProfile = (profileRowRes.data as any)?.is_admin_profile;
+        if (typeof userElo === 'number' && !isAdminProfile) {
+          const { count } = await supabase
+            .from('profiles')
+            .select('id', { count: 'exact', head: true })
+            .eq('is_admin_profile', false)
+            .gt('game_elo', userElo);
+          leaderboardPosition = (count ?? 0) + 1;
+        }
+      } catch (gsErr) {
+        console.warn('Errore fetch gameStats/classifica (non bloccante):', gsErr);
+      }
+
+      setUserDetails({ ...data, gameStats, leaderboardPosition });
     } catch (error: any) {
       console.error('Error loading user details:', error);
       toast({
@@ -675,6 +713,110 @@ export function UserBanManager() {
                         </div>
                       </div>
                     )}
+
+                    {/* 🎮 PARTITE: stats tris + dama, partite giornaliere, ultima partita,
+                        metodo pagamento, posizione classifica. Richiede migration
+                        20260524174313_user_game_stats.sql per popolare i campi. */}
+                    {(() => {
+                      const gs = userDetails?.gameStats;
+                      const pos = userDetails?.leaderboardPosition;
+                      const isPremium =
+                        userDetails?.credits?.is_premium &&
+                        userDetails?.credits?.subscription_type === 'monthly' &&
+                        (!userDetails?.credits?.premium_tier || userDetails?.credits?.premium_tier === 'premium');
+
+                      const trisWins = gs?.tris_wins ?? 0;
+                      const trisLosses = gs?.tris_losses ?? 0;
+                      const trisDraws = gs?.tris_draws ?? 0;
+                      const damaWins = gs?.dama_wins ?? 0;
+                      const damaLosses = gs?.dama_losses ?? 0;
+                      const damaDraws = gs?.dama_draws ?? 0;
+                      const totalGamesToday = gs?.games_played_today ?? 0;
+                      const lastGameAt = gs?.last_game_at;
+                      const lastPayment = gs?.last_game_payment_type;
+
+                      const paymentLabel = isPremium
+                        ? '⭐ Premium'
+                        : lastPayment === 'credits'
+                        ? '💎 Crediti (2)'
+                        : lastPayment === 'free'
+                        ? '🆓 Partita giornaliera'
+                        : lastPayment === 'premium'
+                        ? '⭐ Premium'
+                        : 'N/A';
+
+                      return (
+                        <div className="space-y-3 border-t pt-3">
+                          <h4 className="font-semibold text-sm">🎮 Partite</h4>
+                          <div className="space-y-2 text-sm">
+                            {/* Tris */}
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Tris (V/S/P):</span>
+                              <span className="font-medium">
+                                <span className="text-green-500">{trisWins}</span>
+                                {' / '}
+                                <span className="text-red-500">{trisLosses}</span>
+                                {' / '}
+                                <span className="text-yellow-500">{trisDraws}</span>
+                              </span>
+                            </div>
+                            {/* Dama */}
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Dama (V/S/P):</span>
+                              <span className="font-medium">
+                                <span className="text-green-500">{damaWins}</span>
+                                {' / '}
+                                <span className="text-red-500">{damaLosses}</span>
+                                {' / '}
+                                <span className="text-yellow-500">{damaDraws}</span>
+                              </span>
+                            </div>
+                            {/* Totale generale */}
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Totale (V/S/P):</span>
+                              <span className="font-medium">
+                                <span className="text-green-500">{trisWins + damaWins}</span>
+                                {' / '}
+                                <span className="text-red-500">{trisLosses + damaLosses}</span>
+                                {' / '}
+                                <span className="text-yellow-500">{trisDraws + damaDraws}</span>
+                              </span>
+                            </div>
+                            {/* Partite giocate oggi */}
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Partite oggi:</span>
+                              <span className="font-medium">
+                                {isPremium ? '♾️ Illimitate' : totalGamesToday}
+                              </span>
+                            </div>
+                            {/* Ultima partita */}
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Ultima partita:</span>
+                              <span className="font-medium">
+                                {lastGameAt
+                                  ? new Date(lastGameAt).toLocaleString('it-IT', {
+                                      dateStyle: 'medium',
+                                      timeStyle: 'short',
+                                    })
+                                  : 'Mai giocata'}
+                              </span>
+                            </div>
+                            {/* Metodo pagamento ultima partita */}
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Modalità ultima:</span>
+                              <span className="font-medium">{paymentLabel}</span>
+                            </div>
+                            {/* Posizione classifica */}
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Posizione classifica:</span>
+                              <span className="font-medium">
+                                {pos != null ? `#${pos}` : 'N/A'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {userDetails?.purchases && userDetails.purchases.length > 0 && (
                       <div className="space-y-3 border-t pt-3">
