@@ -200,11 +200,13 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
                             <Info className="w-3.5 h-3.5 text-yellow-700/70 dark:text-yellow-300/70" />
                           </button>
                         </TooltipTrigger>
-                        <TooltipContent side="bottom" className="max-w-xs text-center leading-relaxed">
-                          🏆 Riceve 1 trofeo <strong>Campione del giorno</strong> chi è{" "}
-                          <strong>#1 in classifica ELO a mezzanotte UTC</strong>. Conta
-                          quanti giorni di fila/totali è stato il migliore — non bastano
-                          le vittorie singole, serve dominare la classifica.
+                        <TooltipContent side="top" className="max-w-xs text-center leading-relaxed">
+                          🏆 Ogni notte alle ore 00:00 (mezzanotte) il sistema
+                          controlla la classifica ELO. Chi si trova in{" "}
+                          <strong>prima posizione</strong> in quel momento riceve un
+                          trofeo <strong>Campione del giorno</strong>. Il numero qui
+                          accanto indica quante volte questo profilo è stato il primo
+                          in classifica a fine giornata.
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
