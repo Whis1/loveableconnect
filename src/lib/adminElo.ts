@@ -147,6 +147,46 @@ function cumulativeDrift(id: string, currentBucket: number): number {
   return Math.round(sum / 10) * 10;
 }
 
+// 🏆 Statistiche complete simulate per un admin profile.
+// Tutti i numeri sono deterministici dall'id (stessa stat ovunque, sempre).
+// Realistico: chi ha base ELO alto ha piu' vittorie, piu' trofei TOP 1,
+// rapporto V/S migliore. Chi ha base ELO basso ha pochi trofei e tante perdite.
+export interface AdminStats {
+  elo: number;          // ELO corrente (base + cumulativeDrift)
+  baseElo: number;      // ELO base intrinseco
+  totalWins: number;    // Vittorie simulate
+  totalLosses: number;  // Sconfitte simulate
+  totalDraws: number;   // Pareggi simulati
+  top1Trophies: number; // Volte che e' stato #1 in classifica (simulate)
+}
+
+export function computeAdminStats(id: string): AdminStats {
+  const base = baseElo(id);
+  const now = Date.now();
+  const bucket = personalBucket(id, now);
+  const elo = Math.max(100, base + cumulativeDrift(id, bucket));
+
+  // Vittorie: scalano con ELO. base 3000 → ~500 vittorie, base 100 → ~10
+  const totalWins = Math.max(5, Math.floor(base / 6) + (hash(`${id}#wins`) % 50));
+
+  // Sconfitte: inverso proporzionale. base 3000 → poche, base 100 → tante
+  // Formula: piu' base e' basso, piu' sconfitte (relativo alle vittorie)
+  const lossRatio = 1 - Math.min(0.9, base / 3500); // 0.1 al top, 0.9 al bottom
+  const totalLosses = Math.max(2, Math.floor(totalWins * lossRatio) + (hash(`${id}#losses`) % 30));
+
+  // Pareggi: rari, circa 5-15% delle partite totali
+  const totalDraws = Math.floor((totalWins + totalLosses) * (0.05 + (hash(`${id}#draws`) % 11) / 100));
+
+  // Trofei TOP 1: solo chi ha base alta ne ha. Sotto 2000 ELO: 0. Sopra: scala.
+  // Es. base 2500 → ~5 trofei, base 3000 → ~20 trofei.
+  let top1Trophies = 0;
+  if (base >= 2000) {
+    top1Trophies = Math.floor((base - 2000) / 50) + (hash(`${id}#trophies`) % 5);
+  }
+
+  return { elo, baseElo: base, totalWins, totalLosses, totalDraws, top1Trophies };
+}
+
 // Mappa id -> ELO simulato corrente. Ogni admin aggiorna al suo ritmo:
 // alcuni ogni 2 ore, altri ogni 8, ognuno con offset diverso. Il drift
 // cumulativo amplifica le serie consecutive: un admin che ha avuto 3 buone
