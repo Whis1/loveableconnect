@@ -22,13 +22,15 @@
 // NESSUNA forzatura di slot: la posizione finale dipende SOLO dal valore
 // numerico ELO. Un utente reale che supera un admin gli passa davanti.
 //
-// Distribuzione realistica dei "talenti" admin (ispirata ai rating chess online):
-//   5%  top legendari   (2500-3000)
-//   15% alti            (2000-2500)
-//   30% medio-alti      (1500-2000)
-//   30% medi            (1000-1500)
-//   15% bassi           (600-1000)
-//   5%  molto bassi     (400-600)
+// Distribuzione realistica dei "talenti" admin (ispirata ai rating chess online,
+// che spaziano da principianti totali a Magnus Carlsen):
+//   5%  top legendari   (2500-3000) — gli "elite", quasi imbattibili
+//   13% alti            (2000-2500) — giocatori esperti
+//   27% medio-alti      (1500-2000) — buoni giocatori
+//   27% medi            (1000-1500) — giocatori medi
+//   15% bassi           (600-1000)  — giocatori poco esperti
+//   8%  molto bassi     (300-600)   — scarsi che perdono spesso
+//   5%  principianti    (100-300)   — appena registrati, perdono quasi sempre
 
 const HOUR_MS = 60 * 60 * 1000;
 const EPOCH = Date.UTC(2026, 0, 1);
@@ -73,18 +75,21 @@ interface AdminSeed {
 }
 
 // ELO BASE intrinseco di un admin: stabile per sempre, distribuito in tier
-// realistici. SEMPRE multiplo di 10 (coerente con utenti reali +20/-10).
+// realistici dai principianti totali ai top legendari. SEMPRE multiplo di 10
+// (coerente con utenti reali +20/-10).
 function baseElo(id: string): number {
   const h = hash(id);
   const tier = h % 100;
   const inner = (h >>> 8);
 
-  if (tier < 5)  return 2500 + (inner % 51) * 10; // 2500-3000 (5%)
-  if (tier < 20) return 2000 + (inner % 51) * 10; // 2000-2500 (15%)
-  if (tier < 50) return 1500 + (inner % 51) * 10; // 1500-2000 (30%)
-  if (tier < 80) return 1000 + (inner % 51) * 10; // 1000-1500 (30%)
-  if (tier < 95) return  600 + (inner % 41) * 10; // 600-1000  (15%)
-  return                400 + (inner % 21) * 10;  // 400-600   (5%)
+  // count = (max - min) / 10 + 1 → numero di valori possibili (multipli di 10)
+  if (tier < 5)  return 2500 + (inner % 51) * 10; // 2500-3000 (5%)  top legendari
+  if (tier < 18) return 2000 + (inner % 51) * 10; // 2000-2500 (13%) alti
+  if (tier < 45) return 1500 + (inner % 51) * 10; // 1500-2000 (27%) medio-alti
+  if (tier < 72) return 1000 + (inner % 51) * 10; // 1000-1500 (27%) medi
+  if (tier < 87) return  600 + (inner % 41) * 10; // 600-1000  (15%) bassi
+  if (tier < 95) return  300 + (inner % 31) * 10; // 300-600   (8%)  molto bassi
+  return                100 + (inner % 21) * 10;  // 100-300   (5%)  principianti
 }
 
 // Frequenza di "gioco" personale dell'admin, in millisecondi.
