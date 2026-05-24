@@ -124,45 +124,73 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
 
   const checkGamesRemaining = async () => {
     console.log('🔍 checkGamesRemaining - START');
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    let userId = getStoredUserId();
+    if (!userId) {
+      const { data: { session } } = await supabase.auth.getSession();
+      userId = session?.user?.id ?? null;
+    }
+    if (!userId) {
       console.log('❌ checkGamesRemaining - No session');
       return;
     }
 
-    console.log('🔍 Querying tris_games for user:', session.user.id);
-    const { data, error } = await supabase
+    console.log('🔍 Querying tris_games for user:', userId);
+
+    // 🔧 FIX BUG DUPLICATI:
+    // Prima usavamo .maybeSingle() che ritorna null+PGRST116 se ci sono 2+ righe.
+    // Il codice non gestiva PGRST116 → faceva INSERT → creava una ENNESIMA riga →
+    // spirale di duplicati che rendeva impossibile leggere correttamente lo stato.
+    // Ora prendiamo TUTTE le righe ordinate per updated_at DESC e usiamo la piu'
+    // recente. Se ci sono duplicati li puliamo (mantieni solo la piu' recente).
+    const { data: rows, error } = await supabase
       .from("tris_games")
       .select("*")
-      .eq("user_id", session.user.id)
-      .maybeSingle();
+      .eq("user_id", userId)
+      .order("updated_at", { ascending: false });
 
-    if (error && error.code !== "PGRST116") {
-      console.error("❌ Error checking games:", error);
+    if (error) {
+      console.error("❌ Error querying tris_games:", error);
       return;
     }
 
+    console.log(`📊 Found ${rows?.length ?? 0} tris_games row(s) for user`);
+
+    // Cleanup duplicati: tieni la prima (piu' recente), elimina le altre.
+    if (rows && rows.length > 1) {
+      const idsToDelete = rows.slice(1).map((r: any) => r.id);
+      console.warn(`🧹 Pulizia ${idsToDelete.length} righe duplicate in tris_games:`, idsToDelete);
+      await supabase.from("tris_games").delete().in("id", idsToDelete);
+    }
+
+    const data = rows?.[0];
+
     if (!data) {
       console.log('📝 No tris_games record found, creating new one');
-      const { error: insertError } = await supabase.from("tris_games").insert({
-        user_id: session.user.id,
-        games_played_today: 0,
-        last_reset_date: new Date().toISOString().split("T")[0],
-      });
-      
+      const today = new Date().toISOString().split("T")[0];
+      const { data: insertedRows, error: insertError } = await supabase
+        .from("tris_games")
+        .insert({
+          user_id: userId,
+          games_played_today: 0,
+          last_reset_date: today,
+        })
+        .select();
+
       if (insertError) {
         console.error("❌ Error creating tris_games record:", insertError);
+      } else {
+        console.log('✅ tris_games row creata:', insertedRows);
       }
-      console.log('✅ Setting gamesPlayed to 0');
       setGamesPlayed(0);
     } else {
       const today = new Date().toISOString().split("T")[0];
       console.log('📊 Found tris_games data:', {
+        id: data.id,
         games_played_today: data.games_played_today,
         last_reset_date: data.last_reset_date,
         today: today
       });
-      
+
       if (data.last_reset_date !== today) {
         console.log('🔄 Date mismatch - resetting games');
         const { error: updateError } = await supabase
@@ -171,8 +199,8 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
             games_played_today: 0,
             last_reset_date: today,
           })
-          .eq("user_id", session.user.id);
-          
+          .eq("id", data.id);
+
         if (updateError) {
           console.error("❌ Error resetting daily games:", updateError);
         }
@@ -274,26 +302,57 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
        today,
      });
 
-     // UPDATE con .select() per verificare che la riga sia stata toccata davvero
-     const { data: updatedRows, error: updateErr } = await supabase
+     // 1) Trova TUTTE le righe per pulire duplicati e prendere la piu' recente
+     const { data: existingRows, error: selectErr } = await supabase
        .from("tris_games")
-       .update({
-         games_played_today: newGamesPlayed,
-         last_reset_date: today,
-       })
+       .select("*")
        .eq("user_id", userId)
-       .select();
+       .order("updated_at", { ascending: false });
 
-     if (updateErr) {
-       console.error('❌ incrementGamesPlayed UPDATE error:', updateErr);
-       throw updateErr;
+     if (selectErr) {
+       console.error('❌ SELECT pre-update error:', selectErr);
+       throw selectErr;
      }
 
-     console.log('📝 UPDATE result rows:', updatedRows);
+     console.log(`📊 Pre-update rows: ${existingRows?.length ?? 0}`);
 
-     // Se UPDATE non ha trovato la riga, la creiamo con INSERT
-     if (!updatedRows || updatedRows.length === 0) {
-       console.warn('⚠️ tris_games row non trovata, faccio INSERT');
+     // Pulizia duplicati: tieni la prima, elimina le altre
+     if (existingRows && existingRows.length > 1) {
+       const idsToDelete = existingRows.slice(1).map((r: any) => r.id);
+       console.warn(`🧹 Pulizia ${idsToDelete.length} duplicati pre-update:`, idsToDelete);
+       await supabase.from("tris_games").delete().in("id", idsToDelete);
+     }
+
+     const targetRow = existingRows?.[0];
+
+     // 2) UPDATE per id (non per user_id) se la riga esiste, altrimenti INSERT
+     if (targetRow) {
+       console.log(`📝 UPDATE su id=${targetRow.id} (games_played_today: ${targetRow.games_played_today} → ${newGamesPlayed})`);
+       const { data: updatedRows, error: updateErr } = await supabase
+         .from("tris_games")
+         .update({
+           games_played_today: newGamesPlayed,
+           last_reset_date: today,
+         })
+         .eq("id", targetRow.id)
+         .select();
+
+       if (updateErr) {
+         console.error('❌ incrementGamesPlayed UPDATE error:', updateErr);
+         throw updateErr;
+       }
+
+       if (!updatedRows || updatedRows.length === 0) {
+         console.error('❌ UPDATE per id ha toccato 0 righe — RLS sta bloccando');
+         throw new Error(
+           "UPDATE su tris_games bloccato dalle RLS. " +
+           "Apri Admin → Diagnostica Account per vedere lo stato."
+         );
+       }
+
+       console.log('✅ UPDATE successful:', updatedRows[0]);
+     } else {
+       console.warn('⚠️ Nessuna riga tris_games, faccio INSERT');
        const { data: insertedRow, error: insertErr } = await supabase
          .from("tris_games")
          .insert({
@@ -307,12 +366,10 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
        if (insertErr) {
          console.error('❌ INSERT error:', insertErr);
          throw new Error(
-           `Impossibile salvare le partite (UPDATE: 0 righe, INSERT errore: ${insertErr.message})`
+           `Impossibile salvare le partite (INSERT errore: ${insertErr.message})`
          );
        }
        console.log('✅ INSERT successful:', insertedRow);
-     } else {
-       console.log('✅ UPDATE successful, new games_played_today:', updatedRows[0].games_played_today);
      }
 
      // Aggiorna lo stato locale SOLO dopo il successo del database
@@ -344,10 +401,27 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
 
    const handleOpponentFound = async (foundOpponent: Profile) => {
      try {
+       // 🔍 LOG DIAGNOSTICO: capire perche' (eventualmente) il counter
+       // non scala. Mostra lo stato dei credits all'istante del check.
+       const unlimited = hasUnlimitedGames();
+       console.log('🎮 handleOpponentFound', {
+         hasUnlimitedGames: unlimited,
+         willIncrement: !unlimited,
+         credits: credits ? {
+           is_premium: credits.is_premium,
+           subscription_type: credits.subscription_type,
+           premium_tier: credits.premium_tier,
+           premium_expires_at: credits.premium_expires_at,
+         } : 'null',
+         gamesPlayed,
+       });
+
        // Il Premium mensile e' davvero illimitato: non incrementiamo il contatore giornaliero.
-       if (!hasUnlimitedGames()) {
+       if (!unlimited) {
          // CRITICO: Attendere l'aggiornamento PRIMA di avviare il gioco
          await incrementGamesPlayedWithRetry();
+       } else {
+         console.warn('⚠️ Increment SKIPPATO perche hasUnlimitedGames=true');
        }
        
        setOpponent(foundOpponent);
