@@ -6,12 +6,14 @@ import { X as XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { GameResultOverlay } from "./GameResultOverlay";
+import { ProfileStatsDialog } from "./ProfileStatsDialog";
 
 interface Profile {
   id: string;
   nickname: string;
   avatar_url: string | null;
   game_elo?: number;
+  is_admin_profile?: boolean;
 }
 
 interface TrisBoardProps {
@@ -60,6 +62,8 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
   const [winner, setWinner] = useState<"player" | "bot" | "draw" | null>(null);
   const [showEmoji, setShowEmoji] = useState(false);
   const [currentUserProfile, setCurrentUserProfile] = useState<Profile | null>(null);
+  // 🆕 Avatar cliccabile durante la partita → apre ProfileStatsDialog
+  const [clickedProfile, setClickedProfile] = useState<Profile | null>(null);
   const [userEmoji, setUserEmoji] = useState<string | null>(null);
   const [opponentEmoji, setOpponentEmoji] = useState<string | null>(null);
   const [lastOpponentEmoji, setLastOpponentEmoji] = useState<string | null>(null);
@@ -494,7 +498,22 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
       <div className="flex justify-between items-center mb-6">
         {/* Current User - Left */}
         <div className="flex items-center space-x-3 relative">
-          <div className="relative">
+          <button
+            type="button"
+            onClick={() => {
+              if (currentUserProfile) {
+                setClickedProfile({
+                  id: currentUserProfile.id,
+                  nickname: currentUserProfile.nickname,
+                  avatar_url: currentUserProfile.avatar_url,
+                  is_admin_profile: false,
+                  game_elo: userElo,
+                });
+              }
+            }}
+            className="relative cursor-pointer hover:scale-110 transition-transform"
+            title="Vedi le tue statistiche"
+          >
             <Avatar className="w-14 h-14 border-2 border-primary">
               <AvatarImage src={getAvatarUrl(currentUserProfile?.avatar_url)} />
               <AvatarFallback>
@@ -506,7 +525,7 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
                 {userEmoji}
               </div>
             )}
-          </div>
+          </button>
           <div>
             <p className="font-bold">{currentUserProfile?.nickname || "Tu"}</p>
             <p className="text-xs text-muted-foreground">Tu</p>
@@ -531,7 +550,12 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
             <p className="text-xs text-muted-foreground text-right">Sfidante</p>
             <p className="text-xs font-semibold text-destructive text-right">ELO: {opponentElo}</p>
           </div>
-          <div className="relative">
+          <button
+            type="button"
+            onClick={() => setClickedProfile({ ...opponent, is_admin_profile: opponent.is_admin_profile ?? true })}
+            className="relative cursor-pointer hover:scale-110 transition-transform"
+            title={`Vedi statistiche di ${opponent.nickname}`}
+          >
             <Avatar className="w-14 h-14 border-2 border-destructive">
               <AvatarImage src={getAvatarUrl(opponent.avatar_url)} />
               <AvatarFallback>
@@ -543,9 +567,32 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
                 {opponentEmoji}
               </div>
             )}
-          </div>
+          </button>
         </div>
       </div>
+
+      {/* Dialog statistiche profilo cliccato (avatar tuo o dell'avversario) */}
+      <ProfileStatsDialog
+        profile={
+          clickedProfile
+            ? {
+                id: clickedProfile.id,
+                nickname: clickedProfile.nickname,
+                avatar_url: clickedProfile.avatar_url,
+                is_admin_profile: clickedProfile.is_admin_profile ?? false,
+                elo:
+                  clickedProfile.id === currentUserProfile?.id
+                    ? userElo
+                    : clickedProfile.id === opponent.id
+                    ? opponentElo
+                    : clickedProfile.game_elo,
+              }
+            : null
+        }
+        onClose={() => setClickedProfile(null)}
+        topIndex={null}
+        showRank={false}
+      />
 
       {showEmoji && (
         <div className="flex flex-wrap gap-2 mb-4 p-3 bg-background/50 rounded-lg">

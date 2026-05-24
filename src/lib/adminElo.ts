@@ -33,7 +33,11 @@
 //   5%  principianti    (100-300)   — appena registrati, perdono quasi sempre
 
 const HOUR_MS = 60 * 60 * 1000;
-const EPOCH = Date.UTC(2026, 0, 1);
+// 🔄 EPOCH = momento di "azzeramento globale" del sistema simulato.
+// Spostata al 24 maggio 2026, 18:00 UTC → da quel momento in poi tutti gli
+// admin partono da 0 V/S/T e accumulano in tempo reale al passare dei
+// bucket personali. Per "azzerare" di nuovo basta aggiornare questa data.
+const EPOCH = Date.UTC(2026, 4, 24, 18, 0);
 
 // Drift massimo per ogni singola "sessione di gioco" (un bucket personale):
 //   +60 = 3 vittorie consecutive  (3 × +20)
@@ -197,7 +201,52 @@ function computeAdminLifetimeStats(id: string): { wins: number; losses: number }
   return { wins: totalWins, losses: totalLosses };
 }
 
-export function computeAdminStats(id: string): AdminStats {
+// 🏆 Trofei TOP 1 LIVE per admin: per ogni bucket personale di QUESTO
+// admin, controlliamo se in quel momento il suo ELO simulato era il piu'
+// alto tra TUTTI gli admin. Se si', conta come 1 trofeo. Realistico:
+// un top admin (base 2900) sara' stato #1 in molti bucket, un basso
+// quasi mai.
+//
+// allAdmins: lista TUTTI gli admin del sistema (passare admins.length puo'
+// essere costoso, ma il calcolo avviene solo lazy al click sul dialog).
+function computeAdminLifetimeTrophies(id: string, allAdmins: AdminSeed[]): number {
+  const now = Date.now();
+  const myCurrentBucket = personalBucket(id, now);
+  if (myCurrentBucket < 0) return 0;
+
+  const myFreq = personalFrequencyMs(id);
+  const myOffset = personalOffsetMs(id, myFreq);
+  const myBase = baseElo(id);
+
+  let trophies = 0;
+  for (let b = 0; b <= myCurrentBucket; b++) {
+    // Timestamp esatto in cui scatta il bucket b di QUESTO admin
+    const t = EPOCH + myOffset + b * myFreq;
+
+    // ELO di QUESTO admin a quel momento
+    const myElo = Math.max(100, myBase + cumulativeDrift(id, b));
+
+    // Confronta con ogni altro admin (al suo bucket personale a quell'istante)
+    let amTop = true;
+    for (const other of allAdmins) {
+      if (other.id === id) continue;
+      const otherBucket = personalBucket(other.id, t);
+      if (otherBucket < 0) continue; // pre-EPOCH per quell'admin
+      const otherElo = Math.max(100, baseElo(other.id) + cumulativeDrift(other.id, otherBucket));
+      if (otherElo > myElo) {
+        amTop = false;
+        break;
+      }
+    }
+    if (amTop) trophies++;
+  }
+
+  return trophies;
+}
+
+// `allAdmins` opzionale: se omesso, trofei = 0 (no info per calcolare).
+// Quando passato, calcola i trofei LIVE come descritto sopra.
+export function computeAdminStats(id: string, allAdmins?: AdminSeed[]): AdminStats {
   const base = baseElo(id);
   const now = Date.now();
   const bucket = personalBucket(id, now);
@@ -210,12 +259,8 @@ export function computeAdminStats(id: string): AdminStats {
   // Pareggi: il modello drift non li distingue (drift 0 = sessione idle).
   const totalDraws = 0;
 
-  // Trofei TOP 1: solo chi ha base alta ne ha. Sotto 2000 ELO: 0. Sopra: scala.
-  // Es. base 2500 → ~5 trofei, base 3000 → ~20 trofei.
-  let top1Trophies = 0;
-  if (base >= 2000) {
-    top1Trophies = Math.floor((base - 2000) / 50) + (hash(`${id}#trophies`) % 5);
-  }
+  // 🏆 Trofei TOP 1 LIVE: simulati da quante volte e' stato #1 in classifica.
+  const top1Trophies = allAdmins ? computeAdminLifetimeTrophies(id, allAdmins) : 0;
 
   return { elo, baseElo: base, totalWins, totalLosses, totalDraws, top1Trophies };
 }
