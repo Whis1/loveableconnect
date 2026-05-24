@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Coins, Crown, Zap, Shield, Eye, Heart, Gamepad2 } from "lucide-react";
+import { ArrowLeft, Coins, Crown, Zap, Shield, Eye, Heart, Gamepad2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 
@@ -141,19 +141,67 @@ const Credits = () => {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="text-center py-4 text-muted-foreground">{t("credits.loading")}</div>
+              <div className="flex justify-center py-4" aria-label={t("credits.loading")}>
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              </div>
             ) : (credits?.is_premium && (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date())) ? (
               credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium') ? (
+                // 🟡 PREMIUM MENSILE — stessi servizi/icone della card d'acquisto (€399,99/mese)
                 <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <Crown className="h-8 w-8 text-amber-500" />
+                  <div className="flex items-start gap-3">
+                    <Crown className="h-8 w-8 text-amber-500 shrink-0 mt-1" />
                     <div className="flex-1">
                       <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                        {t("credits.unlimitedCredits")}
+                        Premium Mensile Attivo
                       </div>
-                      <div className="text-sm text-muted-foreground">{t("credits.premiumSubscriptionActive")}</div>
+                      <ul className="space-y-1.5 mt-3 text-sm text-muted-foreground">
+                        <li className="flex items-center gap-2">
+                          <Zap className="h-4 w-4 text-amber-500 shrink-0" />
+                          <span><strong>Crediti illimitati</strong> (attuale: {credits.balance})</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Heart className="h-4 w-4 text-amber-500 shrink-0" />
+                          <span>Like illimitati</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Eye className="h-4 w-4 text-amber-500 shrink-0" />
+                          <span>Visualizzazione Like illimitata</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Zap className="h-4 w-4 text-amber-500 shrink-0" />
+                          <span>Sblocco Chat con nuovi profili Illimitato</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-amber-500 shrink-0">
+                            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                            <line x1="12" x2="12" y1="19" y2="22"/>
+                          </svg>
+                          <span>Accesso ai messaggi vocali nelle chat con gli utenti</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-amber-500 shrink-0" />
+                          <span>Disattivazione/attivazione dello stato online del profilo</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Gamepad2 className="h-4 w-4 text-amber-500 shrink-0" />
+                          <span>Sfide tra utenti illimitate</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Crown className="h-4 w-4 text-amber-500 shrink-0" />
+                          <span>Posizione prioritaria nella bacheca</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-amber-500 shrink-0">
+                            <rect width="18" height="18" x="3" y="3" rx="2"/>
+                            <path d="M3 9h18"/>
+                            <path d="m9 16 3-3 3 3"/>
+                          </svg>
+                          <span>Rimozione completa delle pubblicità</span>
+                        </li>
+                      </ul>
                       {credits.premium_expires_at && (
-                        <div className="text-xs text-muted-foreground mt-1">
+                        <div className="text-xs text-muted-foreground mt-3">
                           Rinnovo: {new Date(credits.premium_expires_at).toLocaleDateString('it-IT')}
                         </div>
                       )}
@@ -165,28 +213,58 @@ const Credits = () => {
                     variant="outline"
                     className="w-full"
                   >
-                    {purchasing ? "Caricamento..." : "Gestisci Abbonamento"}
+                    {purchasing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Gestisci Abbonamento
                   </Button>
                   <p className="text-xs text-muted-foreground text-center">
                     Puoi disdire il rinnovo automatico in qualsiasi momento dal portale di gestione
                   </p>
                 </div>
               ) : credits.subscription_type === 'monthly' && credits.premium_tier === 'standard' ? (
+                // 🔵 PLATINO — stessi servizi/icone della card d'acquisto (€69,99/mese)
                 <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <Crown className="h-8 w-8 text-blue-500" />
-                  <div className="flex-1">
+                  <div className="flex items-start gap-3">
+                    <Crown className="h-8 w-8 text-blue-500 shrink-0 mt-1" />
+                    <div className="flex-1">
                       <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                         Platino Attivo
                       </div>
-                      <div className="space-y-1 mt-2 text-sm text-muted-foreground">
-                        <div>💰 70 crediti giornalieri (attuale: {credits.balance})</div>
-                        <div>❤️ 40 like giornalieri</div>
-                        <div>👁️ Visualizzazione illimitata dei like ricevuti</div>
-                        <div>🎮 Possibilità di disputare 20 partite giornaliere tra utenti</div>
-                      </div>
+                      <ul className="space-y-1.5 mt-3 text-sm text-muted-foreground">
+                        <li className="flex items-center gap-2">
+                          <Coins className="h-4 w-4 text-blue-500 shrink-0" />
+                          <span><strong>70 crediti giornalieri</strong> (attuale: {credits.balance})</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Heart className="h-4 w-4 text-blue-500 shrink-0" />
+                          <span><strong>40 like al giorno</strong></span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Eye className="h-4 w-4 text-blue-500 shrink-0" />
+                          <span><strong>Visualizzazione Like illimitata</strong></span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Gamepad2 className="h-4 w-4 text-blue-500 shrink-0" />
+                          <span><strong>20 partite giornaliere</strong> tra utenti</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-blue-500 shrink-0" />
+                          <span>Disattivazione/attivazione dello stato online del profilo</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Crown className="h-4 w-4 text-blue-500 shrink-0" />
+                          <span>Posizione prioritaria nella bacheca</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-blue-500 shrink-0">
+                            <rect width="18" height="18" x="3" y="3" rx="2"/>
+                            <path d="M3 9h18"/>
+                            <path d="m9 16 3-3 3 3"/>
+                          </svg>
+                          <span>Rimozione completa delle pubblicità</span>
+                        </li>
+                      </ul>
                       {credits.premium_expires_at && (
-                        <div className="text-xs text-muted-foreground mt-2">
+                        <div className="text-xs text-muted-foreground mt-3">
                           Rinnovo: {new Date(credits.premium_expires_at).toLocaleDateString('it-IT')}
                         </div>
                       )}
@@ -198,28 +276,46 @@ const Credits = () => {
                     variant="outline"
                     className="w-full"
                   >
-                    {purchasing ? "Caricamento..." : "Gestisci Abbonamento"}
+                    {purchasing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Gestisci Abbonamento
                   </Button>
                   <p className="text-xs text-muted-foreground text-center">
                     Puoi disdire il rinnovo automatico in qualsiasi momento dal portale di gestione
                   </p>
                 </div>
               ) : (
+                // 🟣 PREMIUM SETTIMANALE — stessi servizi/icone della card d'acquisto (€6,99/sett.)
                 <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <Crown className="h-8 w-8 text-purple-500" />
+                  <div className="flex items-start gap-3">
+                    <Zap className="h-8 w-8 text-purple-500 shrink-0 mt-1" />
                     <div className="flex-1">
                       <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                         Premium Settimanale Attivo
                       </div>
-                      <div className="space-y-1 mt-2 text-sm text-muted-foreground">
-                        <div>💰 40 crediti giornalieri (attuale: {credits.balance})</div>
-                        <div>❤️ 30 like giornalieri</div>
-                        <div>👁️ Visualizzazione illimitata dei like ricevuti</div>
-                        <div>🎮 Possibilità di disputare 10 partite giornaliere tra utenti</div>
-                      </div>
+                      <ul className="space-y-1.5 mt-3 text-sm text-muted-foreground">
+                        <li className="flex items-center gap-2">
+                          <Coins className="h-4 w-4 text-purple-500 shrink-0" />
+                          <span><strong>40 crediti giornalieri</strong> (attuale: {credits.balance})</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Heart className="h-4 w-4 text-purple-500 shrink-0" />
+                          <span><strong>30 like al giorno</strong></span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Gamepad2 className="h-4 w-4 text-purple-500 shrink-0" />
+                          <span><strong>10 partite giornaliere</strong> tra utenti</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-purple-500 shrink-0">
+                            <rect width="18" height="18" x="3" y="3" rx="2"/>
+                            <path d="M3 9h18"/>
+                            <path d="m9 16 3-3 3 3"/>
+                          </svg>
+                          <span><strong>Rimozione completa delle pubblicità</strong></span>
+                        </li>
+                      </ul>
                       {credits.premium_expires_at && (
-                        <div className="text-xs text-muted-foreground mt-2">
+                        <div className="text-xs text-muted-foreground mt-3">
                           Rinnovo: {new Date(credits.premium_expires_at).toLocaleDateString('it-IT')}
                         </div>
                       )}
@@ -231,7 +327,8 @@ const Credits = () => {
                     variant="outline"
                     className="w-full"
                   >
-                    {purchasing ? "Caricamento..." : "Gestisci Abbonamento"}
+                    {purchasing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Gestisci Abbonamento
                   </Button>
                   <p className="text-xs text-muted-foreground text-center">
                     Puoi disdire il rinnovo automatico in qualsiasi momento dal portale di gestione
@@ -472,7 +569,11 @@ const Credits = () => {
                   <div className="text-3xl font-bold">{pkg.price}</div>
                   <Button
                     onClick={() => handlePurchaseCredits(pkg.id)}
-                    disabled={purchasing || (credits?.is_premium && credits.subscription_type === 'monthly')}
+                    disabled={purchasing || (
+                      credits?.is_premium &&
+                      credits.subscription_type === 'monthly' &&
+                      (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date())
+                    )}
                     className="w-full"
                     variant={pkg.popular ? "default" : "outline"}
                   >
