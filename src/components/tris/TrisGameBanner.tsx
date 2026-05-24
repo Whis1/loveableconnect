@@ -535,55 +535,11 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
       }
     }
 
-    // 🏆 Calcola la posizione attuale in classifica (admin + utenti reali)
-    // e chiama award_top1_trophy_if_promoted: se l'utente passa da non-#1 a #1,
-    // riceve 1 trofeo TOP 1. Best-effort, non bloccante.
-    try {
-      // ELO attuale dell'utente (post-update)
-      const { data: myProfile } = await supabase
-        .from('profiles')
-        .select('game_elo')
-        .eq('id', session.user.id)
-        .maybeSingle();
-      const myElo = myProfile?.game_elo ?? 1200;
-
-      // Admin con ELO simulato > di me
-      const { data: admins } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('is_admin_profile', true);
-      const { computeAdminElos } = await import('@/lib/adminElo');
-      const adminElos = computeAdminElos(admins ?? []);
-      let higher = 0;
-      adminElos.forEach((e) => {
-        if (e > myElo) higher++;
-      });
-
-      // Utenti reali con game_elo > di me (escluso me stesso)
-      const { count: realHigher } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('is_admin_profile', false)
-        .gt('game_elo', myElo)
-        .neq('id', session.user.id);
-
-      const currentRank = higher + (realHigher ?? 0) + 1;
-
-      const { data: trophyResult, error: trophyErr } = await supabase.rpc(
-        'award_top1_trophy_if_promoted' as any,
-        { p_user_id: session.user.id, p_current_rank: currentRank }
-      );
-      if (trophyErr) {
-        console.warn('award_top1_trophy warning (non bloccante):', trophyErr);
-      } else if (Array.isArray(trophyResult) && trophyResult[0]?.awarded) {
-        toast({
-          title: '🏆 Trofeo TOP 1 conquistato!',
-          description: `Sei salito al #1 in classifica. Trofei totali: ${trophyResult[0].total_trophies}`,
-        });
-      }
-    } catch (e) {
-      console.warn('Trophy assignment exception (non bloccante):', e);
-    }
+    // 🏆 NUOVO SISTEMA: snapshot giornaliero. Niente piu' trofei alla
+    // "transizione" (era exploitabile perdendo apposta per risalire).
+    // Chi e' #1 a mezzanotte UTC riceve 1 trofeo "champion of the day".
+    // L'assegnazione viene fatta lazy dalla RPC award_daily_top1_if_needed
+    // chiamata all'apertura della pagina giochi (vedi EloLeaderboard).
 
     // Award credits if win
     if (result === "win") {

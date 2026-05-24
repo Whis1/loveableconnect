@@ -38,6 +38,18 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     if (isLoading) return;
     setIsLoading(true);
 
+    // 🏆 Best-effort: assegna eventuali trofei TOP 1 giornalieri arretrati
+    // (chi era #1 a mezzanotte UTC di un giorno non ancora processato).
+    // Idempotente lato server (PRIMARY KEY su daily_top1_trophies.award_date).
+    try {
+      const { data: awardResult } = await supabase.rpc('award_daily_top1_if_needed' as any);
+      if (Array.isArray(awardResult) && awardResult[0]?.processed_days > 0) {
+        console.log('🏆 Trofei TOP 1 giornalieri assegnati:', awardResult);
+      }
+    } catch (e) {
+      console.warn('award_daily_top1 non disponibile (migration da applicare?):', e);
+    }
+
     try {
       const { data: admins } = await supabase
         .from("profiles")

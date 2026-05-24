@@ -201,44 +201,57 @@ function computeAdminLifetimeStats(id: string): { wins: number; losses: number }
   return { wins: totalWins, losses: totalLosses };
 }
 
-// 🏆 Trofei TOP 1 LIVE per admin: per ogni bucket personale di QUESTO
-// admin, controlliamo se in quel momento il suo ELO simulato era il piu'
-// alto tra TUTTI gli admin. Se si', conta come 1 trofeo. Realistico:
-// un top admin (base 2900) sara' stato #1 in molti bucket, un basso
-// quasi mai.
+// 🏆 Trofei TOP 1 GIORNALIERI per admin: snapshot a mezzanotte UTC di
+// ogni giorno passato dall'EPOCH. Per ogni giorno, se l'ELO simulato di
+// questo admin a mezzanotte era il piu' alto fra TUTTI gli admin → +1 trofeo.
+// Coerente col sistema utenti reali (award_daily_top1_if_needed lato DB).
 //
-// allAdmins: lista TUTTI gli admin del sistema (passare admins.length puo'
-// essere costoso, ma il calcolo avviene solo lazy al click sul dialog).
+// Realistico: un top admin (base 2900) vincera' la maggioranza dei giorni,
+// un basso (base 200) mai. Calcolato lazy al click sul dialog profilo.
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 function computeAdminLifetimeTrophies(id: string, allAdmins: AdminSeed[]): number {
   const now = Date.now();
-  const myCurrentBucket = personalBucket(id, now);
-  if (myCurrentBucket < 0) return 0;
+  // Mezzanotte UTC di OGGI (escluso, conta solo i giorni PASSATI)
+  const today = new Date();
+  const midnightTodayUTC = Date.UTC(
+    today.getUTCFullYear(),
+    today.getUTCMonth(),
+    today.getUTCDate()
+  );
 
-  const myFreq = personalFrequencyMs(id);
-  const myOffset = personalOffsetMs(id, myFreq);
+  // Mezzanotte UTC del giorno della EPOCH (incluso se >= EPOCH)
+  const firstDay = new Date(EPOCH);
+  let dayMidnight = Date.UTC(
+    firstDay.getUTCFullYear(),
+    firstDay.getUTCMonth(),
+    firstDay.getUTCDate() + 1 // primo giorno COMPLETO dopo EPOCH
+  );
+
   const myBase = baseElo(id);
-
   let trophies = 0;
-  for (let b = 0; b <= myCurrentBucket; b++) {
-    // Timestamp esatto in cui scatta il bucket b di QUESTO admin
-    const t = EPOCH + myOffset + b * myFreq;
 
-    // ELO di QUESTO admin a quel momento
-    const myElo = Math.max(100, myBase + cumulativeDrift(id, b));
+  while (dayMidnight < midnightTodayUTC) {
+    // ELO di QUESTO admin alla mezzanotte di quel giorno
+    if (dayMidnight >= EPOCH) {
+      const myBucket = personalBucket(id, dayMidnight);
+      const myElo = Math.max(100, myBase + cumulativeDrift(id, myBucket));
 
-    // Confronta con ogni altro admin (al suo bucket personale a quell'istante)
-    let amTop = true;
-    for (const other of allAdmins) {
-      if (other.id === id) continue;
-      const otherBucket = personalBucket(other.id, t);
-      if (otherBucket < 0) continue; // pre-EPOCH per quell'admin
-      const otherElo = Math.max(100, baseElo(other.id) + cumulativeDrift(other.id, otherBucket));
-      if (otherElo > myElo) {
-        amTop = false;
-        break;
+      // Confronta con ogni altro admin a quello stesso istante
+      let amTop = true;
+      for (const other of allAdmins) {
+        if (other.id === id) continue;
+        const otherBucket = personalBucket(other.id, dayMidnight);
+        if (otherBucket < 0) continue;
+        const otherElo = Math.max(100, baseElo(other.id) + cumulativeDrift(other.id, otherBucket));
+        if (otherElo > myElo) {
+          amTop = false;
+          break;
+        }
       }
+      if (amTop) trophies++;
     }
-    if (amTop) trophies++;
+    dayMidnight += DAY_MS;
   }
 
   return trophies;
