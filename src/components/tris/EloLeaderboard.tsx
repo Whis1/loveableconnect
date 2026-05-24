@@ -23,25 +23,28 @@ interface EloLeaderboardProps {
 // (su richiesta utente: solo testo pulito).
 export function renderRankBadge(position: number, size: "sm" | "md" = "sm") {
   const pad = size === "sm" ? "px-2.5 py-0.5 text-[10px]" : "px-3 py-1 text-xs";
+  // Testo SCURO a tema del colore di sfondo (no bianco, no nero pieno):
+  // marrone scuro su oro, grigio scuro su argento, ecc. → contrasto alto +
+  // palette armoniosa.
   const styles = [
     {
-      bg: "bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 text-white shadow shadow-yellow-500/40 border border-yellow-300/60",
+      bg: "bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500 text-amber-950 shadow shadow-yellow-500/40 border border-yellow-300/60",
       label: "Campione",
     },
     {
-      bg: "bg-gradient-to-r from-gray-300 via-slate-400 to-gray-500 text-white shadow shadow-gray-400/40 border border-gray-300/60",
+      bg: "bg-gradient-to-r from-gray-200 via-slate-300 to-gray-400 text-slate-800 shadow shadow-gray-400/40 border border-gray-300/60",
       label: "2° posto",
     },
     {
-      bg: "bg-gradient-to-r from-orange-400 via-amber-600 to-orange-700 text-white shadow shadow-orange-500/40 border border-orange-300/60",
+      bg: "bg-gradient-to-r from-orange-300 via-amber-500 to-orange-600 text-orange-950 shadow shadow-orange-500/40 border border-orange-300/60",
       label: "3° posto",
     },
     {
-      bg: "bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-500 text-white shadow shadow-blue-500/40 border border-blue-300/60",
+      bg: "bg-gradient-to-r from-blue-300 via-blue-400 to-indigo-500 text-indigo-950 shadow shadow-blue-500/40 border border-blue-300/60",
       label: "4° posto",
     },
     {
-      bg: "bg-gradient-to-r from-purple-400 via-pink-500 to-rose-500 text-white shadow shadow-pink-500/40 border border-pink-300/60",
+      bg: "bg-gradient-to-r from-purple-300 via-pink-400 to-rose-500 text-rose-950 shadow shadow-pink-500/40 border border-pink-300/60",
       label: "5° posto",
     },
   ];
