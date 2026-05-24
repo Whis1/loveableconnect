@@ -205,13 +205,8 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
                             </span>
                           </button>
                         </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-xs text-center leading-relaxed">
-                          Ogni giorno, alle ore 00:00, il sistema verifica la
-                          classifica ELO. Il profilo che occupa la prima
-                          posizione in quel momento riceve il trofeo{" "}
-                          <strong>“Campione del Giorno”</strong>. Il numero
-                          riportato indica quante volte il profilo ha concluso
-                          la giornata al primo posto in classifica.
+                        <TooltipContent side="top" className="max-w-sm text-left leading-relaxed">
+                          Ogni giorno, alle ore 00:00, il sistema verifica la classifica ELO. Il profilo che occupa la prima posizione in quel momento riceve il trofeo <strong>“Campione del Giorno”</strong>. Il numero riportato indica quante volte il profilo ha concluso la giornata al primo posto in classifica.
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
