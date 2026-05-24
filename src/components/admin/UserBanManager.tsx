@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { computeAdminElos } from "@/lib/adminElo";
 
 export function UserBanManager() {
   const { toast } = useToast();
@@ -246,8 +247,9 @@ export function UserBanManager() {
       // 20260524174313_user_game_stats.sql.
       let gameStats: any = null;
       let leaderboardPosition: number | null = null;
+      let userGameElo: number | null = null;
       try {
-        const [trisRowsRes, profileRowRes] = await Promise.all([
+        const [trisRowsRes, profileRowRes, adminsRes] = await Promise.all([
           (supabase as any)
             .from('tris_games')
             .select('*')
@@ -259,26 +261,39 @@ export function UserBanManager() {
             .select('game_elo, is_admin_profile')
             .eq('id', user.id)
             .maybeSingle(),
+          // Tutti gli admin profile per simulare i loro ELO con computeAdminElos
+          supabase
+            .from('profiles')
+            .select('id')
+            .eq('is_admin_profile', true),
         ]);
         gameStats = trisRowsRes.data?.[0] ?? null;
 
-        // Posizione in classifica: numero di utenti (non admin profile) con
-        // game_elo > di quello di questo utente, + 1.
+        // 🏆 Posizione classifica come la VEDE L'UTENTE: include sia gli admin
+        // profile (con ELO simulato che ruota ogni 3 ore via computeAdminElos)
+        // sia gli utenti reali. Stessa logica di EloLeaderboard.
         const userElo = (profileRowRes.data as any)?.game_elo ?? null;
-        const isAdminProfile = (profileRowRes.data as any)?.is_admin_profile;
-        if (typeof userElo === 'number' && !isAdminProfile) {
+        userGameElo = typeof userElo === 'number' ? userElo : null;
+        if (typeof userElo === 'number') {
+          // Conta gli admin con ELO simulato > userElo
+          const adminElos = computeAdminElos((adminsRes.data ?? []) as { id: string }[]);
+          let higherAdmins = 0;
+          adminElos.forEach((e) => {
+            if (e > userElo) higherAdmins++;
+          });
+          // Conta utenti reali con game_elo > userElo
           const { count } = await supabase
             .from('profiles')
             .select('id', { count: 'exact', head: true })
             .eq('is_admin_profile', false)
             .gt('game_elo', userElo);
-          leaderboardPosition = (count ?? 0) + 1;
+          leaderboardPosition = higherAdmins + (count ?? 0) + 1;
         }
       } catch (gsErr) {
         console.warn('Errore fetch gameStats/classifica (non bloccante):', gsErr);
       }
 
-      setUserDetails({ ...data, gameStats, leaderboardPosition });
+      setUserDetails({ ...data, gameStats, leaderboardPosition, userGameElo });
     } catch (error: any) {
       console.error('Error loading user details:', error);
       toast({
@@ -806,11 +821,26 @@ export function UserBanManager() {
                               <span className="text-muted-foreground">Modalità ultima:</span>
                               <span className="font-medium">{paymentLabel}</span>
                             </div>
-                            {/* Posizione classifica */}
+                            {/* ELO */}
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">ELO:</span>
+                              <span className="font-medium">
+                                {userDetails?.userGameElo != null ? userDetails.userGameElo : 'N/A'}
+                              </span>
+                            </div>
+                            {/* Posizione classifica — come la vede l'utente
+                                (include admin profile con ELO simulato che ruota
+                                ogni 3 ore via computeAdminElos, stessa logica
+                                di EloLeaderboard). */}
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">Posizione classifica:</span>
                               <span className="font-medium">
-                                {pos != null ? `#${pos}` : 'N/A'}
+                                {pos != null ? (
+                                  pos === 1 ? '🥇 1°' :
+                                  pos === 2 ? '🥈 2°' :
+                                  pos === 3 ? '🥉 3°' :
+                                  `#${pos}`
+                                ) : 'N/A'}
                               </span>
                             </div>
                           </div>
