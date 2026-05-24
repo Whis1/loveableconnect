@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { X, ShoppingCart } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCredits } from "@/hooks/useCredits";
+import { supabase } from "@/integrations/supabase/client";
 import bannersData from "@/data/banners.json";
 
 export const AdBanner = () => {
@@ -12,21 +13,40 @@ export const AdBanner = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [shouldShowAds, setShouldShowAds] = useState(true);
+  // Fallback iniziale dal JSON bundled: serve solo se la query DB fallisce
+  // (es. tabella non ancora migrata). Una volta arrivata la risposta DB
+  // setBanners viene rimpiazzato con la lista reale.
   const [banners, setBanners] = useState<string[]>(bannersData.banners);
 
-  // Load banners from localStorage if available
+  // Carica i banner dal DB (tabella app_banners, SELECT pubblica via RLS).
+  // Prima leggevamo da localStorage scritto dall'admin → ogni browser aveva
+  // una lista diversa, le modifiche dell'admin non arrivavano agli utenti.
   useEffect(() => {
-    const savedBanners = localStorage.getItem('adBanners');
-    if (savedBanners) {
+    let cancelled = false;
+    (async () => {
       try {
-        const parsed = JSON.parse(savedBanners);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setBanners(parsed);
+        const { data, error } = await (supabase as any)
+          .from("app_banners")
+          .select("image_path, position")
+          .order("position", { ascending: true });
+        if (cancelled) return;
+        if (error) {
+          console.warn("AdBanner: errore lettura app_banners, uso fallback JSON", error);
+          return;
+        }
+        const paths = (data ?? [])
+          .map((r: any) => r?.image_path)
+          .filter((p: any): p is string => typeof p === 'string' && p.length > 0);
+        if (paths.length > 0) {
+          setBanners(paths);
         }
       } catch (e) {
-        console.error('Error parsing saved banners:', e);
+        console.warn("AdBanner: eccezione fetch banner, uso fallback JSON", e);
       }
-    }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Check if user has premium subscription (monthly or weekly)
