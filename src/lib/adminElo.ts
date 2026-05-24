@@ -37,30 +37,35 @@ interface AdminSeed {
 }
 
 // ELO BASE intrinseco di un admin: stabile per sempre, distribuito in tier
-// realistici. Cambia solo se cambia l'id (mai).
+// realistici. SEMPRE multiplo di 10 (coerente con il sistema utenti reali
+// che guadagnano +20 / perdono -10 ad ogni partita).
 function baseElo(id: string): number {
   const h = hash(id);
   const tier = h % 100;     // 0-99 → determina la fascia
   const inner = (h >>> 8);  // bit alti → posizione DENTRO la fascia
 
-  if (tier < 5)  return 2500 + (inner % 501); // 2500-3000 (5%)
-  if (tier < 20) return 2000 + (inner % 501); // 2000-2500 (15%)
-  if (tier < 50) return 1500 + (inner % 501); // 1500-2000 (30%)
-  if (tier < 80) return 1000 + (inner % 501); // 1000-1500 (30%)
-  if (tier < 95) return  600 + (inner % 401); // 600-1000  (15%)
-  return                400 + (inner % 201);  // 400-600   (5%)
+  // count = (max - min) / 10 + 1 → numero di valori possibili (multipli di 10)
+  if (tier < 5)  return 2500 + (inner % 51) * 10; // 2500-3000 (5%)
+  if (tier < 20) return 2000 + (inner % 51) * 10; // 2000-2500 (15%)
+  if (tier < 50) return 1500 + (inner % 51) * 10; // 1500-2000 (30%)
+  if (tier < 80) return 1000 + (inner % 51) * 10; // 1000-1500 (30%)
+  if (tier < 95) return  600 + (inner % 41) * 10; // 600-1000  (15%)
+  return                400 + (inner % 21) * 10;  // 400-600   (5%)
 }
 
-// Drift corrente per bucket di 3 ore: ±MAX_DRIFT ELO, deterministico da
-// hash(id, bucket). Simula "quanto ha giocato bene/male nelle ultime 3 ore".
+// Drift corrente per bucket di 3 ore: ±MAX_DRIFT ELO in STEP DI 10.
+// Es. -60, -50, -40, ..., 0, ..., +50, +60 → 13 valori possibili.
+// Coerente con il sistema utenti reali (+20 vittoria / -10 sconfitta).
 function currentDrift(id: string, bucket: number): number {
-  return (hash(`${id}#bucket#${bucket}`) % (2 * MAX_DRIFT + 1)) - MAX_DRIFT;
+  const steps = MAX_DRIFT / 10; // 6
+  return ((hash(`${id}#bucket#${bucket}`) % (2 * steps + 1)) - steps) * 10;
 }
 
 // Mappa id -> ELO simulato corrente per i profili admin passati.
 // L'ordinamento finale nella classifica (in EloLeaderboard) viene poi fatto
 // SEMPLICEMENTE per valore ELO desc, quindi admin + utenti reali competono
 // nello stesso campo: chi ha l'ELO piu' alto sta sopra, punto.
+// Tutti gli ELO sono multipli di 10 (base*10 + drift*10).
 export function computeAdminElos(admins: AdminSeed[]): Map<string, number> {
   const result = new Map<string, number>();
   if (admins.length === 0) return result;
