@@ -149,15 +149,52 @@ function cumulativeDrift(id: string, currentBucket: number): number {
 
 // 🏆 Statistiche complete simulate per un admin profile.
 // Tutti i numeri sono deterministici dall'id (stessa stat ovunque, sempre).
-// Realistico: chi ha base ELO alto ha piu' vittorie, piu' trofei TOP 1,
-// rapporto V/S migliore. Chi ha base ELO basso ha pochi trofei e tante perdite.
 export interface AdminStats {
   elo: number;          // ELO corrente (base + cumulativeDrift)
   baseElo: number;      // ELO base intrinseco
-  totalWins: number;    // Vittorie simulate
-  totalLosses: number;  // Sconfitte simulate
-  totalDraws: number;   // Pareggi simulati
+  totalWins: number;    // Vittorie LIVE (cumulato da tutti i bucket passati)
+  totalLosses: number;  // Sconfitte LIVE
+  totalDraws: number;   // Pareggi (sempre 0 nel modello drift)
   top1Trophies: number; // Volte che e' stato #1 in classifica (simulate)
+}
+
+// 🎯 Decompone un drift D (multiplo di 10, range ±60) in vittorie/sconfitte
+// atomiche secondo il sistema +20 vittoria / -10 sconfitta.
+// Cerca il minimo numero di partite (V+S) per ottenere esattamente D.
+//   D > 0: V = ceil(D/20),  S = (20V - D) / 10
+//   D < 0: V = 0,           S = |D| / 10
+//   D = 0: nessuna partita giocata in quella sessione (idle)
+// Esempi:
+//   D=+60 → 3V/0S    D=+50 → 3V/1S    D=+40 → 2V/0S    D=+30 → 2V/1S
+//   D=+20 → 1V/0S    D=+10 → 1V/1S    D=0   → 0V/0S
+//   D=-10 → 0V/1S    D=-20 → 0V/2S    ... D=-60 → 0V/6S
+function decomposeDrift(d: number): { wins: number; losses: number } {
+  if (d === 0) return { wins: 0, losses: 0 };
+  if (d > 0) {
+    const wins = Math.ceil(d / 20);
+    const losses = (20 * wins - d) / 10;
+    return { wins, losses };
+  }
+  return { wins: 0, losses: Math.abs(d) / 10 };
+}
+
+// Conta TUTTE le vittorie/sconfitte cumulate dall'EPOCH (1 gen 2026) al
+// bucket personale corrente. Ogni bucket = una "sessione di gioco" che
+// produce un drift; il drift si scompone in V/S atomiche.
+// Risultato LIVE: quando un nuovo bucket personale scatta, le V/S aumentano
+// senza bisogno di pre-calcolo o storage.
+function computeAdminLifetimeStats(id: string): { wins: number; losses: number } {
+  const now = Date.now();
+  const currentBucket = personalBucket(id, now);
+  let totalWins = 0;
+  let totalLosses = 0;
+  for (let b = 0; b <= currentBucket; b++) {
+    const drift = singleSessionDrift(id, b);
+    const { wins, losses } = decomposeDrift(drift);
+    totalWins += wins;
+    totalLosses += losses;
+  }
+  return { wins: totalWins, losses: totalLosses };
 }
 
 export function computeAdminStats(id: string): AdminStats {
@@ -166,16 +203,12 @@ export function computeAdminStats(id: string): AdminStats {
   const bucket = personalBucket(id, now);
   const elo = Math.max(100, base + cumulativeDrift(id, bucket));
 
-  // Vittorie: scalano con ELO. base 3000 → ~500 vittorie, base 100 → ~10
-  const totalWins = Math.max(5, Math.floor(base / 6) + (hash(`${id}#wins`) % 50));
+  // ⚡ V/S LIVE: cumulate da tutti i bucket personali passati. Aumentano
+  // automaticamente quando scatta un nuovo bucket (ogni 2-8h secondo profilo).
+  const { wins: totalWins, losses: totalLosses } = computeAdminLifetimeStats(id);
 
-  // Sconfitte: inverso proporzionale. base 3000 → poche, base 100 → tante
-  // Formula: piu' base e' basso, piu' sconfitte (relativo alle vittorie)
-  const lossRatio = 1 - Math.min(0.9, base / 3500); // 0.1 al top, 0.9 al bottom
-  const totalLosses = Math.max(2, Math.floor(totalWins * lossRatio) + (hash(`${id}#losses`) % 30));
-
-  // Pareggi: rari, circa 5-15% delle partite totali
-  const totalDraws = Math.floor((totalWins + totalLosses) * (0.05 + (hash(`${id}#draws`) % 11) / 100));
+  // Pareggi: il modello drift non li distingue (drift 0 = sessione idle).
+  const totalDraws = 0;
 
   // Trofei TOP 1: solo chi ha base alta ne ha. Sotto 2000 ELO: 0. Sopra: scala.
   // Es. base 2500 → ~5 trofei, base 3000 → ~20 trofei.
