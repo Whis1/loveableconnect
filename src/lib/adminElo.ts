@@ -1,17 +1,23 @@
-// Simulazione ELO dei profili admin con AGGIORNAMENTI ASINCRONI PER PROFILO.
+// Simulazione ELO dei profili admin con AGGIORNAMENTI ASINCRONI PER PROFILO
+// + MOMENTUM CUMULATIVO (serie di vittorie/sconfitte amplificate).
 //
-// 🎯 SISTEMA REALISTICO: ogni admin ha
+// 🎯 SISTEMA SUPER REALISTICO: ogni admin ha
 //   1) un ELO BASE intrinseco persistente (mai cambia)
 //   2) una FREQUENZA di aggiornamento personale (2-8 ore — chi gioca tanto,
 //      chi solo qualche volta al giorno)
 //   3) un OFFSET temporale personale (sfasamento iniziale rispetto agli altri,
 //      cosi' nessuno aggiorna nello stesso istante)
-//   4) un DRIFT ±60 ELO applicato AD OGNI SUO bucket personale
+//   4) un DRIFT CUMULATIVO basato sulle ultime 6 "sessioni" personali:
+//      somma pesata che amplifica le serie consecutive.
+//      - 3 vittorie di fila (+60 ciascuna) ≈ +130 ELO
+//      - serie altalena ≈ ±20-40 ELO
+//      - 4 sconfitte di fila (-60 ciascuna) ≈ -130 ELO
+//      Cap a ±200 ELO per evitare derive estreme (un top non puo' crollare
+//      al fondo classifica in un solo "evento").
 //
-// Risultato: alle 14:23 magari Guerriero ha appena "giocato" e ha guadagnato
-// +30, Sognatore non gioca da 6 ore (ultimo aggiornamento alle 8:17), Topazio
-// gioca ogni 2 ore (prossimo aggiornamento alle 15:09). La classifica si
-// muove in modo organico, non a scatti sincronizzati come prima.
+// Risultato: la classifica si muove veramente, gli admin top possono crollare
+// dopo brutte giornate, gli admin bassi possono scalare con serie vincenti,
+// e gli utenti reali (con ELO base+/-20-10) competono nello stesso campo.
 //
 // NESSUNA forzatura di slot: la posizione finale dipende SOLO dal valore
 // numerico ELO. Un utente reale che supera un admin gli passa davanti.
@@ -27,7 +33,7 @@
 const HOUR_MS = 60 * 60 * 1000;
 const EPOCH = Date.UTC(2026, 0, 1);
 
-// Drift massimo per ogni "sessione di gioco simulata":
+// Drift massimo per ogni singola "sessione di gioco" (un bucket personale):
 //   +60 = 3 vittorie consecutive  (3 × +20)
 //   -60 = 6 sconfitte consecutive (6 × -10)
 const MAX_DRIFT = 60;
@@ -38,6 +44,19 @@ const MAX_DRIFT = 60;
 // Distribuiti uniformemente sui profili admin via hash(id+"freq").
 const FREQ_MIN_HOURS = 2;
 const FREQ_MAX_HOURS = 8;
+
+// Pesi del momentum cumulativo: peso[0] = bucket appena passato (piu' rilevante),
+// pesi successivi = bucket sempre piu' vecchi, contributo decrescente.
+// Somma pesi = 2.7 → max drift cumulativo teorico = 60 × 2.7 = 162 ELO.
+// Sotto il cap di 200 quindi raggiungibile solo con tutte vittorie o tutte sconfitte
+// consecutive (raro), che e' esattamente cio' che vogliamo: serie spettacolari.
+const MOMENTUM_WEIGHTS = [1.0, 0.7, 0.5, 0.3, 0.2];
+
+// Cap assoluto del drift cumulativo (in valore assoluto). Evita derive estreme.
+// Es. un admin con base 2400 puo' oscillare nel range 2200-2600 → variazione
+// 400 punti totale, sufficientemente ampia per scambi di posizione reali ma
+// non assurda (un top non sprofonda mai al penultimo posto).
+const MAX_CUMULATIVE_DRIFT = 200;
 
 // Hash deterministico (FNV-1a) -> intero senza segno a 32 bit.
 function hash(str: string): number {
@@ -96,17 +115,38 @@ function personalBucket(id: string, now: number): number {
   return Math.floor((now - EPOCH - offsetMs) / freqMs);
 }
 
-// Drift corrente: ±MAX_DRIFT ELO in step di 10, deterministico per
-// (id, bucket_personale_corrente). Quando il bucket avanza, il drift cambia
-// → l'admin "ha giocato" e il suo ELO si aggiorna.
-function currentDrift(id: string, bucket: number): number {
+// Drift di una singola sessione (un bucket personale): ±MAX_DRIFT ELO in
+// step di 10, deterministico per (id, bucket). Rappresenta l'esito di
+// "quella" sessione di gioco simulata.
+function singleSessionDrift(id: string, bucket: number): number {
   const steps = MAX_DRIFT / 10; // 6
   return ((hash(`${id}#bucket#${bucket}`) % (2 * steps + 1)) - steps) * 10;
 }
 
+// 🚀 Drift CUMULATIVO con momentum: somma pesata delle ultime N sessioni.
+// Sessione piu' recente pesa di piu' (peso 1.0), sessioni vecchie pesano meno.
+// Risultato: serie consecutive vinte/perse si AMPLIFICANO; serie miste si
+// attenuano. Cap a ±MAX_CUMULATIVE_DRIFT per evitare derive estreme.
+// Arrotondato a multipli di 10 per coerenza con il sistema utenti reali.
+function cumulativeDrift(id: string, currentBucket: number): number {
+  let sum = 0;
+  for (let i = 0; i < MOMENTUM_WEIGHTS.length; i++) {
+    const b = currentBucket - i;
+    if (b < 0) break; // pre-EPOCH non ha senso
+    sum += singleSessionDrift(id, b) * MOMENTUM_WEIGHTS[i];
+  }
+  // Cap a ±MAX_CUMULATIVE_DRIFT
+  if (sum > MAX_CUMULATIVE_DRIFT) sum = MAX_CUMULATIVE_DRIFT;
+  if (sum < -MAX_CUMULATIVE_DRIFT) sum = -MAX_CUMULATIVE_DRIFT;
+  // Arrotonda al multiplo di 10 piu' vicino
+  return Math.round(sum / 10) * 10;
+}
+
 // Mappa id -> ELO simulato corrente. Ogni admin aggiorna al suo ritmo:
-// alcuni ogni 2 ore, altri ogni 8, ognuno con offset diverso. La classifica
-// si muove in modo organico, non a scatti sincronizzati.
+// alcuni ogni 2 ore, altri ogni 8, ognuno con offset diverso. Il drift
+// cumulativo amplifica le serie consecutive: un admin che ha avuto 3 buone
+// sessioni di fila puo' salire di +130 ELO, uno con 4 brutte sessioni puo'
+// crollare di -130 ELO. La classifica si muove in modo organico e meritocratico.
 export function computeAdminElos(admins: AdminSeed[]): Map<string, number> {
   const result = new Map<string, number>();
   if (admins.length === 0) return result;
@@ -115,7 +155,7 @@ export function computeAdminElos(admins: AdminSeed[]): Map<string, number> {
 
   for (const a of admins) {
     const bucket = personalBucket(a.id, now);
-    const elo = baseElo(a.id) + currentDrift(a.id, bucket);
+    const elo = baseElo(a.id) + cumulativeDrift(a.id, bucket);
     result.set(a.id, Math.max(100, elo));
   }
 
