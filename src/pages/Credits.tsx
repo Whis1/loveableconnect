@@ -345,11 +345,26 @@ const Credits = () => {
           </CardContent>
         </Card>
 
-        {/* Premium Subscriptions */}
-        {/* Nascondi solo se hai Premium Mensile premium tier attivo */}
-        {!(credits?.is_premium && credits.subscription_type === 'monthly' && (!credits.premium_tier || credits.premium_tier === 'premium') && (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date())) && (
+        {/* Premium Subscriptions — gerarchia upgrade:
+             Premium (top) > Platino > Settimanale > Free
+             Nascondi i piani PARI o INFERIORI a quello attivo, mostra solo
+             gli upgrade reali. */}
+        {(() => {
+          const hasActiveSub = credits?.is_premium && (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date());
+          const hasPremium = hasActiveSub && credits?.subscription_type === 'monthly' && (!credits?.premium_tier || credits?.premium_tier === 'premium');
+          const hasPlatinum = hasActiveSub && credits?.subscription_type === 'monthly' && credits?.premium_tier === 'standard';
+          const hasWeekly = hasActiveSub && credits?.subscription_type === 'weekly';
+
+          const showPremiumCard = !hasPremium;
+          const showPlatinumCard = !hasPremium && !hasPlatinum;
+          const showWeeklyCard = !hasPremium && !hasPlatinum && !hasWeekly;
+
+          if (!showPremiumCard && !showPlatinumCard && !showWeeklyCard) return null;
+
+          return (
           <>
             {/* Monthly Premium */}
+            {showPremiumCard && (
             <Card className="mb-6 border-2 border-amber-500/50 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -424,8 +439,10 @@ const Credits = () => {
                 </p>
               </CardContent>
             </Card>
+            )}
 
-            {/* Standard Monthly */}
+            {/* Standard Monthly (Platino) — nascosto se utente ha gia' Platino o Premium */}
+            {showPlatinumCard && (
             <Card className="mb-6 border-2 border-blue-500/50 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -487,9 +504,10 @@ const Credits = () => {
                 </p>
               </CardContent>
             </Card>
+            )}
 
-            {/* Weekly Premium - Nascondi solo se hai già Weekly attivo */}
-            {!(credits?.is_premium && credits.subscription_type === 'weekly' && (!credits.premium_expires_at || new Date(credits.premium_expires_at) > new Date())) && (
+            {/* Weekly Premium — nascosto se utente ha Weekly, Platino o Premium */}
+            {showWeeklyCard && (
               <Card className="mb-8 border-2 border-purple-500/50 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -549,7 +567,8 @@ const Credits = () => {
               </Card>
             )}
           </>
-        )}
+          );
+        })()}
 
         {/* Credit Packages */}
         <div className="mb-8">
