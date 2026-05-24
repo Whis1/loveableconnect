@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
-import { Crown, Sword, ShieldOff } from "lucide-react";
+import { Crown, Sword, ShieldOff, Info } from "lucide-react";
 import { computeAdminStats } from "@/lib/adminElo";
 
 interface ProfileLike {
@@ -169,17 +170,35 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
                     <p className="text-4xl font-bold text-primary">{stats.elo}</p>
                   </div>
 
-                  {/* Trofei TOP 1: mostrato solo se ne ha almeno 1 nelle partite
-                      (richiesta utente). In classifica/EloLeaderboard mostrato sempre. */}
+                  {/* 🏆 Campione del giorno: trofeo dato a chi e' #1 in classifica
+                      a mezzanotte UTC. Mostrato sempre in classifica, solo se >0
+                      durante le partite. Tooltip cliccabile/hover che spiega
+                      come si ottiene. */}
                   {(showRank || stats.top1Trophies > 0) && (
-                    <div className="flex items-center justify-center gap-2 p-3 rounded-lg bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-500/40">
-                      <Crown className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-                      <span className="text-sm font-semibold">Trofei TOP 1:</span>
-                      <span className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
-                        {stats.top1Trophies}
-                      </span>
-                      <span className="text-xl">🏆</span>
-                    </div>
+                    <TooltipProvider delayDuration={150}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className="w-full flex items-center justify-center gap-2 p-3 rounded-lg bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-500/40 hover:from-yellow-500/30 hover:to-amber-500/30 transition-colors cursor-help"
+                          >
+                            <Crown className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                            <span className="text-sm font-semibold">Campione del giorno:</span>
+                            <span className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
+                              {stats.top1Trophies}
+                            </span>
+                            <span className="text-xl">🏆</span>
+                            <Info className="w-3.5 h-3.5 text-yellow-700/70 dark:text-yellow-300/70" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="max-w-xs text-center leading-relaxed">
+                          🏆 Riceve 1 trofeo <strong>Campione del giorno</strong> chi è{" "}
+                          <strong>#1 in classifica ELO a mezzanotte UTC</strong>. Conta
+                          quanti giorni di fila/totali è stato il migliore — non bastano
+                          le vittorie singole, serve dominare la classifica.
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   )}
 
                   <div className="grid grid-cols-2 gap-2">
