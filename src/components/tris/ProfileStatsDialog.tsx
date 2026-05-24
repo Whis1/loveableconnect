@@ -39,37 +39,44 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
   const [stats, setStats] = useState<ProfileStats | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // 🐛 FIX LOOP RICARICA: prima la dep era [profile] (l'intero oggetto).
+  // TrisBoard/CheckersBoard ricreano un NUOVO oggetto profile ad ogni render
+  // (per includere l'elo calcolato), quindi la reference cambiava ogni volta
+  // → useEffect ri-eseguiva → loop infinito di fetch.
+  // Ora dep solo [profile?.id, profile?.is_admin_profile]: cambia SOLO quando
+  // si seleziona un altro profilo (id diverso), non ad ogni render del parent.
   useEffect(() => {
     if (!profile) {
       setStats(null);
       return;
     }
     let cancelled = false;
+    const profileId = profile.id;
+    const isAdmin = profile.is_admin_profile;
+    const fallbackElo = profile.elo ?? (isAdmin ? 1200 : 1200);
+
     (async () => {
       setLoading(true);
       try {
-        if (profile.is_admin_profile) {
-          // Per i trofei live devo passare TUTTI gli admin a computeAdminStats.
-          // Faccio una query rapida (cached per session se necessario).
+        if (isAdmin) {
           const { data: admins } = await supabase
             .from("profiles")
             .select("id")
             .eq("is_admin_profile", true);
           if (cancelled) return;
 
-          const adminStats = computeAdminStats(profile.id, admins ?? []);
+          const adminStats = computeAdminStats(profileId, admins ?? []);
           setStats({
-            elo: profile.elo ?? adminStats.elo,
+            elo: fallbackElo ?? adminStats.elo,
             totalWins: adminStats.totalWins,
             totalLosses: adminStats.totalLosses,
             top1Trophies: adminStats.top1Trophies,
           });
         } else {
-          // Utente reale: tris_games + game_elo + top_1_trophies
           const { data: tris } = await supabase
             .from("tris_games")
             .select("*")
-            .eq("user_id", profile.id)
+            .eq("user_id", profileId)
             .order("updated_at", { ascending: false })
             .limit(1)
             .maybeSingle();
@@ -77,7 +84,7 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
 
           const row = tris as any;
           setStats({
-            elo: profile.elo ?? 1200,
+            elo: fallbackElo,
             totalWins: (row?.tris_wins ?? 0) + (row?.dama_wins ?? 0),
             totalLosses: (row?.tris_losses ?? 0) + (row?.dama_losses ?? 0),
             top1Trophies: row?.top_1_trophies ?? 0,
@@ -87,7 +94,7 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
         console.error("ProfileStatsDialog stats load error:", e);
         if (!cancelled) {
           setStats({
-            elo: profile.elo ?? 0,
+            elo: fallbackElo,
             totalWins: 0,
             totalLosses: 0,
             top1Trophies: 0,
@@ -100,7 +107,9 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
     return () => {
       cancelled = true;
     };
-  }, [profile]);
+    // Solo l'id (e il tipo admin/user) trigggera il refetch — non l'oggetto intero.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.id, profile?.is_admin_profile]);
 
   const getAvatarUrl = (avatarPath: string | null) => {
     if (!avatarPath) return "";
