@@ -244,7 +244,7 @@ const Credits = () => {
                         </li>
                         <li className="flex items-center gap-2">
                           <Gamepad2 className="h-4 w-4 text-blue-500 shrink-0" />
-                          <span><strong>20 partite giornaliere</strong> tra utenti</span>
+                          <span><strong>20 partite giornaliere tra utenti</strong></span>
                         </li>
                         <li className="flex items-center gap-2">
                           <Shield className="h-4 w-4 text-blue-500 shrink-0" />
@@ -303,7 +303,7 @@ const Credits = () => {
                         </li>
                         <li className="flex items-center gap-2">
                           <Gamepad2 className="h-4 w-4 text-purple-500 shrink-0" />
-                          <span><strong>10 partite giornaliere</strong> tra utenti</span>
+                          <span><strong>10 partite giornaliere tra utenti</strong></span>
                         </li>
                         <li className="flex items-center gap-2">
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-purple-500 shrink-0">
@@ -472,7 +472,7 @@ const Credits = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <Gamepad2 className="h-5 w-5 text-blue-500" />
-                    <span><strong>20 partite giornaliere</strong> tra utenti</span>
+                    <span><strong>20 partite giornaliere tra utenti</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Shield className="h-5 w-5 text-blue-500" />
