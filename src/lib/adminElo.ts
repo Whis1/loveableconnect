@@ -34,10 +34,10 @@
 
 const HOUR_MS = 60 * 60 * 1000;
 // 🔄 EPOCH = momento di "azzeramento globale" del sistema simulato.
-// Spostata al 24 maggio 2026, 18:00 UTC → da quel momento in poi tutti gli
-// admin partono da 0 V/S/T e accumulano in tempo reale al passare dei
-// bucket personali. Per "azzerare" di nuovo basta aggiornare questa data.
-const EPOCH = Date.UTC(2026, 4, 24, 18, 0);
+// Spostata al 25 maggio 2026 09:42 UTC → tutti gli admin riazzerano V/S
+// e ricominciano ad accumulare in tempo reale al passare dei bucket personali.
+// Per "azzerare" di nuovo basta aggiornare questa data.
+const EPOCH = Date.UTC(2026, 4, 25, 9, 42);
 
 // Drift massimo per ogni singola "sessione di gioco" (un bucket personale):
 //   +100 = 5 vittorie consecutive  (5 × +20)
