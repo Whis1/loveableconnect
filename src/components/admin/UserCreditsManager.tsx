@@ -356,7 +356,7 @@ export const UserCreditsManager = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Coins className="h-5 w-5" />
-          Gestione Crediti e abbonamenti Utente
+          Gestione crediti e abbonamenti Utente
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
