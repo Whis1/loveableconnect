@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Trophy, X, Loader2, Clock, Swords } from "lucide-react";
+import { Trophy, X, Loader2, Clock, Gamepad2 } from "lucide-react";
 import { OpponentSearch } from "./OpponentSearch";
 import { TrisBoard } from "./TrisBoard";
 import { CheckersBoard } from "./CheckersBoard";
@@ -837,11 +837,11 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
           <div className="absolute -inset-2 rounded-2xl bg-gradient-to-br from-pink-500/40 via-fuchsia-500/30 to-indigo-500/40 blur-xl animate-pulse" />
           {/* Box icona */}
           <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 via-fuchsia-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-pink-500/40 ring-2 ring-white/10">
-            <Swords className="w-7 h-7 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" />
+            <Gamepad2 className="w-7 h-7 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" />
           </div>
         </div>
         <h3 className="text-xl md:text-2xl font-black tracking-tight bg-gradient-to-r from-pink-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(244,114,182,0.3)]">
-          Sfida gli utenti per vincere crediti
+          Sfida gli utenti per vincere crediti e scalare la classifica
         </h3>
         {/* Linea decorativa sotto il titolo */}
         <div className="mt-2 h-[2px] w-24 rounded-full bg-gradient-to-r from-transparent via-pink-400/60 to-transparent" />
@@ -869,12 +869,8 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
           </div>
         ) : (
           <div className="text-center py-3 px-4 rounded-xl bg-background/40 border border-white/5 backdrop-blur-sm">
-            <p className="text-sm text-muted-foreground">
-              Partite gratuite oggi:{" "}
-              <span className="font-black text-xl bg-gradient-to-r from-pink-400 to-fuchsia-400 bg-clip-text text-transparent">
-                {Math.max(0, getGameLimit() - gamesPlayed)}
-              </span>
-              <span className="text-foreground/60">/{getGameLimit()}</span>
+            <p className="text-lg font-black tracking-tight bg-gradient-to-r from-pink-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(244,114,182,0.3)]">
+              Partite gratuite oggi: {Math.max(0, getGameLimit() - gamesPlayed)}/{getGameLimit()}
             </p>
             {hasActiveSubscription() && credits.subscription_type === 'monthly' && credits.premium_tier === 'standard' && (
               <p className="text-[11px] mt-1 font-semibold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
