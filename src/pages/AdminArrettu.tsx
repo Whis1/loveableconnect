@@ -14,6 +14,7 @@ import { Shield, LogOut, MessageSquare, UserPlus, Mail, Megaphone, Loader2 } fro
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminRole } from "@/hooks/useAdminRole";
+import { useUnreadSupportMessages } from "@/hooks/useUnreadSupportMessages";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export default function AdminArrettu() {
@@ -29,6 +30,8 @@ export default function AdminArrettu() {
   // Tier 1 = full access. Tier 2 = ridotto (no Profili & Chat, no Creazione).
   // Default a 1 se NULL (admin pre-migration, retrocompatibile).
   const isTier1 = (adminTier ?? 1) === 1;
+  // 🔔 Conta messaggi non letti dal supporto utenti + beep automatico al nuovo
+  const { unreadCount: unreadSupportCount } = useUnreadSupportMessages();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -208,9 +211,27 @@ export default function AdminArrettu() {
             <Button
               variant="outline"
               onClick={() => navigate("/admin/support")}
+              className={
+                unreadSupportCount > 0
+                  ? "relative bg-red-500/20 border-red-500 text-red-100 hover:bg-red-500/30 animate-pulse shadow-lg shadow-red-500/40"
+                  : "relative"
+              }
             >
-              <MessageSquare className="h-5 w-5 mr-2" />
+              <MessageSquare className={`h-5 w-5 mr-2 ${unreadSupportCount > 0 ? 'text-red-300' : ''}`} />
               Supporto Clienti
+              {unreadSupportCount > 0 && (
+                <>
+                  {/* Badge count */}
+                  <span className="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-xs font-bold">
+                    {unreadSupportCount}
+                  </span>
+                  {/* Pallino ping animato in alto a destra */}
+                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                  </span>
+                </>
+              )}
             </Button>
             <Dialog open={inboxAllDialogOpen} onOpenChange={setInboxAllDialogOpen}>
               <DialogTrigger asChild>
