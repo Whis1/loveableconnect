@@ -166,14 +166,54 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
 
     console.log(`📊 Found ${rows?.length ?? 0} tris_games row(s) for user`);
 
-    // Cleanup duplicati: tieni la prima (piu' recente), elimina le altre.
+    // 🔧 FIX MERGE DUPLICATI:
+    // Prima la pulizia tiene la più recente by updated_at e DELETE le altre.
+    // Problema: una INSERT spuria di una RPC (es. award_top1_trophy con
+    // ON CONFLICT DO NOTHING inefficace per mancanza di UNIQUE) crea una riga
+    // VUOTA "più recente" → si cancellano le righe vecchie CON LE STATS!
+    // Ora aggreghiamo (max) tutte le stats sulla riga più recente PRIMA di
+    // cancellare le altre, così non perdiamo mai nulla.
+    let data = rows?.[0] as any;
     if (rows && rows.length > 1) {
+      const keep = rows[0] as any;
       const idsToDelete = rows.slice(1).map((r: any) => r.id);
-      console.warn(`🧹 Pulizia ${idsToDelete.length} righe duplicate in tris_games:`, idsToDelete);
-      await supabase.from("tris_games").delete().in("id", idsToDelete);
-    }
+      console.warn(`🧹 Merging ${rows.length} righe tris_games (mantengo ${keep.id})`);
 
-    const data = rows?.[0];
+      // Max di ogni stat sull'insieme di tutte le righe → niente perdita dati
+      const max = (key: string) =>
+        Math.max(...(rows as any[]).map((r) => r?.[key] ?? 0));
+      const latestNonNull = (key: string) => {
+        const sorted = (rows as any[])
+          .filter((r) => r?.[key])
+          .sort((a, b) => new Date(b.updated_at ?? 0).getTime() - new Date(a.updated_at ?? 0).getTime());
+        return sorted[0]?.[key] ?? null;
+      };
+
+      const aggregated: any = {
+        games_played_today: max("games_played_today"),
+        tris_wins: max("tris_wins"),
+        tris_losses: max("tris_losses"),
+        tris_draws: max("tris_draws"),
+        dama_wins: max("dama_wins"),
+        dama_losses: max("dama_losses"),
+        dama_draws: max("dama_draws"),
+        top_1_trophies: max("top_1_trophies"),
+        last_game_at: latestNonNull("last_game_at"),
+        last_game_payment_type: latestNonNull("last_game_payment_type"),
+      };
+
+      const { data: updated } = await supabase
+        .from("tris_games")
+        .update(aggregated)
+        .eq("id", keep.id)
+        .select()
+        .maybeSingle();
+
+      await supabase.from("tris_games").delete().in("id", idsToDelete);
+
+      data = updated ?? { ...keep, ...aggregated };
+      console.log("✅ Merge duplicati completato:", aggregated);
+    }
 
     if (!data) {
       console.log('📝 No tris_games record found, creating new one');
@@ -347,14 +387,45 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
 
      console.log(`📊 Pre-update rows: ${existingRows?.length ?? 0}`);
 
-     // Pulizia duplicati: tieni la prima, elimina le altre
+     // 🔧 FIX MERGE DUPLICATI: aggrega le stats (max) sulla riga più recente
+     // PRIMA di cancellare le altre, così non perdiamo wins/losses/trophies
+     // accumulate in righe duplicate create da INSERT spuri delle RPC.
+     let targetRow = (existingRows as any[])?.[0];
      if (existingRows && existingRows.length > 1) {
+       const keep = existingRows[0] as any;
        const idsToDelete = existingRows.slice(1).map((r: any) => r.id);
-       console.warn(`🧹 Pulizia ${idsToDelete.length} duplicati pre-update:`, idsToDelete);
-       await supabase.from("tris_games").delete().in("id", idsToDelete);
-     }
+       console.warn(`🧹 Merge ${existingRows.length} duplicati pre-update (keep ${keep.id})`);
 
-     const targetRow = existingRows?.[0];
+       const max = (key: string) => Math.max(...(existingRows as any[]).map((r) => r?.[key] ?? 0));
+       const latestNonNull = (key: string) => {
+         const sorted = (existingRows as any[])
+           .filter((r) => r?.[key])
+           .sort((a, b) => new Date(b.updated_at ?? 0).getTime() - new Date(a.updated_at ?? 0).getTime());
+         return sorted[0]?.[key] ?? null;
+       };
+
+       const aggregated: any = {
+         games_played_today: max("games_played_today"),
+         tris_wins: max("tris_wins"),
+         tris_losses: max("tris_losses"),
+         tris_draws: max("tris_draws"),
+         dama_wins: max("dama_wins"),
+         dama_losses: max("dama_losses"),
+         dama_draws: max("dama_draws"),
+         top_1_trophies: max("top_1_trophies"),
+         last_game_at: latestNonNull("last_game_at"),
+         last_game_payment_type: latestNonNull("last_game_payment_type"),
+       };
+
+       const { data: mergedRow } = await supabase
+         .from("tris_games")
+         .update(aggregated)
+         .eq("id", keep.id)
+         .select()
+         .maybeSingle();
+       await supabase.from("tris_games").delete().in("id", idsToDelete);
+       targetRow = mergedRow ?? { ...keep, ...aggregated };
+     }
 
      // 2) UPDATE per id (non per user_id) se la riga esiste, altrimenti INSERT
      if (targetRow) {
