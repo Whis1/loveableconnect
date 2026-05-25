@@ -10,6 +10,7 @@ import { UserBanManager } from "@/components/admin/UserBanManager";
 import { UserReportsMonitor } from "@/components/admin/UserReportsMonitor";
 import { BannerManager } from "@/components/admin/BannerManager";
 import { EmailTemplateManager } from "@/components/admin/EmailTemplateManager";
+import { AdminTierManager } from "@/components/admin/AdminTierManager";
 import { Shield, LogOut, MessageSquare, UserPlus, Mail, Megaphone, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,7 +26,10 @@ export default function AdminArrettu() {
   const [inboxAllDialogOpen, setInboxAllDialogOpen] = useState(false);
   const [broadcastMessage, setBroadcastMessage] = useState("");
   const [sendingBroadcast, setSendingBroadcast] = useState(false);
-  const { isAdmin, loading: adminLoading } = useAdminRole();
+  const { isAdmin, adminTier, loading: adminLoading } = useAdminRole();
+  // Tier 1 = full access. Tier 2 = ridotto (no Profili & Chat, no Creazione).
+  // Default a 1 se NULL (admin pre-migration, retrocompatibile).
+  const isTier1 = (adminTier ?? 1) === 1;
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -186,19 +190,24 @@ export default function AdminArrettu() {
               Gestione completa del sistema
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate("/admin/profiles")}>
-              Profili & Chat
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate("/admin/create-profile")}
-            >
-              <UserPlus className="h-5 w-5 mr-2" />
-              Creazione Profili
-            </Button>
-            <Button 
-              variant="outline" 
+          <div className="flex gap-2 flex-wrap">
+            {/* Profili & Chat + Creazione Profili: solo per admin tier 1 (full access) */}
+            {isTier1 && (
+              <>
+                <Button variant="outline" onClick={() => navigate("/admin/profiles")}>
+                  Profili & Chat
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/admin/create-profile")}
+                >
+                  <UserPlus className="h-5 w-5 mr-2" />
+                  Creazione Profili
+                </Button>
+              </>
+            )}
+            <Button
+              variant="outline"
               onClick={() => navigate("/admin/support")}
             >
               <MessageSquare className="h-5 w-5 mr-2" />
@@ -262,6 +271,10 @@ export default function AdminArrettu() {
             <EmailTemplateManager />
           </CardContent>
         </Card>
+
+        {/* Gestione Admin Tier 1/2 → SOLO visibile a tier 1 (full access).
+            Tier 2 non può promuovere/revocare altri admin. */}
+        {isTier1 && <AdminTierManager />}
       </div>
     </div>
   );
