@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Ban, ShieldCheck, RefreshCw, Send, AlertTriangle, EyeOff, Eye, Loader2 } from "lucide-react";
+import { Search, Ban, ShieldCheck, RefreshCw, Send, AlertTriangle, EyeOff, Eye, Loader2, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -26,6 +26,16 @@ export function UserBanManager() {
   const [bannedUsersMap, setBannedUsersMap] = useState<Map<string, any>>(new Map());
   const [inboxMessage, setInboxMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
+  // 🖼 Avatar ingrandito (overlay) - click sul cerchio del Dettagli utente
+  const [enlargedAvatar, setEnlargedAvatar] = useState<string | null>(null);
+
+  // Helper: trasforma path Storage in URL pubblica per gli avatar.
+  // Pattern usato dal resto del codebase (ChatsList, ChatUserProfile, ecc).
+  const getAvatarUrl = (path: string | null | undefined): string => {
+    if (!path) return "";
+    if (path.startsWith("http")) return path;
+    return supabase.storage.from("profile-images").getPublicUrl(path).data.publicUrl;
+  };
   // Profili senza account auth corrispondente (orfani): quando un account
   // viene cancellato da Lovable Cloud (auth.users), la riga in `profiles`
   // resta. Li individuiamo verificando in background ogni profilo con
@@ -492,7 +502,7 @@ export function UserBanManager() {
                       >
                         <div className="flex items-center gap-3">
                           <Avatar className="h-10 w-10">
-                            <AvatarImage src={user.avatar_url} />
+                            <AvatarImage src={getAvatarUrl(user.avatar_url)} />
                             <AvatarFallback>
                               {user.nickname.charAt(0)}
                             </AvatarFallback>
@@ -540,12 +550,29 @@ export function UserBanManager() {
                 ) : (
                   <div className="space-y-4">
                     <div className="flex items-center gap-4">
-                      <Avatar className="h-20 w-20">
-                        <AvatarImage src={selectedUser.avatar_url} />
-                        <AvatarFallback className="text-2xl">
-                          {selectedUser.nickname.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
+                      {/* Avatar cliccabile per ingrandire */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const url = getAvatarUrl(selectedUser.avatar_url);
+                          if (url) setEnlargedAvatar(url);
+                        }}
+                        className="relative group rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary"
+                        title={selectedUser.avatar_url ? "Clicca per ingrandire" : "Nessuna foto"}
+                        disabled={!selectedUser.avatar_url}
+                      >
+                        <Avatar className="h-20 w-20 cursor-pointer">
+                          <AvatarImage src={getAvatarUrl(selectedUser.avatar_url)} />
+                          <AvatarFallback className="text-2xl">
+                            {selectedUser.nickname.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        {selectedUser.avatar_url && (
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                            <Eye className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        )}
+                      </button>
                       <div className="flex-1">
                         <h3 className="font-semibold text-xl">
                           {selectedUser.nickname}
@@ -1077,6 +1104,32 @@ export function UserBanManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 🖼 Overlay avatar ingrandito - click sull'avatar in Dettagli utente */}
+      {enlargedAvatar && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-sm flex items-center justify-center p-6 cursor-zoom-out animate-in fade-in duration-200"
+          onClick={() => setEnlargedAvatar(null)}
+        >
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setEnlargedAvatar(null);
+            }}
+            className="absolute top-6 right-6 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+            title="Chiudi"
+          >
+            <X className="h-6 w-6" />
+          </button>
+          <img
+            src={enlargedAvatar}
+            alt="Avatar ingrandito"
+            className="max-w-[90vw] max-h-[90vh] rounded-lg shadow-2xl object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </Card>
   );
 }
