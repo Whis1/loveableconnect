@@ -7,6 +7,7 @@ import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AdBanner } from "./components/AdBanner";
 import { AnimatedRoutes } from "./components/AnimatedRoutes";
+import { useApplyGamePendingPenalty } from "./hooks/useApplyGamePendingPenalty";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,6 +21,18 @@ const queryClient = new QueryClient({
   },
 });
 
+// Wrapper interno per chiamare hook che richiedono context (BrowserRouter, ecc.)
+// e per applicare le pending penalty di abbandono partita all'avvio dell'app.
+const AppShell = () => {
+  useApplyGamePendingPenalty();
+  return (
+    <>
+      <AdBanner />
+      <AnimatedRoutes />
+    </>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
@@ -27,9 +40,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          {/* Ad Banner - visibile in tutte le pagine tranne /auth */}
-          <AdBanner />
-          <AnimatedRoutes />
+          <AppShell />
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
