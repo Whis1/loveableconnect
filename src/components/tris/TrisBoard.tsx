@@ -154,18 +154,10 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
       }
     };
 
-    // Intercept back navigation
-    const handlePopState = () => {
-      if (allowNavigateRef.current || gameCompletedRef.current) return;
-      // keep user on page and show confirmation
-      history.pushState(null, "", window.location.href);
-      leaveIntentRef.current = "back";
-      setShowLeaveConfirm(true);
-    };
-
-    // Prepare history blocking
-    history.pushState(null, "", window.location.href);
-    window.addEventListener("popstate", handlePopState);
+    // 🚪 Freccia indietro del browser: NESSUN dialog. L'utente si assume la
+    // responsabilità → naviga via, il cleanup unmount applica sconfitta + ELO
+    // (una volta sola, grazie al pattern gameCompletedRef + marker pending).
+    // Niente più pushState/popstate listener.
     document.addEventListener("keydown", handleKeyDown);
 
     // Handle page/tab closing or toolbar reload.
@@ -189,7 +181,6 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
         supabase.removeChannel(channel);
       }
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      window.removeEventListener("popstate", handlePopState);
       document.removeEventListener("keydown", handleKeyDown);
       try {
         localStorage.removeItem("tris_game_active");

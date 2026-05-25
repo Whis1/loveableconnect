@@ -241,18 +241,8 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
       }
     };
 
-    // Intercept back navigation
-    const handlePopState = () => {
-      if (allowNavigateRef.current || gameCompletedRef.current) return;
-      // keep user on page and show confirmation
-      history.pushState(null, "", window.location.href);
-      leaveIntentRef.current = "back";
-      setShowLeaveConfirm(true);
-    };
-
-    // Prepare history blocking
-    history.pushState(null, "", window.location.href);
-    window.addEventListener("popstate", handlePopState);
+    // 🚪 Freccia indietro del browser: NESSUN dialog. L'utente si assume la
+    // responsabilità → naviga via, cleanup unmount applica sconfitta + ELO.
     document.addEventListener("keydown", handleKeyDown);
 
     // 🛡️ Solo marker pending_penalty per evitare doppia applicazione.
@@ -272,7 +262,6 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
         supabase.removeChannel(channel);
       }
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      window.removeEventListener("popstate", handlePopState);
       document.removeEventListener("keydown", handleKeyDown);
       try {
         localStorage.removeItem("checkers_game_active");
