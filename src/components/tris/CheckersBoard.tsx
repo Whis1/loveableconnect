@@ -215,14 +215,14 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
       localStorage.setItem("checkers_game_active", "1");
     } catch {}
 
-    // If a pending penalty was set (e.g. previous reload), apply it once.
-    // 🛡️ Applica SIA ELO -10 SIA increment_game_stat (lose) per coerenza.
+    // 🛡️ Pending penalty: rimuovi marker SUBITO per evitare doppia applicazione
+    // (race con useApplyGamePendingPenalty globale).
     (async () => {
       try {
         if (localStorage.getItem("checkers_pending_penalty") === "1") {
+          localStorage.removeItem("checkers_pending_penalty");
           await updateUserElo(-10);
           await recordLossStat();
-          localStorage.removeItem("checkers_pending_penalty");
         }
       } catch (e) {
         console.error("Failed applying pending Checkers penalty:", e);
@@ -255,28 +255,12 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     window.addEventListener("popstate", handlePopState);
     document.addEventListener("keydown", handleKeyDown);
 
-    // Handle page/tab closing or toolbar reload
+    // 🛡️ Solo marker pending_penalty per evitare doppia applicazione.
     const handleBeforeUnload = () => {
       if (!gameCompletedRef.current) {
         try {
           localStorage.setItem("checkers_pending_penalty", "1");
         } catch {}
-        // Best-effort immediate penalty (may not complete before unload).
-        // 🛡️ Tenta SIA ELO -10 SIA increment_game_stat (lose); il pending
-        // garantisce comunque il recupero al prossimo mount.
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (session) {
-            supabase.rpc("update_game_elo", {
-              user_id: session.user.id,
-              elo_change: -10,
-            });
-            supabase.rpc("increment_game_stat" as any, {
-              p_user_id: session.user.id,
-              p_game: "dama",
-              p_result: "lose",
-            });
-          }
-        });
       }
     };
 
@@ -1226,14 +1210,18 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
   };
 
   const confirmLeave = async () => {
-    try {
-      localStorage.setItem("checkers_pending_penalty", "1");
-    } catch {}
+    // 🛡️ Setta SUBITO gameCompletedRef.current=true → blocca il cleanup unmount
+    // che altrimenti applicherebbe una SECONDA sconfitta.
+    gameCompletedRef.current = true;
+
     try {
       await updateUserElo(-10);
       await recordLossStat();
     } catch (e) {
       console.error("Failed to apply ELO penalty on leave:", e);
+      try {
+        localStorage.setItem("checkers_pending_penalty", "1");
+      } catch {}
     }
 
     setShowLeaveConfirm(false);

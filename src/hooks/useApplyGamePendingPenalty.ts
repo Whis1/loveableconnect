@@ -47,6 +47,13 @@ export function useApplyGamePendingPenalty() {
       if (cancelled || !session) return;
 
       for (const p of pending) {
+        // 🛡️ Rimuovi il marker SUBITO (sincrono) PRIMA di applicare le RPC
+        // → previene race con mount di TrisBoard/CheckersBoard che potrebbero
+        // vedere lo stesso marker e applicare un'altra penalità doppione.
+        try {
+          localStorage.removeItem(p.key);
+        } catch {}
+
         try {
           await supabase.rpc("update_game_elo", {
             user_id: session.user.id,
@@ -57,13 +64,14 @@ export function useApplyGamePendingPenalty() {
             p_game: p.gameName,
             p_result: "lose",
           });
-          try {
-            localStorage.removeItem(p.key);
-          } catch {}
           console.log(`🛡️ Pending penalty applicata per ${p.gameName} (abbandono partita)`);
         } catch (e) {
           console.warn(`⚠️ Impossibile applicare pending penalty ${p.gameName}:`, e);
-          // Lascia il marker, retry al prossimo avvio
+          // Rimetti il marker per retry al prossimo avvio (la rimozione sopra
+          // era ottimistica per evitare race; se le RPC falliscono, rimetti).
+          try {
+            localStorage.setItem(p.key, "1");
+          } catch {}
         }
       }
     };

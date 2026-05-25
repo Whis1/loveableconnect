@@ -126,14 +126,16 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
       localStorage.setItem("tris_game_active", "1");
     } catch {}
 
-    // If a pending penalty was set (e.g. previous reload), apply it once.
-    // 🛡️ Applica SIA ELO -10 SIA increment_game_stat (lose) per coerenza.
+    // 🛡️ Pending penalty da sessione precedente (es. reload/chiusura tab).
+    // RIMUOVI IL MARKER SUBITO (sincrono) prima di applicare → previene race
+    // con useApplyGamePendingPenalty globale che potrebbe vederlo anche lui.
+    // Chi arriva primo applica; chi arriva dopo non trova il marker.
     (async () => {
       try {
         if (localStorage.getItem("tris_pending_penalty") === "1") {
+          localStorage.removeItem("tris_pending_penalty");
           await updateUserElo(-10);
           await recordLossStat();
-          localStorage.removeItem("tris_pending_penalty");
         }
       } catch (e) {
         console.error("Failed applying pending Tris penalty:", e);
@@ -166,29 +168,16 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
     window.addEventListener("popstate", handlePopState);
     document.addEventListener("keydown", handleKeyDown);
 
-    // Handle page/tab closing or toolbar reload
+    // Handle page/tab closing or toolbar reload.
+    // 🛡️ Soltanto il marker pending_penalty: al prossimo accesso, l'hook globale
+    // useApplyGamePendingPenalty (o il mount di TrisBoard) lo applicherà UNA volta
+    // sola. Prima si tentavano anche le RPC sincrone come 'best-effort' ma di
+    // fatto andavano in concorrenza con il pending → DOPPIO incremento sconfitte.
     const handleBeforeUnload = () => {
       if (!gameCompletedRef.current) {
         try {
           localStorage.setItem("tris_pending_penalty", "1");
         } catch {}
-        // Best-effort immediate penalty (may not complete before unload).
-        // 🛡️ Tenta SIA ELO -10 SIA increment_game_stat (lose); se non fanno
-        // in tempo, il pending_penalty sopra garantisce il recupero al
-        // prossimo mount in TrisBoard.
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (session) {
-            supabase.rpc("update_game_elo", {
-              user_id: session.user.id,
-              elo_change: -10,
-            });
-            supabase.rpc("increment_game_stat" as any, {
-              p_user_id: session.user.id,
-              p_game: "tris",
-              p_result: "lose",
-            });
-          }
-        });
       }
     };
 
@@ -501,14 +490,20 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
   };
 
   const confirmLeave = async () => {
-    try {
-      localStorage.setItem("tris_pending_penalty", "1");
-    } catch {}
+    // 🛡️ Setta SUBITO gameCompletedRef.current=true → blocca il cleanup unmount
+    // che altrimenti applicherebbe una SECONDA sconfitta (causa principale del
+    // doppione: confirmLeave applicava +1, poi unmount riapplicava +1).
+    gameCompletedRef.current = true;
+
     try {
       await updateUserElo(-10);
       await recordLossStat();
     } catch (e) {
       console.error("Failed to apply ELO penalty on leave:", e);
+      // Fallback: se le RPC sono fallite, lascia marker per il prossimo accesso
+      try {
+        localStorage.setItem("tris_pending_penalty", "1");
+      } catch {}
     }
 
     setShowLeaveConfirm(false);
