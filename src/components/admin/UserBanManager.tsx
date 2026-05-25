@@ -416,7 +416,7 @@ export function UserBanManager() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ShieldCheck className="h-5 w-5" />
-          Gestione Ban Utenti
+          Gestione Utenti
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -438,23 +438,6 @@ export function UserBanManager() {
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Ricarica
-          </Button>
-          <Button
-            onClick={() => setShowOrphans((v) => !v)}
-            variant="outline"
-            className="mt-6"
-            title={
-              showOrphans
-                ? 'Nascondi profili senza account auth'
-                : 'Mostra anche profili senza account auth (orfani)'
-            }
-          >
-            {showOrphans ? (
-              <EyeOff className="h-4 w-4 mr-2" />
-            ) : (
-              <Eye className="h-4 w-4 mr-2" />
-            )}
-            {showOrphans ? 'Nascondi cancellati' : 'Mostra cancellati'}
           </Button>
         </div>
 
