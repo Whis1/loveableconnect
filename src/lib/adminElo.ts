@@ -40,9 +40,11 @@ const HOUR_MS = 60 * 60 * 1000;
 const EPOCH = Date.UTC(2026, 4, 24, 18, 0);
 
 // Drift massimo per ogni singola "sessione di gioco" (un bucket personale):
-//   +60 = 3 vittorie consecutive  (3 × +20)
-//   -60 = 6 sconfitte consecutive (6 × -10)
-const MAX_DRIFT = 60;
+//   +100 = 5 vittorie consecutive  (5 × +20)
+//   -100 = 10 sconfitte consecutive (10 × -10)
+// Ampliato da 60 a 100 per ridurre pareggi visivi tra admin nella TOP 5
+// (con range troppo stretto i top finivano spesso con ELO identici).
+const MAX_DRIFT = 100;
 
 // Range di frequenza personale di "gioco" per admin:
 //   FREQ_MIN_HOURS = chi gioca tanto (aggiornamento ogni 2 ore)
@@ -53,16 +55,15 @@ const FREQ_MAX_HOURS = 8;
 
 // Pesi del momentum cumulativo: peso[0] = bucket appena passato (piu' rilevante),
 // pesi successivi = bucket sempre piu' vecchi, contributo decrescente.
-// Somma pesi = 2.7 → max drift cumulativo teorico = 60 × 2.7 = 162 ELO.
-// Sotto il cap di 200 quindi raggiungibile solo con tutte vittorie o tutte sconfitte
-// consecutive (raro), che e' esattamente cio' che vogliamo: serie spettacolari.
+// Somma pesi = 2.7 → max drift cumulativo teorico = 100 × 2.7 = 270 ELO.
+// Sotto il cap di 300 quindi raggiungibile solo con tutte vittorie o tutte sconfitte
+// consecutive (raro): serie spettacolari di +200/-200 di scambio.
 const MOMENTUM_WEIGHTS = [1.0, 0.7, 0.5, 0.3, 0.2];
 
 // Cap assoluto del drift cumulativo (in valore assoluto). Evita derive estreme.
-// Es. un admin con base 2400 puo' oscillare nel range 2200-2600 → variazione
-// 400 punti totale, sufficientemente ampia per scambi di posizione reali ma
-// non assurda (un top non sprofonda mai al penultimo posto).
-const MAX_CUMULATIVE_DRIFT = 200;
+// Es. un admin con base 2400 puo' oscillare nel range 2100-2700 → variazione
+// 600 punti totale, ampio spread per posizioni diverse in classifica.
+const MAX_CUMULATIVE_DRIFT = 300;
 
 // Hash deterministico (FNV-1a) -> intero senza segno a 32 bit.
 function hash(str: string): number {
