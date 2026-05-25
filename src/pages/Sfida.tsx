@@ -36,9 +36,6 @@ const Sfida = () => {
               <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
                 Sfida
               </h1>
-              <p className="text-xs md:text-sm text-muted-foreground">
-                Gioca e scala la classifica
-              </p>
             </div>
           </div>
         </div>
