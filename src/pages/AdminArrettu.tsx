@@ -10,7 +10,6 @@ import { UserBanManager } from "@/components/admin/UserBanManager";
 import { UserReportsMonitor } from "@/components/admin/UserReportsMonitor";
 import { BannerManager } from "@/components/admin/BannerManager";
 import { EmailTemplateManager } from "@/components/admin/EmailTemplateManager";
-import { AdminTierManager } from "@/components/admin/AdminTierManager";
 import { Shield, LogOut, MessageSquare, UserPlus, Mail, Megaphone, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -272,9 +271,6 @@ export default function AdminArrettu() {
           </CardContent>
         </Card>
 
-        {/* Gestione Admin Tier 1/2 → SOLO visibile a tier 1 (full access).
-            Tier 2 non può promuovere/revocare altri admin. */}
-        {isTier1 && <AdminTierManager />}
       </div>
     </div>
   );

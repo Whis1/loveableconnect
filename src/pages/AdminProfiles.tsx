@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { ProfileManager } from "@/components/admin/ProfileManager";
 import { NotificationMonitor } from "@/components/admin/NotificationMonitor";
 import { SecondaryAccountsManager } from "@/components/admin/SecondaryAccountsManager";
+import { AdminTierManager } from "@/components/admin/AdminTierManager";
 import { Shield, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -146,6 +147,8 @@ export default function AdminProfiles() {
             <ProfileManager />
             <NotificationMonitor />
           </div>
+          {/* Account Admin Tier 1/2 sopra Account Admin Secondari (richiesta utente) */}
+          <AdminTierManager />
           <SecondaryAccountsManager />
         </div>
       </div>
