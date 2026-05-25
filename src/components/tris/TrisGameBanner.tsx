@@ -326,11 +326,6 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
       setUserCredits((prev) => Math.max(0, prev - 2));
 
       nextGamePaymentTypeRef.current = 'credits';
-
-      toast({
-        title: "Partita extra",
-        description: "Hai speso 2 crediti per giocare un'altra partita!",
-      });
     } else {
       // partita free (entro il limite giornaliero)
       nextGamePaymentTypeRef.current = 'free';
@@ -569,13 +564,6 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
        
        setOpponent(foundOpponent);
        setGameState("playing");
-       
-       const remaining = hasUnlimitedGames() ? "∞" : getGameLimit() - gamesPlayed;
-       const limitLabel = hasUnlimitedGames() ? "∞" : getGameLimit();
-       toast({
-         title: "Partita avviata!",
-         description: `Partite rimanenti oggi: ${remaining}/${limitLabel}`,
-       });
      } catch (error) {
        console.error('Errore aggiornamento partite:', error);
        toast({
