@@ -111,15 +111,30 @@ export const SupportChatMonitor = () => {
       if (error || !data?.success) throw new Error(error?.message || data?.error || 'Failed to load');
       setMessages((data.messages || []) as SupportMessage[]);
 
-      // Best-effort mark as read (may fail without auth)
-      try {
-        await supabase
-          .from('support_messages')
-          .update({ read: true })
-          .eq('user_id', userId)
-          .eq('is_admin_response', false)
-          .eq('read', false);
-      } catch {}
+      // 🔔 Marca i messaggi utente come letti (con .select() per accorgersi
+      // se RLS sta bloccando e log esplicito invece di try/catch silente).
+      const { data: updated, error: updateErr } = await supabase
+        .from('support_messages')
+        .update({ read: true })
+        .eq('user_id', userId)
+        .eq('is_admin_response', false)
+        .eq('read', false)
+        .select('id');
+
+      if (updateErr) {
+        console.warn('⚠️ Mark-as-read fallito (forse RLS):', updateErr);
+      } else {
+        console.log(`✓ ${updated?.length ?? 0} messaggi supporto marcati come letti`);
+      }
+
+      // 🆕 Aggiorna lo stato locale: azzera unread_count della conversazione
+      // selezionata, così il badge "5" sparisce SUBITO senza aspettare
+      // un refetch completo.
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.user_id === userId ? { ...c, unread_count: 0 } : c
+        )
+      );
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
