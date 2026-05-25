@@ -150,5 +150,8 @@ verify_jwt = false
 [functions.admin-reset-account]
 verify_jwt = false
 
+[functions.admin-create-tiered]
+verify_jwt = true
+
 [functions.stripe-webhook]
 verify_jwt = false

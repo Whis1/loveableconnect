@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Crown, Shield, UserPlus, Loader2, Trash2 } from "lucide-react";
+import { Crown, Shield, UserPlus, Loader2, Trash2, Plus, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface TieredAdminRow {
@@ -38,6 +38,13 @@ export const AdminTierManager = () => {
   const [tier, setTier] = useState<"1" | "2">("2");
   const [promoting, setPromoting] = useState(false);
   const [demotingId, setDemotingId] = useState<string | null>(null);
+
+  // 🆕 Form 'Crea da zero' (chiama edge function admin-create-tiered)
+  const [newEmail, setNewEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newTier, setNewTier] = useState<"1" | "2">("2");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [creating, setCreating] = useState(false);
 
   const fetchAdmins = async () => {
     setLoading(true);
@@ -90,6 +97,49 @@ export const AdminTierManager = () => {
       });
     } finally {
       setPromoting(false);
+    }
+  };
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEmail.trim() || !newEmail.includes("@")) {
+      toast({ title: "Errore", description: "Email non valida", variant: "destructive" });
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast({ title: "Errore", description: "Password troppo corta (min 6)", variant: "destructive" });
+      return;
+    }
+    setCreating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-create-tiered", {
+        body: {
+          email: newEmail.trim(),
+          password: newPassword,
+          tier: parseInt(newTier, 10),
+        },
+      });
+      if (error) throw error;
+      if (!data?.success) {
+        throw new Error(data?.error ?? "Errore durante la creazione");
+      }
+      toast({
+        title: "✓ Admin creato",
+        description: `Email: ${data.email} · Tier: ${data.tier}. Salva la password.`,
+      });
+      setNewEmail("");
+      setNewPassword("");
+      setShowNewPassword(false);
+      await fetchAdmins();
+    } catch (e: any) {
+      console.error("handleCreate error", e);
+      toast({
+        title: "Errore creazione",
+        description: e?.message ?? "Impossibile creare l'account admin",
+        variant: "destructive",
+      });
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -150,16 +200,94 @@ export const AdminTierManager = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Form promozione */}
+        {/* 🆕 Form CREA DA ZERO: edge function admin-create-tiered */}
+        <form
+          onSubmit={handleCreate}
+          className="space-y-4 p-4 rounded-lg bg-gradient-to-br from-primary/10 to-purple-500/10 border border-primary/30"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Plus className="h-5 w-5 text-primary" />
+            <h3 className="font-bold">Crea Admin da Zero</h3>
+          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Crea un nuovo account admin con email + password personalizzate. Il profilo NON
+            apparirà nella bacheca utenti. Usa email random/dedicate per gli admin di staff.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="new-email">Email</Label>
+              <Input
+                id="new-email"
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="es. admin1@loveableconnect.internal"
+                disabled={creating}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new-password">Password</Label>
+              <div className="relative">
+                <Input
+                  id="new-password"
+                  type={showNewPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Min 6 caratteri"
+                  disabled={creating}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                >
+                  {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new-tier">Tier</Label>
+              <Select
+                value={newTier}
+                onValueChange={(v) => setNewTier(v as "1" | "2")}
+                disabled={creating}
+              >
+                <SelectTrigger id="new-tier" className="min-w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Tier 1 (Full)</SelectItem>
+                  <SelectItem value="2">Tier 2 (Ridotto)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <Button type="submit" disabled={creating} className="w-full">
+            {creating ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Plus className="h-4 w-4 mr-2" />
+            )}
+            Crea Account Admin
+          </Button>
+        </form>
+
+        {/* Form promozione utente esistente */}
         <form
           onSubmit={handlePromote}
           className="space-y-4 p-4 rounded-lg bg-background/50 border border-border"
         >
+          <div className="flex items-center gap-2 mb-2">
+            <UserPlus className="h-5 w-5 text-muted-foreground" />
+            <h3 className="font-bold">Promuovi Utente Esistente</h3>
+          </div>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            L'utente da promuovere deve <strong>prima registrarsi normalmente</strong> via{" "}
-            <code className="px-1 bg-muted rounded">/auth</code> con email e password. Poi inserisci
-            qui la sua email e scegli il tier per dargli accesso a{" "}
-            <code className="px-1 bg-muted rounded">/adminarrettu</code>.
+            Se l'utente è già registrato via <code className="px-1 bg-muted rounded">/auth</code>,
+            inserisci la sua email per promuoverlo ad admin (non crea un nuovo account).
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-3">
