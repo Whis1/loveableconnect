@@ -111,25 +111,27 @@ export const SupportChatMonitor = () => {
       if (error || !data?.success) throw new Error(error?.message || data?.error || 'Failed to load');
       setMessages((data.messages || []) as SupportMessage[]);
 
-      // 🔔 Marca i messaggi utente come letti (con .select() per accorgersi
-      // se RLS sta bloccando e log esplicito invece di try/catch silente).
-      const { data: updated, error: updateErr } = await supabase
-        .from('support_messages')
-        .update({ read: true })
-        .eq('user_id', userId)
-        .eq('is_admin_response', false)
-        .eq('read', false)
-        .select('id');
-
-      if (updateErr) {
-        console.warn('⚠️ Mark-as-read fallito (forse RLS):', updateErr);
-      } else {
-        console.log(`✓ ${updated?.length ?? 0} messaggi supporto marcati come letti`);
+      // 🔔 Marca come letti via RPC SECURITY DEFINER → bypassa RLS che
+      // bloccava silenziosamente l'UPDATE diretto. La RPC ritorna
+      // updated_count con il numero di righe toccate (utile per debug).
+      try {
+        const { data: rpcData, error: rpcErr } = await supabase.rpc(
+          'mark_support_messages_read' as any,
+          { p_user_id: userId }
+        );
+        if (rpcErr) {
+          console.warn('⚠️ Mark-as-read RPC failed:', rpcErr);
+        } else {
+          const updatedCount = Array.isArray(rpcData)
+            ? (rpcData[0] as any)?.updated_count
+            : (rpcData as any)?.updated_count;
+          console.log(`✓ ${updatedCount ?? 0} messaggi marcati come letti`);
+        }
+      } catch (e) {
+        console.warn('mark_support_messages_read exception:', e);
       }
 
-      // 🆕 Aggiorna lo stato locale: azzera unread_count della conversazione
-      // selezionata, così il badge "5" sparisce SUBITO senza aspettare
-      // un refetch completo.
+      // Aggiorna lo stato locale: badge sparisce subito.
       setConversations((prev) =>
         prev.map((c) =>
           c.user_id === userId ? { ...c, unread_count: 0 } : c
