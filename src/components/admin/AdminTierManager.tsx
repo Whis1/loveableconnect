@@ -100,6 +100,14 @@ export const AdminTierManager = () => {
     }
   };
 
+  // 🆕 Creazione admin da zero SENZA edge function:
+  // 1) Salva la sessione admin corrente
+  // 2) supabase.auth.signUp con la nuova email/password (sostituisce la
+  //    sessione corrente, ma noi la ripristiniamo subito dopo)
+  // 3) Ripristina la sessione admin tramite setSession
+  // 4) Chiama RPC admin_promote_to_tier(email, tier, p_delete_profile=true)
+  //    → assegna role+tier E cancella il profile auto-generato dal trigger
+  //    → l'admin non apparirà in bacheca / esplorazione / ricerca
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEmail.trim() || !newEmail.includes("@")) {
@@ -112,20 +120,59 @@ export const AdminTierManager = () => {
     }
     setCreating(true);
     try {
-      const { data, error } = await supabase.functions.invoke("admin-create-tiered", {
-        body: {
-          email: newEmail.trim(),
-          password: newPassword,
-          tier: parseInt(newTier, 10),
+      // 1) Salva tokens della sessione admin
+      const { data: { session: adminSession } } = await supabase.auth.getSession();
+      if (!adminSession) {
+        throw new Error("Sessione admin non valida. Ri-effettua il login.");
+      }
+      const adminAccessToken = adminSession.access_token;
+      const adminRefreshToken = adminSession.refresh_token;
+
+      // 2) Crea il nuovo utente via signUp (pubblico). Sostituisce la
+      // sessione corrente con quella del nuovo utente (se autoconfirm on)
+      // o resta admin (se autoconfirm off).
+      const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
+        email: newEmail.trim().toLowerCase(),
+        password: newPassword,
+        options: {
+          data: {
+            full_name: `Admin Tier ${newTier}`,
+            nickname: newEmail.split("@")[0],
+            is_admin_account: true,
+          },
         },
       });
-      if (error) throw error;
-      if (!data?.success) {
-        throw new Error(data?.error ?? "Errore durante la creazione");
+      if (signUpErr) throw signUpErr;
+      if (!signUpData.user) throw new Error("Creazione utente fallita");
+
+      // 3) Ripristina sessione admin (sempre, per sicurezza)
+      const { error: restoreErr } = await supabase.auth.setSession({
+        access_token: adminAccessToken,
+        refresh_token: adminRefreshToken,
+      });
+      if (restoreErr) {
+        console.warn("Errore restore sessione admin (non bloccante):", restoreErr);
       }
+
+      // 4) Chiama RPC con p_delete_profile=true per assegnare tier +
+      // cancellare il profile generato dal trigger handle_new_user
+      const { data: promoteData, error: promoteErr } = await supabase.rpc(
+        "admin_promote_to_tier" as any,
+        {
+          p_email: newEmail.trim().toLowerCase(),
+          p_tier: parseInt(newTier, 10),
+          p_delete_profile: true,
+        }
+      );
+      if (promoteErr) throw promoteErr;
+      const result = Array.isArray(promoteData) ? (promoteData[0] as any) : (promoteData as any);
+      if (!result?.success) {
+        throw new Error(result?.message ?? "Errore promozione tier");
+      }
+
       toast({
         title: "✓ Admin creato",
-        description: `Email: ${data.email} · Tier: ${data.tier}. Salva la password.`,
+        description: `Email: ${newEmail} · Tier ${newTier}. Salva la password.`,
       });
       setNewEmail("");
       setNewPassword("");
