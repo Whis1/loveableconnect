@@ -23,6 +23,8 @@ interface UserReport {
   reported_avatar: string | null;
   // Quante volte questo utente segnalato e' stato segnalato in TOTALE
   reported_total_count: number;
+  // Quante volte questo utente segnalatore ha effettuato segnalazioni in TOTALE
+  reporter_total_count: number;
 }
 
 const reportTypeLabels: Record<string, string> = {
@@ -135,10 +137,13 @@ export const UserReportsMonitor = () => {
       const profileMap = new Map<string, { nickname: string; avatar_url: string | null }>();
       profiles?.forEach((p) => profileMap.set(p.id, { nickname: p.nickname, avatar_url: p.avatar_url }));
 
-      // Conta quante segnalazioni TOTALI ha ricevuto ciascun reported_id (incluso storico)
+      // Conta quante segnalazioni TOTALI per ogni reported_id (subite) e per
+      // ogni reporter_id (effettuate). Usato per indicare prima/Nª segnalazione.
       const reportedCounts = new Map<string, number>();
+      const reporterCounts = new Map<string, number>();
       reportsData.forEach((r) => {
         reportedCounts.set(r.reported_id, (reportedCounts.get(r.reported_id) ?? 0) + 1);
+        reporterCounts.set(r.reporter_id, (reporterCounts.get(r.reporter_id) ?? 0) + 1);
       });
 
       const enriched: UserReport[] = reportsData.map((report) => {
@@ -151,6 +156,7 @@ export const UserReportsMonitor = () => {
           reported_nickname: reportedProfile?.nickname ?? "Utente sconosciuto",
           reported_avatar: reportedProfile?.avatar_url ?? null,
           reported_total_count: reportedCounts.get(report.reported_id) ?? 1,
+          reporter_total_count: reporterCounts.get(report.reporter_id) ?? 1,
         };
       });
       setReports(enriched);
@@ -229,25 +235,14 @@ export const UserReportsMonitor = () => {
                     key={report.id}
                     className={`relative border border-border/60 border-l-4 ${style.card} rounded-lg overflow-hidden`}
                   >
-                    {/* Header: categoria + gravità + data + delete */}
+                    {/* Header: categoria + data + delete (badge recidivi spostati
+                        sotto agli avatar per leggere meglio chi è chi) */}
                     <div className="flex items-start justify-between gap-2 p-3 pb-2 border-b border-border/40 bg-background/30">
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge className={`${style.badge} border gap-1 font-bold`}>
                           <MessageSquareWarning className={`h-3 w-3 ${style.icon}`} />
                           {reportTypeLabels[report.report_type] ?? report.report_type}
                         </Badge>
-                        {report.reported_total_count >= 3 && (
-                          <Badge className="bg-red-500/20 text-red-300 border border-red-500/50 gap-1">
-                            <Repeat className="h-3 w-3" />
-                            {report.reported_total_count}ª segnalazione su questo utente
-                          </Badge>
-                        )}
-                        {report.reported_total_count === 2 && (
-                          <Badge className="bg-orange-500/15 text-orange-300 border border-orange-500/40 gap-1">
-                            <Repeat className="h-3 w-3" />
-                            2ª segnalazione
-                          </Badge>
-                        )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -268,34 +263,48 @@ export const UserReportsMonitor = () => {
                     </div>
 
                     {/* Flusso visivo: segnalatore → segnalato */}
-                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 p-3">
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-2 p-3">
                       {/* Segnalatore */}
-                      <div className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/40 border border-border/40">
-                        <Avatar className="h-11 w-11 ring-2 ring-blue-500/40 shrink-0">
-                          <AvatarImage src={reporterUrl} />
-                          <AvatarFallback className="bg-blue-500/20 text-blue-300 font-bold">
-                            {report.reporter_nickname.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[10px] uppercase tracking-wider font-bold text-blue-400">
-                            Segnalatore
+                      <div className="flex flex-col gap-2 p-2.5 rounded-lg bg-muted/40 border border-border/40">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-11 w-11 ring-2 ring-blue-500/40 shrink-0">
+                            <AvatarImage src={reporterUrl} />
+                            <AvatarFallback className="bg-blue-500/20 text-blue-300 font-bold">
+                              {report.reporter_nickname.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[10px] uppercase tracking-wider font-bold text-blue-400">
+                              Segnalatore
+                            </div>
+                            <p className="font-bold truncate">{report.reporter_nickname}</p>
+                            <button
+                              type="button"
+                              onClick={() => copyToClipboard(report.reporter_id, "ID segnalatore")}
+                              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground font-mono mt-0.5 group"
+                              title="Clicca per copiare ID completo"
+                            >
+                              <span>ID: {report.reporter_id.slice(0, 8)}...</span>
+                              <Copy className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </button>
                           </div>
-                          <p className="font-bold truncate">{report.reporter_nickname}</p>
-                          <button
-                            type="button"
-                            onClick={() => copyToClipboard(report.reporter_id, "ID segnalatore")}
-                            className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground font-mono mt-0.5 group"
-                            title="Clicca per copiare ID completo"
-                          >
-                            <span>ID: {report.reporter_id.slice(0, 8)}...</span>
-                            <Copy className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </button>
                         </div>
+                        {/* Badge "Nª segnalazione effettuata" */}
+                        {report.reporter_total_count === 1 ? (
+                          <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/15 border border-blue-500/30 text-[10px] font-semibold text-blue-300">
+                            <Flag className="h-3 w-3" />
+                            <span>1ª segnalazione effettuata</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-purple-500/15 border border-purple-500/30 text-[10px] font-semibold text-purple-300">
+                            <Repeat className="h-3 w-3" />
+                            <span>{report.reporter_total_count}ª segnalazione (recidivo nel segnalare)</span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Freccia centro */}
-                      <div className="flex flex-col items-center gap-1">
+                      <div className="flex flex-col items-center justify-center gap-1">
                         <div className="p-1.5 rounded-full bg-gradient-to-r from-blue-500/30 via-purple-500/30 to-red-500/30 border border-border/40">
                           <ArrowRight className="h-4 w-4 text-foreground/70" />
                         </div>
@@ -305,28 +314,47 @@ export const UserReportsMonitor = () => {
                       </div>
 
                       {/* Segnalato */}
-                      <div className="flex items-center gap-3 p-2.5 rounded-lg bg-destructive/10 border border-destructive/30">
-                        <Avatar className="h-11 w-11 ring-2 ring-red-500/50 shrink-0">
-                          <AvatarImage src={reportedUrl} />
-                          <AvatarFallback className="bg-red-500/20 text-red-300 font-bold">
-                            {report.reported_nickname.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[10px] uppercase tracking-wider font-bold text-red-400">
-                            Utente segnalato
+                      <div className="flex flex-col gap-2 p-2.5 rounded-lg bg-destructive/10 border border-destructive/30">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-11 w-11 ring-2 ring-red-500/50 shrink-0">
+                            <AvatarImage src={reportedUrl} />
+                            <AvatarFallback className="bg-red-500/20 text-red-300 font-bold">
+                              {report.reported_nickname.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[10px] uppercase tracking-wider font-bold text-red-400">
+                              Utente segnalato
+                            </div>
+                            <p className="font-bold truncate">{report.reported_nickname}</p>
+                            <button
+                              type="button"
+                              onClick={() => copyToClipboard(report.reported_id, "ID segnalato")}
+                              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground font-mono mt-0.5 group"
+                              title="Clicca per copiare ID completo"
+                            >
+                              <span>ID: {report.reported_id.slice(0, 8)}...</span>
+                              <Copy className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </button>
                           </div>
-                          <p className="font-bold truncate">{report.reported_nickname}</p>
-                          <button
-                            type="button"
-                            onClick={() => copyToClipboard(report.reported_id, "ID segnalato")}
-                            className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground font-mono mt-0.5 group"
-                            title="Clicca per copiare ID completo"
-                          >
-                            <span>ID: {report.reported_id.slice(0, 8)}...</span>
-                            <Copy className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </button>
                         </div>
+                        {/* Badge "Nª segnalazione subita" */}
+                        {report.reported_total_count === 1 ? (
+                          <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-yellow-500/15 border border-yellow-500/30 text-[10px] font-semibold text-yellow-300">
+                            <Flag className="h-3 w-3" />
+                            <span>1ª segnalazione subita</span>
+                          </div>
+                        ) : report.reported_total_count === 2 ? (
+                          <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-orange-500/20 border border-orange-500/40 text-[10px] font-semibold text-orange-300">
+                            <Repeat className="h-3 w-3" />
+                            <span>2ª segnalazione subita</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-red-500/25 border border-red-500/50 text-[10px] font-bold text-red-300">
+                            <Repeat className="h-3 w-3" />
+                            <span>{report.reported_total_count}ª segnalazione subita — RECIDIVO</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
