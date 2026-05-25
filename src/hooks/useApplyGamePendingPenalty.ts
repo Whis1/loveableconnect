@@ -5,16 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
  * 🛡️ Hook globale: applica le penalità di abbandono partita lasciate in sospeso
  * dalla sessione precedente, ovunque l'utente navighi nel sito.
  *
- * Prima il controllo `tris_pending_penalty` / `checkers_pending_penalty` veniva
- * fatto SOLO al mount di TrisBoard/CheckersBoard. Se un utente abbandonava una
- * partita (F5, chiusura tab, ecc.) e non rientrava più in una nuova partita
- * dello stesso gioco, le sconfitte restavano in attesa per sempre — exploit
- * facile per evitare la penalità.
- *
- * Ora il check scatta all'avvio dell'app (montato in App.tsx). Appena il primo
- * componente che usa supabase auth ottiene una sessione valida, si applica
- * `update_game_elo(-10)` + `increment_game_stat('lose')` per ogni gioco in
- * sospeso, e si pulisce il marker.
+ * IMPLEMENTAZIONE RACE-SAFE:
+ * - Snapshot SINCRONO dei marker localStorage all'inizio + rimozione immediata,
+ *   PRIMA di qualsiasi await. Così se la funzione viene chiamata 2 volte in
+ *   parallelo (es. mount + onAuthStateChange SIGNED_IN), la seconda non trova
+ *   più marker da applicare.
+ * - Singleton `inFlight` per evitare invocazioni concorrenti.
+ * - In caso di failure RPC, il marker viene RIMESSO per retry futuro.
  */
 
 type PendingGame = {
@@ -27,65 +24,74 @@ const PENDING_GAMES: PendingGame[] = [
   { key: "checkers_pending_penalty", gameName: "dama" },
 ];
 
+// Singleton a livello modulo: una sola invocazione di apply() alla volta.
+let inFlight = false;
+
+async function applyPendingPenalties() {
+  if (inFlight) return;
+  inFlight = true;
+  try {
+    // 1) Snapshot SINCRONO + rimozione marker IMMEDIATA, prima di qualsiasi
+    // await: chi arriva primo "ruba" i marker, chi arriva dopo non vede nulla.
+    const toApply: PendingGame[] = [];
+    for (const p of PENDING_GAMES) {
+      try {
+        if (localStorage.getItem(p.key) === "1") {
+          localStorage.removeItem(p.key);
+          toApply.push(p);
+        }
+      } catch {
+        // ignore quota / storage errors
+      }
+    }
+    if (toApply.length === 0) return;
+
+    // 2) Ora prendiamo la sessione. Se non c'è (utente non loggato),
+    // rimettiamo i marker per applicarli al prossimo accesso.
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      for (const p of toApply) {
+        try { localStorage.setItem(p.key, "1"); } catch {}
+      }
+      return;
+    }
+
+    // 3) Applica le RPC. Su errore, rimetti il marker per retry.
+    for (const p of toApply) {
+      try {
+        await supabase.rpc("update_game_elo", {
+          user_id: session.user.id,
+          elo_change: -10,
+        });
+        await supabase.rpc("increment_game_stat" as any, {
+          p_user_id: session.user.id,
+          p_game: p.gameName,
+          p_result: "lose",
+        });
+        console.log(`🛡️ Pending penalty applicata per ${p.gameName} (abbandono partita)`);
+      } catch (e) {
+        console.warn(`⚠️ Impossibile applicare pending penalty ${p.gameName}:`, e);
+        try { localStorage.setItem(p.key, "1"); } catch {}
+      }
+    }
+  } finally {
+    inFlight = false;
+  }
+}
+
 export function useApplyGamePendingPenalty() {
   useEffect(() => {
-    let cancelled = false;
+    // Eseguito una volta al mount (avvio app)
+    applyPendingPenalties();
 
-    const apply = async () => {
-      // Controlla quali pending ci sono PRIMA di fare richieste
-      const pending = PENDING_GAMES.filter((p) => {
-        try {
-          return localStorage.getItem(p.key) === "1";
-        } catch {
-          return false;
-        }
-      });
-      if (pending.length === 0) return;
-
-      // Serve una sessione attiva per RPC autenticate
-      const { data: { session } } = await supabase.auth.getSession();
-      if (cancelled || !session) return;
-
-      for (const p of pending) {
-        // 🛡️ Rimuovi il marker SUBITO (sincrono) PRIMA di applicare le RPC
-        // → previene race con mount di TrisBoard/CheckersBoard che potrebbero
-        // vedere lo stesso marker e applicare un'altra penalità doppione.
-        try {
-          localStorage.removeItem(p.key);
-        } catch {}
-
-        try {
-          await supabase.rpc("update_game_elo", {
-            user_id: session.user.id,
-            elo_change: -10,
-          });
-          await supabase.rpc("increment_game_stat" as any, {
-            p_user_id: session.user.id,
-            p_game: p.gameName,
-            p_result: "lose",
-          });
-          console.log(`🛡️ Pending penalty applicata per ${p.gameName} (abbandono partita)`);
-        } catch (e) {
-          console.warn(`⚠️ Impossibile applicare pending penalty ${p.gameName}:`, e);
-          // Rimetti il marker per retry al prossimo avvio (la rimozione sopra
-          // era ottimistica per evitare race; se le RPC falliscono, rimetti).
-          try {
-            localStorage.setItem(p.key, "1");
-          } catch {}
-        }
-      }
-    };
-
-    // Eseguito una volta al mount (avvio app) + ogni volta che cambia auth state
-    apply();
+    // E ad ogni evento auth rilevante
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-        apply();
+        applyPendingPenalties();
       }
     });
 
     return () => {
-      cancelled = true;
       subscription?.unsubscribe();
     };
   }, []);
