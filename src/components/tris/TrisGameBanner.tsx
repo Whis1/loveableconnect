@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Trophy, X, Loader2, Clock } from "lucide-react";
+import { Trophy, X, Loader2, Clock, Swords } from "lucide-react";
 import { OpponentSearch } from "./OpponentSearch";
 import { TrisBoard } from "./TrisBoard";
 import { CheckersBoard } from "./CheckersBoard";
@@ -810,19 +810,44 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
 
 
   return (
-    <Card className="mb-6 p-6 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-      <div className="flex justify-between items-start mb-4">
-        <h3 className="text-xl font-bold">🎮 Sfida gli utenti per vincere crediti</h3>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={exitGames}
-        >
-          <X className="w-4 h-4" />
-        </Button>
+    <Card
+      className="
+        mb-6 p-7 relative overflow-hidden
+        bg-gradient-to-br from-purple-950/40 via-fuchsia-900/25 to-indigo-950/40
+        border border-pink-500/30
+        shadow-[0_8px_40px_-12px_rgba(244,114,182,0.35)]
+        before:absolute before:inset-0 before:pointer-events-none
+        before:bg-[radial-gradient(circle_at_top_right,rgba(244,114,182,0.18),transparent_60%),radial-gradient(circle_at_bottom_left,rgba(168,85,247,0.15),transparent_55%)]
+      "
+    >
+      {/* Close button: posizionato in alto a destra, fuori dall'header centrato */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={exitGames}
+        className="absolute top-3 right-3 z-10 text-foreground/70 hover:text-foreground hover:bg-white/5"
+      >
+        <X className="w-4 h-4" />
+      </Button>
+
+      {/* Header centrato con icona Swords stilizzata + titolo gradient */}
+      <div className="relative flex flex-col items-center text-center mb-6">
+        <div className="relative mb-3">
+          {/* Glow esterno */}
+          <div className="absolute -inset-2 rounded-2xl bg-gradient-to-br from-pink-500/40 via-fuchsia-500/30 to-indigo-500/40 blur-xl animate-pulse" />
+          {/* Box icona */}
+          <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 via-fuchsia-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-pink-500/40 ring-2 ring-white/10">
+            <Swords className="w-7 h-7 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" />
+          </div>
+        </div>
+        <h3 className="text-xl md:text-2xl font-black tracking-tight bg-gradient-to-r from-pink-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(244,114,182,0.3)]">
+          Sfida gli utenti per vincere crediti
+        </h3>
+        {/* Linea decorativa sotto il titolo */}
+        <div className="mt-2 h-[2px] w-24 rounded-full bg-gradient-to-r from-transparent via-pink-400/60 to-transparent" />
       </div>
 
-      <div className="space-y-4">
+      <div className="relative space-y-4">
         {!credits || !gamesDataLoaded ? (
           // 🔒 Anti-FOUC: skeleton finche' SIA credits SIA gamesPlayed sono pronti.
           // Senza !gamesDataLoaded mostrava brevemente "5/5" (default) prima del
@@ -833,26 +858,39 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
             </div>
           </div>
         ) : hasUnlimitedGames() ? (
-          <p className="text-muted-foreground text-center">
-            🌟 <span className="font-bold text-primary">Giochi illimitati</span> con il tuo abbonamento Premium Mensile!
-          </p>
-        ) : (
-          <div className="text-center">
-            <p className="text-muted-foreground">
-              Partite gratuite oggi: <span className="font-bold text-primary">{Math.max(0, getGameLimit() - gamesPlayed)}</span>/{getGameLimit()}
-              {hasActiveSubscription() && credits.subscription_type === 'monthly' && credits.premium_tier === 'standard' && (
-                <span className="block text-xs mt-1">💎 Abbonamento Platino</span>
-              )}
-              {hasActiveSubscription() && credits.subscription_type === 'weekly' && (
-                <span className="block text-xs mt-1">✨ Bonus Premium Settimanale</span>
-              )}
+          <div className="text-center py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500/15 via-yellow-500/15 to-amber-500/15 border border-amber-400/30 backdrop-blur-sm">
+            <p className="text-sm">
+              <span className="bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 bg-clip-text text-transparent font-black">
+                Giochi illimitati
+              </span>
+              <span className="text-muted-foreground"> con il tuo abbonamento </span>
+              <span className="font-bold text-amber-400">Premium Mensile</span>
             </p>
-            {/* Countdown 24h stile counter Like/Crediti: mostrato solo se
-                l'utente ha gia' usato almeno una partita gratuita (altrimenti
-                non serve sapere quando si "rinnova"). */}
+          </div>
+        ) : (
+          <div className="text-center py-3 px-4 rounded-xl bg-background/40 border border-white/5 backdrop-blur-sm">
+            <p className="text-sm text-muted-foreground">
+              Partite gratuite oggi:{" "}
+              <span className="font-black text-xl bg-gradient-to-r from-pink-400 to-fuchsia-400 bg-clip-text text-transparent">
+                {Math.max(0, getGameLimit() - gamesPlayed)}
+              </span>
+              <span className="text-foreground/60">/{getGameLimit()}</span>
+            </p>
+            {hasActiveSubscription() && credits.subscription_type === 'monthly' && credits.premium_tier === 'standard' && (
+              <p className="text-[11px] mt-1 font-semibold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                Abbonamento Platino
+              </p>
+            )}
+            {hasActiveSubscription() && credits.subscription_type === 'weekly' && (
+              <p className="text-[11px] mt-1 font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                Bonus Premium Settimanale
+              </p>
+            )}
+            {/* Countdown 24h: mostrato solo se l'utente ha gia' usato almeno
+                una partita gratuita. */}
             {nextResetTime && gamesPlayed > 0 && (
               <div
-                className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-1"
+                className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-pink-500/10 text-pink-300 border border-pink-500/20"
                 title="Rinnovo giornaliero"
               >
                 <Clock className="h-3 w-3" />
@@ -878,16 +916,16 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
             !isLoading && gamesPlayed >= limit && !hasUnlimitedGames();
           const cantAfford = needsCredits && userCredits < 2;
           return (
-            <div className="flex justify-center">
+            <div className="flex justify-center pt-1">
               <Button
                 onClick={handleStartGame}
                 disabled={isLoading}
                 className={
                   isLoading
-                    ? "px-8 bg-primary/40 text-foreground/60 cursor-wait"
+                    ? "px-8 h-11 rounded-full bg-pink-500/30 text-foreground/60 cursor-wait"
                     : cantAfford
-                    ? "px-8 bg-primary/30 hover:bg-primary/40 text-foreground/60 cursor-not-allowed border border-primary/30"
-                    : "px-8 bg-primary hover:bg-primary/90"
+                    ? "px-8 h-11 rounded-full bg-pink-500/20 hover:bg-pink-500/30 text-foreground/70 cursor-not-allowed border border-pink-500/30"
+                    : "px-8 h-11 rounded-full bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-500 hover:from-pink-400 hover:via-fuchsia-400 hover:to-purple-400 text-white font-bold shadow-lg shadow-pink-500/50 hover:shadow-pink-500/70 hover:scale-[1.03] transition-all border-0"
                 }
               >
                 {isLoading ? (
@@ -897,8 +935,8 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
                   </>
                 ) : (
                   <>
-                    <Trophy className="w-4 h-4 mr-2" />
-                    {needsCredits ? "Gioca con 2 crediti" : "Iniziare a giocare"}
+                    <Trophy className="w-4 h-4 mr-2 drop-shadow" />
+                    {needsCredits ? "Gioca con 2 crediti" : "Inizia a giocare"}
                   </>
                 )}
               </Button>
