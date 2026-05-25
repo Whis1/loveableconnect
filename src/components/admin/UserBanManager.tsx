@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Ban, ShieldCheck, RefreshCw, Send, AlertTriangle, EyeOff, Eye, Loader2, X } from "lucide-react";
+import { Search, Ban, ShieldCheck, RefreshCw, Send, AlertTriangle, EyeOff, Eye, Loader2, X, Receipt, Wallet, Calendar, CheckCircle2, Clock, XCircle, Crown, Coins } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -28,6 +28,8 @@ export function UserBanManager() {
   const [sendingMessage, setSendingMessage] = useState(false);
   // 🖼 Avatar ingrandito (overlay) - click sul cerchio del Dettagli utente
   const [enlargedAvatar, setEnlargedAvatar] = useState<string | null>(null);
+  // 💳 Dialog cronologia pagamenti (apre con pulsante sotto "Elimina Utente")
+  const [showPaymentHistory, setShowPaymentHistory] = useState(false);
 
   // Helper: trasforma path Storage in URL pubblica per gli avatar.
   // Pattern usato dal resto del codebase (ChatsList, ChatUserProfile, ecc).
@@ -858,47 +860,8 @@ export function UserBanManager() {
                       );
                     })()}
 
-                    {userDetails?.purchases && userDetails.purchases.length > 0 && (
-                      <div className="space-y-3 border-t pt-3">
-                        <h4 className="font-semibold text-sm">Cronologia Acquisti ({userDetails.purchases.length})</h4>
-                        <ScrollArea className="h-[150px]">
-                          <div className="space-y-2">
-                            {userDetails.purchases.map((purchase: any) => (
-                              <div key={purchase.id} className="p-2 bg-background rounded-lg text-xs space-y-1">
-                                <div className="flex justify-between">
-                                  <span className="font-medium">
-                                    {purchase.product_type === 'premium' ? '⭐ Abbonamento Premium' : 
-                                     purchase.product_type === 'credits' ? '💎 Crediti' : 
-                                     purchase.product_type}
-                                  </span>
-                                  <span className={`font-semibold ${
-                                    purchase.status === 'completed' ? 'text-green-500' : 
-                                    purchase.status === 'pending' ? 'text-yellow-500' : 
-                                    'text-muted-foreground'
-                                  }`}>
-                                    {purchase.status === 'completed' ? '✓' : 
-                                     purchase.status === 'pending' ? '⏳' : '✗'}
-                                  </span>
-                                </div>
-                                <div className="flex justify-between text-muted-foreground">
-                                  <span>
-                                    {new Date(purchase.created_at).toLocaleDateString("it-IT")}
-                                  </span>
-                                  <span className="font-medium">
-                                    €{(purchase.amount_cents / 100).toFixed(2)}
-                                  </span>
-                                </div>
-                                {purchase.credits_amount && (
-                                  <div className="text-muted-foreground">
-                                    {purchase.credits_amount} crediti
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </ScrollArea>
-                      </div>
-                    )}
+                    {/* Cronologia pagamenti spostata in un Dialog dedicato,
+                        apre dal pulsante sotto "Elimina Utente". */}
 
                     <div className="space-y-2 border-t pt-3">
                       <Label htmlFor="reason">Motivo del ban</Label>
@@ -968,6 +931,23 @@ export function UserBanManager() {
                         </Button>
                       </div>
                     )}
+
+                    {/* 💳 Pulsante Cronologia pagamenti → apre Dialog con tutti
+                        gli acquisti dell'utente (crediti + abbonamenti),
+                        totale spesa, dettagli per acquisto. */}
+                    <Button
+                      onClick={() => setShowPaymentHistory(true)}
+                      variant="outline"
+                      className="w-full bg-gradient-to-r from-blue-500/10 to-cyan-500/10 hover:from-blue-500/20 hover:to-cyan-500/20 border-blue-500/30"
+                    >
+                      <Receipt className="h-4 w-4 mr-2 text-blue-500" />
+                      Cronologia pagamenti
+                      {userDetails?.purchases?.length > 0 && (
+                        <span className="ml-2 px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-xs font-semibold">
+                          {userDetails.purchases.length}
+                        </span>
+                      )}
+                    </Button>
 
                     <div className="space-y-2 border-t pt-3">
                       <Label htmlFor="inboxMessage">Invia messaggio all'utente</Label>
@@ -1097,6 +1077,178 @@ export function UserBanManager() {
             <Button
               variant="outline"
               onClick={() => setDeleteErrorInfo(null)}
+              className="w-full"
+            >
+              Chiudi
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 💳 Dialog Cronologia pagamenti */}
+      <Dialog open={showPaymentHistory} onOpenChange={setShowPaymentHistory}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-hidden flex flex-col p-0">
+          {/* Header con gradient e info utente */}
+          <div className="relative bg-gradient-to-br from-blue-500/30 via-cyan-500/20 to-indigo-500/30 p-6 pb-7">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-2xl">
+                <Receipt className="h-7 w-7 text-blue-300" />
+                Cronologia pagamenti
+              </DialogTitle>
+            </DialogHeader>
+            {selectedUser && (
+              <p className="text-sm text-foreground/80 mt-1">
+                {selectedUser.nickname}{" "}
+                <span className="text-foreground/50 font-mono text-xs">· {selectedUser.id.slice(0, 8)}</span>
+              </p>
+            )}
+          </div>
+
+          {/* Body */}
+          <div className="px-6 py-5 overflow-y-auto flex-1">
+            {(() => {
+              const purchases: any[] = userDetails?.purchases ?? [];
+              const completedPurchases = purchases.filter((p) => p.status === "completed");
+              const totalCents = completedPurchases.reduce(
+                (sum, p) => sum + (p.amount_cents || 0),
+                0
+              );
+              const totalEur = (totalCents / 100).toFixed(2);
+              const totalCreditsBought = completedPurchases
+                .filter((p) => p.product_type === "credits")
+                .reduce((sum, p) => sum + (p.credits_amount || 0), 0);
+              const subscriptionsCount = completedPurchases.filter(
+                (p) => p.product_type === "premium"
+              ).length;
+
+              if (purchases.length === 0) {
+                return (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Wallet className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                    <p className="font-semibold">Nessun acquisto effettuato</p>
+                    <p className="text-xs mt-1">Questo utente non ha ancora speso nulla.</p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-5">
+                  {/* Riepilogo totali — 3 card */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/15 to-emerald-500/10 border border-green-500/30">
+                      <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-green-400 font-bold">
+                        <Wallet className="h-3 w-3" />
+                        Totale Speso
+                      </div>
+                      <p className="text-2xl font-black text-green-400 mt-1">€{totalEur}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500/15 to-yellow-500/10 border border-amber-500/30">
+                      <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-amber-400 font-bold">
+                        <Coins className="h-3 w-3" />
+                        Crediti Acq.
+                      </div>
+                      <p className="text-2xl font-black text-amber-400 mt-1">{totalCreditsBought}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/15 to-pink-500/10 border border-purple-500/30">
+                      <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-purple-400 font-bold">
+                        <Crown className="h-3 w-3" />
+                        Abbonamenti
+                      </div>
+                      <p className="text-2xl font-black text-purple-400 mt-1">{subscriptionsCount}</p>
+                    </div>
+                  </div>
+
+                  {/* Lista acquisti */}
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold text-foreground/80">
+                      Dettaglio ({purchases.length} {purchases.length === 1 ? "acquisto" : "acquisti"})
+                    </h4>
+                    <div className="space-y-2">
+                      {purchases.map((p: any) => {
+                        const isCredits = p.product_type === "credits";
+                        const isPremium = p.product_type === "premium";
+                        const statusInfo =
+                          p.status === "completed"
+                            ? { icon: CheckCircle2, label: "Completato", color: "text-green-400", bg: "bg-green-500/10 border-green-500/30" }
+                            : p.status === "pending"
+                            ? { icon: Clock, label: "In attesa", color: "text-yellow-400", bg: "bg-yellow-500/10 border-yellow-500/30" }
+                            : { icon: XCircle, label: "Fallito", color: "text-red-400", bg: "bg-red-500/10 border-red-500/30" };
+                        const StatusIcon = statusInfo.icon;
+                        const date = new Date(p.created_at);
+                        return (
+                          <div
+                            key={p.id}
+                            className="p-3 rounded-lg bg-background/40 border border-border/60 hover:border-border transition-colors"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-start gap-3 flex-1 min-w-0">
+                                {/* Icona prodotto */}
+                                <div
+                                  className={`shrink-0 p-2 rounded-lg ${
+                                    isPremium
+                                      ? "bg-gradient-to-br from-amber-500/20 to-yellow-500/20 text-amber-400"
+                                      : isCredits
+                                      ? "bg-gradient-to-br from-blue-500/20 to-cyan-500/20 text-blue-400"
+                                      : "bg-muted text-muted-foreground"
+                                  }`}
+                                >
+                                  {isPremium ? (
+                                    <Crown className="h-5 w-5" />
+                                  ) : isCredits ? (
+                                    <Coins className="h-5 w-5" />
+                                  ) : (
+                                    <Receipt className="h-5 w-5" />
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-sm truncate">
+                                    {isPremium ? "Abbonamento Premium" : isCredits ? "Crediti" : p.product_type}
+                                  </p>
+                                  {p.credits_amount && (
+                                    <p className="text-xs text-muted-foreground">
+                                      {p.credits_amount} crediti
+                                    </p>
+                                  )}
+                                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-1">
+                                    <Calendar className="h-3 w-3" />
+                                    <span>
+                                      {date.toLocaleString("it-IT", {
+                                        day: "2-digit",
+                                        month: "short",
+                                        year: "numeric",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <p className="font-bold text-lg">
+                                  €{((p.amount_cents || 0) / 100).toFixed(2)}
+                                </p>
+                                <span
+                                  className={`inline-flex items-center gap-1 px-2 py-0.5 mt-1 rounded-full text-[10px] font-bold ${statusInfo.bg} ${statusInfo.color}`}
+                                >
+                                  <StatusIcon className="h-2.5 w-2.5" />
+                                  {statusInfo.label}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+
+          <DialogFooter className="px-6 py-4 border-t border-border bg-muted/20">
+            <Button
+              variant="outline"
+              onClick={() => setShowPaymentHistory(false)}
               className="w-full"
             >
               Chiudi
