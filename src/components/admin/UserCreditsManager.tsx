@@ -356,7 +356,7 @@ export const UserCreditsManager = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Coins className="h-5 w-5" />
-          Gestione Crediti Utente
+          Gestione Crediti e abbonamenti Utente
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -461,14 +461,6 @@ export const UserCreditsManager = () => {
             <XCircle className="h-4 w-4 mr-2" />
             {loadingRemoveSub ? "Rimuovendo..." : "Rimuovi Abbonamento"}
           </Button>
-
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Riporta l'account a Free:{" "}
-            <code className="px-1 bg-muted rounded">is_premium=false</code>,{" "}
-            <code className="px-1 bg-muted rounded">subscription_type=none</code>,{" "}
-            <code className="px-1 bg-muted rounded">premium_tier=none</code>, e azzera{" "}
-            <code className="px-1 bg-muted rounded">games_played_today</code>.
-          </p>
         </div>
       </CardContent>
     </Card>
