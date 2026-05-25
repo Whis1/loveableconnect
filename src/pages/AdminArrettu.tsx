@@ -10,7 +10,7 @@ import { UserBanManager } from "@/components/admin/UserBanManager";
 import { UserReportsMonitor } from "@/components/admin/UserReportsMonitor";
 import { BannerManager } from "@/components/admin/BannerManager";
 import { EmailTemplateManager } from "@/components/admin/EmailTemplateManager";
-import { Shield, LogOut, MessageSquare, UserPlus, Mail, Megaphone } from "lucide-react";
+import { Shield, LogOut, MessageSquare, UserPlus, Mail, Megaphone, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -146,8 +146,19 @@ export default function AdminArrettu() {
   }
 
 
-  // Se loggato ma senza ruolo admin
-  if (isLoggedIn && !adminLoading && !isAdmin) {
+  // Se loggato ma stiamo ancora controllando il ruolo (isAdmin === null o adminLoading),
+  // mostra spinner invece di "Permessi insufficienti" per evitare il flash brutto
+  // tra signInWithPassword e il completamento del check user_roles.
+  if (isLoggedIn && (adminLoading || isAdmin === null)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Se loggato ma confermatamente senza ruolo admin
+  if (isLoggedIn && isAdmin === false) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
         <Card className="w-full max-w-md">
