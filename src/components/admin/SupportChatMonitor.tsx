@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, MessageCircle, User, Trash2, MapPin, Check, X, Calendar, UserX } from "lucide-react";
+import { Send, MessageCircle, User, Trash2, MapPin, Check, X, Calendar, UserX, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -537,9 +537,36 @@ export const SupportChatMonitor = () => {
                           <p className="font-medium text-sm truncate">
                             {conv.nickname}
                           </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {conv.user_email}
-                          </p>
+                          {/* 🆔 ID utente con pulsante copia (richiesta admin) */}
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <span
+                              className="text-[10px] text-muted-foreground font-mono truncate flex-1 min-w-0"
+                              title={conv.user_id}
+                            >
+                              ID: {conv.user_id.slice(0, 8)}...
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-5 w-5 flex-shrink-0 hover:bg-primary/10"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigator.clipboard.writeText(conv.user_id);
+                                toast({
+                                  title: "ID copiato",
+                                  description: conv.user_id,
+                                });
+                              }}
+                              title="Copia ID completo"
+                            >
+                              <Copy className="h-3 w-3 text-muted-foreground" />
+                            </Button>
+                          </div>
+                          {conv.user_email && (
+                            <p className="text-xs text-muted-foreground truncate mt-0.5">
+                              {conv.user_email}
+                            </p>
+                          )}
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
                           {conv.unread_count > 0 && (
