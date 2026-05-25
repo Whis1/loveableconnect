@@ -76,26 +76,56 @@ export const SupportChatMonitor = () => {
 
   const fetchConversations = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('admin-list-support');
-      if (error || !data?.success) throw new Error(error?.message || data?.error || 'Failed to load');
-      const allMessages = (data.messages || []) as SupportMessage[];
+      // 🐛 BUG STORICO: l'edge function admin-list-support tornava i messaggi
+      // senza il campo 'read' → msg.read = undefined → !msg.read = true
+      // → contava TUTTI i messaggi come non letti.
+      // FIX: query diretta su support_messages includendo 'read'.
+      // L'admin ha permesso RLS di SELECT sui support_messages.
+      const { data: allMessages, error } = await supabase
+        .from('support_messages')
+        .select('id, user_id, user_email, message, is_admin_response, read, created_at')
+        .order('created_at', { ascending: false })
+        .limit(200);
+      if (error) throw error;
 
-      const grouped = allMessages.reduce((acc: Record<string, UserConversation>, msg) => {
-        if (!acc[msg.user_id]) {
-          acc[msg.user_id] = {
-            user_id: msg.user_id,
-            user_email: msg.user_email || '',
-            nickname: msg.profiles?.nickname || 'N/A',
-            unread_count: 0,
-            last_message: msg.message,
-            last_message_time: msg.created_at,
-          };
-        }
-        if (!msg.is_admin_response && !msg.read) {
-          acc[msg.user_id].unread_count++;
-        }
-        return acc;
-      }, {});
+      const userIds = Array.from(
+        new Set((allMessages ?? []).map((m: any) => m.user_id).filter(Boolean))
+      );
+
+      // Fetch nickname dei profili
+      let nicknameMap: Record<string, string> = {};
+      if (userIds.length > 0) {
+        const { data: profs } = await supabase
+          .from('profiles')
+          .select('id, nickname')
+          .in('id', userIds);
+        nicknameMap = (profs ?? []).reduce((acc: Record<string, string>, p: any) => {
+          acc[p.id] = p.nickname;
+          return acc;
+        }, {});
+      }
+
+      const grouped = (allMessages ?? []).reduce(
+        (acc: Record<string, UserConversation>, msg: any) => {
+          if (!msg.user_id) return acc;
+          if (!acc[msg.user_id]) {
+            acc[msg.user_id] = {
+              user_id: msg.user_id,
+              user_email: msg.user_email || '',
+              nickname: nicknameMap[msg.user_id] || 'N/A',
+              unread_count: 0,
+              last_message: msg.message,
+              last_message_time: msg.created_at,
+            };
+          }
+          // Conta SOLO messaggi utente NON letti
+          if (msg.is_admin_response === false && msg.read === false) {
+            acc[msg.user_id].unread_count++;
+          }
+          return acc;
+        },
+        {}
+      );
 
       setConversations(Object.values(grouped));
     } catch (error) {
