@@ -233,14 +233,22 @@ export function useTournament(currentUserId: string | null) {
   }, [tournament?.id, tournament?.status]);
 
   // ============== NPC AUTO-RESOLVE POLLING ==============
+  // 🛡️ matches in un REF stabile: il useEffect del polling dipende SOLO da
+  //    tournament.id/status, NON da matches. Altrimenti ogni update realtime
+  //    aggiornava la ref di matches → cleanup+rerun del useEffect → il
+  //    setInterval ripartiva da capo da 0 → con update frequenti il tick non
+  //    scattava mai → match NPC scaduti mai risolti.
+  const matchesRef = useRef<MatchRow[]>([]);
+  useEffect(() => {
+    matchesRef.current = matches;
+  }, [matches]);
+
   useEffect(() => {
     if (!tournament?.id || tournament.status !== "active") return;
-    const tid = tournament.id;
 
     const tick = async () => {
       const now = Date.now();
-      // Trova match NPC in_progress con scheduled_end_at scaduto
-      const toResolve = matches.filter(
+      const toResolve = matchesRef.current.filter(
         (m) =>
           !m.is_user_match &&
           m.status === "in_progress" &&
@@ -258,16 +266,26 @@ export function useTournament(currentUserId: string | null) {
     };
 
     npcPollTimerRef.current = setInterval(tick, NPC_POLL_INTERVAL_MS);
-    // tick subito in caso ci siano gia' match scaduti
     tick();
+
+    // 🔄 Trigger extra: quando l'utente torna sulla tab dopo essere stato
+    //    altrove (es. ha minimizzato il browser), forza un tick subito.
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") tick();
+    };
+    const onFocus = () => tick();
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("focus", onFocus);
 
     return () => {
       if (npcPollTimerRef.current) {
         clearInterval(npcPollTimerRef.current);
         npcPollTimerRef.current = null;
       }
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", onFocus);
     };
-  }, [tournament?.id, tournament?.status, matches]);
+  }, [tournament?.id, tournament?.status]);
 
   // ============== USER MATCH SELECTOR ==============
   // Il match attualmente "giocabile" o "in attesa" per l'utente. NON filtriamo
