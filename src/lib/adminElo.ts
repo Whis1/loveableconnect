@@ -316,12 +316,29 @@ export function computeAdminStats(id: string, allAdmins?: AdminSeed[]): AdminSta
   // 🏆 Trofei TOP 1 LIVE: simulati da quante volte e' stato #1 in classifica.
   const top1Trophies = allAdmins ? computeAdminLifetimeTrophies(id, allAdmins) : 0;
 
-  // 🥇 Tornei vinti: simulati in modo deterministico in base al baseElo.
-  //    Formula: tier_elo / 500 + hash variance. Admin top legendari (2500+)
-  //    arrivano a 5-7 tornei vinti, medi 1-2, bassi 0.
-  const tournamentBase = Math.max(0, Math.floor((base - 1000) / 400));
-  const tournamentVariance = hash(`${id}#tourn`) % 3; // 0..2
-  const tournamentsWon = Math.max(0, tournamentBase + tournamentVariance - 1);
+  // 👑 Tornei vinti: simulati ma MOLTO RARI anche per top admin (un torneo
+  //    e' difficile da vincere per tutti, deve sembrare un risultato di
+  //    prestigio). Distribuzione deterministica per id:
+  //      baseElo < 2000  → 0 tornei vinti (sempre)
+  //      baseElo 2000-2499 → 70% 0, 30% 1
+  //      baseElo 2500-2799 → 50% 0, 35% 1, 12% 2, 3% 3
+  //      baseElo >= 2800   → 30% 1, 40% 2, 25% 3, 5% 4
+  //    Il numero MAX e' 4 (solo per top legendari con la roll giusto).
+  const tournamentsWon = (() => {
+    if (base < 2000) return 0;
+    const h = hash(`${id}#tourn`) % 100;
+    if (base < 2500) return h < 30 ? 1 : 0;
+    if (base < 2800) {
+      if (h < 50) return 0;
+      if (h < 85) return 1;
+      if (h < 97) return 2;
+      return 3;
+    }
+    if (h < 30) return 1;
+    if (h < 70) return 2;
+    if (h < 95) return 3;
+    return 4;
+  })();
 
   return { elo, baseElo: base, totalWins, totalLosses, totalDraws, top1Trophies, tournamentsWon };
 }
