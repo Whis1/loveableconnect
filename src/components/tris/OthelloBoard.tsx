@@ -169,6 +169,20 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
     setShowResultOverlay(true);
   };
 
+  // 🔧 ADMIN TEST: forza sconfitta istantanea per testare il flusso post-loss.
+  const forceAdminLose = () => {
+    if (gameCompletedRef.current) return;
+    gameCompletedRef.current = true;
+    setGameOver(true);
+    setWinner("bot");
+    if (!tournamentMode) {
+      updateUserElo(-10);
+      recordLossStat();
+    }
+    setLastEloChange(tournamentMode ? 0 : -10);
+    setShowResultOverlay(true);
+  };
+
   // Auto-close partita dopo 3.5s come fallback se l'utente non clicca Continua.
   useEffect(() => {
     if (!showResultOverlay || !winner) return;
@@ -548,17 +562,27 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
 
   return (
     <Card className="mb-6 p-4 md:p-6 bg-gradient-to-br from-emerald-50 via-emerald-100 to-green-50 dark:from-emerald-950/40 dark:via-green-950/30 dark:to-emerald-950/40 border-emerald-500/40 relative">
-      {/* 🔧 ADMIN: pulsante test "Vinci ora" — visibile solo a user_roles.role='admin'.
-          Forza vittoria istantanea per testare il flusso post-game. */}
+      {/* 🔧 ADMIN: pulsanti test "Vinci ora" / "Perdi ora" — visibili solo a
+          user_roles.role='admin'. Forzano l'esito per testare flussi post-game. */}
       {isAdmin && !gameOver && (
-        <button
-          onClick={forceAdminWin}
-          className="absolute top-2 right-2 z-30 flex items-center gap-1 px-2 py-1 rounded-md bg-orange-500/90 hover:bg-orange-500 text-white text-[10px] font-bold shadow-lg border border-orange-300"
-          title="DEBUG: forza vittoria utente (visibile solo admin)"
-        >
-          <Wrench className="w-3 h-3" />
-          [ADMIN] Vinci ora
-        </button>
+        <div className="absolute top-2 right-2 z-30 flex flex-col gap-1">
+          <button
+            onClick={forceAdminWin}
+            className="flex items-center gap-1 px-2 py-1 rounded-md bg-orange-500/90 hover:bg-orange-500 text-white text-[10px] font-bold shadow-lg border border-orange-300"
+            title="DEBUG: forza vittoria utente (visibile solo admin)"
+          >
+            <Wrench className="w-3 h-3" />
+            [ADMIN] Vinci ora
+          </button>
+          <button
+            onClick={forceAdminLose}
+            className="flex items-center gap-1 px-2 py-1 rounded-md bg-slate-700/90 hover:bg-slate-700 text-white text-[10px] font-bold shadow-lg border border-slate-500"
+            title="DEBUG: forza sconfitta utente (visibile solo admin)"
+          >
+            <Wrench className="w-3 h-3" />
+            [ADMIN] Perdi ora
+          </button>
+        </div>
       )}
       {/* Header con avatar (player sx, opponent dx) */}
       <div className="flex items-center justify-between mb-4">

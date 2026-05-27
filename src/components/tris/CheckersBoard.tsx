@@ -204,6 +204,20 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
     setShowResultOverlay(true);
   };
 
+  // 🔧 ADMIN TEST: forza sconfitta istantanea per testare il flusso post-loss.
+  const forceAdminLose = () => {
+    if (gameCompletedRef.current) return;
+    gameCompletedRef.current = true;
+    setGameOver(true);
+    setWinner("bot");
+    if (!tournamentMode) {
+      updateUserElo(-10);
+      recordLossStat();
+    }
+    setLastEloChange(tournamentMode ? 0 : -10);
+    setShowResultOverlay(true);
+  };
+
   // Auto-close partita dopo 3.5s come fallback se l'utente non clicca Continua.
   useEffect(() => {
     if (!showResultOverlay || !winner) return;
@@ -1269,16 +1283,27 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
 
   return (
     <Card className="p-6 bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20 relative">
-      {/* 🔧 ADMIN: pulsante test "Vinci ora" — visibile solo a user_roles.role='admin' */}
+      {/* 🔧 ADMIN: pulsanti test "Vinci ora" / "Perdi ora" — visibili solo a
+          user_roles.role='admin'. */}
       {isAdmin && !gameOver && (
-        <button
-          onClick={forceAdminWin}
-          className="absolute top-2 right-2 z-30 flex items-center gap-1 px-2 py-1 rounded-md bg-orange-500/90 hover:bg-orange-500 text-white text-[10px] font-bold shadow-lg border border-orange-300"
-          title="DEBUG: forza vittoria utente (visibile solo admin)"
-        >
-          <Wrench className="w-3 h-3" />
-          [ADMIN] Vinci ora
-        </button>
+        <div className="absolute top-2 right-2 z-30 flex flex-col gap-1">
+          <button
+            onClick={forceAdminWin}
+            className="flex items-center gap-1 px-2 py-1 rounded-md bg-orange-500/90 hover:bg-orange-500 text-white text-[10px] font-bold shadow-lg border border-orange-300"
+            title="DEBUG: forza vittoria utente (visibile solo admin)"
+          >
+            <Wrench className="w-3 h-3" />
+            [ADMIN] Vinci ora
+          </button>
+          <button
+            onClick={forceAdminLose}
+            className="flex items-center gap-1 px-2 py-1 rounded-md bg-slate-700/90 hover:bg-slate-700 text-white text-[10px] font-bold shadow-lg border border-slate-500"
+            title="DEBUG: forza sconfitta utente (visibile solo admin)"
+          >
+            <Wrench className="w-3 h-3" />
+            [ADMIN] Perdi ora
+          </button>
+        </div>
       )}
       {/* Players Row */}
       <div className="flex justify-between items-center mb-6">
