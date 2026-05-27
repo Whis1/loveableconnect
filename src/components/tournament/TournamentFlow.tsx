@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { TournamentSelectionBanner } from "./TournamentSelectionBanner";
 import { TournamentOpponentSearch } from "./TournamentOpponentSearch";
 import { TournamentBracketView } from "./TournamentBracketView";
+import { TournamentEndBanner } from "./TournamentEndBanner";
 import { OthelloBoard } from "../tris/OthelloBoard";
 import { CheckersBoard } from "../tris/CheckersBoard";
 
@@ -31,6 +32,13 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
   const [creating, setCreating] = useState(false);
   // Profilo avversario corrente per la board (estratto dal userMatch)
   const opponentProfileRef = useRef<any>(null);
+  // 🏆 Dati per il TournamentEndBanner premium (sostituisce il vecchio toast)
+  const [endBanner, setEndBanner] = useState<{
+    finalPosition: number | null;
+    creditsAwarded: number;
+    eloDelta: number;
+    gameType: "othello" | "dama";
+  } | null>(null);
 
   const { toast } = useToast();
 
@@ -116,43 +124,19 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
     shouldAbandonExistingRef.current = false;
 
     if (tournament.status === "finished" || tournament.status === "abandoned") {
-      // 🚪 Torneo concluso NELLA SESSIONE CORRENTE → niente piu' banner risultato
-      //    (richiesta utente). Mostriamo SOLO un toast con i premi e usciamo
-      //    immediatamente alla pagina Sfida.
+      // 🏆 Torneo concluso NELLA SESSIONE CORRENTE → mostra il TournamentEndBanner
+      //    premium (tematico, animato, auto-close 5s). Il banner si chiude da
+      //    solo o on click X → chiama handleEndBannerClose → clearTournament + onExit.
       if (!resultProcessedRef.current) {
         resultProcessedRef.current = true;
         (async () => {
           const r = await claimRewards();
-          const finalPos = r?.final_position ?? tournament.user_final_position;
-          const credits = r?.credits_awarded ?? 0;
-          const elo = r?.elo_delta ?? 0;
-
-          // Toast informativo in base alla posizione finale
-          if (finalPos === 1) {
-            toast({
-              title: "🏆 Torneo vinto!",
-              description: `+${credits} crediti${elo ? ` · +${elo} ELO` : ""}`,
-            });
-          } else if (finalPos === 2) {
-            toast({
-              title: "🥈 Finale persa",
-              description: `+${credits} crediti${elo ? ` · ${elo} ELO` : ""}`,
-            });
-          } else if (finalPos === 3 || finalPos === 4) {
-            toast({
-              title: "🥉 Semifinale persa",
-              description: `+${credits} crediti${elo ? ` · ${elo} ELO` : ""}`,
-            });
-          } else {
-            toast({
-              title: "💔 Eliminato dal torneo",
-              description: elo ? `${elo} ELO` : "Riprova!",
-              variant: "destructive",
-            });
-          }
-
-          clearTournament();
-          onExit();
+          setEndBanner({
+            finalPosition: r?.final_position ?? tournament.user_final_position,
+            creditsAwarded: r?.credits_awarded ?? 0,
+            eloDelta: r?.elo_delta ?? 0,
+            gameType: tournament.game_type,
+          });
         })();
       }
       return;
@@ -259,15 +243,38 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
     // tournament.status passa ad 'abandoned'.
   };
 
+  // 🏆 Handler chiusura banner risultato (auto-close 5s o click X)
+  const handleEndBannerClose = () => {
+    setEndBanner(null);
+    clearTournament();
+    onExit();
+  };
+
+  // 🏆 Banner premium overlay: appare SOPRA qualsiasi fase mentre l'utente
+  //    sta uscendo dal torneo. Sostituisce il vecchio toast generico.
+  const endBannerOverlay = endBanner && (
+    <TournamentEndBanner
+      open={true}
+      finalPosition={endBanner.finalPosition}
+      creditsAwarded={endBanner.creditsAwarded}
+      eloDelta={endBanner.eloDelta}
+      gameType={endBanner.gameType}
+      onClose={handleEndBannerClose}
+    />
+  );
+
   // ============== RENDER ==============
   // Phase select: nessun torneo attivo, mostra banner di scelta
   if (phase === "select") {
     return (
-      <TournamentSelectionBanner
-        onSelect={handleSelectGame}
-        onClose={onExit}
-        isCreating={creating}
-      />
+      <>
+        <TournamentSelectionBanner
+          onSelect={handleSelectGame}
+          onClose={onExit}
+          isCreating={creating}
+        />
+        {endBannerOverlay}
+      </>
     );
   }
 
@@ -275,17 +282,23 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
   if (phase === "searching") {
     if (!tournament || participants.length < 8) {
       return (
-        <Card className="p-8 text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-amber-400" />
-          <p>Preparazione torneo...</p>
-        </Card>
+        <>
+          <Card className="p-8 text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-amber-400" />
+            <p>Preparazione torneo...</p>
+          </Card>
+          {endBannerOverlay}
+        </>
       );
     }
     return (
-      <TournamentOpponentSearch
-        participants={participants}
-        onComplete={handleSearchComplete}
-      />
+      <>
+        <TournamentOpponentSearch
+          participants={participants}
+          onComplete={handleSearchComplete}
+        />
+        {endBannerOverlay}
+      </>
     );
   }
 
@@ -293,34 +306,43 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
   if (phase === "playing" && tournament && opponentProfileRef.current) {
     if (tournament.game_type === "othello") {
       return (
-        <OthelloBoard
+        <>
+          <OthelloBoard
+            opponent={opponentProfileRef.current}
+            onGameEnd={handleBoardGameEnd}
+            tournamentMode
+          />
+          {endBannerOverlay}
+        </>
+      );
+    }
+    return (
+      <>
+        <CheckersBoard
           opponent={opponentProfileRef.current}
           onGameEnd={handleBoardGameEnd}
           tournamentMode
         />
-      );
-    }
-    return (
-      <CheckersBoard
-        opponent={opponentProfileRef.current}
-        onGameEnd={handleBoardGameEnd}
-        tournamentMode
-      />
+        {endBannerOverlay}
+      </>
     );
   }
 
   // Phase bracket: overview del torneo
   if (phase === "bracket" && tournament) {
     return (
-      <TournamentBracketView
-        tournament={tournament}
-        participants={participants}
-        matches={matches}
-        userMatch={userMatch}
-        currentUserId={currentUserId}
-        onStartUserMatch={handleStartUserMatch}
-        onAbandon={handleAbandon}
-      />
+      <>
+        <TournamentBracketView
+          tournament={tournament}
+          participants={participants}
+          matches={matches}
+          userMatch={userMatch}
+          currentUserId={currentUserId}
+          onStartUserMatch={handleStartUserMatch}
+          onAbandon={handleAbandon}
+        />
+        {endBannerOverlay}
+      </>
     );
   }
 
