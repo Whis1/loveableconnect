@@ -10,58 +10,89 @@ interface TournamentOpponentSearchProps {
   onComplete: () => void;
 }
 
-// 🎰 Animazione di ricerca PARALLELA dei 7 sfidanti.
-// Tutti gli slot admin girano in CONTEMPORANEA: ognuno mostra profili a rotazione
-// (150ms tra un cambio e l'altro) per una durata random 9-15s.
-// Quando il timer di ogni slot scade, si ferma sul profilo realmente assegnato a quel slot.
-// L'utente e' fisso fin dall'inizio (e' gia' loggato, lo si conosce).
-// Quando TUTTI gli slot admin si sono fermati, chiama onComplete.
+// 🎰 Animazione di ricerca PARALLELA dei 7 sfidanti, stile slot machine del 1v1.
+// - Fetch di TUTTI i profili admin dal DB → pool ricco di volti che scorrono.
+// - Tutti i 7 slot girano CONTEMPORANEAMENTE, ognuno con la sua durata random (9-15s).
+// - Ogni 150ms tutti gli slot non-fermi cambiano avatar (NITIDO, non blurrato).
+// - Quando il timer di uno slot scade, si ferma sul profilo realmente assegnato a
+//   quello slot (con bordo dorato + transizione).
+// - L'utente e' fisso fin dall'inizio (gia' loggato, lo si conosce).
 
 const SEARCH_DURATION_MIN_MS = 9000;
 const SEARCH_DURATION_MAX_MS = 15000;
 const SCROLL_INTERVAL_MS = 150;
 
+interface AdminProfile {
+  id: string;
+  nickname: string | null;
+  full_name: string;
+  avatar_url: string | null;
+  photos: string[] | null;
+}
+
 export const TournamentOpponentSearch = ({
   participants,
   onComplete,
 }: TournamentOpponentSearchProps) => {
-  // Sorted by slot, deterministico
   const sortedParticipants = useMemo(
     () => [...participants].sort((a, b) => a.slot - b.slot),
     [participants]
   );
 
-  // Indice corrente di scrolling per ogni slot (per i 7 admin che ruotano).
-  // Per lo slot utente, sempre -1 (significa "fermo, mostra il profilo vero").
+  // Pool di TUTTI gli admin per lo scrolling. Fetched al mount, poi usato
+  // ciclicamente come nel 1v1 (OpponentSearch).
+  const [adminPool, setAdminPool] = useState<AdminProfile[]>([]);
+  // Indice corrente di scrolling per ogni slot (-1 = fissato sul profilo vero).
   const [scrollIndices, setScrollIndices] = useState<Record<number, number>>({});
-  // Quali slot si sono GIA' fermati sul profilo assegnato.
+  // Slot gia' fissati sull'admin assegnato.
   const [settledSlots, setSettledSlots] = useState<Set<number>>(new Set());
   const animationStarted = useRef(false);
 
-  // Pool di profili da mostrare nello scrolling: usiamo i 7 admin selezionati
-  // + qualche profilo random per varieta'. Per semplicita' usiamo gli 8 partecipanti
-  // stessi (l'utente compare ogni tanto ma e' un dettaglio innocuo nello scrolling).
-  const scrollPool = useMemo(() => sortedParticipants, [sortedParticipants]);
+  // Fetch pool admin profiles all'inizio.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, nickname, full_name, avatar_url, photos")
+        .eq("is_admin_profile", true);
+      if (!cancelled && data) {
+        // Shuffle deterministico per avere ordini diversi a ogni mount
+        const shuffled = [...data];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        setAdminPool(shuffled as AdminProfile[]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (animationStarted.current) return;
     if (sortedParticipants.length < 8) return;
+    if (adminPool.length === 0) return; // aspetta il fetch
     animationStarted.current = true;
 
-    // Per ogni slot admin (non utente), genera una durata random e schedula
-    // il "settle" (fermata) a quel timestamp.
     const settleTimers: ReturnType<typeof setTimeout>[] = [];
 
+    // Imposta l'utente come gia' fissato (lo conosciamo, lo vediamo subito).
     sortedParticipants.forEach((p) => {
       if (p.is_user) {
-        // L'utente e' subito "settled" (mostra se stesso).
         setSettledSlots((prev) => {
           const next = new Set(prev);
           next.add(p.slot);
           return next;
         });
-        return;
       }
+    });
+
+    // Genera durata random per ogni slot admin.
+    sortedParticipants.forEach((p) => {
+      if (p.is_user) return;
       const duration =
         SEARCH_DURATION_MIN_MS +
         Math.floor(Math.random() * (SEARCH_DURATION_MAX_MS - SEARCH_DURATION_MIN_MS + 1));
@@ -75,15 +106,23 @@ export const TournamentOpponentSearch = ({
       settleTimers.push(t);
     });
 
-    // Scrolling globale: ogni SCROLL_INTERVAL_MS aggiorna l'indice di tutti gli
-    // slot che non si sono ancora fermati.
+    // Scrolling globale ogni 150ms: incrementa l'indice di ogni slot non-fermo.
+    // Ogni slot ha un OFFSET random iniziale cosi' non sono tutti sincroni.
+    const initialOffsets: Record<number, number> = {};
+    sortedParticipants.forEach((p) => {
+      if (!p.is_user) {
+        initialOffsets[p.slot] = Math.floor(Math.random() * adminPool.length);
+      }
+    });
+    setScrollIndices(initialOffsets);
+
     const scrollTimer = setInterval(() => {
       setScrollIndices((prev) => {
         const next = { ...prev };
         sortedParticipants.forEach((p) => {
           if (p.is_user) return;
-          // Random tra 0 e scrollPool.length-1 ogni tick → effetto slot machine
-          next[p.slot] = Math.floor(Math.random() * scrollPool.length);
+          // Incremento +1 ciclico → effetto "scroll" naturale come nel 1v1
+          next[p.slot] = ((prev[p.slot] ?? 0) + 1) % adminPool.length;
         });
         return next;
       });
@@ -93,9 +132,9 @@ export const TournamentOpponentSearch = ({
       settleTimers.forEach(clearTimeout);
       clearInterval(scrollTimer);
     };
-  }, [sortedParticipants, scrollPool]);
+  }, [sortedParticipants, adminPool]);
 
-  // Quando TUTTI gli slot sono settled, fai una breve pausa drammatica e poi onComplete.
+  // Quando TUTTI gli slot sono settled → pausa drammatica → onComplete.
   useEffect(() => {
     if (settledSlots.size === 8) {
       const t = setTimeout(onComplete, 800);
@@ -103,15 +142,36 @@ export const TournamentOpponentSearch = ({
     }
   }, [settledSlots, onComplete]);
 
-  const getAvatarUrl = (p: ParticipantRow | undefined): string => {
-    if (!p?.profile) return "";
-    if (p.profile.avatar_url) {
-      return supabase.storage.from("profile-images").getPublicUrl(p.profile.avatar_url).data.publicUrl;
+  // Costruisce URL avatar da uno dei due formati possibili (avatar_url o photos[0])
+  const buildAvatarUrl = (
+    avatar_url: string | null | undefined,
+    photos: string[] | null | undefined
+  ): string => {
+    if (avatar_url) {
+      return supabase.storage.from("profile-images").getPublicUrl(avatar_url).data.publicUrl;
     }
-    if (p.profile.photos && p.profile.photos.length > 0) {
-      return supabase.storage.from("profile-images").getPublicUrl(p.profile.photos[0]).data.publicUrl;
+    if (photos && photos.length > 0) {
+      return supabase.storage.from("profile-images").getPublicUrl(photos[0]).data.publicUrl;
     }
     return "";
+  };
+
+  const getDisplayInfo = (p: ParticipantRow) => {
+    const isSettled = settledSlots.has(p.slot);
+    if (isSettled || p.is_user) {
+      // Mostra il profilo realmente assegnato a questo slot
+      return {
+        nickname: p.profile?.nickname ?? p.profile?.full_name ?? "Sfidante",
+        avatarUrl: buildAvatarUrl(p.profile?.avatar_url, p.profile?.photos),
+      };
+    }
+    // Slot ancora in "ricerca": mostra il profilo dal pool nell'indice corrente
+    const idx = scrollIndices[p.slot] ?? 0;
+    const cycling = adminPool[idx % adminPool.length];
+    return {
+      nickname: cycling?.nickname ?? cycling?.full_name ?? "Sfidante",
+      avatarUrl: buildAvatarUrl(cycling?.avatar_url, cycling?.photos),
+    };
   };
 
   return (
@@ -129,30 +189,24 @@ export const TournamentOpponentSearch = ({
           Sto selezionando i 7 sfidanti che si batteranno contro di te.
         </p>
 
-        {/* Griglia 4x2 di slot con ricerca PARALLELA */}
         <div className="grid grid-cols-4 gap-3 max-w-3xl mx-auto">
           {sortedParticipants.map((p) => {
             const isSettled = settledSlots.has(p.slot);
-
-            // Profilo da mostrare: se non settled, mostra quello "in scroll";
-            // se settled, mostra quello realmente assegnato a questo slot.
-            const displayParticipant = isSettled
-              ? p
-              : scrollPool[scrollIndices[p.slot] ?? 0] ?? p;
+            const { nickname, avatarUrl } = getDisplayInfo(p);
 
             return (
               <div
                 key={p.id}
-                className={`relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-300 ${
+                className={`relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-colors duration-200 ${
                   isSettled
                     ? p.is_user
                       ? "border-cyan-400 bg-cyan-500/15 scale-105 shadow-lg shadow-cyan-500/40"
-                      : "border-amber-500/60 bg-amber-500/15 shadow-lg shadow-amber-500/20"
-                    : "border-amber-500/30 bg-amber-500/5 animate-pulse"
+                      : "border-amber-500/70 bg-amber-500/15 shadow-lg shadow-amber-500/30"
+                    : "border-amber-500/30 bg-amber-500/5"
                 }`}
               >
                 {p.is_user && isSettled && (
-                  <div className="absolute -top-2 -right-2 px-2 py-0.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 text-[10px] font-black text-white shadow-lg flex items-center gap-1">
+                  <div className="absolute -top-2 -right-2 px-2 py-0.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 text-[10px] font-black text-white shadow-lg flex items-center gap-1 z-10">
                     <Sparkles className="w-3 h-3" />
                     TU
                   </div>
@@ -163,30 +217,22 @@ export const TournamentOpponentSearch = ({
                       ? "border-cyan-300"
                       : isSettled
                       ? "border-amber-400"
-                      : "border-amber-500/40"
-                  } transition-all ${!isSettled ? "blur-[1px]" : ""}`}
+                      : "border-amber-500/50 animate-pulse"
+                  } transition-colors`}
                 >
-                  <AvatarImage src={getAvatarUrl(displayParticipant)} />
+                  <AvatarImage src={avatarUrl} />
                   <AvatarFallback className="bg-muted text-xs">
-                    {displayParticipant?.profile?.nickname?.[0] ?? "?"}
+                    {nickname?.[0] ?? "?"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="text-center min-h-[36px]">
-                  <p
-                    className={`text-xs font-semibold truncate w-full ${
-                      isSettled ? "" : "blur-[2px] opacity-60"
-                    }`}
-                  >
-                    {displayParticipant?.profile?.nickname ??
-                      displayParticipant?.profile?.full_name ??
-                      "Sfidante"}
-                  </p>
+                  <p className="text-xs font-semibold truncate w-full">{nickname}</p>
                   <p
                     className={`text-[10px] font-medium ${
-                      isSettled ? "text-amber-300" : "text-amber-400/40"
+                      isSettled ? "text-amber-300" : "text-amber-400/60"
                     }`}
                   >
-                    {isSettled ? `ELO ${p.elo_snapshot}` : "··· ricerca ···"}
+                    {isSettled ? `ELO ${p.elo_snapshot}` : "🔍 ricerca…"}
                   </p>
                 </div>
               </div>
