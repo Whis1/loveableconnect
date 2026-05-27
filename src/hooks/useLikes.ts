@@ -1,12 +1,16 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useMemo, useState } from "react";
+import { withTimeout } from "@/lib/async";
 
 const fetchUserLikes = async (userId: string): Promise<Set<string>> => {
-  const { data, error } = await supabase
-    .from("likes")
-    .select("to_user_id")
-    .eq("from_user_id", userId);
+  const { data, error } = await withTimeout(
+    supabase
+      .from("likes")
+      .select("to_user_id")
+      .eq("from_user_id", userId),
+    5000
+  );
 
   if (error) throw error;
 
@@ -23,9 +27,15 @@ export const useLikes = () => {
     let isMounted = true;
 
     const initializeUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!isMounted) return;
+      let session = null;
+      try {
+        const response = await withTimeout(supabase.auth.getSession(), 3000);
+        session = response.data.session;
+      } catch {
+        session = null;
+      }
 
+      if (!isMounted) return;
       setUserId(session?.user?.id ?? null);
       setAuthReady(true);
     };
@@ -59,8 +69,9 @@ export const useLikes = () => {
     enabled: authReady && !!userId,
     staleTime: 0,
     refetchInterval: 60 * 1000,
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    retry: 0,
   });
 
   const likedProfileIds = data ?? emptyLikedProfileIds;
@@ -91,7 +102,7 @@ export const useLikes = () => {
 
   return {
     likedProfileIds,
-    loading: !authReady || (!!userId && isLoading),
+    loading: !authReady || (!!userId && isLoading && !data),
     error,
   };
 };

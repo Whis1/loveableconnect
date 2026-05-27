@@ -45,43 +45,10 @@ export const useDailyLikes = () => {
     refetchInterval: 60 * 1000, // Ricontrolla ogni minuto
   });
 
-  // Realtime updates
-  useEffect(() => {
-    const setupSubscription = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const channel = supabase
-          .channel("daily-likes-changes")
-          .on(
-            "postgres_changes",
-            {
-              event: "*",
-              schema: "public",
-              table: "user_credits",
-              filter: `user_id=eq.${user.id}`,
-            },
-            () => {
-              queryClient.invalidateQueries({ queryKey: ["daily-likes"] });
-            }
-          )
-          .subscribe();
-
-        return channel;
-      }
-      return null;
-    };
-
-    let channel: any;
-    setupSubscription().then((ch) => {
-      channel = ch;
-    });
-
-    return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
-  }, [queryClient]);
+  // 🚫 Realtime channel RIMOSSO (era ridondante con useCredits, entrambi
+  //    monitoravano user_credits). Il polling di useQuery (refetchInterval:
+  //    60s + invalidateQueries via useSendLike) è sufficiente. Risparmiamo
+  //    1 channel per ogni componente che usa useDailyLikes.
 
   const consumeLike = async (
     useCredits: boolean = false

@@ -8,6 +8,7 @@ import { ThemeProvider } from "next-themes";
 import { AdBanner } from "./components/AdBanner";
 import { AnimatedRoutes } from "./components/AnimatedRoutes";
 import { useApplyGamePendingPenalty } from "./hooks/useApplyGamePendingPenalty";
+import { useConnectionWatchdog } from "./hooks/useConnectionWatchdog";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,6 +26,10 @@ const queryClient = new QueryClient({
 // e per applicare le pending penalty di abbandono partita all'avvio dell'app.
 const AppShell = () => {
   useApplyGamePendingPenalty();
+  // 🛡️ Connection Watchdog: auto-recovery quando rileva timeout ripetuti
+  //    (3 in 15s → chiude channel zombie + refresh JWT + invalida query)
+  //    + refresh proattivo ogni 90s + on visibility/focus.
+  useConnectionWatchdog();
   return (
     <>
       <AdBanner />

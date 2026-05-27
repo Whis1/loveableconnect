@@ -47,9 +47,6 @@ export default function AdminSupport() {
               <Shield className="h-10 w-10 text-primary" />
               Supporto Clienti
             </h1>
-            <p className="text-muted-foreground mt-1">
-              Gestione richieste di supporto
-            </p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => navigate("/adminarrettu")}>

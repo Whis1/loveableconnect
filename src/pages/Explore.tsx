@@ -82,23 +82,22 @@ const Explore = () => {
   const { likedProfileIds } = useLikes();
   const { profiles: cachedProfiles } = useProfiles();
   const [currentUser, setCurrentUser] = useState<string | null>(null);
-  // Profili caricati progressivamente con infinite scroll (batch da 60).
+  // 📄 PAGINAZIONE CLASSICA: 20 profili per pagina, pulsanti Prev/Next.
+  // Più affidabile dell'infinite scroll: niente caricamento infinito, niente
+  // sentinel observer flaky, niente render di centinaia di card insieme.
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [showGeoLoader, setShowGeoLoader] = useState(true);
-  // Stato per l'infinite scroll
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
+  // Pagina corrente (0-indexed) e count totale dei profili disponibili
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalProfiles, setTotalProfiles] = useState(0);
+  const [loadingPage, setLoadingPage] = useState(false);
+  const [pageError, setPageError] = useState(false);
+  // Legacy refs (unused dopo migrazione paginazione, mantenuti per compat type)
   const sentinelRef = useRef<HTMLDivElement | null>(null);
-  // PREFETCH: dopo ogni caricamento, in background prepariamo gia' il
-  // batch successivo. Cosi' quando l'utente arriva in fondo, l'append e'
-  // ISTANTANEO (niente attesa fetch). Salviamo qui anche l'offset al
-  // momento del prefetch, per scartarlo se nel frattempo la lista e'
-  // cambiata (es. realtime ha aggiunto profili).
-  const prefetchedBatchRef = useRef<{ offset: number; profiles: Profile[] } | null>(null);
-  const prefetchingRef = useRef(false);
-  
+  // 📄 PAGINAZIONE: rimossi prefetch + observer refs (legacy infinite scroll)
+
   // Pre-caricare matches e hidden matches per performance
   const [matchedProfileIds, setMatchedProfileIds] = useState<Set<string>>(new Set());
   
@@ -318,13 +317,13 @@ const Explore = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
-  // Dimensione di ogni batch dell'infinite scroll. 60 e' un buon compromesso
-  // tra rapidita' di rendering (prima vista immediata) e numero di chiamate
-  // (caricamenti successivi non troppo frequenti).
-  const PROFILES_BATCH_SIZE = 60;
+  // 📄 PAGINAZIONE: 20 profili per pagina (sweet spot scrolling/perf).
+  const PROFILES_BATCH_SIZE = 20;
+  const totalPages = Math.max(1, Math.ceil(totalProfiles / PROFILES_BATCH_SIZE));
 
   const loadAllProfiles = async (userId: string, preloadedMatches?: Set<string>) => {
     if (profiles.length === 0) setLoading(true);
+    setPageError(false);
 
     try {
       // Use preloaded matches se disponibili
@@ -349,34 +348,50 @@ const Explore = () => {
         setMatchedProfileIds(matchedUserIds);
       }
 
-      // PRIMO BATCH: prendiamo solo i primi N profili. I successivi
-      // arrivano scrollando (vedi loadMoreProfiles).
-      // Filtro server-side per ESCLUDERE i profili gia' matchati: cosi'
-      // il .range restituisce esattamente N profili "utili", non N profili
-      // tra cui poi il client deve scartarne meta'.
-      let query = supabase
-        .from("profiles")
-        .select("*")
-        .neq("id", userId);
-      if (matchedUserIds.size > 0) {
-        const ids = Array.from(matchedUserIds).map((id) => `"${id}"`).join(",");
-        query = query.not("id", "in", `(${ids})`);
+      // 📄 PRIMA PAGINA con retry automatico (stesso pattern di loadPage)
+      let profilesData: any[] | null = null;
+      let count: number | null = null;
+      let error: any = null;
+      const MAX_RETRIES = 3;
+      for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        let query = supabase
+          .from("profiles")
+          .select("*", { count: "exact" })
+          .neq("id", userId);
+        if (matchedUserIds.size > 0) {
+          const ids = Array.from(matchedUserIds).map((id) => `"${id}"`).join(",");
+          query = query.not("id", "in", `(${ids})`);
+        }
+        try {
+          const result = await withTimeout(
+            query
+              .order("last_active", { ascending: false, nullsFirst: false })
+              .range(0, PROFILES_BATCH_SIZE - 1),
+            10000
+          );
+          if (result.error) throw result.error;
+          profilesData = result.data;
+          count = result.count;
+          error = null;
+          break;
+        } catch (e: any) {
+          error = e;
+          if (attempt < MAX_RETRIES - 1) {
+            await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+            try { await supabase.auth.refreshSession(); } catch {}
+            continue;
+          }
+        }
       }
-      const { data: profilesData, error } = await withTimeout(
-        query
-          .order("last_active", { ascending: false, nullsFirst: false })
-          .range(0, PROFILES_BATCH_SIZE - 1),
-        6000
-      );
 
       if (error) throw error;
 
       const fetched = (profilesData || []).length;
-      // hasMore = true SE il server ci ha dato un batch pieno (potrebbero
-      // essercene altri); false se ne ha dati meno di BATCH_SIZE.
-      setHasMore(fetched >= PROFILES_BATCH_SIZE);
+      // 📄 Total count → ci dice quante pagine ci sono in totale
+      setTotalProfiles(count ?? fetched);
+      setCurrentPage(0);
       console.log(
-        `🔍 Explore loadAllProfiles: fetched=${fetched}, batch=${PROFILES_BATCH_SIZE}, hasMore=${fetched >= PROFILES_BATCH_SIZE}, matchedFiltered=${matchedUserIds.size}`
+        `🔍 Explore loadAllProfiles: fetched=${fetched}, batch=${PROFILES_BATCH_SIZE}, total=${count}, matchedFiltered=${matchedUserIds.size}`
       );
 
       // I match sono gia' esclusi server-side, ma per sicurezza filtriamo
@@ -436,17 +451,12 @@ const Explore = () => {
       // Pre-carica gli stati online di tutti i profili
       void loadOnlineStatuses(allProfiles.map(p => p.id));
 
-      // Dopo il primo batch, avviamo IMMEDIATAMENTE il prefetch del
-      // secondo batch in background. Quando l'utente scrollera' fino al
-      // fondo del primo batch, il secondo sara' gia' pronto e l'append
-      // sara' istantaneo.
-      if ((profilesData || []).length >= PROFILES_BATCH_SIZE) {
-        setTimeout(() => void startBackgroundPrefetch(), 100);
-      }
+      // 📄 Paginazione: niente più prefetch infinite-scroll
     } catch (error: any) {
+      setPageError(true);
       toast({
-        title: "Errore",
-        description: error.message,
+        title: "Errore caricamento",
+        description: "Impossibile caricare i profili. Riprova.",
         variant: "destructive",
       });
     } finally {
@@ -454,160 +464,122 @@ const Explore = () => {
     }
   };
 
-  // Funzione interna: scarica un batch di profili da una posizione di
-  // offset. Restituisce { rawCount, batch } dove rawCount e' quanti
-  // profili ha ritornato il server (per capire se ci sono altri batch).
-  const fetchProfilesAtOffset = async (
-    offset: number,
-    existingIds: Set<string>
-  ): Promise<{ rawCount: number; batch: Profile[] } | null> => {
-    if (!currentUser) return null;
-    let query = supabase
-      .from("profiles")
-      .select("*")
-      .neq("id", currentUser);
-    if (matchedProfileIds.size > 0) {
-      const ids = Array.from(matchedProfileIds).map((id) => `"${id}"`).join(",");
-      query = query.not("id", "in", `(${ids})`);
-    }
-    const { data, error } = await withTimeout(
-      query
-        .order("last_active", { ascending: false, nullsFirst: false })
-        .range(offset, offset + PROFILES_BATCH_SIZE - 1),
-      6000
-    );
-    if (error) return null;
-    const rawBatch = (data || []) as Profile[];
-    const batch = rawBatch.filter(
-      (p) => !matchedProfileIds.has(p.id) && !existingIds.has(p.id)
-    );
-    return { rawCount: rawBatch.length, batch };
-  };
+  // 📄 Cambia pagina con retry AUTOMATICO + refresh sessione fra tentativi.
+  // Logica bulletproof:
+  //   - 3 tentativi automatici (utente non vede errori sui glitch transitori)
+  //   - Backoff esponenziale fra retry (500ms, 1s, 1.5s)
+  //   - refreshSession() prima di ogni retry (risolve token scaduti)
+  //   - Errore visibile SOLO se tutti e 3 i tentativi falliscono
+  //   - Scroll to top quando la pagina cambia (UX pulita)
+  const loadPage = async (pageIndex: number) => {
+    if (!currentUser || loadingPage || pageIndex < 0) return;
+    if (pageIndex === currentPage && profiles.length > 0) return;
 
-  // PREFETCH in background: scarica il prossimo batch SENZA mostrare il
-  // loading indicator. Quando l'utente arriva in fondo, il batch e' gia'
-  // pronto e l'append e' istantaneo.
-  const startBackgroundPrefetch = async () => {
-    if (prefetchingRef.current || prefetchedBatchRef.current) return;
-    if (!currentUser || !hasMoreRef.current) return;
-    prefetchingRef.current = true;
-    try {
-      const offset = profiles.length;
-      const existingIds = new Set(profiles.map((p) => p.id));
-      const result = await fetchProfilesAtOffset(offset, existingIds);
-      if (result && result.batch.length > 0) {
-        prefetchedBatchRef.current = { offset, profiles: result.batch };
-        // Se il server ne ha restituiti meno di un batch, segnaliamo che
-        // dopo questo non ce ne sono piu' altri.
-        if (result.rawCount < PROFILES_BATCH_SIZE) {
-          // Lo memorizzeremo nel loadMore quando consumiamo il prefetch.
+    setLoadingPage(true);
+    setPageError(false);
+
+    const MAX_RETRIES = 3;
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        let query = supabase
+          .from("profiles")
+          .select("*")
+          .neq("id", currentUser);
+        if (matchedProfileIds.size > 0) {
+          const ids = Array.from(matchedProfileIds).map((id) => `"${id}"`).join(",");
+          query = query.not("id", "in", `(${ids})`);
         }
+        const from = pageIndex * PROFILES_BATCH_SIZE;
+        const to = from + PROFILES_BATCH_SIZE - 1;
+        const { data, error } = await withTimeout(
+          query.order("last_active", { ascending: false, nullsFirst: false }).range(from, to),
+          10000
+        );
+        if (error) throw error;
+
+        let pageProfiles = (data || []).filter((p) => !matchedProfileIds.has(p.id)) as Profile[];
+
+        // Subscription sort + admin rotation (BEST-EFFORT: se la RPC fallisce,
+        // mostriamo comunque i profili senza ranking premium)
+        const profileIds = pageProfiles.map((p) => p.id);
+        let subsData: any[] | null = null;
+        try {
+          const subsResult = await withFallback(
+            supabase.rpc("get_subscription_types", { profile_ids: profileIds }),
+            { data: [], error: null },
+            4000
+          );
+          subsData = subsResult.data;
+        } catch {
+          subsData = [];
+        }
+        const creditsMap = new Map<string, string>(
+          (subsData || []).map((c: any) => [c.user_id, c.subscription_type])
+        );
+        const rotationBucket = getRotationBucket();
+        const rotationKey = (id: string) => rotationHashStr(`${id}-${rotationBucket}`);
+
+        pageProfiles.sort((a, b) => {
+          const aSub = creditsMap.get(a.id);
+          const bSub = creditsMap.get(b.id);
+          const rank = (p: Profile, sub?: string) => {
+            if (sub === "monthly") return 0;
+            if (p.is_admin_profile === true) return 1;
+            return 2;
+          };
+          const rA = rank(a, aSub);
+          const rB = rank(b, bSub);
+          if (rA !== rB) return rA - rB;
+          if (rA === 1) {
+            const kA = rotationKey(a.id);
+            const kB = rotationKey(b.id);
+            if (kA !== kB) return kA - kB;
+            return a.id < b.id ? -1 : 1;
+          }
+          const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
+          const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
+          return dateB - dateA;
+        });
+
+        // ✅ SUCCESSO
+        setProfiles(pageProfiles);
+        setCurrentPage(pageIndex);
+        void loadOnlineStatuses(pageProfiles.map((p) => p.id));
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setLoadingPage(false);
+        return;
+      } catch (e: any) {
+        const isLastAttempt = attempt === MAX_RETRIES - 1;
+        console.warn(
+          `🔁 loadPage tentativo ${attempt + 1}/${MAX_RETRIES} fallito${isLastAttempt ? " (DEFINITIVO)" : " (retry...)"}:`,
+          e?.message || e
+        );
+        if (!isLastAttempt) {
+          // Backoff progressivo + refresh sessione (risolve JWT scaduto)
+          const delay = 500 * (attempt + 1);
+          await new Promise((r) => setTimeout(r, delay));
+          try {
+            await supabase.auth.refreshSession();
+          } catch {
+            // refresh fallito, continueremo con il token corrente
+          }
+          continue;
+        }
+        // Tutti i tentativi esauriti: errore visibile
+        setPageError(true);
+        toast({
+          title: "Connessione lenta",
+          description: "Riprova fra qualche istante.",
+          variant: "destructive",
+        });
+        setLoadingPage(false);
+        return;
       }
-    } catch (e) {
-      console.warn("Prefetch fallito (silenzioso):", e);
-    } finally {
-      prefetchingRef.current = false;
     }
   };
 
-  // Carica il prossimo batch di profili (infinite scroll). Se c'e' un
-  // prefetch gia' pronto e valido (stesso offset), lo usa istantaneamente.
-  // Altrimenti fa una fetch normale.
-  const loadMoreProfiles = async () => {
-    if (!currentUser || loadingMore || !hasMore) return;
-
-    // FAST PATH: usa il prefetch se pronto e con offset coerente
-    const prefetch = prefetchedBatchRef.current;
-    if (prefetch && prefetch.offset === profiles.length && prefetch.profiles.length > 0) {
-      console.log("⚡ Append istantaneo dal prefetch (", prefetch.profiles.length, "profili)");
-      prefetchedBatchRef.current = null;
-      const newProfiles = prefetch.profiles;
-      setProfiles((prev) => [...prev, ...newProfiles]);
-      void loadOnlineStatuses(newProfiles.map((p) => p.id));
-      // Avvia immediatamente il prefetch del batch successivo
-      setTimeout(() => void startBackgroundPrefetch(), 50);
-      return;
-    }
-
-    // SLOW PATH: fetch normale con indicatore di loading
-    setLoadingMore(true);
-    try {
-      const offset = profiles.length;
-      const existingIds = new Set(profiles.map((p) => p.id));
-      const result = await fetchProfilesAtOffset(offset, existingIds);
-      if (!result) return;
-
-      console.log(
-        `🔍 Explore loadMoreProfiles: offset=${offset}, fetched=${result.rawCount}, batch=${PROFILES_BATCH_SIZE}`
-      );
-      if (result.rawCount < PROFILES_BATCH_SIZE) setHasMore(false);
-      if (result.batch.length === 0) return;
-
-      setProfiles((prev) => [...prev, ...result.batch]);
-      void loadOnlineStatuses(result.batch.map((p) => p.id));
-      // Dopo aver appeso, avviamo il prefetch del prossimo batch
-      setTimeout(() => void startBackgroundPrefetch(), 50);
-    } catch (e) {
-      console.warn("loadMoreProfiles fallito:", e);
-    } finally {
-      setLoadingMore(false);
-    }
-  };
-
-  // Refs sempre aggiornate per leggere lo stato corrente dentro le closure
-  // degli observer/listener senza dipendere dal dependency array (che
-  // causava re-creazioni continue e potenziali eventi persi).
-  const hasMoreRef = useRef(hasMore);
-  const loadingMoreRef = useRef(loadingMore);
-  useEffect(() => { hasMoreRef.current = hasMore; }, [hasMore]);
-  useEffect(() => { loadingMoreRef.current = loadingMore; }, [loadingMore]);
-
-  // Doppia rete: IntersectionObserver + scroll listener come backup.
-  // IntersectionObserver e' piu' efficiente ma a volte non scatta con
-  // layout dinamici (sentinel renderizzato dopo). Il scroll listener
-  // monitora la posizione reale di scroll del documento.
-  useEffect(() => {
-    if (!currentUser) return;
-
-    const tryLoadMore = () => {
-      if (hasMoreRef.current && !loadingMoreRef.current) {
-        loadMoreProfiles();
-      }
-    };
-
-    // 1) IntersectionObserver con rootMargin generoso (precarico anticipato)
-    let observer: IntersectionObserver | null = null;
-    if (sentinelRef.current) {
-      observer = new IntersectionObserver(
-        (entries) => {
-          if (entries[0]?.isIntersecting) tryLoadMore();
-        },
-        { rootMargin: "1200px" } // attiva con largo anticipo
-      );
-      observer.observe(sentinelRef.current);
-    }
-
-    // 2) Scroll listener come fallback: se l'utente e' a 1000px dal fondo
-    //    del documento, carica altri profili. Throttle a 200ms.
-    let scrollTimeout: ReturnType<typeof setTimeout> | null = null;
-    const handleScroll = () => {
-      if (scrollTimeout) return;
-      scrollTimeout = setTimeout(() => {
-        scrollTimeout = null;
-        const pos = window.scrollY + window.innerHeight;
-        const docHeight = document.documentElement.scrollHeight;
-        if (pos >= docHeight - 1000) tryLoadMore();
-      }, 200);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-
-    return () => {
-      observer?.disconnect();
-      window.removeEventListener("scroll", handleScroll);
-      if (scrollTimeout) clearTimeout(scrollTimeout);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, profiles.length]);
+  // 📄 PAGINAZIONE: nessun observer né scroll listener — UI con bottoni
+  //    Prev/Next gestisce manualmente il cambio pagina via loadPage().
 
   const loadOnlineStatuses = async (profileIds: string[]) => {
     if (profileIds.length === 0) return;
@@ -1019,30 +991,69 @@ const Explore = () => {
                 ))}
               </div>
 
-              {/* Sentinel: l'IntersectionObserver lo guarda e scatena
-                  loadMoreProfiles quando entra nel viewport. Tenuto h-20
-                  per essere ben visibile dall'observer. */}
-              <div ref={sentinelRef} className="h-20" aria-hidden="true" />
+              {/* 📄 PAGINAZIONE MINIMAL — solo Avanti / Indietro */}
+              <div className="mt-8 mb-4 flex items-center justify-center gap-3 flex-wrap">
+                {/* Indietro: visibile SOLO se non sei in prima pagina */}
+                {currentPage > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={() => loadPage(currentPage - 1)}
+                    disabled={loadingPage}
+                    className="h-11 px-6 font-semibold border-2 border-pink-500/40 hover:bg-pink-500/10 hover:border-pink-400 transition-all"
+                  >
+                    {loadingPage ? (
+                      <div className="flex items-center gap-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: "120ms" }} />
+                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: "240ms" }} />
+                      </div>
+                    ) : (
+                      <>← Indietro</>
+                    )}
+                  </Button>
+                )}
 
-              {/* Indicatore di caricamento del prossimo batch */}
-              {loadingMore && (
-                <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
-                  <div className="w-2 h-2 rounded-full bg-pink-500 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: '120ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '240ms' }} />
-                  <span className="text-sm ml-1">Carico altri profili...</span>
-                </div>
-              )}
+                {/* Avanti: visibile finché ci sono altre pagine */}
+                {currentPage < totalPages - 1 && (
+                  <Button
+                    onClick={() => loadPage(currentPage + 1)}
+                    disabled={loadingPage}
+                    className="h-11 px-6 font-semibold bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white shadow-lg shadow-pink-500/30 hover:shadow-pink-500/50 transition-all"
+                  >
+                    {loadingPage ? (
+                      <div className="flex items-center gap-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-white animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <div className="w-1.5 h-1.5 rounded-full bg-white animate-bounce" style={{ animationDelay: "120ms" }} />
+                        <div className="w-1.5 h-1.5 rounded-full bg-white animate-bounce" style={{ animationDelay: "240ms" }} />
+                      </div>
+                    ) : (
+                      <>Avanti →</>
+                    )}
+                  </Button>
+                )}
 
-              {/* Auto-load: niente piu' bottone manuale. L'IntersectionObserver
-                  + lo scroll listener fanno tutto in automatico. */}
+                {/* Messaggio fine lista (solo sull'ultima pagina) */}
+                {currentPage >= totalPages - 1 && totalPages > 0 && !loadingPage && (
+                  <div className="w-full text-center mt-2 text-sm text-muted-foreground">
+                    ✨ Hai visto tutti i profili. Torna più tardi per nuovi arrivi!
+                  </div>
+                )}
 
-              {/* Messaggio "fine lista" quando non ci sono piu' batch */}
-              {!hasMore && !loadingMore && (
-                <div className="text-center py-8 text-sm text-muted-foreground">
-                  ✨ Hai visto tutti i profili disponibili. Torna piu' tardi per nuovi arrivi!
-                </div>
-              )}
+                {/* Errore (mostrato SOLO se tutti i 3 retry sono falliti) */}
+                {pageError && !loadingPage && (
+                  <div className="w-full text-center mt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => loadPage(currentPage)}
+                      className="text-destructive border-destructive/50"
+                    >
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      Riprova
+                    </Button>
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             !loading && (

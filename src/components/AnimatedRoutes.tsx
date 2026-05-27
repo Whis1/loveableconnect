@@ -1,6 +1,7 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { PageTransition } from "./PageTransition";
+import { RouteTransitionOverlay } from "./RouteTransitionOverlay";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import Explore from "@/pages/Explore";
@@ -30,33 +31,36 @@ export const AnimatedRoutes = () => {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location}>
-        <Route path="/" element={<PageTransition><Index /></PageTransition>} />
-        <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
-        <Route path="/explore" element={<PageTransition><Explore /></PageTransition>} />
-        <Route path="/search" element={<PageTransition><Search /></PageTransition>} />
-        <Route path="/profile/edit" element={<PageTransition><ProfileEdit /></PageTransition>} />
-        <Route path="/matches" element={<PageTransition><Matches /></PageTransition>} />
-        <Route path="/likes" element={<PageTransition><Likes /></PageTransition>} />
-        <Route path="/messages" element={<PageTransition><Messages /></PageTransition>} />
-        <Route path="/chat/:matchId" element={<PageTransition><Chat /></PageTransition>} />
-        <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
-        <Route path="/terms" element={<PageTransition><TermsAndConditions /></PageTransition>} />
-        <Route path="/credits" element={<PageTransition><Credits /></PageTransition>} />
-        <Route path="/purchase-success" element={<PageTransition><PurchaseSuccess /></PageTransition>} />
-        <Route path="/premium-success" element={<PageTransition><PremiumSuccess /></PageTransition>} />
-        <Route path="/support" element={<PageTransition><Support /></PageTransition>} />
-        <Route path="/adminarrettu" element={<PageTransition><AdminArrettu /></PageTransition>} />
-        <Route path="/admin/profiles" element={<PageTransition><AdminProfiles /></PageTransition>} />
-        <Route path="/admin/support" element={<PageTransition><AdminSupport /></PageTransition>} />
-        <Route path="/admin/create-profile" element={<PageTransition><AdminCreateProfile /></PageTransition>} />
-        <Route path="/chattors-login" element={<PageTransition><ChattorsLogin /></PageTransition>} />
-        <Route path="/chattors" element={<PageTransition><Chats /></PageTransition>} />
-        <Route path="/auth/callback" element={<PageTransition><AuthCallback /></PageTransition>} />
-        <Route path="/sfida" element={<PageTransition><Sfida /></PageTransition>} />
-        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
-      </Routes>
-    </AnimatePresence>
+    <>
+      <RouteTransitionOverlay routeKey={location.pathname} />
+      <AnimatePresence initial={false} mode="sync">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<PageTransition><Index /></PageTransition>} />
+          <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
+          <Route path="/explore" element={<PageTransition><Explore /></PageTransition>} />
+          <Route path="/search" element={<PageTransition><Search /></PageTransition>} />
+          <Route path="/profile/edit" element={<PageTransition><ProfileEdit /></PageTransition>} />
+          <Route path="/matches" element={<PageTransition><Matches /></PageTransition>} />
+          <Route path="/likes" element={<PageTransition><Likes /></PageTransition>} />
+          <Route path="/messages" element={<PageTransition><Messages /></PageTransition>} />
+          <Route path="/chat/:matchId" element={<PageTransition><Chat /></PageTransition>} />
+          <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
+          <Route path="/terms" element={<PageTransition><TermsAndConditions /></PageTransition>} />
+          <Route path="/credits" element={<PageTransition><Credits /></PageTransition>} />
+          <Route path="/purchase-success" element={<PageTransition><PurchaseSuccess /></PageTransition>} />
+          <Route path="/premium-success" element={<PageTransition><PremiumSuccess /></PageTransition>} />
+          <Route path="/support" element={<PageTransition><Support /></PageTransition>} />
+          <Route path="/adminarrettu" element={<PageTransition><AdminArrettu /></PageTransition>} />
+          <Route path="/admin/profiles" element={<PageTransition><AdminProfiles /></PageTransition>} />
+          <Route path="/admin/support" element={<PageTransition><AdminSupport /></PageTransition>} />
+          <Route path="/admin/create-profile" element={<PageTransition><AdminCreateProfile /></PageTransition>} />
+          <Route path="/chattors-login" element={<PageTransition><ChattorsLogin /></PageTransition>} />
+          <Route path="/chattors" element={<PageTransition><Chats /></PageTransition>} />
+          <Route path="/auth/callback" element={<PageTransition><AuthCallback /></PageTransition>} />
+          <Route path="/sfida" element={<PageTransition><Sfida /></PageTransition>} />
+          <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+        </Routes>
+      </AnimatePresence>
+    </>
   );
 };

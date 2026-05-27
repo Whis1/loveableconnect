@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { replaceTemplateVars, userTemplateVars } from "../_shared/email-template.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -43,16 +44,14 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Template non trovato");
     }
 
-    // Sostituisci variabili
-    const replaceVars = (text: string, vars: Record<string, string>) =>
-      Object.entries(vars).reduce((acc, [k, v]) => acc.replaceAll(`{{${k}}}`, v ?? ''), text);
-
+    const displayName = email.split("@")[0] || "Utente";
     const variables = {
+      ...userTemplateVars(displayName, ['recipient']),
       resetLink: resetLink || 'https://loveableconnect.com/reset-password'
     };
 
-    const subject = replaceVars(template.subject, variables);
-    const html = replaceVars(template.html_content, variables);
+    const subject = replaceTemplateVars(template.subject, variables);
+    const html = replaceTemplateVars(template.html_content, variables);
 
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {

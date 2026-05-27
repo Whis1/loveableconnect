@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { replaceTemplateVars, userTemplateVars } from "../_shared/email-template.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -38,29 +39,34 @@ serve(async (req) => {
       throw new Error("Template non trovato");
     }
 
-    // Helper: replace {{placeholders}}
-    const replaceVars = (text: string, vars: Record<string, string>) =>
-      Object.entries(vars).reduce((acc, [k, v]) => acc.replaceAll(`{{${k}}}`, v ?? ''), text);
-
     // Create sample data based on template type
-    let variables: Record<string, string> = {};
+    let variables = {
+      ...userTemplateVars('Utente Test', ['recipient', 'receiver']),
+    };
 
     switch (templateKey) {
       case 'like_notification':
         variables = {
+          ...variables,
           likerNickname: 'TestUser123',
+          likerName: 'TestUser123',
+          senderNickname: 'TestUser123',
+          senderName: 'TestUser123',
         };
         break;
       
       case 'message_notification':
         variables = {
+          ...variables,
           senderNickname: 'TestUser123',
+          senderName: 'TestUser123',
           messagePreview: 'Ciao! Questo è un messaggio di prova per testare il template email.',
         };
         break;
       
       case 'purchase_credits':
         variables = {
+          ...variables,
           creditsAmount: '100',
           amountPaid: '9.99',
           newBalance: '116',
@@ -69,7 +75,9 @@ serve(async (req) => {
       
       case 'subscription_purchased':
         variables = {
+          ...variables,
           subscriptionType: 'Premium Mensile',
+          planName: 'Premium Mensile',
           tier: 'gold',
           expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('it-IT', {
             day: 'numeric',
@@ -82,7 +90,9 @@ serve(async (req) => {
       
       case 'subscription_renewed':
         variables = {
+          ...variables,
           subscriptionType: 'Premium Mensile',
+          planName: 'Premium Mensile',
           tier: 'gold',
           expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('it-IT', {
             day: 'numeric',
@@ -94,13 +104,17 @@ serve(async (req) => {
       
       case 'subscription_expired':
         variables = {
+          ...variables,
           subscriptionType: 'Premium Mensile',
+          planName: 'Premium Mensile',
         };
         break;
       
       case 'subscription_expiring':
         variables = {
+          ...variables,
           subscriptionType: 'Premium Mensile',
+          planName: 'Premium Mensile',
           daysRemaining: '3',
           expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('it-IT', {
             day: 'numeric',
@@ -112,7 +126,9 @@ serve(async (req) => {
       
       case 'gift_subscription':
         variables = {
+          ...variables,
           senderNickname: 'TestUser123',
+          senderName: 'TestUser123',
           expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('it-IT', {
             day: 'numeric',
             month: 'long',
@@ -124,19 +140,23 @@ serve(async (req) => {
       
       case 'confirmation_email':
         variables = {
+          ...variables,
           confirmLink: 'https://loveableconnect.com/auth/confirm?token=test123456',
         };
         break;
       
       case 'reset_password':
         variables = {
+          ...variables,
           resetLink: 'https://loveableconnect.com/reset-password?token=test123456',
         };
         break;
       
       case 'subscription_expiring':
         variables = {
+          ...variables,
           subscriptionType: 'Premium Mensile',
+          planName: 'Premium Mensile',
           daysRemaining: '3',
           expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('it-IT', {
             day: 'numeric',
@@ -148,6 +168,7 @@ serve(async (req) => {
       
       case 'support_email':
         variables = {
+          ...variables,
           userEmail: recipientEmail,
           message: 'Questo è un messaggio di test per il supporto.',
         };
@@ -155,6 +176,7 @@ serve(async (req) => {
       
       case 'unlock_payment':
         variables = {
+          ...variables,
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString('it-IT', {
             day: 'numeric',
             month: 'long',
@@ -166,11 +188,13 @@ serve(async (req) => {
         break;
       
       default:
-        variables = {};
+        variables = {
+          ...variables,
+        };
     }
 
-    const subject = replaceVars(template.subject, variables);
-    const html = replaceVars(template.html_content, variables);
+    const subject = replaceTemplateVars(template.subject, variables);
+    const html = replaceTemplateVars(template.html_content, variables);
 
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {

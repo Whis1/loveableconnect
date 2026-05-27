@@ -297,12 +297,19 @@ const Dashboard = () => {
       const profileData = profileResult.data;
       const error = profileResult.error;
 
-      // Se c'e' un timeout, NON redirigere ad /auth: aspetta che la rete
-      // risponda. L'utente probabilmente ha solo una rete lenta o Supabase
-      // ha avuto un cold start. La pagina si caricheranno al prossimo
-      // refetch (focus della finestra) o navigando.
+      // Se c'e' un timeout, NON redirigere ad /auth.
       if (error?.message === "profile_timeout") {
-        console.warn("Profile fetch timeout: la home restera' in skeleton finche' la rete non torna.");
+        console.warn("Profile fetch timeout: trigger auto-recovery");
+        // 🛡️ Segnala al Connection Watchdog (lazy import per evitare cycle)
+        import("@/hooks/useConnectionWatchdog").then(({ reportSupabaseTimeout }) => {
+          reportSupabaseTimeout("dashboardProfile");
+        }).catch(() => {});
+        // 🔁 Auto-retry dopo 3 secondi (con refresh sessione nel mezzo).
+        // Se anche il retry fallisce, il watchdog farà recovery globale.
+        setTimeout(async () => {
+          try { await supabase.auth.refreshSession(); } catch {}
+          try { fetchUserData(); } catch {}
+        }, 3000);
         return;
       }
 

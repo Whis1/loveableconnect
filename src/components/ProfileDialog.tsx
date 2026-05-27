@@ -42,6 +42,10 @@ interface ProfileDialogProps {
   currentUserId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  // 🚀 Pre-load: passando i dati già caricati nella card della bacheca,
+  // il dialog si apre ISTANTANEO senza fare un'altra query. Risolve il
+  // problema "skeleton vuoto per minuti" quando la rete è satura.
+  initialProfile?: Partial<Profile> & { id: string };
 }
 
 export const ProfileDialog = ({
@@ -49,9 +53,12 @@ export const ProfileDialog = ({
   currentUserId,
   open,
   onOpenChange,
+  initialProfile,
 }: ProfileDialogProps) => {
   const { t } = useTranslation();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(
+    initialProfile ? (initialProfile as Profile) : null
+  );
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -62,13 +69,36 @@ export const ProfileDialog = ({
   useEffect(() => {
     if (!open || !profileId) return;
 
+    // 🚀 Se abbiamo già un initialProfile completo (con bio, photos, ecc.),
+    //    saltiamo del tutto la query e generiamo subito gli avatar URL.
+    //    Il dialog appare ISTANTANEO. Facciamo comunque una fetch in
+    //    background per i campi che potrebbero mancare (favorite_songs).
+    if (initialProfile && initialProfile.id === profileId) {
+      setProfile(initialProfile as Profile);
+      if (initialProfile.avatar_url) {
+        const { data: urlData } = supabase.storage
+          .from("profile-images")
+          .getPublicUrl(initialProfile.avatar_url);
+        setAvatarUrl(urlData.publicUrl);
+      }
+      if (initialProfile.photos && initialProfile.photos.length > 0) {
+        const urls = initialProfile.photos.map((photo: string) => {
+          const { data: urlData } = supabase.storage
+            .from("profile-images")
+            .getPublicUrl(photo);
+          return urlData.publicUrl;
+        });
+        setPhotoUrls(urls);
+      }
+    }
+
     const fetchProfile = async () => {
       // Timeout sulla fetch: se la query si pianta (es. cold start
       // Supabase), il dialog non resta vuoto in eterno.
       const result = (await Promise.race([
         supabase.from("profiles").select("*").eq("id", profileId).single(),
         new Promise((resolve) =>
-          setTimeout(() => resolve({ data: null, error: { message: "profile_dialog_timeout" } }), 6000)
+          setTimeout(() => resolve({ data: null, error: { message: "profile_dialog_timeout" } }), 8000)
         ),
       ])) as { data: any; error: any };
       const data = result.data;
@@ -501,7 +531,7 @@ export const ProfileDialog = ({
               <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
                 <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                   <Music className="h-5 w-5 text-primary" />
-                  🎵 Canzoni Preferite
+                  Canzoni Preferite
                 </h3>
                 <ScrollArea className="w-full">
                   <div className="flex gap-4 pb-2">

@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { getDisplayName, replaceTemplateVars, userTemplateVars } from "../_shared/email-template.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,7 +27,7 @@ serve(async (req) => {
     // Check if user is online
     const { data: profile } = await supabase
       .from('profiles')
-      .select('last_active')
+      .select('last_active, nickname, full_name')
       .eq('id', receiverId)
       .single();
 
@@ -56,11 +57,9 @@ serve(async (req) => {
       });
     }
 
-    const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+    const recipientName = getDisplayName(profile, user);
 
-    // Helper: replace {{placeholders}}
-    const replaceVars = (text: string, vars: Record<string, string>) =>
-      Object.entries(vars).reduce((acc, [k, v]) => acc.replaceAll(`{{${k}}}`, v ?? ''), text);
+    const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
     // Try to load template from DB
     const { data: tmpl } = await supabase
@@ -70,12 +69,14 @@ serve(async (req) => {
       .maybeSingle();
 
     const variables = {
+      ...userTemplateVars(recipientName, ['recipient', 'receiver']),
       senderNickname,
+      senderName: senderNickname,
       messagePreview: messagePreview ? messagePreview.substring(0, 100) + (messagePreview.length > 100 ? '...' : '') : '',
-    } as Record<string, string>;
+    };
 
-    const subject = tmpl ? replaceVars(tmpl.subject, variables) : `Nuovo messaggio da ${senderNickname} 💬`;
-    const html = tmpl ? replaceVars(tmpl.html_content, variables) : `
+    const subject = tmpl ? replaceTemplateVars(tmpl.subject, variables) : `Nuovo messaggio da ${senderNickname} 💬`;
+    const html = tmpl ? replaceTemplateVars(tmpl.html_content, variables) : `
         <!DOCTYPE html>
         <html lang="it">
           <head>

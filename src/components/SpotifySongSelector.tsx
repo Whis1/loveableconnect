@@ -33,33 +33,64 @@ export const SpotifySongSelector = ({
   const { toast } = useToast();
 
   useEffect(() => {
-    if (searchQuery.trim() === "") {
+    const query = searchQuery.trim();
+
+    if (query === "") {
       setSearchResults([]);
       return;
     }
 
     const timeoutId = setTimeout(async () => {
-      await handleSearch();
+      await handleSearch(query);
     }, 500);
 
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
-  const handleSearch = async () => {
-    if (searchQuery.trim() === "") return;
+  const searchWithFallbackApi = async (query: string): Promise<SpotifySong[]> => {
+    const response = await fetch(
+      `/api/music-search?query=${encodeURIComponent(query)}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Fallback musicale non disponibile");
+    }
+
+    const data = await response.json();
+
+    return (data.tracks || []).filter(
+      (track: SpotifySong) => track.name && track.artist && track.preview_url
+    );
+  };
+
+  const handleSearch = async (query = searchQuery.trim()) => {
+    if (query === "") return;
 
     setIsSearching(true);
     try {
-      const { data, error } = await supabase.functions.invoke('spotify-search', {
-        body: { query: searchQuery }
-      });
+      let tracksWithPreview: SpotifySong[] = [];
 
-      if (error) throw error;
-      // Filter only songs with preview available
-      const tracksWithPreview = (data.tracks || []).filter((track: SpotifySong) => track.preview_url);
+      try {
+        const { data, error } = await supabase.functions.invoke('spotify-search', {
+          body: { query }
+        });
+
+        if (error) throw error;
+
+        tracksWithPreview = (data?.tracks || []).filter(
+          (track: SpotifySong) => track.preview_url
+        );
+      } catch (spotifyError) {
+        console.warn('Spotify search failed, using fallback:', spotifyError);
+      }
+
+      if (tracksWithPreview.length === 0) {
+        tracksWithPreview = await searchWithFallbackApi(query);
+      }
+
       setSearchResults(tracksWithPreview);
     } catch (error: any) {
-      console.error('Error searching Spotify:', error);
+      console.error('Error searching songs:', error);
       toast({
         title: "Errore nella ricerca",
         description: error.message || "Impossibile cercare le canzoni",

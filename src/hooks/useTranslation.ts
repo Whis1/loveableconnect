@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation as useI18nTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
+import { withTimeout } from '@/lib/async';
 
 const translationCache = new Map<string, string>();
 
@@ -123,84 +124,39 @@ const INTEREST_REVERSE_MAP: Record<string, string> = {
 };
 
 export const useTextTranslation = () => {
-  const { i18n, t } = useI18nTranslation();
-  const currentLanguage = i18n.language;
+  const { i18n } = useI18nTranslation();
+  // Mantenuta solo per retrocompatibilità: il sito è ufficialmente IT-only.
+  const currentLanguage = i18n.language || 'it';
+
+  // 🚫 TRADUZIONI DINAMICHE DISABILITATE (definitivamente, da decisione utente).
+  //
+  // Motivazione: il sito è italiano nativo, i profili e gli interessi sono
+  // già in italiano. Le chiamate all'Edge Function `translate-text` (anche
+  // solo IT→IT) saturavano il connection pool del browser (max 6 connessioni
+  // HTTP concorrenti) e facevano timeoutare TUTTE le altre query: crediti,
+  // profilo, like. Causa principale del "Caricamento infinito".
+  //
+  // Le label UI restano tradotte tramite i18next + file `it.json` (lookup
+  // sincrono in memoria, zero chiamate API, zero impatto sulle performance).
+  //
+  // translateText, translateArray, translateProfiles sono ora NOOP che ritornano
+  // il testo originale immediatamente — niente più Edge Function calls.
 
   const translateText = async (text: string | null | undefined): Promise<string> => {
-    if (!text) return '';
-    
-    // If text is already in current language or is very short, return as is
-    if (text.length < 3) return text;
-
-    const cacheKey = `${text}_${currentLanguage}`;
-    
-    // Check cache first
-    if (translationCache.has(cacheKey)) {
-      return translationCache.get(cacheKey)!;
-    }
-
-    try {
-      const { data, error } = await supabase.functions.invoke('translate-text', {
-        body: { text, targetLanguage: currentLanguage }
-      });
-
-      if (error) throw error;
-
-      const translatedText = data.translatedText || text;
-      translationCache.set(cacheKey, translatedText);
-      return translatedText;
-    } catch (error) {
-      console.error('Translation error:', error);
-      return text; // Return original text on error
-    }
+    return text || '';
   };
 
   const translateArray = async (items: string[] | null | undefined): Promise<string[]> => {
-    if (!items || items.length === 0) return [];
-    
-    // Try to translate interests using the reverse map first
-    const translations = items.map(item => {
-      const normalized = item.toLowerCase().trim();
-      const key = INTEREST_REVERSE_MAP[normalized];
-      if (key) {
-        return t(`interests.${key}`, item);
-      }
-      return item;
-    });
-    
-    // If no translations found via map, fallback to API translation
-    const hasUntranslated = translations.some((trans, idx) => trans === items[idx]);
-    if (hasUntranslated) {
-      const apiTranslations = await Promise.all(
-        items.map((item, idx) => {
-          if (translations[idx] === item) {
-            return translateText(item);
-          }
-          return Promise.resolve(translations[idx]);
-        })
-      );
-      return apiTranslations;
-    }
-    
-    return translations;
+    return items || [];
   };
 
-  // Batch translate profiles for better performance
+  // Batch translate profiles: NOOP — ritorna i profili così come sono.
   const translateProfiles = async (profiles: any[]): Promise<any[]> => {
-    const translatedProfiles = await Promise.all(
-      profiles.map(async (profile) => {
-        const [translatedBio, translatedInterests] = await Promise.all([
-          profile.bio ? translateText(profile.bio) : null,
-          profile.interests ? translateArray(profile.interests) : null
-        ]);
-
-        return {
-          ...profile,
-          translatedBio,
-          translatedInterests
-        };
-      })
-    );
+    const translatedProfiles = profiles.map((profile) => ({
+      ...profile,
+      translatedBio: null,
+      translatedInterests: null,
+    }));
 
     return translatedProfiles;
   };

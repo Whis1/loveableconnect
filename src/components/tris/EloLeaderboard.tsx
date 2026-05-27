@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Trophy, ChevronDown, ChevronUp } from "lucide-react";
 import { computeAdminElos } from "@/lib/adminElo";
 import { ProfileStatsDialog } from "./ProfileStatsDialog";
+import { VictoryIcon, DefeatIcon } from "@/lib/gameIcons";
 
 interface LeaderboardProfile {
   id: string;
@@ -83,6 +84,12 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
   const [topPlayers, setTopPlayers] = useState<LeaderboardProfile[]>([]);
   const [userElo, setUserElo] = useState<number>(1200);
   const [userRank, setUserRank] = useState<number | null>(null);
+  // 🏆 Stats personali dell'utente: vittorie / sconfitte / trofei (campioni del giorno)
+  const [userStats, setUserStats] = useState<{
+    wins: number;
+    losses: number;
+    trophies: number;
+  } | null>(null);
   // 🆕 Default true: la classifica è APERTA appena si entra. Click sulla
   // tendina per chiuderla.
   const [isOpen, setIsOpen] = useState(true);
@@ -168,6 +175,22 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
           .eq("is_admin_profile", false)
           .gt("game_elo", myElo);
         setUserRank(higher + (count ?? 0) + 1);
+
+        // 🏆 Carica vittorie/sconfitte/trofei dell'utente da tris_games
+        const { data: tris } = await supabase
+          .from("tris_games")
+          .select("tris_wins, tris_losses, dama_wins, dama_losses, othello_wins, othello_losses, top_1_trophies")
+          .eq("user_id", userId)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const row = tris as any;
+        setUserStats({
+          wins: (row?.tris_wins ?? 0) + (row?.dama_wins ?? 0) + (row?.othello_wins ?? 0),
+          losses: (row?.tris_losses ?? 0) + (row?.dama_losses ?? 0) + (row?.othello_losses ?? 0),
+          trophies: row?.top_1_trophies ?? 0,
+        });
       }
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
@@ -262,6 +285,47 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
               <p className="text-2xl font-bold">{getRankDisplay()}</p>
             </div>
           </div>
+
+          {/* 🏆 Stats personali: Vittorie / Sconfitte / Trofei */}
+          {userStats && (
+            <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-primary/20">
+              {/* Vittorie */}
+              <div className="flex flex-col items-center p-2.5 rounded-lg bg-gradient-to-br from-emerald-500/15 to-green-500/10 border border-emerald-500/30">
+                <VictoryIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mb-1 drop-shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+                <span className="text-[10px] uppercase tracking-wider font-semibold text-emerald-700 dark:text-emerald-300">
+                  Vittorie
+                </span>
+                <span className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 drop-shadow-[0_0_6px_rgba(16,185,129,0.4)]">
+                  {userStats.wins}
+                </span>
+              </div>
+
+              {/* Sconfitte */}
+              <div className="flex flex-col items-center p-2.5 rounded-lg bg-gradient-to-br from-rose-500/15 to-red-500/10 border border-rose-500/30">
+                <DefeatIcon className="w-5 h-5 text-rose-600 dark:text-rose-400 mb-1 drop-shadow-[0_0_6px_rgba(244,63,94,0.4)]" />
+                <span className="text-[10px] uppercase tracking-wider font-semibold text-rose-700 dark:text-rose-300">
+                  Sconfitte
+                </span>
+                <span className="text-xl font-extrabold text-rose-600 dark:text-rose-400 drop-shadow-[0_0_6px_rgba(244,63,94,0.4)]">
+                  {userStats.losses}
+                </span>
+              </div>
+
+              {/* Trofei Campione del Giorno */}
+              <div className="flex flex-col items-center p-2.5 rounded-lg bg-gradient-to-br from-yellow-500/20 to-amber-500/15 border border-yellow-500/40 relative overflow-hidden">
+                {userStats.trophies > 0 && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-300/10 to-transparent animate-pulse" />
+                )}
+                <Trophy className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mb-0.5 relative z-10" />
+                <span className="text-[10px] uppercase tracking-wider font-semibold text-yellow-700 dark:text-yellow-300 relative z-10">
+                  Trofei
+                </span>
+                <span className="text-xl font-extrabold text-yellow-600 dark:text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)] relative z-10">
+                  {userStats.trophies}
+                </span>
+              </div>
+            </div>
+          )}
         </Card>
       )}
 
@@ -317,6 +381,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         onClose={() => setSelectedProfile(null)}
         topIndex={selectedProfileIndex >= 0 ? selectedProfileIndex : null}
         showRank={true}
+        hideWinsLosses
       />
     </div>
   );

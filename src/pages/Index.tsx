@@ -8,6 +8,7 @@ import { useLikes } from "@/hooks/useLikes";
 import { useCredits } from "@/hooks/useCredits";
 import { useDailyLikes } from "@/hooks/useDailyLikes";
 import { getStoredUserId } from "@/lib/storedSession";
+import { PageLoader } from "@/components/PageLoader";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -114,11 +115,7 @@ const Index = () => {
   }, [navigate]);
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-muted-foreground">Caricamento...</p>
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (!isAuthenticated) {

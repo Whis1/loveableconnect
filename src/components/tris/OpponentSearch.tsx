@@ -21,7 +21,9 @@ interface OpponentSearchProps {
 export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const searchDuration = useRef(Math.floor(Math.random() * 1000) + 2000); // 2-3 secondi
+  // 🎰 Durata ricerca sfidante: random tra 5 e 10 secondi (inclusi).
+  // Math.random() * 6 → [0, 6), Math.floor() → 0..5, + 5 → 5..10 ✓
+  const searchDuration = useRef((Math.floor(Math.random() * 6) + 5) * 1000);
   const animationStarted = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 

@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { User, Heart, MapPin } from "lucide-react";
+import { User, Heart, MapPin, Music } from "lucide-react";
 import { ImageDialog } from "@/components/ImageDialog";
 import { getGenericLocationPhrase } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -373,7 +373,8 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
         {profile.favorite_songs && profile.favorite_songs.length > 0 && (
           <div className="pt-3 border-t border-border/50">
             <h4 className="text-xs font-semibold mb-2 flex items-center gap-1.5 text-foreground/70">
-              🎵 {t("chat.favoriteSongs")}
+              <Music className="h-3.5 w-3.5 text-primary" />
+              {t("chat.favoriteSongs")}
             </h4>
             <ScrollArea className="w-full">
               <div className="flex gap-2 pb-2">

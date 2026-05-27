@@ -16,12 +16,15 @@ import { supabase } from "@/integrations/supabase/client";
 
 type PendingGame = {
   key: string;       // chiave localStorage
-  gameName: "tris" | "dama";
+  gameName: "tris" | "dama" | "othello";
 };
 
 const PENDING_GAMES: PendingGame[] = [
   { key: "tris_pending_penalty", gameName: "tris" },
   { key: "checkers_pending_penalty", gameName: "dama" },
+  // 🆕 Othello: stesso pattern. Se la RPC non riconosce "othello" come
+  // p_game (vecchio backend), nel catch facciamo fallback a "dama".
+  { key: "othello_pending_penalty", gameName: "othello" },
 ];
 
 // Singleton a livello modulo: una sola invocazione di apply() alla volta.
@@ -63,11 +66,26 @@ async function applyPendingPenalties() {
           user_id: session.user.id,
           elo_change: -10,
         });
-        await supabase.rpc("increment_game_stat" as any, {
-          p_user_id: session.user.id,
-          p_game: p.gameName,
-          p_result: "lose",
-        });
+        try {
+          await supabase.rpc("increment_game_stat" as any, {
+            p_user_id: session.user.id,
+            p_game: p.gameName,
+            p_result: "lose",
+          });
+        } catch (statErr) {
+          // 🔄 Fallback: se la RPC non riconosce "othello" come p_game (DB
+          // non ancora aggiornato), conta come "dama" per non perdere la
+          // statistica e per non rimettere il marker (l'ELO è già scalato).
+          if (p.gameName === "othello") {
+            await supabase.rpc("increment_game_stat" as any, {
+              p_user_id: session.user.id,
+              p_game: "dama",
+              p_result: "lose",
+            });
+          } else {
+            throw statErr;
+          }
+        }
         console.log(`🛡️ Pending penalty applicata per ${p.gameName} (abbandono partita)`);
       } catch (e) {
         console.warn(`⚠️ Impossibile applicare pending penalty ${p.gameName}:`, e);

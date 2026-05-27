@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { getDisplayName, replaceTemplateVars, userTemplateVars } from "../_shared/email-template.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -34,6 +35,14 @@ serve(async (req) => {
       });
     }
 
+    const { data: recipientProfile } = await supabase
+      .from('profiles')
+      .select('nickname, full_name')
+      .eq('id', userId)
+      .maybeSingle();
+
+    const recipientName = getDisplayName(recipientProfile, user);
+
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
     let planName = "Premium";
@@ -60,10 +69,6 @@ serve(async (req) => {
       year: 'numeric'
     }) : '';
 
-    // Helper: replace {{placeholders}}
-    const replaceVars = (text: string, vars: Record<string, string>) =>
-      Object.entries(vars).reduce((acc, [k, v]) => acc.replaceAll(`{{${k}}}`, v ?? ''), text);
-
     // Try to load template from DB
     const { data: tmpl } = await supabase
       .from('email_templates')
@@ -72,14 +77,16 @@ serve(async (req) => {
       .maybeSingle();
 
     const variables = {
+      ...userTemplateVars(recipientName, ['recipient']),
       subscriptionType: planName,
+      planName,
       tier: tier || '',
       expiresAt: formattedDate,
       benefits,
-    } as Record<string, string>;
+    };
 
-    const subject = tmpl ? replaceVars(tmpl.subject, variables) : "Benvenuto in Premium! 🌟";
-    const html = tmpl ? replaceVars(tmpl.html_content, variables) : `
+    const subject = tmpl ? replaceTemplateVars(tmpl.subject, variables) : "Benvenuto in Premium! 🌟";
+    const html = tmpl ? replaceTemplateVars(tmpl.html_content, variables) : `
         <!DOCTYPE html>
         <html lang="it">
           <head>

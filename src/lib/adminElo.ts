@@ -39,12 +39,13 @@ const HOUR_MS = 60 * 60 * 1000;
 // Per "azzerare" di nuovo basta aggiornare questa data.
 const EPOCH = Date.UTC(2026, 4, 25, 9, 42);
 
-// Drift massimo per ogni singola "sessione di gioco" (un bucket personale):
-//   +100 = 5 vittorie consecutive  (5 × +20)
-//   -100 = 10 sconfitte consecutive (10 × -10)
-// Ampliato da 60 a 100 per ridurre pareggi visivi tra admin nella TOP 5
-// (con range troppo stretto i top finivano spesso con ELO identici).
-const MAX_DRIFT = 100;
+// Drift massimo TEORICO di una singola sessione (cap di sicurezza). Le sessioni
+// ora hanno LUNGHEZZA VARIABILE (vedi sessionGameCount): la maggior parte sono
+// brevi (1-2 partite), alcune medie (3-6), poche lunghe (7-14 partite di fila).
+// Questo riproduce comportamento umano: chi gioca una mano e va, chi resta
+// un'ora a fare 10 partite di seguito. Risultato: la classifica si muove
+// MOLTO di più, ELO uguali quasi azzerati, swing larghi tra TOP e bottom.
+const MAX_DRIFT = 280; // 14 partite × max 20 = 280 (mega-sessione tutte vittorie)
 
 // Range di frequenza personale di "gioco" per admin:
 //   FREQ_MIN_HOURS = chi gioca tanto (aggiornamento ogni 2 ore)
@@ -61,9 +62,11 @@ const FREQ_MAX_HOURS = 8;
 const MOMENTUM_WEIGHTS = [1.0, 0.7, 0.5, 0.3, 0.2];
 
 // Cap assoluto del drift cumulativo (in valore assoluto). Evita derive estreme.
-// Es. un admin con base 2400 puo' oscillare nel range 2100-2700 → variazione
-// 600 punti totale, ampio spread per posizioni diverse in classifica.
-const MAX_CUMULATIVE_DRIFT = 300;
+// Alzato da 300 a 500 perché con sessioni variabili (fino a 14 partite di fila),
+// vogliamo che le grandi serie di vittorie/sconfitte abbiano un impatto visibile.
+// Es. un admin con base 2400 puo' oscillare nel range 1900-2900 → variazione
+// 1000 punti totale, swing notevoli che cambiano la classifica.
+const MAX_CUMULATIVE_DRIFT = 500;
 
 // Hash deterministico (FNV-1a) -> intero senza segno a 32 bit.
 function hash(str: string): number {
@@ -125,12 +128,52 @@ function personalBucket(id: string, now: number): number {
   return Math.floor((now - EPOCH - offsetMs) / freqMs);
 }
 
-// Drift di una singola sessione (un bucket personale): ±MAX_DRIFT ELO in
-// step di 10, deterministico per (id, bucket). Rappresenta l'esito di
-// "quella" sessione di gioco simulata.
+// 🎮 NUOVO MODELLO REALISTICO: ogni bucket personale rappresenta una "finestra"
+// durante la quale l'admin POTREBBE giocare. La quantità di partite varia
+// drasticamente, simulando comportamento umano reale:
+//   - 30% pausa: l'admin in quella finestra non gioca (drift = 0)
+//   - 30% 1 partita: fa solo una mano e va
+//   - 18% 2-3 partite: sessione breve
+//   - 12% 4-6 partite: sessione media
+//   - 7%  7-9 partite: sessione intensa
+//   - 3%  10-14 partite: maratona di gioco
+//
+// Risultato: classifica MOLTO più dinamica. Chi fa una maratona vincente
+// scala +280 ELO in un colpo solo; chi prende una maratona di sconfitte può
+// crollare di -140 ELO. ELO uguali tra admin praticamente azzerati.
+function sessionGameCount(id: string, bucket: number): number {
+  const h = hash(`${id}#count#${bucket}`);
+  const r = h % 100;
+  const inner = (h >>> 8);
+  if (r < 30) return 0;                      // 30% pausa
+  if (r < 60) return 1;                      // 30% 1 partita
+  if (r < 78) return 2 + (inner % 2);        // 18% 2-3 partite
+  if (r < 90) return 4 + (inner % 3);        // 12% 4-6 partite
+  if (r < 97) return 7 + (inner % 3);        // 7%  7-9 partite
+  return 10 + (inner % 5);                   // 3%  10-14 partite (maratona)
+}
+
+// Risultati di una singola sessione: per ogni partita un coin-flip
+// deterministico (bit dell'hash outcome). Coerente con sistema utenti reali:
+// +20 ELO per vittoria, -10 ELO per sconfitta.
+function singleSessionResults(id: string, bucket: number): { wins: number; losses: number } {
+  const games = sessionGameCount(id, bucket);
+  if (games === 0) return { wins: 0, losses: 0 };
+  const outcomeHash = hash(`${id}#out#${bucket}`);
+  let wins = 0, losses = 0;
+  for (let i = 0; i < games; i++) {
+    // Coin flip deterministico per ogni partita della sessione
+    if (((outcomeHash >>> (i % 32)) & 1) === 0) wins++;
+    else losses++;
+  }
+  return { wins, losses };
+}
+
+// Drift = somma algebrica delle vittorie/sconfitte della sessione.
+// +20 per vittoria, -10 per sconfitta. Compatibile col cap MAX_DRIFT.
 function singleSessionDrift(id: string, bucket: number): number {
-  const steps = MAX_DRIFT / 10; // 6
-  return ((hash(`${id}#bucket#${bucket}`) % (2 * steps + 1)) - steps) * 10;
+  const { wins, losses } = singleSessionResults(id, bucket);
+  return wins * 20 + losses * -10;
 }
 
 // 🚀 Drift CUMULATIVO con momentum: somma pesata delle ultime N sessioni.
@@ -163,16 +206,11 @@ export interface AdminStats {
   top1Trophies: number; // Volte che e' stato #1 in classifica (simulate)
 }
 
-// 🎯 Decompone un drift D (multiplo di 10, range ±60) in vittorie/sconfitte
-// atomiche secondo il sistema +20 vittoria / -10 sconfitta.
-// Cerca il minimo numero di partite (V+S) per ottenere esattamente D.
-//   D > 0: V = ceil(D/20),  S = (20V - D) / 10
-//   D < 0: V = 0,           S = |D| / 10
-//   D = 0: nessuna partita giocata in quella sessione (idle)
-// Esempi:
-//   D=+60 → 3V/0S    D=+50 → 3V/1S    D=+40 → 2V/0S    D=+30 → 2V/1S
-//   D=+20 → 1V/0S    D=+10 → 1V/1S    D=0   → 0V/0S
-//   D=-10 → 0V/1S    D=-20 → 0V/2S    ... D=-60 → 0V/6S
+// ⚠️ DEPRECATA con il nuovo modello sessioni multiple: ora abbiamo accesso
+// diretto a wins/losses tramite `singleSessionResults(id, bucket)`, quindi
+// non serve decomporre il drift "alla cieca". Manteniamo la funzione per
+// retrocompatibilità ma il chiamante (computeAdminLifetimeStats) usa la
+// versione nuova `singleSessionResults`.
 function decomposeDrift(d: number): { wins: number; losses: number } {
   if (d === 0) return { wins: 0, losses: 0 };
   if (d > 0) {
@@ -194,8 +232,9 @@ function computeAdminLifetimeStats(id: string): { wins: number; losses: number }
   let totalWins = 0;
   let totalLosses = 0;
   for (let b = 0; b <= currentBucket; b++) {
-    const drift = singleSessionDrift(id, b);
-    const { wins, losses } = decomposeDrift(drift);
+    // ⚡ Usa singleSessionResults direttamente: coerente con il nuovo modello
+    //    di sessioni a lunghezza variabile (drift = wins*20 - losses*10).
+    const { wins, losses } = singleSessionResults(id, b);
     totalWins += wins;
     totalLosses += losses;
   }

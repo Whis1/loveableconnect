@@ -14,6 +14,7 @@ interface TieredAdminRow {
   email: string;
   admin_tier: number | null;
   created_at: string;
+  display_name?: string | null;
 }
 
 /**
@@ -35,12 +36,14 @@ export const AdminTierManager = () => {
   const [loading, setLoading] = useState(true);
 
   const [email, setEmail] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [tier, setTier] = useState<"1" | "2">("2");
   const [promoting, setPromoting] = useState(false);
   const [demotingId, setDemotingId] = useState<string | null>(null);
 
   // 🆕 Form 'Crea da zero' (chiama edge function admin-create-tiered)
   const [newEmail, setNewEmail] = useState("");
+  const [newDisplayName, setNewDisplayName] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newTier, setNewTier] = useState<"1" | "2">("2");
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -51,7 +54,26 @@ export const AdminTierManager = () => {
     try {
       const { data, error } = await supabase.rpc("admin_list_tiered" as any);
       if (error) throw error;
-      setAdmins((data ?? []) as TieredAdminRow[]);
+      const rows = (data ?? []) as TieredAdminRow[];
+
+      // 📛 Fetch separato dei display_name dalla tabella user_roles
+      //    (non possiamo toccare la RPC esistente per retrocompatibilità)
+      const adminIds = rows.map((r) => r.user_id);
+      if (adminIds.length > 0) {
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("user_id, display_name")
+          .in("user_id", adminIds);
+        const nameMap: Record<string, string | null> = {};
+        (roleData ?? []).forEach((r: any) => {
+          nameMap[r.user_id] = r.display_name;
+        });
+        rows.forEach((r) => {
+          r.display_name = nameMap[r.user_id] ?? null;
+        });
+      }
+
+      setAdmins(rows);
     } catch (e: any) {
       console.error("fetchAdmins error", e);
       toast({
@@ -85,8 +107,18 @@ export const AdminTierManager = () => {
       if (!result?.success) {
         throw new Error(result?.message ?? "Errore durante la promozione");
       }
+      // 📛 Setta display_name (se inserito) via UPDATE diretto su user_roles
+      if (displayName.trim() && result.user_id) {
+        await supabase
+          .from("user_roles")
+          .update({ display_name: displayName.trim() })
+          .eq("user_id", result.user_id)
+          .eq("role", "admin");
+      }
+
       toast({ title: "✓ Promosso", description: result.message });
       setEmail("");
+      setDisplayName("");
       await fetchAdmins();
     } catch (e: any) {
       console.error("handlePromote error", e);
@@ -127,11 +159,21 @@ export const AdminTierManager = () => {
         throw new Error(result?.message ?? "Errore durante la creazione");
       }
 
+      // 📛 Setta display_name (se inserito) via UPDATE diretto su user_roles
+      if (newDisplayName.trim() && result.user_id) {
+        await supabase
+          .from("user_roles")
+          .update({ display_name: newDisplayName.trim() })
+          .eq("user_id", result.user_id)
+          .eq("role", "admin");
+      }
+
       toast({
         title: "✓ Admin creato",
-        description: `Email: ${newEmail} · Tier ${newTier}. Salva la password.`,
+        description: `${newDisplayName ? newDisplayName + " · " : ""}${newEmail} · Tier ${newTier}. Salva la password.`,
       });
       setNewEmail("");
+      setNewDisplayName("");
       setNewPassword("");
       setShowNewPassword(false);
       await fetchAdmins();
@@ -218,7 +260,18 @@ export const AdminTierManager = () => {
             apparirà nella bacheca utenti. Usa email random/dedicate per gli admin di staff.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto] gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="new-display-name">Nome admin</Label>
+              <Input
+                id="new-display-name"
+                type="text"
+                value={newDisplayName}
+                onChange={(e) => setNewDisplayName(e.target.value)}
+                placeholder="es. Marco"
+                disabled={creating}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="new-email">Email</Label>
               <Input
@@ -294,7 +347,18 @@ export const AdminTierManager = () => {
             inserisci la sua email per promuoverlo ad admin (non crea un nuovo account).
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto_auto] gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="promote-name">Nome admin</Label>
+              <Input
+                id="promote-name"
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="es. Marco"
+                disabled={promoting}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="promote-email">Email utente</Label>
               <Input
@@ -352,7 +416,12 @@ export const AdminTierManager = () => {
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium truncate">{row.email}</span>
+                      {row.display_name && (
+                        <span className="font-bold text-primary">{row.display_name}</span>
+                      )}
+                      <span className="font-medium truncate text-muted-foreground text-sm">
+                        {row.email}
+                      </span>
                       {renderTierBadge(row.admin_tier)}
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">

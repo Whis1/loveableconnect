@@ -12,8 +12,10 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, MapPin, Search as SearchIcon, RotateCcw, Heart, MessageCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { getGenericLocationPhrase } from "@/lib/utils";
+import { PageLoader } from "@/components/PageLoader";
 import { useLikes } from "@/hooks/useLikes";
 import { useSendLike } from "@/hooks/useSendLike";
+import { withFallback, withTimeout } from "@/lib/async";
 
 interface Profile {
   id: string;
@@ -45,7 +47,7 @@ const Search = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation();
-  const { likedProfileIds, loading: likesLoading } = useLikes();
+  const { likedProfileIds } = useLikes();
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,19 +79,28 @@ const Search = () => {
   ];
 
   useEffect(() => {
+    let cancelled = false;
+    const loadingSafety = setTimeout(() => {
+      if (!cancelled) setLoading(false);
+    }, 2500);
+
     const initializeSearch = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await withTimeout(supabase.auth.getSession(), 3000);
       
       if (!session) {
         navigate("/auth");
         return;
       }
 
+      if (cancelled) return;
       setCurrentUser(session.user.id);
       setLoading(false);
     };
 
-    initializeSearch();
+    initializeSearch().catch((error) => {
+      console.error("Error initializing search:", error);
+      if (!cancelled) setLoading(false);
+    });
 
     // Realtime subscription for profile updates
     const channel = supabase
@@ -120,6 +131,8 @@ const Search = () => {
       .subscribe();
 
     return () => {
+      cancelled = true;
+      clearTimeout(loadingSafety);
       supabase.removeChannel(channel);
     };
   }, [navigate]);
@@ -188,10 +201,14 @@ const Search = () => {
 
     try {
       // Get user's matches to exclude them
-      const { data: matchesData } = await supabase
-        .from("matches")
-        .select("user1_id, user2_id")
-        .or(`user1_id.eq.${currentUser},user2_id.eq.${currentUser}`);
+      const { data: matchesData } = await withFallback(
+        supabase
+          .from("matches")
+          .select("user1_id, user2_id")
+          .or(`user1_id.eq.${currentUser},user2_id.eq.${currentUser}`),
+        { data: [], error: null },
+        4500
+      );
 
       const matchedUserIds = new Set(
         (matchesData || []).map(match => 
@@ -218,7 +235,7 @@ const Search = () => {
         query = query.in("sexual_orientation", selectedOrientations);
       }
 
-      const { data: profilesData, error } = await query;
+      const { data: profilesData, error } = await withTimeout(query, 6000);
 
       if (error) throw error;
 
@@ -340,12 +357,8 @@ const Search = () => {
   const endIndex = startIndex + resultsPerPage;
   const currentProfiles = profiles.slice(startIndex, endIndex);
 
-  if (loading || likesLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">{t('search.loading')}</p>
-      </div>
-    );
+  if (loading) {
+    return <PageLoader />;
   }
 
   return (

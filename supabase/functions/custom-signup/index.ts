@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { replaceTemplateVars, userTemplateVars } from "../_shared/email-template.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -95,8 +96,12 @@ serve(async (req) => {
       throw new Error("Email template not found");
     }
 
-    // Replace placeholder with actual confirmation link
-    const htmlContent = template.html_content.replace(/{{confirmLink}}/g, confirmationUrl);
+    const templateVariables = {
+      ...userTemplateVars(nickname || "Utente", ['recipient']),
+      confirmLink: confirmationUrl,
+    };
+    const subject = replaceTemplateVars(template.subject, templateVariables);
+    const htmlContent = replaceTemplateVars(template.html_content, templateVariables);
 
     // Send email using Resend
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
@@ -104,7 +109,7 @@ serve(async (req) => {
     const { error: emailError } = await resend.emails.send({
       from: "Lovable Connect <noreply@loveableconnect.com>",
       to: [email],
-      subject: template.subject,
+      subject,
       html: htmlContent,
     });
 
@@ -123,12 +128,13 @@ serve(async (req) => {
       .single();
 
     if (welcomeTemplate) {
-      const welcomeHtml = welcomeTemplate.html_content.replace(/{{nickname}}/g, nickname);
+      const welcomeHtml = replaceTemplateVars(welcomeTemplate.html_content, templateVariables);
+      const welcomeSubject = replaceTemplateVars(welcomeTemplate.subject, templateVariables);
       
       const { error: welcomeEmailError } = await resend.emails.send({
         from: "Lovable Connect <noreply@loveableconnect.com>",
         to: [email],
-        subject: welcomeTemplate.subject,
+        subject: welcomeSubject,
         html: welcomeHtml,
       });
 
