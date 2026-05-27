@@ -18,7 +18,6 @@ interface TournamentFlowProps {
 }
 
 type Phase =
-  | "resume_prompt"    // c'e' gia' un torneo active: scelta riprendi/nuovo
   | "select"           // scelta othello/dama
   | "searching"        // animazione composizione bracket
   | "bracket"          // bracket overview, l'utente aspetta o sta per giocare
@@ -56,24 +55,49 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
   } = useTournament(currentUserId);
 
   // ============== AUTO-TRANSITION ==============
-  // Quando il torneo viene caricato/aggiornato, decidiamo dove siamo nel flusso.
-  // 🆕 Se al MOUNT troviamo un torneo active gia' esistente (es. da sessione
-  //    precedente), mostriamo prima un banner "Riprendi / Nuovo" invece di
-  //    saltare dritti alla search.
-  const initialMountRef = useRef(true);
+  // 🚫 NO RESUME: se troviamo un torneo active in DB al mount, lo abbandoniamo
+  //    automaticamente (-20 ELO penalty) e mostriamo la scelta del nuovo gioco.
+  //    L'utente NON puo' riprendere un torneo: qualsiasi uscita (reload, navigate,
+  //    chiusura tab) = sconfitta automatica + perdita ELO.
+  const shouldAbandonExistingRef = useRef(true);
+  const abandoningExistingRef = useRef(false);
 
   useEffect(() => {
     if (!tournament) {
-      // 🛡️ NON settare initialMountRef=false qui: il torneo potrebbe arrivare
-      //    dopo (fetch async). Se lo settassimo a false subito, al successivo
-      //    re-render con tournament active il branch "primo caricamento"
-      //    NON scatterebbe → si saltava direttamente al bracket/search.
+      // 🛡️ Mantieni shouldAbandonExistingRef=true: il torneo potrebbe ancora
+      //    arrivare dalla fetch asincrona di useTournament.
       if (phase !== "select") setPhase("select");
       return;
     }
 
+    // 🆕 PRIMO incontro con un torneo active → abbandona automatico
+    if (
+      tournament.status === "active" &&
+      shouldAbandonExistingRef.current &&
+      !abandoningExistingRef.current
+    ) {
+      abandoningExistingRef.current = true;
+      shouldAbandonExistingRef.current = false;
+      (async () => {
+        try {
+          await abandonTournament("reload_or_reentry");
+          // Reclama il -20 ELO penalty subito, poi cancella stato in memoria.
+          await claimRewards();
+          clearTournament();
+        } catch (e) {
+          console.warn("Auto-abandon failed:", e);
+        }
+        setPhase("select");
+        abandoningExistingRef.current = false;
+      })();
+      return;
+    }
+
+    // Da qui in poi, qualsiasi tournament che vediamo NON e' "orfano"
+    shouldAbandonExistingRef.current = false;
+
     if (tournament.status === "finished" || tournament.status === "abandoned") {
-      // Torneo concluso: passa a result (se non gia' fatto)
+      // Torneo appena concluso (vinto/perso o abbandonato dall'utente in corso)
       if (phase !== "result" && !spectating) {
         (async () => {
           const r = await claimRewards();
@@ -93,34 +117,26 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
           setPhase("result");
         })();
       }
-      initialMountRef.current = false;
       return;
     }
 
-    // Torneo active
-    // 🆕 Primo caricamento con torneo gia' active → chiedi all'utente
-    //    se vuole riprenderlo o iniziarne uno nuovo.
-    if (initialMountRef.current && (phase === "select" || phase === "resume_prompt")) {
-      setPhase("resume_prompt");
-      initialMountRef.current = false;
-      return;
-    }
-    initialMountRef.current = false;
-
+    // Torneo active appena creato dall'utente → mostra search
     if (phase === "select") {
-      // Appena creato (post-create_tournament) → mostra animazione search
       setPhase("searching");
       return;
     }
-    if (phase === "resume_prompt") return; // attende interazione utente
     if (phase === "playing") return;
     if (phase !== "bracket" && phase !== "searching") {
       setPhase("bracket");
     }
-  }, [tournament, phase, spectating, claimRewards]);
+  }, [tournament, phase, spectating, claimRewards, abandonTournament, clearTournament]);
 
   // ============== HANDLER PHASES ==============
   const handleSelectGame = async (gameType: GameType) => {
+    // 🛡️ Il prossimo torneo che arrivera' da useTournament e' QUELLO appena
+    //    creato dall'utente: NON deve essere auto-abbandonato. Spegniamo il
+    //    flag PRIMA di chiamare la RPC.
+    shouldAbandonExistingRef.current = false;
     setCreating(true);
     try {
       await createTournament(gameType);
@@ -210,66 +226,7 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
     setPhase("bracket");
   };
 
-  // ============== HANDLER: RESUME / NEW ==============
-  const handleResume = () => {
-    // Salta al bracket / search secondo lo stato del torneo
-    setPhase("bracket");
-  };
-
-  const handleStartNew = async () => {
-    if (!tournament) {
-      setPhase("select");
-      return;
-    }
-    setCreating(true);
-    try {
-      await abandonTournament("user_chose_new");
-      clearTournament();
-      setPhase("select");
-    } catch (e: any) {
-      toast({
-        title: "Errore",
-        description: e?.message ?? "Impossibile abbandonare il torneo in corso.",
-        variant: "destructive",
-      });
-    } finally {
-      setCreating(false);
-    }
-  };
-
   // ============== RENDER ==============
-  // Phase resume_prompt: c'e' un torneo in corso, chiediamo cosa fare
-  if (phase === "resume_prompt" && tournament) {
-    return (
-      <Card className="mb-6 p-8 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-amber-500/10 border-amber-500/30 text-center">
-        <h3 className="text-2xl font-black bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 bg-clip-text text-transparent mb-3">
-          🏆 Torneo {tournament.game_type === "othello" ? "Othello" : "Dama"} in corso
-        </h3>
-        <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
-          Hai gia' un torneo iniziato. Puoi riprenderlo da dove eri (round{" "}
-          <strong>{tournament.current_round}</strong>) oppure iniziare un nuovo torneo
-          (il vecchio verra' abbandonato e perderai 20 ELO).
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <button
-            onClick={handleResume}
-            disabled={creating}
-            className="px-6 py-3 rounded-lg bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400 text-white font-bold shadow-lg disabled:opacity-50"
-          >
-            🎮 Riprendi torneo
-          </button>
-          <button
-            onClick={handleStartNew}
-            disabled={creating}
-            className="px-6 py-3 rounded-lg bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-400 hover:to-pink-400 text-white font-bold shadow-lg disabled:opacity-50"
-          >
-            {creating ? "Abbandono in corso..." : "🔄 Inizia nuovo torneo"}
-          </button>
-        </div>
-      </Card>
-    );
-  }
-
   // Phase select: nessun torneo attivo, mostra banner di scelta
   if (phase === "select") {
     return (
