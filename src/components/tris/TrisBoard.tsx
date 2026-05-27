@@ -77,15 +77,23 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
   const [showResultOverlay, setShowResultOverlay] = useState(false);
   const [lastEloChange, setLastEloChange] = useState(0);
 
-  // Auto-close della partita 2.5 secondi dopo che il gioco e' finito,
-  // senza piu' overlay popup. L'utente vede il testo "Hai vinto/Hai perso/
-  // Pareggio" sopra la board e poi torniamo automaticamente alla Sfida.
+  // 🛡️ Ref anti-double-call: evita che onGameEnd venga invocato 2 volte.
+  //    Stesso pattern usato in OthelloBoard/CheckersBoard.
+  const resultClosedRef = useRef(false);
+
+  const dismissResultAndReturn = () => {
+    if (resultClosedRef.current) return;
+    resultClosedRef.current = true;
+    setShowResultOverlay(false);
+    onGameEnd(winner === "player" ? "win" : winner === "bot" ? "lose" : "draw");
+  };
+
+  // Auto-close partita dopo 3.5s come fallback (l'utente vede il messaggio
+  // inline "Hai vinto/Hai perso/Pareggio" sopra la board e poi torniamo
+  // automaticamente alla pagina Sfida).
   useEffect(() => {
     if (!showResultOverlay || !winner) return;
-    const t = setTimeout(() => {
-      setShowResultOverlay(false);
-      onGameEnd(winner === "player" ? "win" : winner === "bot" ? "lose" : "draw");
-    }, 2500);
+    const t = setTimeout(dismissResultAndReturn, 3500);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showResultOverlay, winner]);
@@ -194,28 +202,32 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
   }, []);
 
   const startBotEmojiSystem = () => {
+    // 🎭 Personalità admin: 50% degli admin usa emoji, 50% no. Hash
+    // deterministico dell'id (sempre stesso comportamento per quello stesso
+    // admin in ogni partita: chi è "silenzioso" lo è sempre).
+    const usesEmojis = parseInt((opponent.id || "0").replace(/[^0-9a-f]/gi, "").slice(0, 6) || "0", 16) % 2 === 0;
+    if (!usesEmojis) return;
+
     const showRandomEmoji = () => {
-      // 30% chance to show emoji
-      if (Math.random() < 0.3 && !gameOver) {
+      // 40% chance di mandare emoji quando scatta il timer
+      if (Math.random() < 0.4 && !gameOver) {
         const availableEmojis = EMOJIS.filter(e => e !== lastOpponentEmoji);
         const randomEmoji = availableEmojis[Math.floor(Math.random() * availableEmojis.length)];
-        
         setOpponentEmoji(randomEmoji);
         setLastOpponentEmoji(randomEmoji);
-        
         setTimeout(() => {
           setOpponentEmoji(null);
         }, 4000);
       }
-      
-      // Schedule next check at random interval (5-15 seconds)
+
+      // Prossima emoji random tra 30 e 50 secondi (meno spam)
       if (!gameOver) {
-        setTimeout(showRandomEmoji, Math.random() * 10000 + 5000);
+        setTimeout(showRandomEmoji, Math.random() * 20000 + 30000);
       }
     };
-    
-    // Start after 3-8 seconds
-    setTimeout(showRandomEmoji, Math.random() * 5000 + 3000);
+
+    // Prima emoji random tra 15 e 35 secondi (non immediato a inizio partita)
+    setTimeout(showRandomEmoji, Math.random() * 20000 + 15000);
   };
 
   const fetchCurrentUserProfile = async () => {
@@ -606,6 +618,7 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
         onClose={() => setClickedProfile(null)}
         topIndex={null}
         showRank={false}
+        showLikeButton
       />
 
       {showEmoji && (

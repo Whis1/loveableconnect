@@ -663,13 +663,15 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
     // Ricarica i dati dal DB prima di resettare
     await checkGamesRemaining();
 
-    // Reset game
-    setTimeout(() => {
-      setGameState("idle");
-      setSelectedGame(null);
-      setOpponent(null);
-      if (variant !== "page") setShowBanner(false);
-    }, 3000);
+    // 🚀 Reset IMMEDIATO: torna SUBITO alla pagina Sfida.
+    //    Prima c'erano 3s di delay che combinati con i 4s dell'overlay nella
+    //    board lasciavano l'utente bloccato per 7s totali con la scacchiera
+    //    apparentemente "appesa". Ora torniamo immediatamente al banner di
+    //    inizio dove deve di nuovo spendere 1 partita giornaliera o 2 crediti.
+    setGameState("idle");
+    setSelectedGame(null);
+    setOpponent(null);
+    if (variant !== "page") setShowBanner(false);
   };
 
   const getTimeRemaining = () => {

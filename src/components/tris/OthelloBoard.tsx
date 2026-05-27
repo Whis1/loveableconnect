@@ -138,13 +138,24 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
   const PLAYER: "black" = "black";
   const BOT: "white" = "white";
 
-  // Auto-close partita dopo 2.5s dal game over
+  // 🛡️ Ref anti-double-call: il bottone "Continua" dell'overlay E il timer
+  //    di auto-close possono scattare entrambi. Usiamo un ref per assicurarci
+  //    che onGameEnd venga chiamato UNA volta sola.
+  const resultClosedRef = useRef(false);
+
+  // Chiude l'overlay e notifica al parent (TrisGameBanner) che la partita
+  // e' finita, in modo che torni allo state idle (pagina Sfida).
+  const dismissResultAndReturn = () => {
+    if (resultClosedRef.current) return;
+    resultClosedRef.current = true;
+    setShowResultOverlay(false);
+    onGameEnd(winner === "player" ? "win" : winner === "bot" ? "lose" : "draw");
+  };
+
+  // Auto-close partita dopo 3.5s come fallback se l'utente non clicca Continua.
   useEffect(() => {
     if (!showResultOverlay || !winner) return;
-    const t = setTimeout(() => {
-      setShowResultOverlay(false);
-      onGameEnd(winner === "player" ? "win" : winner === "bot" ? "lose" : "draw");
-    }, 4000);
+    const t = setTimeout(dismissResultAndReturn, 3500);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showResultOverlay, winner]);
@@ -703,6 +714,7 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
         <GameResultOverlay
           result={winner === "player" ? "win" : winner === "bot" ? "lose" : "draw"}
           eloChange={lastEloChange}
+          onClose={dismissResultAndReturn}
         />
       )}
 

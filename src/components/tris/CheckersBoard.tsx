@@ -165,15 +165,20 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
   const [lastEloChange, setLastEloChange] = useState(0);
   const [displayBoard, setDisplayBoard] = useState<Board>([]);
 
-  // Auto-close della partita 2.5 secondi dopo che il gioco e' finito,
-  // senza piu' overlay popup. L'utente vede il testo "Hai vinto/Hai perso"
-  // sopra la board e poi torniamo automaticamente alla Sfida.
+  // 🛡️ Ref anti-double-call (vedi OthelloBoard per spiegazione).
+  const resultClosedRef = useRef(false);
+
+  const dismissResultAndReturn = () => {
+    if (resultClosedRef.current) return;
+    resultClosedRef.current = true;
+    setShowResultOverlay(false);
+    onGameEnd(winner === "player" ? "win" : winner === "bot" ? "lose" : "draw");
+  };
+
+  // Auto-close partita dopo 3.5s come fallback se l'utente non clicca Continua.
   useEffect(() => {
     if (!showResultOverlay || !winner) return;
-    const t = setTimeout(() => {
-      setShowResultOverlay(false);
-      onGameEnd(winner === "player" ? "win" : winner === "bot" ? "lose" : "draw");
-    }, 4000);
+    const t = setTimeout(dismissResultAndReturn, 3500);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showResultOverlay, winner]);
