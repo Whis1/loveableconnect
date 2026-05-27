@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Heart, Check, Loader2 } from "lucide-react";
+import { Trophy, Heart, Check, Loader2, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 import { VictoryIcon, DefeatIcon } from "@/lib/gameIcons";
@@ -25,6 +25,7 @@ interface ProfileStats {
   totalWins: number;
   totalLosses: number;
   top1Trophies: number;
+  tournamentsWon: number;
 }
 
 interface Props {
@@ -99,6 +100,7 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
             totalWins: adminStats.totalWins,
             totalLosses: adminStats.totalLosses,
             top1Trophies: adminStats.top1Trophies,
+            tournamentsWon: adminStats.tournamentsWon,
           });
         } else {
           const { data: tris } = await supabase
@@ -116,6 +118,7 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
             totalWins: (row?.tris_wins ?? 0) + (row?.dama_wins ?? 0) + (row?.othello_wins ?? 0),
             totalLosses: (row?.tris_losses ?? 0) + (row?.dama_losses ?? 0) + (row?.othello_losses ?? 0),
             top1Trophies: row?.top_1_trophies ?? 0,
+            tournamentsWon: row?.tournaments_won ?? 0,
           });
         }
       } catch (e) {
@@ -126,6 +129,7 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
             totalWins: 0,
             totalLosses: 0,
             top1Trophies: 0,
+            tournamentsWon: 0,
           });
         }
       } finally {
@@ -310,6 +314,28 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
                       {stats.elo}
                     </p>
                   </div>
+
+                  {/* 👑 Tornei Vinti: counter incrementato in claim_tournament_rewards
+                      ogni volta che l'utente arriva 1° (vincitore finale) di un torneo. */}
+                  <TooltipProvider delayDuration={150}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="w-full flex items-center justify-center gap-2 p-3 rounded-lg bg-gradient-to-r from-fuchsia-500/20 to-pink-500/20 border border-fuchsia-500/40 hover:from-fuchsia-500/30 hover:to-pink-500/30 transition-colors cursor-help"
+                        >
+                          <Crown className="w-5 h-5 text-fuchsia-500 dark:text-fuchsia-300" />
+                          <span className="text-sm font-semibold">Tornei Vinti:</span>
+                          <span className="text-lg font-bold text-fuchsia-500 dark:text-fuchsia-300">
+                            {stats.tournamentsWon}
+                          </span>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-sm text-left leading-relaxed">
+                        Indica quante volte il profilo ha vinto un torneo a 8 giocatori (Othello o Dama) arrivando primo in finale. Ogni vittoria vale <strong>12 crediti + 60 ELO</strong>.
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
 
                   {/* 🏆 Campione del giorno: trofeo dato a chi e' #1 in classifica
                       a mezzanotte UTC. Mostrato SEMPRE (anche con 0 trofei) sia

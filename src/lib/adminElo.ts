@@ -204,6 +204,7 @@ export interface AdminStats {
   totalLosses: number;  // Sconfitte LIVE
   totalDraws: number;   // Pareggi (sempre 0 nel modello drift)
   top1Trophies: number; // Volte che e' stato #1 in classifica (simulate)
+  tournamentsWon: number; // Tornei vinti (simulati: proporzionali al baseElo)
 }
 
 // ⚠️ DEPRECATA con il nuovo modello sessioni multiple: ora abbiamo accesso
@@ -315,7 +316,14 @@ export function computeAdminStats(id: string, allAdmins?: AdminSeed[]): AdminSta
   // 🏆 Trofei TOP 1 LIVE: simulati da quante volte e' stato #1 in classifica.
   const top1Trophies = allAdmins ? computeAdminLifetimeTrophies(id, allAdmins) : 0;
 
-  return { elo, baseElo: base, totalWins, totalLosses, totalDraws, top1Trophies };
+  // 🥇 Tornei vinti: simulati in modo deterministico in base al baseElo.
+  //    Formula: tier_elo / 500 + hash variance. Admin top legendari (2500+)
+  //    arrivano a 5-7 tornei vinti, medi 1-2, bassi 0.
+  const tournamentBase = Math.max(0, Math.floor((base - 1000) / 400));
+  const tournamentVariance = hash(`${id}#tourn`) % 3; // 0..2
+  const tournamentsWon = Math.max(0, tournamentBase + tournamentVariance - 1);
+
+  return { elo, baseElo: base, totalWins, totalLosses, totalDraws, top1Trophies, tournamentsWon };
 }
 
 // Mappa id -> ELO simulato corrente. Ogni admin aggiorna al suo ritmo:
