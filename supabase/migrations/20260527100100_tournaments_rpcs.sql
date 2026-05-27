@@ -27,6 +27,10 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+-- 🛡️ Le colonne del RETURNS TABLE (tournament_id, user_slot) altrimenti
+--    confliggono con le colonne omonime di tournament_participants/matches
+--    nelle WHERE clauses. use_column = in caso di ambiguita', prevale la colonna.
+#variable_conflict use_column
 DECLARE
   v_user_id UUID := auth.uid();
   v_tournament_id UUID;
@@ -146,10 +150,10 @@ BEGIN
       v_pre_winner UUID := NULL;
       v_npc_dur INTEGER;
     BEGIN
-      SELECT profile_id INTO v_pa_id FROM public.tournament_participants
-        WHERE tournament_id = v_tournament_id AND slot = v_pa_slot;
-      SELECT profile_id INTO v_pb_id FROM public.tournament_participants
-        WHERE tournament_id = v_tournament_id AND slot = v_pb_slot;
+      SELECT profile_id INTO v_pa_id FROM public.tournament_participants tp
+        WHERE tp.tournament_id = v_tournament_id AND tp.slot = v_pa_slot;
+      SELECT profile_id INTO v_pb_id FROM public.tournament_participants tp
+        WHERE tp.tournament_id = v_tournament_id AND tp.slot = v_pb_slot;
 
       v_is_user := (v_pa_id = v_user_id OR v_pb_id = v_user_id);
 
@@ -166,10 +170,10 @@ BEGIN
             v_elo_a INTEGER;
             v_elo_b INTEGER;
           BEGIN
-            SELECT elo_snapshot INTO v_elo_a FROM public.tournament_participants
-              WHERE tournament_id = v_tournament_id AND profile_id = v_pa_id;
-            SELECT elo_snapshot INTO v_elo_b FROM public.tournament_participants
-              WHERE tournament_id = v_tournament_id AND profile_id = v_pb_id;
+            SELECT elo_snapshot INTO v_elo_a FROM public.tournament_participants tp
+              WHERE tp.tournament_id = v_tournament_id AND tp.profile_id = v_pa_id;
+            SELECT elo_snapshot INTO v_elo_b FROM public.tournament_participants tp
+              WHERE tp.tournament_id = v_tournament_id AND tp.profile_id = v_pb_id;
             v_pre_winner := CASE WHEN v_elo_a >= v_elo_b THEN v_pa_id ELSE v_pb_id END;
           END;
         END IF;
