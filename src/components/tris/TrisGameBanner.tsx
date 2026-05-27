@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Trophy, X, Loader2, Clock, Gamepad2, Sparkles } from "lucide-react";
+import { Trophy, X, Loader2, Clock, Gamepad2 } from "lucide-react";
 import { OpponentSearch } from "./OpponentSearch";
 import { TrisBoard } from "./TrisBoard";
 import { CheckersBoard } from "./CheckersBoard";
@@ -842,26 +842,14 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
           </Button>
         </div>
 
-        {/* 🏆 PULSANTE TORNEO: sotto le 3 colonne minigame, larghezza piena.
-            Apre il flusso TournamentFlow (Othello/Dama) usando lo STESSO
-            biglietto già pagato per aprire il pannello dei minigame.
-            L'utente puo' giocare 1 torneo intero al costo di 1 partita. */}
+        {/* 🏆 PULSANTE TORNEO: semplice, tema rosa/fuchsia del sito. */}
         <div className="mt-5">
           <Button
             onClick={handleStartTournament}
-            className="w-full h-auto py-4 bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-500 hover:from-amber-400 hover:via-yellow-400 hover:to-amber-400 text-black font-black shadow-lg shadow-amber-500/40 hover:shadow-amber-500/60 transition-all relative overflow-hidden group"
+            className="w-full h-12 rounded-full bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-500 hover:from-pink-400 hover:via-fuchsia-400 hover:to-purple-400 text-white font-bold shadow-lg shadow-pink-500/50 hover:shadow-pink-500/70 hover:scale-[1.02] transition-all border-0"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-            <div className="relative flex items-center justify-center gap-3">
-              <Trophy className="w-6 h-6 drop-shadow" />
-              <div className="text-left">
-                <div className="text-base font-black uppercase tracking-wide">🏆 Torneo</div>
-                <div className="text-[10px] font-semibold opacity-80">
-                  8 sfidanti · vinci 12 crediti + 60 ELO
-                </div>
-              </div>
-              <Sparkles className="w-5 h-5 drop-shadow animate-pulse" />
-            </div>
+            <Trophy className="w-4 h-4 mr-2" />
+            Torneo
           </Button>
         </div>
 

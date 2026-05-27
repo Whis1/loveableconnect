@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Trophy, Clock, X, Loader2 } from "lucide-react";
+import { Trophy, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   MatchRow,
@@ -10,7 +10,7 @@ import {
   TournamentRow,
 } from "@/hooks/useTournament";
 
-const AUTO_START_DELAY_MS = 3000;
+const AUTO_START_DELAY_MS = 10000;
 
 interface TournamentBracketViewProps {
   tournament: TournamentRow;
@@ -36,12 +36,6 @@ export const TournamentBracketView = ({
   onStartUserMatch,
   onAbandon,
 }: TournamentBracketViewProps) => {
-  // Ticker per i countdown live
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
 
   // 🚀 Auto-start del match utente: appena userMatch entra in stato 'waiting'
   //    (cioe' appena la sua partita e' pronta), avviamo un countdown 3s e poi
@@ -100,15 +94,6 @@ export const TournamentBracketView = ({
   const findMatch = (round: number, side: "left" | "right" | "final", idx: number = 1) =>
     matches.find((m) => m.round === round && m.bracket_side === side && m.match_index === idx);
 
-  const formatCountdown = (endAt: string | null): string => {
-    if (!endAt) return "";
-    const diff = new Date(endAt).getTime() - now;
-    if (diff <= 0) return "0:00";
-    const m = Math.floor(diff / 60000);
-    const s = Math.floor((diff % 60000) / 1000);
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  };
-
   const isUserInMatch = (m: MatchRow | undefined) =>
     m && (m.player_a_id === currentUserId || m.player_b_id === currentUserId);
 
@@ -149,7 +134,7 @@ export const TournamentBracketView = ({
             </p>
           )}
         </div>
-        {isWinner && <Trophy className="w-3.5 h-3.5 text-amber-400" />}
+        {isWinner && <Trophy className="w-3.5 h-3.5 text-fuchsia-300" />}
       </div>
     );
 
@@ -161,7 +146,7 @@ export const TournamentBracketView = ({
             : isCompleted
             ? "border-white/10 bg-muted/20"
             : isNpcInProgress
-            ? "border-amber-500/40 bg-amber-500/5"
+            ? "border-pink-500/40 bg-pink-500/5"
             : "border-white/10 bg-muted/10 opacity-70"
         } ${compact ? "" : ""}`}
       >
@@ -175,10 +160,7 @@ export const TournamentBracketView = ({
             <span className="text-muted-foreground">In attesa</span>
           )}
           {isNpcInProgress && (
-            <span className="inline-flex items-center gap-1 text-amber-300 font-semibold">
-              <Clock className="w-3 h-3" />
-              {formatCountdown(match.scheduled_end_at)}
-            </span>
+            <span className="text-pink-300/80">⏳ In corso</span>
           )}
           {isUserMatch && !isCompleted && (
             <span className="text-cyan-300 font-bold">
@@ -205,11 +187,11 @@ export const TournamentBracketView = ({
   const userCanStart = userMatch && userMatch.status === "waiting";
 
   return (
-    <Card className="mb-6 p-5 md:p-8 bg-gradient-to-br from-amber-500/10 via-yellow-500/5 to-orange-500/10 border-amber-500/30">
+    <Card className="mb-6 p-5 md:p-8 bg-gradient-to-br from-purple-950/40 via-fuchsia-900/25 to-indigo-950/40 border-pink-500/30 shadow-[0_8px_40px_-12px_rgba(244,114,182,0.35)]">
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h3 className="text-2xl font-black tracking-tight bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 bg-clip-text text-transparent flex items-center gap-2">
-            <Trophy className="w-7 h-7 text-amber-400" />
+          <h3 className="text-2xl font-black tracking-tight bg-gradient-to-r from-pink-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent flex items-center gap-2">
+            <Trophy className="w-7 h-7 text-pink-300" />
             Torneo {tournament.game_type === "othello" ? "Othello" : "Dama"}
           </h3>
           <p className="text-xs text-muted-foreground mt-1">
@@ -253,7 +235,7 @@ export const TournamentBracketView = ({
 
         {/* Colonna 3: Finale */}
         <div className="space-y-4 md:pt-24">
-          <p className="text-[10px] uppercase tracking-wide text-amber-300 text-center font-black">
+          <p className="text-[10px] uppercase tracking-wide text-pink-300 text-center font-black">
             🏆 FINALE
           </p>
           <MatchCard match={finalMatch} />
@@ -293,15 +275,7 @@ export const TournamentBracketView = ({
         </div>
       )}
 
-      {/* Se l'utente sta aspettando NPC */}
-      {!userCanStart && tournament.status === "active" && !userMatch && (
-        <div className="mt-6 text-center p-3 rounded-xl bg-muted/20 border border-white/5">
-          <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-amber-400" />
-          <p className="text-xs text-muted-foreground">
-            In attesa che gli altri match si concludano...
-          </p>
-        </div>
-      )}
+      {/* Loader rimosso su richiesta utente: il bracket parla da solo. */}
     </Card>
   );
 };

@@ -11,38 +11,34 @@ interface TournamentSelectionBannerProps {
 }
 
 // 🏆 Banner di selezione torneo: 2 card grandi per Othello e Dama.
-// Il "biglietto" (1 partita giornaliera o 2 crediti) e' già stato pagato in
-// handleStartGame (prima di entrare nel gameState='selecting'), quindi qui
-// l'utente sta solo scegliendo quale torneo iniziare.
+// Tema rosa/fuchsia/indigo coerente col TrisGameBanner.
 export const TournamentSelectionBanner = ({
   onSelect,
   onClose,
   isCreating = false,
 }: TournamentSelectionBannerProps) => {
   return (
-    <Card className="mb-6 p-8 bg-gradient-to-br from-amber-500/15 via-yellow-500/10 to-amber-500/15 border-amber-500/30 backdrop-blur-sm relative overflow-hidden">
-      {/* Glow di sfondo */}
-      <div className="absolute -inset-2 rounded-2xl bg-gradient-to-br from-amber-500/20 via-yellow-500/15 to-orange-500/20 blur-3xl pointer-events-none" />
-
+    <Card
+      className="
+        mb-6 p-7 relative overflow-hidden
+        bg-gradient-to-br from-purple-950/40 via-fuchsia-900/25 to-indigo-950/40
+        border border-pink-500/30
+        shadow-[0_8px_40px_-12px_rgba(244,114,182,0.35)]
+        before:absolute before:inset-0 before:pointer-events-none
+        before:bg-[radial-gradient(circle_at_top_right,rgba(244,114,182,0.18),transparent_60%),radial-gradient(circle_at_bottom_left,rgba(168,85,247,0.15),transparent_55%)]
+      "
+    >
       <div className="relative flex justify-between items-start mb-6">
-        <div>
-          <h3 className="text-2xl font-black tracking-tight bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(251,191,36,0.4)] flex items-center gap-2">
-            <Trophy className="w-7 h-7 text-amber-400 drop-shadow-[0_2px_4px_rgba(251,191,36,0.6)]" />
-            Scegli il Torneo
-          </h3>
-          <p className="text-sm text-muted-foreground max-w-md mt-2">
-            8 giocatori, bracket a eliminazione diretta. Vinci la finale per ottenere{" "}
-            <span className="text-amber-400 font-bold">12 crediti</span> e{" "}
-            <span className="text-amber-400 font-bold">+60 ELO</span>. Gli admin sono
-            difficili da battere: solo i migliori arrivano in fondo. 🏆
-          </p>
-        </div>
+        <h3 className="text-2xl font-black tracking-tight bg-gradient-to-r from-pink-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent flex items-center gap-2">
+          <Trophy className="w-7 h-7 text-pink-300" />
+          Scegli il Torneo
+        </h3>
         <Button
           variant="ghost"
           size="icon"
           onClick={onClose}
           disabled={isCreating}
-          className="hover:bg-white/5"
+          className="hover:bg-white/5 text-foreground/70 hover:text-foreground"
         >
           <X className="w-5 h-5" />
         </Button>
@@ -62,14 +58,9 @@ export const TournamentSelectionBanner = ({
               <img src={othelloIcon} alt="Othello" className="w-full h-full object-contain drop-shadow-lg" />
             )}
           </div>
-          <div className="text-center z-10">
-            <span className="text-xl font-black tracking-wider uppercase bg-gradient-to-r from-emerald-400 via-green-300 to-emerald-500 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(16,185,129,0.5)]">
-              Torneo Othello
-            </span>
-            <p className="text-[11px] text-muted-foreground mt-1.5">
-              8 sfidanti · eliminazione diretta
-            </p>
-          </div>
+          <span className="text-xl font-black tracking-wider uppercase bg-gradient-to-r from-emerald-400 via-green-300 to-emerald-500 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(16,185,129,0.5)]">
+            Torneo Othello
+          </span>
         </Button>
 
         <Button
@@ -85,22 +76,10 @@ export const TournamentSelectionBanner = ({
               <img src={damaIcon} alt="Dama" className="w-full h-full object-contain drop-shadow-lg scale-110" />
             )}
           </div>
-          <div className="text-center z-10">
-            <span className="text-xl font-black tracking-wider uppercase bg-gradient-to-r from-red-400 via-red-300 to-red-500 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(239,68,68,0.5)]">
-              Torneo Dama
-            </span>
-            <p className="text-[11px] text-muted-foreground mt-1.5">
-              8 sfidanti · eliminazione diretta
-            </p>
-          </div>
+          <span className="text-xl font-black tracking-wider uppercase bg-gradient-to-r from-red-400 via-red-300 to-red-500 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(239,68,68,0.5)]">
+            Torneo Dama
+          </span>
         </Button>
-      </div>
-
-      <div className="relative mt-5 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-center">
-        <p className="text-xs text-amber-200/90">
-          📜 <strong>Premi:</strong> 🥇 12 crediti + 60 ELO · 🥈 4 crediti · 🥉 2 crediti ·{" "}
-          ogni sconfitta -20 ELO
-        </p>
       </div>
     </Card>
   );

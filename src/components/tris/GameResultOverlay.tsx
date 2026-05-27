@@ -118,34 +118,9 @@ const WinOverlay: React.FC<{ creditsEarned: number; eloChange: number; onClose: 
       </motion.div>
       
       <motion.div
-        className="flex gap-2"
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.8 }}
-      >
-        {[...Array(5)].map((_, i) => (
-          <motion.div
-            key={i}
-            animate={{ 
-              y: [0, -10, 0],
-              rotate: [0, 10, -10, 0],
-            }}
-            transition={{ 
-              duration: 0.5, 
-              delay: i * 0.1,
-              repeat: Infinity,
-              repeatDelay: 2,
-            }}
-          >
-            <Star className="w-8 h-8 text-yellow-900 fill-yellow-300" />
-          </motion.div>
-        ))}
-      </motion.div>
-      
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 1 }}
       >
         <Button
           onClick={onClose}
