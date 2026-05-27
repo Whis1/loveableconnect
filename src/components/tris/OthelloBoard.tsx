@@ -762,10 +762,14 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
         <p className="text-[10px]">Vince chi ha più pedine quando nessuno può più muovere.</p>
       </div>
 
-      {/* Game result overlay */}
+      {/* Game result overlay.
+          🏆 In tournamentMode passiamo creditsEarned=0 e eloChange=0 cosi'
+          GameResultOverlay non mostra le pillole "+6 crediti" / "+X ELO"
+          (i premi del torneo sono assegnati alla FINE del torneo, non per match). */}
       {showResultOverlay && winner && (
         <GameResultOverlay
           result={winner === "player" ? "win" : winner === "bot" ? "lose" : "draw"}
+          creditsEarned={tournamentMode ? 0 : 6}
           eloChange={lastEloChange}
           onClose={dismissResultAndReturn}
         />

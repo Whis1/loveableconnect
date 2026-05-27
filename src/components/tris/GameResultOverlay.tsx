@@ -99,15 +99,22 @@ const WinOverlay: React.FC<{ creditsEarned: number; eloChange: number; onClose: 
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.6 }}
       >
-        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-300/50">
-          <Coins className="w-5 h-5 text-yellow-800" />
-          <span className="font-bold text-yellow-900">+{creditsEarned} crediti</span>
-        </div>
-        
-        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-400/50">
-          <TrendingUp className="w-5 h-5 text-green-800" />
-          <span className="font-bold text-green-900">+{eloChange} ELO</span>
-        </div>
+        {/* Pillola crediti SOLO se > 0 (non mostrata in modalita' torneo dove
+            i crediti sono assegnati alla fine del torneo, non per match) */}
+        {creditsEarned > 0 && (
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-300/50">
+            <Coins className="w-5 h-5 text-yellow-800" />
+            <span className="font-bold text-yellow-900">+{creditsEarned} crediti</span>
+          </div>
+        )}
+
+        {/* Pillola ELO SOLO se > 0 */}
+        {eloChange > 0 && (
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-400/50">
+            <TrendingUp className="w-5 h-5 text-green-800" />
+            <span className="font-bold text-green-900">+{eloChange} ELO</span>
+          </div>
+        )}
       </motion.div>
       
       <motion.div
@@ -187,15 +194,19 @@ const LoseOverlay: React.FC<{ eloChange: number; onClose: () => void }> = ({
         😔 Hai perso
       </motion.h1>
       
-      <motion.div
-        className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/30"
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.6 }}
-      >
-        <TrendingDown className="w-5 h-5 text-red-300" />
-        <span className="font-bold text-red-200">{eloChange} ELO</span>
-      </motion.div>
+      {/* Pillola ELO SOLO se valore != 0 (in torneo non si mostra:
+          la penalty -20 e' applicata da claim_tournament_rewards a fine torneo) */}
+      {eloChange !== 0 && (
+        <motion.div
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/30"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.6 }}
+        >
+          <TrendingDown className="w-5 h-5 text-red-300" />
+          <span className="font-bold text-red-200">{eloChange} ELO</span>
+        </motion.div>
+      )}
       
       <motion.p
         className="text-slate-400 text-center max-w-xs"

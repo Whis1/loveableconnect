@@ -1508,10 +1508,14 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
             il risultato sopra la board e dopo 2.5s torniamo automaticamente
             alla Sfida (gestito dall'useEffect "auto-close"). */}
         {gameOver && winner === "player" && (
-          <p className="text-xl font-bold text-primary">🎉 Hai vinto! +6 crediti</p>
+          <p className="text-xl font-bold text-primary">
+            {tournamentMode ? "🎉 Match vinto! Passi al round successivo" : "🎉 Hai vinto! +6 crediti"}
+          </p>
         )}
         {gameOver && winner === "bot" && (
-          <p className="text-xl font-bold text-destructive">😔 Hai perso!</p>
+          <p className="text-xl font-bold text-destructive">
+            {tournamentMode ? "💔 Match perso. Sei eliminato dal torneo" : "😔 Hai perso!"}
+          </p>
         )}
       </div>
 

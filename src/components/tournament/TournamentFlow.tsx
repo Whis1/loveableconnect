@@ -70,7 +70,7 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
       return;
     }
 
-    // 🆕 PRIMO incontro con un torneo active → abbandona automatico
+    // 🆕 PRIMO incontro con un torneo ACTIVE → abbandona automatico (-20 ELO)
     if (
       tournament.status === "active" &&
       shouldAbandonExistingRef.current &&
@@ -81,7 +81,6 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
       (async () => {
         try {
           await abandonTournament("reload_or_reentry");
-          // Reclama il -20 ELO penalty subito, poi cancella stato in memoria.
           await claimRewards();
           clearTournament();
         } catch (e) {
@@ -93,11 +92,25 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
       return;
     }
 
+    // 🆕 PRIMO incontro con un torneo FINISHED/ABANDONED → torneo "fantasma"
+    //    di una sessione precedente. NON mostriamo il banner risultato: il
+    //    torneo e' gia' concluso e l'utente ha visto (o saltato) il banner.
+    //    Pulizia silenziosa e si ricomincia da zero (scelta gioco).
+    if (
+      (tournament.status === "finished" || tournament.status === "abandoned") &&
+      shouldAbandonExistingRef.current
+    ) {
+      shouldAbandonExistingRef.current = false;
+      clearTournament();
+      setPhase("select");
+      return;
+    }
+
     // Da qui in poi, qualsiasi tournament che vediamo NON e' "orfano"
     shouldAbandonExistingRef.current = false;
 
     if (tournament.status === "finished" || tournament.status === "abandoned") {
-      // Torneo appena concluso (vinto/perso o abbandonato dall'utente in corso)
+      // Torneo concluso NELLA SESSIONE CORRENTE → mostra banner risultato
       if (phase !== "result" && !spectating) {
         (async () => {
           const r = await claimRewards();
