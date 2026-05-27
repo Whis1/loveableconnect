@@ -270,11 +270,14 @@ export function useTournament(currentUserId: string | null) {
   }, [tournament?.id, tournament?.status, matches]);
 
   // ============== USER MATCH SELECTOR ==============
-  // Il match attualmente "giocabile" o "in attesa" per l'utente.
+  // Il match attualmente "giocabile" o "in attesa" per l'utente. NON filtriamo
+  // per round perche' i lati left/right del bracket avanzano indipendentemente:
+  // l'utente potrebbe essere gia' in semifinale anche se l'altro lato e' ancora
+  // ai quarti (current_round resta 1). Filtrando per round perderemmo il match
+  // semifinale dell'utente. Filtra solo per is_user_match + status attivo.
   const userMatch = matches.find(
     (m) =>
       m.is_user_match &&
-      m.round === tournament?.current_round &&
       (m.status === "waiting" || m.status === "in_progress")
   );
 

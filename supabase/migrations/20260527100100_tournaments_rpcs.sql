@@ -427,37 +427,109 @@ SET search_path = public
 AS $$
 DECLARE
   v_tournament public.tournaments%ROWTYPE;
-  v_pending INTEGER;
-  v_round INTEGER;
+  v_user_id UUID;
+  v_min_open_round INTEGER;
 BEGIN
   SELECT * INTO v_tournament FROM public.tournaments WHERE id = _tournament_id;
   IF NOT FOUND OR v_tournament.status <> 'active' THEN RETURN; END IF;
+  v_user_id := v_tournament.user_id;
 
-  v_round := v_tournament.current_round;
+  -- =====================================================================
+  -- AVANZAMENTO PER LATO (left / right indipendenti)
+  -- I 2 quarti del lato SX → popolano la semi SX (se non gia' popolata).
+  -- I 2 quarti del lato DX → popolano la semi DX (se non gia' popolata).
+  -- La finale aspetta entrambe le semi completate.
+  -- =====================================================================
 
-  -- Quanti match del round attuale NON sono completed?
-  SELECT COUNT(*) INTO v_pending FROM public.tournament_matches
-    WHERE tournament_id = _tournament_id
-      AND round = v_round
-      AND status <> 'completed';
-  IF v_pending > 0 THEN RETURN; END IF; -- non ancora pronto
+  -- ===== LATO LEFT: 2 quarti → 1 semi =====
+  DECLARE
+    v_left_pending INTEGER;
+    v_semi_left public.tournament_matches%ROWTYPE;
+  BEGIN
+    SELECT COUNT(*) INTO v_left_pending FROM public.tournament_matches
+      WHERE tournament_id = _tournament_id AND round = 1
+        AND bracket_side = 'left' AND status <> 'completed';
+    IF v_left_pending = 0 THEN
+      SELECT * INTO v_semi_left FROM public.tournament_matches
+        WHERE tournament_id = _tournament_id AND round = 2 AND bracket_side = 'left';
+      IF v_semi_left.status = 'pending' THEN
+        UPDATE public.tournament_matches SET
+          player_a_id = (SELECT winner_id FROM public.tournament_matches
+            WHERE tournament_id = _tournament_id AND round = 1
+              AND bracket_side = 'left' AND match_index = 1),
+          player_b_id = (SELECT winner_id FROM public.tournament_matches
+            WHERE tournament_id = _tournament_id AND round = 1
+              AND bracket_side = 'left' AND match_index = 2)
+        WHERE id = v_semi_left.id;
+        PERFORM public._tournament_setup_match(v_semi_left.id, v_user_id);
+      END IF;
+    END IF;
+  END;
 
-  IF v_round = 3 THEN
-    -- Finale completata
-    DECLARE
-      v_final_winner UUID;
-      v_user_id UUID := v_tournament.user_id;
-      v_user_final_pos INTEGER;
-    BEGIN
-      SELECT winner_id INTO v_final_winner FROM public.tournament_matches
+  -- ===== LATO RIGHT: 2 quarti → 1 semi =====
+  DECLARE
+    v_right_pending INTEGER;
+    v_semi_right public.tournament_matches%ROWTYPE;
+  BEGIN
+    SELECT COUNT(*) INTO v_right_pending FROM public.tournament_matches
+      WHERE tournament_id = _tournament_id AND round = 1
+        AND bracket_side = 'right' AND status <> 'completed';
+    IF v_right_pending = 0 THEN
+      SELECT * INTO v_semi_right FROM public.tournament_matches
+        WHERE tournament_id = _tournament_id AND round = 2 AND bracket_side = 'right';
+      IF v_semi_right.status = 'pending' THEN
+        UPDATE public.tournament_matches SET
+          player_a_id = (SELECT winner_id FROM public.tournament_matches
+            WHERE tournament_id = _tournament_id AND round = 1
+              AND bracket_side = 'right' AND match_index = 1),
+          player_b_id = (SELECT winner_id FROM public.tournament_matches
+            WHERE tournament_id = _tournament_id AND round = 1
+              AND bracket_side = 'right' AND match_index = 2)
+        WHERE id = v_semi_right.id;
+        PERFORM public._tournament_setup_match(v_semi_right.id, v_user_id);
+      END IF;
+    END IF;
+  END;
+
+  -- ===== FINALE: aspetta che ENTRAMBE le semi siano completed =====
+  DECLARE
+    v_semi_pending INTEGER;
+    v_final_match public.tournament_matches%ROWTYPE;
+  BEGIN
+    SELECT COUNT(*) INTO v_semi_pending FROM public.tournament_matches
+      WHERE tournament_id = _tournament_id AND round = 2 AND status <> 'completed';
+    IF v_semi_pending = 0 THEN
+      SELECT * INTO v_final_match FROM public.tournament_matches
         WHERE tournament_id = _tournament_id AND round = 3;
+      IF v_final_match.status = 'pending' THEN
+        UPDATE public.tournament_matches SET
+          player_a_id = (SELECT winner_id FROM public.tournament_matches
+            WHERE tournament_id = _tournament_id AND round = 2 AND bracket_side = 'left'),
+          player_b_id = (SELECT winner_id FROM public.tournament_matches
+            WHERE tournament_id = _tournament_id AND round = 2 AND bracket_side = 'right')
+        WHERE id = v_final_match.id;
+        PERFORM public._tournament_setup_match(v_final_match.id, v_user_id);
+      END IF;
+    END IF;
+  END;
 
-      -- Calcola posizione finale dell'utente
+  -- ===== FINALE COMPLETATA → status='finished' =====
+  DECLARE
+    v_final_winner UUID;
+    v_user_final_pos INTEGER;
+  BEGIN
+    SELECT winner_id INTO v_final_winner FROM public.tournament_matches
+      WHERE tournament_id = _tournament_id AND round = 3 AND status = 'completed';
+    IF v_final_winner IS NOT NULL THEN
       SELECT CASE
-        WHEN v_final_winner = v_user_id THEN 1                  -- vincitore
-        WHEN EXISTS (SELECT 1 FROM public.tournament_matches WHERE tournament_id = _tournament_id AND round = 3 AND (player_a_id = v_user_id OR player_b_id = v_user_id)) THEN 2  -- finalista perdente
-        WHEN EXISTS (SELECT 1 FROM public.tournament_matches WHERE tournament_id = _tournament_id AND round = 2 AND (player_a_id = v_user_id OR player_b_id = v_user_id)) THEN 3  -- semifinalista perdente (3 o 4, tie)
-        ELSE 5  -- quartifinalista perdente (5..8)
+        WHEN v_final_winner = v_user_id THEN 1
+        WHEN EXISTS (SELECT 1 FROM public.tournament_matches
+          WHERE tournament_id = _tournament_id AND round = 3
+            AND (player_a_id = v_user_id OR player_b_id = v_user_id)) THEN 2
+        WHEN EXISTS (SELECT 1 FROM public.tournament_matches
+          WHERE tournament_id = _tournament_id AND round = 2
+            AND (player_a_id = v_user_id OR player_b_id = v_user_id)) THEN 3
+        ELSE 5
       END INTO v_user_final_pos;
 
       UPDATE public.tournaments SET
@@ -467,112 +539,79 @@ BEGIN
         user_final_position = v_user_final_pos,
         finished_at = NOW()
       WHERE id = _tournament_id;
-
-      -- Premi assegnati separatamente via claim_tournament_rewards (idempotente)
-    END;
-    RETURN;
-  END IF;
-
-  -- Popola il prossimo round (v_round+1)
-  -- Round 2 (semi):
-  --   left:  vincitore match(round=1, side=left, idx=1) vs vincitore match(round=1, side=left, idx=2)
-  --   right: vincitore match(round=1, side=right, idx=1) vs vincitore match(round=1, side=right, idx=2)
-  -- Round 3 (finale):
-  --   vincitore match(round=2, side=left) vs vincitore match(round=2, side=right)
-  IF v_round = 1 THEN
-    -- Semi LEFT
-    UPDATE public.tournament_matches SET
-      player_a_id = (SELECT winner_id FROM public.tournament_matches
-                     WHERE tournament_id = _tournament_id AND round = 1 AND bracket_side = 'left' AND match_index = 1),
-      player_b_id = (SELECT winner_id FROM public.tournament_matches
-                     WHERE tournament_id = _tournament_id AND round = 1 AND bracket_side = 'left' AND match_index = 2)
-    WHERE tournament_id = _tournament_id AND round = 2 AND bracket_side = 'left';
-
-    -- Semi RIGHT
-    UPDATE public.tournament_matches SET
-      player_a_id = (SELECT winner_id FROM public.tournament_matches
-                     WHERE tournament_id = _tournament_id AND round = 1 AND bracket_side = 'right' AND match_index = 1),
-      player_b_id = (SELECT winner_id FROM public.tournament_matches
-                     WHERE tournament_id = _tournament_id AND round = 1 AND bracket_side = 'right' AND match_index = 2)
-    WHERE tournament_id = _tournament_id AND round = 2 AND bracket_side = 'right';
-
-  ELSIF v_round = 2 THEN
-    UPDATE public.tournament_matches SET
-      player_a_id = (SELECT winner_id FROM public.tournament_matches
-                     WHERE tournament_id = _tournament_id AND round = 2 AND bracket_side = 'left'),
-      player_b_id = (SELECT winner_id FROM public.tournament_matches
-                     WHERE tournament_id = _tournament_id AND round = 2 AND bracket_side = 'right')
-    WHERE tournament_id = _tournament_id AND round = 3;
-  END IF;
-
-  -- Avvia ogni match del nuovo round
-  DECLARE
-    rec RECORD;
-    v_user_id UUID := v_tournament.user_id;
-    v_is_user BOOLEAN;
-    v_pre_winner UUID;
-    v_npc_dur INTEGER;
-  BEGIN
-    FOR rec IN
-      SELECT * FROM public.tournament_matches
-        WHERE tournament_id = _tournament_id AND round = v_round + 1
-    LOOP
-      v_is_user := (rec.player_a_id = v_user_id OR rec.player_b_id = v_user_id);
-
-      IF v_is_user THEN
-        -- Match utente: status='waiting' (aspetta click "Inizia partita")
-        UPDATE public.tournament_matches SET
-          is_user_match = TRUE,
-          status = 'waiting',
-          predetermined_winner_id = NULL
-        WHERE id = rec.id;
-      ELSE
-        -- Match NPC: serve un predetermined winner.
-        -- Logica: usa il vincitore con piu' alto ELO snapshot (deterministico,
-        -- semplice). Per tornei dove la difficolta' deve essere alta, gli admin
-        -- top-ELO tendenzialmente passano. Variante: usa win_prob ELO-based ma
-        -- gia' al create_tournament il client lo fa per round 1, qui semplifico.
-        DECLARE
-          v_elo_a INTEGER;
-          v_elo_b INTEGER;
-        BEGIN
-          SELECT elo_snapshot INTO v_elo_a FROM public.tournament_participants
-            WHERE tournament_id = _tournament_id AND profile_id = rec.player_a_id;
-          SELECT elo_snapshot INTO v_elo_b FROM public.tournament_participants
-            WHERE tournament_id = _tournament_id AND profile_id = rec.player_b_id;
-
-          -- Probabilita' di vittoria ELO standard: Pa = 1 / (1 + 10^((Eb-Ea)/400))
-          -- Coin flip pesato: se random() < Pa → vince A
-          DECLARE
-            v_pa_prob NUMERIC;
-          BEGIN
-            v_pa_prob := 1.0 / (1.0 + power(10, (v_elo_b - v_elo_a) / 400.0));
-            IF random() < v_pa_prob THEN
-              v_pre_winner := rec.player_a_id;
-            ELSE
-              v_pre_winner := rec.player_b_id;
-            END IF;
-          END;
-        END;
-
-        v_npc_dur := 240 + floor(random() * 361)::INTEGER;
-
-        UPDATE public.tournament_matches SET
-          is_user_match = FALSE,
-          predetermined_winner_id = v_pre_winner,
-          status = 'in_progress',
-          started_at = NOW(),
-          scheduled_end_at = NOW() + (v_npc_dur || ' seconds')::INTERVAL
-        WHERE id = rec.id;
-      END IF;
-    END LOOP;
+      RETURN;
+    END IF;
   END;
 
-  UPDATE public.tournaments SET current_round = v_round + 1 WHERE id = _tournament_id;
+  -- ===== AGGIORNA current_round = min round non-completed =====
+  SELECT MIN(round) INTO v_min_open_round FROM public.tournament_matches
+    WHERE tournament_id = _tournament_id AND status <> 'completed';
+  IF v_min_open_round IS NOT NULL AND v_min_open_round <> v_tournament.current_round THEN
+    UPDATE public.tournaments SET current_round = v_min_open_round WHERE id = _tournament_id;
+  END IF;
 END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.advance_tournament(UUID) TO authenticated;
+
+-- =====================================================================
+-- _tournament_setup_match: helper interno che configura un match appena
+-- popolato (con player_a/b assegnati). Decide se utente o NPC, e nel caso
+-- NPC genera predetermined_winner_id (ELO-based) + scheduled_end_at.
+-- =====================================================================
+CREATE OR REPLACE FUNCTION public._tournament_setup_match(
+  _match_id UUID,
+  _user_id UUID
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_match public.tournament_matches%ROWTYPE;
+  v_is_user BOOLEAN;
+  v_pre_winner UUID;
+  v_npc_dur INTEGER;
+  v_elo_a INTEGER;
+  v_elo_b INTEGER;
+  v_pa_prob NUMERIC;
+BEGIN
+  SELECT * INTO v_match FROM public.tournament_matches WHERE id = _match_id;
+  IF NOT FOUND THEN RETURN; END IF;
+  IF v_match.player_a_id IS NULL OR v_match.player_b_id IS NULL THEN RETURN; END IF;
+
+  v_is_user := (v_match.player_a_id = _user_id OR v_match.player_b_id = _user_id);
+
+  IF v_is_user THEN
+    UPDATE public.tournament_matches SET
+      is_user_match = TRUE,
+      status = 'waiting',
+      predetermined_winner_id = NULL
+    WHERE id = _match_id;
+  ELSE
+    SELECT elo_snapshot INTO v_elo_a FROM public.tournament_participants tp
+      WHERE tp.tournament_id = v_match.tournament_id AND tp.profile_id = v_match.player_a_id;
+    SELECT elo_snapshot INTO v_elo_b FROM public.tournament_participants tp
+      WHERE tp.tournament_id = v_match.tournament_id AND tp.profile_id = v_match.player_b_id;
+    v_pa_prob := 1.0 / (1.0 + power(10, (v_elo_b - v_elo_a) / 400.0));
+    IF random() < v_pa_prob THEN
+      v_pre_winner := v_match.player_a_id;
+    ELSE
+      v_pre_winner := v_match.player_b_id;
+    END IF;
+    v_npc_dur := 240 + floor(random() * 361)::INTEGER;
+
+    UPDATE public.tournament_matches SET
+      is_user_match = FALSE,
+      predetermined_winner_id = v_pre_winner,
+      status = 'in_progress',
+      started_at = NOW(),
+      scheduled_end_at = NOW() + (v_npc_dur || ' seconds')::INTERVAL
+    WHERE id = _match_id;
+  END IF;
+END;
+$$;
 
 -- ============================================================
 -- abandon_tournament: utente abbandona (volontariamente o per timeout).
