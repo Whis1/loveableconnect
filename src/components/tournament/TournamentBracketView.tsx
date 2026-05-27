@@ -1,14 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Trophy, Clock, Play, X, Loader2 } from "lucide-react";
+import { Trophy, Clock, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   MatchRow,
   ParticipantRow,
   TournamentRow,
 } from "@/hooks/useTournament";
+
+const AUTO_START_DELAY_MS = 3000;
 
 interface TournamentBracketViewProps {
   tournament: TournamentRow;
@@ -40,6 +42,38 @@ export const TournamentBracketView = ({
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  // 🚀 Auto-start del match utente: appena userMatch entra in stato 'waiting'
+  //    (cioe' appena la sua partita e' pronta), avviamo un countdown 3s e poi
+  //    chiamiamo onStartUserMatch automaticamente. Niente piu' click manuale.
+  const [autoStartSecs, setAutoStartSecs] = useState<number | null>(null);
+  const autoStartTriggeredRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!userMatch || userMatch.status !== "waiting") {
+      setAutoStartSecs(null);
+      return;
+    }
+    // Evita di re-triggerare se gia' partito per questo match
+    if (autoStartTriggeredRef.current === userMatch.id) return;
+    autoStartTriggeredRef.current = userMatch.id;
+
+    setAutoStartSecs(Math.round(AUTO_START_DELAY_MS / 1000));
+    // Countdown visivo
+    const countdownTimer = setInterval(() => {
+      setAutoStartSecs((s) => (s === null || s <= 1 ? null : s - 1));
+    }, 1000);
+    // Trigger effettivo dopo AUTO_START_DELAY_MS
+    const startTimer = setTimeout(() => {
+      onStartUserMatch().catch((e) => console.error("auto-start failed:", e));
+    }, AUTO_START_DELAY_MS);
+
+    return () => {
+      clearInterval(countdownTimer);
+      clearTimeout(startTimer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userMatch?.id, userMatch?.status]);
 
   const participantById = new Map(participants.map((p) => [p.profile_id, p]));
 
@@ -243,19 +277,19 @@ export const TournamentBracketView = ({
         </div>
       </div>
 
-      {/* CTA "Inizia partita" se il match utente e' waiting */}
+      {/* 🚀 Auto-start partita utente: countdown automatico, niente click */}
       {userCanStart && (
         <div className="mt-6 flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-r from-cyan-500/15 via-blue-500/15 to-cyan-500/15 border-2 border-cyan-400/40 animate-pulse">
           <p className="text-sm font-semibold text-cyan-300">
             🎮 La tua partita è pronta!
           </p>
-          <Button
-            onClick={onStartUserMatch}
-            className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-bold shadow-lg shadow-cyan-500/40"
-          >
-            <Play className="w-4 h-4 mr-2" />
-            Inizia partita
-          </Button>
+          <p className="text-xs text-cyan-200/80">
+            Avvio automatico tra{" "}
+            <span className="font-black text-cyan-100 text-lg">
+              {autoStartSecs ?? Math.round(AUTO_START_DELAY_MS / 1000)}
+            </span>{" "}
+            secondi…
+          </p>
         </div>
       )}
 
