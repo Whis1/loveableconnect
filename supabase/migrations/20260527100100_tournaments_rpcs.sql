@@ -603,16 +603,25 @@ BEGIN
 
   IF v_tournament.status <> 'active' THEN RETURN; END IF;
 
-  -- L'utente che abbandona viene trattato come se avesse PERSO il prossimo
-  -- match che avrebbe dovuto giocare. La posizione finale dipende dal round
-  -- corrente del torneo:
+  -- 🆕 Determina la posizione finale dell'utente:
+  --   - Se l'utente e' GIA' STATO ELIMINATO (perso un match) → usa
+  --     eliminated_in_round del participant (round in cui ha perso).
+  --   - Altrimenti (abbandono volontario PRIMA di giocare) → usa
+  --     current_round del torneo.
+  -- Mapping round → posizione:
   --   round 1 (quarti)  → posizione 5 (5°-8°, premio 0 + -20 ELO)
   --   round 2 (semi)    → posizione 3 (3°-4°, premio 2 + -20 ELO)
   --   round 3 (finale)  → posizione 2 (premio 4 + -20 ELO)
   DECLARE
     v_final_pos INTEGER;
+    v_user_elim_round INTEGER;
   BEGIN
-    v_final_pos := CASE v_tournament.current_round
+    SELECT eliminated_in_round INTO v_user_elim_round
+      FROM public.tournament_participants tp
+      WHERE tp.tournament_id = _tournament_id
+        AND tp.profile_id = v_tournament.user_id;
+
+    v_final_pos := CASE COALESCE(v_user_elim_round, v_tournament.current_round)
       WHEN 1 THEN 5
       WHEN 2 THEN 3
       WHEN 3 THEN 2

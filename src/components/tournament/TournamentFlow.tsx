@@ -209,26 +209,32 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
     setPhase("playing");
   };
 
-  // Quando la board chiama onGameEnd → reportUserResult e torna al bracket
+  // Quando la board chiama onGameEnd → reportUserResult.
+  // Se l'utente HA PERSO il match (non finale) → abbandona immediatamente il
+  // torneo: niente "continua come spettatore", l'utente viene sbattuto subito
+  // alla pagina Sfida con un toast.
   const handleBoardGameEnd = async (result: "win" | "lose" | "draw") => {
     if (!userMatch) return;
     // Pareggio non ammesso in torneo: Othello forza "lose" in caso di parita',
     // Dama non produce pareggi. Per sicurezza tratto draw come lose.
     const userWon = result === "win";
     await reportUserResult(userWon);
+
     if (userWon) {
       toast({
         title: "🎯 Match vinto!",
         description: "Passi al round successivo.",
       });
+      setPhase("bracket");
     } else {
-      toast({
-        title: "💔 Match perso",
-        description: "Sei eliminato dal torneo.",
-        variant: "destructive",
-      });
+      // 🚪 Sconfitta utente: termina IMMEDIATAMENTE il torneo per lui.
+      //    Se era la finale (round 3), advance_tournament ha gia' messo
+      //    status='finished'. Per quarti/semi il torneo resta 'active' per
+      //    gli altri → chiamiamo abandon esplicito cosi' l'utente esce.
+      //    L'useEffect rilevera' lo status non-active e mostrera' il toast
+      //    finale + onExit.
+      await abandonTournament("lost_match");
     }
-    setPhase("bracket");
   };
 
   const handleAbandon = async () => {
