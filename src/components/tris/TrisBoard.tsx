@@ -2,11 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { X as XIcon } from "lucide-react";
+import { X as XIcon, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { GameResultOverlay } from "./GameResultOverlay";
 import { ProfileStatsDialog } from "./ProfileStatsDialog";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 interface Profile {
   id: string;
@@ -86,6 +87,28 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
     resultClosedRef.current = true;
     setShowResultOverlay(false);
     onGameEnd(winner === "player" ? "win" : winner === "bot" ? "lose" : "draw");
+  };
+
+  // 🔧 ADMIN TEST: forza vittoria istantanea per testare il flusso post-game.
+  const isAdmin = useIsAdmin();
+  const forceAdminWin = async () => {
+    if (gameCompletedRef.current) return;
+    gameCompletedRef.current = true;
+    setGameOver(true);
+    setWinner("player");
+    await updateUserElo(20);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        await supabase.rpc("increment_game_stat" as any, {
+          p_user_id: session.user.id,
+          p_game: "tris",
+          p_result: "win",
+        });
+      }
+    } catch {}
+    setLastEloChange(20);
+    setShowResultOverlay(true);
   };
 
   // Auto-close partita dopo 3.5s come fallback (l'utente vede il messaggio
@@ -519,7 +542,18 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
   };
 
   return (
-    <Card className="p-6 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+    <Card className="p-6 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 relative">
+      {/* 🔧 ADMIN: pulsante test "Vinci ora" — visibile solo a user_roles.role='admin' */}
+      {isAdmin && !gameOver && (
+        <button
+          onClick={forceAdminWin}
+          className="absolute top-2 right-2 z-30 flex items-center gap-1 px-2 py-1 rounded-md bg-orange-500/90 hover:bg-orange-500 text-white text-[10px] font-bold shadow-lg border border-orange-300"
+          title="DEBUG: forza vittoria utente (visibile solo admin)"
+        >
+          <Wrench className="w-3 h-3" />
+          [ADMIN] Vinci ora
+        </button>
+      )}
       {/* Players Row */}
       <div className="flex justify-between items-center mb-6">
         {/* Current User - Left */}

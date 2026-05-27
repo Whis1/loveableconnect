@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { GameResultOverlay } from "./GameResultOverlay";
 import { ProfileStatsDialog } from "./ProfileStatsDialog";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { Wrench } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -173,6 +175,33 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
     resultClosedRef.current = true;
     setShowResultOverlay(false);
     onGameEnd(winner === "player" ? "win" : winner === "bot" ? "lose" : "draw");
+  };
+
+  // 🔧 ADMIN TEST: forza vittoria istantanea per testare il flusso post-game.
+  const isAdmin = useIsAdmin();
+  const forceAdminWin = () => {
+    if (gameCompletedRef.current) return;
+    gameCompletedRef.current = true;
+    setGameOver(true);
+    setWinner("player");
+    if (!tournamentMode) {
+      updateUserElo(20);
+      // Stats win in modo non-bloccante
+      (async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            await supabase.rpc("increment_game_stat" as any, {
+              p_user_id: session.user.id,
+              p_game: "dama",
+              p_result: "win",
+            });
+          }
+        } catch {}
+      })();
+    }
+    setLastEloChange(tournamentMode ? 0 : 20);
+    setShowResultOverlay(true);
   };
 
   // Auto-close partita dopo 3.5s come fallback se l'utente non clicca Continua.
@@ -1239,7 +1268,18 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
   };
 
   return (
-    <Card className="p-6 bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
+    <Card className="p-6 bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20 relative">
+      {/* 🔧 ADMIN: pulsante test "Vinci ora" — visibile solo a user_roles.role='admin' */}
+      {isAdmin && !gameOver && (
+        <button
+          onClick={forceAdminWin}
+          className="absolute top-2 right-2 z-30 flex items-center gap-1 px-2 py-1 rounded-md bg-orange-500/90 hover:bg-orange-500 text-white text-[10px] font-bold shadow-lg border border-orange-300"
+          title="DEBUG: forza vittoria utente (visibile solo admin)"
+        >
+          <Wrench className="w-3 h-3" />
+          [ADMIN] Vinci ora
+        </button>
+      )}
       {/* Players Row */}
       <div className="flex justify-between items-center mb-6">
         {/* Current User */}

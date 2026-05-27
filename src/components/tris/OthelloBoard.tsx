@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { GameResultOverlay } from "./GameResultOverlay";
 import { ProfileStatsDialog } from "./ProfileStatsDialog";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { Wrench } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -150,6 +152,21 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
     resultClosedRef.current = true;
     setShowResultOverlay(false);
     onGameEnd(winner === "player" ? "win" : winner === "bot" ? "lose" : "draw");
+  };
+
+  // 🔧 ADMIN TEST: forza vittoria istantanea per testare il flusso post-game.
+  const isAdmin = useIsAdmin();
+  const forceAdminWin = () => {
+    if (gameCompletedRef.current) return;
+    gameCompletedRef.current = true;
+    setGameOver(true);
+    setWinner("player");
+    if (!tournamentMode) {
+      updateUserElo(20);
+      recordWinStat();
+    }
+    setLastEloChange(tournamentMode ? 0 : 20);
+    setShowResultOverlay(true);
   };
 
   // Auto-close partita dopo 3.5s come fallback se l'utente non clicca Continua.
@@ -530,7 +547,19 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
   const validPlayerMoves = !gameOver && isPlayerTurn ? getAllValidMoves(board, PLAYER).map((m) => m.idx) : [];
 
   return (
-    <Card className="mb-6 p-4 md:p-6 bg-gradient-to-br from-emerald-50 via-emerald-100 to-green-50 dark:from-emerald-950/40 dark:via-green-950/30 dark:to-emerald-950/40 border-emerald-500/40">
+    <Card className="mb-6 p-4 md:p-6 bg-gradient-to-br from-emerald-50 via-emerald-100 to-green-50 dark:from-emerald-950/40 dark:via-green-950/30 dark:to-emerald-950/40 border-emerald-500/40 relative">
+      {/* 🔧 ADMIN: pulsante test "Vinci ora" — visibile solo a user_roles.role='admin'.
+          Forza vittoria istantanea per testare il flusso post-game. */}
+      {isAdmin && !gameOver && (
+        <button
+          onClick={forceAdminWin}
+          className="absolute top-2 right-2 z-30 flex items-center gap-1 px-2 py-1 rounded-md bg-orange-500/90 hover:bg-orange-500 text-white text-[10px] font-bold shadow-lg border border-orange-300"
+          title="DEBUG: forza vittoria utente (visibile solo admin)"
+        >
+          <Wrench className="w-3 h-3" />
+          [ADMIN] Vinci ora
+        </button>
+      )}
       {/* Header con avatar (player sx, opponent dx) */}
       <div className="flex items-center justify-between mb-4">
         {/* Player (sx) */}
