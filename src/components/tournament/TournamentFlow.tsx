@@ -65,6 +65,11 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
   // 🚪 Evita double-process del result toast quando il torneo passa a
   //    finished/abandoned (useEffect potrebbe rifire piu' volte).
   const resultProcessedRef = useRef(false);
+  // 🆔 ID del torneo creato dall'utente IN QUESTA sessione. Il banner di
+  //    risultato (TournamentEndBanner) scatta SOLO se tournament.id corrisponde
+  //    a questo ref. Cosi' i tornei "fantasma" di sessioni precedenti non
+  //    fanno mai apparire il banner — vengono solo puliti silenziosamente.
+  const sessionTournamentIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!tournament) {
@@ -123,11 +128,19 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
     // Da qui in poi, qualsiasi tournament che vediamo NON e' "orfano"
     shouldAbandonExistingRef.current = false;
 
+    // 🆔 Memorizza l'ID del torneo "di sessione" la PRIMA volta che vediamo
+    //    un torneo active non-orfano. Sara' usato per filtrare il banner.
+    if (tournament.status === "active" && !sessionTournamentIdRef.current) {
+      sessionTournamentIdRef.current = tournament.id;
+    }
+
     if (tournament.status === "finished" || tournament.status === "abandoned") {
-      // 🏆 Torneo concluso NELLA SESSIONE CORRENTE → mostra il TournamentEndBanner
-      //    premium (tematico, animato, auto-close 5s). Il banner si chiude da
-      //    solo o on click X → chiama handleEndBannerClose → clearTournament + onExit.
-      if (!resultProcessedRef.current) {
+      // 🏆 Torneo concluso NELLA SESSIONE CORRENTE → mostra il banner SOLO se
+      //    l'id del torneo corrisponde a quello che abbiamo creato in questa
+      //    sessione. Altrimenti e' un fantasma di sessione precedente: pulizia
+      //    silenziosa.
+      const isOurSession = tournament.id === sessionTournamentIdRef.current;
+      if (!resultProcessedRef.current && isOurSession) {
         resultProcessedRef.current = true;
         (async () => {
           const r = await claimRewards();
@@ -137,6 +150,14 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
             eloDelta: r?.elo_delta ?? 0,
             gameType: tournament.game_type,
           });
+        })();
+      } else if (!isOurSession && !resultProcessedRef.current) {
+        // Fantasma: claim silenzioso (idempotente) + cleanup
+        resultProcessedRef.current = true;
+        (async () => {
+          try { await claimRewards(); } catch {}
+          clearTournament();
+          setPhase("select");
         })();
       }
       return;
@@ -157,10 +178,12 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
   const handleSelectGame = async (gameType: GameType) => {
     // 🛡️ Il prossimo torneo che arrivera' da useTournament e' QUELLO appena
     //    creato dall'utente: NON deve essere auto-abbandonato. Spegniamo il
-    //    flag PRIMA di chiamare la RPC. Reset anche resultProcessedRef cosi'
-    //    il toast finale del NUOVO torneo scatti regolarmente.
+    //    flag PRIMA di chiamare la RPC. Reset anche resultProcessedRef e
+    //    sessionTournamentIdRef cosi' il banner finale del NUOVO torneo
+    //    scatti regolarmente per il giusto id.
     shouldAbandonExistingRef.current = false;
     resultProcessedRef.current = false;
+    sessionTournamentIdRef.current = null;
     setCreating(true);
     try {
       await createTournament(gameType);

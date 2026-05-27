@@ -72,7 +72,14 @@ export const TournamentEndBanner: React.FC<TournamentEndBannerProps> = ({
 }) => {
   const [progress, setProgress] = useState(0);
 
-  // Auto-close timer + progress bar
+  // 🛡️ Ref per onClose: cosi' useEffect dipende solo da `open`. Senza questo,
+  //    onClose cambiava reference ad ogni render del parent → useEffect runa
+  //    di nuovo → timer reset da capo → countdown non scatta mai.
+  const onCloseRef = React.useRef(onClose);
+  React.useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     if (!open) return;
     const start = Date.now();
@@ -82,11 +89,11 @@ export const TournamentEndBanner: React.FC<TournamentEndBannerProps> = ({
       setProgress(pct);
       if (elapsed >= AUTO_CLOSE_MS) {
         clearInterval(interval);
-        onClose();
+        onCloseRef.current();
       }
     }, 50);
     return () => clearInterval(interval);
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
