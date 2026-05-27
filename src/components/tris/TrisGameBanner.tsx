@@ -2,11 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Trophy, X, Loader2, Clock, Gamepad2 } from "lucide-react";
+import { Trophy, X, Loader2, Clock, Gamepad2, Sparkles } from "lucide-react";
 import { OpponentSearch } from "./OpponentSearch";
 import { TrisBoard } from "./TrisBoard";
 import { CheckersBoard } from "./CheckersBoard";
+import { OthelloBoard } from "./OthelloBoard";
 import { EloLeaderboard } from "./EloLeaderboard";
+import { TournamentFlow } from "@/components/tournament/TournamentFlow";
 import { supabase } from "@/integrations/supabase/client";
 import { getStoredUserId } from "@/lib/storedSession";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +16,7 @@ import { useCredits } from "@/hooks/useCredits";
 import { InsufficientCreditsBanner } from "@/components/chat/InsufficientCreditsBanner";
 import trisIcon from "@/assets/tris-icon.png";
 import damaIcon from "@/assets/dama-icon.png";
+import othelloIcon from "@/assets/othello-icon.png";
 
 interface Profile {
   id: string;
@@ -24,8 +27,10 @@ interface Profile {
 
 export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "page" }) => {
   const [showBanner, setShowBanner] = useState(variant === "page");
-  const [gameState, setGameState] = useState<"idle" | "selecting" | "searching" | "playing">("idle");
-  const [selectedGame, setSelectedGame] = useState<"tris" | "dama" | null>(null);
+  // 🏆 Aggiunto stato 'tournament' che gestisce l'intero flusso torneo
+  //    delegato al componente TournamentFlow (bracket 8-player).
+  const [gameState, setGameState] = useState<"idle" | "selecting" | "searching" | "playing" | "tournament">("idle");
+  const [selectedGame, setSelectedGame] = useState<"tris" | "dama" | "othello" | null>(null);
   const [opponent, setOpponent] = useState<Profile | null>(null);
   const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
   const [gamesPlayed, setGamesPlayed] = useState(0);
@@ -333,7 +338,7 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
     setGameState("selecting");
   };
 
-  const handleGameSelect = (game: "tris" | "dama") => {
+  const handleGameSelect = (game: "tris" | "dama" | "othello") => {
     console.log('🎮 Game selected:', game);
     setSelectedGame(game);
     setGameState("searching");
@@ -500,6 +505,26 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
      throw new Error('Max retries reached');
    };
 
+   // 🏆 Avvio del flusso torneo: consuma il "biglietto" (partita giornaliera o
+   //    2 crediti gia' pagati in handleStartGame) e passa a stato 'tournament'.
+   //    Stesso pattern di handleOpponentFound per la consistenza.
+   const handleStartTournament = async () => {
+     try {
+       const unlimited = hasUnlimitedGames();
+       if (!unlimited) {
+         await incrementGamesPlayedWithRetry();
+       }
+       setGameState("tournament");
+     } catch (err) {
+       console.error('🚨 Errore avvio torneo:', err);
+       toast({
+         title: "Errore",
+         description: "Impossibile avviare il torneo. Riprova.",
+         variant: "destructive",
+       });
+     }
+   };
+
    const handleOpponentFound = async (foundOpponent: Profile) => {
      try {
        // 🔍 LOG DIAGNOSTICO: capire perche' (eventualmente) il counter
@@ -597,8 +622,15 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
     // 🏆 NUOVO SISTEMA: snapshot giornaliero. Niente piu' trofei alla
     // "transizione" (era exploitabile perdendo apposta per risalire).
     // Chi e' #1 a mezzanotte UTC riceve 1 trofeo "champion of the day".
-    // L'assegnazione viene fatta lazy dalla RPC award_daily_top1_if_needed
-    // chiamata all'apertura della pagina giochi (vedi EloLeaderboard).
+    // Chiamiamo la RPC sia qui (post-partita) sia da EloLeaderboard (apertura
+    // pagina) per aumentare le occasioni di assegnazione + snapshot della
+    // classifica, così non dipendiamo solo dal fatto che qualcuno apra la
+    // classifica per scatenare lo snapshot giornaliero.
+    try {
+      await supabase.rpc('award_daily_top1_if_needed' as any);
+    } catch (e) {
+      console.warn('award_daily_top1_if_needed (post-partita):', e);
+    }
 
     // Award credits if win
     if (result === "win") {
@@ -754,8 +786,8 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
           </div>
         </div>
         
-        {/* Game Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Game Selection — 3 colonne con Othello al centro tra Tris e Dama */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Button
             onClick={() => handleGameSelect("tris")}
             className="h-auto p-6 flex flex-col items-center gap-4 bg-gradient-to-br from-blue-500/20 via-blue-600/15 to-blue-700/20 hover:from-blue-500/30 hover:via-blue-600/25 hover:to-blue-700/30 border-2 border-blue-500/40 hover:border-blue-400/60 transition-all duration-300 hover:scale-105 group relative overflow-hidden"
@@ -770,23 +802,90 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
               </span>
             </div>
           </Button>
-          
+
+          {/* 🆕 Othello/Reversi al CENTRO tra Tris e Dama */}
+          <Button
+            onClick={() => handleGameSelect("othello")}
+            className="h-auto p-6 flex flex-col items-center gap-4 bg-gradient-to-br from-emerald-500/20 via-green-600/15 to-emerald-700/20 hover:from-emerald-500/30 hover:via-green-600/25 hover:to-emerald-700/30 border-2 border-emerald-500/40 hover:border-emerald-400/60 transition-all duration-300 hover:scale-105 group relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+            <div className="w-20 h-20 flex items-center justify-center">
+              <img src={othelloIcon} alt="Othello" className="w-full h-full object-contain drop-shadow-lg" />
+            </div>
+            <div className="text-center z-10">
+              <span className="text-2xl font-black tracking-wider uppercase bg-gradient-to-r from-emerald-400 via-green-300 to-emerald-500 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(16,185,129,0.5)]">
+                OTHELLO
+              </span>
+            </div>
+          </Button>
+
           <Button
             onClick={() => handleGameSelect("dama")}
             className="h-auto p-6 flex flex-col items-center gap-4 bg-gradient-to-br from-purple-500/20 via-purple-600/15 to-purple-700/20 hover:from-purple-500/30 hover:via-purple-600/25 hover:to-purple-700/30 border-2 border-purple-500/40 hover:border-purple-400/60 transition-all duration-300 hover:scale-105 group relative overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-            <div className="w-20 h-20 flex items-center justify-center">
-              <img src={damaIcon} alt="Dama" className="w-full h-full object-contain drop-shadow-lg" />
+            {/* 📏 Container leggermente più grande per Dama: l'icona ha
+                bordi trasparenti che la facevano sembrare più piccola di
+                Tris/Othello. w-24 h-24 + scale-110 compensa visivamente. */}
+            <div className="w-24 h-24 flex items-center justify-center">
+              <img src={damaIcon} alt="Dama" className="w-full h-full object-contain drop-shadow-lg scale-110" />
             </div>
             <div className="text-center z-10">
-              <span className="text-2xl font-black tracking-wider uppercase bg-gradient-to-r from-purple-400 via-purple-300 to-purple-500 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(168,85,247,0.5)]">
+              {/* 🎨 Rosso luminoso, stessa "luce" di Tris (azzurro) e
+                  Othello (verde chiaro) — chiaro al centro, sfumato sui lati. */}
+              <span className="text-2xl font-black tracking-wider uppercase bg-gradient-to-r from-red-400 via-red-300 to-red-500 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(239,68,68,0.5)]">
                 DAMA
               </span>
             </div>
           </Button>
         </div>
 
+        {/* 🏆 PULSANTE TORNEO: sotto le 3 colonne minigame, larghezza piena.
+            Apre il flusso TournamentFlow (Othello/Dama) usando lo STESSO
+            biglietto già pagato per aprire il pannello dei minigame.
+            L'utente puo' giocare 1 torneo intero al costo di 1 partita. */}
+        <div className="mt-5">
+          <Button
+            onClick={handleStartTournament}
+            className="w-full h-auto py-4 bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-500 hover:from-amber-400 hover:via-yellow-400 hover:to-amber-400 text-black font-black shadow-lg shadow-amber-500/40 hover:shadow-amber-500/60 transition-all relative overflow-hidden group"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+            <div className="relative flex items-center justify-center gap-3">
+              <Trophy className="w-6 h-6 drop-shadow" />
+              <div className="text-left">
+                <div className="text-base font-black uppercase tracking-wide">🏆 Torneo</div>
+                <div className="text-[10px] font-semibold opacity-80">
+                  8 sfidanti · vinci 12 crediti + 60 ELO
+                </div>
+              </div>
+              <Sparkles className="w-5 h-5 drop-shadow animate-pulse" />
+            </div>
+          </Button>
+        </div>
+
+      </Card>
+    );
+  }
+
+  // 🏆 Phase TORNEO: delega tutto al TournamentFlow
+  if (gameState === "tournament" && currentUserId) {
+    return (
+      <Card className="mb-6 p-0 bg-transparent border-0 shadow-none">
+        <TournamentFlow
+          currentUserId={currentUserId}
+          onExit={async () => {
+            // A torneo concluso (volontariamente o per fine match):
+            //  1) Ri-leggi le partite giocate (probabile incremento in DB)
+            //  2) Torna allo state idle (la pagina Sfida)
+            try {
+              await checkGamesRemaining();
+            } catch {}
+            setGameState("idle");
+            setSelectedGame(null);
+            setOpponent(null);
+            if (variant !== "page") setShowBanner(false);
+          }}
+        />
       </Card>
     );
   }
@@ -806,6 +905,11 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
   if (gameState === "playing" && opponent && selectedGame === "dama") {
     console.log('🎮 Rendering CheckersBoard');
     return <CheckersBoard opponent={opponent} onGameEnd={handleGameEnd} />;
+  }
+
+  if (gameState === "playing" && opponent && selectedGame === "othello") {
+    console.log('🎮 Rendering OthelloBoard');
+    return <OthelloBoard opponent={opponent} onGameEnd={handleGameEnd} />;
   }
 
 

@@ -18,6 +18,10 @@ interface Profile {
 interface CheckersBoardProps {
   opponent: Profile;
   onGameEnd: (result: "win" | "lose" | "draw") => void;
+  /** 🏆 Modalità torneo: skip update_game_elo + increment_game_stat (gestiti
+   *  da claim_tournament_rewards alla fine del torneo). Niente penalty
+   *  abbandono in unmount perche' il torneo ha la sua logica abandon. */
+  tournamentMode?: boolean;
 }
 
 type PieceType = "red" | "black" | "red-king" | "black-king" | null;
@@ -133,7 +137,7 @@ function renderPiece(piece: PieceType) {
 }
 
 
-export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
+export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: CheckersBoardProps) => {
   const [board, setBoard] = useState<Board>([]);
   const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
   const [validMoves, setValidMoves] = useState<number[]>([]);
@@ -169,7 +173,7 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
     const t = setTimeout(() => {
       setShowResultOverlay(false);
       onGameEnd(winner === "player" ? "win" : winner === "bot" ? "lose" : "draw");
-    }, 2500);
+    }, 4000);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showResultOverlay, winner]);
@@ -299,25 +303,26 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
   };
 
   const startBotEmojiSystem = () => {
+    // 🎭 Personalità admin: 50% degli admin usa emoji, 50% no (silenzioso).
+    // Hash deterministico dell'id: lo stesso admin ha sempre lo stesso stile.
+    const usesEmojis = parseInt((opponent.id || "0").replace(/[^0-9a-f]/gi, "").slice(0, 6) || "0", 16) % 2 === 0;
+    if (!usesEmojis) return;
+
     const showRandomEmoji = () => {
-      if (Math.random() < 0.3 && !gameOver) {
+      // 40% chance ogni 30-50 secondi (meno spam, più naturale)
+      if (Math.random() < 0.4 && !gameOver) {
         const availableEmojis = EMOJIS.filter(e => e !== lastOpponentEmoji);
         const randomEmoji = availableEmojis[Math.floor(Math.random() * availableEmojis.length)];
-        
         setOpponentEmoji(randomEmoji);
         setLastOpponentEmoji(randomEmoji);
-        
-        setTimeout(() => {
-          setOpponentEmoji(null);
-        }, 4000);
+        setTimeout(() => setOpponentEmoji(null), 4000);
       }
-      
       if (!gameOver) {
-        setTimeout(showRandomEmoji, Math.random() * 10000 + 5000);
+        setTimeout(showRandomEmoji, Math.random() * 20000 + 30000);
       }
     };
-    
-    setTimeout(showRandomEmoji, Math.random() * 5000 + 3000);
+    // Prima emoji random tra 15 e 35 secondi
+    setTimeout(showRandomEmoji, Math.random() * 20000 + 15000);
   };
 
   const fetchCurrentUserProfile = async () => {
@@ -344,6 +349,9 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
   };
 
   const updateUserElo = async (eloChange: number) => {
+    // 🏆 In modalità torneo NON tocchiamo l'ELO globale: la differenza
+    //    finale (vincitore +60, sconfitta -20) la applica claim_tournament_rewards.
+    if (tournamentMode) return;
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
@@ -362,6 +370,9 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
   // 🛡️ Registra sconfitta dama nelle stats (anti-evasione). Stesso pattern
   // di TrisBoard.recordLossStat — chiamato in tutti gli scenari di abbandono.
   const recordLossStat = async () => {
+    // 🏆 In modalità torneo niente increment: gli stat sono aggregati dalla
+    //    RPC claim_tournament_rewards a torneo finito.
+    if (tournamentMode) return;
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
@@ -1322,6 +1333,7 @@ export const CheckersBoard = ({ opponent, onGameEnd }: CheckersBoardProps) => {
         onClose={() => setClickedProfile(null)}
         topIndex={null}
         showRank={false}
+        showLikeButton
       />
 
       {showEmoji && (
