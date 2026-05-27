@@ -66,7 +66,11 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
       return;
     }
 
-    // 🆕 PRIMO incontro con un torneo ACTIVE → abbandona automatico (-20 ELO)
+    // 🆕 PRIMO incontro con un torneo ACTIVE → abbandona automatico (-20 ELO).
+    //    🛡️ resultProcessedRef=true SINCRONO: blocca il branch "concluso
+    //       sessione corrente" che altrimenti scatterebbe per race condition
+    //       quando il realtime channel notifica tournament=abandoned PRIMA
+    //       che clearTournament finisca.
     if (
       tournament.status === "active" &&
       shouldAbandonExistingRef.current &&
@@ -74,10 +78,11 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
     ) {
       abandoningExistingRef.current = true;
       shouldAbandonExistingRef.current = false;
+      resultProcessedRef.current = true;
       (async () => {
         try {
           await abandonTournament("reload_or_reentry");
-          await claimRewards();
+          await claimRewards(); // idempotente: applica -20 ELO se non gia' claimato
           clearTournament();
         } catch (e) {
           console.warn("Auto-abandon failed:", e);
@@ -88,17 +93,22 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
       return;
     }
 
-    // 🆕 PRIMO incontro con un torneo FINISHED/ABANDONED → torneo "fantasma"
-    //    di una sessione precedente. NON mostriamo il banner risultato: il
-    //    torneo e' gia' concluso e l'utente ha visto (o saltato) il banner.
-    //    Pulizia silenziosa e si ricomincia da zero (scelta gioco).
+    // 🆕 PRIMO incontro con torneo FINISHED/ABANDONED → torneo fantasma di
+    //    sessione precedente. Pulizia silenziosa, NESSUN toast. claim idempotente
+    //    per applicare premi/penalty se non lo erano gia' stati.
     if (
       (tournament.status === "finished" || tournament.status === "abandoned") &&
       shouldAbandonExistingRef.current
     ) {
       shouldAbandonExistingRef.current = false;
-      clearTournament();
-      setPhase("select");
+      resultProcessedRef.current = true; // 🛡️ blocca branch "concluso"
+      (async () => {
+        try {
+          await claimRewards(); // idempotente
+        } catch {}
+        clearTournament();
+        setPhase("select");
+      })();
       return;
     }
 
@@ -163,8 +173,10 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
   const handleSelectGame = async (gameType: GameType) => {
     // 🛡️ Il prossimo torneo che arrivera' da useTournament e' QUELLO appena
     //    creato dall'utente: NON deve essere auto-abbandonato. Spegniamo il
-    //    flag PRIMA di chiamare la RPC.
+    //    flag PRIMA di chiamare la RPC. Reset anche resultProcessedRef cosi'
+    //    il toast finale del NUOVO torneo scatti regolarmente.
     shouldAbandonExistingRef.current = false;
+    resultProcessedRef.current = false;
     setCreating(true);
     try {
       await createTournament(gameType);
