@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, ChevronDown, ChevronUp } from "lucide-react";
+import { Trophy, ChevronDown, ChevronUp, Crown } from "lucide-react";
 import { computeAdminElos } from "@/lib/adminElo";
 import { ProfileStatsDialog } from "./ProfileStatsDialog";
 import { VictoryIcon, DefeatIcon } from "@/lib/gameIcons";
@@ -84,11 +84,18 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
   const [topPlayers, setTopPlayers] = useState<LeaderboardProfile[]>([]);
   const [userElo, setUserElo] = useState<number>(1200);
   const [userRank, setUserRank] = useState<number | null>(null);
-  // 🏆 Stats personali dell'utente: vittorie / sconfitte / trofei (campioni del giorno)
+  // 👤 Profilo dell'utente loggato: serve per avatar + nickname nella card stile partita
+  const [userProfile, setUserProfile] = useState<{
+    nickname: string | null;
+    full_name: string;
+    avatar_url: string | null;
+  } | null>(null);
+  // 🏆 Stats personali dell'utente: V/S/trofei/tornei_vinti
   const [userStats, setUserStats] = useState<{
     wins: number;
     losses: number;
     trophies: number;
+    tournamentsWon: number;
   } | null>(null);
   // 🆕 Default true: la classifica è APERTA appena si entra. Click sulla
   // tendina per chiuderla.
@@ -176,10 +183,10 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
           .gt("game_elo", myElo);
         setUserRank(higher + (count ?? 0) + 1);
 
-        // 🏆 Carica vittorie/sconfitte/trofei dell'utente da tris_games
+        // 🏆 Carica vittorie/sconfitte/trofei/tornei_vinti dell'utente da tris_games
         const { data: tris } = await supabase
           .from("tris_games")
-          .select("tris_wins, tris_losses, dama_wins, dama_losses, othello_wins, othello_losses, top_1_trophies")
+          .select("tris_wins, tris_losses, dama_wins, dama_losses, othello_wins, othello_losses, top_1_trophies, tournaments_won")
           .eq("user_id", userId)
           .order("updated_at", { ascending: false })
           .limit(1)
@@ -190,7 +197,18 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
           wins: (row?.tris_wins ?? 0) + (row?.dama_wins ?? 0) + (row?.othello_wins ?? 0),
           losses: (row?.tris_losses ?? 0) + (row?.dama_losses ?? 0) + (row?.othello_losses ?? 0),
           trophies: row?.top_1_trophies ?? 0,
+          tournamentsWon: row?.tournaments_won ?? 0,
         });
+
+        // 👤 Profilo: nickname + avatar per la card stile partita
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("nickname, full_name, avatar_url")
+          .eq("id", userId)
+          .maybeSingle();
+        if (profile) {
+          setUserProfile(profile as any);
+        }
       }
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
@@ -274,54 +292,77 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
   return (
     <div className="space-y-4">
       {userId && (
-        <Card className="p-4 bg-gradient-to-r from-primary/20 to-secondary/20 border-primary/30">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Il tuo ELO</p>
-              <p className="text-3xl font-bold text-primary">{userElo}</p>
+        <Card className="p-5 bg-gradient-to-br from-purple-950/40 via-fuchsia-900/25 to-indigo-950/40 border-pink-500/30 shadow-[0_8px_40px_-12px_rgba(244,114,182,0.35)]">
+          {/* 🎮 Card stile board partita: avatar grande + nickname + ELO + posizione */}
+          <div className="flex items-center gap-4">
+            <Avatar className="w-16 h-16 border-2 border-pink-400/60 shadow-lg shadow-pink-500/30 shrink-0">
+              <AvatarImage src={getAvatarUrl(userProfile?.avatar_url ?? null)} />
+              <AvatarFallback className="bg-fuchsia-500/20 text-pink-200 font-bold">
+                {(userProfile?.nickname ?? userProfile?.full_name ?? "ME").slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-base truncate bg-gradient-to-r from-pink-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent">
+                {userProfile?.nickname ?? userProfile?.full_name ?? "Tu"}
+              </p>
+              <p className="text-sm font-bold text-pink-300">
+                ELO <span className="text-2xl font-black">{userElo}</span>
+              </p>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-muted-foreground">Posizione classifica</p>
-              <p className="text-2xl font-bold">{getRankDisplay()}</p>
+            <div className="text-right shrink-0">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                Posizione
+              </p>
+              <p className="text-xl font-black bg-gradient-to-r from-pink-300 to-fuchsia-300 bg-clip-text text-transparent">
+                {getRankDisplay()}
+              </p>
             </div>
           </div>
 
-          {/* 🏆 Stats personali: Vittorie / Sconfitte / Trofei */}
+          {/* 📊 Stats personali (V/S/Trofei/Tornei Vinti) — solo per il proprio profilo */}
           {userStats && (
-            <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-primary/20">
+            <div className="grid grid-cols-4 gap-2 mt-4 pt-4 border-t border-pink-500/20">
               {/* Vittorie */}
-              <div className="flex flex-col items-center p-2.5 rounded-lg bg-gradient-to-br from-emerald-500/15 to-green-500/10 border border-emerald-500/30">
-                <VictoryIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mb-1 drop-shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
-                <span className="text-[10px] uppercase tracking-wider font-semibold text-emerald-700 dark:text-emerald-300">
+              <div className="flex flex-col items-center p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+                <VictoryIcon className="w-4 h-4 text-emerald-400 mb-0.5" />
+                <span className="text-[9px] uppercase tracking-wider font-semibold text-emerald-300/90">
                   Vittorie
                 </span>
-                <span className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 drop-shadow-[0_0_6px_rgba(16,185,129,0.4)]">
+                <span className="text-lg font-black text-emerald-300">
                   {userStats.wins}
                 </span>
               </div>
 
               {/* Sconfitte */}
-              <div className="flex flex-col items-center p-2.5 rounded-lg bg-gradient-to-br from-rose-500/15 to-red-500/10 border border-rose-500/30">
-                <DefeatIcon className="w-5 h-5 text-rose-600 dark:text-rose-400 mb-1 drop-shadow-[0_0_6px_rgba(244,63,94,0.4)]" />
-                <span className="text-[10px] uppercase tracking-wider font-semibold text-rose-700 dark:text-rose-300">
+              <div className="flex flex-col items-center p-2 rounded-lg bg-rose-500/10 border border-rose-500/30">
+                <DefeatIcon className="w-4 h-4 text-rose-400 mb-0.5" />
+                <span className="text-[9px] uppercase tracking-wider font-semibold text-rose-300/90">
                   Sconfitte
                 </span>
-                <span className="text-xl font-extrabold text-rose-600 dark:text-rose-400 drop-shadow-[0_0_6px_rgba(244,63,94,0.4)]">
+                <span className="text-lg font-black text-rose-300">
                   {userStats.losses}
                 </span>
               </div>
 
               {/* Trofei Campione del Giorno */}
-              <div className="flex flex-col items-center p-2.5 rounded-lg bg-gradient-to-br from-yellow-500/20 to-amber-500/15 border border-yellow-500/40 relative overflow-hidden">
-                {userStats.trophies > 0 && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-300/10 to-transparent animate-pulse" />
-                )}
-                <Trophy className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mb-0.5 relative z-10" />
-                <span className="text-[10px] uppercase tracking-wider font-semibold text-yellow-700 dark:text-yellow-300 relative z-10">
+              <div className="flex flex-col items-center p-2 rounded-lg bg-yellow-500/15 border border-yellow-500/40">
+                <Trophy className="w-4 h-4 text-yellow-300 mb-0.5" />
+                <span className="text-[9px] uppercase tracking-wider font-semibold text-yellow-300/90">
                   Trofei
                 </span>
-                <span className="text-xl font-extrabold text-yellow-600 dark:text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)] relative z-10">
+                <span className="text-lg font-black text-yellow-300">
                   {userStats.trophies}
+                </span>
+              </div>
+
+              {/* 👑 Tornei Vinti */}
+              <div className="flex flex-col items-center p-2 rounded-lg bg-fuchsia-500/15 border border-fuchsia-500/40">
+                <Crown className="w-4 h-4 text-fuchsia-300 mb-0.5" />
+                <span className="text-[9px] uppercase tracking-wider font-semibold text-fuchsia-300/90">
+                  Tornei
+                </span>
+                <span className="text-lg font-black text-fuchsia-300">
+                  {userStats.tournamentsWon}
                 </span>
               </div>
             </div>
