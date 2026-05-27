@@ -118,6 +118,10 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
       fidanzato: t('common.inRelationship'),
       fidanzata: t('common.inRelationship'),
       'fidanzato/a': t('common.inRelationship'),
+      // 🔧 Varianti dirty generate da seed-profiles → tutte mappate a "Fidanzato/a"
+      'in una relazione': t('common.inRelationship'),
+      'in_una_relazione': t('common.inRelationship'),
+      relationship: t('common.inRelationship'),
       married: t('common.married'),
       sposato: t('common.married'),
       sposata: t('common.married'),
@@ -132,6 +136,7 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
       'vedovo/a': t('common.widowed'),
       prefer_not_say: t('common.preferNotSay'),
       preferisco_non_dirlo: t('common.preferNotSay'),
+      'preferisco non dirlo': t('common.preferNotSay'),
       scoprilo: t('common.notSpecified'),
     };
     return statusMap[status.toLowerCase()] || status;
@@ -247,6 +252,22 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
 
     if (hasLiked || isLiking) return;
 
+    // 🛡️ PRE-CHECK CLIENT-SIDE: se sappiamo GIÀ dai dati cached che l'utente
+    //    ha 0 like giornalieri rimasti (e non sta usando crediti), mostriamo
+    //    SUBITO il banner crediti SENZA fare la RPC. Eliminiamo il bug
+    //    "optimistic UI fasullo": niente bottone che diventa "Chat" se non
+    //    può davvero essere applicato. La RPC parte solo quando ha senso.
+    //    Skip se monthly premium (like illimitati) e se sta usando crediti.
+    if (!useCredits && !hasPremiumDirectChat) {
+      const dailyRemaining = credits?.daily_likes_remaining ?? null;
+      if (dailyRemaining !== null && dailyRemaining <= 0) {
+        // Like esauriti: mostra banner immediatamente, NESSUNA chiamata RPC,
+        // NESSUNA optimistic UI (il bottone resta "Mi Piace").
+        setShowLikesExhausted(true);
+        return;
+      }
+    }
+
     setIsLiking(true);
     setHasLiked(true); // Optimistic — will be rolled back on failure
 
@@ -278,9 +299,14 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
       }
     } catch (error: any) {
       setHasLiked(false);
+      // 🛡️ Errore esplicito su timeout: l'utente sa che il like NON è andato a
+      //    buon fine, niente "fake messo" silenzioso.
+      const isTimeout = String(error?.message || "").includes("SEND_LIKE_TIMEOUT");
       toast({
-        title: t('common.error'),
-        description: error.message,
+        title: isTimeout ? "Connessione lenta" : t('common.error'),
+        description: isTimeout
+          ? "Il mi piace non è stato inviato. Riprova fra un istante."
+          : (error?.message || "Errore generico"),
         variant: 'destructive',
       });
     } finally {
@@ -289,14 +315,25 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
   };
 
   const handleUseCreditsForLike = async () => {
-    setShowLikesExhausted(false);
+    // 🔒 Anti-spam: se siamo già nel mezzo di un like, ignora il click.
+    //    Il bottone è anche disabled={isProcessing}, ma cinghia + bretelle.
+    if (isLiking) return;
 
     if ((credits?.balance ?? 0) < 2) {
+      setShowLikesExhausted(false);
       setShowCreditsBanner(true);
       return;
     }
 
-    await handleLike({ stopPropagation: () => {} } as React.MouseEvent, true);
+    // 🚀 NON chiudo il banner qui: lo lascio aperto con lo spinner mentre la
+    //    RPC è in volo. Lo chiudo SOLO dopo che handleLike è terminato
+    //    (success o failure). Questo previene il flash "banner si chiude →
+    //    utente clicca altrove → seconda chiamata".
+    try {
+      await handleLike({ stopPropagation: () => {} } as React.MouseEvent, true);
+    } finally {
+      setShowLikesExhausted(false);
+    }
   };
 
   const handleChat = async (e: React.MouseEvent) => {
@@ -573,13 +610,21 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
         currentUserId={currentUserId}
         open={showProfileDialog}
         onOpenChange={setShowProfileDialog}
+        initialProfile={profile}
       />
       
       <DailyLikesExhaustedBanner
         open={showLikesExhausted}
-        onOpenChange={setShowLikesExhausted}
+        onOpenChange={(o) => {
+          // 🔒 Blocco la chiusura del banner mentre la RPC è in volo: l'utente
+          //    deve VEDERE lo spinner sul bottone, non poterlo richiudere e
+          //    spammare di nuovo (questo causava le chiamate parallele).
+          if (isLiking && !o) return;
+          setShowLikesExhausted(o);
+        }}
         onUseCredits={handleUseCreditsForLike}
         resetAt={resetAt}
+        isProcessing={isLiking}
       />
       
       <ChatConfirmationBanner

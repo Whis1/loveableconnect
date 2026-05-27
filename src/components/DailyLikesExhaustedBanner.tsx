@@ -1,18 +1,23 @@
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Clock, Heart } from "lucide-react";
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Clock, Heart, Loader2 } from "lucide-react";
 
 interface DailyLikesExhaustedBannerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUseCredits: () => void;
   resetAt: string | null;
+  /** 🔒 Quando true, il pulsante "Usa 2 Crediti" è disabilitato (spinner).
+   *  Previene il classico spam-click che faceva partire multiple RPC parallele. */
+  isProcessing?: boolean;
 }
 
-export const DailyLikesExhaustedBanner = ({ 
-  open, 
-  onOpenChange, 
+export const DailyLikesExhaustedBanner = ({
+  open,
+  onOpenChange,
   onUseCredits,
-  resetAt
+  resetAt,
+  isProcessing = false,
 }: DailyLikesExhaustedBannerProps) => {
   const formatTimeRemaining = () => {
     if (!resetAt) return "24 ore";
@@ -57,12 +62,27 @@ export const DailyLikesExhaustedBanner = ({
         </AlertDialogHeader>
         <AlertDialogFooter className="flex-col gap-3 sm:gap-3 mt-2">
           <div className="flex flex-col sm:flex-row gap-3 w-full">
-            <AlertDialogCancel className="flex-1 m-0">
+            <AlertDialogCancel className="flex-1 m-0" disabled={isProcessing}>
               Attendi Rinnovo
             </AlertDialogCancel>
-            <AlertDialogAction onClick={onUseCredits} className="flex-1 m-0">
-              Usa 2 Crediti
-            </AlertDialogAction>
+            {/* 🔒 Bottone CUSTOM (non AlertDialogAction) per evitare l'auto-close
+                del dialog: vogliamo restare aperti finché la RPC non torna,
+                così l'utente vede chiaramente lo spinner e NON può spammare
+                aprendo/chiudendo il banner. */}
+            <Button
+              onClick={onUseCredits}
+              disabled={isProcessing}
+              className="flex-1 m-0"
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Invio...
+                </>
+              ) : (
+                "Usa 2 Crediti"
+              )}
+            </Button>
           </div>
         </AlertDialogFooter>
       </AlertDialogContent>
