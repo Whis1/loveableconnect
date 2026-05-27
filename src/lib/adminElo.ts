@@ -298,6 +298,39 @@ function computeAdminLifetimeTrophies(id: string, allAdmins: AdminSeed[]): numbe
   return trophies;
 }
 
+// 👑 Tornei vinti admin: bucket settimanale con epoca recente.
+//    EPOCH = "ricomincia da zero" con il nuovo sistema. Da quella data in poi,
+//    ogni admin con baseElo >= 2000 ha una probabilita' per settimana di
+//    vincere 1 torneo. Probabilita' scalata col tier:
+//      2000-2499 (alti)       → 4% per settimana
+//      2500-2799 (medio-top)  → 8% per settimana
+//      >= 2800   (legendari)  → 15% per settimana
+//    Sotto 2000 non vince mai.
+//    Risultato in 6 mesi (~26 settimane): legendari ~4, alti ~2, medio-top ~1.
+const TOURNAMENT_EPOCH = Date.UTC(2026, 4, 27, 18, 0); // 27 maggio 2026 18:00 UTC
+const TOURNAMENT_BUCKET_MS = 7 * 24 * 60 * 60 * 1000; // 1 settimana
+
+function computeAdminTournamentsWon(id: string): number {
+  const now = Date.now();
+  if (now < TOURNAMENT_EPOCH) return 0;
+  const base = baseElo(id);
+  if (base < 2000) return 0;
+
+  // Probabilita' per bucket settimanale (0..10000)
+  let probPerWeek: number;
+  if (base >= 2800) probPerWeek = 1500;       // 15%
+  else if (base >= 2500) probPerWeek = 800;   // 8%
+  else probPerWeek = 400;                     // 4%
+
+  const totalWeeks = Math.floor((now - TOURNAMENT_EPOCH) / TOURNAMENT_BUCKET_MS);
+  let count = 0;
+  for (let w = 0; w < totalWeeks; w++) {
+    const h = hash(`${id}#tw#${w}`) % 10000;
+    if (h < probPerWeek) count++;
+  }
+  return count;
+}
+
 // `allAdmins` opzionale: se omesso, trofei = 0 (no info per calcolare).
 // Quando passato, calcola i trofei LIVE come descritto sopra.
 export function computeAdminStats(id: string, allAdmins?: AdminSeed[]): AdminStats {
@@ -316,10 +349,11 @@ export function computeAdminStats(id: string, allAdmins?: AdminSeed[]): AdminSta
   // 🏆 Trofei TOP 1 LIVE: simulati da quante volte e' stato #1 in classifica.
   const top1Trophies = allAdmins ? computeAdminLifetimeTrophies(id, allAdmins) : 0;
 
-  // 👑 Tornei vinti per admin = SEMPRE 0.
-  //    Vincere un torneo deve essere un risultato di prestigio reale: solo
-  //    gli utenti veri che battono il bracket lo guadagnano. Niente simulazione.
-  const tournamentsWon = 0;
+  // 👑 Tornei vinti per admin = bucket-based con epoca recente.
+  //    Tutti gli admin partono da 0 alla TOURNAMENT_EPOCH (oggi). Nel tempo
+  //    accumulano vittorie SOLO se baseElo >= 2000, con probabilità per
+  //    bucket settimanale. Ricomincia "da zero con il nuovo sistema".
+  const tournamentsWon = computeAdminTournamentsWon(id);
 
   return { elo, baseElo: base, totalWins, totalLosses, totalDraws, top1Trophies, tournamentsWon };
 }
