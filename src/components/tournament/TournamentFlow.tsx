@@ -6,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import { TournamentSelectionBanner } from "./TournamentSelectionBanner";
 import { TournamentOpponentSearch } from "./TournamentOpponentSearch";
 import { TournamentBracketView } from "./TournamentBracketView";
-import { TournamentResultBanner } from "./TournamentResultBanner";
 import { OthelloBoard } from "../tris/OthelloBoard";
 import { CheckersBoard } from "../tris/CheckersBoard";
 
@@ -21,21 +20,15 @@ type Phase =
   | "select"           // scelta othello/dama
   | "searching"        // animazione composizione bracket
   | "bracket"          // bracket overview, l'utente aspetta o sta per giocare
-  | "playing"          // l'utente sta giocando il suo match (board attiva)
-  | "result";          // banner risultato finale
+  | "playing";         // l'utente sta giocando il suo match (board attiva)
+  // 🚪 NO phase "result": al posto del banner risultato, mostriamo un toast
+  //    e usciamo immediatamente alla pagina Sfida.
 
 // 🏆 Orchestratore del torneo. Gestisce tutte le transizioni di stato e
 // l'interazione con la board del minigame quando tocca all'utente.
 export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) => {
   const [phase, setPhase] = useState<Phase>("select");
   const [creating, setCreating] = useState(false);
-  // Banner risultato (con dati premio post claim)
-  const [resultData, setResultData] = useState<{
-    finalPosition: number | null;
-    creditsAwarded: number;
-    eloDelta: number;
-  } | null>(null);
-  const [spectating, setSpectating] = useState(false);
   // Profilo avversario corrente per la board (estratto dal userMatch)
   const opponentProfileRef = useRef<any>(null);
 
@@ -61,6 +54,9 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
   //    chiusura tab) = sconfitta automatica + perdita ELO.
   const shouldAbandonExistingRef = useRef(true);
   const abandoningExistingRef = useRef(false);
+  // 🚪 Evita double-process del result toast quando il torneo passa a
+  //    finished/abandoned (useEffect potrebbe rifire piu' volte).
+  const resultProcessedRef = useRef(false);
 
   useEffect(() => {
     if (!tournament) {
@@ -110,24 +106,43 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
     shouldAbandonExistingRef.current = false;
 
     if (tournament.status === "finished" || tournament.status === "abandoned") {
-      // Torneo concluso NELLA SESSIONE CORRENTE → mostra banner risultato
-      if (phase !== "result" && !spectating) {
+      // 🚪 Torneo concluso NELLA SESSIONE CORRENTE → niente piu' banner risultato
+      //    (richiesta utente). Mostriamo SOLO un toast con i premi e usciamo
+      //    immediatamente alla pagina Sfida.
+      if (!resultProcessedRef.current) {
+        resultProcessedRef.current = true;
         (async () => {
           const r = await claimRewards();
-          if (r) {
-            setResultData({
-              finalPosition: r.final_position,
-              creditsAwarded: r.credits_awarded ?? 0,
-              eloDelta: r.elo_delta ?? 0,
+          const finalPos = r?.final_position ?? tournament.user_final_position;
+          const credits = r?.credits_awarded ?? 0;
+          const elo = r?.elo_delta ?? 0;
+
+          // Toast informativo in base alla posizione finale
+          if (finalPos === 1) {
+            toast({
+              title: "🏆 Torneo vinto!",
+              description: `+${credits} crediti${elo ? ` · +${elo} ELO` : ""}`,
+            });
+          } else if (finalPos === 2) {
+            toast({
+              title: "🥈 Finale persa",
+              description: `+${credits} crediti${elo ? ` · ${elo} ELO` : ""}`,
+            });
+          } else if (finalPos === 3 || finalPos === 4) {
+            toast({
+              title: "🥉 Semifinale persa",
+              description: `+${credits} crediti${elo ? ` · ${elo} ELO` : ""}`,
             });
           } else {
-            setResultData({
-              finalPosition: tournament.user_final_position,
-              creditsAwarded: 0,
-              eloDelta: 0,
+            toast({
+              title: "💔 Eliminato dal torneo",
+              description: elo ? `${elo} ELO` : "Riprova!",
+              variant: "destructive",
             });
           }
-          setPhase("result");
+
+          clearTournament();
+          onExit();
         })();
       }
       return;
@@ -142,7 +157,7 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
     if (phase !== "bracket" && phase !== "searching") {
       setPhase("bracket");
     }
-  }, [tournament, phase, spectating, claimRewards, abandonTournament, clearTournament]);
+  }, [tournament, phase, claimRewards, abandonTournament, clearTournament, onExit, toast]);
 
   // ============== HANDLER PHASES ==============
   const handleSelectGame = async (gameType: GameType) => {
@@ -222,21 +237,8 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
       return;
     }
     await abandonTournament("voluntary");
-    // claim + result via useEffect
-  };
-
-  const handleResultClose = () => {
-    clearTournament();
-    setResultData(null);
-    setSpectating(false);
-    onExit();
-  };
-
-  const handleSpectate = () => {
-    // L'utente vuole guardare il torneo continuare anche se è eliminato.
-    setSpectating(true);
-    setResultData(null);
-    setPhase("bracket");
+    // Il toast finale + onExit() vengono triggerati dall'useEffect quando
+    // tournament.status passa ad 'abandoned'.
   };
 
   // ============== RENDER ==============
@@ -290,57 +292,16 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
   }
 
   // Phase bracket: overview del torneo
-  if ((phase === "bracket" || spectating) && tournament) {
+  if (phase === "bracket" && tournament) {
     return (
-      <>
-        <TournamentBracketView
-          tournament={tournament}
-          participants={participants}
-          matches={matches}
-          userMatch={spectating ? undefined : userMatch}
-          currentUserId={currentUserId}
-          onStartUserMatch={handleStartUserMatch}
-          onAbandon={handleAbandon}
-        />
-
-        {/* Banner risultato sovrapposto se phase=='result' ma anche in spectating
-            mostriamo il risultato finale quando il torneo è davvero finito.
-            Qui non lo mostriamo se siamo in spectating active → solo a torneo
-            FINITO. */}
-        {resultData && tournament.status !== "active" && (
-          <TournamentResultBanner
-            open={true}
-            finalPosition={resultData.finalPosition}
-            creditsAwarded={resultData.creditsAwarded}
-            eloDelta={resultData.eloDelta}
-            gameType={tournament.game_type}
-            allowSpectate={false}
-            onClose={handleResultClose}
-          />
-        )}
-      </>
-    );
-  }
-
-  // Phase result: torneo concluso, banner con premi
-  if (phase === "result" && resultData && tournament) {
-    // allowSpectate=true SOLO se l'utente è stato eliminato prima della finale
-    // E il torneo è ancora "in corso per gli altri" (ovvero ha senso spettare).
-    // Per semplicita': se finalPosition >= 3 (eliminato prima della finale)
-    // e ci sono ancora match active in altri round, permette spectate.
-    // Per ora: spectate disponibile per posizioni 3-8 SEMPRE (può sempre
-    // riguardare il bracket).
-    const canSpectate = (resultData.finalPosition ?? 0) >= 3;
-    return (
-      <TournamentResultBanner
-        open={true}
-        finalPosition={resultData.finalPosition}
-        creditsAwarded={resultData.creditsAwarded}
-        eloDelta={resultData.eloDelta}
-        gameType={tournament.game_type}
-        allowSpectate={canSpectate}
-        onClose={handleResultClose}
-        onContinueAsSpectator={canSpectate ? handleSpectate : undefined}
+      <TournamentBracketView
+        tournament={tournament}
+        participants={participants}
+        matches={matches}
+        userMatch={userMatch}
+        currentUserId={currentUserId}
+        onStartUserMatch={handleStartUserMatch}
+        onAbandon={handleAbandon}
       />
     );
   }
