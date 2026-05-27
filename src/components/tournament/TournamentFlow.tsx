@@ -64,9 +64,11 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
 
   useEffect(() => {
     if (!tournament) {
-      // Nessun torneo attivo: torna a select
+      // 🛡️ NON settare initialMountRef=false qui: il torneo potrebbe arrivare
+      //    dopo (fetch async). Se lo settassimo a false subito, al successivo
+      //    re-render con tournament active il branch "primo caricamento"
+      //    NON scatterebbe → si saltava direttamente al bracket/search.
       if (phase !== "select") setPhase("select");
-      initialMountRef.current = false;
       return;
     }
 

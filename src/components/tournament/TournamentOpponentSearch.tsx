@@ -46,7 +46,13 @@ export const TournamentOpponentSearch = ({
   const [scrollIndices, setScrollIndices] = useState<Record<number, number>>({});
   // Slot gia' fissati sull'admin assegnato.
   const [settledSlots, setSettledSlots] = useState<Set<number>>(new Set());
-  const animationStarted = useRef(false);
+
+  // 🛡️ Timer in ref PERSISTENTI (non distrutti dal cleanup quando il useEffect
+  //    riruna a causa di updates realtime su `participants`). Il cleanup vero
+  //    avviene solo on unmount (secondo useEffect dedicato).
+  const settleTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const scrollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const animationStartedRef = useRef(false);
 
   // Fetch pool admin profiles all'inizio.
   useEffect(() => {
@@ -72,12 +78,10 @@ export const TournamentOpponentSearch = ({
   }, []);
 
   useEffect(() => {
-    if (animationStarted.current) return;
+    if (animationStartedRef.current) return;
     if (sortedParticipants.length < 8) return;
     if (adminPool.length === 0) return; // aspetta il fetch
-    animationStarted.current = true;
-
-    const settleTimers: ReturnType<typeof setTimeout>[] = [];
+    animationStartedRef.current = true;
 
     // Imposta l'utente come gia' fissato (lo conosciamo, lo vediamo subito).
     sortedParticipants.forEach((p) => {
@@ -90,7 +94,7 @@ export const TournamentOpponentSearch = ({
       }
     });
 
-    // Genera durata random per ogni slot admin.
+    // Genera durata random per ogni slot admin → settle dopo timer.
     sortedParticipants.forEach((p) => {
       if (p.is_user) return;
       const duration =
@@ -103,11 +107,10 @@ export const TournamentOpponentSearch = ({
           return next;
         });
       }, duration);
-      settleTimers.push(t);
+      settleTimersRef.current.push(t);
     });
 
-    // Scrolling globale ogni 150ms: incrementa l'indice di ogni slot non-fermo.
-    // Ogni slot ha un OFFSET random iniziale cosi' non sono tutti sincroni.
+    // Offset random iniziale per ogni slot non-utente.
     const initialOffsets: Record<number, number> = {};
     sortedParticipants.forEach((p) => {
       if (!p.is_user) {
@@ -116,23 +119,33 @@ export const TournamentOpponentSearch = ({
     });
     setScrollIndices(initialOffsets);
 
-    const scrollTimer = setInterval(() => {
+    // Scroll timer: incrementa l'indice di ogni slot non-fermo ogni 150ms.
+    scrollTimerRef.current = setInterval(() => {
       setScrollIndices((prev) => {
         const next = { ...prev };
         sortedParticipants.forEach((p) => {
           if (p.is_user) return;
-          // Incremento +1 ciclico → effetto "scroll" naturale come nel 1v1
           next[p.slot] = ((prev[p.slot] ?? 0) + 1) % adminPool.length;
         });
         return next;
       });
     }, SCROLL_INTERVAL_MS);
 
-    return () => {
-      settleTimers.forEach(clearTimeout);
-      clearInterval(scrollTimer);
-    };
+    // 🚫 NESSUN cleanup qui: i timer vivono finche' il componente non smonta.
+    //    Il cleanup vero e' nel secondo useEffect (deps []).
   }, [sortedParticipants, adminPool]);
+
+  // Cleanup SOLO on unmount
+  useEffect(() => {
+    return () => {
+      settleTimersRef.current.forEach(clearTimeout);
+      settleTimersRef.current = [];
+      if (scrollTimerRef.current) {
+        clearInterval(scrollTimerRef.current);
+        scrollTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // Quando TUTTI gli slot sono settled → pausa drammatica → onComplete.
   useEffect(() => {
