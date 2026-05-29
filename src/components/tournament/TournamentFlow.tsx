@@ -381,11 +381,17 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
   // Phase playing: rende la board del minigame (o lo spareggio dopo un pareggio)
   if (phase === "playing" && tournament && opponentProfileRef.current) {
     const opp = opponentProfileRef.current;
-    const oppAvatar = opp.avatar_url
-      ? (opp.avatar_url.startsWith("http")
-          ? opp.avatar_url
-          : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/profile-images/${opp.avatar_url}`)
-      : "";
+    const toAvatarUrl = (path: string | null | undefined): string => {
+      if (!path) return "";
+      if (path.startsWith("http")) return path;
+      return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/profile-images/${path}`;
+    };
+    const oppAvatar = toAvatarUrl(opp.avatar_url);
+    // 👤 Profilo dell'utente preso dai partecipanti del torneo (per avatar+nome reali)
+    const userParticipant = participants.find((p) => p.is_user);
+    const userAvatar = toAvatarUrl(userParticipant?.profile?.avatar_url);
+    const userDisplayName =
+      userParticipant?.profile?.nickname ?? userParticipant?.profile?.full_name ?? "Tu";
 
     // 🤝 Banner intro spareggio (pareggio quarti/semi → Carta-Forbici-Sasso)
     if (tiebreak === "intro") {
@@ -397,8 +403,8 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
           </h3>
           <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">
             Avete totalizzato lo stesso punteggio. Per decidere chi passa il turno
-            vi sfiderete a <strong className="text-pink-300">Carta-Forbici-Sasso</strong>,
-            al meglio dei 3. Chi vince 2 round avanza nel torneo.
+            vi sfiderete a <strong className="text-pink-300">Carta-Forbici-Sasso</strong>:
+            chi arriva per primo a 3 vittorie avanza nel torneo.
           </p>
           <p className="text-xs text-pink-200/80">
             Lo spareggio inizia tra{" "}
@@ -413,8 +419,8 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
     if (tiebreak === "rps") {
       return (
         <RockPaperScissors
-          userName="Tu"
-          userAvatarUrl=""
+          userName={userDisplayName}
+          userAvatarUrl={userAvatar}
           opponentName={opp.nickname ?? "Sfidante"}
           opponentAvatarUrl={oppAvatar}
           onResult={handleRpsResult}
