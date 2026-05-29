@@ -165,10 +165,9 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
     gameCompletedRef.current = true;
     setGameOver(true);
     setWinner("player");
-    if (!tournamentMode) {
-      updateUserElo(20);
-      recordWinStat();
-    }
+    // ⚠️ La stat vittoria la registra il parent (handleGameEnd) su onGameEnd:
+    //    qui NON va chiamato recordWinStat o si conterebbe 2 volte.
+    if (!tournamentMode) updateUserElo(20);
     setLastEloChange(tournamentMode ? 0 : 20);
     setShowResultOverlay(true);
   };
@@ -179,10 +178,7 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
     gameCompletedRef.current = true;
     setGameOver(true);
     setWinner("bot");
-    if (!tournamentMode) {
-      updateUserElo(-10);
-      recordLossStat();
-    }
+    if (!tournamentMode) updateUserElo(-10);
     setLastEloChange(tournamentMode ? 0 : -10);
     setShowResultOverlay(true);
   };
@@ -206,13 +202,8 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
   const handleDrawRpsResult = (userWon: boolean) => {
     setTiebreak(null);
     setWinner(userWon ? "player" : "bot");
-    if (userWon) {
-      updateUserElo(20);
-      recordWinStat();
-    } else {
-      updateUserElo(-10);
-      recordLossStat();
-    }
+    // La stat la registra il parent su onGameEnd (no doppio conteggio).
+    updateUserElo(userWon ? 20 : -10);
     setLastEloChange(userWon ? 20 : -10);
     setShowResultOverlay(true);
   };
@@ -469,17 +460,12 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
       setGameOver(true);
       if (black > white) {
         setWinner("player");
-        if (!tournamentMode) {
-          updateUserElo(20);
-          recordWinStat();
-        }
+        // Stat registrata dal parent su onGameEnd (no doppio conteggio).
+        if (!tournamentMode) updateUserElo(20);
         setLastEloChange(tournamentMode ? 0 : 20);
       } else if (white > black) {
         setWinner("bot");
-        if (!tournamentMode) {
-          updateUserElo(-10);
-          recordLossStat();
-        }
+        if (!tournamentMode) updateUserElo(-10);
         setLastEloChange(tournamentMode ? 0 : -10);
       } else {
         // Pareggio = stesso numero di pedine (black === white). NON è per forza
@@ -589,9 +575,9 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
               gameCompletedRef.current = true;
               setGameOver(true);
               setWinner("bot");
-              updateUserElo(-10);
-              recordLossStat();
-              setLastEloChange(-10);
+              // Stat sconfitta registrata dal parent su onGameEnd (no doppio).
+              if (!tournamentMode) updateUserElo(-10);
+              setLastEloChange(tournamentMode ? 0 : -10);
               setShowResultOverlay(true);
             }
           } else {
