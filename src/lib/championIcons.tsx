@@ -102,7 +102,47 @@ const MEDAL_TIERS = {
   gold: { from: "#FDE68A", to: "#F59E0B", ring: "#B45309", ribbon: "#F59E0B" },
   silver: { from: "#E5E7EB", to: "#9CA3AF", ring: "#6B7280", ribbon: "#9CA3AF" },
   bronze: { from: "#FCD9B6", to: "#C2703D", ring: "#8A4B24", ribbon: "#C2703D" },
+  sapphire: { from: "#BFDBFE", to: "#3B82F6", ring: "#1E40AF", ribbon: "#2563EB" },
+  amethyst: { from: "#F5D0FE", to: "#C026D3", ring: "#86198F", ribbon: "#A21CAF" },
 } as const;
+
+// 🏅 MEDAGLIA DI RANGO (2°-5°) — nastro integrato + medaglione metallico
+// bisellato con numero "inciso" (copia chiara sotto + numero scuro sopra).
+export const RankMedalIcon: React.FC<ChampionIconProps & { tier: keyof typeof MEDAL_TIERS; place: number }> = ({
+  className,
+  tier,
+  place,
+}) => {
+  const g = useGradId("rankmedal");
+  const t = MEDAL_TIERS[tier];
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id={g} x1="6" y1="8" x2="18" y2="22" gradientUnits="userSpaceOnUse">
+          <stop stopColor={t.from} />
+          <stop offset="1" stopColor={t.to} />
+        </linearGradient>
+      </defs>
+      {/* nastro dietro al medaglione (entra sotto il disco) */}
+      <path d="M12 11L8.6 11 5.4 2.2 8.8 2.2z" fill={t.ribbon} />
+      <path d="M12 11L15.4 11 18.6 2.2 15.2 2.2z" fill={t.ribbon} opacity="0.78" />
+      {/* medaglione */}
+      <circle cx="12" cy="14.8" r="7.4" fill={`url(#${g})`} stroke={t.ring} strokeWidth="1" />
+      {/* bisello interno */}
+      <circle cx="12" cy="14.8" r="5.6" fill="none" stroke={t.ring} strokeWidth="0.6" opacity="0.45" />
+      {/* riflesso metallico */}
+      <path d="M8 11.4a5.4 5.4 0 0 1 4-1.7" stroke="#ffffff" strokeWidth="0.9" strokeLinecap="round" opacity="0.55" fill="none" />
+      {/* numero inciso: copia chiara sotto */}
+      <text x="12" y="15.95" textAnchor="middle" dominantBaseline="central" fontSize="8.5" fontWeight="900" fill="#ffffff" opacity="0.45">
+        {place}
+      </text>
+      {/* numero inciso: scuro sopra */}
+      <text x="12" y="15.4" textAnchor="middle" dominantBaseline="central" fontSize="8.5" fontWeight="900" fill={t.ring}>
+        {place}
+      </text>
+    </svg>
+  );
+};
 
 export const MedalIcon: React.FC<ChampionIconProps & { tier: keyof typeof MEDAL_TIERS; place: number }> = ({
   className,

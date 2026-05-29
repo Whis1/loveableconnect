@@ -6,7 +6,7 @@ import { Trophy, ChevronDown, ChevronUp, Crown } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { computeChampionBadges, dateStringToDayNumber, ChampionBadges } from "@/lib/championBadges";
 import { ChampionBadgesRow } from "./ChampionBadgesRow";
-import { CampioneIcon } from "@/lib/championIcons";
+import { CampioneIcon, RankMedalIcon } from "@/lib/championIcons";
 import { computeAdminElos } from "@/lib/adminElo";
 import { ProfileStatsDialog } from "./ProfileStatsDialog";
 import { VictoryIcon, DefeatIcon } from "@/lib/gameIcons";
@@ -250,33 +250,21 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
       );
     }
 
-    // 🎖️ 2°-5°: medaglia con nastro. Il cerchio è il medaglione (con anello
-    // interno + numero inciso) e due code di nastro spuntano dietro in alto.
-    const medals: Record<number, { disc: string; glow: string; ribbon: string; num: string }> = {
-      1: { disc: "from-gray-200 via-gray-300 to-gray-500 border-gray-300", glow: "from-gray-300 via-gray-400 to-gray-500", ribbon: "from-slate-400 to-slate-600", num: "text-slate-700" },
-      2: { disc: "from-orange-300 via-amber-500 to-orange-600 border-orange-400", glow: "from-orange-400 via-amber-600 to-orange-700", ribbon: "from-amber-500 to-orange-700", num: "text-white" },
-      3: { disc: "from-blue-300 via-blue-400 to-blue-600 border-blue-300", glow: "from-blue-400 via-blue-500 to-blue-600", ribbon: "from-sky-400 to-blue-700", num: "text-white" },
-      4: { disc: "from-purple-300 via-purple-400 to-purple-600 border-purple-300", glow: "from-purple-400 via-purple-500 to-purple-600", ribbon: "from-fuchsia-400 to-purple-700", num: "text-white" },
+    // 🎖️ 2°-5°: medaglia coesa (nastro integrato + medaglione + numero inciso)
+    const tiers: Record<number, "silver" | "bronze" | "sapphire" | "amethyst"> = {
+      1: "silver",
+      2: "bronze",
+      3: "sapphire",
+      4: "amethyst",
     };
-    const m = medals[position];
-    if (!m) return null;
+    const tier = tiers[position];
+    if (!tier) return null;
     return (
-      <div className="relative w-10 h-10">
-        {/* nastri (spuntano dietro, in alto) */}
-        <div className="absolute -top-2 left-1/2 -translate-x-1/2 flex gap-[3px] z-0 pointer-events-none">
-          <span className={`block w-2 h-4 rounded-b-[2px] -rotate-[14deg] origin-bottom bg-gradient-to-b ${m.ribbon} shadow-sm`} />
-          <span className={`block w-2 h-4 rounded-b-[2px] rotate-[14deg] origin-bottom bg-gradient-to-b ${m.ribbon} shadow-sm`} />
-        </div>
-        {/* glow */}
-        <div className={`absolute inset-0 rounded-full blur-sm opacity-60 bg-gradient-to-br ${m.glow}`} />
-        {/* medaglione */}
-        <div className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center shadow-lg border-2 bg-gradient-to-br ${m.disc}`}>
-          <span className="absolute inset-[3px] rounded-full border border-white/40" />
-          <span className={`relative text-lg font-black ${m.num} [text-shadow:0_1px_1px_rgba(0,0,0,0.4)]`}>
-            {position + 1}
-          </span>
-        </div>
-      </div>
+      <RankMedalIcon
+        tier={tier}
+        place={position + 1}
+        className="w-10 h-10 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]"
+      />
     );
   };
 
