@@ -796,21 +796,21 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
             ))}
           </div>
 
-          {/* 🏆 Torneo — card full width, accento fuchsia/oro */}
-          <button
-            onClick={handleStartTournament}
-            className="group mt-2.5 w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-gradient-to-r from-fuchsia-600/20 via-pink-600/15 to-amber-500/15 border border-fuchsia-500/40 hover:border-fuchsia-400/60 hover:from-fuchsia-600/30 hover:via-pink-600/25 hover:to-amber-500/25 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-fuchsia-500/30 transition-all relative overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-fuchsia-500 to-amber-500 flex items-center justify-center shadow-lg shadow-fuchsia-500/30 shrink-0">
-              <Trophy className="w-5 h-5 text-white" />
-            </div>
-            <div className="relative text-left">
-              <p className="text-base font-black uppercase tracking-wide bg-gradient-to-r from-fuchsia-300 via-pink-300 to-amber-300 bg-clip-text text-transparent">
+          {/* 🏆 Torneo — pill compatta centrata, accento fuchsia/oro */}
+          <div className="mt-3 flex justify-center">
+            <button
+              onClick={handleStartTournament}
+              className="group inline-flex items-center gap-2.5 pl-2.5 pr-5 py-2 rounded-full bg-gradient-to-r from-fuchsia-600/25 via-pink-600/20 to-amber-500/20 border border-fuchsia-500/40 hover:border-fuchsia-400/60 hover:from-fuchsia-600/35 hover:via-pink-600/30 hover:to-amber-500/30 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-fuchsia-500/30 transition-all relative overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+              <div className="relative w-8 h-8 rounded-full bg-gradient-to-br from-fuchsia-500 to-amber-500 flex items-center justify-center shadow-md shadow-fuchsia-500/30 shrink-0">
+                <Trophy className="w-4 h-4 text-white" />
+              </div>
+              <span className="relative text-sm font-black uppercase tracking-wide bg-gradient-to-r from-fuchsia-300 via-pink-300 to-amber-300 bg-clip-text text-transparent">
                 Torneo
-              </p>
-            </div>
-          </button>
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* ℹ️ Cos'è l'ELO */}
