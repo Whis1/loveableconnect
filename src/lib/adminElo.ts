@@ -393,16 +393,47 @@ export function computeAdminStats(id: string, allAdmins?: AdminSeed[]): AdminSta
 // cumulativo amplifica le serie consecutive: un admin che ha avuto 3 buone
 // sessioni di fila puo' salire di +130 ELO, uno con 4 brutte sessioni puo'
 // crollare di -130 ELO. La classifica si muove in modo organico e meritocratico.
+// 🥊 Duello di parità (solo admin-vs-admin): quando un admin risulta con lo
+//    STESSO ELO dell'admin sopra di lui in classifica, "sfida" per superarlo.
+//    Esito deterministico e STABILE (finché l'ELO non cambia col drift, così
+//    non lampeggia): vince → +20 (passa sopra), perde → -10 (scende sotto).
+//    Risultato: non restano mai due admin con lo stesso ELO. 50% di vittoria,
+//    seed = id + valore della parità.
+function duelWonOverTie(id: string, tieElo: number): boolean {
+  return hash(`${id}#duel#${tieElo}`) % 100 < 50;
+}
+
 export function computeAdminElos(admins: AdminSeed[]): Map<string, number> {
   const result = new Map<string, number>();
   if (admins.length === 0) return result;
 
   const now = Date.now();
 
-  for (const a of admins) {
+  // 1) ELO grezzo simulato per ogni admin (base intrinseca + drift cumulativo).
+  const computed = admins.map((a) => {
     const bucket = personalBucket(a.id, now);
-    const elo = baseElo(a.id) + cumulativeDrift(a.id, bucket);
-    result.set(a.id, Math.max(100, elo));
+    return { id: a.id, elo: Math.max(100, baseElo(a.id) + cumulativeDrift(a.id, bucket)) };
+  });
+
+  // 2) Ordina per ELO desc (tie-break id asc) per individuare le parità.
+  computed.sort((x, y) => y.elo - x.elo || (x.id < y.id ? -1 : 1));
+
+  // 3) Risolve le parità col "duello": chi sta sotto ed è pari all'admin sopra
+  //    sfida → vince +20 (sopra), perde -10 (sotto). Lo scaling per posizione
+  //    nel gruppo (raro: 3+ pari) garantisce che restino tutti distinti.
+  let groupElo: number | null = null;
+  let tiedRank = 0;
+  for (const c of computed) {
+    if (groupElo !== null && c.elo === groupElo) {
+      tiedRank++;
+      const won = duelWonOverTie(c.id, groupElo);
+      const resolved = won ? groupElo + 20 * tiedRank : groupElo - 10 * tiedRank;
+      result.set(c.id, Math.max(100, resolved));
+    } else {
+      result.set(c.id, c.elo);
+      groupElo = c.elo;
+      tiedRank = 0;
+    }
   }
 
   return result;
