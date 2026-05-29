@@ -13,21 +13,18 @@ export const GeolocationBanner = ({ onActivate, onClose }: GeolocationBannerProp
   const [cookieConsent, setCookieConsent] = useState(false);
   const [showConsentStep, setShowConsentStep] = useState(false);
 
-  const handleInitialActivate = async () => {
-    // Trigger browser geolocation prompt first
+  const handleInitialActivate = () => {
+    // ⚡ Passa SUBITO allo step di consenso: niente attesa del "fix" GPS
+    //    (getCurrentPosition può impiegare secondi per acquisire la posizione,
+    //    rendendo il click lento). Il prompt del browser lo inneschiamo in
+    //    background senza bloccare la UI.
+    setShowConsentStep(true);
     if (navigator.geolocation) {
-      try {
-        await new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject);
-        });
-        
-        // If user accepts browser prompt, show consent step
-        setShowConsentStep(true);
-      } catch (error) {
-        // User denied browser permission - close banner or show error
-        console.error("Geolocation permission denied");
-        onClose();
-      }
+      navigator.geolocation.getCurrentPosition(
+        () => {},
+        () => {},
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
+      );
     }
   };
 
