@@ -793,17 +793,17 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
 
           <div className="grid grid-cols-3 gap-2.5">
             {[
-              { key: "tris" as const, icon: trisIcon, label: "Tris", accent: "from-amber-200 via-amber-400 to-yellow-600", glow: "group-hover:shadow-amber-500/40 group-hover:border-amber-400/50" },
-              { key: "othello" as const, icon: othelloIcon, label: "Othello", accent: "from-emerald-400 to-emerald-500", glow: "group-hover:shadow-emerald-500/40 group-hover:border-emerald-400/50" },
-              { key: "dama" as const, icon: damaIcon, label: "Dama", accent: "from-red-400 to-red-500", glow: "group-hover:shadow-red-500/40 group-hover:border-red-400/50" },
+              { key: "tris" as const, icon: trisIcon, label: "Tris", accent: "from-amber-200 via-amber-400 to-yellow-600", glow: "group-hover:shadow-amber-500/40 group-hover:border-amber-400/50", scale: "scale-100" },
+              { key: "othello" as const, icon: othelloIcon, label: "Othello", accent: "from-emerald-400 to-emerald-500", glow: "group-hover:shadow-emerald-500/40 group-hover:border-emerald-400/50", scale: "scale-[1.18]" },
+              { key: "dama" as const, icon: damaIcon, label: "Dama", accent: "from-red-400 to-red-500", glow: "group-hover:shadow-red-500/40 group-hover:border-red-400/50", scale: "scale-[1.5]" },
             ].map((g) => (
               <button
                 key={g.key}
                 onClick={() => handleGameSelect(g.key)}
                 className={`group flex flex-col items-center gap-2 py-4 rounded-2xl bg-white/[0.04] border border-white/10 hover:bg-white/[0.07] hover:-translate-y-0.5 hover:shadow-lg transition-all ${g.glow}`}
               >
-                <div className="w-12 h-12 flex items-center justify-center">
-                  <img src={g.icon} alt={g.label} className="w-full h-full object-contain drop-shadow group-hover:scale-110 transition-transform" />
+                <div className="w-12 h-12 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <img src={g.icon} alt={g.label} className={`w-full h-full object-contain drop-shadow ${g.scale}`} />
                 </div>
                 <span className={`text-sm font-black uppercase tracking-wide bg-gradient-to-r ${g.accent} bg-clip-text text-transparent`}>
                   {g.label}
