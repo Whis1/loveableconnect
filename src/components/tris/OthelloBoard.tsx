@@ -708,7 +708,11 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
       <div className="text-center mb-3">
         {gameOver ? (
           <p className="text-lg font-bold">
-            {winner === "player"
+            {tournamentMode
+              ? winner === "player"
+                ? "🎉 Match vinto! Passi al round successivo"
+                : "💔 Match perso. Sei eliminato dal torneo"
+              : winner === "player"
               ? "🏆 Hai vinto!"
               : winner === "bot"
               ? "😢 Hai perso"
