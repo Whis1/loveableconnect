@@ -238,16 +238,9 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
   };
 
   const getTrophyIcon = (position: number) => {
-    // 🥇 1° posto: trofeo dorato nel cerchio dorato (sfondo pieno)
+    // 🥇 1° posto: solo il trofeo dorato (niente cerchio), coerente con le medaglie
     if (position === 0) {
-      return (
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-yellow-300 via-yellow-500 to-yellow-600 rounded-full blur-sm opacity-75 animate-pulse" />
-          <div className="relative w-10 h-10 bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-600 rounded-full flex items-center justify-center shadow-lg border-2 border-yellow-300">
-            <CampioneIcon className="w-7 h-7 drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.35)]" />
-          </div>
-        </div>
-      );
+      return <CampioneIcon className="w-10 h-10 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" />;
     }
 
     // 🎖️ 2°-5°: medaglia coesa (nastro integrato + medaglione + numero inciso)
