@@ -183,6 +183,16 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
     setShowResultOverlay(true);
   };
 
+  // 🔧 ADMIN TEST: forza pareggio 32-32 per testare lo spareggio (RPS / replay).
+  const forceAdminDraw = () => {
+    if (gameCompletedRef.current) return;
+    gameCompletedRef.current = true;
+    setGameOver(true);
+    setWinner("draw");
+    setLastEloChange(0);
+    setShowResultOverlay(true);
+  };
+
   // Auto-close partita: 3.5s normale, 1.2s in torneo (cosi' appare subito il
   // TournamentEndBanner viola senza far vedere prima l'overlay grigio).
   useEffect(() => {
@@ -577,6 +587,14 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
           >
             <Wrench className="w-3 h-3" />
             [ADMIN] Perdi ora
+          </button>
+          <button
+            onClick={forceAdminDraw}
+            className="flex items-center gap-1 px-2 py-1 rounded-md bg-indigo-600/90 hover:bg-indigo-600 text-white text-[10px] font-bold shadow-lg border border-indigo-400"
+            title="DEBUG: forza pareggio per testare lo spareggio (visibile solo admin)"
+          >
+            <Wrench className="w-3 h-3" />
+            [ADMIN] Pareggia ora
           </button>
         </div>
       )}
