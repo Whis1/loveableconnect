@@ -82,7 +82,7 @@ export const ChampionBadgesRow = ({ badges, tournamentsWon, size = "md", classNa
             active={tournamentsWon > 0}
             count={tournamentsWon}
             title="Tornei Vinti"
-            desc="Numero di tornei a 8 giocatori (Othello o Dama) vinti arrivando primi in finale."
+            desc="Numero di tornei a 8 giocatori (Othello o Dama) vinti aggiudicandosi la finale."
           />
         )}
       </div>
