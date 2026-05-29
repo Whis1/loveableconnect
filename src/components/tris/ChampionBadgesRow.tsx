@@ -81,8 +81,8 @@ export const ChampionBadgesRow = ({ badges, tournamentsWon, size = "md", classNa
             icon={<TorneiIcon className={iconCls} active={tournamentsWon > 0} />}
             active={tournamentsWon > 0}
             count={tournamentsWon}
-            title="Tornei Vinti"
-            desc="Numero di tornei vinti aggiudicandosi la finale."
+            title="Tournament Champion"
+            desc="Titolo ottenuto vincendo la finale di un torneo."
           />
         )}
       </div>
