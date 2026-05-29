@@ -18,8 +18,8 @@ interface TournamentOpponentSearchProps {
 //   quello slot (con bordo dorato + transizione).
 // - L'utente e' fisso fin dall'inizio (gia' loggato, lo si conosce).
 
-const SEARCH_DURATION_MIN_MS = 9000;
-const SEARCH_DURATION_MAX_MS = 15000;
+const SEARCH_DURATION_MIN_MS = 19000;
+const SEARCH_DURATION_MAX_MS = 30000;
 const SCROLL_INTERVAL_MS = 150;
 
 interface AdminProfile {
