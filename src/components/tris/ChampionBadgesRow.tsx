@@ -82,7 +82,7 @@ export const ChampionBadgesRow = ({ badges, tournamentsWon, size = "md", classNa
             active={tournamentsWon > 0}
             count={tournamentsWon}
             title="Tornei Vinti"
-            desc="Numero di tornei a 8 giocatori (Othello o Dama) vinti arrivando primi in finale. Ogni vittoria vale 12 crediti e +60 ELO."
+            desc="Numero di tornei a 8 giocatori (Othello o Dama) vinti arrivando primi in finale."
           />
         )}
       </div>
