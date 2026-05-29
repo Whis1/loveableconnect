@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Handshake } from "lucide-react";
+import { Loader2, Handshake, RotateCcw } from "lucide-react";
 import { useTournament, GameType, MatchRow } from "@/hooks/useTournament";
 import { useToast } from "@/hooks/use-toast";
 import { TournamentSelectionBanner } from "./TournamentSelectionBanner";
@@ -34,6 +34,10 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
   const [creating, setCreating] = useState(false);
   // Profilo avversario corrente per la board (estratto dal userMatch)
   const opponentProfileRef = useRef<any>(null);
+  // 🛡️ Round del match che l'utente sta GIOCANDO (catturato all'avvio).
+  //    Usato per decidere lo spareggio in caso di pareggio: il check su
+  //    userMatch.round poteva essere inaffidabile (match aggiornato dal realtime).
+  const playingRoundRef = useRef<number | null>(null);
   // 🏆 Dati per il TournamentEndBanner premium (sostituisce il vecchio toast)
   const [endBanner, setEndBanner] = useState<{
     finalPosition: number | null;
@@ -266,6 +270,8 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
       game_elo: opponentParticipant.elo_snapshot,
       is_admin_profile: true,
     };
+    // 🛡️ Cattura il round del match che si sta avviando (1=quarti, 2=semi, 3=finale)
+    playingRoundRef.current = userMatch.round;
     await startUserMatch();
     setPhase("playing");
   };
@@ -288,19 +294,20 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
   //      • match normale (quarti/semi) → Carta-Forbici-Sasso al meglio dei 3
   //      • FINALE → si rigioca la partita da capo finché non c'è un vincitore
   const handleBoardGameEnd = async (result: "win" | "lose" | "draw") => {
-    if (!userMatch) return;
-
     if (result === "draw") {
-      if (userMatch.round === 3) {
-        // Finale pareggiata → replay
+      // 🛡️ Usa il round CATTURATO all'avvio del match (non userMatch.round, che
+      //    potrebbe essere cambiato per via di update realtime). round 3 = finale.
+      if (playingRoundRef.current === 3) {
+        // FINALE pareggiata → si rigioca la partita (NO Carta-Forbici-Sasso)
         setFinalReplay(true);
       } else {
-        // Quarti/Semi pareggiati → spareggio RPS
+        // Quarti/Semi pareggiati → spareggio Carta-Forbici-Sasso
         setTiebreak("intro");
       }
       return;
     }
 
+    if (!userMatch) return;
     await resolveUserMatch(result === "win");
   };
 
@@ -432,20 +439,28 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
     // 🔁 Banner replay finale (pareggio in finale → si rigioca da capo)
     if (finalReplay) {
       return (
-        <Card className="mb-6 p-8 text-center bg-gradient-to-br from-purple-950/50 via-fuchsia-900/30 to-indigo-950/50 border-pink-500/40">
-          <Handshake className="w-16 h-16 mx-auto mb-4 text-pink-300" />
-          <h3 className="text-2xl font-black bg-gradient-to-r from-pink-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent mb-2">
-            Finale in parità!
-          </h3>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">
-            La finale è finita in pareggio: un campione si decide sul campo.
-            Si rigioca la partita da capo, finché uno dei due non vince.
+        <Card className="mb-6 p-8 text-center bg-gradient-to-br from-purple-950/55 via-fuchsia-900/35 to-indigo-950/55 border-pink-500/40 shadow-[0_8px_40px_-12px_rgba(244,114,182,0.45)] relative overflow-hidden">
+          <div className="absolute -inset-6 rounded-[40px] bg-gradient-to-br from-pink-500/15 via-fuchsia-500/10 to-indigo-500/15 blur-3xl pointer-events-none" />
+          <div className="relative">
+            <div className="relative inline-flex mb-4">
+              <div className="absolute -inset-3 rounded-full bg-pink-500/30 blur-xl animate-pulse" />
+              <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 via-fuchsia-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-pink-500/40">
+                <RotateCcw className="w-8 h-8 text-white" />
+              </div>
+            </div>
+            <h3 className="text-2xl font-black bg-gradient-to-r from-pink-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent mb-2">
+              Finale in parità!
+            </h3>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">
+              In finale non si pareggia: il campione si decide sul campo.
+              La partita si rigioca da capo, finché uno dei due non vince.
           </p>
-          <p className="text-xs text-pink-200/80">
-            La finale riparte tra{" "}
-            <span className="font-black text-pink-100 text-lg">{tiebreakCountdown ?? 10}</span>{" "}
-            secondi…
-          </p>
+            <p className="text-xs text-pink-200/80">
+              La finale riparte tra{" "}
+              <span className="font-black text-pink-100 text-lg">{tiebreakCountdown ?? 10}</span>{" "}
+              secondi…
+            </p>
+          </div>
         </Card>
       );
     }
