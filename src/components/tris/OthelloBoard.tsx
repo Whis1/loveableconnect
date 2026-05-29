@@ -183,10 +183,11 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
     setShowResultOverlay(true);
   };
 
-  // Auto-close partita dopo 3.5s come fallback se l'utente non clicca Continua.
+  // Auto-close partita: 3.5s normale, 1.2s in torneo (cosi' appare subito il
+  // TournamentEndBanner viola senza far vedere prima l'overlay grigio).
   useEffect(() => {
     if (!showResultOverlay || !winner) return;
-    const t = setTimeout(dismissResultAndReturn, 3500);
+    const t = setTimeout(dismissResultAndReturn, tournamentMode ? 1200 : 3500);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showResultOverlay, winner]);
@@ -623,14 +624,17 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
           >
             {timeLeft}s
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowEmoji(!showEmoji)}
-            className="shrink-0"
-          >
-            😊
-          </Button>
+          {/* 😊 Emoji button nascosto in modalità torneo (richiesta utente) */}
+          {!tournamentMode && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowEmoji(!showEmoji)}
+              className="shrink-0"
+            >
+              😊
+            </Button>
+          )}
         </div>
 
         {/* Opponent (dx) */}
@@ -762,14 +766,13 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
         <p className="text-[10px]">Vince chi ha più pedine quando nessuno può più muovere.</p>
       </div>
 
-      {/* Game result overlay.
-          🏆 In tournamentMode passiamo creditsEarned=0 e eloChange=0 cosi'
-          GameResultOverlay non mostra le pillole "+6 crediti" / "+X ELO"
-          (i premi del torneo sono assegnati alla FINE del torneo, non per match). */}
-      {showResultOverlay && winner && (
+      {/* Game result overlay — SOLO in modalità normale.
+          🏆 In torneo NON lo mostriamo: il risultato del torneo e' gestito dal
+          TournamentEndBanner viola (un solo banner, niente doppione grigio). */}
+      {!tournamentMode && showResultOverlay && winner && (
         <GameResultOverlay
           result={winner === "player" ? "win" : winner === "bot" ? "lose" : "draw"}
-          creditsEarned={tournamentMode ? 0 : 6}
+          creditsEarned={6}
           eloChange={lastEloChange}
           onClose={dismissResultAndReturn}
         />

@@ -149,8 +149,8 @@ export const TournamentEndBanner: React.FC<TournamentEndBannerProps> = ({
       }
     : isEliminated
     ? {
-        title: "💔 Eliminato",
-        subtitle: "Riprova: gli admin sono forti, ma migliorerai.",
+        title: "💔 Eliminato dal torneo",
+        subtitle: "",
         gradientFrom: "from-rose-300",
         gradientVia: "via-pink-400",
         gradientTo: "to-rose-500",

@@ -52,20 +52,23 @@ export const TournamentBracketView = ({
     if (autoStartTriggeredRef.current === userMatch.id) return;
     autoStartTriggeredRef.current = userMatch.id;
 
-    setAutoStartSecs(Math.round(AUTO_START_DELAY_MS / 1000));
-    // Countdown visivo
-    const countdownTimer = setInterval(() => {
-      setAutoStartSecs((s) => (s === null || s <= 1 ? null : s - 1));
+    // 🕒 Countdown unico: 10 → 1 → AVVIO. Quando arriva a 0 fa partire la
+    //    partita (niente piu' "0 poi torna a 10" visivo). Single timer cosi'
+    //    display e trigger sono perfettamente sincronizzati.
+    let secs = Math.round(AUTO_START_DELAY_MS / 1000); // 10
+    setAutoStartSecs(secs);
+    const timer = setInterval(() => {
+      secs -= 1;
+      if (secs <= 0) {
+        clearInterval(timer);
+        setAutoStartSecs(null);
+        onStartUserMatch().catch((e) => console.error("auto-start failed:", e));
+      } else {
+        setAutoStartSecs(secs); // mostra 9, 8, …, 1
+      }
     }, 1000);
-    // Trigger effettivo dopo AUTO_START_DELAY_MS
-    const startTimer = setTimeout(() => {
-      onStartUserMatch().catch((e) => console.error("auto-start failed:", e));
-    }, AUTO_START_DELAY_MS);
 
-    return () => {
-      clearInterval(countdownTimer);
-      clearTimeout(startTimer);
-    };
+    return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userMatch?.id, userMatch?.status]);
 
@@ -163,9 +166,7 @@ export const TournamentBracketView = ({
             <span className="text-pink-300/80">⏳ In corso</span>
           )}
           {isUserMatch && !isCompleted && (
-            <span className="text-cyan-300 font-bold">
-              {match.status === "waiting" ? "🎮 Tocca a te!" : "Stai giocando..."}
-            </span>
+            <span className="text-pink-300/80">⏳ In corso</span>
           )}
           {isCompleted && (
             <span className="text-emerald-400/70">✅ Concluso</span>

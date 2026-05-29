@@ -218,10 +218,11 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
     setShowResultOverlay(true);
   };
 
-  // Auto-close partita dopo 3.5s come fallback se l'utente non clicca Continua.
+  // Auto-close partita: 3.5s normale, 1.2s in torneo (cosi' appare subito il
+  // TournamentEndBanner viola senza far indugiare sul testo inline).
   useEffect(() => {
     if (!showResultOverlay || !winner) return;
-    const t = setTimeout(dismissResultAndReturn, 3500);
+    const t = setTimeout(dismissResultAndReturn, tournamentMode ? 1200 : 3500);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showResultOverlay, winner]);
@@ -1344,15 +1345,17 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
           </div>
         </div>
 
-        {/* Emoji Button */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowEmoji(!showEmoji)}
-          className="shrink-0"
-        >
-          😊
-        </Button>
+        {/* Emoji Button — nascosto in modalità torneo (richiesta utente) */}
+        {!tournamentMode && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowEmoji(!showEmoji)}
+            className="shrink-0"
+          >
+            😊
+          </Button>
+        )}
 
         {/* Opponent */}
         <div className="flex items-center space-x-3 relative">
