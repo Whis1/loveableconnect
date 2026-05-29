@@ -6,6 +6,7 @@ import { Trophy, ChevronDown, ChevronUp, Crown } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { computeChampionBadges, dateStringToDayNumber, ChampionBadges } from "@/lib/championBadges";
 import { ChampionBadgesRow } from "./ChampionBadgesRow";
+import { CampioneIcon } from "@/lib/championIcons";
 import { computeAdminElos } from "@/lib/adminElo";
 import { ProfileStatsDialog } from "./ProfileStatsDialog";
 import { VictoryIcon, DefeatIcon } from "@/lib/gameIcons";
@@ -241,9 +242,9 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
       case 0:
         return (
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-yellow-300 via-yellow-500 to-yellow-600 rounded-full blur-sm opacity-75 animate-pulse" />
-            <div className="relative w-10 h-10 bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-600 rounded-full flex items-center justify-center text-2xl shadow-lg border-2 border-yellow-300">
-              🏆
+            <div className="absolute inset-0 bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-600 rounded-full blur-md opacity-60 animate-pulse" />
+            <div className="relative w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br from-amber-950/50 to-yellow-900/30 shadow-lg border-2 border-yellow-300/70">
+              <CampioneIcon className="w-7 h-7" />
             </div>
           </div>
         );
