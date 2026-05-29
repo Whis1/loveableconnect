@@ -129,7 +129,7 @@ export const TournamentBracketView = ({
         </Avatar>
         <div className="flex-1 min-w-0">
           <p className={`text-xs font-semibold truncate ${isWinner ? "text-emerald-300" : ""}`}>
-            {pid === currentUserId ? "🧑 Tu" : nickname(pid)}
+            {pid === currentUserId ? "Tu" : nickname(pid)}
           </p>
           {!isPending && (
             <p className="text-[9px] text-muted-foreground">
@@ -264,7 +264,7 @@ export const TournamentBracketView = ({
       {userCanStart && (
         <div className="mt-6 flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-r from-cyan-500/15 via-blue-500/15 to-cyan-500/15 border-2 border-cyan-400/40 animate-pulse">
           <p className="text-sm font-semibold text-cyan-300">
-            🎮 La tua partita è pronta!
+            🎮 Il Torneo sta per iniziare
           </p>
           <p className="text-xs text-cyan-200/80">
             Avvio automatico tra{" "}
