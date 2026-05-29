@@ -334,8 +334,8 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
           {/* 📊 Stats personali — solo per il proprio profilo */}
           {userStats && (
             <div className="mt-4 pt-4 border-t border-pink-500/20 space-y-3">
-              {/* Vittorie / Sconfitte / Tornei */}
-              <div className="grid grid-cols-3 gap-2">
+              {/* Vittorie / Sconfitte */}
+              <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col items-center p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
                   <VictoryIcon className="w-4 h-4 text-emerald-400 mb-0.5" />
                   <span className="text-[9px] uppercase tracking-wider font-semibold text-emerald-300/90">
@@ -351,35 +351,15 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
                   </span>
                   <span className="text-lg font-black text-rose-300">{userStats.losses}</span>
                 </div>
-
-                <TooltipProvider delayDuration={150}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        className="flex flex-col items-center p-2 rounded-lg bg-fuchsia-500/15 border border-fuchsia-500/40 cursor-help w-full"
-                      >
-                        <Crown className="w-4 h-4 text-fuchsia-300 mb-0.5" />
-                        <span className="text-[9px] uppercase tracking-wider font-semibold text-fuchsia-300/90 leading-tight text-center">
-                          Tornei
-                        </span>
-                        <span className="text-lg font-black text-fuchsia-300">
-                          {userStats.tournamentsWon}
-                        </span>
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-[260px] text-left leading-relaxed">
-                      <strong>Tornei Vinti.</strong> Quante volte hai vinto un torneo a 8
-                      giocatori (Othello o Dama) arrivando primo in finale. Ogni vittoria
-                      vale 12 crediti e +60 ELO.
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
               </div>
 
-              {/* 🏅 Titoli di Campione (solo icone + tooltip) */}
-              <div className="flex items-center justify-center gap-3 pt-1">
-                <ChampionBadgesRow badges={userStats.badges} size="md" />
+              {/* 🏅 Titoli (Campione/Settimana/Mese) + Tornei, solo icone + tooltip */}
+              <div className="flex items-center justify-center pt-1">
+                <ChampionBadgesRow
+                  badges={userStats.badges}
+                  tournamentsWon={userStats.tournamentsWon}
+                  size="md"
+                />
               </div>
             </div>
           )}

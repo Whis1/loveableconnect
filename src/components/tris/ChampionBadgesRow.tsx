@@ -1,17 +1,19 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ChampionBadges } from "@/lib/championBadges";
-import { CampioneIcon, SettimanaIcon, MeseIcon } from "@/lib/championIcons";
+import { CampioneIcon, SettimanaIcon, MeseIcon, TorneiIcon } from "@/lib/championIcons";
 
-// 🏅 Riga dei 3 titoli di Campione. Solo icone + tooltip (titolo + descrizione).
-// Le icone non guadagnate appaiono spente (grigie). Settimana/Mese mostrano xN.
+// 🏅 Riga dei titoli. Solo icone + tooltip (titolo + descrizione).
+// Le icone non guadagnate appaiono spente (grigie). Settimana/Mese/Tornei mostrano xN.
 
 interface ChampionBadgesRowProps {
   badges: ChampionBadges;
+  /** Se passato, mostra anche l'icona "Tornei Vinti" (xN) accanto ai titoli. */
+  tournamentsWon?: number;
   size?: "sm" | "md";
   className?: string;
 }
 
-export const ChampionBadgesRow = ({ badges, size = "md", className = "" }: ChampionBadgesRowProps) => {
+export const ChampionBadgesRow = ({ badges, tournamentsWon, size = "md", className = "" }: ChampionBadgesRowProps) => {
   const iconCls = size === "sm" ? "w-6 h-6" : "w-8 h-8";
 
   const Badge = ({
@@ -74,6 +76,15 @@ export const ChampionBadgesRow = ({ badges, size = "md", className = "" }: Champ
           title="Campione del Mese"
           desc="Sei rimasto primo in classifica per un mese intero (30 giorni consecutivi). Il numero indica quanti mesi completi hai totalizzato."
         />
+        {typeof tournamentsWon === "number" && (
+          <Badge
+            icon={<TorneiIcon className={iconCls} active={tournamentsWon > 0} />}
+            active={tournamentsWon > 0}
+            count={tournamentsWon}
+            title="Tornei Vinti"
+            desc="Quante volte hai vinto un torneo a 8 giocatori (Othello o Dama) arrivando primo in finale. Ogni vittoria vale 12 crediti e +60 ELO."
+          />
+        )}
       </div>
     </TooltipProvider>
   );

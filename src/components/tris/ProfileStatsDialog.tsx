@@ -332,32 +332,14 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
                     </p>
                   </div>
 
-                  {/* 👑 Tornei Vinti: counter incrementato in claim_tournament_rewards
-                      ogni volta che l'utente arriva 1° (vincitore finale) di un torneo. */}
-                  <TooltipProvider delayDuration={150}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          type="button"
-                          className="w-full flex items-center justify-center gap-2 p-3 rounded-lg bg-gradient-to-r from-fuchsia-500/20 to-pink-500/20 border border-fuchsia-500/40 hover:from-fuchsia-500/30 hover:to-pink-500/30 transition-colors cursor-help"
-                        >
-                          <Crown className="w-5 h-5 text-fuchsia-500 dark:text-fuchsia-300" />
-                          <span className="text-sm font-semibold">Tornei Vinti:</span>
-                          <span className="text-lg font-bold text-fuchsia-500 dark:text-fuchsia-300">
-                            {stats.tournamentsWon}
-                          </span>
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-sm text-left leading-relaxed">
-                        Indica quante volte il profilo ha vinto un torneo a 8 giocatori (Othello o Dama) arrivando primo in finale. Ogni vittoria vale <strong>12 crediti + 60 ELO</strong>.
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  {/* 🏅 Titoli di Campione (solo icone + tooltip al hover):
-                      Campione (mai #1), Campione della Settimana xN, Campione del Mese xN. */}
+                  {/* 🏅 Titoli (solo icone + tooltip al hover): Campione,
+                      Campione della Settimana xN, Campione del Mese xN, Tornei Vinti xN. */}
                   <div className="flex justify-center pt-1">
-                    <ChampionBadgesRow badges={stats.badges} size="md" />
+                    <ChampionBadgesRow
+                      badges={stats.badges}
+                      tournamentsWon={stats.tournamentsWon}
+                      size="md"
+                    />
                   </div>
 
                   {/* 🔒 PRIVACY: V/S NON mostrate nei profili degli altri.
