@@ -440,9 +440,11 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
         }
         setLastEloChange(tournamentMode ? 0 : -10);
       } else {
-        // Pareggio 32-32 per conteggio pezzi. In entrambe le modalità
-        // segnaliamo "draw": in torneo sarà il TournamentFlow a gestire lo
-        // spareggio (Carta-Forbici-Sasso per i match, replay per la finale).
+        // Pareggio = stesso numero di pedine (black === white). NON è per forza
+        // 32-32: se la partita finisce con caselle vuote (nessuno può muovere)
+        // può essere 30-30, 28-28, ecc. In entrambe le modalità segnaliamo "draw":
+        // in torneo sarà il TournamentFlow a gestire lo spareggio (Carta-Forbici-Sasso
+        // per i match, replay per la finale).
         setWinner("draw");
         setLastEloChange(0);
       }
@@ -726,12 +728,12 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
                 ? "Match vinto! Passi al round successivo"
                 : winner === "bot"
                 ? "Match perso. Sei eliminato dal torneo"
-                : "Pareggio 32-32! Si va allo spareggio…"
+                : `Pareggio ${black}-${white}! Si va allo spareggio…`
               : winner === "player"
               ? "🏆 Hai vinto!"
               : winner === "bot"
               ? "😢 Hai perso"
-              : "🤝 Pareggio"}
+              : `🤝 Pareggio ${black}-${white}`}
           </p>
         ) : (
           <p className="text-sm font-semibold">
