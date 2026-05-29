@@ -28,7 +28,7 @@ export const TournamentSelectionBanner = ({
         before:bg-[radial-gradient(circle_at_top_right,rgba(244,114,182,0.18),transparent_60%),radial-gradient(circle_at_bottom_left,rgba(168,85,247,0.15),transparent_55%)]
       "
     >
-      <div className="relative flex justify-between items-start mb-6">
+      <div className="relative flex justify-between items-start mb-3">
         <h3 className="text-2xl font-black tracking-tight bg-gradient-to-r from-pink-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent flex items-center gap-2">
           <Trophy className="w-7 h-7 text-pink-300" />
           Scegli il Torneo
@@ -42,6 +42,46 @@ export const TournamentSelectionBanner = ({
         >
           <X className="w-5 h-5" />
         </Button>
+      </div>
+
+      {/* 📜 Come funziona + premi */}
+      <div className="relative mb-5 rounded-xl bg-black/20 border border-pink-500/20 p-4 space-y-2.5">
+        <p className="text-sm text-foreground/90">
+          8 sfidanti, eliminazione diretta. Batti l'avversario a ogni round per
+          avanzare: <strong className="text-pink-300">quarti → semifinale → finale</strong>.
+          In caso di pareggio si va allo spareggio (Carta-Forbici-Sasso; in finale
+          si rigioca la partita).
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+          <div className="flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-500/30 px-3 py-2">
+            <span className="text-base">🥇</span>
+            <span className="text-xs text-foreground/90">
+              <strong className="text-amber-300">Vinci il torneo:</strong> +12 crediti, +60 ELO
+            </span>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg bg-slate-400/10 border border-slate-300/30 px-3 py-2">
+            <span className="text-base">🥈</span>
+            <span className="text-xs text-foreground/90">
+              <strong className="text-slate-200">Perdi in finale:</strong> +4 crediti, −20 ELO
+            </span>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg bg-orange-500/10 border border-orange-400/30 px-3 py-2">
+            <span className="text-base">🥉</span>
+            <span className="text-xs text-foreground/90">
+              <strong className="text-orange-300">Perdi in semifinale:</strong> +2 crediti, −20 ELO
+            </span>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg bg-rose-500/10 border border-rose-400/30 px-3 py-2">
+            <span className="text-base">💔</span>
+            <span className="text-xs text-foreground/90">
+              <strong className="text-rose-300">Eliminato ai quarti:</strong> nessun premio, −20 ELO
+            </span>
+          </div>
+        </div>
+        <p className="text-[11px] text-muted-foreground pt-0.5">
+          Gli admin sono avversari tosti: arrivare in fondo è un'impresa. Ogni
+          sconfitta toglie 20 ELO, ma più avanti arrivi più crediti di consolazione ottieni.
+        </p>
       </div>
 
       <div className="relative grid grid-cols-1 md:grid-cols-2 gap-4">
