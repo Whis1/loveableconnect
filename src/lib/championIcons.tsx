@@ -2,7 +2,7 @@ import React from "react";
 
 // 🎖️ Icone SVG personalizzate per i titoli di Campione.
 // Niente emoji: gradient + dettagli per un look premium. Escalation visiva:
-//   Campione (alloro+stella) → Settimana (corona) → Mese (corona con gemma e raggi).
+//   Campione (trofeo dorato) → Settimana (corona) → Mese (corona con gemma e raggi).
 // La prop `active` accende il gradient; se false l'icona è grigia/spenta.
 
 interface ChampionIconProps {
@@ -17,29 +17,53 @@ const useGradId = (prefix: string) => {
   return ref.current;
 };
 
-// 1) CAMPIONE — stella dentro corona d'alloro
+// 1) CAMPIONE — trofeo dorato leggendario (coppa + manici + gemma + base)
 export const CampioneIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
   const g = useGradId("camp");
+  const gem = useGradId("campgem");
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id={g} x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
-          <stop stopColor={active ? "#FDE68A" : "#6b7280"} />
-          <stop offset="1" stopColor={active ? "#F59E0B" : "#4b5563"} />
+        <linearGradient id={g} x1="6" y1="3" x2="18" y2="18" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#FEF3C7" : "#6b7280"} />
+          <stop offset="0.5" stopColor={active ? "#F59E0B" : "#4b5563"} />
+          <stop offset="1" stopColor={active ? "#B45309" : "#374151"} />
         </linearGradient>
+        <radialGradient id={gem} cx="0.5" cy="0.4" r="0.7">
+          <stop stopColor={active ? "#FCA5A5" : "#6b7280"} />
+          <stop offset="1" stopColor={active ? "#DC2626" : "#4b5563"} />
+        </radialGradient>
       </defs>
-      {/* alloro sinistro */}
-      <path d="M6.5 5.5C4 7 3.2 10 4.2 13c1.8-.3 3.4-1.6 4-3.4" stroke={active ? "#34D399" : "#4b5563"} strokeWidth="1.4" strokeLinecap="round" fill="none" />
-      {/* alloro destro */}
-      <path d="M17.5 5.5C20 7 20.8 10 19.8 13c-1.8-.3-3.4-1.6-4-3.4" stroke={active ? "#34D399" : "#4b5563"} strokeWidth="1.4" strokeLinecap="round" fill="none" />
-      {/* stella centrale */}
+      {/* luccichii leggendari */}
+      {active && (
+        <g fill="#FDE68A">
+          <path d="M3.1 3.2l.5 1.3 1.3.5-1.3.5-.5 1.3-.5-1.3-1.3-.5 1.3-.5.5-1.3z" opacity="0.95" />
+          <path d="M20.7 8.4l.4 1 1 .4-1 .4-.4 1-.4-1-1-.4 1-.4.4-1z" opacity="0.8" />
+        </g>
+      )}
+      {/* manici */}
+      <path d="M6.5 5H3.6c0 2.9 1.5 4.5 3.7 4.9" stroke={active ? "#FBBF24" : "#4b5563"} strokeWidth="1.4" strokeLinecap="round" fill="none" />
+      <path d="M17.5 5h2.9c0 2.9-1.5 4.5-3.7 4.9" stroke={active ? "#FBBF24" : "#4b5563"} strokeWidth="1.4" strokeLinecap="round" fill="none" />
+      {/* coppa */}
       <path
-        d="M12 6.2l1.7 3.5 3.8.5-2.8 2.6.7 3.8L12 15.4 8.6 17.2l.7-3.8-2.8-2.6 3.8-.5L12 6.2z"
+        d="M6 3.6h12v3.9c0 3.3-2.7 6-6 6s-6-2.7-6-6V3.6z"
         fill={`url(#${g})`}
-        stroke={active ? "#B45309" : "#374151"}
-        strokeWidth="0.6"
+        stroke={active ? "#92400E" : "#374151"}
+        strokeWidth="0.7"
         strokeLinejoin="round"
       />
+      {/* stelo */}
+      <rect x="10.9" y="13.1" width="2.2" height="3" fill={`url(#${g})`} />
+      {/* base superiore */}
+      <rect x="8" y="16" width="8" height="1.9" rx="0.7" fill={`url(#${g})`} stroke={active ? "#92400E" : "#374151"} strokeWidth="0.5" />
+      {/* base inferiore */}
+      <rect x="6.2" y="17.7" width="11.6" height="2.4" rx="1" fill={`url(#${g})`} stroke={active ? "#92400E" : "#374151"} strokeWidth="0.5" />
+      {/* gemma centrale */}
+      <circle cx="12" cy="6.9" r="1.7" fill={`url(#${gem})`} stroke={active ? "#92400E" : "#374151"} strokeWidth="0.4" />
+      {/* riflesso sulla coppa */}
+      {active && (
+        <path d="M8.3 4.6c-.4 1.7-.2 3.2.5 4.4" stroke="#FFFBEB" strokeWidth="0.8" strokeLinecap="round" opacity="0.5" fill="none" />
+      )}
     </svg>
   );
 };
