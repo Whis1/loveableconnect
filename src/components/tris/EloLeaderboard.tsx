@@ -6,7 +6,7 @@ import { Trophy, ChevronDown, ChevronUp, Crown } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { computeChampionBadges, dateStringToDayNumber, ChampionBadges } from "@/lib/championBadges";
 import { ChampionBadgesRow } from "./ChampionBadgesRow";
-import { CampioneIcon, LaurelRankIcon } from "@/lib/championIcons";
+import { CampioneIcon } from "@/lib/championIcons";
 import { computeAdminElos } from "@/lib/adminElo";
 import { ProfileStatsDialog } from "./ProfileStatsDialog";
 import { VictoryIcon, DefeatIcon } from "@/lib/gameIcons";
@@ -238,55 +238,46 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
   };
 
   const getTrophyIcon = (position: number) => {
-    switch (position) {
-      case 0:
-        return (
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-yellow-300 via-yellow-500 to-yellow-600 rounded-full blur-sm opacity-75 animate-pulse" />
-            <div className="relative w-10 h-10 bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-600 rounded-full flex items-center justify-center shadow-lg border-2 border-yellow-300">
-              <CampioneIcon className="w-7 h-7 drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.35)]" />
-            </div>
+    // 🥇 1° posto: trofeo dorato nel cerchio dorato (sfondo pieno)
+    if (position === 0) {
+      return (
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-yellow-300 via-yellow-500 to-yellow-600 rounded-full blur-sm opacity-75 animate-pulse" />
+          <div className="relative w-10 h-10 bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-600 rounded-full flex items-center justify-center shadow-lg border-2 border-yellow-300">
+            <CampioneIcon className="w-7 h-7 drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.35)]" />
           </div>
-        );
-      case 1:
-        return (
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500 rounded-full blur-sm opacity-60" />
-            <div className="relative w-10 h-10 bg-gradient-to-br from-gray-200 via-gray-300 to-gray-500 rounded-full flex items-center justify-center shadow-lg border-2 border-gray-300">
-              <LaurelRankIcon place={2} tone="#334155" className="w-7 h-7" />
-            </div>
-          </div>
-        );
-      case 2:
-        return (
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-amber-600 to-orange-700 rounded-full blur-sm opacity-60" />
-            <div className="relative w-10 h-10 bg-gradient-to-br from-orange-300 via-amber-500 to-orange-600 rounded-full flex items-center justify-center shadow-lg border-2 border-orange-400">
-              <LaurelRankIcon place={3} tone="#FFFFFF" className="w-7 h-7 drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.45)]" />
-            </div>
-          </div>
-        );
-      case 3:
-        return (
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 rounded-full blur-sm opacity-50" />
-            <div className="relative w-10 h-10 bg-gradient-to-br from-blue-300 via-blue-400 to-blue-600 rounded-full flex items-center justify-center shadow-lg border-2 border-blue-300">
-              <LaurelRankIcon place={4} tone="#FFFFFF" className="w-7 h-7 drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.45)]" />
-            </div>
-          </div>
-        );
-      case 4:
-        return (
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-400 via-purple-500 to-purple-600 rounded-full blur-sm opacity-50" />
-            <div className="relative w-10 h-10 bg-gradient-to-br from-purple-300 via-purple-400 to-purple-600 rounded-full flex items-center justify-center shadow-lg border-2 border-purple-300">
-              <LaurelRankIcon place={5} tone="#FFFFFF" className="w-7 h-7 drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.45)]" />
-            </div>
-          </div>
-        );
-      default:
-        return null;
+        </div>
+      );
     }
+
+    // 🎖️ 2°-5°: medaglia con nastro. Il cerchio è il medaglione (con anello
+    // interno + numero inciso) e due code di nastro spuntano dietro in alto.
+    const medals: Record<number, { disc: string; glow: string; ribbon: string; num: string }> = {
+      1: { disc: "from-gray-200 via-gray-300 to-gray-500 border-gray-300", glow: "from-gray-300 via-gray-400 to-gray-500", ribbon: "from-slate-400 to-slate-600", num: "text-slate-700" },
+      2: { disc: "from-orange-300 via-amber-500 to-orange-600 border-orange-400", glow: "from-orange-400 via-amber-600 to-orange-700", ribbon: "from-amber-500 to-orange-700", num: "text-white" },
+      3: { disc: "from-blue-300 via-blue-400 to-blue-600 border-blue-300", glow: "from-blue-400 via-blue-500 to-blue-600", ribbon: "from-sky-400 to-blue-700", num: "text-white" },
+      4: { disc: "from-purple-300 via-purple-400 to-purple-600 border-purple-300", glow: "from-purple-400 via-purple-500 to-purple-600", ribbon: "from-fuchsia-400 to-purple-700", num: "text-white" },
+    };
+    const m = medals[position];
+    if (!m) return null;
+    return (
+      <div className="relative w-10 h-10">
+        {/* nastri (spuntano dietro, in alto) */}
+        <div className="absolute -top-2 left-1/2 -translate-x-1/2 flex gap-[3px] z-0 pointer-events-none">
+          <span className={`block w-2 h-4 rounded-b-[2px] -rotate-[14deg] origin-bottom bg-gradient-to-b ${m.ribbon} shadow-sm`} />
+          <span className={`block w-2 h-4 rounded-b-[2px] rotate-[14deg] origin-bottom bg-gradient-to-b ${m.ribbon} shadow-sm`} />
+        </div>
+        {/* glow */}
+        <div className={`absolute inset-0 rounded-full blur-sm opacity-60 bg-gradient-to-br ${m.glow}`} />
+        {/* medaglione */}
+        <div className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center shadow-lg border-2 bg-gradient-to-br ${m.disc}`}>
+          <span className="absolute inset-[3px] rounded-full border border-white/40" />
+          <span className={`relative text-lg font-black ${m.num} [text-shadow:0_1px_1px_rgba(0,0,0,0.4)]`}>
+            {position + 1}
+          </span>
+        </div>
+      </div>
+    );
   };
 
   const getRankDisplay = () => {
