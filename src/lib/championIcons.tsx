@@ -68,6 +68,41 @@ export const CampioneIcon: React.FC<ChampionIconProps> = ({ className, active = 
   );
 };
 
+// 🥈🥉 RANGHI 2°-5° — corona d'alloro con numero del piazzamento.
+// `tone` regola il colore di alloro+numero per il massimo contrasto sul cerchio.
+export const LaurelRankIcon: React.FC<{ className?: string; place: number; tone?: string }> = ({
+  className,
+  place,
+  tone = "#FFFFFF",
+}) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+    <g fill={tone} stroke={tone} strokeWidth="0.8" strokeLinecap="round">
+      {/* stelo sinistro */}
+      <path d="M6.6 18.4C4.6 15.9 4.2 12.4 5.4 9.2" fill="none" strokeWidth="1.1" />
+      <ellipse cx="4.6" cy="11.2" rx="1.4" ry="0.75" transform="rotate(-38 4.6 11.2)" />
+      <ellipse cx="4.5" cy="13.8" rx="1.4" ry="0.75" transform="rotate(-22 4.5 13.8)" />
+      <ellipse cx="5.2" cy="16.2" rx="1.4" ry="0.75" transform="rotate(-8 5.2 16.2)" />
+      {/* stelo destro */}
+      <path d="M17.4 18.4C19.4 15.9 19.8 12.4 18.6 9.2" fill="none" strokeWidth="1.1" />
+      <ellipse cx="19.4" cy="11.2" rx="1.4" ry="0.75" transform="rotate(38 19.4 11.2)" />
+      <ellipse cx="19.5" cy="13.8" rx="1.4" ry="0.75" transform="rotate(22 19.5 13.8)" />
+      <ellipse cx="18.8" cy="16.2" rx="1.4" ry="0.75" transform="rotate(8 18.8 16.2)" />
+    </g>
+    <text
+      x="12"
+      y="13"
+      textAnchor="middle"
+      dominantBaseline="central"
+      fontSize="11"
+      fontWeight="900"
+      fill={tone}
+      stroke="none"
+    >
+      {place}
+    </text>
+  </svg>
+);
+
 // 2) CAMPIONE DELLA SETTIMANA — corona
 export const SettimanaIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
   const g = useGradId("sett");

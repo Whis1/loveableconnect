@@ -6,7 +6,7 @@ import { Trophy, ChevronDown, ChevronUp, Crown } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { computeChampionBadges, dateStringToDayNumber, ChampionBadges } from "@/lib/championBadges";
 import { ChampionBadgesRow } from "./ChampionBadgesRow";
-import { CampioneIcon } from "@/lib/championIcons";
+import { CampioneIcon, LaurelRankIcon } from "@/lib/championIcons";
 import { computeAdminElos } from "@/lib/adminElo";
 import { ProfileStatsDialog } from "./ProfileStatsDialog";
 import { VictoryIcon, DefeatIcon } from "@/lib/gameIcons";
@@ -242,9 +242,9 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
       case 0:
         return (
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-600 rounded-full blur-md opacity-60 animate-pulse" />
-            <div className="relative w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br from-amber-950/50 to-yellow-900/30 shadow-lg border-2 border-yellow-300/70">
-              <CampioneIcon className="w-7 h-7" />
+            <div className="absolute inset-0 bg-gradient-to-br from-yellow-300 via-yellow-500 to-yellow-600 rounded-full blur-sm opacity-75 animate-pulse" />
+            <div className="relative w-10 h-10 bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-600 rounded-full flex items-center justify-center shadow-lg border-2 border-yellow-300">
+              <CampioneIcon className="w-7 h-7 drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.35)]" />
             </div>
           </div>
         );
@@ -252,8 +252,8 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         return (
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500 rounded-full blur-sm opacity-60" />
-            <div className="relative w-10 h-10 bg-gradient-to-br from-gray-200 via-gray-300 to-gray-500 rounded-full flex items-center justify-center text-2xl shadow-lg border-2 border-gray-300">
-              🥈
+            <div className="relative w-10 h-10 bg-gradient-to-br from-gray-200 via-gray-300 to-gray-500 rounded-full flex items-center justify-center shadow-lg border-2 border-gray-300">
+              <LaurelRankIcon place={2} tone="#334155" className="w-7 h-7" />
             </div>
           </div>
         );
@@ -261,8 +261,8 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         return (
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-amber-600 to-orange-700 rounded-full blur-sm opacity-60" />
-            <div className="relative w-10 h-10 bg-gradient-to-br from-orange-300 via-amber-500 to-orange-600 rounded-full flex items-center justify-center text-2xl shadow-lg border-2 border-orange-400">
-              🥉
+            <div className="relative w-10 h-10 bg-gradient-to-br from-orange-300 via-amber-500 to-orange-600 rounded-full flex items-center justify-center shadow-lg border-2 border-orange-400">
+              <LaurelRankIcon place={3} tone="#FFFFFF" className="w-7 h-7 drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.45)]" />
             </div>
           </div>
         );
@@ -270,8 +270,8 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         return (
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 rounded-full blur-sm opacity-50" />
-            <div className="relative w-10 h-10 bg-gradient-to-br from-blue-300 via-blue-400 to-blue-600 rounded-full flex items-center justify-center text-xl shadow-lg border-2 border-blue-300">
-              🎖️
+            <div className="relative w-10 h-10 bg-gradient-to-br from-blue-300 via-blue-400 to-blue-600 rounded-full flex items-center justify-center shadow-lg border-2 border-blue-300">
+              <LaurelRankIcon place={4} tone="#FFFFFF" className="w-7 h-7 drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.45)]" />
             </div>
           </div>
         );
@@ -279,8 +279,8 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         return (
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-400 via-purple-500 to-purple-600 rounded-full blur-sm opacity-50" />
-            <div className="relative w-10 h-10 bg-gradient-to-br from-purple-300 via-purple-400 to-purple-600 rounded-full flex items-center justify-center text-xl shadow-lg border-2 border-purple-300">
-              🏅
+            <div className="relative w-10 h-10 bg-gradient-to-br from-purple-300 via-purple-400 to-purple-600 rounded-full flex items-center justify-center shadow-lg border-2 border-purple-300">
+              <LaurelRankIcon place={5} tone="#FFFFFF" className="w-7 h-7 drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.45)]" />
             </div>
           </div>
         );
