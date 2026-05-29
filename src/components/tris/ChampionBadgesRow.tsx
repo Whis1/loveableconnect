@@ -67,14 +67,14 @@ export const ChampionBadgesRow = ({ badges, tournamentsWon, size = "md", classNa
           active={badges.weeks > 0}
           count={badges.weeks}
           title="Campione della Settimana"
-          desc="Titolo ottenuto restando primo in classifica per una settimana intera (7 giorni consecutivi). Il numero indica le settimane complete totalizzate."
+          desc="Titolo ottenuto restando primo in classifica per una settimana intera."
         />
         <Badge
           icon={<MeseIcon className={iconCls} active={badges.months > 0} />}
           active={badges.months > 0}
           count={badges.months}
           title="Campione del Mese"
-          desc="Titolo ottenuto restando primo in classifica per un mese intero (30 giorni consecutivi). Il numero indica i mesi completi totalizzati."
+          desc="Titolo ottenuto restando primo in classifica per un mese intero."
         />
         {typeof tournamentsWon === "number" && (
           <Badge
@@ -82,7 +82,7 @@ export const ChampionBadgesRow = ({ badges, tournamentsWon, size = "md", classNa
             active={tournamentsWon > 0}
             count={tournamentsWon}
             title="Tornei Vinti"
-            desc="Numero di tornei a 8 giocatori (Othello o Dama) vinti aggiudicandosi la finale."
+            desc="Numero di tornei vinti aggiudicandosi la finale."
           />
         )}
       </div>
