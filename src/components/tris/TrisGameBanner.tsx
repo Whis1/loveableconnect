@@ -809,18 +809,22 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
               <p className="text-base font-black uppercase tracking-wide bg-gradient-to-r from-fuchsia-300 via-pink-300 to-amber-300 bg-clip-text text-transparent">
                 Torneo
               </p>
-              <p className="text-[11px] text-foreground/60">8 sfidanti · premi esclusivi</p>
             </div>
           </button>
         </div>
 
-        {/* ℹ️ Cos'è l'ELO — compatto */}
-        <div className="mt-4 flex items-start gap-2.5 p-3 rounded-xl bg-white/[0.03] border border-white/10">
-          <Trophy className="w-4 h-4 text-pink-300 mt-0.5 shrink-0" />
-          <p className="text-[11px] text-muted-foreground leading-relaxed">
-            <strong className="text-pink-300/90">Cos'è l'ELO?</strong> Misura la tua abilità: parti da 1200,
-            +20 per vittoria e −10 per sconfitta. Più è alto, più sei bravo.
-          </p>
+        {/* ℹ️ Cos'è l'ELO */}
+        <div className="mt-4 p-4 rounded-lg bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-primary/20">
+          <div className="flex items-start gap-3">
+            <Trophy className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <h4 className="font-semibold text-sm mb-1 text-primary">Cos&apos;è l&apos;ELO?</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Il sistema ELO misura il livello della tua abilità di gioco. Parti da 1200 punti: se vinci
+                acquisisci +20 ELO, se perdi scendi di -10. Più alto è il tuo ELO, più dimostri la tua bravura!
+              </p>
+            </div>
+          </div>
         </div>
       </Card>
     );

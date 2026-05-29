@@ -289,10 +289,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
   };
 
   const getRankDisplay = () => {
-    if (!userRank) return "N/A";
-    if (userRank === 1) return "1° 🥇";
-    if (userRank === 2) return "2° 🥈";
-    if (userRank === 3) return "3° 🥉";
+    if (!userRank) return "—";
     return `${userRank}°`;
   };
 
@@ -304,63 +301,65 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
   return (
     <div className="space-y-4">
       {userId && (
-        <Card className="p-5 bg-gradient-to-br from-purple-950/40 via-fuchsia-900/25 to-indigo-950/40 border-pink-500/30 shadow-[0_8px_40px_-12px_rgba(244,114,182,0.35)]">
-          {/* 🎮 Card stile board partita: avatar grande + nickname + ELO + posizione */}
-          <div className="flex items-center gap-4">
-            <Avatar className="w-16 h-16 border-2 border-pink-400/60 shadow-lg shadow-pink-500/30 shrink-0">
-              <AvatarImage src={getAvatarUrl(userProfile?.avatar_url ?? null)} />
-              <AvatarFallback className="bg-fuchsia-500/20 text-pink-200 font-bold">
-                {(userProfile?.nickname ?? userProfile?.full_name ?? "ME").slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+        <Card className="relative overflow-hidden p-5 bg-gradient-to-br from-purple-950/40 via-fuchsia-900/25 to-indigo-950/40 border-pink-500/30 shadow-[0_8px_40px_-12px_rgba(244,114,182,0.35)]">
+          {/* glow decorativo */}
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(244,114,182,0.16),transparent_55%)]" />
+
+          {/* 🎮 Header: avatar + nickname + ELO + posizione */}
+          <div className="relative flex items-center gap-4">
+            <div className="relative shrink-0">
+              <div className="absolute -inset-0.5 rounded-full bg-gradient-to-br from-pink-400 via-fuchsia-500 to-indigo-500 opacity-70 blur-[2px]" />
+              <Avatar className="relative w-16 h-16 border-2 border-pink-400/70 shadow-lg shadow-pink-500/30">
+                <AvatarImage src={getAvatarUrl(userProfile?.avatar_url ?? null)} />
+                <AvatarFallback className="bg-fuchsia-500/20 text-pink-200 font-bold">
+                  {(userProfile?.nickname ?? userProfile?.full_name ?? "ME").slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </div>
             <div className="flex-1 min-w-0">
-              <p className="font-bold text-base truncate bg-gradient-to-r from-pink-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent">
+              <p className="font-black text-lg truncate bg-gradient-to-r from-pink-200 via-fuchsia-200 to-indigo-200 bg-clip-text text-transparent">
                 {userProfile?.nickname ?? userProfile?.full_name ?? "Tu"}
               </p>
-              <p className="text-sm font-bold text-pink-300">
-                ELO <span className="text-2xl font-black">{userElo}</span>
-              </p>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-[11px] uppercase tracking-wider font-bold text-pink-300/70">ELO</span>
+                <span className="text-2xl font-black bg-gradient-to-r from-pink-300 to-fuchsia-300 bg-clip-text text-transparent leading-none">
+                  {userElo}
+                </span>
+              </div>
             </div>
-            <div className="text-right shrink-0">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+            <div className="flex flex-col items-center shrink-0 px-3 py-1.5 rounded-xl bg-white/[0.04] border border-pink-500/20">
+              <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold">
                 Posizione
-              </p>
-              <p className="text-xl font-black bg-gradient-to-r from-pink-300 to-fuchsia-300 bg-clip-text text-transparent">
+              </span>
+              <span className="text-2xl font-black bg-gradient-to-r from-amber-300 via-pink-300 to-fuchsia-300 bg-clip-text text-transparent leading-tight">
                 {getRankDisplay()}
-              </p>
+              </span>
             </div>
           </div>
 
-          {/* 📊 Stats personali — solo per il proprio profilo */}
+          {/* 📊 Stats personali — V/S inline (compatte) + titoli, su una sola strip */}
           {userStats && (
-            <div className="mt-4 pt-4 border-t border-pink-500/20 space-y-3">
-              {/* Vittorie / Sconfitte — pillole compatte orizzontali */}
-              <div className="grid grid-cols-2 gap-2">
-                <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+            <div className="relative mt-4 pt-4 border-t border-pink-500/20 flex flex-wrap items-center justify-between gap-x-5 gap-y-3">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5">
                   <VictoryIcon className="w-4 h-4 text-emerald-400 shrink-0" />
                   <span className="text-xl font-black text-emerald-300 leading-none">{userStats.wins}</span>
-                  <span className="text-[10px] uppercase tracking-wide font-semibold text-emerald-300/70">
-                    Vittorie
-                  </span>
+                  <span className="text-[11px] font-semibold text-emerald-300/70">Vittorie</span>
                 </div>
-
-                <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/30">
+                <div className="w-px h-5 bg-pink-500/20" />
+                <div className="flex items-center gap-1.5">
                   <DefeatIcon className="w-4 h-4 text-rose-400 shrink-0" />
                   <span className="text-xl font-black text-rose-300 leading-none">{userStats.losses}</span>
-                  <span className="text-[10px] uppercase tracking-wide font-semibold text-rose-300/70">
-                    Sconfitte
-                  </span>
+                  <span className="text-[11px] font-semibold text-rose-300/70">Sconfitte</span>
                 </div>
               </div>
 
               {/* 🏅 Titoli (Campione/Settimana/Mese) + Tornei, solo icone + tooltip */}
-              <div className="flex items-center justify-center gap-1 pt-0.5">
-                <ChampionBadgesRow
-                  badges={userStats.badges}
-                  tournamentsWon={userStats.tournamentsWon}
-                  size="md"
-                />
-              </div>
+              <ChampionBadgesRow
+                badges={userStats.badges}
+                tournamentsWon={userStats.tournamentsWon}
+                size="md"
+              />
             </div>
           )}
         </Card>
