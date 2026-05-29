@@ -483,6 +483,20 @@ export function useTournament(currentUserId: string | null) {
     setMatches([]);
   }, []);
 
+  // 🔧 ADMIN/TEST: forza la conclusione immediata di un match NPC (anche prima
+  //    dello scadere del tempo). Usa resolve_npc_match con _force=true.
+  const forceResolveMatch = useCallback(
+    async (matchId: string) => {
+      try {
+        await supabase.rpc("resolve_npc_match" as any, { _match_id: matchId, _force: true });
+      } catch (e) {
+        console.warn("forceResolveMatch failed:", e);
+      }
+      if (tournament?.id) await fetchTournamentState(tournament.id);
+    },
+    [tournament?.id, fetchTournamentState]
+  );
+
   return {
     tournament,
     participants,
@@ -496,5 +510,6 @@ export function useTournament(currentUserId: string | null) {
     abandonTournament,
     claimRewards,
     clearTournament,
+    forceResolveMatch,
   };
 }

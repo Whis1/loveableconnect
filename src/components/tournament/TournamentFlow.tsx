@@ -94,6 +94,7 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
     abandonTournament,
     claimRewards,
     clearTournament,
+    forceResolveMatch,
   } = useTournament(currentUserId);
 
   // ============== AUTO-TRANSITION ==============
@@ -488,6 +489,7 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
           currentUserId={currentUserId}
           onStartUserMatch={handleStartUserMatch}
           onAbandon={handleAbandon}
+          onForceResolve={forceResolveMatch}
         />
         {endBannerOverlay}
       </>

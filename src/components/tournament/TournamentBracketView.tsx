@@ -2,8 +2,9 @@ import { useEffect, useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Trophy, X, Gamepad2, Hourglass, CircleCheck } from "lucide-react";
+import { Trophy, X, Gamepad2, Hourglass, CircleCheck, Wrench } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import {
   MatchRow,
   ParticipantRow,
@@ -20,6 +21,8 @@ interface TournamentBracketViewProps {
   currentUserId: string;
   onStartUserMatch: () => Promise<void>;
   onAbandon: () => Promise<void>;
+  /** 🔧 ADMIN: forza la conclusione immediata di un match NPC (test). */
+  onForceResolve?: (matchId: string) => void;
 }
 
 // 🏆 Bracket 8-player visuale:
@@ -35,7 +38,25 @@ export const TournamentBracketView = ({
   currentUserId,
   onStartUserMatch,
   onAbandon,
+  onForceResolve,
 }: TournamentBracketViewProps) => {
+  const isAdmin = useIsAdmin();
+  // ⏱️ Ticker per il countdown NPC (solo admin lo vede). Aggiorna ogni secondo.
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (!isAdmin) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [isAdmin]);
+
+  const formatCountdown = (endAt: string | null): string => {
+    if (!endAt) return "";
+    const diff = new Date(endAt).getTime() - now;
+    if (diff <= 0) return "0:00";
+    const m = Math.floor(diff / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
 
   // 🚀 Auto-start del match utente: appena userMatch entra in stato 'waiting'
   //    (cioe' appena la sua partita e' pronta), avviamo un countdown 3s e poi
@@ -175,6 +196,25 @@ export const TournamentBracketView = ({
             </span>
           )}
         </div>
+
+        {/* 🔧 ADMIN: countdown reale del match NPC + pulsante "Concludi" (test) */}
+        {isAdmin && isNpcInProgress && (
+          <div className="flex flex-col items-center gap-1 pt-1.5 border-t border-white/10 mt-1">
+            <span className="text-[10px] font-mono text-amber-300">
+              ⏱ {formatCountdown(match.scheduled_end_at)}
+            </span>
+            {onForceResolve && (
+              <button
+                onClick={() => onForceResolve(match.id)}
+                className="flex items-center gap-1 px-2 py-0.5 rounded bg-orange-500/90 hover:bg-orange-500 text-white text-[9px] font-bold border border-orange-300"
+                title="DEBUG: concludi subito questo match NPC"
+              >
+                <Wrench className="w-2.5 h-2.5" />
+                [ADMIN] Concludi
+              </button>
+            )}
+          </div>
+        )}
       </div>
     );
   };

@@ -234,7 +234,10 @@ GRANT EXECUTE ON FUNCTION public.create_tournament(TEXT, UUID[], INTEGER[], INTE
 -- scheduled_end_at <= now(). Applica il predetermined_winner.
 -- Idempotente (no-op se gia' completed).
 -- ============================================================
-CREATE OR REPLACE FUNCTION public.resolve_npc_match(_match_id UUID)
+CREATE OR REPLACE FUNCTION public.resolve_npc_match(
+  _match_id UUID,
+  _force BOOLEAN DEFAULT FALSE  -- 🔧 admin/test: chiude il match anche prima del tempo
+)
 RETURNS TABLE (
   match_id UUID,
   winner_id UUID,
@@ -266,7 +269,7 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Solo NPC + in_progress + scheduled_end_at scaduto
+  -- Solo NPC + in_progress
   IF v_match.is_user_match THEN
     RAISE EXCEPTION 'Cannot auto-resolve a user match';
   END IF;
@@ -274,7 +277,8 @@ BEGIN
     RAISE EXCEPTION 'Match not in resolvable state (status=%, sched=%)',
       v_match.status, v_match.scheduled_end_at;
   END IF;
-  IF NOW() < v_match.scheduled_end_at THEN
+  -- ⏱️ Check tempo: saltato se _force=TRUE (pulsante admin "Concludi").
+  IF NOT _force AND NOW() < v_match.scheduled_end_at THEN
     RAISE EXCEPTION 'Match not yet ended (now=%, scheduled=%)',
       NOW(), v_match.scheduled_end_at;
   END IF;
@@ -309,7 +313,7 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.resolve_npc_match(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.resolve_npc_match(UUID, BOOLEAN) TO authenticated;
 
 -- ============================================================
 -- start_user_match: chiamato quando l'utente clicca "Inizia partita"
