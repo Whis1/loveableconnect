@@ -7,7 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { GameResultOverlay } from "./GameResultOverlay";
 import { ProfileStatsDialog } from "./ProfileStatsDialog";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { Wrench } from "lucide-react";
+import { RockPaperScissors } from "@/components/tournament/RockPaperScissors";
+import { Wrench, Handshake } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -120,6 +121,9 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
   const [isPlayerTurn, setIsPlayerTurn] = useState(true); // black inizia (player)
   const [gameOver, setGameOver] = useState(false);
   const [winner, setWinner] = useState<"player" | "bot" | "draw" | null>(null);
+  // 🤝 Spareggio dopo pareggio in 1v1 normale → Carta-Forbici-Sasso (come torneo/Dama)
+  const [tiebreak, setTiebreak] = useState<null | "intro" | "rps">(null);
+  const [tiebreakCountdown, setTiebreakCountdown] = useState<number | null>(null);
   const [showEmoji, setShowEmoji] = useState(false);
   const [currentUserProfile, setCurrentUserProfile] = useState<Profile | null>(null);
   const [userEmoji, setUserEmoji] = useState<string | null>(null);
@@ -183,13 +187,33 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
     setShowResultOverlay(true);
   };
 
-  // 🔧 ADMIN TEST: forza pareggio 32-32 per testare lo spareggio (RPS / replay).
+  // 🔧 ADMIN TEST: forza pareggio per testare lo spareggio (RPS in normale,
+  //    torneo gestisce RPS/replay).
   const forceAdminDraw = () => {
     if (gameCompletedRef.current) return;
     gameCompletedRef.current = true;
     setGameOver(true);
-    setWinner("draw");
-    setLastEloChange(0);
+    if (tournamentMode) {
+      setWinner("draw");
+      setLastEloChange(0);
+      setShowResultOverlay(true);
+    } else {
+      setTiebreak("intro");
+    }
+  };
+
+  // 🎲 Esito dello spareggio Carta-Forbici-Sasso (solo modalità normale).
+  const handleDrawRpsResult = (userWon: boolean) => {
+    setTiebreak(null);
+    setWinner(userWon ? "player" : "bot");
+    if (userWon) {
+      updateUserElo(20);
+      recordWinStat();
+    } else {
+      updateUserElo(-10);
+      recordLossStat();
+    }
+    setLastEloChange(userWon ? 20 : -10);
     setShowResultOverlay(true);
   };
 
@@ -201,6 +225,24 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showResultOverlay, winner]);
+
+  // ⏱️ Countdown 10s sull'intro spareggio (normale) → poi parte l'RPS da solo.
+  useEffect(() => {
+    if (tiebreak !== "intro") return;
+    setTiebreakCountdown(10);
+    let secs = 10;
+    const id = setInterval(() => {
+      secs -= 1;
+      if (secs <= 0) {
+        clearInterval(id);
+        setTiebreakCountdown(null);
+        setTiebreak("rps");
+      } else {
+        setTiebreakCountdown(secs);
+      }
+    }, 1000);
+    return () => clearInterval(id);
+  }, [tiebreak]);
 
   useEffect(() => {
     initializeBoard();
@@ -442,8 +484,13 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
       } else {
         // Pareggio = stesso numero di pedine (black === white). NON è per forza
         // 32-32: se la partita finisce con caselle vuote (nessuno può muovere)
-        // può essere 30-30, 28-28, ecc. In entrambe le modalità segnaliamo "draw":
-        // in torneo sarà il TournamentFlow a gestire lo spareggio (Carta-Forbici-Sasso
+        // può essere 30-30, 28-28, ecc.
+        if (!tournamentMode) {
+          // 1v1 normale: spareggio Carta-Forbici-Sasso (intro + countdown → RPS)
+          setTiebreak("intro");
+          return true;
+        }
+        // Torneo: il TournamentFlow gestisce lo spareggio (Carta-Forbici-Sasso
         // per i match, replay per la finale).
         setWinner("draw");
         setLastEloChange(0);
@@ -567,6 +614,41 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
 
   const { black, white } = countPieces(board);
   const validPlayerMoves = !gameOver && isPlayerTurn ? getAllValidMoves(board, PLAYER).map((m) => m.idx) : [];
+
+  // 🤝 Spareggio dopo pareggio (1v1 normale): intro con countdown → RPS.
+  //    In torneo questo stato non viene usato (lo gestisce il TournamentFlow).
+  if (tiebreak === "intro") {
+    return (
+      <Card className="mb-6 p-8 text-center bg-gradient-to-br from-emerald-950/55 via-green-900/40 to-emerald-950/55 border-emerald-500/40 shadow-[0_8px_40px_-12px_rgba(16,185,129,0.4)]">
+        <Handshake className="w-16 h-16 mx-auto mb-4 text-emerald-300" />
+        <h3 className="text-2xl font-black bg-gradient-to-r from-emerald-300 via-green-300 to-emerald-200 bg-clip-text text-transparent mb-2">
+          Pareggio!
+        </h3>
+        <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">
+          Avete totalizzato lo stesso punteggio. Per decidere il vincitore vi sfiderete a{" "}
+          <strong className="text-emerald-300">Carta-Forbici-Sasso</strong>: chi arriva per
+          primo a 3 vittorie vince.
+        </p>
+        <p className="text-xs text-emerald-200/80">
+          Lo spareggio inizia tra{" "}
+          <span className="font-black text-emerald-100 text-lg">{tiebreakCountdown ?? 10}</span>{" "}
+          secondi…
+        </p>
+      </Card>
+    );
+  }
+
+  if (tiebreak === "rps") {
+    return (
+      <RockPaperScissors
+        userName={currentUserProfile?.nickname ?? "Tu"}
+        userAvatarUrl={getAvatarUrl(currentUserProfile?.avatar_url ?? null)}
+        opponentName={opponent.nickname ?? "Sfidante"}
+        opponentAvatarUrl={getAvatarUrl(opponent.avatar_url)}
+        onResult={handleDrawRpsResult}
+      />
+    );
+  }
 
   return (
     <Card className="mb-6 p-4 md:p-6 bg-gradient-to-br from-emerald-50 via-emerald-100 to-green-50 dark:from-emerald-950/40 dark:via-green-950/30 dark:to-emerald-950/40 border-emerald-500/40 relative">
