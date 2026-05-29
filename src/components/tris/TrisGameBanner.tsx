@@ -746,11 +746,11 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
 
   if (gameState === "selecting") {
     return (
-      <Card className="mb-6 mx-auto max-w-4xl p-6 bg-gradient-to-br from-primary/15 via-secondary/10 to-primary/10 border-primary/30 backdrop-blur-sm">
+      <Card className="mb-6 mx-auto max-w-2xl p-5 md:p-6 bg-gradient-to-br from-purple-950/50 via-fuchsia-900/25 to-indigo-950/50 border-pink-500/30 shadow-[0_8px_50px_-12px_rgba(244,114,182,0.4)] backdrop-blur-sm">
         {/* Header: titolo + close */}
-        <div className="flex justify-between items-start mb-5">
-          <h3 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent inline-flex items-center gap-2">
-            <Gamepad2 className="w-6 h-6 text-primary" />
+        <div className="flex justify-between items-center mb-5">
+          <h3 className="text-xl font-black tracking-tight bg-gradient-to-r from-pink-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent inline-flex items-center gap-2">
+            <Gamepad2 className="w-6 h-6 text-pink-300" />
             Scegli il tuo gioco
           </h3>
           <Button
@@ -760,86 +760,67 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
               setGameState("idle");
               if (variant !== "page") setShowBanner(false);
             }}
-            className="hover:bg-primary/10"
+            className="hover:bg-white/5 text-foreground/60 hover:text-foreground"
           >
             <X className="w-5 h-5" />
           </Button>
         </div>
 
-        {/* 📐 LAYOUT 2 COLONNE: sinistra leaderboard+ELO info, destra torneo+giochi */}
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_220px] gap-5">
-          {/* === COLONNA SINISTRA === */}
-          <div className="space-y-4 min-w-0">
-            <EloLeaderboard userId={currentUserId || undefined} />
+        {/* 👤 Profilo + classifica (card propria) */}
+        <EloLeaderboard userId={currentUserId || undefined} />
 
-            {/* ELO Explanation */}
-            <div className="p-4 rounded-lg bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-primary/20">
-              <div className="flex items-start gap-3">
-                <Trophy className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <h4 className="font-semibold text-sm mb-1 text-primary">Cos&apos;è l&apos;ELO?</h4>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Il sistema ELO misura il livello della tua abilità di gioco. Parti da 1200 punti: se vinci acquisisci +20 ELO,
-                    se perdi scendi di -10. Più alto è il tuo ELO, più dimostri la tua bravura! 🏆
-                  </p>
+        {/* 🎮 MODALITÀ — 3 giochi (glass coerente) + Torneo full-width */}
+        <div className="mt-5">
+          <p className="text-[11px] uppercase tracking-[0.2em] font-bold text-pink-300/70 mb-2.5 px-0.5">
+            Modalità di gioco
+          </p>
+
+          <div className="grid grid-cols-3 gap-2.5">
+            {[
+              { key: "tris" as const, icon: trisIcon, label: "Tris", accent: "from-blue-400 to-blue-500", glow: "group-hover:shadow-blue-500/40 group-hover:border-blue-400/50" },
+              { key: "othello" as const, icon: othelloIcon, label: "Othello", accent: "from-emerald-400 to-emerald-500", glow: "group-hover:shadow-emerald-500/40 group-hover:border-emerald-400/50" },
+              { key: "dama" as const, icon: damaIcon, label: "Dama", accent: "from-red-400 to-red-500", glow: "group-hover:shadow-red-500/40 group-hover:border-red-400/50" },
+            ].map((g) => (
+              <button
+                key={g.key}
+                onClick={() => handleGameSelect(g.key)}
+                className={`group flex flex-col items-center gap-2 py-4 rounded-2xl bg-white/[0.04] border border-white/10 hover:bg-white/[0.07] hover:-translate-y-0.5 hover:shadow-lg transition-all ${g.glow}`}
+              >
+                <div className="w-12 h-12 flex items-center justify-center">
+                  <img src={g.icon} alt={g.label} className="w-full h-full object-contain drop-shadow group-hover:scale-110 transition-transform" />
                 </div>
-              </div>
+                <span className={`text-sm font-black uppercase tracking-wide bg-gradient-to-r ${g.accent} bg-clip-text text-transparent`}>
+                  {g.label}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* 🏆 Torneo — card full width, accento fuchsia/oro */}
+          <button
+            onClick={handleStartTournament}
+            className="group mt-2.5 w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-gradient-to-r from-fuchsia-600/20 via-pink-600/15 to-amber-500/15 border border-fuchsia-500/40 hover:border-fuchsia-400/60 hover:from-fuchsia-600/30 hover:via-pink-600/25 hover:to-amber-500/25 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-fuchsia-500/30 transition-all relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-fuchsia-500 to-amber-500 flex items-center justify-center shadow-lg shadow-fuchsia-500/30 shrink-0">
+              <Trophy className="w-5 h-5 text-white" />
             </div>
-          </div>
+            <div className="relative text-left">
+              <p className="text-base font-black uppercase tracking-wide bg-gradient-to-r from-fuchsia-300 via-pink-300 to-amber-300 bg-clip-text text-transparent">
+                Torneo
+              </p>
+              <p className="text-[11px] text-foreground/60">8 sfidanti · premi esclusivi</p>
+            </div>
+          </button>
+        </div>
 
-          {/* === COLONNA DESTRA: Torneo sopra, 3 giochi impilati sotto === */}
-          <div className="flex flex-col gap-3 md:sticky md:top-4 self-start">
-            {/* 🏆 Torneo */}
-            <Button
-              onClick={handleStartTournament}
-              className="w-full h-11 rounded-full bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-500 hover:from-pink-400 hover:via-fuchsia-400 hover:to-purple-400 text-white font-bold shadow-lg shadow-pink-500/50 hover:shadow-pink-500/70 hover:scale-[1.02] transition-all border-0"
-            >
-              <Trophy className="w-4 h-4 mr-2" />
-              Torneo
-            </Button>
-
-            {/* Tris */}
-            <Button
-              onClick={() => handleGameSelect("tris")}
-              className="h-auto py-3 px-4 flex items-center gap-3 justify-start bg-gradient-to-r from-blue-500/20 via-blue-600/15 to-blue-700/20 hover:from-blue-500/30 hover:via-blue-600/25 hover:to-blue-700/30 border border-blue-500/40 hover:border-blue-400/60 transition-all hover:scale-[1.02] group relative overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-              <div className="w-10 h-10 flex items-center justify-center shrink-0 z-10">
-                <img src={trisIcon} alt="Tris" className="w-full h-full object-contain drop-shadow" />
-              </div>
-              <span className="text-lg font-black tracking-wider uppercase bg-gradient-to-r from-blue-400 via-blue-300 to-blue-500 bg-clip-text text-transparent drop-shadow-[0_2px_6px_rgba(59,130,246,0.5)] z-10">
-                TRIS
-              </span>
-            </Button>
-
-            {/* Othello */}
-            <Button
-              onClick={() => handleGameSelect("othello")}
-              className="h-auto py-3 px-4 flex items-center gap-3 justify-start bg-gradient-to-r from-emerald-500/20 via-green-600/15 to-emerald-700/20 hover:from-emerald-500/30 hover:via-green-600/25 hover:to-emerald-700/30 border border-emerald-500/40 hover:border-emerald-400/60 transition-all hover:scale-[1.02] group relative overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-              <div className="w-10 h-10 flex items-center justify-center shrink-0 z-10">
-                <img src={othelloIcon} alt="Othello" className="w-full h-full object-contain drop-shadow" />
-              </div>
-              <span className="text-lg font-black tracking-wider uppercase bg-gradient-to-r from-emerald-400 via-green-300 to-emerald-500 bg-clip-text text-transparent drop-shadow-[0_2px_6px_rgba(16,185,129,0.5)] z-10">
-                OTHELLO
-              </span>
-            </Button>
-
-            {/* Dama */}
-            <Button
-              onClick={() => handleGameSelect("dama")}
-              className="h-auto py-3 px-4 flex items-center gap-3 justify-start bg-gradient-to-r from-purple-500/20 via-purple-600/15 to-purple-700/20 hover:from-purple-500/30 hover:via-purple-600/25 hover:to-purple-700/30 border border-purple-500/40 hover:border-purple-400/60 transition-all hover:scale-[1.02] group relative overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-              <div className="w-12 h-12 flex items-center justify-center shrink-0 z-10">
-                <img src={damaIcon} alt="Dama" className="w-full h-full object-contain drop-shadow scale-110" />
-              </div>
-              <span className="text-lg font-black tracking-wider uppercase bg-gradient-to-r from-red-400 via-red-300 to-red-500 bg-clip-text text-transparent drop-shadow-[0_2px_6px_rgba(239,68,68,0.5)] z-10">
-                DAMA
-              </span>
-            </Button>
-          </div>
+        {/* ℹ️ Cos'è l'ELO — compatto */}
+        <div className="mt-4 flex items-start gap-2.5 p-3 rounded-xl bg-white/[0.03] border border-white/10">
+          <Trophy className="w-4 h-4 text-pink-300 mt-0.5 shrink-0" />
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            <strong className="text-pink-300/90">Cos'è l'ELO?</strong> Misura la tua abilità: parti da 1200,
+            +20 per vittoria e −10 per sconfitta. Più è alto, più sei bravo.
+          </p>
         </div>
       </Card>
     );

@@ -334,27 +334,27 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
           {/* 📊 Stats personali — solo per il proprio profilo */}
           {userStats && (
             <div className="mt-4 pt-4 border-t border-pink-500/20 space-y-3">
-              {/* Vittorie / Sconfitte */}
+              {/* Vittorie / Sconfitte — pillole compatte orizzontali */}
               <div className="grid grid-cols-2 gap-2">
-                <div className="flex flex-col items-center p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
-                  <VictoryIcon className="w-4 h-4 text-emerald-400 mb-0.5" />
-                  <span className="text-[9px] uppercase tracking-wider font-semibold text-emerald-300/90">
+                <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+                  <VictoryIcon className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span className="text-xl font-black text-emerald-300 leading-none">{userStats.wins}</span>
+                  <span className="text-[10px] uppercase tracking-wide font-semibold text-emerald-300/70">
                     Vittorie
                   </span>
-                  <span className="text-lg font-black text-emerald-300">{userStats.wins}</span>
                 </div>
 
-                <div className="flex flex-col items-center p-2 rounded-lg bg-rose-500/10 border border-rose-500/30">
-                  <DefeatIcon className="w-4 h-4 text-rose-400 mb-0.5" />
-                  <span className="text-[9px] uppercase tracking-wider font-semibold text-rose-300/90">
+                <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/30">
+                  <DefeatIcon className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span className="text-xl font-black text-rose-300 leading-none">{userStats.losses}</span>
+                  <span className="text-[10px] uppercase tracking-wide font-semibold text-rose-300/70">
                     Sconfitte
                   </span>
-                  <span className="text-lg font-black text-rose-300">{userStats.losses}</span>
                 </div>
               </div>
 
               {/* 🏅 Titoli (Campione/Settimana/Mese) + Tornei, solo icone + tooltip */}
-              <div className="flex items-center justify-center pt-1">
+              <div className="flex items-center justify-center gap-1 pt-0.5">
                 <ChampionBadgesRow
                   badges={userStats.badges}
                   tournamentsWon={userStats.tournamentsWon}
@@ -380,6 +380,22 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
 
         {isOpen && (
           <div className="p-4 pt-0 space-y-3">
+            {/* 🦴 Skeleton mentre carica: evita il "pop-in" / salto di altezza */}
+            {topPlayers.length === 0 &&
+              Array.from({ length: 5 }).map((_, i) => (
+                <div
+                  key={`sk-${i}`}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg bg-background/40 animate-pulse"
+                >
+                  <div className="w-10 h-6 rounded bg-white/10 shrink-0" />
+                  <div className="w-10 h-10 rounded-full bg-white/10 shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3.5 w-24 rounded bg-white/10" />
+                    <div className="h-3 w-14 rounded bg-white/10" />
+                  </div>
+                  <div className="h-5 w-10 rounded bg-white/10 shrink-0" />
+                </div>
+              ))}
             {topPlayers.map((player, index) => (
               <button
                 type="button"
