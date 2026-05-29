@@ -52,11 +52,17 @@ export const RockPaperScissors = ({
 
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const botCommitRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nextRoundRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 🛡️ Garantisce che il reveal di un round venga elaborato UNA volta sola.
+  //    Senza questo, setPhase("reveal") ri-eseguiva l'effect e il cleanup
+  //    cancellava il timer del round successivo → spareggio bloccato.
+  const roundResolvedRef = useRef(false);
   const onResultRef = useRef(onResult);
   useEffect(() => { onResultRef.current = onResult; }, [onResult]);
 
   // ===== Setup di ogni round =====
   useEffect(() => {
+    roundResolvedRef.current = false;
     setUserChoice(null);
     setBotChoice(null);
     setBotCommitted(false);
@@ -84,12 +90,15 @@ export const RockPaperScissors = ({
     return () => {
       if (botCommitRef.current) clearTimeout(botCommitRef.current);
       if (countdownRef.current) clearInterval(countdownRef.current);
+      if (nextRoundRef.current) clearTimeout(nextRoundRef.current);
     };
   }, [round]);
 
-  // ===== Quando ENTRAMBI hanno scelto → reveal + esito =====
+  // ===== Quando ENTRAMBI hanno scelto → reveal + esito (una sola volta) =====
   useEffect(() => {
-    if (phase !== "playing" || !userChoice || !botChoice) return;
+    if (!userChoice || !botChoice) return;
+    if (roundResolvedRef.current) return;
+    roundResolvedRef.current = true;
 
     let result: "win" | "lose" | "tie";
     if (userChoice === botChoice) result = "tie";
@@ -104,14 +113,15 @@ export const RockPaperScissors = ({
     if (result === "win") setUserScore(newUser);
     if (result === "lose") setBotScore(newBot);
 
-    const t = setTimeout(() => {
+    // Timer del round successivo in un REF: NON viene cancellato dai re-render
+    // dell'effect (solo dal cleanup del setup-round o dall'unmount).
+    nextRoundRef.current = setTimeout(() => {
       if (newUser >= WIN_TARGET) return onResultRef.current(true);
       if (newBot >= WIN_TARGET) return onResultRef.current(false);
-      setRound((r) => r + 1); // prossimo round (l'effect di setup resetta tutto)
+      setRound((r) => r + 1);
     }, 1900);
-    return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userChoice, botChoice, phase]);
+  }, [userChoice, botChoice]);
 
   const play = (c: Choice) => {
     if (phase !== "playing" || userChoice) return;
