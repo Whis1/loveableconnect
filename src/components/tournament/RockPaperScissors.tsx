@@ -1,23 +1,29 @@
 import { useState, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Gem, Scroll, Scissors, Hourglass, CircleCheck } from "lucide-react";
+import { Gem, Scroll, Scissors, Hourglass, CircleCheck, Timer } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-// 🎮 Spareggio Carta-Forbici-Sasso. PRIMO A 3 VITTORIE passa il turno.
-// Quando l'utente sceglie, l'admin "ci pensa" 4-6 secondi (suspense realistico),
-// con badge di stato accanto a ciascun profilo: "Sta decidendo" (clessidra) /
-// "Ha scelto" (spunta verde). Icone lucide a tema, niente emoji base.
+// 🎮 Spareggio Carta-Forbici-Sasso, PRIMO A 3 VITTORIE.
+//
+// Realismo: i due giocatori scelgono in modo INDIPENDENTE e simultaneo.
+// - All'inizio di ogni round entrambi sono "Sta decidendo".
+// - L'admin blocca la sua scelta per conto suo dopo 2-6s (NON dipende dalla
+//   mossa dell'utente) → diventa "Ha scelto" (mossa nascosta).
+// - L'utente sceglie quando vuole entro 30 secondi → "Ha scelto".
+// - Quando ENTRAMBI hanno scelto, le mosse si rivelano e appare l'esito.
+// - Se l'utente non sceglie entro 30s → perde lo spareggio.
 
 type Choice = "sasso" | "carta" | "forbici";
-type Phase = "userTurn" | "botThinking" | "reveal";
+type Phase = "playing" | "reveal";
 
 const CHOICES: Choice[] = ["sasso", "carta", "forbici"];
 const BEATS: Record<Choice, Choice> = { sasso: "forbici", carta: "sasso", forbici: "carta" };
 const ICONS: Record<Choice, typeof Gem> = { sasso: Gem, carta: Scroll, forbici: Scissors };
 const LABELS: Record<Choice, string> = { sasso: "Sasso", carta: "Carta", forbici: "Forbici" };
 
-const WIN_TARGET = 3; // primo a 3 vittorie passa
+const WIN_TARGET = 3;
+const ROUND_SECONDS = 30;
 
 interface RockPaperScissorsProps {
   userName: string;
@@ -36,82 +42,97 @@ export const RockPaperScissors = ({
 }: RockPaperScissorsProps) => {
   const [userScore, setUserScore] = useState(0);
   const [botScore, setBotScore] = useState(0);
+  const [round, setRound] = useState(0);
   const [userChoice, setUserChoice] = useState<Choice | null>(null);
   const [botChoice, setBotChoice] = useState<Choice | null>(null);
-  const [phase, setPhase] = useState<Phase>("userTurn");
+  const [botCommitted, setBotCommitted] = useState(false);
+  const [phase, setPhase] = useState<Phase>("playing");
   const [roundResult, setRoundResult] = useState<"win" | "lose" | "tie" | null>(null);
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const [timeLeft, setTimeLeft] = useState(ROUND_SECONDS);
 
-  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const botCommitRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onResultRef = useRef(onResult);
+  useEffect(() => { onResultRef.current = onResult; }, [onResult]);
 
-  const play = (choice: Choice) => {
-    if (phase !== "userTurn") return;
-    setUserChoice(choice);
-    setPhase("botThinking");
+  // ===== Setup di ogni round =====
+  useEffect(() => {
+    setUserChoice(null);
+    setBotChoice(null);
+    setBotCommitted(false);
+    setRoundResult(null);
+    setPhase("playing");
+    setTimeLeft(ROUND_SECONDS);
 
-    // 🤖 L'admin "ci pensa" 4-6 secondi prima di scegliere
-    const thinkMs = 4000 + Math.floor(Math.random() * 2001);
-    const t1 = setTimeout(() => {
-      const bot = CHOICES[Math.floor(Math.random() * 3)];
-      let result: "win" | "lose" | "tie";
-      if (choice === bot) result = "tie";
-      else if (BEATS[choice] === bot) result = "win";
-      else result = "lose";
+    // 🤖 L'admin blocca la sua mossa INDIPENDENTEMENTE dopo 2-6 secondi.
+    botCommitRef.current = setTimeout(() => {
+      setBotChoice(CHOICES[Math.floor(Math.random() * 3)]);
+      setBotCommitted(true);
+    }, 2000 + Math.random() * 4000);
 
-      setBotChoice(bot);
-      setRoundResult(result);
-      setPhase("reveal");
+    // ⏱️ Countdown 30s: se l'utente non sceglie in tempo, perde lo spareggio.
+    let secs = ROUND_SECONDS;
+    countdownRef.current = setInterval(() => {
+      secs -= 1;
+      setTimeLeft(secs);
+      if (secs <= 0) {
+        if (countdownRef.current) clearInterval(countdownRef.current);
+        onResultRef.current(false); // tempo scaduto → eliminato
+      }
+    }, 1000);
 
-      const newUser = userScore + (result === "win" ? 1 : 0);
-      const newBot = botScore + (result === "lose" ? 1 : 0);
-      if (result === "win") setUserScore(newUser);
-      if (result === "lose") setBotScore(newBot);
+    return () => {
+      if (botCommitRef.current) clearTimeout(botCommitRef.current);
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+  }, [round]);
 
-      // Dopo il reveal: prossimo round o fine spareggio
-      const t2 = setTimeout(() => {
-        if (newUser >= WIN_TARGET) {
-          onResult(true);
-          return;
-        }
-        if (newBot >= WIN_TARGET) {
-          onResult(false);
-          return;
-        }
-        setUserChoice(null);
-        setBotChoice(null);
-        setRoundResult(null);
-        setPhase("userTurn");
-      }, 1900);
-      timers.current.push(t2);
-    }, thinkMs);
-    timers.current.push(t1);
+  // ===== Quando ENTRAMBI hanno scelto → reveal + esito =====
+  useEffect(() => {
+    if (phase !== "playing" || !userChoice || !botChoice) return;
+
+    let result: "win" | "lose" | "tie";
+    if (userChoice === botChoice) result = "tie";
+    else if (BEATS[userChoice] === botChoice) result = "win";
+    else result = "lose";
+
+    setRoundResult(result);
+    setPhase("reveal");
+
+    const newUser = userScore + (result === "win" ? 1 : 0);
+    const newBot = botScore + (result === "lose" ? 1 : 0);
+    if (result === "win") setUserScore(newUser);
+    if (result === "lose") setBotScore(newBot);
+
+    const t = setTimeout(() => {
+      if (newUser >= WIN_TARGET) return onResultRef.current(true);
+      if (newBot >= WIN_TARGET) return onResultRef.current(false);
+      setRound((r) => r + 1); // prossimo round (l'effect di setup resetta tutto)
+    }, 1900);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userChoice, botChoice, phase]);
+
+  const play = (c: Choice) => {
+    if (phase !== "playing" || userChoice) return;
+    setUserChoice(c);
+    // L'utente ha scelto in tempo → ferma il countdown.
+    if (countdownRef.current) clearInterval(countdownRef.current);
   };
 
-  // Badge di stato accanto a ciascun profilo
-  const StatusBadge = ({ state }: { state: "deciding" | "chosen" | "idle" }) => {
-    if (state === "idle") return <div className="h-5" />;
-    if (state === "deciding") {
-      return (
-        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-300">
-          <Hourglass className="w-3 h-3 animate-pulse" />
-          Sta decidendo
-        </span>
-      );
-    }
-    return (
+  const StatusBadge = ({ chosen }: { chosen: boolean }) =>
+    chosen ? (
       <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-300">
         <CircleCheck className="w-3 h-3" />
         Ha scelto
       </span>
+    ) : (
+      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-300">
+        <Hourglass className="w-3 h-3 animate-pulse" />
+        Sta decidendo
+      </span>
     );
-  };
 
-  const userState: "deciding" | "chosen" | "idle" =
-    userChoice ? "chosen" : phase === "userTurn" ? "deciding" : "idle";
-  const botState: "deciding" | "chosen" | "idle" =
-    phase === "botThinking" ? "deciding" : phase === "reveal" ? "chosen" : "idle";
-
-  // Carta scelta: nascosta (?) finche' non si arriva al reveal → suspense
   const ChoiceCard = ({
     choice,
     side,
@@ -125,7 +146,7 @@ export const RockPaperScissors = ({
     const Icon = showIcon ? ICONS[choice] : null;
     return (
       <div
-        className={`w-24 h-24 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 transition-colors ${
+        className={`w-24 h-24 rounded-2xl border-2 flex items-center justify-center transition-colors ${
           side === "user" ? "border-cyan-400/50 bg-cyan-500/10" : "border-rose-400/50 bg-rose-500/10"
         }`}
       >
@@ -156,6 +177,9 @@ export const RockPaperScissors = ({
     );
   };
 
+  const showTimer = phase === "playing" && !userChoice;
+  const timerDanger = timeLeft <= 10;
+
   return (
     <Card className="mb-6 p-6 bg-gradient-to-br from-purple-950/55 via-fuchsia-900/35 to-indigo-950/55 border-pink-500/40 shadow-[0_8px_40px_-12px_rgba(244,114,182,0.45)] relative overflow-hidden">
       <div className="absolute -inset-6 rounded-[40px] bg-gradient-to-br from-pink-500/15 via-fuchsia-500/10 to-indigo-500/15 blur-3xl pointer-events-none" />
@@ -164,11 +188,30 @@ export const RockPaperScissors = ({
         <h3 className="text-center text-xl font-black tracking-tight bg-gradient-to-r from-pink-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent mb-1">
           Spareggio · Carta Forbici Sasso
         </h3>
-        <p className="text-center text-xs text-muted-foreground mb-6">
+        <p className="text-center text-xs text-muted-foreground mb-5">
           Chi arriva per primo a <strong className="text-pink-300">3 vittorie</strong> passa il turno
         </p>
 
-        {/* Arena: profilo + stato + scelta, con scoreboard al centro */}
+        {/* Countdown round */}
+        <div className="h-8 flex items-center justify-center mb-3">
+          {showTimer && (
+            <motion.div
+              key={timeLeft}
+              initial={{ scale: 1.15, opacity: 0.6 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-black text-sm ${
+                timerDanger
+                  ? "bg-rose-600/40 text-rose-100 border border-rose-300/50"
+                  : "bg-white/10 text-white/80 border border-white/20"
+              }`}
+            >
+              <Timer className="w-4 h-4" />
+              {timeLeft}s
+            </motion.div>
+          )}
+        </div>
+
+        {/* Arena: profilo + stato + carta */}
         <div className="flex items-start justify-center gap-4 sm:gap-8 mb-5">
           {/* Utente */}
           <div className="flex flex-col items-center gap-2 w-28">
@@ -179,7 +222,7 @@ export const RockPaperScissors = ({
               </AvatarFallback>
             </Avatar>
             <span className="text-xs font-semibold text-cyan-200 truncate max-w-full">{userName}</span>
-            <StatusBadge state={userState} />
+            <StatusBadge chosen={!!userChoice} />
             <ChoiceCard choice={userChoice} side="user" revealed={phase === "reveal"} />
           </div>
 
@@ -203,7 +246,7 @@ export const RockPaperScissors = ({
               </AvatarFallback>
             </Avatar>
             <span className="text-xs font-semibold text-rose-200 truncate max-w-full">{opponentName}</span>
-            <StatusBadge state={botState} />
+            <StatusBadge chosen={botCommitted} />
             <ChoiceCard choice={botChoice} side="bot" revealed={phase === "reveal"} />
           </div>
         </div>
@@ -239,7 +282,7 @@ export const RockPaperScissors = ({
         <div className="grid grid-cols-3 gap-3 max-w-sm mx-auto">
           {CHOICES.map((c) => {
             const Icon = ICONS[c];
-            const disabled = phase !== "userTurn";
+            const disabled = phase !== "playing" || !!userChoice;
             return (
               <button
                 key={c}
@@ -260,8 +303,8 @@ export const RockPaperScissors = ({
 
         {/* Sotto-testo guida */}
         <p className="text-center text-[11px] text-muted-foreground mt-4 h-4">
-          {phase === "userTurn" && "Scegli la tua mossa"}
-          {phase === "botThinking" && `${opponentName} sta scegliendo…`}
+          {phase === "playing" && !userChoice && "Scegli la tua mossa prima dello scadere del tempo"}
+          {phase === "playing" && userChoice && !botChoice && `In attesa della mossa di ${opponentName}…`}
         </p>
       </div>
     </Card>
