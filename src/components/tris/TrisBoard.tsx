@@ -563,7 +563,7 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
   };
 
   return (
-    <Card className="p-6 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 relative">
+    <Card className="p-6 bg-gradient-to-br from-amber-50 via-yellow-100 to-amber-50 dark:from-amber-950/40 dark:via-yellow-900/30 dark:to-amber-950/40 border-amber-500/40 relative">
       {/* 🔧 ADMIN: pulsanti test "Vinci ora" / "Perdi ora" — visibili solo a
           user_roles.role='admin'. */}
       {isAdmin && !gameOver && (
@@ -739,20 +739,17 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
             </div>
           </div>
         )}
-        {/* Testi inline a fine partita: mostriamo subito win/perso/pareggio
-            sopra la board, niente piu' overlay popup brutto. Dopo ~2.5s
-            torniamo automaticamente alla pagina Sfida (gestito dall'useEffect
-            "auto-close" qui sotto). */}
-        {gameOver && winner === "player" && (
-          <p className="text-xl font-bold text-primary">🎉 Hai vinto! +6 crediti</p>
-        )}
-        {gameOver && winner === "bot" && (
-          <p className="text-xl font-bold text-destructive">😔 Hai perso!</p>
-        )}
-        {gameOver && winner === "draw" && (
-          <p className="text-xl font-bold text-muted-foreground">🤝 Pareggio!</p>
-        )}
       </div>
+
+      {/* 🏆 Banner risultato (stesso di Othello): vittoria/sconfitta/pareggio */}
+      {showResultOverlay && winner && (
+        <GameResultOverlay
+          result={winner === "player" ? "win" : winner === "bot" ? "lose" : "draw"}
+          creditsEarned={6}
+          eloChange={lastEloChange}
+          onClose={dismissResultAndReturn}
+        />
+      )}
       {showLeaveConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <Card className="w-[90%] max-w-md p-6 shadow-lg">

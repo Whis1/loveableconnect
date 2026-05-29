@@ -1293,7 +1293,7 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
   };
 
   return (
-    <Card className="p-6 bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20 relative">
+    <Card className="p-6 bg-gradient-to-br from-rose-100 via-red-50 to-purple-100 dark:from-rose-900/40 dark:via-rose-950/50 dark:to-purple-950/70 border-rose-500/40 relative">
       {/* 🔧 ADMIN: pulsanti test "Vinci ora" / "Perdi ora" — visibili solo a
           user_roles.role='admin'. */}
       {isAdmin && !gameOver && (
@@ -1525,20 +1525,25 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
             </div>
           </div>
         )}
-        {/* Testi inline a fine partita: niente piu' overlay popup, mostriamo
-            il risultato sopra la board e dopo 2.5s torniamo automaticamente
-            alla Sfida (gestito dall'useEffect "auto-close"). */}
-        {gameOver && winner === "player" && (
-          <p className="text-xl font-bold text-primary">
-            {tournamentMode ? "🎉 Match vinto! Passi al round successivo" : "🎉 Hai vinto! +6 crediti"}
-          </p>
+        {/* In TORNEO: testo inline (il banner viola del torneo arriva a fine
+            torneo). In modalità normale: banner risultato come Othello. */}
+        {gameOver && tournamentMode && winner === "player" && (
+          <p className="text-xl font-bold text-primary">🎉 Match vinto! Passi al round successivo</p>
         )}
-        {gameOver && winner === "bot" && (
-          <p className="text-xl font-bold text-destructive">
-            {tournamentMode ? "💔 Match perso. Sei eliminato dal torneo" : "😔 Hai perso!"}
-          </p>
+        {gameOver && tournamentMode && winner === "bot" && (
+          <p className="text-xl font-bold text-destructive">💔 Match perso. Sei eliminato dal torneo</p>
         )}
       </div>
+
+      {/* 🏆 Banner risultato (stesso di Othello) — SOLO modalità normale */}
+      {!tournamentMode && showResultOverlay && winner && (
+        <GameResultOverlay
+          result={winner === "player" ? "win" : winner === "bot" ? "lose" : "draw"}
+          creditsEarned={6}
+          eloChange={lastEloChange}
+          onClose={dismissResultAndReturn}
+        />
+      )}
 
       {showLeaveConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
