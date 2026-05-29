@@ -104,8 +104,8 @@ export const TournamentEndBanner: React.FC<TournamentEndBannerProps> = ({
 
   const config = isWinner
     ? {
-        title: "Torneo Vinto!",
-        subtitle: `Sei campione del torneo ${gameType === "othello" ? "Othello" : "Dama"}!`,
+        title: "Hai vinto il Torneo!",
+        subtitle: `Campione del torneo ${gameType === "othello" ? "Othello" : "Dama"} · 1° posto`,
         gradientFrom: "from-amber-400",
         gradientVia: "via-yellow-300",
         gradientTo: "to-amber-500",
@@ -119,8 +119,8 @@ export const TournamentEndBanner: React.FC<TournamentEndBannerProps> = ({
       }
     : isSecond
     ? {
-        title: "Finalista",
-        subtitle: "Sei arrivato fino alla finale.",
+        title: "Hai perso la Finale",
+        subtitle: "2° posto · sei arrivato fino in fondo",
         gradientFrom: "from-slate-300",
         gradientVia: "via-slate-200",
         gradientTo: "to-slate-400",
@@ -134,8 +134,8 @@ export const TournamentEndBanner: React.FC<TournamentEndBannerProps> = ({
       }
     : isThirdFourth
     ? {
-        title: "Semifinalista",
-        subtitle: "Hai raggiunto la semifinale.",
+        title: "Hai perso in Semifinale",
+        subtitle: "Top 4 del torneo",
         gradientFrom: "from-orange-300",
         gradientVia: "via-amber-400",
         gradientTo: "to-orange-500",
@@ -149,7 +149,7 @@ export const TournamentEndBanner: React.FC<TournamentEndBannerProps> = ({
       }
     : isEliminated
     ? {
-        title: "Eliminato dal torneo",
+        title: "Eliminato ai Quarti",
         subtitle: "",
         gradientFrom: "from-rose-300",
         gradientVia: "via-pink-400",
@@ -275,34 +275,38 @@ export const TournamentEndBanner: React.FC<TournamentEndBannerProps> = ({
                 </motion.p>
               )}
 
-              {/* Rewards pills */}
+              {/* Bilancio premio: cosa si vince/perde, esplicito */}
               <motion.div
-                className="flex flex-wrap items-center justify-center gap-2 mt-2"
+                className="w-full flex flex-col items-center gap-2 mt-1"
                 initial={{ y: 15, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
               >
-                {creditsAwarded > 0 && (
+                <p className="text-[11px] uppercase tracking-wider font-bold text-white/70">
+                  Il tuo bilancio
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {/* Crediti: sempre mostrato (vinti se >0, altrimenti "0 crediti") */}
                   <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/25 border border-white/40 backdrop-blur">
                     <Coins className="w-4 h-4 text-yellow-100" />
-                    <span className="font-black text-white text-sm">+{creditsAwarded} crediti</span>
+                    <span className="font-black text-white text-sm">
+                      {creditsAwarded > 0 ? `+${creditsAwarded} crediti` : "0 crediti"}
+                    </span>
                   </div>
-                )}
-                {eloDelta > 0 && (
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/40 border border-emerald-200/50 backdrop-blur">
-                    <TrendingUp className="w-4 h-4 text-emerald-100" />
-                    <span className="font-black text-white text-sm">+{eloDelta} ELO</span>
-                  </div>
-                )}
-                {eloDelta < 0 && (
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-700/50 border border-rose-200/50 backdrop-blur">
-                    <TrendingDown className="w-4 h-4 text-rose-100" />
-                    <span className="font-black text-white text-sm">{eloDelta} ELO</span>
-                  </div>
-                )}
-                {creditsAwarded === 0 && eloDelta === 0 && (
-                  <span className="text-xs text-white/70">Nessuna ricompensa</span>
-                )}
+
+                  {/* ELO: positivo (vittoria torneo) o negativo (qualsiasi sconfitta) */}
+                  {eloDelta > 0 ? (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/40 border border-emerald-200/50 backdrop-blur">
+                      <TrendingUp className="w-4 h-4 text-emerald-100" />
+                      <span className="font-black text-white text-sm">+{eloDelta} ELO</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-700/50 border border-rose-200/50 backdrop-blur">
+                      <TrendingDown className="w-4 h-4 text-rose-100" />
+                      <span className="font-black text-white text-sm">{eloDelta} ELO</span>
+                    </div>
+                  )}
+                </div>
               </motion.div>
             </div>
           </motion.div>
