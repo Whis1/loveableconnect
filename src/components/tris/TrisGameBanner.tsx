@@ -793,7 +793,7 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
 
           <div className="grid grid-cols-3 gap-2.5">
             {[
-              { key: "tris" as const, icon: trisIcon, label: "Tris", accent: "from-blue-400 to-blue-500", glow: "group-hover:shadow-blue-500/40 group-hover:border-blue-400/50" },
+              { key: "tris" as const, icon: trisIcon, label: "Tris", accent: "from-amber-200 via-amber-400 to-yellow-600", glow: "group-hover:shadow-amber-500/40 group-hover:border-amber-400/50" },
               { key: "othello" as const, icon: othelloIcon, label: "Othello", accent: "from-emerald-400 to-emerald-500", glow: "group-hover:shadow-emerald-500/40 group-hover:border-emerald-400/50" },
               { key: "dama" as const, icon: damaIcon, label: "Dama", accent: "from-red-400 to-red-500", glow: "group-hover:shadow-red-500/40 group-hover:border-red-400/50" },
             ].map((g) => (

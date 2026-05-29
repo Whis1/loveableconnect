@@ -321,7 +321,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
                 {userProfile?.nickname ?? userProfile?.full_name ?? "Tu"}
               </p>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-[11px] uppercase tracking-wider font-bold text-pink-300/70">ELO</span>
+                <span className="text-2xl font-black uppercase tracking-wide text-pink-300/70 leading-none">ELO</span>
                 <span className="text-2xl font-black bg-gradient-to-r from-pink-300 to-fuchsia-300 bg-clip-text text-transparent leading-none">
                   {userElo}
                 </span>
@@ -371,10 +371,12 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
           className="w-full p-4 flex items-center justify-between hover:bg-primary/5 transition-colors rounded-t-lg"
         >
           <div className="flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-primary" />
-            <h4 className="font-bold text-lg">Classifica ELO - TOP 5</h4>
+            <Trophy className="w-5 h-5 text-pink-300" />
+            <h4 className="font-black text-lg tracking-tight bg-gradient-to-r from-pink-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent">
+              Classifica ELO - TOP 5
+            </h4>
           </div>
-          {isOpen ? <ChevronUp className="w-5 h-5 text-primary" /> : <ChevronDown className="w-5 h-5 text-primary" />}
+          {isOpen ? <ChevronUp className="w-5 h-5 text-pink-300" /> : <ChevronDown className="w-5 h-5 text-pink-300" />}
         </button>
 
         {isOpen && (
