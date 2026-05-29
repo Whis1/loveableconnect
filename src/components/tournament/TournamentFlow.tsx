@@ -401,6 +401,13 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
     const userDisplayName =
       userParticipant?.profile?.nickname ?? userParticipant?.profile?.full_name ?? "Tu";
 
+    // 🤝 Motivo del pareggio, diverso per gioco:
+    //    Othello = stesso punteggio; Dama = stallo (troppe mosse senza catture).
+    const drawReason =
+      tournament.game_type === "othello"
+        ? "Avete totalizzato lo stesso punteggio."
+        : "La partita si è bloccata: troppe mosse senza catture.";
+
     // 🤝 Banner intro spareggio (pareggio quarti/semi → Carta-Forbici-Sasso)
     if (tiebreak === "intro") {
       return (
@@ -410,9 +417,9 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
             Pareggio!
           </h3>
           <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">
-            Avete totalizzato lo stesso punteggio. Per decidere chi passa il turno
-            vi sfiderete a <strong className="text-pink-300">Carta-Forbici-Sasso</strong>:
-            chi arriva per primo a 3 vittorie avanza nel torneo.
+            {drawReason} Per decidere chi passa il turno vi sfiderete a{" "}
+            <strong className="text-pink-300">Carta-Forbici-Sasso</strong>: chi arriva
+            per primo a 3 vittorie avanza nel torneo.
           </p>
           <p className="text-xs text-pink-200/80">
             Lo spareggio inizia tra{" "}
