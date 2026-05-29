@@ -11,6 +11,7 @@ import { VictoryIcon, DefeatIcon } from "@/lib/gameIcons";
 import { computeAdminStats, computeAdminChampionDays } from "@/lib/adminElo";
 import { computeChampionBadges, dateStringToDayNumber, ChampionBadges } from "@/lib/championBadges";
 import { ChampionBadgesRow } from "./ChampionBadgesRow";
+import { CampioneIcon, RankMedalIcon } from "@/lib/championIcons";
 import { renderRankBadge, getRankNicknameClass } from "./EloLeaderboard";
 import { useSendLike } from "@/hooks/useSendLike";
 
@@ -266,20 +267,25 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
   };
 
   const getTrophyIcon = (position: number) => {
-    switch (position) {
-      case 0:
-        return <span className="text-3xl">🏆</span>;
-      case 1:
-        return <span className="text-3xl">🥈</span>;
-      case 2:
-        return <span className="text-3xl">🥉</span>;
-      case 3:
-        return <span className="text-3xl">🎖️</span>;
-      case 4:
-        return <span className="text-3xl">🏅</span>;
-      default:
-        return null;
+    // 1° = trofeo dorato; 2°-5° = medaglie coese (come in classifica)
+    if (position === 0) {
+      return <CampioneIcon className="w-12 h-12 drop-shadow-[0_2px_4px_rgba(0,0,0,0.45)]" />;
     }
+    const tiers: Record<number, "silver" | "bronze" | "sapphire" | "amethyst"> = {
+      1: "silver",
+      2: "bronze",
+      3: "sapphire",
+      4: "amethyst",
+    };
+    const tier = tiers[position];
+    if (!tier) return null;
+    return (
+      <RankMedalIcon
+        tier={tier}
+        place={position + 1}
+        className="w-12 h-12 drop-shadow-[0_2px_4px_rgba(0,0,0,0.45)]"
+      />
+    );
   };
 
   return (
