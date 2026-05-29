@@ -101,10 +101,19 @@ export function useTournament(currentUserId: string | null) {
   const heartbeatTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const npcPollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  // 🛡️ Id del torneo "di sessione". Tutti i fetch per un id DIVERSO da questo
+  //    vengono ignorati: cosi' un fetch stale (es. del torneo precedente
+  //    appena cancellato) non puo' MAI sovrascrivere lo stato del torneo nuovo.
+  const activeIdRef = useRef<string | null>(null);
 
   // ============== FETCH FULL STATE ==============
   const fetchTournamentState = useCallback(
     async (tournamentId: string) => {
+      // 🛡️ Guard anti-stale: se nel frattempo e' stato impostato un altro
+      //    torneo di sessione, ignoriamo questo fetch.
+      if (activeIdRef.current && activeIdRef.current !== tournamentId) {
+        return null;
+      }
       const [tRes, pRes, mRes] = await Promise.all([
         supabase.from("tournaments").select("*").eq("id", tournamentId).maybeSingle(),
         supabase
@@ -154,26 +163,11 @@ export function useTournament(currentUserId: string | null) {
     []
   );
 
-  // ============== FIND ACTIVE TOURNAMENT ON MOUNT ==============
-  useEffect(() => {
-    if (!currentUserId) return;
-    let cancelled = false;
-    (async () => {
-      // C'e' un torneo active per questo utente?
-      const { data } = await supabase
-        .from("tournaments")
-        .select("id")
-        .eq("user_id", currentUserId)
-        .eq("status", "active")
-        .maybeSingle();
-      if (!cancelled && data?.id) {
-        await fetchTournamentState(data.id);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [currentUserId, fetchTournamentState]);
+  // 🚫 NESSUN fetch-al-mount del torneo esistente (no-resume policy).
+  //    Quando l'utente esce da un torneo, quello "svanisce" — non lo
+  //    ricarichiamo mai. Un nuovo torneo nasce SOLO via createTournament, che
+  //    lato DB cancella ogni torneo precedente (clean slate). Questo elimina
+  //    alla radice il bug di "rientro nel torneo precedente".
 
   // ============== REALTIME SUBSCRIPTION ==============
   useEffect(() => {
@@ -418,6 +412,10 @@ export function useTournament(currentUserId: string | null) {
         const tournamentId = row?.tournament_id as string;
         if (!tournamentId) throw new Error("create_tournament: no tournament_id returned");
 
+        // 🛡️ Da ora SOLO questo torneo e' valido: i fetch per id diversi
+        //    (es. del torneo precedente appena cancellato) vengono ignorati.
+        activeIdRef.current = tournamentId;
+
         // 7) Fetch full state
         const t = await fetchTournamentState(tournamentId);
         if (!t) throw new Error("Tournament created but fetch failed");
@@ -479,6 +477,7 @@ export function useTournament(currentUserId: string | null) {
   }, [tournament?.id, fetchTournamentState]);
 
   const clearTournament = useCallback(() => {
+    activeIdRef.current = null;
     setTournament(null);
     setParticipants([]);
     setMatches([]);

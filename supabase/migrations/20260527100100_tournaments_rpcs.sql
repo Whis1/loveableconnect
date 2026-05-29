@@ -55,16 +55,13 @@ BEGIN
     RAISE EXCEPTION 'Expected 7 admin_ids, 7 admin_elos, 4 predetermined_winners';
   END IF;
 
-  -- Cleanup tornei abbandonati prima di crearne uno nuovo (lazy cron).
-  -- Tornei active con heartbeat scaduto >10 min → status='abandoned'.
-  PERFORM public.cleanup_abandoned_tournaments_internal();
-
-  -- Vieta torneo se ne ha gia' uno active (UNIQUE INDEX fallback ma diamo errore chiaro)
-  SELECT id INTO v_existing FROM public.tournaments
-    WHERE user_id = v_user_id AND status = 'active';
-  IF v_existing IS NOT NULL THEN
-    RAISE EXCEPTION 'User already has an active tournament: %', v_existing;
-  END IF;
+  -- 🧹 CLEAN SLATE: cancella DEFINITIVAMENTE tutti i tornei precedenti
+  --    dell'utente (qualsiasi stato). Il CASCADE rimuove participants + matches.
+  --    Cosi' quando l'utente esce da un torneo e ne avvia un altro, il vecchio
+  --    "svanisce proprio" e non puo' MAI riapparire (no resurrection bug).
+  --    Niente piu' RAISE EXCEPTION: la creazione di un nuovo torneo ha sempre
+  --    successo partendo da zero.
+  DELETE FROM public.tournaments WHERE user_id = v_user_id;
 
   -- Verifica che i 7 admin_ids siano davvero admin distinti ed esistenti
   SELECT COUNT(DISTINCT id) INTO v_admin_count
