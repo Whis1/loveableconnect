@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, Handshake } from "lucide-react";
 import { useTournament, GameType, MatchRow } from "@/hooks/useTournament";
 import { useToast } from "@/hooks/use-toast";
 import { TournamentSelectionBanner } from "./TournamentSelectionBanner";
 import { TournamentOpponentSearch } from "./TournamentOpponentSearch";
 import { TournamentBracketView } from "./TournamentBracketView";
 import { TournamentEndBanner } from "./TournamentEndBanner";
+import { RockPaperScissors } from "./RockPaperScissors";
 import { OthelloBoard } from "../tris/OthelloBoard";
 import { CheckersBoard } from "../tris/CheckersBoard";
 
@@ -39,6 +41,14 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
     eloDelta: number;
     gameType: "othello" | "dama";
   } | null>(null);
+  // 🎲 Spareggio dopo un pareggio Othello:
+  //    - tiebreak="intro": banner che spiega lo spareggio Carta-Forbici-Sasso
+  //    - tiebreak="rps": il minigame RPS in corso
+  //    - finalReplay=true: pareggio in FINALE → banner "si rigioca" + replay board
+  const [tiebreak, setTiebreak] = useState<null | "intro" | "rps">(null);
+  const [finalReplay, setFinalReplay] = useState(false);
+  // Chiave per forzare il REMOUNT della board (replay finale = partita da capo)
+  const [boardKey, setBoardKey] = useState(0);
 
   const { toast } = useToast();
 
@@ -228,32 +238,50 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
     setPhase("playing");
   };
 
-  // Quando la board chiama onGameEnd → reportUserResult.
-  // Se l'utente HA PERSO il match (non finale) → abbandona immediatamente il
-  // torneo: niente "continua come spettatore", l'utente viene sbattuto subito
-  // alla pagina Sfida con un toast.
-  const handleBoardGameEnd = async (result: "win" | "lose" | "draw") => {
-    if (!userMatch) return;
-    // Pareggio non ammesso in torneo: Othello forza "lose" in caso di parita',
-    // Dama non produce pareggi. Per sicurezza tratto draw come lose.
-    const userWon = result === "win";
+  // Applica l'esito definitivo del match utente (win/lose) → avanza o abbandona.
+  const resolveUserMatch = async (userWon: boolean) => {
     await reportUserResult(userWon);
-
     if (userWon) {
-      toast({
-        title: "🎯 Match vinto!",
-        description: "Passi al round successivo.",
-      });
+      toast({ title: "Match vinto!", description: "Passi al round successivo." });
       setPhase("bracket");
     } else {
       // 🚪 Sconfitta utente: termina IMMEDIATAMENTE il torneo per lui.
-      //    Se era la finale (round 3), advance_tournament ha gia' messo
-      //    status='finished'. Per quarti/semi il torneo resta 'active' per
-      //    gli altri → chiamiamo abandon esplicito cosi' l'utente esce.
-      //    L'useEffect rilevera' lo status non-active e mostrera' il toast
-      //    finale + onExit.
       await abandonTournament("lost_match");
     }
+  };
+
+  // Quando la board chiama onGameEnd.
+  //  - win/lose → resolve diretto
+  //  - draw (solo Othello) → spareggio:
+  //      • match normale (quarti/semi) → Carta-Forbici-Sasso al meglio dei 3
+  //      • FINALE → si rigioca la partita da capo finché non c'è un vincitore
+  const handleBoardGameEnd = async (result: "win" | "lose" | "draw") => {
+    if (!userMatch) return;
+
+    if (result === "draw") {
+      if (userMatch.round === 3) {
+        // Finale pareggiata → replay
+        setFinalReplay(true);
+      } else {
+        // Quarti/Semi pareggiati → spareggio RPS
+        setTiebreak("intro");
+      }
+      return;
+    }
+
+    await resolveUserMatch(result === "win");
+  };
+
+  // 🎲 Esito spareggio Carta-Forbici-Sasso
+  const handleRpsResult = async (userWon: boolean) => {
+    setTiebreak(null);
+    await resolveUserMatch(userWon);
+  };
+
+  // 🔁 Replay finale: rigioca la partita da capo (board remount)
+  const handleFinalReplay = () => {
+    setFinalReplay(false);
+    setBoardKey((k) => k + 1);
   };
 
   const handleAbandon = async () => {
@@ -325,13 +353,80 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
     );
   }
 
-  // Phase playing: rende la board del minigame
+  // Phase playing: rende la board del minigame (o lo spareggio dopo un pareggio)
   if (phase === "playing" && tournament && opponentProfileRef.current) {
+    const opp = opponentProfileRef.current;
+    const oppAvatar = opp.avatar_url
+      ? (opp.avatar_url.startsWith("http")
+          ? opp.avatar_url
+          : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/profile-images/${opp.avatar_url}`)
+      : "";
+
+    // 🤝 Banner intro spareggio (pareggio quarti/semi → Carta-Forbici-Sasso)
+    if (tiebreak === "intro") {
+      return (
+        <Card className="mb-6 p-8 text-center bg-gradient-to-br from-purple-950/50 via-fuchsia-900/30 to-indigo-950/50 border-pink-500/40">
+          <Handshake className="w-16 h-16 mx-auto mb-4 text-pink-300" />
+          <h3 className="text-2xl font-black bg-gradient-to-r from-pink-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent mb-2">
+            Pareggio!
+          </h3>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
+            Avete totalizzato lo stesso punteggio. Per decidere chi passa il turno
+            vi sfiderete a <strong className="text-pink-300">Carta-Forbici-Sasso</strong>,
+            al meglio dei 3. Chi vince 2 round avanza nel torneo.
+          </p>
+          <Button
+            onClick={() => setTiebreak("rps")}
+            className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-500 hover:from-pink-400 hover:via-fuchsia-400 hover:to-purple-400 text-white font-bold shadow-lg shadow-pink-500/40"
+          >
+            Inizia lo spareggio
+          </Button>
+        </Card>
+      );
+    }
+
+    // 🎲 Minigame Carta-Forbici-Sasso
+    if (tiebreak === "rps") {
+      return (
+        <RockPaperScissors
+          userName="Tu"
+          userAvatarUrl=""
+          opponentName={opp.nickname ?? "Sfidante"}
+          opponentAvatarUrl={oppAvatar}
+          onResult={handleRpsResult}
+        />
+      );
+    }
+
+    // 🔁 Banner replay finale (pareggio in finale → si rigioca da capo)
+    if (finalReplay) {
+      return (
+        <Card className="mb-6 p-8 text-center bg-gradient-to-br from-purple-950/50 via-fuchsia-900/30 to-indigo-950/50 border-pink-500/40">
+          <Handshake className="w-16 h-16 mx-auto mb-4 text-pink-300" />
+          <h3 className="text-2xl font-black bg-gradient-to-r from-pink-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent mb-2">
+            Finale in parità!
+          </h3>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
+            La finale è finita in pareggio: un campione si decide sul campo.
+            Si rigioca la partita da capo, finché uno dei due non vince.
+          </p>
+          <Button
+            onClick={handleFinalReplay}
+            className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-500 hover:from-pink-400 hover:via-fuchsia-400 hover:to-purple-400 text-white font-bold shadow-lg shadow-pink-500/40"
+          >
+            Rigioca la finale
+          </Button>
+        </Card>
+      );
+    }
+
+    // Board del gioco. key={boardKey} forza il remount sul replay finale.
     if (tournament.game_type === "othello") {
       return (
         <>
           <OthelloBoard
-            opponent={opponentProfileRef.current}
+            key={boardKey}
+            opponent={opp}
             onGameEnd={handleBoardGameEnd}
             tournamentMode
           />
@@ -342,7 +437,8 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
     return (
       <>
         <CheckersBoard
-          opponent={opponentProfileRef.current}
+          key={boardKey}
+          opponent={opp}
           onGameEnd={handleBoardGameEnd}
           tournamentMode
         />

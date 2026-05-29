@@ -132,9 +132,6 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
   const [hoverFlips, setHoverFlips] = useState<number[]>([]);
   const [showResultOverlay, setShowResultOverlay] = useState(false);
   const [lastEloChange, setLastEloChange] = useState(0);
-  // 🎲 True se nel torneo il risultato è stato deciso da uno spareggio a sorte
-  //    (pareggio 32-32: in un bracket serve un vincitore → coin flip 50/50).
-  const [drawTiebreak, setDrawTiebreak] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const gameCompletedRef = useRef(false);
   const leaveIntentRef = useRef<"reload" | "back" | null>(null);
@@ -433,19 +430,11 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
         }
         setLastEloChange(tournamentMode ? 0 : -10);
       } else {
-        // Pareggio 32-32 per conteggio pezzi.
-        if (tournamentMode) {
-          // 🎲 In un bracket serve un vincitore: SPAREGGIO A SORTE 50/50.
-          //    Equo — chi pareggia un admin forte ha comunque 50% di passare.
-          const userWinsTiebreak = Math.random() < 0.5;
-          setWinner(userWinsTiebreak ? "player" : "bot");
-          setDrawTiebreak(true);
-          setLastEloChange(0);
-        } else {
-          // Modalità normale: pareggio vero, nessun cambio ELO.
-          setWinner("draw");
-          setLastEloChange(0);
-        }
+        // Pareggio 32-32 per conteggio pezzi. In entrambe le modalità
+        // segnaliamo "draw": in torneo sarà il TournamentFlow a gestire lo
+        // spareggio (Carta-Forbici-Sasso per i match, replay per la finale).
+        setWinner("draw");
+        setLastEloChange(0);
       }
       setShowResultOverlay(true);
       return true;
@@ -715,13 +704,11 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
         {gameOver ? (
           <p className="text-lg font-bold">
             {tournamentMode
-              ? drawTiebreak
-                ? winner === "player"
-                  ? "Pareggio 32-32 · spareggio vinto! Passi al round"
-                  : "Pareggio 32-32 · spareggio perso. Eliminato"
-                : winner === "player"
+              ? winner === "player"
                 ? "Match vinto! Passi al round successivo"
-                : "Match perso. Sei eliminato dal torneo"
+                : winner === "bot"
+                ? "Match perso. Sei eliminato dal torneo"
+                : "Pareggio 32-32! Si va allo spareggio…"
               : winner === "player"
               ? "🏆 Hai vinto!"
               : winner === "bot"
