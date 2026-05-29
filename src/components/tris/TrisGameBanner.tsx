@@ -769,11 +769,27 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
         {/* 👤 Profilo + classifica (card propria) */}
         <EloLeaderboard userId={currentUserId || undefined} />
 
-        {/* 🎮 MODALITÀ — 3 giochi (glass coerente) + Torneo full-width */}
+        {/* 🎮 MODALITÀ — header con Torneo a destra + 3 giochi (glass coerente) */}
         <div className="mt-5">
-          <p className="text-[11px] uppercase tracking-[0.2em] font-bold text-pink-300/70 mb-2.5 px-0.5">
-            Modalità di gioco
-          </p>
+          <div className="flex items-center justify-between gap-3 mb-2.5 px-0.5">
+            <p className="text-[11px] uppercase tracking-[0.2em] font-bold text-pink-300/70">
+              Modalità di gioco
+            </p>
+
+            {/* 🏆 Torneo — pill compatta accanto all'intestazione */}
+            <button
+              onClick={handleStartTournament}
+              className="group inline-flex items-center gap-2 pl-1.5 pr-4 py-1.5 rounded-full bg-gradient-to-r from-fuchsia-600/25 via-pink-600/20 to-amber-500/20 border border-fuchsia-500/40 hover:border-fuchsia-400/60 hover:from-fuchsia-600/35 hover:via-pink-600/30 hover:to-amber-500/30 hover:shadow-lg hover:shadow-fuchsia-500/30 transition-all relative overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+              <div className="relative w-6 h-6 rounded-full bg-gradient-to-br from-fuchsia-500 to-amber-500 flex items-center justify-center shadow-md shadow-fuchsia-500/30 shrink-0">
+                <Trophy className="w-3.5 h-3.5 text-white" />
+              </div>
+              <span className="relative text-xs font-black uppercase tracking-wide bg-gradient-to-r from-fuchsia-300 via-pink-300 to-amber-300 bg-clip-text text-transparent">
+                Torneo
+              </span>
+            </button>
+          </div>
 
           <div className="grid grid-cols-3 gap-2.5">
             {[
@@ -796,21 +812,6 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
             ))}
           </div>
 
-          {/* 🏆 Torneo — pill compatta centrata, accento fuchsia/oro */}
-          <div className="mt-3 flex justify-center">
-            <button
-              onClick={handleStartTournament}
-              className="group inline-flex items-center gap-2.5 pl-2.5 pr-5 py-2 rounded-full bg-gradient-to-r from-fuchsia-600/25 via-pink-600/20 to-amber-500/20 border border-fuchsia-500/40 hover:border-fuchsia-400/60 hover:from-fuchsia-600/35 hover:via-pink-600/30 hover:to-amber-500/30 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-fuchsia-500/30 transition-all relative overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-              <div className="relative w-8 h-8 rounded-full bg-gradient-to-br from-fuchsia-500 to-amber-500 flex items-center justify-center shadow-md shadow-fuchsia-500/30 shrink-0">
-                <Trophy className="w-4 h-4 text-white" />
-              </div>
-              <span className="relative text-sm font-black uppercase tracking-wide bg-gradient-to-r from-fuchsia-300 via-pink-300 to-amber-300 bg-clip-text text-transparent">
-                Torneo
-              </span>
-            </button>
-          </div>
         </div>
 
         {/* ℹ️ Cos'è l'ELO */}
