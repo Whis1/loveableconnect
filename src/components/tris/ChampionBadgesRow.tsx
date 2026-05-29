@@ -60,21 +60,21 @@ export const ChampionBadgesRow = ({ badges, tournamentsWon, size = "md", classNa
           icon={<CampioneIcon className={iconCls} active={badges.everChampion} />}
           active={badges.everChampion}
           title="Campione"
-          desc="Sei arrivato primo in classifica almeno una volta."
+          desc="Titolo ottenuto arrivando primo in classifica almeno una volta."
         />
         <Badge
           icon={<SettimanaIcon className={iconCls} active={badges.weeks > 0} />}
           active={badges.weeks > 0}
           count={badges.weeks}
           title="Campione della Settimana"
-          desc="Sei rimasto primo in classifica per una settimana intera (7 giorni consecutivi). Il numero indica quante settimane complete hai totalizzato."
+          desc="Titolo ottenuto restando primo in classifica per una settimana intera (7 giorni consecutivi). Il numero indica le settimane complete totalizzate."
         />
         <Badge
           icon={<MeseIcon className={iconCls} active={badges.months > 0} />}
           active={badges.months > 0}
           count={badges.months}
           title="Campione del Mese"
-          desc="Sei rimasto primo in classifica per un mese intero (30 giorni consecutivi). Il numero indica quanti mesi completi hai totalizzato."
+          desc="Titolo ottenuto restando primo in classifica per un mese intero (30 giorni consecutivi). Il numero indica i mesi completi totalizzati."
         />
         {typeof tournamentsWon === "number" && (
           <Badge
@@ -82,7 +82,7 @@ export const ChampionBadgesRow = ({ badges, tournamentsWon, size = "md", classNa
             active={tournamentsWon > 0}
             count={tournamentsWon}
             title="Tornei Vinti"
-            desc="Quante volte hai vinto un torneo a 8 giocatori (Othello o Dama) arrivando primo in finale. Ogni vittoria vale 12 crediti e +60 ELO."
+            desc="Numero di tornei a 8 giocatori (Othello o Dama) vinti arrivando primi in finale. Ogni vittoria vale 12 crediti e +60 ELO."
           />
         )}
       </div>
