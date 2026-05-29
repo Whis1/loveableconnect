@@ -105,7 +105,7 @@ export const TournamentEndBanner: React.FC<TournamentEndBannerProps> = ({
   const config = isWinner
     ? {
         title: "Hai vinto il Torneo!",
-        subtitle: `Winner del torneo ${gameType === "othello" ? "Othello" : "Dama"} · 1° posto`,
+        subtitle: `Tournament Champion · ${gameType === "othello" ? "Othello" : "Dama"} · 1° posto`,
         gradientFrom: "from-amber-400",
         gradientVia: "via-yellow-300",
         gradientTo: "to-amber-500",
