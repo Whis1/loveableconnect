@@ -7,7 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { GameResultOverlay } from "./GameResultOverlay";
 import { ProfileStatsDialog } from "./ProfileStatsDialog";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { Wrench } from "lucide-react";
+import { RockPaperScissors } from "@/components/tournament/RockPaperScissors";
+import { Wrench, Handshake } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -167,6 +168,13 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
   const [lastEloChange, setLastEloChange] = useState(0);
   const [displayBoard, setDisplayBoard] = useState<Board>([]);
 
+  // 🤝 Spareggio per stallo: se passano N mosse senza nessuna cattura la
+  //    partita è patta → Carta-Forbici-Sasso (come nel torneo).
+  const [tiebreak, setTiebreak] = useState<null | "intro" | "rps">(null);
+  const [tiebreakCountdown, setTiebreakCountdown] = useState<number | null>(null);
+  const movesSinceCaptureRef = useRef(0);
+  const prevPiecesRef = useRef(24);
+
   // 🛡️ Ref anti-double-call (vedi OthelloBoard per spiegazione).
   const resultClosedRef = useRef(false);
 
@@ -218,14 +226,9 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
     setShowResultOverlay(true);
   };
 
-  // 🔧 ADMIN TEST: forza pareggio per testare lo spareggio nel torneo.
+  // 🔧 ADMIN TEST: forza pareggio → spareggio (RPS in normale, torneo gestisce).
   const forceAdminDraw = () => {
-    if (gameCompletedRef.current) return;
-    gameCompletedRef.current = true;
-    setGameOver(true);
-    setWinner("draw");
-    setLastEloChange(0);
-    setShowResultOverlay(true);
+    triggerStallDraw();
   };
 
   // Auto-close partita: 3.5s normale, 1.2s in torneo (cosi' appare subito il
@@ -236,6 +239,65 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showResultOverlay, winner]);
+
+  // 🤝 Pareggio per stallo: scatta dopo N mosse senza nessuna cattura.
+  const DRAW_NO_CAPTURE_LIMIT = 20;
+
+  const triggerStallDraw = () => {
+    if (gameCompletedRef.current) return;
+    setGameOver(true);
+    gameCompletedRef.current = true;
+    if (tournamentMode) {
+      // In torneo: pareggio → il TournamentFlow gestisce spareggio/replay
+      setWinner("draw");
+      setLastEloChange(0);
+      setShowResultOverlay(true);
+    } else {
+      // Modalità normale: intro + Carta-Forbici-Sasso (come nel torneo)
+      setTiebreak("intro");
+    }
+  };
+
+  // Aggiorna il contatore "mosse senza catture" dopo ogni mossa completata.
+  // Ritorna true se è scattato il pareggio (il chiamante deve fermare il turno).
+  const noteMoveForStall = (b: Board): boolean => {
+    const total = b.filter(Boolean).length;
+    if (total < prevPiecesRef.current) movesSinceCaptureRef.current = 0;
+    else movesSinceCaptureRef.current += 1;
+    prevPiecesRef.current = total;
+    if (movesSinceCaptureRef.current >= DRAW_NO_CAPTURE_LIMIT) {
+      triggerStallDraw();
+      return true;
+    }
+    return false;
+  };
+
+  // Esito dello spareggio Carta-Forbici-Sasso (solo modalità normale).
+  const handleStallRpsResult = (userWon: boolean) => {
+    setTiebreak(null);
+    setWinner(userWon ? "player" : "bot");
+    updateUserElo(userWon ? 20 : -10);
+    setLastEloChange(userWon ? 20 : -10);
+    setShowResultOverlay(true);
+  };
+
+  // ⏱️ Countdown 10s sull'intro spareggio → poi parte l'RPS da solo.
+  useEffect(() => {
+    if (tiebreak !== "intro") return;
+    setTiebreakCountdown(10);
+    let secs = 10;
+    const id = setInterval(() => {
+      secs -= 1;
+      if (secs <= 0) {
+        clearInterval(id);
+        setTiebreakCountdown(null);
+        setTiebreak("rps");
+      } else {
+        setTiebreakCountdown(secs);
+      }
+    }, 1000);
+    return () => clearInterval(id);
+  }, [tiebreak]);
   const [animOverlay, setAnimOverlay] = useState<{ piece: PieceType; index: number } | null>(null);
   const [vanishing, setVanishing] = useState<Set<number>>(new Set());
   const [isAnimating, setIsAnimating] = useState(false);
@@ -619,6 +681,7 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
     
     // Completed a valid move
     moveCountRef.current += 1;
+    if (noteMoveForStall(newBoard)) return; // 🤝 pareggio per stallo → spareggio
     setIsPlayerTurn(false);
   };
 
@@ -1072,7 +1135,8 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
       setShowResultOverlay(true);
       return;
     }
-    
+
+    if (noteMoveForStall(newBoard)) return; // 🤝 pareggio per stallo → spareggio
     setIsPlayerTurn(true);
   };
 
@@ -1291,6 +1355,43 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
       window.history.back();
     }
   };
+
+  // 🤝 Spareggio per stallo (modalità normale): intro con countdown → RPS,
+  //    identico al torneo. In torneo questo stato non viene usato (lo gestisce
+  //    il TournamentFlow tramite onGameEnd("draw")).
+  if (tiebreak === "intro") {
+    return (
+      <Card className="mb-6 p-8 text-center bg-gradient-to-br from-rose-950/55 via-purple-950/40 to-rose-950/55 border-rose-500/40 shadow-[0_8px_40px_-12px_rgba(244,63,94,0.4)]">
+        <Handshake className="w-16 h-16 mx-auto mb-4 text-rose-300" />
+        <h3 className="text-2xl font-black bg-gradient-to-r from-rose-300 via-pink-300 to-purple-300 bg-clip-text text-transparent mb-2">
+          Pareggio!
+        </h3>
+        <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">
+          Sono passate troppe mosse senza catture: la partita è patta. Per decidere
+          il vincitore vi sfiderete a{" "}
+          <strong className="text-rose-300">Carta-Forbici-Sasso</strong>: chi arriva
+          per primo a 3 vittorie vince.
+        </p>
+        <p className="text-xs text-rose-200/80">
+          Lo spareggio inizia tra{" "}
+          <span className="font-black text-rose-100 text-lg">{tiebreakCountdown ?? 10}</span>{" "}
+          secondi…
+        </p>
+      </Card>
+    );
+  }
+
+  if (tiebreak === "rps") {
+    return (
+      <RockPaperScissors
+        userName={currentUserProfile?.nickname ?? "Tu"}
+        userAvatarUrl={getAvatarUrl(currentUserProfile?.avatar_url ?? null)}
+        opponentName={opponent.nickname ?? "Sfidante"}
+        opponentAvatarUrl={getAvatarUrl(opponent.avatar_url)}
+        onResult={handleStallRpsResult}
+      />
+    );
+  }
 
   return (
     <Card className="p-6 bg-gradient-to-br from-rose-100 via-red-50 to-purple-100 dark:from-rose-900/40 dark:via-rose-950/50 dark:to-purple-950/70 border-rose-500/40 relative">
