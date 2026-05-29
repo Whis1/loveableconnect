@@ -703,18 +703,18 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-3 mb-6 max-w-xs mx-auto">
+      <div className="grid grid-cols-3 gap-2.5 mb-6 max-w-xs mx-auto p-3 rounded-2xl bg-amber-950/50 border border-amber-500/40 shadow-inner">
         {board.map((cell, index) => (
           <button
             key={index}
             onClick={() => handleCellClick(index)}
             disabled={!isPlayerTurn || gameOver || cell !== null}
             className={cn(
-              "aspect-square rounded-lg border-2 flex items-center justify-center text-4xl font-bold transition-all",
-              cell === "X" && "bg-primary/20 border-primary text-primary",
-              cell === "O" && "bg-destructive/20 border-destructive text-destructive",
-              cell === null && "bg-muted/30 border-muted hover:border-primary hover:bg-primary/10",
-              !isPlayerTurn && "cursor-not-allowed opacity-50"
+              "aspect-square rounded-lg border-2 flex items-center justify-center text-4xl font-black transition-all",
+              cell === "X" && "bg-sky-400/20 border-sky-300 text-sky-200 shadow-md shadow-sky-500/20",
+              cell === "O" && "bg-rose-500/25 border-rose-300 text-rose-200 shadow-md shadow-rose-500/20",
+              cell === null && "bg-amber-100/10 border-amber-300/50 hover:border-amber-200 hover:bg-amber-200/20",
+              !isPlayerTurn && cell === null && "opacity-60 cursor-not-allowed"
             )}
           >
             {cell}
