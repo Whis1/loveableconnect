@@ -52,9 +52,9 @@ export const TournamentSelectionBanner = ({
           avanzare: <strong className="text-pink-300">quarti → semifinale → finale</strong>.
         </p>
         <p className="text-xs text-foreground/80">
-          Nel torneo di <strong className="text-emerald-300">Othello</strong> una partita può
-          concludersi in parità. In questo caso, nei quarti e nelle semifinali il passaggio
-          del turno si decide con una sfida a{" "}
+          Nel torneo di <strong className="text-emerald-300">Othello</strong> può capitare,
+          in alcuni casi, che una partita si concluda in parità. In questa eventualità, nei
+          quarti e nelle semifinali il passaggio del turno si decide con una sfida a{" "}
           <strong className="text-pink-300">Carta-Forbici-Sasso</strong>; in finale, invece,
           la partita viene rigiocata finché uno dei due finalisti non vince. Nel torneo di{" "}
           <strong className="text-red-300">Dama</strong> la parità non è possibile.
