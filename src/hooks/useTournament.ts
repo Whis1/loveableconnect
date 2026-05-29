@@ -445,9 +445,26 @@ export function useTournament(currentUserId: string | null) {
         _user_won: userWon,
       });
       if (e) console.error("report_user_match_result failed:", e);
+
+      // 📊 Ogni match di torneo giocato conta 1 nelle V/S del profilo (opzione 1):
+      //    +1 vittoria se lo vinci, +1 sconfitta se ti elimina. Una sola volta
+      //    per match (reportUserResult è chiamato una volta per risoluzione).
+      //    Best-effort: errori non bloccanti.
+      if (currentUserId && tournament?.game_type) {
+        try {
+          await supabase.rpc("increment_game_stat" as any, {
+            p_user_id: currentUserId,
+            p_game: tournament.game_type,
+            p_result: userWon ? "win" : "lose",
+          });
+        } catch (err) {
+          console.warn("increment_game_stat (torneo) non bloccante:", err);
+        }
+      }
+
       if (tournament?.id) await fetchTournamentState(tournament.id);
     },
-    [userMatch, tournament?.id, fetchTournamentState]
+    [userMatch, tournament?.id, tournament?.game_type, currentUserId, fetchTournamentState]
   );
 
   const abandonTournament = useCallback(
