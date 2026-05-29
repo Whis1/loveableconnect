@@ -49,6 +49,37 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
   const [finalReplay, setFinalReplay] = useState(false);
   // Chiave per forzare il REMOUNT della board (replay finale = partita da capo)
   const [boardKey, setBoardKey] = useState(0);
+  // ⏱️ Countdown (10s) mostrato sui banner intro spareggio / replay finale:
+  //    a 0 lo spareggio/replay parte DA SOLO (niente pulsante manuale).
+  const [tiebreakCountdown, setTiebreakCountdown] = useState<number | null>(null);
+
+  useEffect(() => {
+    const active = tiebreak === "intro" || finalReplay;
+    if (!active) {
+      setTiebreakCountdown(null);
+      return;
+    }
+    let secs = 10;
+    setTiebreakCountdown(secs);
+    const timer = setInterval(() => {
+      secs -= 1;
+      if (secs <= 0) {
+        clearInterval(timer);
+        setTiebreakCountdown(null);
+        if (tiebreak === "intro") {
+          setTiebreak("rps");
+        } else {
+          // replay finale: rimonta la board fresca
+          setFinalReplay(false);
+          setBoardKey((k) => k + 1);
+        }
+      } else {
+        setTiebreakCountdown(secs);
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tiebreak, finalReplay]);
 
   const { toast } = useToast();
 
@@ -278,12 +309,6 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
     await resolveUserMatch(userWon);
   };
 
-  // 🔁 Replay finale: rigioca la partita da capo (board remount)
-  const handleFinalReplay = () => {
-    setFinalReplay(false);
-    setBoardKey((k) => k + 1);
-  };
-
   const handleAbandon = async () => {
     if (!tournament) {
       onExit();
@@ -370,17 +395,16 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
           <h3 className="text-2xl font-black bg-gradient-to-r from-pink-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent mb-2">
             Pareggio!
           </h3>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
+          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">
             Avete totalizzato lo stesso punteggio. Per decidere chi passa il turno
             vi sfiderete a <strong className="text-pink-300">Carta-Forbici-Sasso</strong>,
             al meglio dei 3. Chi vince 2 round avanza nel torneo.
           </p>
-          <Button
-            onClick={() => setTiebreak("rps")}
-            className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-500 hover:from-pink-400 hover:via-fuchsia-400 hover:to-purple-400 text-white font-bold shadow-lg shadow-pink-500/40"
-          >
-            Inizia lo spareggio
-          </Button>
+          <p className="text-xs text-pink-200/80">
+            Lo spareggio inizia tra{" "}
+            <span className="font-black text-pink-100 text-lg">{tiebreakCountdown ?? 10}</span>{" "}
+            secondi…
+          </p>
         </Card>
       );
     }
@@ -406,16 +430,15 @@ export const TournamentFlow = ({ currentUserId, onExit }: TournamentFlowProps) =
           <h3 className="text-2xl font-black bg-gradient-to-r from-pink-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent mb-2">
             Finale in parità!
           </h3>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
+          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">
             La finale è finita in pareggio: un campione si decide sul campo.
             Si rigioca la partita da capo, finché uno dei due non vince.
           </p>
-          <Button
-            onClick={handleFinalReplay}
-            className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-500 hover:from-pink-400 hover:via-fuchsia-400 hover:to-purple-400 text-white font-bold shadow-lg shadow-pink-500/40"
-          >
-            Rigioca la finale
-          </Button>
+          <p className="text-xs text-pink-200/80">
+            La finale riparte tra{" "}
+            <span className="font-black text-pink-100 text-lg">{tiebreakCountdown ?? 10}</span>{" "}
+            secondi…
+          </p>
         </Card>
       );
     }
