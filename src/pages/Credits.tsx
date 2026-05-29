@@ -386,19 +386,19 @@ const Credits = () => {
                 <ul className="space-y-2">
                   <li className="flex items-center gap-2">
                     <Zap className="h-5 w-5 text-amber-500" />
-                    <span>{t("credits.unlimitedCredits")}</span>
+                    <span><strong>{t("credits.unlimitedCredits")}</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Heart className="h-5 w-5 text-amber-500" />
-                    <span>Like illimitati</span>
+                    <span><strong>Like illimitati</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Eye className="h-5 w-5 text-amber-500" />
-                    <span>Visualizzazione Like illimitata</span>
+                    <span><strong>Visualizzazione Like illimitata</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Zap className="h-5 w-5 text-amber-500" />
-                    <span>Sblocco Chat con nuovi profili Illimitato</span>
+                    <span><strong>Sblocco Chat con nuovi profili Illimitato</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-amber-500">
@@ -406,19 +406,19 @@ const Credits = () => {
                       <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
                       <line x1="12" x2="12" y1="19" y2="22"/>
                     </svg>
-                    <span>Accesso ai messaggi vocali nelle chat con gli utenti</span>
+                    <span><strong>Accesso ai messaggi vocali nelle chat con gli utenti</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Shield className="h-5 w-5 text-amber-500" />
-                    <span>Accesso al sistema di disattivazione/attivazione dello stato online del profilo</span>
+                    <span><strong>Accesso al sistema di disattivazione/attivazione dello stato online del profilo</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Gamepad2 className="h-5 w-5 text-amber-500" />
-                    <span>Sfide tra utenti illimitate</span>
+                    <span><strong>Sfide tra utenti illimitate</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Crown className="h-5 w-5 text-amber-500" />
-                    <span>Posizione prioritaria nella bacheca: sempre tra i primi profili mostrati</span>
+                    <span><strong>Posizione prioritaria nella bacheca: sempre tra i primi profili mostrati</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-amber-500">
@@ -426,7 +426,7 @@ const Credits = () => {
                       <path d="M3 9h18"/>
                       <path d="m9 16 3-3 3 3"/>
                     </svg>
-                    <span>Rimozione completa delle pubblicità</span>
+                    <span><strong>Rimozione completa delle pubblicità</strong></span>
                   </li>
                 </ul>
                 <Button
@@ -479,11 +479,11 @@ const Credits = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <Shield className="h-5 w-5 text-blue-500" />
-                    <span>Accesso al sistema di disattivazione/attivazione dello stato online del profilo</span>
+                    <span><strong>Accesso al sistema di disattivazione/attivazione dello stato online del profilo</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Crown className="h-5 w-5 text-blue-500" />
-                    <span>Posizione prioritaria nella bacheca: sempre tra i primi profili mostrati</span>
+                    <span><strong>Posizione prioritaria nella bacheca: sempre tra i primi profili mostrati</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-blue-500">
@@ -491,7 +491,7 @@ const Credits = () => {
                       <path d="M3 9h18"/>
                       <path d="m9 16 3-3 3 3"/>
                     </svg>
-                    <span>Rimozione completa delle pubblicità</span>
+                    <span><strong>Rimozione completa delle pubblicità</strong></span>
                   </li>
                 </ul>
                 <Button
