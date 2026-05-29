@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Trophy, X, Loader2 } from "lucide-react";
 import othelloIcon from "@/assets/othello-icon.png";
 import damaIcon from "@/assets/dama-icon.png";
+import { MedalIcon, EliminatedIcon } from "@/lib/championIcons";
 
 interface TournamentSelectionBannerProps {
   onSelect: (game: "othello" | "dama") => void;
@@ -60,25 +61,25 @@ export const TournamentSelectionBanner = ({
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
           <div className="flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-500/30 px-3 py-2">
-            <span className="text-base">🥇</span>
+            <MedalIcon tier="gold" place={1} className="w-6 h-6 shrink-0" />
             <span className="text-xs text-foreground/90">
               <strong className="text-amber-300">Vinci il torneo:</strong> +12 crediti, +60 ELO
             </span>
           </div>
           <div className="flex items-center gap-2 rounded-lg bg-slate-400/10 border border-slate-300/30 px-3 py-2">
-            <span className="text-base">🥈</span>
+            <MedalIcon tier="silver" place={2} className="w-6 h-6 shrink-0" />
             <span className="text-xs text-foreground/90">
               <strong className="text-slate-200">Perdi in finale:</strong> +4 crediti, −20 ELO
             </span>
           </div>
           <div className="flex items-center gap-2 rounded-lg bg-orange-500/10 border border-orange-400/30 px-3 py-2">
-            <span className="text-base">🥉</span>
+            <MedalIcon tier="bronze" place={3} className="w-6 h-6 shrink-0" />
             <span className="text-xs text-foreground/90">
               <strong className="text-orange-300">Perdi in semifinale:</strong> +2 crediti, −20 ELO
             </span>
           </div>
           <div className="flex items-center gap-2 rounded-lg bg-rose-500/10 border border-rose-400/30 px-3 py-2">
-            <span className="text-base">💔</span>
+            <EliminatedIcon className="w-6 h-6 shrink-0" />
             <span className="text-xs text-foreground/90">
               <strong className="text-rose-300">Eliminato ai quarti:</strong> nessun premio, −20 ELO
             </span>
