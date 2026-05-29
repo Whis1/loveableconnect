@@ -116,28 +116,30 @@ export const MedalIcon: React.FC<ChampionIconProps & { tier: keyof typeof MEDAL_
   );
 };
 
-// 💔 ELIMINATO — cuore spezzato (rosa)
+// 💀 ELIMINATO — teschio (rosa/rosso)
 export const EliminatedIcon: React.FC<ChampionIconProps> = ({ className }) => {
-  const g = useGradId("elim");
+  const g = useGradId("skull");
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id={g} x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#FB7185" />
+        <linearGradient id={g} x1="5" y1="3" x2="19" y2="21" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#FDA4AF" />
           <stop offset="1" stopColor="#E11D48" />
         </linearGradient>
       </defs>
-      {/* metà sinistra del cuore */}
+      {/* cranio + mascella */}
       <path
-        d="M12 20.5l-6.4-6.2C3.8 12.6 3.8 9.7 5.6 8c1.6-1.5 4-1.2 5.4.4L12 6.5l-1.6 4 2 1.5-1.8 2.5L12 16.5V20.5z"
+        d="M12 3c-4.4 0-7.5 3-7.5 7 0 2.4 1.1 4 2.5 5v2.2c0 .9.7 1.6 1.6 1.6h.9v-1.8h1.2v1.8h2.6v-1.8h1.2v1.8h.9c.9 0 1.6-.7 1.6-1.6V15c1.4-1 2.5-2.6 2.5-5 0-4-3.1-7-7.5-7z"
         fill={`url(#${g})`}
+        stroke="#9F1239"
+        strokeWidth="0.7"
+        strokeLinejoin="round"
       />
-      {/* metà destra del cuore */}
-      <path
-        d="M12 20.5l6.4-6.2c1.8-1.7 1.8-4.6 0-6.3-1.6-1.5-4-1.2-5.4.4L12 6.5l1.6 4-2 1.5 1.8 2.5L12 16.5V20.5z"
-        fill={`url(#${g})`}
-        opacity="0.78"
-      />
+      {/* occhiaie */}
+      <ellipse cx="9" cy="11" rx="1.9" ry="2.2" fill="#7F1D1D" />
+      <ellipse cx="15" cy="11" rx="1.9" ry="2.2" fill="#7F1D1D" />
+      {/* naso */}
+      <path d="M12 12.6l-1 2h2l-1-2z" fill="#7F1D1D" />
     </svg>
   );
 };

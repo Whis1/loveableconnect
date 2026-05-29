@@ -52,12 +52,11 @@ export const TournamentSelectionBanner = ({
           avanzare: <strong className="text-pink-300">quarti → semifinale → finale</strong>.
         </p>
         <p className="text-xs text-foreground/80">
-          Nel torneo di <strong className="text-emerald-300">Othello</strong> può capitare,
-          in alcuni casi, che una partita si concluda in parità. In questa eventualità, nei
-          quarti e nelle semifinali il passaggio del turno si decide con una sfida a{" "}
+          Nel torneo di <strong className="text-emerald-300">Othello</strong> può capitare che
+          una partita si concluda in parità. In questa eventualità, nei quarti e nelle
+          semifinali il passaggio del turno si decide con una sfida a{" "}
           <strong className="text-pink-300">Carta-Forbici-Sasso</strong>; in finale, invece,
-          la partita viene rigiocata finché uno dei due finalisti non vince. Nel torneo di{" "}
-          <strong className="text-red-300">Dama</strong> la parità non è possibile.
+          la partita viene rigiocata finché uno dei due finalisti non vince.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
           <div className="flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-500/30 px-3 py-2">
