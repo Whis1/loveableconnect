@@ -34,7 +34,7 @@ export function renderRankBadge(position: number, size: "sm" | "md" = "sm") {
   const styles = [
     {
       bg: "bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500 text-amber-950 shadow shadow-yellow-500/40 border border-yellow-300/60",
-      label: "Campione",
+      label: "Champion",
     },
     {
       bg: "bg-gradient-to-r from-gray-200 via-slate-300 to-gray-400 text-slate-800 shadow shadow-gray-400/40 border border-gray-300/60",

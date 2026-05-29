@@ -59,22 +59,22 @@ export const ChampionBadgesRow = ({ badges, tournamentsWon, size = "md", classNa
         <Badge
           icon={<CampioneIcon className={iconCls} active={badges.everChampion} />}
           active={badges.everChampion}
-          title="Campione"
-          desc="Titolo ottenuto arrivando primo in classifica almeno una volta."
+          title="Champion"
+          desc="Titolo ottenuto raggiungendo la prima posizione in classifica almeno una volta."
         />
         <Badge
           icon={<SettimanaIcon className={iconCls} active={badges.weeks > 0} />}
           active={badges.weeks > 0}
           count={badges.weeks}
-          title="Campione della Settimana"
-          desc="Titolo ottenuto restando primo in classifica per una settimana intera."
+          title="Weekly Champion"
+          desc="Titolo ottenuto restando in prima posizione nella classifica per una settimana intera."
         />
         <Badge
           icon={<MeseIcon className={iconCls} active={badges.months > 0} />}
           active={badges.months > 0}
           count={badges.months}
-          title="Campione del Mese"
-          desc="Titolo ottenuto restando primo in classifica per un mese intero."
+          title="Monthly Champion"
+          desc="Titolo ottenuto restando in prima posizione nella classifica per un mese intero."
         />
         {typeof tournamentsWon === "number" && (
           <Badge
