@@ -269,28 +269,25 @@ function computeAdminLifetimeTrophies(id: string, allAdmins: AdminSeed[]): numbe
     firstDay.getUTCDate() + 1 // primo giorno COMPLETO dopo EPOCH
   );
 
-  const myBase = baseElo(id);
   let trophies = 0;
 
   while (dayMidnight < midnightTodayUTC) {
-    // ELO di QUESTO admin alla mezzanotte di quel giorno
     if (dayMidnight >= EPOCH) {
-      const myBucket = personalBucket(id, dayMidnight);
-      const myElo = Math.max(100, myBase + cumulativeDrift(id, myBucket));
-
-      // Confronta con ogni altro admin a quello stesso istante
-      let amTop = true;
-      for (const other of allAdmins) {
-        if (other.id === id) continue;
-        const otherBucket = personalBucket(other.id, dayMidnight);
-        if (otherBucket < 0) continue;
-        const otherElo = Math.max(100, baseElo(other.id) + cumulativeDrift(other.id, otherBucket));
-        if (otherElo > myElo) {
-          amTop = false;
-          break;
+      // 🏆 Determina il CAMPIONE UNICO di quel giorno: ELO più alto a mezzanotte;
+      //    in caso di parità esatta vince l'id "più piccolo" (tie-break stabile).
+      //    Così c'è SEMPRE un solo campione al giorno (niente doppi conteggi).
+      let bestElo = -1;
+      let bestId = "";
+      for (const a of allAdmins) {
+        const b = personalBucket(a.id, dayMidnight);
+        if (b < 0) continue;
+        const e = Math.max(100, baseElo(a.id) + cumulativeDrift(a.id, b));
+        if (e > bestElo || (e === bestElo && a.id < bestId)) {
+          bestElo = e;
+          bestId = a.id;
         }
       }
-      if (amTop) trophies++;
+      if (bestId === id) trophies++;
     }
     dayMidnight += DAY_MS;
   }
