@@ -104,7 +104,7 @@ export const TournamentEndBanner: React.FC<TournamentEndBannerProps> = ({
 
   const config = isWinner
     ? {
-        title: "🏆 Torneo Vinto!",
+        title: "Torneo Vinto!",
         subtitle: `Sei campione del torneo ${gameType === "othello" ? "Othello" : "Dama"}!`,
         gradientFrom: "from-amber-400",
         gradientVia: "via-yellow-300",
@@ -119,7 +119,7 @@ export const TournamentEndBanner: React.FC<TournamentEndBannerProps> = ({
       }
     : isSecond
     ? {
-        title: "🥈 Finalista",
+        title: "Finalista",
         subtitle: "Sei arrivato fino alla finale.",
         gradientFrom: "from-slate-300",
         gradientVia: "via-slate-200",
@@ -134,7 +134,7 @@ export const TournamentEndBanner: React.FC<TournamentEndBannerProps> = ({
       }
     : isThirdFourth
     ? {
-        title: "🥉 Semifinalista",
+        title: "Semifinalista",
         subtitle: "Hai raggiunto la semifinale.",
         gradientFrom: "from-orange-300",
         gradientVia: "via-amber-400",
@@ -149,7 +149,7 @@ export const TournamentEndBanner: React.FC<TournamentEndBannerProps> = ({
       }
     : isEliminated
     ? {
-        title: "💔 Eliminato dal torneo",
+        title: "Eliminato dal torneo",
         subtitle: "",
         gradientFrom: "from-rose-300",
         gradientVia: "via-pink-400",

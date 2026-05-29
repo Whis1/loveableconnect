@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Trophy, X } from "lucide-react";
+import { Trophy, X, Gamepad2, Hourglass, CircleCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   MatchRow,
@@ -157,19 +157,22 @@ export const TournamentBracketView = ({
         <div className="text-center text-[10px] font-bold text-muted-foreground">VS</div>
         {playerRow(bId, !!bWon)}
 
-        {/* Status footer */}
+        {/* Status footer — icone lucide, niente emoji base */}
         <div className="text-center text-[10px] pt-1">
           {isPending && (
             <span className="text-muted-foreground">In attesa</span>
           )}
-          {isNpcInProgress && (
-            <span className="text-pink-300/80">⏳ In corso</span>
-          )}
-          {isUserMatch && !isCompleted && (
-            <span className="text-pink-300/80">⏳ In corso</span>
+          {(isNpcInProgress || (isUserMatch && !isCompleted)) && (
+            <span className="inline-flex items-center gap-1 text-pink-300/80">
+              <Hourglass className="w-3 h-3" />
+              In corso
+            </span>
           )}
           {isCompleted && (
-            <span className="text-emerald-400/70">✅ Concluso</span>
+            <span className="inline-flex items-center gap-1 text-emerald-400/70">
+              <CircleCheck className="w-3 h-3" />
+              Concluso
+            </span>
           )}
         </div>
       </div>
@@ -236,8 +239,9 @@ export const TournamentBracketView = ({
 
         {/* Colonna 3: Finale */}
         <div className="space-y-4 md:pt-24">
-          <p className="text-[10px] uppercase tracking-wide text-pink-300 text-center font-black">
-            🏆 FINALE
+          <p className="text-[10px] uppercase tracking-wide text-pink-300 text-center font-black inline-flex items-center justify-center gap-1 w-full">
+            <Trophy className="w-3 h-3" />
+            FINALE
           </p>
           <MatchCard match={finalMatch} />
         </div>
@@ -263,8 +267,9 @@ export const TournamentBracketView = ({
       {/* 🚀 Auto-start partita utente: countdown automatico, niente click */}
       {userCanStart && (
         <div className="mt-6 flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-r from-cyan-500/15 via-blue-500/15 to-cyan-500/15 border-2 border-cyan-400/40 animate-pulse">
-          <p className="text-sm font-semibold text-cyan-300">
-            🎮 Il Torneo sta per iniziare
+          <p className="text-sm font-semibold text-cyan-300 inline-flex items-center gap-1.5">
+            <Gamepad2 className="w-4 h-4" />
+            Il Torneo sta per iniziare
           </p>
           <p className="text-xs text-cyan-200/80">
             Avvio automatico tra{" "}

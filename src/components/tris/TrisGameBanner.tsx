@@ -749,8 +749,9 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
       <Card className="mb-6 mx-auto max-w-4xl p-6 bg-gradient-to-br from-primary/15 via-secondary/10 to-primary/10 border-primary/30 backdrop-blur-sm">
         {/* Header: titolo + close */}
         <div className="flex justify-between items-start mb-5">
-          <h3 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            🎮 Scegli il tuo gioco
+          <h3 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent inline-flex items-center gap-2">
+            <Gamepad2 className="w-6 h-6 text-primary" />
+            Scegli il tuo gioco
           </h3>
           <Button
             variant="ghost"
