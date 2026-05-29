@@ -49,8 +49,13 @@ export const TournamentSelectionBanner = ({
         <p className="text-sm text-foreground/90">
           8 sfidanti, eliminazione diretta. Batti l'avversario a ogni round per
           avanzare: <strong className="text-pink-300">quarti → semifinale → finale</strong>.
-          In caso di pareggio si va allo spareggio (Carta-Forbici-Sasso; in finale
-          si rigioca la partita).
+        </p>
+        <p className="text-xs text-foreground/80">
+          Solo nell'<strong className="text-emerald-300">Othello</strong> una partita può
+          finire in pareggio: in quel caso si decide a{" "}
+          <strong className="text-pink-300">Carta-Forbici-Sasso</strong> (in finale, invece,
+          si rigioca la partita finché qualcuno vince). Nella{" "}
+          <strong className="text-red-300">Dama</strong> non si pareggia mai.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
           <div className="flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-500/30 px-3 py-2">
@@ -78,10 +83,6 @@ export const TournamentSelectionBanner = ({
             </span>
           </div>
         </div>
-        <p className="text-[11px] text-muted-foreground pt-0.5">
-          Gli admin sono avversari tosti: arrivare in fondo è un'impresa. Ogni
-          sconfitta toglie 20 ELO, ma più avanti arrivi più crediti di consolazione ottieni.
-        </p>
       </div>
 
       <div className="relative grid grid-cols-1 md:grid-cols-2 gap-4">
