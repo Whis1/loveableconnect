@@ -295,6 +295,39 @@ function computeAdminLifetimeTrophies(id: string, allAdmins: AdminSeed[]): numbe
   return trophies;
 }
 
+// 🏅 Giorni in cui questo admin è stato il CAMPIONE del giorno (ELO più alto
+//    a mezzanotte UTC fra tutti gli admin). Ritorna un array di "numeri di
+//    giorno" (Math.floor(midnightUTC / DAY_MS)), usato da computeChampionBadges
+//    per calcolare i titoli Campione / Settimana / Mese.
+export function computeAdminChampionDays(id: string, allAdmins: AdminSeed[]): number[] {
+  const days: number[] = [];
+  const today = new Date();
+  const midnightTodayUTC = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+
+  const firstDay = new Date(EPOCH);
+  let dayMidnight = Date.UTC(firstDay.getUTCFullYear(), firstDay.getUTCMonth(), firstDay.getUTCDate() + 1);
+
+  while (dayMidnight < midnightTodayUTC) {
+    if (dayMidnight >= EPOCH) {
+      // Campione UNICO del giorno: max ELO, tie-break id più piccolo.
+      let bestElo = -1;
+      let bestId = "";
+      for (const a of allAdmins) {
+        const b = personalBucket(a.id, dayMidnight);
+        if (b < 0) continue;
+        const e = Math.max(100, baseElo(a.id) + cumulativeDrift(a.id, b));
+        if (e > bestElo || (e === bestElo && a.id < bestId)) {
+          bestElo = e;
+          bestId = a.id;
+        }
+      }
+      if (bestId === id) days.push(Math.floor(dayMidnight / DAY_MS));
+    }
+    dayMidnight += DAY_MS;
+  }
+  return days;
+}
+
 // 👑 Tornei vinti admin: bucket settimanale con epoca recente.
 //    EPOCH = "ricomincia da zero" con il nuovo sistema. Da quella data in poi,
 //    ogni admin con baseElo >= 2000 ha una probabilita' per settimana di

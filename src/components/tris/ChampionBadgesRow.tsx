@@ -1,0 +1,80 @@
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ChampionBadges } from "@/lib/championBadges";
+import { CampioneIcon, SettimanaIcon, MeseIcon } from "@/lib/championIcons";
+
+// 🏅 Riga dei 3 titoli di Campione. Solo icone + tooltip (titolo + descrizione).
+// Le icone non guadagnate appaiono spente (grigie). Settimana/Mese mostrano xN.
+
+interface ChampionBadgesRowProps {
+  badges: ChampionBadges;
+  size?: "sm" | "md";
+  className?: string;
+}
+
+export const ChampionBadgesRow = ({ badges, size = "md", className = "" }: ChampionBadgesRowProps) => {
+  const iconCls = size === "sm" ? "w-6 h-6" : "w-8 h-8";
+
+  const Badge = ({
+    icon,
+    active,
+    count,
+    title,
+    desc,
+  }: {
+    icon: React.ReactNode;
+    active: boolean;
+    count?: number;
+    title: string;
+    desc: string;
+  }) => (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          className={`relative flex items-center justify-center cursor-help transition-transform hover:scale-110 ${
+            active ? "" : "opacity-40 grayscale"
+          }`}
+        >
+          {icon}
+          {typeof count === "number" && count > 0 && (
+            <span className="absolute -bottom-1 -right-1 px-1 min-w-[14px] h-[14px] flex items-center justify-center rounded-full bg-pink-600 text-white text-[9px] font-black leading-none border border-pink-300/60">
+              {count}
+            </span>
+          )}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-[240px] text-left leading-relaxed">
+        <strong>{title}</strong>
+        <br />
+        {desc}
+      </TooltipContent>
+    </Tooltip>
+  );
+
+  return (
+    <TooltipProvider delayDuration={150}>
+      <div className={`flex items-center gap-3 ${className}`}>
+        <Badge
+          icon={<CampioneIcon className={iconCls} active={badges.everChampion} />}
+          active={badges.everChampion}
+          title="Campione"
+          desc="Sei arrivato primo in classifica almeno una volta."
+        />
+        <Badge
+          icon={<SettimanaIcon className={iconCls} active={badges.weeks > 0} />}
+          active={badges.weeks > 0}
+          count={badges.weeks}
+          title="Campione della Settimana"
+          desc="Sei rimasto primo in classifica per una settimana intera (7 giorni consecutivi). Il numero indica quante settimane complete hai totalizzato."
+        />
+        <Badge
+          icon={<MeseIcon className={iconCls} active={badges.months > 0} />}
+          active={badges.months > 0}
+          count={badges.months}
+          title="Campione del Mese"
+          desc="Sei rimasto primo in classifica per un mese intero (30 giorni consecutivi). Il numero indica quanti mesi completi hai totalizzato."
+        />
+      </div>
+    </TooltipProvider>
+  );
+};

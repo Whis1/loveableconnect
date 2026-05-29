@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy, ChevronDown, ChevronUp, Crown } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { computeChampionBadges, dateStringToDayNumber, ChampionBadges } from "@/lib/championBadges";
+import { ChampionBadgesRow } from "./ChampionBadgesRow";
 import { computeAdminElos } from "@/lib/adminElo";
 import { ProfileStatsDialog } from "./ProfileStatsDialog";
 import { VictoryIcon, DefeatIcon } from "@/lib/gameIcons";
@@ -91,12 +93,13 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     full_name: string;
     avatar_url: string | null;
   } | null>(null);
-  // 🏆 Stats personali dell'utente: V/S/trofei/tornei_vinti
+  // 🏆 Stats personali dell'utente: V/S/trofei/tornei_vinti + titoli campione
   const [userStats, setUserStats] = useState<{
     wins: number;
     losses: number;
     trophies: number;
     tournamentsWon: number;
+    badges: ChampionBadges;
   } | null>(null);
   // 🆕 Default true: la classifica è APERTA appena si entra. Click sulla
   // tendina per chiuderla.
@@ -193,12 +196,20 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
           .limit(1)
           .maybeSingle();
 
+        // 🏅 Titoli campione: giorni in cui l'utente è stato #1 (daily_top1_trophies)
+        const { data: champRows } = await supabase
+          .from("daily_top1_trophies")
+          .select("award_date")
+          .eq("user_id", userId);
+        const champDays = (champRows ?? []).map((r: any) => dateStringToDayNumber(r.award_date));
+
         const row = tris as any;
         setUserStats({
           wins: (row?.tris_wins ?? 0) + (row?.dama_wins ?? 0) + (row?.othello_wins ?? 0),
           losses: (row?.tris_losses ?? 0) + (row?.dama_losses ?? 0) + (row?.othello_losses ?? 0),
           trophies: row?.top_1_trophies ?? 0,
           tournamentsWon: row?.tournaments_won ?? 0,
+          badges: computeChampionBadges(champDays),
         });
 
         // 👤 Profilo: nickname + avatar per la card stile partita
@@ -320,80 +331,56 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
             </div>
           </div>
 
-          {/* 📊 Stats personali (V/S/Trofei/Tornei Vinti) — solo per il proprio profilo */}
+          {/* 📊 Stats personali — solo per il proprio profilo */}
           {userStats && (
-            <div className="grid grid-cols-4 gap-2 mt-4 pt-4 border-t border-pink-500/20">
-              {/* Vittorie */}
-              <div className="flex flex-col items-center p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
-                <VictoryIcon className="w-4 h-4 text-emerald-400 mb-0.5" />
-                <span className="text-[9px] uppercase tracking-wider font-semibold text-emerald-300/90">
-                  Vittorie
-                </span>
-                <span className="text-lg font-black text-emerald-300">
-                  {userStats.wins}
-                </span>
+            <div className="mt-4 pt-4 border-t border-pink-500/20 space-y-3">
+              {/* Vittorie / Sconfitte / Tornei */}
+              <div className="grid grid-cols-3 gap-2">
+                <div className="flex flex-col items-center p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+                  <VictoryIcon className="w-4 h-4 text-emerald-400 mb-0.5" />
+                  <span className="text-[9px] uppercase tracking-wider font-semibold text-emerald-300/90">
+                    Vittorie
+                  </span>
+                  <span className="text-lg font-black text-emerald-300">{userStats.wins}</span>
+                </div>
+
+                <div className="flex flex-col items-center p-2 rounded-lg bg-rose-500/10 border border-rose-500/30">
+                  <DefeatIcon className="w-4 h-4 text-rose-400 mb-0.5" />
+                  <span className="text-[9px] uppercase tracking-wider font-semibold text-rose-300/90">
+                    Sconfitte
+                  </span>
+                  <span className="text-lg font-black text-rose-300">{userStats.losses}</span>
+                </div>
+
+                <TooltipProvider delayDuration={150}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex flex-col items-center p-2 rounded-lg bg-fuchsia-500/15 border border-fuchsia-500/40 cursor-help w-full"
+                      >
+                        <Crown className="w-4 h-4 text-fuchsia-300 mb-0.5" />
+                        <span className="text-[9px] uppercase tracking-wider font-semibold text-fuchsia-300/90 leading-tight text-center">
+                          Tornei
+                        </span>
+                        <span className="text-lg font-black text-fuchsia-300">
+                          {userStats.tournamentsWon}
+                        </span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[260px] text-left leading-relaxed">
+                      <strong>Tornei Vinti.</strong> Quante volte hai vinto un torneo a 8
+                      giocatori (Othello o Dama) arrivando primo in finale. Ogni vittoria
+                      vale 12 crediti e +60 ELO.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
 
-              {/* Sconfitte */}
-              <div className="flex flex-col items-center p-2 rounded-lg bg-rose-500/10 border border-rose-500/30">
-                <DefeatIcon className="w-4 h-4 text-rose-400 mb-0.5" />
-                <span className="text-[9px] uppercase tracking-wider font-semibold text-rose-300/90">
-                  Sconfitte
-                </span>
-                <span className="text-lg font-black text-rose-300">
-                  {userStats.losses}
-                </span>
+              {/* 🏅 Titoli di Campione (solo icone + tooltip) */}
+              <div className="flex items-center justify-center gap-3 pt-1">
+                <ChampionBadgesRow badges={userStats.badges} size="md" />
               </div>
-
-              {/* 🏆 Campione del Giorno (ex "Trofei") */}
-              <TooltipProvider delayDuration={150}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      className="flex flex-col items-center p-2 rounded-lg bg-yellow-500/15 border border-yellow-500/40 cursor-help w-full"
-                    >
-                      <Trophy className="w-4 h-4 text-yellow-300 mb-0.5" />
-                      <span className="text-[9px] uppercase tracking-wider font-semibold text-yellow-300/90 leading-tight text-center">
-                        Campione
-                      </span>
-                      <span className="text-lg font-black text-yellow-300">
-                        {userStats.trophies}
-                      </span>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-[260px] text-left leading-relaxed">
-                    <strong>Campione del Giorno.</strong> Ogni giorno a mezzanotte il
-                    profilo che è 1° nella classifica ELO riceve questo trofeo. Il numero
-                    indica quante volte hai chiuso la giornata al primo posto.
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              {/* 👑 Tornei Vinti */}
-              <TooltipProvider delayDuration={150}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      className="flex flex-col items-center p-2 rounded-lg bg-fuchsia-500/15 border border-fuchsia-500/40 cursor-help w-full"
-                    >
-                      <Crown className="w-4 h-4 text-fuchsia-300 mb-0.5" />
-                      <span className="text-[9px] uppercase tracking-wider font-semibold text-fuchsia-300/90 leading-tight text-center">
-                        Tornei
-                      </span>
-                      <span className="text-lg font-black text-fuchsia-300">
-                        {userStats.tournamentsWon}
-                      </span>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-[260px] text-left leading-relaxed">
-                    <strong>Tornei Vinti.</strong> Quante volte hai vinto un torneo a 8
-                    giocatori (Othello o Dama) arrivando primo in finale. Ogni vittoria
-                    vale 12 crediti e +60 ELO.
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
             </div>
           )}
         </Card>

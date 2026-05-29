@@ -8,7 +8,9 @@ import { Trophy, Heart, Check, Loader2, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 import { VictoryIcon, DefeatIcon } from "@/lib/gameIcons";
-import { computeAdminStats } from "@/lib/adminElo";
+import { computeAdminStats, computeAdminChampionDays } from "@/lib/adminElo";
+import { computeChampionBadges, dateStringToDayNumber, ChampionBadges } from "@/lib/championBadges";
+import { ChampionBadgesRow } from "./ChampionBadgesRow";
 import { renderRankBadge, getRankNicknameClass } from "./EloLeaderboard";
 import { useSendLike } from "@/hooks/useSendLike";
 
@@ -26,6 +28,7 @@ interface ProfileStats {
   totalLosses: number;
   top1Trophies: number;
   tournamentsWon: number;
+  badges: ChampionBadges;
 }
 
 interface Props {
@@ -95,12 +98,15 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
           if (cancelled) return;
 
           const adminStats = computeAdminStats(profileId, admins ?? []);
+          // 🏅 Titoli campione admin (serie consecutive da #1, simulate)
+          const champDays = computeAdminChampionDays(profileId, (admins ?? []) as any);
           setStats({
             elo: fallbackElo ?? adminStats.elo,
             totalWins: adminStats.totalWins,
             totalLosses: adminStats.totalLosses,
             top1Trophies: adminStats.top1Trophies,
             tournamentsWon: adminStats.tournamentsWon,
+            badges: computeChampionBadges(champDays),
           });
         } else {
           const { data: tris } = await supabase
@@ -112,6 +118,15 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
             .maybeSingle();
           if (cancelled) return;
 
+          // 🏅 Titoli campione utente reale: giorni in cui è stato #1
+          //    (storico in daily_top1_trophies).
+          const { data: champRows } = await supabase
+            .from("daily_top1_trophies")
+            .select("award_date")
+            .eq("user_id", profileId);
+          if (cancelled) return;
+          const champDays = (champRows ?? []).map((r: any) => dateStringToDayNumber(r.award_date));
+
           const row = tris as any;
           setStats({
             elo: fallbackElo,
@@ -119,6 +134,7 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
             totalLosses: (row?.tris_losses ?? 0) + (row?.dama_losses ?? 0) + (row?.othello_losses ?? 0),
             top1Trophies: row?.top_1_trophies ?? 0,
             tournamentsWon: row?.tournaments_won ?? 0,
+            badges: computeChampionBadges(champDays),
           });
         }
       } catch (e) {
@@ -130,6 +146,7 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
             totalLosses: 0,
             top1Trophies: 0,
             tournamentsWon: 0,
+            badges: { everChampion: false, weeks: 0, months: 0 },
           });
         }
       } finally {
@@ -337,29 +354,11 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
                     </Tooltip>
                   </TooltipProvider>
 
-                  {/* 🏆 Campione del giorno: trofeo dato a chi e' #1 in classifica
-                      a mezzanotte UTC. Mostrato SEMPRE (anche con 0 trofei) sia
-                      in classifica che durante le partite, su richiesta utente.
-                      Tooltip cliccabile/hover che spiega come si ottiene. */}
-                  <TooltipProvider delayDuration={150}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          type="button"
-                          className="w-full flex items-center justify-center gap-2 p-3 rounded-lg bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-500/40 hover:from-yellow-500/30 hover:to-amber-500/30 transition-colors cursor-help"
-                        >
-                          <Trophy className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-                          <span className="text-sm font-semibold">Campione del giorno:</span>
-                          <span className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
-                            {stats.top1Trophies}
-                          </span>
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-sm text-left leading-relaxed">
-                        Ogni giorno, alle ore 00:00, il sistema verifica la classifica ELO. Il profilo che occupa la prima posizione in quel momento riceve il trofeo <strong>Campione del Giorno</strong>. Il numero riportato indica quante volte il profilo ha concluso la giornata al primo posto in classifica.
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  {/* 🏅 Titoli di Campione (solo icone + tooltip al hover):
+                      Campione (mai #1), Campione della Settimana xN, Campione del Mese xN. */}
+                  <div className="flex justify-center pt-1">
+                    <ChampionBadgesRow badges={stats.badges} size="md" />
+                  </div>
 
                   {/* 🔒 PRIVACY: V/S NON mostrate nei profili degli altri.
                       Ogni utente vede le proprie nel pannello /sfida sotto
