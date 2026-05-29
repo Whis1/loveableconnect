@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy, ChevronDown, ChevronUp, Crown } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { computeAdminElos } from "@/lib/adminElo";
 import { ProfileStatsDialog } from "./ProfileStatsDialog";
 import { VictoryIcon, DefeatIcon } from "@/lib/gameIcons";
@@ -344,27 +345,55 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
                 </span>
               </div>
 
-              {/* Trofei Campione del Giorno */}
-              <div className="flex flex-col items-center p-2 rounded-lg bg-yellow-500/15 border border-yellow-500/40">
-                <Trophy className="w-4 h-4 text-yellow-300 mb-0.5" />
-                <span className="text-[9px] uppercase tracking-wider font-semibold text-yellow-300/90">
-                  Trofei
-                </span>
-                <span className="text-lg font-black text-yellow-300">
-                  {userStats.trophies}
-                </span>
-              </div>
+              {/* 🏆 Campione del Giorno (ex "Trofei") */}
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex flex-col items-center p-2 rounded-lg bg-yellow-500/15 border border-yellow-500/40 cursor-help w-full"
+                    >
+                      <Trophy className="w-4 h-4 text-yellow-300 mb-0.5" />
+                      <span className="text-[9px] uppercase tracking-wider font-semibold text-yellow-300/90 leading-tight text-center">
+                        Campione
+                      </span>
+                      <span className="text-lg font-black text-yellow-300">
+                        {userStats.trophies}
+                      </span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[260px] text-left leading-relaxed">
+                    <strong>Campione del Giorno.</strong> Ogni giorno a mezzanotte il
+                    profilo che è 1° nella classifica ELO riceve questo trofeo. Il numero
+                    indica quante volte hai chiuso la giornata al primo posto.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
 
               {/* 👑 Tornei Vinti */}
-              <div className="flex flex-col items-center p-2 rounded-lg bg-fuchsia-500/15 border border-fuchsia-500/40">
-                <Crown className="w-4 h-4 text-fuchsia-300 mb-0.5" />
-                <span className="text-[9px] uppercase tracking-wider font-semibold text-fuchsia-300/90">
-                  Tornei
-                </span>
-                <span className="text-lg font-black text-fuchsia-300">
-                  {userStats.tournamentsWon}
-                </span>
-              </div>
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex flex-col items-center p-2 rounded-lg bg-fuchsia-500/15 border border-fuchsia-500/40 cursor-help w-full"
+                    >
+                      <Crown className="w-4 h-4 text-fuchsia-300 mb-0.5" />
+                      <span className="text-[9px] uppercase tracking-wider font-semibold text-fuchsia-300/90 leading-tight text-center">
+                        Tornei
+                      </span>
+                      <span className="text-lg font-black text-fuchsia-300">
+                        {userStats.tournamentsWon}
+                      </span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[260px] text-left leading-relaxed">
+                    <strong>Tornei Vinti.</strong> Quante volte hai vinto un torneo a 8
+                    giocatori (Othello o Dama) arrivando primo in finale. Ogni vittoria
+                    vale 12 crediti e +60 ELO.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           )}
         </Card>
