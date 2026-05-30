@@ -326,54 +326,97 @@ export const MeseIcon: React.FC<ChampionIconProps> = ({ className, active = true
 //    di speciale, ma tutte sono disegnate nello stesso viewBox 24×24 con
 //    ingombro centrato simile → nel pannello appaiono della STESSA dimensione.
 //    `active` accende il gradient; se false l'icona è spenta/grigia.
-//    Vittorie (tema "Mind"): Cunning Mind(lampadina,50) →
+//    Vittorie (tema "Mind"): Cunning Mind(volpe dorata,50) →
 //      Strategic Mind(torre scacchi,100) → Flawless Mind(cervello,500) →
 //      Absolute Mind(occhio onnisciente,1000).
 //    ELO:    Apex(vetta,2500) → Zenith(astro allo zenit,3000).
 // ───────────────────────────────────────────────────────────────────────────
 
-// 50 vittorie — CUNNING MIND: lampadina con alone, filamento a spirale, scintilla
+// 50 vittorie — CUNNING MIND: volpe dorata astuta (da immagine utente)
 export const VeteranIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
   const g = useGradId("ms-cunning");
-  const base = active ? "#A16207" : "#4b5563";
-  const fil = active ? "#92400E" : "#374151";
+  const gEar = useGradId("ms-cunning-ear");
+  const line = active ? "#92400E" : "#374151";
+  const dark = active ? "#7C2D12" : "#374151";
+  const gear = active ? "#B45309" : "#4b5563";
+  const eyes = active ? "#FFFDE7" : "#9ca3af";
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <radialGradient id={g} cx="0.5" cy="0.42" r="0.62">
-          <stop stopColor={active ? "#FFFBEB" : "#9ca3af"} />
-          <stop offset="0.6" stopColor={active ? "#FCD34D" : "#6b7280"} />
-          <stop offset="1" stopColor={active ? "#D97706" : "#4b5563"} />
-        </radialGradient>
+        <linearGradient id={g} x1="6" y1="4" x2="17" y2="20" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#FEF3C7" : "#6b7280"} />
+          <stop offset="0.5" stopColor={active ? "#FBBF24" : "#565d6b"} />
+          <stop offset="1" stopColor={active ? "#B45309" : "#4b5563"} />
+        </linearGradient>
+        <linearGradient id={gEar} x1="8" y1="2" x2="14" y2="8" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#FCD34D" : "#6b7280"} />
+          <stop offset="1" stopColor={active ? "#B45309" : "#4b5563"} />
+        </linearGradient>
       </defs>
-      {/* alone luminoso (raggi corti attorno al bulbo) */}
+
+      {/* ✨ 3 stelline sopra (come nell'immagine) */}
       {active && (
-        <g stroke="#FBBF24" strokeWidth="1.1" strokeLinecap="round" opacity="0.85">
-          <path d="M12 1.4 V3" />
-          <path d="M4.6 4.4 L5.8 5.6" />
-          <path d="M19.4 4.4 L18.2 5.6" />
-          <path d="M2.6 10.4 H4.1" />
-          <path d="M19.9 10.4 H21.4" />
+        <g fill="#FCD34D">
+          <path d="M9 2.4 l.3 .7 .7 .3 -.7 .3 -.3 .7 -.3 -.7 -.7 -.3 .7 -.3 z" />
+          <path d="M12 1.6 l.35 .8 .8 .35 -.8 .35 -.35 .8 -.35 -.8 -.8 -.35 .8 -.35 z" />
+          <path d="M15 2.4 l.3 .7 .7 .3 -.7 .3 -.3 .7 -.3 -.7 -.7 -.3 .7 -.3 z" />
         </g>
       )}
-      {/* vetro del bulbo */}
+
+      {/* ⚙️ ingranaggio dietro a sinistra */}
+      <g stroke={gear} strokeWidth={active ? "0" : "0.4"}>
+        <path
+          d="M5.6 7.2 l.9-.5 .6 .9 1 -.2 .3 1 1 .3 -.2 1 .7 .8 -.7 .8 .5 .9 -.9 .5 0 1 -1 .2 -.5 .9 -1 -.3 -.8 .6 -.8 -.6 -1 .3 -.5 -.9 -1 -.2 0 -1 -.9 -.5 .5 -.9 -.3 -1 1 -.3 .2 -1 1 .2 .6 -.9 z"
+          fill={gear}
+          opacity={active ? "0.9" : "0.7"}
+        />
+        <circle cx="6.7" cy="11.4" r="1.6" fill={active ? "#78350F" : "#374151"} />
+      </g>
+
+      {/* orecchie */}
+      <path d="M8.2 8.2 L8.4 2.8 L12 6 Z" fill={`url(#${gEar})`} stroke={line} strokeWidth="0.6" strokeLinejoin="round" />
+      <path d="M15.8 8.2 L15.6 2.8 L12 6 Z" fill={`url(#${gEar})`} stroke={line} strokeWidth="0.6" strokeLinejoin="round" />
+      <path d="M9.2 7 L9.4 4.6 L11 6.2 Z" fill={dark} opacity="0.7" />
+      <path d="M14.8 7 L14.6 4.6 L13 6.2 Z" fill={dark} opacity="0.7" />
+
+      {/* muso della volpe */}
       <path
-        d="M12 3.4 C 8.5 3.4 5.8 6 5.8 9.4 C 5.8 11.6 7 13.2 8.4 14.3 L8.6 15.8 L15.4 15.8 L15.6 14.3 C 17 13.2 18.2 11.6 18.2 9.4 C 18.2 6 15.5 3.4 12 3.4 Z"
+        d="M12 5.4 C 15.4 5.4 17 7.6 17 10.2 C 17 12.4 15.6 14.2 13.9 15.4 L12 17 L10.1 15.4 C 8.4 14.2 7 12.4 7 10.2 C 7 7.6 8.6 5.4 12 5.4 Z"
         fill={`url(#${g})`}
-        stroke={active ? "#B45309" : "#374151"}
+        stroke={line}
         strokeWidth="0.7"
         strokeLinejoin="round"
       />
-      {/* riflesso sul vetro */}
-      {active && <path d="M9 6.4 C 8 7.2 7.6 8.4 7.8 9.6" stroke="#FFFDF5" strokeWidth="1" strokeLinecap="round" opacity="0.8" />}
-      {/* filamento a spirale (idea) */}
-      <path d="M9.7 11.2 C 9.7 9.4 11 8.6 12 9.8 C 13 11 14.3 10.2 14.3 8.6" stroke={fil} strokeWidth="0.95" strokeLinecap="round" fill="none" />
-      <circle cx="12" cy="9.9" r="0.55" fill={fil} />
-      {/* scintilla */}
-      {active && <path d="M17.4 6.6 l.35 .9 .9 .35 -.9 .35 -.35 .9 -.35 -.9 -.9 -.35 .9 -.35 z" fill="#FEF08A" />}
-      {/* base a vite con filettatura */}
-      <path d="M8.8 16.6 H15.2 M9 18.1 H15 M9.6 19.6 H14.4" stroke={base} strokeWidth="1.2" strokeLinecap="round" />
-      <path d="M10.6 21 H13.4" stroke={base} strokeWidth="1.3" strokeLinecap="round" />
+      {/* maschera scura (markings) attorno agli occhi/fronte */}
+      <path d="M12 6.6 L10.2 9.4 L8.4 8.2 C 8.9 7.1 10.2 6.6 12 6.6 Z" fill={dark} opacity="0.55" />
+      <path d="M12 6.6 L13.8 9.4 L15.6 8.2 C 15.1 7.1 13.8 6.6 12 6.6 Z" fill={dark} opacity="0.55" />
+
+      {/* occhi luminosi e affilati */}
+      <path d="M8.9 10.4 L11 9.9 L10.4 11.3 Z" fill={eyes} />
+      <path d="M15.1 10.4 L13 9.9 L13.6 11.3 Z" fill={eyes} />
+
+      {/* naso */}
+      <path d="M12 12.6 L10.9 13.9 H13.1 Z" fill={active ? "#1C1917" : "#1f2937"} />
+
+      {/* riflesso sulla fronte */}
+      {active && <path d="M11.4 6.2 C 10.6 7 10.3 8 10.6 9" stroke="#FFFDF5" strokeWidth="0.7" strokeLinecap="round" opacity="0.6" fill="none" />}
+
+      {/* coda fluente avvolta + piedistallo */}
+      <path
+        d="M13.4 16.2 C 16.4 14 19 14.8 19.4 17.6 C 18 16 16.4 16.4 15.6 17.8 C 17 18 18 18.8 18 20 H10.4 C 10.4 18.4 11.6 17 13.4 16.2 Z"
+        fill={`url(#${g})`}
+        stroke={line}
+        strokeWidth="0.6"
+        strokeLinejoin="round"
+      />
+      {/* venature della coda */}
+      <g stroke={dark} strokeWidth="0.5" strokeLinecap="round" opacity="0.5" fill="none">
+        <path d="M14.4 17.4 C 15.6 16.8 16.8 16.7 17.8 17.2" />
+        <path d="M13.6 18.6 C 14.8 18.2 16 18.2 17 18.6" />
+      </g>
+      {/* piedistallo */}
+      <rect x="9.4" y="19.6" width="6.2" height="1.4" rx="0.5" fill={`url(#${g})`} stroke={line} strokeWidth="0.5" />
+      <rect x="8.4" y="20.8" width="8.2" height="1.4" rx="0.6" fill={`url(#${g})`} stroke={line} strokeWidth="0.5" />
     </svg>
   );
 };
