@@ -310,9 +310,9 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
             </div>
           </div>
 
-          {/* 📊 Stats personali — V/S inline (compatte) + titoli, su una sola strip */}
+          {/* 📊 Stats personali — V/S su una riga, titoli/obiettivi sotto */}
           {userStats && (
-            <div className="relative mt-4 pt-4 border-t border-pink-500/20 flex flex-wrap items-center justify-between gap-x-5 gap-y-3">
+            <div className="relative mt-4 pt-4 border-t border-pink-500/20 space-y-3">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
                   <VictoryIcon className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -327,11 +327,14 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
                 </div>
               </div>
 
-              {/* 🏅 Titoli (Campione/Settimana/Mese) + Tornei, solo icone + tooltip */}
+              {/* 🏅 Titoli (Champion/Weekly/Monthly/Tournament) + 🎯 obiettivi (vittorie/ELO) */}
               <ChampionBadgesRow
                 badges={userStats.badges}
                 tournamentsWon={userStats.tournamentsWon}
+                wins={userStats.wins}
+                elo={userElo}
                 size="md"
+                className="flex-wrap gap-y-2"
               />
             </div>
           )}

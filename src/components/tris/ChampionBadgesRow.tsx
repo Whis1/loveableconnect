@@ -1,19 +1,42 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ChampionBadges } from "@/lib/championBadges";
-import { CampioneIcon, SettimanaIcon, MeseIcon, TorneiIcon } from "@/lib/championIcons";
+import {
+  CampioneIcon,
+  SettimanaIcon,
+  MeseIcon,
+  TorneiIcon,
+  VeteranIcon,
+  GladiatorIcon,
+  WarlordIcon,
+  LegendIcon,
+  EloMasterIcon,
+  EloGrandmasterIcon,
+} from "@/lib/championIcons";
 
 // 🏅 Riga dei titoli. Solo icone + tooltip (titolo + descrizione).
 // Le icone non guadagnate appaiono spente (grigie). Settimana/Mese/Tornei mostrano xN.
+// Se passati `wins`/`elo`, mostra anche i titoli obiettivo (milestone).
 
 interface ChampionBadgesRowProps {
   badges: ChampionBadges;
-  /** Se passato, mostra anche l'icona "Tornei Vinti" (xN) accanto ai titoli. */
+  /** Se passato, mostra anche l'icona "Tournament Champion" (xN) accanto ai titoli. */
   tournamentsWon?: number;
+  /** Vittorie totali del profilo: sblocca i titoli Veteran/Gladiator/Warlord/Legend. */
+  wins?: number;
+  /** ELO del profilo: sblocca i titoli ELO Master (2500) / ELO Grandmaster (3000). */
+  elo?: number;
   size?: "sm" | "md";
   className?: string;
 }
 
-export const ChampionBadgesRow = ({ badges, tournamentsWon, size = "md", className = "" }: ChampionBadgesRowProps) => {
+export const ChampionBadgesRow = ({
+  badges,
+  tournamentsWon,
+  wins,
+  elo,
+  size = "md",
+  className = "",
+}: ChampionBadgesRowProps) => {
   const iconCls = size === "sm" ? "w-6 h-6" : "w-8 h-8";
 
   const Badge = ({
@@ -53,6 +76,8 @@ export const ChampionBadgesRow = ({ badges, tournamentsWon, size = "md", classNa
     </Tooltip>
   );
 
+  const showMilestones = typeof wins === "number" || typeof elo === "number";
+
   return (
     <TooltipProvider delayDuration={150}>
       <div className={`flex items-center gap-3 ${className}`}>
@@ -84,6 +109,55 @@ export const ChampionBadgesRow = ({ badges, tournamentsWon, size = "md", classNa
             title="Tournament Champion"
             desc="Titolo ottenuto vincendo la finale di un torneo."
           />
+        )}
+
+        {/* 🎯 Titoli obiettivo (milestone) — separati da un divisore */}
+        {showMilestones && <span className="w-px h-6 bg-white/15 mx-0.5 self-center" />}
+
+        {typeof wins === "number" && (
+          <>
+            <Badge
+              icon={<VeteranIcon className={iconCls} active={wins >= 50} />}
+              active={wins >= 50}
+              title="Veteran"
+              desc="Titolo ottenuto vincendo 50 partite."
+            />
+            <Badge
+              icon={<GladiatorIcon className={iconCls} active={wins >= 100} />}
+              active={wins >= 100}
+              title="Gladiator"
+              desc="Titolo ottenuto vincendo 100 partite."
+            />
+            <Badge
+              icon={<WarlordIcon className={iconCls} active={wins >= 500} />}
+              active={wins >= 500}
+              title="Warlord"
+              desc="Titolo ottenuto vincendo 500 partite."
+            />
+            <Badge
+              icon={<LegendIcon className={iconCls} active={wins >= 1000} />}
+              active={wins >= 1000}
+              title="Legend"
+              desc="Titolo ottenuto vincendo 1000 partite."
+            />
+          </>
+        )}
+
+        {typeof elo === "number" && (
+          <>
+            <Badge
+              icon={<EloMasterIcon className={iconCls} active={elo >= 2500} />}
+              active={elo >= 2500}
+              title="ELO Master"
+              desc="Titolo ottenuto raggiungendo i 2.500 punti ELO."
+            />
+            <Badge
+              icon={<EloGrandmasterIcon className={iconCls} active={elo >= 3000} />}
+              active={elo >= 3000}
+              title="ELO Grandmaster"
+              desc="Titolo ottenuto raggiungendo i 3.000 punti ELO."
+            />
+          </>
         )}
       </div>
     </TooltipProvider>

@@ -282,3 +282,146 @@ export const MeseIcon: React.FC<ChampionIconProps> = ({ className, active = true
     </svg>
   );
 };
+
+// ───────────────────────────────────────────────────────────────────────────
+// 🎯 TITOLI OBIETTIVO (milestone). Stesso stile: prop `active` accende il
+//    gradient, altrimenti l'icona è spenta/grigia.
+//    Vittorie: Veteran(50) → Gladiator(100) → Warlord(500) → Legend(1000).
+//    ELO:      ELO Master(2500) → ELO Grandmaster(3000).
+// ───────────────────────────────────────────────────────────────────────────
+
+// 50 vittorie — VETERAN: gradi a chevron (bronzo)
+export const VeteranIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
+  const a = active ? "#F4C27A" : "#6b7280";
+  const b = active ? "#C2703D" : "#4b5563";
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 10 L12 6 L19 10" stroke={a} />
+        <path d="M5 14 L12 10 L19 14" stroke={b} />
+        <path d="M5 18 L12 14 L19 18" stroke={b} />
+      </g>
+    </svg>
+  );
+};
+
+// 100 vittorie — GLADIATOR: spade incrociate (acciaio + oro)
+export const GladiatorIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
+  const steel = active ? "#CBD5E1" : "#6b7280";
+  const gold = active ? "#F59E0B" : "#4b5563";
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <path d="M5.5 18.5 L17.5 6.5" stroke={steel} strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M18.5 18.5 L6.5 6.5" stroke={steel} strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M3.8 16.6 L7.4 20.2" stroke={gold} strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M20.2 16.6 L16.6 20.2" stroke={gold} strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx="4.5" cy="19.5" r="1.1" fill={gold} />
+      <circle cx="19.5" cy="19.5" r="1.1" fill={gold} />
+    </svg>
+  );
+};
+
+// 500 vittorie — WARLORD: scudo con stella (rosso/oro)
+export const WarlordIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
+  const g = useGradId("warlord");
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id={g} x1="6" y1="3" x2="18" y2="21" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#FCA5A5" : "#6b7280"} />
+          <stop offset="1" stopColor={active ? "#B91C1C" : "#4b5563"} />
+        </linearGradient>
+      </defs>
+      <path
+        d="M12 3l7 2.2v5.6c0 4.2-3 7.3-7 8.9-4-1.6-7-4.7-7-8.9V5.2L12 3z"
+        fill={`url(#${g})`}
+        stroke={active ? "#7F1D1D" : "#374151"}
+        strokeWidth="0.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 7.4l1.2 2.45 2.7.35-1.95 1.85.47 2.7L12 16.25l-2.4 1.0.47-2.7L8.1 10.2l2.7-.35L12 7.4z"
+        fill={active ? "#FDE68A" : "#9ca3af"}
+      />
+    </svg>
+  );
+};
+
+// 1000 vittorie — LEGEND: stella alata (oro)
+export const LegendIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
+  const g = useGradId("legend");
+  const wing = active ? "#FBBF24" : "#4b5563";
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id={g} x1="6" y1="3" x2="18" y2="18" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#FEF3C7" : "#6b7280"} />
+          <stop offset="1" stopColor={active ? "#F59E0B" : "#4b5563"} />
+        </linearGradient>
+      </defs>
+      <path d="M10.5 12.5c-2.2-1.9-4.7-2.4-7.2-1.7 1.5 1.2 1.9 2.7 1.7 4.2 1.9-.7 3.8-.6 5.7.5" fill={wing} opacity="0.9" />
+      <path d="M13.5 12.5c2.2-1.9 4.7-2.4 7.2-1.7-1.5 1.2-1.9 2.7-1.7 4.2-1.9-.7-3.8-.6-5.7.5" fill={wing} opacity="0.9" />
+      <path
+        d="M12 3.6l1.7 3.5 3.8.5-2.75 2.7.65 3.8L12 14.6l-3.4 1.5.65-3.8L6.5 7.6l3.8-.5L12 3.6z"
+        fill={`url(#${g})`}
+        stroke={active ? "#B45309" : "#374151"}
+        strokeWidth="0.6"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+};
+
+// 2500 ELO — ELO MASTER: gemma zaffiro sfaccettata
+export const EloMasterIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
+  const g = useGradId("elom");
+  const line = active ? "#1E3A8A" : "#374151";
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id={g} x1="6" y1="4" x2="18" y2="20" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#BFDBFE" : "#6b7280"} />
+          <stop offset="1" stopColor={active ? "#2563EB" : "#4b5563"} />
+        </linearGradient>
+      </defs>
+      <path d="M12 4 L18.5 9 L12 20 L5.5 9 Z" fill={`url(#${g})`} stroke={line} strokeWidth="0.8" strokeLinejoin="round" />
+      <g stroke={line} strokeWidth="0.6" opacity="0.6" fill="none">
+        <path d="M5.5 9 H18.5" />
+        <path d="M9 9 L12 20" />
+        <path d="M15 9 L12 20" />
+        <path d="M12 4 V9" />
+      </g>
+      {active && <path d="M8 6.6 L10.5 5" stroke="#ffffff" strokeWidth="0.9" strokeLinecap="round" opacity="0.7" />}
+    </svg>
+  );
+};
+
+// 3000 ELO — ELO GRANDMASTER: gemma con coroncina e raggi (viola)
+export const EloGrandmasterIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
+  const g = useGradId("elogm");
+  const line = active ? "#6B21A8" : "#374151";
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id={g} x1="6" y1="5" x2="18" y2="21" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#E9D5FF" : "#6b7280"} />
+          <stop offset="1" stopColor={active ? "#9333EA" : "#4b5563"} />
+        </linearGradient>
+      </defs>
+      {active && (
+        <g stroke="#C084FC" strokeWidth="1" strokeLinecap="round" opacity="0.8">
+          <line x1="12" y1="1.4" x2="12" y2="3" />
+          <line x1="4.2" y1="3.6" x2="5.3" y2="4.9" />
+          <line x1="19.8" y1="3.6" x2="18.7" y2="4.9" />
+        </g>
+      )}
+      <path d="M7.5 7 L9.5 5 L12 6.6 L14.5 5 L16.5 7 Z" fill={`url(#${g})`} stroke={line} strokeWidth="0.6" strokeLinejoin="round" />
+      <path d="M12 7.6 L18 11 L12 20.5 L6 11 Z" fill={`url(#${g})`} stroke={line} strokeWidth="0.8" strokeLinejoin="round" />
+      <g stroke={line} strokeWidth="0.6" opacity="0.6" fill="none">
+        <path d="M6 11 H18" />
+        <path d="M9.2 11 L12 20.5" />
+        <path d="M14.8 11 L12 20.5" />
+      </g>
+    </svg>
+  );
+};
