@@ -58,6 +58,13 @@ export const TournamentSelectionBanner = ({
           <strong className="text-pink-300">Carta-Forbici-Sasso</strong>; in finale, invece,
           la partita viene rigiocata finché uno dei due finalisti non vince.
         </p>
+        <p className="text-xs text-foreground/80">
+          Nel torneo di <strong className="text-rose-300">Dama</strong>, se per diverse mosse
+          consecutive nessuno dei due cattura una pedina, la partita è dichiarata patta.
+          Anche in questo caso, nei quarti e nelle semifinali si passa il turno con una sfida
+          a <strong className="text-pink-300">Carta-Forbici-Sasso</strong>, mentre in finale la
+          partita viene rigiocata finché uno dei due finalisti non vince.
+        </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
           <div className="flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-500/30 px-3 py-2">
             <MedalIcon tier="gold" place={1} className="w-6 h-6 shrink-0" />
