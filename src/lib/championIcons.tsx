@@ -284,129 +284,209 @@ export const MeseIcon: React.FC<ChampionIconProps> = ({ className, active = true
 };
 
 // ───────────────────────────────────────────────────────────────────────────
-// 🎯 TITOLI OBIETTIVO (milestone). Stesso stile: prop `active` accende il
-//    gradient, altrimenti l'icona è spenta/grigia.
-//    Vittorie: Rising Star(50) → Shining Star(100) → Superstar(500) → Legend(1000).
-//    ELO:      ELO Expert(2500) → ELO Virtuoso(3000).
-//    Tutte le icone usano gli STESSI path (STAR/GEM) → identica dimensione.
+// 🎯 TITOLI OBIETTIVO (milestone). Ogni icona è UNICA e rappresenta qualcosa
+//    di speciale, ma tutte sono disegnate nello stesso viewBox 24×24 con
+//    ingombro centrato simile → nel pannello appaiono della STESSA dimensione.
+//    `active` accende il gradient; se false l'icona è spenta/grigia.
+//    Vittorie: Rising Star(comet,50) → Shining Star(sole,100) →
+//              Superstar(fiamma,500) → Legend(alloro,1000).
+//    ELO:      ELO Expert(diamante,2500) → ELO Virtuoso(gemma+corona,3000).
 // ───────────────────────────────────────────────────────────────────────────
 
-// Forme condivise: tutte le icone obiettivo hanno la STESSA dimensione.
-const STAR =
-  "M12 3 L14.18 9.01 L20.56 9.22 L15.52 13.14 L17.29 19.28 L12 15.7 L6.71 19.28 L8.48 13.14 L3.44 9.22 L9.82 9.01 Z";
-const GEM = "M12 3.5 L20 11 L12 20.5 L4 11 Z";
-
-// 50 vittorie — RISING STAR: stella (bronzo)
+// 50 vittorie — RISING STAR: cometa (stella con scia, ambra)
 export const VeteranIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
   const g = useGradId("ms-rising");
+  const trail = active ? "#FDBA74" : "#4b5563";
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id={g} x1="4" y1="3" x2="20" y2="20" gradientUnits="userSpaceOnUse">
-          <stop stopColor={active ? "#FCD9B6" : "#6b7280"} />
-          <stop offset="1" stopColor={active ? "#C2703D" : "#4b5563"} />
-        </linearGradient>
-      </defs>
-      <path d={STAR} fill={`url(#${g})`} stroke={active ? "#8A4B24" : "#374151"} strokeWidth="0.7" strokeLinejoin="round" />
-    </svg>
-  );
-};
-
-// 100 vittorie — SHINING STAR: stella (argento)
-export const GladiatorIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
-  const g = useGradId("ms-shining");
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id={g} x1="4" y1="3" x2="20" y2="20" gradientUnits="userSpaceOnUse">
-          <stop stopColor={active ? "#F1F5F9" : "#6b7280"} />
-          <stop offset="1" stopColor={active ? "#94A3B8" : "#4b5563"} />
-        </linearGradient>
-      </defs>
-      <path d={STAR} fill={`url(#${g})`} stroke={active ? "#64748B" : "#374151"} strokeWidth="0.7" strokeLinejoin="round" />
-    </svg>
-  );
-};
-
-// 500 vittorie — SUPERSTAR: stella (oro)
-export const WarlordIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
-  const g = useGradId("ms-super");
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id={g} x1="4" y1="3" x2="20" y2="20" gradientUnits="userSpaceOnUse">
-          <stop stopColor={active ? "#FDE68A" : "#6b7280"} />
+        <linearGradient id={g} x1="9" y1="3" x2="21" y2="15" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#FEF3C7" : "#6b7280"} />
           <stop offset="1" stopColor={active ? "#F59E0B" : "#4b5563"} />
         </linearGradient>
       </defs>
-      <path d={STAR} fill={`url(#${g})`} stroke={active ? "#B45309" : "#374151"} strokeWidth="0.7" strokeLinejoin="round" />
+      {/* scia della cometa */}
+      <path d="M3.5 20.5 L9 15" stroke={trail} strokeWidth="2.2" strokeLinecap="round" opacity="0.9" />
+      <path d="M3.6 16.4 L7.3 12.9" stroke={trail} strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+      <path d="M7.6 20.4 L11 17" stroke={trail} strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+      {/* stella */}
+      <path
+        d="M15 3 L16.53 6.9 L20.71 7.15 L17.47 9.8 L18.53 13.85 L15 11.6 L11.47 13.85 L12.53 9.8 L9.29 7.15 L13.47 6.9 Z"
+        fill={`url(#${g})`}
+        stroke={active ? "#B45309" : "#374151"}
+        strokeWidth="0.7"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 };
 
-// 1000 vittorie — LEGEND: stella prismatica (leggendaria)
-export const LegendIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
-  const g = useGradId("ms-legend");
+// 100 vittorie — SHINING STAR: sole radiante (oro)
+export const GladiatorIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
+  const g = useGradId("ms-shining");
+  const ray = active ? "#FBBF24" : "#4b5563";
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id={g} x1="4" y1="3" x2="20" y2="20" gradientUnits="userSpaceOnUse">
-          <stop stopColor={active ? "#F9A8D4" : "#6b7280"} />
-          <stop offset="0.5" stopColor={active ? "#C084FC" : "#565d6b"} />
-          <stop offset="1" stopColor={active ? "#67E8F9" : "#4b5563"} />
-        </linearGradient>
+        <radialGradient id={g} cx="0.5" cy="0.45" r="0.55">
+          <stop stopColor={active ? "#FEF9C3" : "#6b7280"} />
+          <stop offset="1" stopColor={active ? "#F59E0B" : "#4b5563"} />
+        </radialGradient>
       </defs>
-      <path d={STAR} fill={`url(#${g})`} stroke={active ? "#7C3AED" : "#374151"} strokeWidth="0.7" strokeLinejoin="round" />
+      {/* raggi */}
+      <g stroke={ray} strokeWidth="1.6" strokeLinecap="round">
+        <path d="M12 1.8 V4.2" />
+        <path d="M12 19.8 V22.2" />
+        <path d="M1.8 12 H4.2" />
+        <path d="M19.8 12 H22.2" />
+        <path d="M4.8 4.8 L6.5 6.5" />
+        <path d="M17.5 17.5 L19.2 19.2" />
+        <path d="M19.2 4.8 L17.5 6.5" />
+        <path d="M6.5 17.5 L4.8 19.2" />
+      </g>
+      {/* disco solare */}
+      <circle cx="12" cy="12" r="4.8" fill={`url(#${g})`} stroke={active ? "#B45309" : "#374151"} strokeWidth="0.8" />
     </svg>
   );
 };
 
-// 2500 ELO — ELO EXPERT: gemma zaffiro
+// 500 vittorie — SUPERSTAR: fiamma ardente ("sei on fire", rosso/arancio)
+export const WarlordIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
+  const g = useGradId("ms-super");
+  const gi = useGradId("ms-super-in");
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id={g} x1="12" y1="2" x2="12" y2="21" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#FB923C" : "#6b7280"} />
+          <stop offset="1" stopColor={active ? "#DC2626" : "#4b5563"} />
+        </linearGradient>
+        <linearGradient id={gi} x1="12" y1="8" x2="12" y2="19" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#FEF08A" : "#9ca3af"} />
+          <stop offset="1" stopColor={active ? "#F97316" : "#6b7280"} />
+        </linearGradient>
+      </defs>
+      {/* fiamma esterna */}
+      <path
+        d="M12 2.5 C 16.5 6.5 18.5 10 17.5 14 C 16.7 17.6 14.4 20.2 12 21 C 9.6 20.2 7.3 17.6 6.5 14 C 5.7 10.2 8 7.5 9.2 9.5 C 9.6 7 10.4 4.8 12 2.5 Z"
+        fill={`url(#${g})`}
+        stroke={active ? "#991B1B" : "#374151"}
+        strokeWidth="0.7"
+        strokeLinejoin="round"
+      />
+      {/* fiamma interna */}
+      <path
+        d="M12 9 C 14 11 14.6 13 14 15.3 C 13.6 17 12.9 18.3 12 19 C 11.1 18.3 10.4 17 10 15.3 C 9.5 13.2 10.3 11.6 12 9 Z"
+        fill={`url(#${gi})`}
+      />
+    </svg>
+  );
+};
+
+// 1000 vittorie — LEGEND: corona d'alloro con stella (oro + stella prismatica)
+export const LegendIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
+  const g = useGradId("ms-legend");
+  const leaf = active ? "#34D399" : "#4b5563";
+  const stem = active ? "#10B981" : "#4b5563";
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id={g} x1="8" y1="5" x2="16" y2="16" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#FEF3C7" : "#6b7280"} />
+          <stop offset="1" stopColor={active ? "#F59E0B" : "#4b5563"} />
+        </linearGradient>
+      </defs>
+      {/* rami d'alloro */}
+      <path d="M11.3 21 C 5.5 19.4 3.6 13 6.4 7.4" stroke={stem} strokeWidth="1.4" strokeLinecap="round" fill="none" />
+      <path d="M12.7 21 C 18.5 19.4 20.4 13 17.6 7.4" stroke={stem} strokeWidth="1.4" strokeLinecap="round" fill="none" />
+      {/* foglie sinistra */}
+      <g fill={leaf}>
+        <ellipse cx="4.7" cy="11.2" rx="1.7" ry="0.85" transform="rotate(-40 4.7 11.2)" />
+        <ellipse cx="5.0" cy="14.6" rx="1.7" ry="0.85" transform="rotate(-20 5.0 14.6)" />
+        <ellipse cx="6.6" cy="17.6" rx="1.7" ry="0.85" transform="rotate(-4 6.6 17.6)" />
+        {/* foglie destra */}
+        <ellipse cx="19.3" cy="11.2" rx="1.7" ry="0.85" transform="rotate(40 19.3 11.2)" />
+        <ellipse cx="19.0" cy="14.6" rx="1.7" ry="0.85" transform="rotate(20 19.0 14.6)" />
+        <ellipse cx="17.4" cy="17.6" rx="1.7" ry="0.85" transform="rotate(4 17.4 17.6)" />
+      </g>
+      {/* stella centrale */}
+      <path
+        d="M12 5 L13.24 8.16 L16.62 8.34 L13.99 10.46 L14.85 13.74 L12 11.9 L9.15 13.74 L10.01 10.46 L7.38 8.34 L10.76 8.16 Z"
+        fill={`url(#${g})`}
+        stroke={active ? "#B45309" : "#374151"}
+        strokeWidth="0.6"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+};
+
+// 2500 ELO — ELO EXPERT: diamante taglio brillante (zaffiro)
 export const EloMasterIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
-  const g = useGradId("ms-expert");
+  const crown = useGradId("ms-expert-c");
+  const pav = useGradId("ms-expert-p");
   const line = active ? "#1E3A8A" : "#374151";
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id={g} x1="4" y1="3" x2="20" y2="20" gradientUnits="userSpaceOnUse">
-          <stop stopColor={active ? "#BFDBFE" : "#6b7280"} />
-          <stop offset="1" stopColor={active ? "#2563EB" : "#4b5563"} />
+        <linearGradient id={crown} x1="4" y1="5" x2="20" y2="9.5" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#DBEAFE" : "#6b7280"} />
+          <stop offset="1" stopColor={active ? "#60A5FA" : "#565d6b"} />
+        </linearGradient>
+        <linearGradient id={pav} x1="4" y1="9.5" x2="14" y2="21" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#3B82F6" : "#565d6b"} />
+          <stop offset="1" stopColor={active ? "#1D4ED8" : "#4b5563"} />
         </linearGradient>
       </defs>
-      <path d={GEM} fill={`url(#${g})`} stroke={line} strokeWidth="0.8" strokeLinejoin="round" />
-      <g stroke={line} strokeWidth="0.6" opacity="0.55" fill="none">
-        <path d="M4 11 H20" />
-        <path d="M8.5 11 L12 20.5" />
-        <path d="M15.5 11 L12 20.5" />
-        <path d="M12 3.5 V11" />
+      {/* corona (parte alta) e padiglione (punta) */}
+      <path d="M7 5 L17 5 L20.5 9.3 L3.5 9.3 Z" fill={`url(#${crown})`} stroke={line} strokeWidth="0.8" strokeLinejoin="round" />
+      <path d="M3.5 9.3 L20.5 9.3 L12 20.8 Z" fill={`url(#${pav})`} stroke={line} strokeWidth="0.8" strokeLinejoin="round" />
+      {/* faccette */}
+      <g stroke={line} strokeWidth="0.55" opacity="0.5" fill="none">
+        <path d="M7 5 L9.2 9.3 L12 20.8" />
+        <path d="M17 5 L14.8 9.3 L12 20.8" />
+        <path d="M9.2 9.3 H14.8" />
+        <path d="M3.5 9.3 L9.2 9.3 M20.5 9.3 L14.8 9.3" />
       </g>
-      {active && <path d="M7.5 7 L10.5 5" stroke="#ffffff" strokeWidth="0.9" strokeLinecap="round" opacity="0.7" />}
+      {active && <path d="M8.4 6.2 L10.6 6.2" stroke="#ffffff" strokeWidth="0.9" strokeLinecap="round" opacity="0.75" />}
     </svg>
   );
 };
 
-// 3000 ELO — ELO VIRTUOSO: gemma ametista
+// 3000 ELO — ELO VIRTUOSO: gemma ametista con coroncina (massima maestria)
 export const EloGrandmasterIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
   const g = useGradId("ms-virtuoso");
+  const gc = useGradId("ms-virtuoso-c");
   const line = active ? "#6B21A8" : "#374151";
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id={g} x1="4" y1="3" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+        <linearGradient id={g} x1="4" y1="8" x2="20" y2="21" gradientUnits="userSpaceOnUse">
           <stop stopColor={active ? "#E9D5FF" : "#6b7280"} />
           <stop offset="1" stopColor={active ? "#9333EA" : "#4b5563"} />
         </linearGradient>
+        <linearGradient id={gc} x1="8" y1="3" x2="16" y2="8" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#FDE68A" : "#6b7280"} />
+          <stop offset="1" stopColor={active ? "#F59E0B" : "#4b5563"} />
+        </linearGradient>
       </defs>
-      <path d={GEM} fill={`url(#${g})`} stroke={line} strokeWidth="0.8" strokeLinejoin="round" />
-      <g stroke={line} strokeWidth="0.6" opacity="0.55" fill="none">
-        <path d="M4 11 H20" />
-        <path d="M8.5 11 L12 20.5" />
-        <path d="M15.5 11 L12 20.5" />
-        <path d="M12 3.5 V11" />
+      {/* coroncina sopra la gemma */}
+      <path
+        d="M7.5 7.4 L8.6 4.3 L10.8 6.1 L12 3.5 L13.2 6.1 L15.4 4.3 L16.5 7.4 Z"
+        fill={`url(#${gc})`}
+        stroke={active ? "#B45309" : "#374151"}
+        strokeWidth="0.55"
+        strokeLinejoin="round"
+      />
+      {/* gemma ametista */}
+      <path d="M6.5 8.6 L17.5 8.6 L20 11.6 L12 20.8 L4 11.6 Z" fill={`url(#${g})`} stroke={line} strokeWidth="0.8" strokeLinejoin="round" />
+      <g stroke={line} strokeWidth="0.55" opacity="0.5" fill="none">
+        <path d="M4 11.6 H20" />
+        <path d="M9 11.6 L12 20.8" />
+        <path d="M15 11.6 L12 20.8" />
+        <path d="M9 11.6 L9.6 8.6 M15 11.6 L14.4 8.6" />
       </g>
-      {active && (
-        <path d="M16.4 5.8l.4 1 1 .4-1 .4-.4 1-.4-1-1-.4 1-.4z" fill="#ffffff" opacity="0.75" />
-      )}
+      {active && <path d="M6.6 10.6 L8.4 10" stroke="#ffffff" strokeWidth="0.8" strokeLinecap="round" opacity="0.7" />}
     </svg>
   );
 };
