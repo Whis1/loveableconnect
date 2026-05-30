@@ -294,7 +294,7 @@ export const MeseIcon: React.FC<ChampionIconProps> = ({ className, active = true
 //    ELO:    Apex(vetta,2500) → Zenith(astro allo zenit,3000).
 // ───────────────────────────────────────────────────────────────────────────
 
-// 50 vittorie — CUNNING MIND: lampadina (idea/astuzia, bronzo)
+// 50 vittorie — CUNNING MIND: lampadina con alone, filamento a spirale, scintilla
 export const VeteranIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
   const g = useGradId("ms-cunning");
   const base = active ? "#A16207" : "#4b5563";
@@ -302,179 +302,259 @@ export const VeteranIcon: React.FC<ChampionIconProps> = ({ className, active = t
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id={g} x1="6" y1="3" x2="18" y2="16" gradientUnits="userSpaceOnUse">
-          <stop stopColor={active ? "#FEF3C7" : "#6b7280"} />
+        <radialGradient id={g} cx="0.5" cy="0.42" r="0.62">
+          <stop stopColor={active ? "#FFFBEB" : "#9ca3af"} />
+          <stop offset="0.6" stopColor={active ? "#FCD34D" : "#6b7280"} />
           <stop offset="1" stopColor={active ? "#D97706" : "#4b5563"} />
-        </linearGradient>
+        </radialGradient>
       </defs>
-      {/* vetro */}
+      {/* alone luminoso (raggi corti attorno al bulbo) */}
+      {active && (
+        <g stroke="#FBBF24" strokeWidth="1.1" strokeLinecap="round" opacity="0.85">
+          <path d="M12 1.4 V3" />
+          <path d="M4.6 4.4 L5.8 5.6" />
+          <path d="M19.4 4.4 L18.2 5.6" />
+          <path d="M2.6 10.4 H4.1" />
+          <path d="M19.9 10.4 H21.4" />
+        </g>
+      )}
+      {/* vetro del bulbo */}
       <path
-        d="M12 3.4 C 8.6 3.4 6 6 6 9.4 C 6 11.5 7.1 13.1 8.4 14.2 L8.4 15.6 L15.6 15.6 L15.6 14.2 C 16.9 13.1 18 11.5 18 9.4 C 18 6 15.4 3.4 12 3.4 Z"
+        d="M12 3.4 C 8.5 3.4 5.8 6 5.8 9.4 C 5.8 11.6 7 13.2 8.4 14.3 L8.6 15.8 L15.4 15.8 L15.6 14.3 C 17 13.2 18.2 11.6 18.2 9.4 C 18.2 6 15.5 3.4 12 3.4 Z"
         fill={`url(#${g})`}
         stroke={active ? "#B45309" : "#374151"}
         strokeWidth="0.7"
         strokeLinejoin="round"
       />
-      {/* filamento */}
-      <path d="M9.8 9 L11.2 11 L12 9.7 L12.8 11 L14.2 9" stroke={fil} strokeWidth="0.9" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      {/* base a vite */}
-      <rect x="8.7" y="16.4" width="6.6" height="1.5" rx="0.6" fill={base} />
-      <rect x="9.4" y="18.3" width="5.2" height="1.4" rx="0.6" fill={base} />
-      <path d="M10.4 20.5 H13.6" stroke={base} strokeWidth="1.2" strokeLinecap="round" />
+      {/* riflesso sul vetro */}
+      {active && <path d="M9 6.4 C 8 7.2 7.6 8.4 7.8 9.6" stroke="#FFFDF5" strokeWidth="1" strokeLinecap="round" opacity="0.8" />}
+      {/* filamento a spirale (idea) */}
+      <path d="M9.7 11.2 C 9.7 9.4 11 8.6 12 9.8 C 13 11 14.3 10.2 14.3 8.6" stroke={fil} strokeWidth="0.95" strokeLinecap="round" fill="none" />
+      <circle cx="12" cy="9.9" r="0.55" fill={fil} />
+      {/* scintilla */}
+      {active && <path d="M17.4 6.6 l.35 .9 .9 .35 -.9 .35 -.35 .9 -.35 -.9 -.9 -.35 .9 -.35 z" fill="#FEF08A" />}
+      {/* base a vite con filettatura */}
+      <path d="M8.8 16.6 H15.2 M9 18.1 H15 M9.6 19.6 H14.4" stroke={base} strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M10.6 21 H13.4" stroke={base} strokeWidth="1.3" strokeLinecap="round" />
     </svg>
   );
 };
 
-// 100 vittorie — STRATEGIC MIND: torre degli scacchi (strategia, argento)
+// 100 vittorie — STRATEGIC MIND: torre scacchi 3D con incisioni e ombre (argento)
 export const GladiatorIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
   const g = useGradId("ms-strategic");
   const line = active ? "#475569" : "#374151";
+  const shade = active ? "#64748B" : "#4b5563";
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id={g} x1="6" y1="4" x2="18" y2="20" gradientUnits="userSpaceOnUse">
-          <stop stopColor={active ? "#F1F5F9" : "#6b7280"} />
+        <linearGradient id={g} x1="6" y1="3" x2="18" y2="21" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#F8FAFC" : "#6b7280"} />
+          <stop offset="0.5" stopColor={active ? "#CBD5E1" : "#565d6b"} />
           <stop offset="1" stopColor={active ? "#94A3B8" : "#4b5563"} />
         </linearGradient>
       </defs>
       {/* corpo torre con merlature */}
       <path
-        d="M6.5 4 H8.4 V5.6 H10.1 V4 H13.9 V5.6 H15.6 V4 H17.5 V7.4 L15.7 9.2 V13.6 L17.2 18.2 H6.8 L8.3 13.6 V9.2 L6.5 7.4 Z"
+        d="M6.4 4 H8.4 V5.7 H10.1 V4 H13.9 V5.7 H15.6 V4 H17.6 V7.6 L15.6 9.4 V13.4 L17.3 18 H6.7 L8.4 13.4 V9.4 L6.4 7.6 Z"
         fill={`url(#${g})`}
         stroke={line}
         strokeWidth="0.8"
         strokeLinejoin="round"
       />
-      {/* base */}
-      <rect x="5.6" y="18.2" width="12.8" height="2.2" rx="0.8" fill={`url(#${g})`} stroke={line} strokeWidth="0.6" />
+      {/* fascia centrale + incisioni verticali */}
+      <path d="M7.7 11 H16.3" stroke={shade} strokeWidth="0.9" strokeLinecap="round" opacity="0.7" />
+      <g stroke={shade} strokeWidth="0.6" strokeLinecap="round" opacity="0.55">
+        <path d="M9.5 11.6 V16.8" />
+        <path d="M12 11.6 V16.8" />
+        <path d="M14.5 11.6 V16.8" />
+      </g>
+      {/* riflesso */}
+      {active && <path d="M9 5.2 V9.2" stroke="#FFFFFF" strokeWidth="0.7" strokeLinecap="round" opacity="0.6" />}
+      {/* base a due gradini */}
+      <rect x="6" y="18" width="12" height="1.5" rx="0.5" fill={`url(#${g})`} stroke={line} strokeWidth="0.55" />
+      <rect x="5.2" y="19.4" width="13.6" height="1.7" rx="0.6" fill={`url(#${g})`} stroke={line} strokeWidth="0.55" />
     </svg>
   );
 };
 
-// 500 vittorie — FLAWLESS MIND: cervello (genio, oro)
+// 500 vittorie — FLAWLESS MIND: cervello stilizzato chiaro (due emisferi + giri)
 export const WarlordIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
   const g = useGradId("ms-flawless");
-  const fold = active ? "#B45309" : "#374151";
+  const fold = active ? "#9A3412" : "#374151";
+  const line = active ? "#B45309" : "#374151";
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id={g} x1="5" y1="5" x2="19" y2="18" gradientUnits="userSpaceOnUse">
-          <stop stopColor={active ? "#FDE68A" : "#6b7280"} />
+        <linearGradient id={g} x1="5" y1="4" x2="19" y2="20" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#FEF3C7" : "#6b7280"} />
           <stop offset="1" stopColor={active ? "#F59E0B" : "#4b5563"} />
         </linearGradient>
       </defs>
+      {/* sagoma cervello: due lobi con gobbe superiori e tronco encefalico */}
       <path
-        d="M12 5 C 9.6 5 7.7 6.6 7.6 8.8 C 6 8.9 5 10.3 5.7 11.7 C 4.9 12.7 5.4 14.2 6.7 14.5 C 6.9 16.1 8.4 17.2 10 16.8 C 10.6 17.7 11.6 18 12 17.8 C 12.4 18 13.4 17.7 14 16.8 C 15.6 17.2 17.1 16.1 17.3 14.5 C 18.6 14.2 19.1 12.7 18.3 11.7 C 19 10.3 18 8.9 16.4 8.8 C 16.3 6.6 14.4 5 12 5 Z"
+        d="M12 4.6
+           C 10.8 3.7 8.9 3.8 8 4.9
+           C 6.6 4.6 5.2 5.6 5.2 7
+           C 4 7.4 3.4 8.8 4.1 9.9
+           C 3.3 10.9 3.6 12.5 4.8 13
+           C 4.6 14.5 5.7 15.8 7.2 15.7
+           C 7.6 17.2 9.4 17.9 10.7 17
+           L 12 17.8 Z
+           M12 4.6
+           C 13.2 3.7 15.1 3.8 16 4.9
+           C 17.4 4.6 18.8 5.6 18.8 7
+           C 20 7.4 20.6 8.8 19.9 9.9
+           C 20.7 10.9 20.4 12.5 19.2 13
+           C 19.4 14.5 18.3 15.8 16.8 15.7
+           C 16.4 17.2 14.6 17.9 13.3 17
+           L 12 17.8 Z"
         fill={`url(#${g})`}
-        stroke={active ? "#B45309" : "#374151"}
+        stroke={line}
         strokeWidth="0.7"
         strokeLinejoin="round"
       />
-      {/* circonvoluzioni */}
-      <g stroke={fold} strokeWidth="0.7" strokeLinecap="round" fill="none" opacity="0.7">
-        <path d="M12 6 V17.4" />
-        <path d="M9.4 8.6 C 8.3 9 8.3 10.2 9.4 10.6" />
-        <path d="M14.6 8.6 C 15.7 9 15.7 10.2 14.6 10.6" />
-        <path d="M8.7 12.6 C 9.8 12.8 10.2 13.7 9.9 14.6" />
-        <path d="M15.3 12.6 C 14.2 12.8 13.8 13.7 14.1 14.6" />
+      {/* solco centrale */}
+      <path d="M12 4.8 V17.6" stroke={fold} strokeWidth="0.8" strokeLinecap="round" opacity="0.75" />
+      {/* circonvoluzioni emisfero sinistro */}
+      <g stroke={fold} strokeWidth="0.7" strokeLinecap="round" fill="none" opacity="0.65">
+        <path d="M9.8 6.4 C 8.3 6.7 8 8 9.2 8.6" />
+        <path d="M7 8.2 C 6 8.9 6.3 10.2 7.6 10.4" />
+        <path d="M8.8 11 C 7.6 11.3 7.4 12.6 8.6 13.2" />
+        <path d="M10.2 14 C 9.2 14.2 9 15.2 9.9 15.8" />
       </g>
+      {/* circonvoluzioni emisfero destro */}
+      <g stroke={fold} strokeWidth="0.7" strokeLinecap="round" fill="none" opacity="0.65">
+        <path d="M14.2 6.4 C 15.7 6.7 16 8 14.8 8.6" />
+        <path d="M17 8.2 C 18 8.9 17.7 10.2 16.4 10.4" />
+        <path d="M15.2 11 C 16.4 11.3 16.6 12.6 15.4 13.2" />
+        <path d="M13.8 14 C 14.8 14.2 15 15.2 14.1 15.8" />
+      </g>
+      {/* tronco encefalico */}
+      <path d="M11.2 17.8 H12.8 L12.4 20.4 H11.6 Z" fill={`url(#${g})`} stroke={line} strokeWidth="0.55" strokeLinejoin="round" />
     </svg>
   );
 };
 
-// 1000 vittorie — ABSOLUTE MIND: occhio onnisciente (prismatico)
+// 1000 vittorie — ABSOLUTE MIND: occhio onnisciente in triangolo radiante (prismatico)
 export const LegendIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
-  const g = useGradId("ms-absolute");
-  const ray = active ? "#A78BFA" : "#4b5563";
+  const gIris = useGradId("ms-abs-iris");
+  const gTri = useGradId("ms-abs-tri");
+  const ray = active ? "#C4B5FD" : "#4b5563";
   const line = active ? "#5B21B6" : "#374151";
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id={g} x1="4" y1="8" x2="20" y2="16" gradientUnits="userSpaceOnUse">
-          <stop stopColor={active ? "#F9A8D4" : "#6b7280"} />
-          <stop offset="0.5" stopColor={active ? "#C084FC" : "#565d6b"} />
-          <stop offset="1" stopColor={active ? "#67E8F9" : "#4b5563"} />
+        <linearGradient id={gTri} x1="6" y1="3.5" x2="18" y2="20" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#EDE9FE" : "#6b7280"} />
+          <stop offset="1" stopColor={active ? "#8B5CF6" : "#4b5563"} />
         </linearGradient>
+        <radialGradient id={gIris} cx="0.5" cy="0.5" r="0.5">
+          <stop stopColor={active ? "#67E8F9" : "#9ca3af"} />
+          <stop offset="1" stopColor={active ? "#7C3AED" : "#4b5563"} />
+        </radialGradient>
       </defs>
-      {/* raggi sopra */}
+      {/* raggi attorno (corona prismatica) */}
       {active && (
-        <g stroke={ray} strokeWidth="1.1" strokeLinecap="round" opacity="0.85">
-          <path d="M12 2.4 V4.2" />
-          <path d="M6.4 4 L7.5 5.4" />
-          <path d="M17.6 4 L16.5 5.4" />
+        <g stroke={ray} strokeWidth="1" strokeLinecap="round" opacity="0.8">
+          <path d="M12 1.4 V3" />
+          <path d="M4.5 5 L5.7 6.2" />
+          <path d="M19.5 5 L18.3 6.2" />
+          <path d="M2.6 13 L4.1 12.5" />
+          <path d="M21.4 13 L19.9 12.5" />
         </g>
       )}
+      {/* triangolo */}
+      <path d="M12 3.4 L20.4 19.4 H3.6 Z" fill={`url(#${gTri})`} stroke={line} strokeWidth="0.8" strokeLinejoin="round" />
+      <path d="M12 6 L17.8 17.6 H6.2 Z" fill="none" stroke={line} strokeWidth="0.5" opacity="0.5" />
       {/* occhio */}
-      <path
-        d="M3.6 12 C 6.2 8.3 9 6.7 12 6.7 C 15 6.7 17.8 8.3 20.4 12 C 17.8 15.7 15 17.3 12 17.3 C 9 17.3 6.2 15.7 3.6 12 Z"
-        fill={`url(#${g})`}
-        stroke={line}
-        strokeWidth="0.8"
-        strokeLinejoin="round"
-      />
-      {/* iride + pupilla */}
-      <circle cx="12" cy="12" r="3" fill={active ? "#1E1B4B" : "#374151"} />
-      <circle cx="12" cy="12" r="1.3" fill={active ? "#E0E7FF" : "#9ca3af"} />
+      <path d="M7.6 13.6 C 9 11.8 10.5 11 12 11 C 13.5 11 15 11.8 16.4 13.6 C 15 15.4 13.5 16.2 12 16.2 C 10.5 16.2 9 15.4 7.6 13.6 Z"
+        fill={active ? "#FFFFFF" : "#9ca3af"} stroke={line} strokeWidth="0.6" strokeLinejoin="round" />
+      <circle cx="12" cy="13.6" r="1.9" fill={`url(#${gIris})`} />
+      <circle cx="12" cy="13.6" r="0.85" fill={active ? "#1E1B4B" : "#374151"} />
+      {active && <circle cx="11.4" cy="13" r="0.4" fill="#FFFFFF" opacity="0.9" />}
     </svg>
   );
 };
 
-// 2500 ELO — APEX: vetta di montagna con bandiera (l'apice, oro)
+// 2500 ELO — APEX: vetta innevata con bandiera, sole dietro e crepacci incisi (oro)
 export const EloMasterIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
   const g = useGradId("ms-apex");
-  const snow = active ? "#FEF9C3" : "#9ca3af";
+  const snow = active ? "#FFFBEB" : "#9ca3af";
+  const line = active ? "#92400E" : "#374151";
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id={g} x1="4" y1="7" x2="18" y2="20" gradientUnits="userSpaceOnUse">
+        <linearGradient id={g} x1="4" y1="6" x2="18" y2="20" gradientUnits="userSpaceOnUse">
           <stop stopColor={active ? "#FDE68A" : "#6b7280"} />
-          <stop offset="1" stopColor={active ? "#D97706" : "#4b5563"} />
+          <stop offset="1" stopColor={active ? "#B45309" : "#4b5563"} />
         </linearGradient>
       </defs>
-      {/* montagna a tre cime, quella centrale più alta */}
+      {/* sole dietro la vetta */}
+      {active && <circle cx="16.6" cy="7" r="2.4" fill="#FCD34D" opacity="0.55" />}
+      {/* montagna a tre cime */}
       <path
-        d="M2.5 19.5 L8 11 L10.6 14.8 L12 6 L13.4 14.8 L16 11 L21.5 19.5 Z"
+        d="M2.4 19.6 L8 10.5 L10.4 14.2 L12 5.4 L13.6 14.2 L16 10.5 L21.6 19.6 Z"
         fill={`url(#${g})`}
-        stroke={active ? "#B45309" : "#374151"}
+        stroke={line}
         strokeWidth="0.7"
         strokeLinejoin="round"
       />
-      {/* neve sulla vetta centrale */}
-      <path d="M10.6 9.4 L12 6 L13.4 9.4 Z" fill={snow} />
+      {/* calotte nevose */}
+      <path d="M10.5 9.2 L12 5.4 L13.5 9.2 L12.7 8.3 L12 9 L11.3 8.3 Z" fill={snow} />
+      <path d="M6.9 13 L8 10.5 L9.1 13 L8.5 12.4 L8 12.9 L7.5 12.4 Z" fill={snow} opacity="0.9" />
+      <path d="M14.9 13 L16 10.5 L17.1 13 L16.5 12.4 L16 12.9 L15.5 12.4 Z" fill={snow} opacity="0.9" />
+      {/* crepacci incisi */}
+      <g stroke={line} strokeWidth="0.55" strokeLinecap="round" opacity="0.5" fill="none">
+        <path d="M12 9.4 L10.8 17" />
+        <path d="M12 9.4 L13.2 17" />
+        <path d="M8 12.9 L6.4 18.4" />
+        <path d="M16 12.9 L17.6 18.4" />
+      </g>
       {/* bandierina sull'apice */}
-      <path d="M12 6 V2.8" stroke={active ? "#B45309" : "#4b5563"} strokeWidth="0.9" strokeLinecap="round" />
-      <path d="M12 3 L14.4 3.9 L12 4.8 Z" fill={active ? "#EF4444" : "#6b7280"} />
+      <path d="M12 5.4 V2.4" stroke={line} strokeWidth="0.9" strokeLinecap="round" />
+      <path d="M12 2.6 L14.6 3.6 L12 4.6 Z" fill={active ? "#EF4444" : "#6b7280"} stroke={active ? "#B91C1C" : "#374151"} strokeWidth="0.4" strokeLinejoin="round" />
     </svg>
   );
 };
 
-// 3000 ELO — ZENITH: astro allo zenit sopra la volta celeste (ciano-viola)
+// 3000 ELO — ZENITH: sole/astro radiante allo zenit con corona di raggi e stelle
 export const EloGrandmasterIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
   const g = useGradId("ms-zenith");
-  const beam = active ? "#67E8F9" : "#4b5563";
-  const dome = active ? "#7C3AED" : "#4b5563";
+  const ray = active ? "#67E8F9" : "#4b5563";
+  const dome = active ? "#6366F1" : "#4b5563";
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <defs>
         <radialGradient id={g} cx="0.5" cy="0.5" r="0.5">
-          <stop stopColor={active ? "#CFFAFE" : "#9ca3af"} />
-          <stop offset="0.55" stopColor={active ? "#A5B4FC" : "#6b7280"} />
+          <stop stopColor={active ? "#ECFEFF" : "#9ca3af"} />
+          <stop offset="0.5" stopColor={active ? "#A5B4FC" : "#6b7280"} />
           <stop offset="1" stopColor={active ? "#7C3AED" : "#4b5563"} />
         </radialGradient>
       </defs>
-      {/* volta celeste */}
-      <path d="M4 19 C 4 12.8 7.6 9.5 12 9.5 C 16.4 9.5 20 12.8 20 19" stroke={dome} strokeWidth="1.4" strokeLinecap="round" fill="none" opacity="0.8" />
-      <path d="M3.5 19.2 H20.5" stroke={dome} strokeWidth="1.2" strokeLinecap="round" opacity="0.6" />
-      {/* raggi dallo zenit */}
+      {/* corona di raggi attorno all'astro (lunghi e corti alternati) */}
+      <g stroke={ray} strokeLinecap="round">
+        <path d="M12 1 V3.4" strokeWidth="1.2" />
+        <path d="M12 12.6 V14.6" strokeWidth="1" opacity="0.8" />
+        <path d="M4.6 8 L6.7 9.1" strokeWidth="1" />
+        <path d="M19.4 8 L17.3 9.1" strokeWidth="1" />
+        <path d="M5.2 3.6 L6.9 5.3" strokeWidth="0.9" opacity="0.85" />
+        <path d="M18.8 3.6 L17.1 5.3" strokeWidth="0.9" opacity="0.85" />
+        <path d="M2.8 11.5 L4.7 11.2" strokeWidth="0.8" opacity="0.7" />
+        <path d="M21.2 11.5 L19.3 11.2" strokeWidth="0.8" opacity="0.7" />
+      </g>
+      {/* astro */}
+      <circle cx="12" cy="8" r="3.6" fill={`url(#${g})`} stroke={active ? "#5B21B6" : "#374151"} strokeWidth="0.7" />
+      {active && <path d="M10 6.4 C 9.2 7.2 9 8.3 9.4 9.3" stroke="#FFFFFF" strokeWidth="0.9" strokeLinecap="round" opacity="0.8" />}
+      {/* volta celeste con stelline */}
+      <path d="M4.5 19.4 C 4.5 14.6 7.8 12 12 12 C 16.2 12 19.5 14.6 19.5 19.4" stroke={dome} strokeWidth="1.4" strokeLinecap="round" fill="none" />
+      <path d="M3.6 19.6 H20.4" stroke={dome} strokeWidth="1.2" strokeLinecap="round" opacity="0.8" />
       {active && (
-        <g stroke={beam} strokeWidth="1" strokeLinecap="round" opacity="0.9">
-          <path d="M12 1.6 V3.4" />
-          <path d="M6.7 4.2 L7.9 5.4" />
-          <path d="M17.3 4.2 L16.1 5.4" />
+        <g fill="#E0E7FF">
+          <path d="M7 16 l.3 .7 .7 .3 -.7 .3 -.3 .7 -.3 -.7 -.7 -.3 .7 -.3 z" />
+          <path d="M16.6 15.4 l.25 .6 .6 .25 -.6 .25 -.25 .6 -.25 -.6 -.6 -.25 .6 -.25 z" />
         </g>
       )}
-      {/* corpo celeste allo zenit */}
-      <circle cx="12" cy="6.2" r="3" fill={`url(#${g})`} stroke={active ? "#5B21B6" : "#374151"} strokeWidth="0.7" />
     </svg>
   );
 };
