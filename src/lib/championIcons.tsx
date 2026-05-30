@@ -518,17 +518,23 @@ export const EloMasterIcon: React.FC<ChampionIconProps> = ({ className, active =
   );
 };
 
-// 3000 ELO — ZENITH: sole/astro radiante allo zenit con corona di raggi e stelle
+// 3000 ELO — ZENITH: astro radiante con OCCHIO al centro, corona di raggi e stelle
 export const EloGrandmasterIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
   const g = useGradId("ms-zenith");
+  const gIris = useGradId("ms-zenith-iris");
   const ray = active ? "#67E8F9" : "#4b5563";
   const dome = active ? "#6366F1" : "#4b5563";
+  const line = active ? "#5B21B6" : "#374151";
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <defs>
         <radialGradient id={g} cx="0.5" cy="0.5" r="0.5">
           <stop stopColor={active ? "#ECFEFF" : "#9ca3af"} />
           <stop offset="0.5" stopColor={active ? "#A5B4FC" : "#6b7280"} />
+          <stop offset="1" stopColor={active ? "#7C3AED" : "#4b5563"} />
+        </radialGradient>
+        <radialGradient id={gIris} cx="0.5" cy="0.5" r="0.5">
+          <stop stopColor={active ? "#67E8F9" : "#9ca3af"} />
           <stop offset="1" stopColor={active ? "#7C3AED" : "#4b5563"} />
         </radialGradient>
       </defs>
@@ -544,8 +550,18 @@ export const EloGrandmasterIcon: React.FC<ChampionIconProps> = ({ className, act
         <path d="M21.2 11.5 L19.3 11.2" strokeWidth="0.8" opacity="0.7" />
       </g>
       {/* astro */}
-      <circle cx="12" cy="8" r="3.6" fill={`url(#${g})`} stroke={active ? "#5B21B6" : "#374151"} strokeWidth="0.7" />
-      {active && <path d="M10 6.4 C 9.2 7.2 9 8.3 9.4 9.3" stroke="#FFFFFF" strokeWidth="0.9" strokeLinecap="round" opacity="0.8" />}
+      <circle cx="12" cy="8" r="3.7" fill={`url(#${g})`} stroke={line} strokeWidth="0.7" />
+      {/* 👁️ occhio radiante dentro l'astro */}
+      <path
+        d="M8.5 8 C 9.7 6.6 10.8 6.1 12 6.1 C 13.2 6.1 14.3 6.6 15.5 8 C 14.3 9.4 13.2 9.9 12 9.9 C 10.8 9.9 9.7 9.4 8.5 8 Z"
+        fill={active ? "#FFFFFF" : "#cbd5e1"}
+        stroke={line}
+        strokeWidth="0.55"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="8" r="1.5" fill={`url(#${gIris})`} />
+      <circle cx="12" cy="8" r="0.62" fill={active ? "#1E1B4B" : "#374151"} />
+      {active && <circle cx="11.55" cy="7.6" r="0.32" fill="#FFFFFF" opacity="0.9" />}
       {/* volta celeste con stelline */}
       <path d="M4.5 19.4 C 4.5 14.6 7.8 12 12 12 C 16.2 12 19.5 14.6 19.5 19.4" stroke={dome} strokeWidth="1.4" strokeLinecap="round" fill="none" />
       <path d="M3.6 19.6 H20.4" stroke={dome} strokeWidth="1.2" strokeLinecap="round" opacity="0.8" />
