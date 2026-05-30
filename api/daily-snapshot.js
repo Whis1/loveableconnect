@@ -10,13 +10,21 @@
 // Opzionale: se CRON_SECRET è impostato, l'endpoint accetta solo chiamate con
 // header "Authorization: Bearer <CRON_SECRET>" (Vercel lo invia in automatico).
 
+// Fallback pubblici: l'URL e la chiave anon NON sono segreti (sono già nel
+// bundle JS del sito). Servono perché le env VITE_* non sempre arrivano alle
+// serverless function di Vercel a runtime. La RPC è SECURITY DEFINER, quindi
+// la chiave anon è sufficiente. Se imposti env su Vercel, hanno la precedenza.
+const FALLBACK_URL = "https://tcmhvrlsaggyuukdscue.supabase.co";
+const FALLBACK_ANON =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjbWh2cmxzYWdneXV1a2RzY3VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyODIyNjcsImV4cCI6MjA3NTg1ODI2N30.emqOEktx6ELOiCP5KMPCK3cBmE5-voWBe8ybwkX3vzw";
+
 const SUPABASE_URL =
-  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
+  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || FALLBACK_URL;
 const SUPABASE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY ||
   process.env.SUPABASE_ANON_KEY ||
   process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  "";
+  FALLBACK_ANON;
 
 export default async function handler(req, res) {
   // 🔒 Se è impostato CRON_SECRET, verifica l'header (Vercel lo invia da solo).
