@@ -96,7 +96,7 @@ export const ChampionBadgesRow = ({
         icon={<CampioneIcon className={iconCls} active={isChampion} />}
         active={isChampion}
         title="Champion"
-        desc="Titolo ottenuto raggiungendo la prima posizione in classifica almeno una volta."
+        desc="Titolo ottenuto raggiungendo per la prima volta la vetta della classifica."
       />
       <Badge
         icon={<SettimanaIcon className={iconCls} active={badges.weeks > 0} />}

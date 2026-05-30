@@ -186,18 +186,29 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
           .select("id", { count: "exact", head: true })
           .eq("is_admin_profile", false)
           .gt("game_elo", myElo);
-        setUserRank(higher + (count ?? 0) + 1);
+        const myRank = higher + (count ?? 0) + 1;
+        setUserRank(myRank);
+
+        // 🏆 Champion come OBIETTIVO: appena tocchi il 1° posto lo sblocchi (e
+        //    resta per sempre). Persistito lato server con mark_champion_reached.
+        if (myRank === 1) {
+          try {
+            await supabase.rpc("mark_champion_reached" as any);
+          } catch (e) {
+            console.warn("mark_champion_reached non disponibile (migration da applicare?):", e);
+          }
+        }
 
         // 🏆 Carica vittorie/sconfitte/trofei/tornei_vinti dell'utente da tris_games
         const { data: tris } = await supabase
           .from("tris_games")
-          .select("tris_wins, tris_losses, dama_wins, dama_losses, othello_wins, othello_losses, top_1_trophies, tournaments_won")
+          .select("tris_wins, tris_losses, dama_wins, dama_losses, othello_wins, othello_losses, top_1_trophies, tournaments_won, ever_champion")
           .eq("user_id", userId)
           .order("updated_at", { ascending: false })
           .limit(1)
           .maybeSingle();
 
-        // 🏅 Titoli campione: giorni in cui l'utente è stato #1 (daily_top1_trophies)
+        // 🏅 Weekly/Monthly: giorni consecutivi da #1 (daily_top1_trophies)
         const { data: champRows } = await supabase
           .from("daily_top1_trophies")
           .select("award_date")
@@ -205,12 +216,16 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         const champDays = (champRows ?? []).map((r: any) => dateStringToDayNumber(r.award_date));
 
         const row = tris as any;
+        const badges = computeChampionBadges(champDays);
+        // Champion sbloccato se: flag persistente, oppure è #1 adesso, oppure
+        // lo era in uno snapshot passato (computeChampionBadges).
+        badges.everChampion = badges.everChampion || !!row?.ever_champion || myRank === 1;
         setUserStats({
           wins: (row?.tris_wins ?? 0) + (row?.dama_wins ?? 0) + (row?.othello_wins ?? 0),
           losses: (row?.tris_losses ?? 0) + (row?.dama_losses ?? 0) + (row?.othello_losses ?? 0),
           trophies: row?.top_1_trophies ?? 0,
           tournamentsWon: row?.tournaments_won ?? 0,
-          badges: computeChampionBadges(champDays),
+          badges,
         });
 
         // 👤 Profilo: nickname + avatar per la card stile partita

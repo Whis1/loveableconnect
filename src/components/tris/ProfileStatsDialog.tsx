@@ -129,13 +129,16 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
           const champDays = (champRows ?? []).map((r: any) => dateStringToDayNumber(r.award_date));
 
           const row = tris as any;
+          const realBadges = computeChampionBadges(champDays);
+          // 🏆 Champion obiettivo: flag persistente ever_champion (o snapshot storici).
+          realBadges.everChampion = realBadges.everChampion || !!row?.ever_champion;
           setStats({
             elo: fallbackElo,
             totalWins: (row?.tris_wins ?? 0) + (row?.dama_wins ?? 0) + (row?.othello_wins ?? 0),
             totalLosses: (row?.tris_losses ?? 0) + (row?.dama_losses ?? 0) + (row?.othello_losses ?? 0),
             top1Trophies: row?.top_1_trophies ?? 0,
             tournamentsWon: row?.tournaments_won ?? 0,
-            badges: computeChampionBadges(champDays),
+            badges: realBadges,
           });
         }
       } catch (e) {
