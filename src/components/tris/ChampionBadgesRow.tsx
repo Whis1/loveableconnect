@@ -119,19 +119,19 @@ export const ChampionBadgesRow = ({
             <Badge
               icon={<VeteranIcon className={iconCls} active={wins >= 50} />}
               active={wins >= 50}
-              title="Challenger"
+              title="Rising Star"
               desc="Titolo ottenuto vincendo 50 partite."
             />
             <Badge
               icon={<GladiatorIcon className={iconCls} active={wins >= 100} />}
               active={wins >= 100}
-              title="Warrior"
+              title="Shining Star"
               desc="Titolo ottenuto vincendo 100 partite."
             />
             <Badge
               icon={<WarlordIcon className={iconCls} active={wins >= 500} />}
               active={wins >= 500}
-              title="Conqueror"
+              title="Superstar"
               desc="Titolo ottenuto vincendo 500 partite."
             />
             <Badge
