@@ -344,7 +344,10 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
                     <ChampionBadgesRow
                       badges={stats.badges}
                       tournamentsWon={stats.tournamentsWon}
+                      wins={stats.totalWins}
+                      elo={stats.elo}
                       size="md"
+                      className="flex-wrap justify-center gap-y-2"
                     />
                   </div>
 
