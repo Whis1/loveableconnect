@@ -87,6 +87,8 @@ export const SettimanaIcon: React.FC<ChampionIconProps> = ({ className, active =
           <stop offset="1" stopColor={active ? "#DC2626" : "#4b5563"} />
         </radialGradient>
       </defs>
+      {/* 🔍 scala+ricentra per riempire il viewBox come le altre icone */}
+      <g transform="translate(12 12) scale(1.16) translate(-12 -10.65)">
       {/* rami d'alloro che abbracciano la coppa */}
       <g fill={leaf}>
         {/* sinistra */}
@@ -113,6 +115,7 @@ export const SettimanaIcon: React.FC<ChampionIconProps> = ({ className, active =
       <rect x="7.4" y="17" width="9.2" height="1.9" rx="0.7" fill={`url(#${g})`} stroke={line} strokeWidth="0.5" />
       {/* riflesso sulla coppa */}
       {active && <path d="M9.4 7.6 C 9 9 9.1 10.2 9.7 11.2" stroke="#FFFBEB" strokeWidth="0.8" strokeLinecap="round" opacity="0.55" fill="none" />}
+      </g>
     </svg>
   );
 };
@@ -282,6 +285,8 @@ export const MeseIcon: React.FC<ChampionIconProps> = ({ className, active = true
           <stop offset="1" stopColor={active ? "#1E293B" : "#4b5563"} />
         </linearGradient>
       </defs>
+      {/* 🔍 scala+ricentra per riempire il viewBox come le altre icone */}
+      <g transform="translate(12 12) scale(1.12) translate(-12 -11.5)">
       {/* ELMO da cavaliere dentro/sopra la coppa */}
       <path
         d="M12 2.2 C 9.2 2.2 7.4 4.3 7.4 7.2 C 7.4 9 8.1 10.3 9 11.2 H15 C 15.9 10.3 16.6 9 16.6 7.2 C 16.6 4.3 14.8 2.2 12 2.2 Z"
@@ -311,6 +316,7 @@ export const MeseIcon: React.FC<ChampionIconProps> = ({ className, active = true
       <rect x="7.6" y="19.9" width="8.8" height="1.6" rx="0.6" fill={`url(#${g})`} stroke={line} strokeWidth="0.5" />
       {/* riflesso sulla coppa */}
       {active && <path d="M9.5 11.8 C 9.2 13 9.3 14 9.9 14.8" stroke="#FFFBEB" strokeWidth="0.8" strokeLinecap="round" opacity="0.5" fill="none" />}
+      </g>
     </svg>
   );
 };
