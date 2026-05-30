@@ -68,31 +68,51 @@ export const CampioneIcon: React.FC<ChampionIconProps> = ({ className, active = 
   );
 };
 
-// 2) CAMPIONE DELLA SETTIMANA — corona
+// 2) WEEKLY CHAMPION — coppa dorata con corona e rami d'alloro (da immagine utente)
 export const SettimanaIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
-  const g = useGradId("sett");
+  const g = useGradId("week");
+  const gem = useGradId("weekgem");
+  const leaf = active ? "#CA8A04" : "#4b5563";
+  const line = active ? "#92400E" : "#374151";
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id={g} x1="0" y1="4" x2="0" y2="20" gradientUnits="userSpaceOnUse">
-          <stop stopColor={active ? "#E5E7EB" : "#6b7280"} />
-          <stop offset="1" stopColor={active ? "#9CA3AF" : "#4b5563"} />
+        <linearGradient id={g} x1="6" y1="6" x2="18" y2="19" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#FEF3C7" : "#6b7280"} />
+          <stop offset="0.5" stopColor={active ? "#FBBF24" : "#565d6b"} />
+          <stop offset="1" stopColor={active ? "#B45309" : "#4b5563"} />
         </linearGradient>
+        <radialGradient id={gem} cx="0.5" cy="0.4" r="0.7">
+          <stop stopColor={active ? "#FCA5A5" : "#6b7280"} />
+          <stop offset="1" stopColor={active ? "#DC2626" : "#4b5563"} />
+        </radialGradient>
       </defs>
-      {/* corpo corona */}
-      <path
-        d="M4 8l3.2 3 4.8-5 4.8 5L20 8l-1.4 9H5.4L4 8z"
-        fill={`url(#${g})`}
-        stroke={active ? "#6B7280" : "#374151"}
-        strokeWidth="0.8"
-        strokeLinejoin="round"
-      />
-      {/* base */}
-      <rect x="5" y="17.5" width="14" height="2.4" rx="1" fill={`url(#${g})`} stroke={active ? "#6B7280" : "#374151"} strokeWidth="0.6" />
-      {/* gemme punte */}
-      <circle cx="4" cy="8" r="1.3" fill={active ? "#67E8F9" : "#4b5563"} />
-      <circle cx="20" cy="8" r="1.3" fill={active ? "#67E8F9" : "#4b5563"} />
-      <circle cx="12" cy="6" r="1.4" fill={active ? "#A7F3D0" : "#4b5563"} />
+      {/* rami d'alloro che abbracciano la coppa */}
+      <g fill={leaf}>
+        {/* sinistra */}
+        <path d="M5.4 17.4 C 2.4 15.4 1.6 12 2.6 9.2 C 3.4 11 4.4 12 5.8 12.6 C 4.8 13.8 4.8 15.6 5.4 17.4 Z" opacity="0.95" />
+        <ellipse cx="3.0" cy="11.4" rx="1.5" ry="0.7" transform="rotate(-32 3.0 11.4)" />
+        <ellipse cx="3.5" cy="14" rx="1.4" ry="0.66" transform="rotate(-14 3.5 14)" />
+        {/* destra */}
+        <path d="M18.6 17.4 C 21.6 15.4 22.4 12 21.4 9.2 C 20.6 11 19.6 12 18.2 12.6 C 19.2 13.8 19.2 15.6 18.6 17.4 Z" opacity="0.95" />
+        <ellipse cx="21.0" cy="11.4" rx="1.5" ry="0.7" transform="rotate(32 21.0 11.4)" />
+        <ellipse cx="20.5" cy="14" rx="1.4" ry="0.66" transform="rotate(14 20.5 14)" />
+      </g>
+      {/* corona sopra la coppa */}
+      <path d="M8.5 5.4 L9.9 3.2 L12 4.8 L14.1 3.2 L15.5 5.4 Z" fill={`url(#${g})`} stroke={line} strokeWidth="0.55" strokeLinejoin="round" />
+      <circle cx="12" cy="3.1" r="0.7" fill={`url(#${gem})`} />
+      <circle cx="12" cy="5.2" r="0.85" fill={`url(#${gem})`} />
+      {/* manici */}
+      <path d="M8 8.2 C 5.8 8.2 5.6 11 7.8 11.3" stroke={line} strokeWidth="1.2" strokeLinecap="round" fill="none" />
+      <path d="M16 8.2 C 18.2 8.2 18.4 11 16.2 11.3" stroke={line} strokeWidth="1.2" strokeLinecap="round" fill="none" />
+      {/* coppa */}
+      <path d="M7.6 6.6 H16.4 V8.6 C 16.4 11.5 14.5 13.4 12 13.4 C 9.5 13.4 7.6 11.5 7.6 8.6 Z" fill={`url(#${g})`} stroke={line} strokeWidth="0.7" strokeLinejoin="round" />
+      {/* stelo + base */}
+      <rect x="11" y="13.2" width="2" height="2.6" fill={`url(#${g})`} />
+      <rect x="8.6" y="15.6" width="6.8" height="1.5" rx="0.5" fill={`url(#${g})`} stroke={line} strokeWidth="0.5" />
+      <rect x="7.4" y="17" width="9.2" height="1.9" rx="0.7" fill={`url(#${g})`} stroke={line} strokeWidth="0.5" />
+      {/* riflesso sulla coppa */}
+      {active && <path d="M9.4 7.6 C 9 9 9.1 10.2 9.7 11.2" stroke="#FFFBEB" strokeWidth="0.8" strokeLinecap="round" opacity="0.55" fill="none" />}
     </svg>
   );
 };
@@ -243,42 +263,54 @@ export const TorneiIcon: React.FC<ChampionIconProps> = ({ className, active = tr
   );
 };
 
-// 3) CAMPIONE DEL MESE — corona regale con gemma centrale e raggi
+// 3) MONTHLY CHAMPION — coppa dorata con elmo da cavaliere (da immagine utente)
 export const MeseIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
-  const g = useGradId("mese");
-  const gem = useGradId("mesegem");
+  const g = useGradId("month");
+  const gh = useGradId("monthhelm");
+  const line = active ? "#92400E" : "#374151";
+  const steel = active ? "#475569" : "#374151";
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id={g} x1="0" y1="4" x2="0" y2="20" gradientUnits="userSpaceOnUse">
-          <stop stopColor={active ? "#FDE68A" : "#6b7280"} />
-          <stop offset="1" stopColor={active ? "#D97706" : "#4b5563"} />
+        <linearGradient id={g} x1="6" y1="9" x2="18" y2="20" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#FEF3C7" : "#6b7280"} />
+          <stop offset="0.5" stopColor={active ? "#FBBF24" : "#565d6b"} />
+          <stop offset="1" stopColor={active ? "#B45309" : "#4b5563"} />
         </linearGradient>
-        <radialGradient id={gem} cx="0.5" cy="0.4" r="0.7">
-          <stop stopColor={active ? "#F9A8D4" : "#6b7280"} />
-          <stop offset="1" stopColor={active ? "#DB2777" : "#4b5563"} />
-        </radialGradient>
+        <linearGradient id={gh} x1="9" y1="2" x2="15" y2="11" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#64748B" : "#6b7280"} />
+          <stop offset="1" stopColor={active ? "#1E293B" : "#4b5563"} />
+        </linearGradient>
       </defs>
-      {/* raggi */}
-      {active && (
-        <g stroke="#FBBF24" strokeWidth="1.1" strokeLinecap="round" opacity="0.8">
-          <line x1="12" y1="1.5" x2="12" y2="3.4" />
-          <line x1="3.5" y1="4" x2="4.8" y2="5.3" />
-          <line x1="20.5" y1="4" x2="19.2" y2="5.3" />
-        </g>
-      )}
-      {/* corpo corona */}
+      {/* ELMO da cavaliere dentro/sopra la coppa */}
       <path
-        d="M3.5 9l3.5 3.2L12 6l5 6.2L20.5 9 19 18H5L3.5 9z"
-        fill={`url(#${g})`}
-        stroke={active ? "#B45309" : "#374151"}
-        strokeWidth="0.8"
+        d="M12 2.2 C 9.2 2.2 7.4 4.3 7.4 7.2 C 7.4 9 8.1 10.3 9 11.2 H15 C 15.9 10.3 16.6 9 16.6 7.2 C 16.6 4.3 14.8 2.2 12 2.2 Z"
+        fill={`url(#${gh})`}
+        stroke={steel}
+        strokeWidth="0.7"
         strokeLinejoin="round"
       />
-      {/* base */}
-      <rect x="4.6" y="18.2" width="14.8" height="2.6" rx="1.1" fill={`url(#${g})`} stroke={active ? "#B45309" : "#374151"} strokeWidth="0.6" />
-      {/* gemma centrale */}
-      <circle cx="12" cy="13.5" r="2" fill={`url(#${gem})`} stroke={active ? "#9D174D" : "#374151"} strokeWidth="0.5" />
+      {/* cresta superiore */}
+      <path d="M10.4 2.6 C 11 1.6 13 1.6 13.6 2.6" stroke={steel} strokeWidth="1" strokeLinecap="round" fill="none" />
+      {/* feritoie della visiera */}
+      <g stroke={active ? "#0F172A" : "#1f2937"} strokeWidth="1.1" strokeLinecap="round">
+        <path d="M9.2 6.4 H14.8" />
+        <path d="M9.4 8 H14.6" />
+        <path d="M9.7 9.5 H14.3" />
+      </g>
+      {/* riflesso elmo */}
+      {active && <path d="M9.6 4.4 C 8.9 5.3 8.7 6.5 9 7.6" stroke="#CBD5E1" strokeWidth="0.7" strokeLinecap="round" opacity="0.7" fill="none" />}
+      {/* manici della coppa */}
+      <path d="M7.2 11.2 C 4.9 11.2 4.7 14.2 7 14.6" stroke={line} strokeWidth="1.3" strokeLinecap="round" fill="none" />
+      <path d="M16.8 11.2 C 19.1 11.2 19.3 14.2 17 14.6" stroke={line} strokeWidth="1.3" strokeLinecap="round" fill="none" />
+      {/* coppa (sotto l'elmo) */}
+      <path d="M7.6 11 H16.4 V11.6 C 16.4 14.8 14.4 16.6 12 16.6 C 9.6 16.6 7.6 14.8 7.6 11.6 Z" fill={`url(#${g})`} stroke={line} strokeWidth="0.7" strokeLinejoin="round" />
+      {/* stelo + base a gradini */}
+      <rect x="11" y="16.4" width="2" height="2.4" fill={`url(#${g})`} />
+      <rect x="8.8" y="18.6" width="6.4" height="1.4" rx="0.5" fill={`url(#${g})`} stroke={line} strokeWidth="0.5" />
+      <rect x="7.6" y="19.9" width="8.8" height="1.6" rx="0.6" fill={`url(#${g})`} stroke={line} strokeWidth="0.5" />
+      {/* riflesso sulla coppa */}
+      {active && <path d="M9.5 11.8 C 9.2 13 9.3 14 9.9 14.8" stroke="#FFFBEB" strokeWidth="0.8" strokeLinecap="round" opacity="0.5" fill="none" />}
     </svg>
   );
 };

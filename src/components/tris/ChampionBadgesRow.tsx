@@ -2,6 +2,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ChampionBadges } from "@/lib/championBadges";
 import {
   CampioneIcon,
+  SettimanaIcon,
+  MeseIcon,
   TorneiIcon,
   VeteranIcon,
   GladiatorIcon,
@@ -10,8 +12,6 @@ import {
   EloMasterIcon,
   EloGrandmasterIcon,
 } from "@/lib/championIcons";
-import weeklyChampionImg from "@/assets/weekly-champion.png";
-import monthlyChampionImg from "@/assets/monthly-champion.png";
 
 // 🏅 Titoli del profilo. Solo icone + tooltip (titolo + descrizione).
 // Le icone non guadagnate appaiono spente (grigie).
@@ -99,14 +99,14 @@ export const ChampionBadgesRow = ({
         desc="Titolo ottenuto raggiungendo per la prima volta la vetta della classifica."
       />
       <Badge
-        icon={<img src={weeklyChampionImg} alt="" draggable={false} className={`${iconCls} object-contain`} />}
+        icon={<SettimanaIcon className={iconCls} active={badges.weeks > 0} />}
         active={badges.weeks > 0}
         count={badges.weeks}
         title="Weekly Champion"
         desc="Titolo ottenuto restando in prima posizione nella classifica per una settimana intera."
       />
       <Badge
-        icon={<img src={monthlyChampionImg} alt="" draggable={false} className={`${iconCls} object-contain`} />}
+        icon={<MeseIcon className={iconCls} active={badges.months > 0} />}
         active={badges.months > 0}
         count={badges.months}
         title="Monthly Champion"
