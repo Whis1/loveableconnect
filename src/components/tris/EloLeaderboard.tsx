@@ -334,8 +334,9 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
                 wins={userStats.wins}
                 elo={userElo}
                 isCurrentlyFirst={userRank === 1}
+                layout="inline"
                 size="md"
-                className="items-start"
+                className="flex-wrap"
               />
             </div>
           )}

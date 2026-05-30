@@ -347,6 +347,7 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
                       wins={stats.totalWins}
                       elo={stats.elo}
                       isCurrentlyFirst={topIndex === 0}
+                      layout="stacked"
                       size="md"
                     />
                   </div>
