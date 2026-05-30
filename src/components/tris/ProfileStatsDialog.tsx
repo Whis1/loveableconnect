@@ -346,8 +346,8 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
                       tournamentsWon={stats.tournamentsWon}
                       wins={stats.totalWins}
                       elo={stats.elo}
+                      isCurrentlyFirst={topIndex === 0}
                       size="md"
-                      className="flex-wrap justify-center gap-y-2"
                     />
                   </div>
 
