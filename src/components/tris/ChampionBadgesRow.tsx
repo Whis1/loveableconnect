@@ -132,25 +132,25 @@ export const ChampionBadgesRow = ({
           <Badge
             icon={<VeteranIcon className={iconCls} active={wins >= 50} />}
             active={wins >= 50}
-            title="Rising Star"
+            title="Cunning Mind"
             desc="Titolo ottenuto vincendo 50 partite."
           />
           <Badge
             icon={<GladiatorIcon className={iconCls} active={wins >= 100} />}
             active={wins >= 100}
-            title="Shining Star"
+            title="Strategic Mind"
             desc="Titolo ottenuto vincendo 100 partite."
           />
           <Badge
             icon={<WarlordIcon className={iconCls} active={wins >= 500} />}
             active={wins >= 500}
-            title="Superstar"
+            title="Flawless Mind"
             desc="Titolo ottenuto vincendo 500 partite."
           />
           <Badge
             icon={<LegendIcon className={iconCls} active={wins >= 1000} />}
             active={wins >= 1000}
-            title="Legend"
+            title="Absolute Mind"
             desc="Titolo ottenuto vincendo 1000 partite."
           />
         </>
@@ -160,13 +160,13 @@ export const ChampionBadgesRow = ({
           <Badge
             icon={<EloMasterIcon className={iconCls} active={elo >= 2500} />}
             active={elo >= 2500}
-            title="ELO Expert"
+            title="Apex"
             desc="Titolo ottenuto raggiungendo i 2.500 punti ELO."
           />
           <Badge
             icon={<EloGrandmasterIcon className={iconCls} active={elo >= 3000} />}
             active={elo >= 3000}
-            title="ELO Virtuoso"
+            title="Zenith"
             desc="Titolo ottenuto raggiungendo i 3.000 punti ELO."
           />
         </>
