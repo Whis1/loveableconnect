@@ -414,33 +414,35 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
                           </div>
                         </div>
                       ) : (
-                        /* Pulsante principale Metti mi piace */
-                        <Button
-                          onClick={() => handleLike(false)}
-                          disabled={isLiking || hasLiked}
-                          className={`w-full font-semibold shadow-md transition-all ${
-                            hasLiked
-                              ? "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-500 text-white"
-                              : "bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white"
-                          }`}
-                        >
-                          {isLiking ? (
-                            <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              Invio...
-                            </>
-                          ) : hasLiked ? (
-                            <>
-                              <Check className="h-4 w-4 mr-2" />
-                              Mi piace inviato
-                            </>
-                          ) : (
-                            <>
-                              <Heart className="h-4 w-4 mr-2 fill-current" />
-                              Metti mi piace
-                            </>
-                          )}
-                        </Button>
+                        /* Pulsante principale Metti mi piace, centrato e largo quanto la scritta */
+                        <div className="flex justify-center">
+                          <Button
+                            onClick={() => handleLike(false)}
+                            disabled={isLiking || hasLiked}
+                            className={`px-8 font-semibold shadow-md transition-all ${
+                              hasLiked
+                                ? "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-500 text-white"
+                                : "bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white"
+                            }`}
+                          >
+                            {isLiking ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Invio...
+                              </>
+                            ) : hasLiked ? (
+                              <>
+                                <Check className="h-4 w-4 mr-2" />
+                                Mi piace inviato
+                              </>
+                            ) : (
+                              <>
+                                <Heart className="h-4 w-4 mr-2 fill-current" />
+                                Metti mi piace
+                              </>
+                            )}
+                          </Button>
+                        </div>
                       )}
                     </div>
                   )}
