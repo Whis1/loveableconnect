@@ -118,17 +118,11 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     if (isLoading) return;
     setIsLoading(true);
 
-    // 🏆 Best-effort: assegna eventuali trofei TOP 1 giornalieri arretrati
-    // (chi era #1 a mezzanotte UTC di un giorno non ancora processato).
-    // Idempotente lato server (PRIMARY KEY su daily_top1_trophies.award_date).
-    try {
-      const { data: awardResult } = await supabase.rpc('award_daily_top1_if_needed' as any);
-      if (Array.isArray(awardResult) && awardResult[0]?.processed_days > 0) {
-        console.log('🏆 Trofei TOP 1 giornalieri assegnati:', awardResult);
-      }
-    } catch (e) {
-      console.warn('award_daily_top1 non disponibile (migration da applicare?):', e);
-    }
+    // ⚠️ NON usiamo più award_daily_top1_if_needed: assegnava il "campione del
+    //    giorno" al miglior UTENTE REALE ignorando gli ELO admin (simulati solo
+    //    lato client). Risultato: titoli sbloccati pur non essendo davvero #1.
+    //    Ora è award_my_daily_champion (più sotto) a registrare il campione,
+    //    chiamato SOLO quando l'utente è #1 nella classifica COMPLETA (admin inclusi).
 
     try {
       const { data: admins } = await supabase
@@ -189,13 +183,16 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         const myRank = higher + (count ?? 0) + 1;
         setUserRank(myRank);
 
-        // 🏆 Champion come OBIETTIVO: appena tocchi il 1° posto lo sblocchi (e
-        //    resta per sempre). Persistito lato server con mark_champion_reached.
+        // 🏆 Titoli: si ottengono SOLO se sei #1 nella classifica COMPLETA
+        //    (admin INCLUSI — myRank tiene già conto degli ELO admin simulati).
+        //    Gli ELO admin esistono solo lato client, quindi è qui che va deciso
+        //    il "campione del giorno": award_my_daily_champion registra l'utente
+        //    come campione di oggi (→ Weekly/Monthly) e sblocca Champion.
         if (myRank === 1) {
           try {
-            await supabase.rpc("mark_champion_reached" as any);
+            await supabase.rpc("award_my_daily_champion" as any);
           } catch (e) {
-            console.warn("mark_champion_reached non disponibile (migration da applicare?):", e);
+            console.warn("award_my_daily_champion non disponibile (migration da applicare?):", e);
           }
         }
 

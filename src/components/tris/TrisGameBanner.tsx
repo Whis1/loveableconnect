@@ -619,18 +619,10 @@ export const TrisGameBanner = ({ variant = "banner" }: { variant?: "banner" | "p
       }
     }
 
-    // 🏆 NUOVO SISTEMA: snapshot giornaliero. Niente piu' trofei alla
-    // "transizione" (era exploitabile perdendo apposta per risalire).
-    // Chi e' #1 a mezzanotte UTC riceve 1 trofeo "champion of the day".
-    // Chiamiamo la RPC sia qui (post-partita) sia da EloLeaderboard (apertura
-    // pagina) per aumentare le occasioni di assegnazione + snapshot della
-    // classifica, così non dipendiamo solo dal fatto che qualcuno apra la
-    // classifica per scatenare lo snapshot giornaliero.
-    try {
-      await supabase.rpc('award_daily_top1_if_needed' as any);
-    } catch (e) {
-      console.warn('award_daily_top1_if_needed (post-partita):', e);
-    }
+    // 🏆 Campione del giorno: il calcolo (admin inclusi) avviene in
+    //    EloLeaderboard quando si conosce la classifica completa. Qui non
+    //    chiamiamo più award_daily_top1_if_needed (assegnava il top tra i soli
+    //    utenti reali, ignorando gli ELO admin → titoli non meritati).
 
     // Award credits if win
     if (result === "win") {
