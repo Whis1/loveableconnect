@@ -159,8 +159,10 @@ def slide_vision():
         "Pochi secondi, una decisione superficiale, zero relazione reale.",
         "",
         "LoveableConnect ribalta il modello: l'incontro nasce dall'interazione di gioco.",
-        "Giocando insieme — Tris, Dama, sfide a tempo — emergono carattere e affinità.",
-        "Il match diventa la conseguenza di un'esperienza condivisa, non di uno swipe.",
+        "Giocando insieme a Tris, Othello e Dama, anche in tornei a eliminazione,",
+        "emergono carattere e affinità, e durante la partita si può mettere like",
+        "all'avversario. Il match diventa la conseguenza di un'esperienza condivisa,",
+        "non di uno swipe.",
     ]
     for p in paragraphs:
         if p:
@@ -270,8 +272,8 @@ def slide_highlights():
          "sistema ELO e classifica condivisa. Più modi di interagire, più occasioni "
          "di conoscersi davvero."),
         ("Titoli, badge & obiettivi",
-         "Un sistema di riconoscimenti sbloccabili — Champion, Tournament Champion, "
-         "traguardi di vittorie e di ELO — con icone dedicate. Progressione e status "
+         "Un sistema di riconoscimenti sbloccabili, come Champion, Tournament Champion "
+         "e traguardi di vittorie e di ELO, con icone dedicate. Progressione e status "
          "che premiano la fedeltà e alimentano l'ingaggio."),
     ]
 
@@ -348,7 +350,7 @@ def slide_product():
     features_left = [
         ("Autenticazione & profili", "Email/password, verifica età 18+, profili ricchi (foto, bio, interessi, canzoni Spotify)."),
         ("Matching & “Tenta il Destino”", "Like reciproci, filtri avanzati e un quiz di affinità a scelte rapide che propone profili compatibili."),
-        ("Suite di giochi (Tris, Othello, Dama)", "Sfide tra utenti con sistema ELO, classifica e regole complete (incl. spareggi)."),
+        ("Suite di giochi (Tris, Othello, Dama)", "Sfide con sistema ELO e classifica; durante la partita si può mettere like all'avversario aprendone il profilo dall'avatar."),
         ("Tornei a eliminazione", "Bracket a 8 giocatori su Othello e Dama, con premi in crediti/ELO e gestione completa dei round."),
     ]
     features_right = [
@@ -453,7 +455,7 @@ def slide_traction():
     # Status big
     c.setFont("Helvetica-Bold", 28)
     c.setFillColor(PINK)
-    c.drawString(MARGIN, y, "Beta pubblica online — in fase di test")
+    c.drawString(MARGIN, y, "Beta pubblica online, in fase di test")
     y -= 50
 
     c.setFont("Helvetica", 17)
@@ -469,7 +471,7 @@ def slide_traction():
     items = [
         ("Codice pronto.", "Funzionalità core (auth, profili, match, chat, giochi, pagamenti) tutte operative."),
         ("Infrastruttura scalabile.", "Backend serverless Supabase, deploy Vercel, monitoring attivo."),
-        ("Sito live.", "https://loveableconnect.vercel.app/ — testabile end-to-end."),
+        ("Sito live.", "https://loveableconnect.vercel.app/, testabile end-to-end."),
         ("Nessuna metrica reale di trazione.", "Non abbiamo ancora aperto agli utenti reali; cerchiamo un partner per il lancio."),
     ]
     for title, desc in items:
