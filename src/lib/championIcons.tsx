@@ -87,8 +87,8 @@ export const SettimanaIcon: React.FC<ChampionIconProps> = ({ className, active =
           <stop offset="1" stopColor={active ? "#DC2626" : "#4b5563"} />
         </radialGradient>
       </defs>
-      {/* 🔍 scala+ricentra per riempire il viewBox come le altre icone */}
-      <g transform="translate(12 12) scale(1.16) translate(-12 -10.65)">
+      {/* 🔧 normalizza al riferimento (centro y≈11.9, altezza ≈16.8) — bbox 2.4..18.9 */}
+      <g transform="translate(12 11.9) scale(1.02) translate(-12 -10.65)">
       {/* rami d'alloro che abbracciano la coppa */}
       <g fill={leaf}>
         {/* sinistra */}
@@ -285,8 +285,8 @@ export const MeseIcon: React.FC<ChampionIconProps> = ({ className, active = true
           <stop offset="1" stopColor={active ? "#1E293B" : "#4b5563"} />
         </linearGradient>
       </defs>
-      {/* 🔍 scala+ricentra per riempire il viewBox come le altre icone */}
-      <g transform="translate(12 12) scale(1.12) translate(-12 -11.5)">
+      {/* 🔧 normalizza al riferimento (centro y≈11.9, altezza ≈16.8) — bbox 1.6..21.5 */}
+      <g transform="translate(12 11.9) scale(0.844) translate(-12 -11.55)">
       {/* ELMO da cavaliere dentro/sopra la coppa */}
       <path
         d="M12 2.2 C 9.2 2.2 7.4 4.3 7.4 7.2 C 7.4 9 8.1 10.3 9 11.2 H15 C 15.9 10.3 16.6 9 16.6 7.2 C 16.6 4.3 14.8 2.2 12 2.2 Z"
@@ -353,6 +353,8 @@ export const VeteranIcon: React.FC<ChampionIconProps> = ({ className, active = t
           <stop offset="1" stopColor={active ? "#B45309" : "#4b5563"} />
         </linearGradient>
       </defs>
+      {/* 🔧 normalizza al riferimento (centro y≈11.9, altezza ≈16.8) — bbox 2.8..22.2 */}
+      <g transform="translate(12 11.9) scale(0.866) translate(-12 -12.5)">
 
       {/* ✨ 3 stelline sopra (come nell'immagine) */}
       {active && (
@@ -417,6 +419,7 @@ export const VeteranIcon: React.FC<ChampionIconProps> = ({ className, active = t
       {/* piedistallo */}
       <rect x="9.4" y="19.6" width="6.2" height="1.4" rx="0.5" fill={`url(#${g})`} stroke={line} strokeWidth="0.5" />
       <rect x="8.4" y="20.8" width="8.2" height="1.4" rx="0.6" fill={`url(#${g})`} stroke={line} strokeWidth="0.5" />
+      </g>
     </svg>
   );
 };
