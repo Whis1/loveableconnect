@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ProfileGridCard } from "@/components/ProfileGridCard";
 import { useLikes } from "@/hooks/useLikes";
-import { Sparkles, X, ArrowRight, ArrowLeft, Loader2, Wand2, RotateCcw } from "lucide-react";
+import { Sparkles, X, ArrowRight, Loader2, Wand2, LogOut } from "lucide-react";
 
 // 🔮 "Tenta il Destino" — minigioco di matching a click.
 // Flusso: scegli genere+orientamento desiderati (FILTRO reale) → rispondi a un
@@ -32,7 +32,6 @@ const ORIENTATION_OPTIONS = [
   { value: "homosexual", label: "Omosessuale", aliases: ["homosexual", "omosessuale", "omo", "gay", "lesbica"] },
   { value: "bisexual", label: "Bisessuale", aliases: ["bisexual", "bisessuale", "bi"] },
   { value: "pansexual", label: "Pansessuale", aliases: ["pansexual", "pansessuale", "pan"] },
-  { value: "any", label: "Indifferente", aliases: [] },
 ];
 
 // ── Domande FISSE (sempre presenti) ──────────────────────────────────────────
@@ -70,6 +69,12 @@ const QUESTION_POOL: DestinyQuestion[] = [
   { id: "if_gift", text: "Il regalo che vorresti ricevere?", options: ["Qualcosa di fatto a mano", "Un'esperienza insieme", "Una sorpresa romantica", "Qualcosa di utile"] },
   { id: "season", text: "La tua stagione del cuore?", options: ["Primavera", "Estate", "Autunno", "Inverno"] },
   { id: "risk", text: "Quanto sei avventuroso/a?", options: ["Vivo per il brivido", "Mi piace un rischio calcolato", "Meglio la sicurezza", "Dipende"] },
+  // 🔥 domande piccanti / intime
+  { id: "spicy_seek", text: "Cosa cerchi davvero qui?", options: ["L'amore della vita", "Una storia seria", "Avventure leggere", "Solo divertimento 🔥"] },
+  { id: "spicy_first", text: "Al primo appuntamento, un bacio...", options: ["Solo se scatta la scintilla", "Assolutamente sì", "Meglio aspettare", "Chi lo sa… 😏"] },
+  { id: "spicy_temp", text: "Come ti descriveresti?", options: ["Romantico/a inguaribile", "Passionale e intenso/a", "Giocoso/a e malizioso/a", "Un mistero da scoprire"] },
+  { id: "spicy_msg", text: "Di notte un messaggio audace ti...", options: ["Fa sorridere e rispondo", "Mi incuriosisce", "Dipende da chi", "Preferisco le cose lente"] },
+  { id: "spicy_dream", text: "Il tuo lato segreto è più...", options: ["Tenero e coccoloso", "Audace e intraprendente", "Timido ma curioso", "Esplosivo 🔥"] },
 ];
 
 interface DestinyQuestion {
@@ -105,7 +110,7 @@ export const DestinyGame = ({ currentUserId, onClose, onMatch }: DestinyGameProp
 
   // domande di questa sessione (fisse + random) generate una volta
   const sessionQuestions = useMemo<DestinyQuestion[]>(
-    () => [...FIXED_QUESTIONS, ...shuffle(QUESTION_POOL).slice(0, 5)],
+    () => [...FIXED_QUESTIONS, ...shuffle(QUESTION_POOL).slice(0, 6)],
     []
   );
   const [qIndex, setQIndex] = useState(0);
@@ -184,7 +189,10 @@ export const DestinyGame = ({ currentUserId, onClose, onMatch }: DestinyGameProp
 
   const overlay = (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full max-w-lg my-8">
+      {/* 🔧 nel Destino la foto della card è troppo alta (aspect-[3/4]):
+          la limitiamo a ~220px così l'intero pannello sta in una schermata */}
+      <style>{`.destiny-card-compact .aspect-\\[3\\/4\\]{aspect-ratio:auto!important;height:220px;}`}</style>
+      <div className="relative w-full max-w-md my-4">
         {/* Chiudi */}
         <button
           onClick={onClose}
@@ -320,25 +328,38 @@ export const DestinyGame = ({ currentUserId, onClose, onMatch }: DestinyGameProp
 
           {/* ── STEP RISULTATO ── */}
           {phase === "result" && current && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <p className="text-center text-sm font-semibold text-fuchsia-300">
                 ✨ Il destino ha scelto per te ✨
               </p>
-              <ProfileGridCard
-                profile={current}
-                currentUserId={currentUserId}
-                likedProfileIds={likedProfileIds}
-                onLike={() => {}}
-                onMatch={onMatch}
-              />
-              <Button
-                onClick={handleDiscard}
-                variant="outline"
-                className="w-full h-11 border-rose-400/40 text-rose-300 hover:bg-rose-500/15 font-semibold"
-              >
-                <RotateCcw className="w-4 h-4 mr-1.5" />
-                Scarta e tenta ancora
-              </Button>
+              {/* card compatta: limito l'altezza dell'immagine (aspect-[3/4] della
+                  ProfileGridCard altrimenti la rende troppo alta nel pannello) */}
+              <div className="destiny-card-compact">
+                <ProfileGridCard
+                  profile={current}
+                  currentUserId={currentUserId}
+                  likedProfileIds={likedProfileIds}
+                  onLike={() => {}}
+                  onMatch={onMatch}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  onClick={onClose}
+                  variant="outline"
+                  className="h-11 border-rose-400/40 text-rose-300 hover:bg-rose-500/15 font-semibold"
+                >
+                  <LogOut className="w-4 h-4 mr-1.5" />
+                  Esci
+                </Button>
+                <Button
+                  onClick={handleDiscard}
+                  className="h-11 bg-gradient-to-r from-fuchsia-500 to-pink-500 hover:from-fuchsia-600 hover:to-pink-600 font-semibold"
+                >
+                  Continua
+                  <ArrowRight className="w-4 h-4 ml-1.5" />
+                </Button>
+              </div>
             </div>
           )}
 
