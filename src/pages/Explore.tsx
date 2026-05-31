@@ -9,9 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useBanCheck } from "@/hooks/useBanCheck";
-import { ArrowLeft, MapPin, Filter, RotateCcw, Search as SearchIcon, Heart, MessageCircle, Sparkles } from "lucide-react";
+import { ArrowLeft, MapPin, Filter, RotateCcw, Search as SearchIcon, Heart, MessageCircle } from "lucide-react";
 import { ProfileGridCard } from "@/components/ProfileGridCard";
 import { DestinyGame } from "@/components/DestinyGame";
+import { LoveCompassIcon } from "@/lib/championIcons";
 import { MatchBanner } from "@/components/MatchBanner";
 import { PageLoader } from "@/components/PageLoader";
 import { useTextTranslation } from "@/hooks/useTranslation";
@@ -866,7 +867,7 @@ const Explore = () => {
                 size="sm"
                 className="bg-gradient-to-r from-fuchsia-500 to-pink-500 hover:from-fuchsia-600 hover:to-pink-600 text-white font-semibold shadow-lg shadow-fuchsia-500/25"
               >
-                <Sparkles className="h-4 w-4 md:mr-2" />
+                <LoveCompassIcon className="h-5 w-5 md:mr-1.5" />
                 <span className="hidden sm:inline">Tenta il Destino</span>
               </Button>
               <Button

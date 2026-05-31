@@ -613,3 +613,34 @@ export const EloGrandmasterIcon: React.FC<ChampionIconProps> = ({ className, act
     </svg>
   );
 };
+
+// 🧭 LOVE COMPASS — bussola dell'amore (rosa dei venti + cuore in cima).
+//     Usata per il minigioco "Tenta il Destino". `tone` regola il colore della
+//     stella (default bianco, per sfondi scuri/colorati).
+export const LoveCompassIcon: React.FC<ChampionIconProps & { tone?: string }> = ({
+  className,
+  tone = "#FFFFFF",
+}) => {
+  const g = useGradId("compass");
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id={g} x1="3" y1="7" x2="21" y2="22" gradientUnits="userSpaceOnUse">
+          <stop stopColor={tone} />
+          <stop offset="1" stopColor="#E2E8F0" />
+        </linearGradient>
+      </defs>
+      {/* cuore in cima */}
+      <path
+        d="M12 2.4 C 11.2 1.2 9.2 1.4 9.2 3.1 C 9.2 4.2 10.6 5.1 12 6.2 C 13.4 5.1 14.8 4.2 14.8 3.1 C 14.8 1.4 12.8 1.2 12 2.4 Z"
+        fill="#EC4899"
+      />
+      {/* rosa dei venti a 4 punte (asse verticale più lungo) */}
+      <path d="M12 7 L13.4 12.6 L12 22 L10.6 12.6 Z" fill={`url(#${g})`} stroke="#CBD5E1" strokeWidth="0.3" strokeLinejoin="round" />
+      <path d="M3 13.5 L11.4 14.9 L21 13.5 L11.4 12.1 Z" fill={`url(#${g})`} stroke="#CBD5E1" strokeWidth="0.3" strokeLinejoin="round" />
+      {/* faccette d'ombra per il volume 3D */}
+      <path d="M12 7 L12 22 L10.6 12.6 Z" fill="#000000" opacity="0.12" />
+      <path d="M3 13.5 L12 13.5 L11.4 12.1 Z" fill="#000000" opacity="0.12" />
+    </svg>
+  );
+};

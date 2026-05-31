@@ -4,8 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ProfileGridCard } from "@/components/ProfileGridCard";
 import { useLikes } from "@/hooks/useLikes";
-import { Sparkles, X, ArrowRight, Loader2, LogOut } from "lucide-react";
-import loveableLogo from "@/assets/loveable-connect-icon.png";
+import { X, ArrowRight, Loader2, LogOut } from "lucide-react";
+import { LoveCompassIcon } from "@/lib/championIcons";
 
 // 🔮 "Tenta il Destino" — minigioco di matching a click.
 // Flusso: scegli genere+orientamento desiderati (FILTRO reale) → rispondi a un
@@ -208,7 +208,7 @@ export const DestinyGame = ({ currentUserId, onClose, onMatch }: DestinyGameProp
           {/* Header */}
           <div className="flex items-center gap-2 mb-5">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-fuchsia-500 to-pink-500 flex items-center justify-center shadow-lg shadow-fuchsia-500/30">
-              <Sparkles className="w-5 h-5 text-white" />
+              <LoveCompassIcon className="w-6 h-6" />
             </div>
             <h2 className="text-xl font-black tracking-tight bg-gradient-to-r from-pink-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent">
               Tenta il Destino
@@ -313,12 +313,8 @@ export const DestinyGame = ({ currentUserId, onClose, onMatch }: DestinyGameProp
           {phase === "searching" && (
             <div className="py-10 flex flex-col items-center text-center gap-4">
               <div className="relative">
-                <div className="absolute -inset-3 rounded-full bg-fuchsia-500/30 blur-xl animate-pulse" />
-                <img
-                  src={loveableLogo}
-                  alt="LoveableConnect"
-                  className="relative w-20 h-20 rounded-full object-cover shadow-lg shadow-fuchsia-500/40 ring-2 ring-fuchsia-400/50 animate-pulse"
-                />
+                <div className="absolute -inset-4 rounded-full bg-fuchsia-500/30 blur-2xl animate-pulse" />
+                <LoveCompassIcon className="relative w-20 h-20 animate-pulse drop-shadow-[0_2px_8px_rgba(244,114,182,0.5)]" />
               </div>
               <div>
                 <p className="text-lg font-black bg-gradient-to-r from-pink-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent">
