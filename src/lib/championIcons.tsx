@@ -323,7 +323,7 @@ export const MeseIcon: React.FC<ChampionIconProps> = ({ className, active = true
 //    Vittorie (tema "Mind"): Cunning Mind(volpe dorata,50) →
 //      Strategic Mind(torre scacchi,100) → Flawless Mind(cervello,500) →
 //      Masterful Mind(occhio onnisciente,1000).
-//    ELO:    Apex(vetta,2500) → Zenith(astro allo zenit,3000).
+//    ELO:    Apex(vetta,2500) → Zenith(cristalli blu/oro + stella su piedistallo,3000).
 // ───────────────────────────────────────────────────────────────────────────
 
 // 50 vittorie — CUNNING MIND: volpe dorata astuta (da immagine utente)
@@ -579,59 +579,76 @@ export const EloMasterIcon: React.FC<ChampionIconProps> = ({ className, active =
   );
 };
 
-// 3000 ELO — ZENITH: astro radiante con OCCHIO al centro, corona di raggi e stelle
+// 3000 ELO — ZENITH: cristalli appuntiti blu/oro con stella dorata su piedistallo (da immagine utente)
 export const EloGrandmasterIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
-  const g = useGradId("ms-zenith");
-  const gIris = useGradId("ms-zenith-iris");
-  const ray = active ? "#67E8F9" : "#4b5563";
-  const dome = active ? "#6366F1" : "#4b5563";
-  const line = active ? "#5B21B6" : "#374151";
+  const gBlue = useGradId("ms-zenith-blue");
+  const gGold = useGradId("ms-zenith-gold");
+  const gStar = useGradId("ms-zenith-star");
+  const gPed = useGradId("ms-zenith-ped");
+  const blueLine = active ? "#1E40AF" : "#374151";
+  const goldLine = active ? "#92400E" : "#374151";
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <radialGradient id={g} cx="0.5" cy="0.5" r="0.5">
-          <stop stopColor={active ? "#ECFEFF" : "#9ca3af"} />
-          <stop offset="0.5" stopColor={active ? "#A5B4FC" : "#6b7280"} />
-          <stop offset="1" stopColor={active ? "#7C3AED" : "#4b5563"} />
+        <linearGradient id={gBlue} x1="6" y1="6" x2="14" y2="18" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#93C5FD" : "#6b7280"} />
+          <stop offset="0.5" stopColor={active ? "#2563EB" : "#565d6b"} />
+          <stop offset="1" stopColor={active ? "#1E3A8A" : "#4b5563"} />
+        </linearGradient>
+        <linearGradient id={gGold} x1="8" y1="3" x2="16" y2="16" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#FEF3C7" : "#6b7280"} />
+          <stop offset="0.5" stopColor={active ? "#FBBF24" : "#565d6b"} />
+          <stop offset="1" stopColor={active ? "#B45309" : "#4b5563"} />
+        </linearGradient>
+        <radialGradient id={gStar} cx="0.5" cy="0.4" r="0.65">
+          <stop stopColor={active ? "#FEF9C3" : "#9ca3af"} />
+          <stop offset="1" stopColor={active ? "#F59E0B" : "#4b5563"} />
         </radialGradient>
-        <radialGradient id={gIris} cx="0.5" cy="0.5" r="0.5">
-          <stop stopColor={active ? "#67E8F9" : "#9ca3af"} />
-          <stop offset="1" stopColor={active ? "#7C3AED" : "#4b5563"} />
-        </radialGradient>
+        <linearGradient id={gPed} x1="4" y1="17" x2="20" y2="22" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#FDE68A" : "#6b7280"} />
+          <stop offset="1" stopColor={active ? "#B45309" : "#4b5563"} />
+        </linearGradient>
       </defs>
-      {/* corona di raggi attorno all'astro (lunghi e corti alternati) */}
-      <g stroke={ray} strokeLinecap="round">
-        <path d="M12 1 V3.4" strokeWidth="1.2" />
-        <path d="M12 12.6 V14.6" strokeWidth="1" opacity="0.8" />
-        <path d="M4.6 8 L6.7 9.1" strokeWidth="1" />
-        <path d="M19.4 8 L17.3 9.1" strokeWidth="1" />
-        <path d="M5.2 3.6 L6.9 5.3" strokeWidth="0.9" opacity="0.85" />
-        <path d="M18.8 3.6 L17.1 5.3" strokeWidth="0.9" opacity="0.85" />
-        <path d="M2.8 11.5 L4.7 11.2" strokeWidth="0.8" opacity="0.7" />
-        <path d="M21.2 11.5 L19.3 11.2" strokeWidth="0.8" opacity="0.7" />
-      </g>
-      {/* astro */}
-      <circle cx="12" cy="8" r="3.7" fill={`url(#${g})`} stroke={line} strokeWidth="0.7" />
-      {/* 👁️ occhio radiante dentro l'astro */}
-      <path
-        d="M8.5 8 C 9.7 6.6 10.8 6.1 12 6.1 C 13.2 6.1 14.3 6.6 15.5 8 C 14.3 9.4 13.2 9.9 12 9.9 C 10.8 9.9 9.7 9.4 8.5 8 Z"
-        fill={active ? "#FFFFFF" : "#cbd5e1"}
-        stroke={line}
-        strokeWidth="0.55"
-        strokeLinejoin="round"
-      />
-      <circle cx="12" cy="8" r="1.5" fill={`url(#${gIris})`} />
-      <circle cx="12" cy="8" r="0.62" fill={active ? "#1E1B4B" : "#374151"} />
-      {active && <circle cx="11.55" cy="7.6" r="0.32" fill="#FFFFFF" opacity="0.9" />}
-      {/* volta celeste con stelline */}
-      <path d="M4.5 19.4 C 4.5 14.6 7.8 12 12 12 C 16.2 12 19.5 14.6 19.5 19.4" stroke={dome} strokeWidth="1.4" strokeLinecap="round" fill="none" />
-      <path d="M3.6 19.6 H20.4" stroke={dome} strokeWidth="1.2" strokeLinecap="round" opacity="0.8" />
+      {/* ✨ scintille */}
       {active && (
-        <g fill="#E0E7FF">
-          <path d="M7 16 l.3 .7 .7 .3 -.7 .3 -.3 .7 -.3 -.7 -.7 -.3 .7 -.3 z" />
-          <path d="M16.6 15.4 l.25 .6 .6 .25 -.6 .25 -.25 .6 -.25 -.6 -.6 -.25 .6 -.25 z" />
+        <g fill="#FFFFFF">
+          <path d="M5.4 6 l.25 .6 .6 .25 -.6 .25 -.25 .6 -.25 -.6 -.6 -.25 .6 -.25 z" opacity="0.9" />
+          <path d="M18.8 7.4 l.25 .6 .6 .25 -.6 .25 -.25 .6 -.25 -.6 -.6 -.25 .6 -.25 z" opacity="0.85" />
         </g>
       )}
+
+      {/* cristalli laterali ORO (esterni) */}
+      <path d="M5 16 L4 9.5 L7.6 13.4 Z" fill={`url(#${gGold})`} stroke={goldLine} strokeWidth="0.5" strokeLinejoin="round" />
+      <path d="M19 16 L20 9.5 L16.4 13.4 Z" fill={`url(#${gGold})`} stroke={goldLine} strokeWidth="0.5" strokeLinejoin="round" />
+
+      {/* cristalli BLU (medi) */}
+      <path d="M8 16.6 L6.6 7.6 L10 12.4 Z" fill={`url(#${gBlue})`} stroke={blueLine} strokeWidth="0.5" strokeLinejoin="round" />
+      <path d="M16 16.6 L17.4 7.6 L14 12.4 Z" fill={`url(#${gBlue})`} stroke={blueLine} strokeWidth="0.5" strokeLinejoin="round" />
+
+      {/* cristallo centrale ORO (il più alto, appuntito) */}
+      <path d="M12 2.6 L9.6 8 L12 16.8 L14.4 8 Z" fill={`url(#${gGold})`} stroke={goldLine} strokeWidth="0.6" strokeLinejoin="round" />
+      {/* faccetta del cristallo centrale */}
+      <path d="M12 2.6 L12 16.8 L9.6 8 Z" fill="#ffffff" opacity={active ? "0.18" : "0"} />
+
+      {/* cristalli BLU interni che salgono */}
+      <path d="M10.4 16.4 L9.2 9.4 L12 13 Z" fill={`url(#${gBlue})`} stroke={blueLine} strokeWidth="0.45" strokeLinejoin="round" />
+      <path d="M13.6 16.4 L14.8 9.4 L12 13 Z" fill={`url(#${gBlue})`} stroke={blueLine} strokeWidth="0.45" strokeLinejoin="round" />
+
+      {/* ⭐ stella dorata al centro */}
+      <path
+        d="M12 6.3 L13.2 9 L16.1 9.25 L13.9 11.2 L14.6 14.05 L12 12.5 L9.4 14.05 L10.1 11.2 L7.9 9.25 L10.8 9 Z"
+        fill={`url(#${gStar})`}
+        stroke={goldLine}
+        strokeWidth="0.5"
+        strokeLinejoin="round"
+      />
+
+      {/* 🏛️ piedistallo (disco argento sopra + base oro a gradini) */}
+      <ellipse cx="12" cy="17.4" rx="5.4" ry="1.5" fill={active ? "#E2E8F0" : "#9ca3af"} stroke={active ? "#94A3B8" : "#4b5563"} strokeWidth="0.5" />
+      <ellipse cx="12" cy="16.9" rx="3.1" ry="0.9" fill={active ? "#CBD5E1" : "#6b7280"} />
+      <path d="M6 18 H18 L17 20.4 Q12 21.6 7 20.4 Z" fill={`url(#${gPed})`} stroke={goldLine} strokeWidth="0.5" strokeLinejoin="round" />
+      <ellipse cx="12" cy="20.6" rx="6" ry="1.5" fill={`url(#${gPed})`} stroke={goldLine} strokeWidth="0.5" />
+      <ellipse cx="12" cy="20.3" rx="6" ry="1.3" fill={active ? "#D97706" : "#565d6b"} opacity="0.5" />
     </svg>
   );
 };
