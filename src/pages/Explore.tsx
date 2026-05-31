@@ -110,6 +110,14 @@ const Explore = () => {
   const [ageRange, setAgeRange] = useState([18, 60]);
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
   const [selectedOrientations, setSelectedOrientations] = useState<string[]>([]);
+  // 📄 Filtri attivi: quando valorizzato, la paginazione (loadPage) applica
+  // questi vincoli a OGNI pagina, così la ricerca filtrata usa gli stessi
+  // pulsanti Avanti/Indietro del flusso normale. null = nessun filtro attivo.
+  const [activeFilters, setActiveFilters] = useState<{
+    genders: string[];
+    orientations: string[];
+    ageRange: [number, number];
+  } | null>(null);
   const [matchBanner, setMatchBanner] = useState<{ show: boolean; userName: string; userAvatar: string | null }>({
     show: false,
     userName: "",
@@ -324,6 +332,36 @@ const Explore = () => {
   const PROFILES_BATCH_SIZE = 20;
   const totalPages = Math.max(1, Math.ceil(totalProfiles / PROFILES_BATCH_SIZE));
 
+  // 🔎 Applica i vincoli di filtro (età/genere/orientamento) a una query
+  // Supabase. Usato sia dalla prima pagina filtrata (applyFilters) sia dal
+  // cambio pagina (loadPage), così i filtri restano coerenti su ogni pagina.
+  const applyFilterClauses = (
+    query: any,
+    filters: { genders: string[]; orientations: string[]; ageRange: [number, number] } | null
+  ) => {
+    if (!filters) return query;
+    // Età — se il massimo è 60 significa "60+": nessun limite superiore.
+    query = query.gte("age", filters.ageRange[0]);
+    if (filters.ageRange[1] < 60) {
+      query = query.lte("age", filters.ageRange[1]);
+    }
+    // Genere (con sinonimi DB)
+    if (filters.genders.length > 0) {
+      const genderValues = Array.from(
+        new Set(filters.genders.flatMap((g) => genderSynonymsMap[g] || [g]))
+      );
+      query = query.in("gender", genderValues);
+    }
+    // Orientamento (con sinonimi DB)
+    if (filters.orientations.length > 0) {
+      const orientationValues = Array.from(
+        new Set(filters.orientations.flatMap((o) => orientationSynonymsMap[o] || [o]))
+      );
+      query = query.in("sexual_orientation", orientationValues);
+    }
+    return query;
+  };
+
   const loadAllProfiles = async (userId: string, preloadedMatches?: Set<string>) => {
     if (profiles.length === 0) setLoading(true);
     setPageError(false);
@@ -492,6 +530,8 @@ const Explore = () => {
           const ids = Array.from(matchedProfileIds).map((id) => `"${id}"`).join(",");
           query = query.not("id", "in", `(${ids})`);
         }
+        // 🔎 Applica i filtri attivi (se presenti) a questa pagina.
+        query = applyFilterClauses(query, activeFilters);
         const from = pageIndex * PROFILES_BATCH_SIZE;
         const to = from + PROFILES_BATCH_SIZE - 1;
         const { data, error } = await withTimeout(
@@ -646,6 +686,17 @@ const Explore = () => {
 
     setLoading(true);
     setShowFilters(false);
+    setPageError(false);
+
+    // 📄 Memorizza i filtri scelti: da qui in poi loadPage li applicherà a
+    // OGNI pagina, quindi la ricerca filtrata usa gli stessi pulsanti
+    // Avanti/Indietro del flusso normale (niente più lista unica infinita).
+    const filters = {
+      genders: [...selectedGenders],
+      orientations: [...selectedOrientations],
+      ageRange: [ageRange[0], ageRange[1]] as [number, number],
+    };
+    setActiveFilters(filters);
 
     try {
       // Get user's matches to exclude them
@@ -659,40 +710,38 @@ const Explore = () => {
       );
 
       const matchedUserIds = new Set(
-        (matchesData || []).map(match => 
+        (matchesData || []).map(match =>
           match.user1_id === currentUser ? match.user2_id : match.user1_id
         )
       );
+      setMatchedProfileIds(matchedUserIds);
 
-      // Fetch all profiles excluding current user
+      // 📄 PRIMA PAGINA filtrata con count totale (stesso pattern di loadAllProfiles).
+      // count: "exact" + esclusione match server-side → totalPages corretto.
       let query = supabase
         .from("profiles")
-        .select("*")
+        .select("*", { count: "exact" })
         .neq("id", currentUser);
-
-      // Age filter — se il massimo è 60 significa "60+": nessun limite superiore.
-      query = query.gte("age", ageRange[0]);
-      if (ageRange[1] < 60) {
-        query = query.lte("age", ageRange[1]);
+      if (matchedUserIds.size > 0) {
+        const ids = Array.from(matchedUserIds).map((id) => `"${id}"`).join(",");
+        query = query.not("id", "in", `(${ids})`);
       }
+      // Applica i vincoli di filtro (età/genere/orientamento)
+      query = applyFilterClauses(query, filters);
 
-      // Gender filter with synonyms
-      if (selectedGenders.length > 0) {
-        const genderValues = Array.from(new Set(selectedGenders.flatMap(g => genderSynonymsMap[g] || [g])));
-        query = query.in("gender", genderValues);
-      }
-
-      // Orientation filter with synonyms
-      if (selectedOrientations.length > 0) {
-        const orientationValues = Array.from(new Set(selectedOrientations.flatMap(o => orientationSynonymsMap[o] || [o])));
-        query = query.in("sexual_orientation", orientationValues);
-      }
-
-      const { data: profilesData, error } = await withTimeout(query, 6000);
+      const { data: profilesData, count, error } = await withTimeout(
+        query.order("last_active", { ascending: false, nullsFirst: false }).range(0, PROFILES_BATCH_SIZE - 1),
+        10000
+      );
 
       if (error) throw error;
 
-      // Filter out profiles with existing matches
+      const fetched = (profilesData || []).length;
+      // 📄 Total count → quante pagine ha la ricerca filtrata
+      setTotalProfiles(count ?? fetched);
+      setCurrentPage(0);
+
+      // Filter out profiles with existing matches (sicurezza client-side)
       let filteredProfiles: Profile[] = (profilesData || [])
         .filter(profile => !matchedUserIds.has(profile.id)) as Profile[];
 
@@ -704,7 +753,7 @@ const Explore = () => {
         3500
       );
       const creditsMap = new Map<string, string>((subsData || []).map((c: any) => [c.user_id, c.subscription_type]));
-      
+
       // Sort profiles: monthly subscribers first, then admin profiles (ROTATED), then by last_active
       // 🔄 Stesso schema di rotazione del primo batch: gli admin in cima ruotano ogni 3 ore.
       const rotationBucketFiltered = getRotationBucket();
@@ -738,9 +787,9 @@ const Explore = () => {
         return dateB - dateA;
       });
 
-      // CARICA TUTTI i profili filtrati subito
+      // 📄 Carica solo la PRIMA pagina dei profili filtrati (le altre via Avanti)
       setProfiles(filteredProfiles);
-      
+
       // Pre-carica gli stati online dei profili filtrati
       void loadOnlineStatuses(filteredProfiles.map(p => p.id));
     } catch (error: any) {
@@ -758,6 +807,9 @@ const Explore = () => {
     setAgeRange([18, 60]);
     setSelectedGenders([]);
     setSelectedOrientations([]);
+    // 📄 Disattiva la modalità filtrata: torna alla paginazione normale.
+    setActiveFilters(null);
+    setCurrentPage(0);
     if (currentUser) {
       loadAllProfiles(currentUser);
     }
