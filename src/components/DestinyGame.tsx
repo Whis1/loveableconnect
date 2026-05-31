@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ProfileGridCard } from "@/components/ProfileGridCard";
 import { useLikes } from "@/hooks/useLikes";
-import { Sparkles, X, ArrowRight, Loader2, Wand2, LogOut } from "lucide-react";
+import { Sparkles, X, ArrowRight, Loader2, LogOut } from "lucide-react";
+import loveableLogo from "@/assets/loveable-connect-icon.png";
 
 // 🔮 "Tenta il Destino" — minigioco di matching a click.
 // Flusso: scegli genere+orientamento desiderati (FILTRO reale) → rispondi a un
@@ -313,15 +314,17 @@ export const DestinyGame = ({ currentUserId, onClose, onMatch }: DestinyGameProp
             <div className="py-10 flex flex-col items-center text-center gap-4">
               <div className="relative">
                 <div className="absolute -inset-3 rounded-full bg-fuchsia-500/30 blur-xl animate-pulse" />
-                <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-fuchsia-500 via-pink-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-fuchsia-500/40">
-                  <Wand2 className="w-8 h-8 text-white animate-pulse" />
-                </div>
+                <img
+                  src={loveableLogo}
+                  alt="LoveableConnect"
+                  className="relative w-20 h-20 rounded-full object-cover shadow-lg shadow-fuchsia-500/40 ring-2 ring-fuchsia-400/50 animate-pulse"
+                />
               </div>
               <div>
                 <p className="text-lg font-black bg-gradient-to-r from-pink-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent">
                   Il destino sta scegliendo…
                 </p>
-                <p className="text-sm text-foreground/50 mt-1">Stiamo cercando l'anima giusta per te</p>
+                <p className="text-sm text-foreground/50 mt-1">Stiamo cercando il profilo ideale per te</p>
               </div>
               <Loader2 className="w-5 h-5 text-fuchsia-300 animate-spin" />
             </div>
