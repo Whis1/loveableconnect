@@ -266,56 +266,50 @@ export const TorneiIcon: React.FC<ChampionIconProps> = ({ className, active = tr
   );
 };
 
-// 3) MONTHLY CHAMPION — coppa dorata con elmo da cavaliere (da immagine utente)
+// 3) MONTHLY CHAMPION — corona regale dorata con gemme
 export const MeseIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
   const g = useGradId("month");
-  const gh = useGradId("monthhelm");
+  const gem = useGradId("monthgem");
   const line = active ? "#92400E" : "#374151";
-  const steel = active ? "#475569" : "#374151";
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id={g} x1="6" y1="9" x2="18" y2="20" gradientUnits="userSpaceOnUse">
+        <linearGradient id={g} x1="4" y1="5" x2="20" y2="20" gradientUnits="userSpaceOnUse">
           <stop stopColor={active ? "#FEF3C7" : "#6b7280"} />
           <stop offset="0.5" stopColor={active ? "#FBBF24" : "#565d6b"} />
           <stop offset="1" stopColor={active ? "#B45309" : "#4b5563"} />
         </linearGradient>
-        <linearGradient id={gh} x1="9" y1="2" x2="15" y2="11" gradientUnits="userSpaceOnUse">
-          <stop stopColor={active ? "#64748B" : "#6b7280"} />
-          <stop offset="1" stopColor={active ? "#1E293B" : "#4b5563"} />
-        </linearGradient>
+        <radialGradient id={gem} cx="0.5" cy="0.4" r="0.7">
+          <stop stopColor={active ? "#FCA5A5" : "#6b7280"} />
+          <stop offset="1" stopColor={active ? "#DC2626" : "#4b5563"} />
+        </radialGradient>
       </defs>
-      {/* 🔧 normalizza al riferimento (centro y≈11.9, altezza ≈16.8) — bbox 1.6..21.5 */}
-      <g transform="translate(12 11.9) scale(0.844) translate(-12 -11.55)">
-      {/* ELMO da cavaliere dentro/sopra la coppa */}
+      {/* 🔧 normalizza al riferimento (centro y≈11.9, altezza ≈16.8) — bbox 4..20 */}
+      <g transform="translate(12 11.9) scale(1.05) translate(-12 -12)">
+      {/* corpo corona a cinque punte */}
       <path
-        d="M12 2.2 C 9.2 2.2 7.4 4.3 7.4 7.2 C 7.4 9 8.1 10.3 9 11.2 H15 C 15.9 10.3 16.6 9 16.6 7.2 C 16.6 4.3 14.8 2.2 12 2.2 Z"
-        fill={`url(#${gh})`}
-        stroke={steel}
-        strokeWidth="0.7"
+        d="M3.5 8.4 L7 12 L9.6 6.2 L12 10.2 L14.4 6.2 L17 12 L20.5 8.4 L18.8 17.4 H5.2 Z"
+        fill={`url(#${g})`}
+        stroke={line}
+        strokeWidth="0.8"
         strokeLinejoin="round"
       />
-      {/* cresta superiore */}
-      <path d="M10.4 2.6 C 11 1.6 13 1.6 13.6 2.6" stroke={steel} strokeWidth="1" strokeLinecap="round" fill="none" />
-      {/* feritoie della visiera */}
-      <g stroke={active ? "#0F172A" : "#1f2937"} strokeWidth="1.1" strokeLinecap="round">
-        <path d="M9.2 6.4 H14.8" />
-        <path d="M9.4 8 H14.6" />
-        <path d="M9.7 9.5 H14.3" />
+      {/* riflesso interno */}
+      {active && <path d="M7 13.4 C 6.7 14.6 6.8 15.6 7.4 16.4" stroke="#FFFBEB" strokeWidth="0.7" strokeLinecap="round" opacity="0.5" fill="none" />}
+      {/* gemme sulle punte */}
+      <circle cx="3.5" cy="8.4" r="1.35" fill={`url(#${gem})`} stroke={line} strokeWidth="0.4" />
+      <circle cx="20.5" cy="8.4" r="1.35" fill={`url(#${gem})`} stroke={line} strokeWidth="0.4" />
+      <circle cx="12" cy="5.4" r="1.5" fill={`url(#${gem})`} stroke={line} strokeWidth="0.4" />
+      {/* gemma centrale incastonata nella fascia */}
+      <circle cx="12" cy="14.4" r="1.6" fill={`url(#${gem})`} stroke={line} strokeWidth="0.45" />
+      {/* base della corona con bordo gemmato */}
+      <rect x="4.6" y="17.2" width="14.8" height="2.8" rx="1" fill={`url(#${g})`} stroke={line} strokeWidth="0.6" />
+      <g fill={active ? "#FDE68A" : "#6b7280"}>
+        <circle cx="7" cy="18.6" r="0.55" />
+        <circle cx="9.7" cy="18.6" r="0.55" />
+        <circle cx="14.3" cy="18.6" r="0.55" />
+        <circle cx="17" cy="18.6" r="0.55" />
       </g>
-      {/* riflesso elmo */}
-      {active && <path d="M9.6 4.4 C 8.9 5.3 8.7 6.5 9 7.6" stroke="#CBD5E1" strokeWidth="0.7" strokeLinecap="round" opacity="0.7" fill="none" />}
-      {/* manici della coppa */}
-      <path d="M7.2 11.2 C 4.9 11.2 4.7 14.2 7 14.6" stroke={line} strokeWidth="1.3" strokeLinecap="round" fill="none" />
-      <path d="M16.8 11.2 C 19.1 11.2 19.3 14.2 17 14.6" stroke={line} strokeWidth="1.3" strokeLinecap="round" fill="none" />
-      {/* coppa (sotto l'elmo) */}
-      <path d="M7.6 11 H16.4 V11.6 C 16.4 14.8 14.4 16.6 12 16.6 C 9.6 16.6 7.6 14.8 7.6 11.6 Z" fill={`url(#${g})`} stroke={line} strokeWidth="0.7" strokeLinejoin="round" />
-      {/* stelo + base a gradini */}
-      <rect x="11" y="16.4" width="2" height="2.4" fill={`url(#${g})`} />
-      <rect x="8.8" y="18.6" width="6.4" height="1.4" rx="0.5" fill={`url(#${g})`} stroke={line} strokeWidth="0.5" />
-      <rect x="7.6" y="19.9" width="8.8" height="1.6" rx="0.6" fill={`url(#${g})`} stroke={line} strokeWidth="0.5" />
-      {/* riflesso sulla coppa */}
-      {active && <path d="M9.5 11.8 C 9.2 13 9.3 14 9.9 14.8" stroke="#FFFBEB" strokeWidth="0.8" strokeLinecap="round" opacity="0.5" fill="none" />}
       </g>
     </svg>
   );
@@ -328,7 +322,7 @@ export const MeseIcon: React.FC<ChampionIconProps> = ({ className, active = true
 //    `active` accende il gradient; se false l'icona è spenta/grigia.
 //    Vittorie (tema "Mind"): Cunning Mind(volpe dorata,50) →
 //      Strategic Mind(torre scacchi,100) → Flawless Mind(cervello,500) →
-//      Absolute Mind(occhio onnisciente,1000).
+//      Masterful Mind(occhio onnisciente,1000).
 //    ELO:    Apex(vetta,2500) → Zenith(astro allo zenit,3000).
 // ───────────────────────────────────────────────────────────────────────────
 
@@ -353,8 +347,8 @@ export const VeteranIcon: React.FC<ChampionIconProps> = ({ className, active = t
           <stop offset="1" stopColor={active ? "#B45309" : "#4b5563"} />
         </linearGradient>
       </defs>
-      {/* 🔧 normalizza al riferimento (centro y≈11.9, altezza ≈16.8) — bbox 2.8..22.2 */}
-      <g transform="translate(12 11.9) scale(0.866) translate(-12 -12.5)">
+      {/* 🔧 normalizza: solo la maschera (orecchie+muso), bbox y 1.6..17 → centro+altezza come le altre */}
+      <g transform="translate(12 11.9) scale(1.04) translate(-12 -9.3)">
 
       {/* ✨ 3 stelline sopra (come nell'immagine) */}
       {active && (
@@ -402,23 +396,6 @@ export const VeteranIcon: React.FC<ChampionIconProps> = ({ className, active = t
 
       {/* riflesso sulla fronte */}
       {active && <path d="M11.4 6.2 C 10.6 7 10.3 8 10.6 9" stroke="#FFFDF5" strokeWidth="0.7" strokeLinecap="round" opacity="0.6" fill="none" />}
-
-      {/* coda fluente avvolta + piedistallo */}
-      <path
-        d="M13.4 16.2 C 16.4 14 19 14.8 19.4 17.6 C 18 16 16.4 16.4 15.6 17.8 C 17 18 18 18.8 18 20 H10.4 C 10.4 18.4 11.6 17 13.4 16.2 Z"
-        fill={`url(#${g})`}
-        stroke={line}
-        strokeWidth="0.6"
-        strokeLinejoin="round"
-      />
-      {/* venature della coda */}
-      <g stroke={dark} strokeWidth="0.5" strokeLinecap="round" opacity="0.5" fill="none">
-        <path d="M14.4 17.4 C 15.6 16.8 16.8 16.7 17.8 17.2" />
-        <path d="M13.6 18.6 C 14.8 18.2 16 18.2 17 18.6" />
-      </g>
-      {/* piedistallo */}
-      <rect x="9.4" y="19.6" width="6.2" height="1.4" rx="0.5" fill={`url(#${g})`} stroke={line} strokeWidth="0.5" />
-      <rect x="8.4" y="20.8" width="8.2" height="1.4" rx="0.6" fill={`url(#${g})`} stroke={line} strokeWidth="0.5" />
       </g>
     </svg>
   );

@@ -150,7 +150,7 @@ export const ChampionBadgesRow = ({
           <Badge
             icon={<LegendIcon className={iconCls} active={wins >= 1000} />}
             active={wins >= 1000}
-            title="Absolute Mind"
+            title="Masterful Mind"
             desc="Titolo ottenuto vincendo 1000 partite."
           />
         </>
