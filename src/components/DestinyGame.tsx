@@ -6,6 +6,7 @@ import { ProfileGridCard } from "@/components/ProfileGridCard";
 import { useLikes } from "@/hooks/useLikes";
 import { X, ArrowRight, Loader2, LogOut } from "lucide-react";
 import { LoveCompassIcon } from "@/lib/championIcons";
+import loveableLogo from "@/assets/loveable-connect-icon.png";
 
 // 🔮 "Tenta il Destino" — minigioco di matching a click.
 // Flusso: scegli genere+orientamento desiderati (FILTRO reale) → rispondi a un
@@ -312,10 +313,12 @@ export const DestinyGame = ({ currentUserId, onClose, onMatch }: DestinyGameProp
           {/* ── STEP RICERCA ── */}
           {phase === "searching" && (
             <div className="py-10 flex flex-col items-center text-center gap-4">
-              <div className="relative">
-                <div className="absolute -inset-4 rounded-full bg-fuchsia-500/30 blur-2xl animate-pulse" />
-                <LoveCompassIcon className="relative w-20 h-20 animate-pulse drop-shadow-[0_2px_8px_rgba(244,114,182,0.5)]" />
-              </div>
+              {/* logo del sito al centro, senza cerchio attorno */}
+              <img
+                src={loveableLogo}
+                alt="LoveableConnect"
+                className="w-24 h-24 object-contain animate-pulse drop-shadow-[0_2px_12px_rgba(244,114,182,0.55)]"
+              />
               <div>
                 <p className="text-lg font-black bg-gradient-to-r from-pink-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent">
                   Il destino sta scegliendo…
