@@ -73,7 +73,7 @@ const QUESTION_POOL: DestinyQuestion[] = [
   { id: "spicy_seek", text: "Cosa cerchi davvero qui?", options: ["L'amore della vita", "Una storia seria", "Avventure leggere", "Solo divertimento 🔥"] },
   { id: "spicy_first", text: "Al primo appuntamento, un bacio...", options: ["Solo se scatta la scintilla", "Assolutamente sì", "Meglio aspettare", "Chi lo sa… 😏"] },
   { id: "spicy_temp", text: "Come ti descriveresti?", options: ["Romantico/a inguaribile", "Passionale e intenso/a", "Giocoso/a e malizioso/a", "Un mistero da scoprire"] },
-  { id: "spicy_msg", text: "Di notte un messaggio audace ti...", options: ["Fa sorridere e rispondo", "Mi incuriosisce", "Dipende da chi", "Preferisco le cose lente"] },
+  { id: "spicy_msg", text: "Ricevi un messaggio audace a tarda notte. Tu...", options: ["Sorrido e rispondo subito", "Mi incuriosisco", "Dipende da chi lo manda", "Preferisco le cose lente"] },
   { id: "spicy_dream", text: "Il tuo lato segreto è più...", options: ["Tenero e coccoloso", "Audace e intraprendente", "Timido ma curioso", "Esplosivo 🔥"] },
 ];
 
@@ -188,10 +188,11 @@ export const DestinyGame = ({ currentUserId, onClose, onMatch }: DestinyGameProp
   const q = sessionQuestions[qIndex];
 
   const overlay = (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
-      {/* 🔧 nel Destino la foto della card è troppo alta (aspect-[3/4]):
-          la limitiamo a ~220px così l'intero pannello sta in una schermata */}
-      <style>{`.destiny-card-compact .aspect-\\[3\\/4\\]{aspect-ratio:auto!important;height:220px;}`}</style>
+    <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
+      {/* 🔧 nel Destino la foto della card (aspect-[3/4]) sarebbe troppo alta:
+          la limitiamo a 300px (object-cover mantiene il viso visibile, non
+          schiacciato) così il pannello resta compatto ma la foto si legge bene */}
+      <style>{`.destiny-card-compact .aspect-\\[3\\/4\\]{aspect-ratio:auto!important;height:300px;}`}</style>
       <div className="relative w-full max-w-md my-4">
         {/* Chiudi */}
         <button
