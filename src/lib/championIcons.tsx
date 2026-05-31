@@ -320,83 +320,40 @@ export const MeseIcon: React.FC<ChampionIconProps> = ({ className, active = true
 //    di speciale, ma tutte sono disegnate nello stesso viewBox 24×24 con
 //    ingombro centrato simile → nel pannello appaiono della STESSA dimensione.
 //    `active` accende il gradient; se false l'icona è spenta/grigia.
-//    Vittorie (tema "Mind"): Cunning Mind(volpe dorata,50) →
+//    Vittorie (tema "Mind"): Cunning Mind(volpe-logo,50) →
 //      Strategic Mind(torre scacchi,100) → Flawless Mind(cervello,500) →
 //      Masterful Mind(occhio onnisciente,1000).
 //    ELO:    Apex(vetta,2500) → Zenith(cristalli blu/oro + stella su piedistallo,3000).
 // ───────────────────────────────────────────────────────────────────────────
 
-// 50 vittorie — CUNNING MIND: volpe dorata astuta (da immagine utente)
+// 50 vittorie — CUNNING MIND: volpe-logo (silhouette + coda a cerchio + goccia, da immagine utente)
 export const VeteranIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
   const g = useGradId("ms-cunning");
-  const gEar = useGradId("ms-cunning-ear");
-  const line = active ? "#92400E" : "#374151";
-  const dark = active ? "#7C2D12" : "#374151";
-  const gear = active ? "#B45309" : "#4b5563";
-  const eyes = active ? "#FFFDE7" : "#9ca3af";
+  const fox = active ? `url(#${g})` : "#6b7280";
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id={g} x1="6" y1="4" x2="17" y2="20" gradientUnits="userSpaceOnUse">
-          <stop stopColor={active ? "#FEF3C7" : "#6b7280"} />
-          <stop offset="0.5" stopColor={active ? "#FBBF24" : "#565d6b"} />
+        <linearGradient id={g} x1="4" y1="3" x2="20" y2="21" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#FEF3C7" : "#9ca3af"} />
+          <stop offset="0.5" stopColor={active ? "#FBBF24" : "#6b7280"} />
           <stop offset="1" stopColor={active ? "#B45309" : "#4b5563"} />
         </linearGradient>
-        <linearGradient id={gEar} x1="8" y1="2" x2="14" y2="8" gradientUnits="userSpaceOnUse">
-          <stop stopColor={active ? "#FCD34D" : "#6b7280"} />
-          <stop offset="1" stopColor={active ? "#B45309" : "#4b5563"} />
-        </linearGradient>
+        {/* maschera: corpo+testa pieni, goccia e spacco coda "ritagliati" */}
+        <mask id={`${g}-m`}>
+          <rect width="24" height="24" fill="#000" />
+          {/* corpo a cerchio */}
+          <circle cx="12.5" cy="14" r="8.6" fill="#fff" />
+          {/* testa: muso a sinistra + 2 orecchie */}
+          <path fill="#fff" d="M2 6.6 L5.3 2.6 L6.8 5.7 C 7.7 5.1 8.7 4.8 9.8 4.8 C 10.1 4.8 10.4 4.82 10.7 4.86 L 12.8 1.9 L 14.1 5.9 C 15.3 6.8 16 8.1 16 9.8 C 16 9.8 14.1 8.1 11.3 8.45 C 7.2 8.95 5.4 8.7 2 6.6 Z" />
+          {/* goccia (foro) */}
+          <path fill="#000" d="M11.6 9.3 C 13.7 11.8 14.7 13.7 14.7 15.6 C 14.7 17.4 13.3 18.8 11.6 18.8 C 9.9 18.8 8.5 17.4 8.5 15.6 C 8.5 13.7 9.5 11.8 11.6 9.3 Z" />
+          {/* spacco coda (foro) in basso a destra */}
+          <path fill="#000" d="M21.3 14.4 C 21.3 18.1 19.2 20.9 16 22.1 C 18.4 20 19.5 17.2 18.8 14.2 C 19.9 14.6 20.7 15.6 21.3 14.4 Z" />
+        </mask>
       </defs>
-      {/* 🔧 normalizza: solo la maschera (orecchie+muso), bbox y 1.6..17 → centro+altezza come le altre */}
-      <g transform="translate(12 11.9) scale(1.04) translate(-12 -9.3)">
-
-      {/* ✨ 3 stelline sopra (come nell'immagine) */}
-      {active && (
-        <g fill="#FCD34D">
-          <path d="M9 2.4 l.3 .7 .7 .3 -.7 .3 -.3 .7 -.3 -.7 -.7 -.3 .7 -.3 z" />
-          <path d="M12 1.6 l.35 .8 .8 .35 -.8 .35 -.35 .8 -.35 -.8 -.8 -.35 .8 -.35 z" />
-          <path d="M15 2.4 l.3 .7 .7 .3 -.7 .3 -.3 .7 -.3 -.7 -.7 -.3 .7 -.3 z" />
-        </g>
-      )}
-
-      {/* ⚙️ ingranaggio dietro a sinistra */}
-      <g stroke={gear} strokeWidth={active ? "0" : "0.4"}>
-        <path
-          d="M5.6 7.2 l.9-.5 .6 .9 1 -.2 .3 1 1 .3 -.2 1 .7 .8 -.7 .8 .5 .9 -.9 .5 0 1 -1 .2 -.5 .9 -1 -.3 -.8 .6 -.8 -.6 -1 .3 -.5 -.9 -1 -.2 0 -1 -.9 -.5 .5 -.9 -.3 -1 1 -.3 .2 -1 1 .2 .6 -.9 z"
-          fill={gear}
-          opacity={active ? "0.9" : "0.7"}
-        />
-        <circle cx="6.7" cy="11.4" r="1.6" fill={active ? "#78350F" : "#374151"} />
-      </g>
-
-      {/* orecchie */}
-      <path d="M8.2 8.2 L8.4 2.8 L12 6 Z" fill={`url(#${gEar})`} stroke={line} strokeWidth="0.6" strokeLinejoin="round" />
-      <path d="M15.8 8.2 L15.6 2.8 L12 6 Z" fill={`url(#${gEar})`} stroke={line} strokeWidth="0.6" strokeLinejoin="round" />
-      <path d="M9.2 7 L9.4 4.6 L11 6.2 Z" fill={dark} opacity="0.7" />
-      <path d="M14.8 7 L14.6 4.6 L13 6.2 Z" fill={dark} opacity="0.7" />
-
-      {/* muso della volpe */}
-      <path
-        d="M12 5.4 C 15.4 5.4 17 7.6 17 10.2 C 17 12.4 15.6 14.2 13.9 15.4 L12 17 L10.1 15.4 C 8.4 14.2 7 12.4 7 10.2 C 7 7.6 8.6 5.4 12 5.4 Z"
-        fill={`url(#${g})`}
-        stroke={line}
-        strokeWidth="0.7"
-        strokeLinejoin="round"
-      />
-      {/* maschera scura (markings) attorno agli occhi/fronte */}
-      <path d="M12 6.6 L10.2 9.4 L8.4 8.2 C 8.9 7.1 10.2 6.6 12 6.6 Z" fill={dark} opacity="0.55" />
-      <path d="M12 6.6 L13.8 9.4 L15.6 8.2 C 15.1 7.1 13.8 6.6 12 6.6 Z" fill={dark} opacity="0.55" />
-
-      {/* occhi luminosi e affilati */}
-      <path d="M8.9 10.4 L11 9.9 L10.4 11.3 Z" fill={eyes} />
-      <path d="M15.1 10.4 L13 9.9 L13.6 11.3 Z" fill={eyes} />
-
-      {/* naso */}
-      <path d="M12 12.6 L10.9 13.9 H13.1 Z" fill={active ? "#1C1917" : "#1f2937"} />
-
-      {/* riflesso sulla fronte */}
-      {active && <path d="M11.4 6.2 C 10.6 7 10.3 8 10.6 9" stroke="#FFFDF5" strokeWidth="0.7" strokeLinecap="round" opacity="0.6" fill="none" />}
-      </g>
+      <rect width="24" height="24" fill={fox} mask={`url(#${g}-m)`} />
+      {/* glint sul corpo */}
+      {active && <circle cx="8.4" cy="11" r="0.9" fill="#FFFDF5" opacity="0.55" />}
     </svg>
   );
 };
