@@ -12,7 +12,7 @@ const TITOLARE_NOME = "Giuseppe Chighini";
 const TITOLARE_EMAIL = "loveableconnect@hotmail.com";
 const NOME_SITO = "LoveableConnect";
 const URL_SITO = "https://loveableconnect.vercel.app";
-const DATA_AGGIORNAMENTO = "21 maggio 2026";
+const DATA_AGGIORNAMENTO = "31 maggio 2026";
 
 const TermsAndConditions = () => {
   const navigate = useNavigate();
@@ -126,8 +126,9 @@ const TermsAndConditions = () => {
                       </li>
                       <li>
                         <strong>Dati di utilizzo:</strong> messaggi inviati e ricevuti
-                        (testo, voce), &laquo;like&raquo;, match, partite ai minigame,
-                        punteggio ELO, crediti accumulati o spesi, abbonamenti attivi.
+                        (testo, voce), &laquo;like&raquo;, match, partite ai minigame e
+                        tornei, punteggio ELO, titoli ottenuti, risposte fornite nei
+                        giochi di affinità, crediti accumulati o spesi, abbonamenti attivi.
                       </li>
                       <li>
                         <strong>Dati di pagamento:</strong> i pagamenti vengono gestiti
@@ -193,7 +194,12 @@ const TermsAndConditions = () => {
                       visualizzazione, {NOME_SITO} utilizza una logica algoritmica
                       automatizzata che tiene conto di parametri quali la distanza
                       geografica, le preferenze indicate, l'attività sulla piattaforma e
-                      l'eventuale punteggio dei minigame. Tale trattamento configura una
+                      l'eventuale punteggio dei minigame. Anche la funzione ludica{" "}
+                      &laquo;Tenta il Destino&raquo; propone profili sulla base delle
+                      preferenze e delle risposte fornite volontariamente dall'utente
+                      durante il gioco; tali risposte sono utilizzate esclusivamente per
+                      suggerire profili nell'ambito di quella sessione e non vengono
+                      impiegate per finalità diverse. Tale trattamento configura una
                       forma di profilazione ai sensi dell'art. 22 GDPR, ma{" "}
                       <strong>non produce effetti giuridici né incide in modo
                       significativo sulla persona</strong>: le scelte di interazione
@@ -394,8 +400,12 @@ const TermsAndConditions = () => {
                     <p>
                       {NOME_SITO} è una piattaforma online di socializzazione e dating
                       che consente agli utenti di creare un profilo, conoscersi, scambiarsi
-                      messaggi e partecipare a minigame interattivi (Tris, Dama) con un
-                      sistema di punteggio ELO.
+                      messaggi e partecipare a minigame interattivi (Tris, Othello, Dama)
+                      con un sistema di punteggio ELO, classifiche, titoli e tornei a
+                      eliminazione. Il Sito offre inoltre funzionalità ludiche di scoperta
+                      dei profili, tra cui &laquo;Tenta il Destino&raquo;, che propone
+                      profili potenzialmente compatibili sulla base delle preferenze e
+                      delle risposte fornite dall'utente.
                     </p>
                     <p>
                       Il servizio è erogato dal Titolare ({TITOLARE_NOME}) ed è
@@ -643,20 +653,37 @@ const TermsAndConditions = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">10. Minigame e classifica ELO</h3>
+                    <h3 className="text-lg font-semibold">10. Minigame, classifica, titoli e tornei</h3>
                     <p>
-                      Il Sito offre minigame (attualmente Tris e Dama) giocabili tra
-                      utenti. La partecipazione modifica il punteggio ELO dell'utente
+                      Il Sito offre minigame (attualmente Tris, Othello e Dama) giocabili
+                      tra utenti. La partecipazione modifica il punteggio ELO dell'utente
                       secondo le regole di volta in volta indicate sul Sito (per
                       esempio: aumento del punteggio in caso di vittoria, diminuzione in
                       caso di sconfitta, attribuzione di crediti per le vittorie).
                     </p>
                     <p>
-                      Sul Sito può essere mostrata una classifica dei migliori giocatori.
-                      L'inserimento nella classifica avviene automaticamente in base ai
-                      risultati di gioco. È vietato utilizzare bot, automatismi o
-                      stratagemmi per alterare i risultati; in tali casi il Titolare può
-                      annullare i punti, i crediti acquisiti e l'account stesso.
+                      Sul Sito può essere mostrata una classifica dei migliori giocatori e
+                      possono essere assegnati <strong>titoli e riconoscimenti</strong>{" "}
+                      (ad esempio per il raggiungimento di determinati traguardi di
+                      vittorie o di punteggio ELO). L'inserimento in classifica e
+                      l'assegnazione dei titoli avvengono automaticamente in base ai
+                      risultati di gioco e hanno finalità esclusivamente ludiche, senza
+                      attribuire all'utente alcun diritto economico.
+                    </p>
+                    <p>
+                      Il Sito può inoltre proporre <strong>tornei a eliminazione</strong>{" "}
+                      (ad esempio su Othello e Dama). La partecipazione può richiedere
+                      l'impiego di una partita giornaliera o di crediti; i premi
+                      eventualmente previsti (in crediti virtuali e/o punteggio ELO) sono
+                      quelli indicati sul Sito al momento dell'iscrizione al torneo e non
+                      sono in alcun caso convertibili in denaro. Le regole, gli
+                      abbinamenti e gli eventuali spareggi sono gestiti automaticamente
+                      dalla piattaforma.
+                    </p>
+                    <p>
+                      È vietato utilizzare bot, automatismi o stratagemmi per alterare i
+                      risultati; in tali casi il Titolare può annullare i punti, i titoli,
+                      i crediti acquisiti e l'account stesso.
                     </p>
                   </div>
 
