@@ -72,7 +72,8 @@ export const ChampionBadgesRow = ({
           }`}
         >
           {icon}
-          {typeof count === "number" && count > 0 && (
+          {/* Il numero appare SOLO da 2 in su: con 1 solo titolo si vede l'icona pulita. */}
+          {typeof count === "number" && count > 1 && (
             <span className="absolute -bottom-1 -right-1 px-1 min-w-[14px] h-[14px] flex items-center justify-center rounded-full bg-pink-600 text-white text-[9px] font-black leading-none border border-pink-300/60">
               {count}
             </span>
@@ -101,14 +102,12 @@ export const ChampionBadgesRow = ({
       <Badge
         icon={<SettimanaIcon className={iconCls} active={badges.weeks > 0} />}
         active={badges.weeks > 0}
-        count={badges.weeks}
         title="Weekly Champion"
         desc="Titolo ottenuto restando in prima posizione nella classifica per una settimana intera."
       />
       <Badge
         icon={<MeseIcon className={iconCls} active={badges.months > 0} />}
         active={badges.months > 0}
-        count={badges.months}
         title="Monthly Champion"
         desc="Titolo ottenuto restando in prima posizione nella classifica per un mese intero."
       />
