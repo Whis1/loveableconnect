@@ -68,54 +68,35 @@ export const CampioneIcon: React.FC<ChampionIconProps> = ({ className, active = 
   );
 };
 
-// 2) WEEKLY CHAMPION — coppa dorata con corona e rami d'alloro (da immagine utente)
+// 2) WEEKLY CHAMPION — pedina del Re degli scacchi, dorata (semplice + croce in cima)
 export const SettimanaIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
   const g = useGradId("week");
-  const gem = useGradId("weekgem");
-  const leaf = active ? "#CA8A04" : "#4b5563";
   const line = active ? "#92400E" : "#374151";
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id={g} x1="6" y1="6" x2="18" y2="19" gradientUnits="userSpaceOnUse">
+        <linearGradient id={g} x1="7" y1="2" x2="17" y2="21" gradientUnits="userSpaceOnUse">
           <stop stopColor={active ? "#FEF3C7" : "#6b7280"} />
           <stop offset="0.5" stopColor={active ? "#FBBF24" : "#565d6b"} />
           <stop offset="1" stopColor={active ? "#B45309" : "#4b5563"} />
         </linearGradient>
-        <radialGradient id={gem} cx="0.5" cy="0.4" r="0.7">
-          <stop stopColor={active ? "#FCA5A5" : "#6b7280"} />
-          <stop offset="1" stopColor={active ? "#DC2626" : "#4b5563"} />
-        </radialGradient>
       </defs>
-      {/* 🔧 normalizza al riferimento (centro y≈11.9, altezza ≈16.8) — bbox 2.4..18.9 */}
-      <g transform="translate(12 11.9) scale(1.02) translate(-12 -10.65)">
-      {/* rami d'alloro che abbracciano la coppa */}
-      <g fill={leaf}>
-        {/* sinistra */}
-        <path d="M5.4 17.4 C 2.4 15.4 1.6 12 2.6 9.2 C 3.4 11 4.4 12 5.8 12.6 C 4.8 13.8 4.8 15.6 5.4 17.4 Z" opacity="0.95" />
-        <ellipse cx="3.0" cy="11.4" rx="1.5" ry="0.7" transform="rotate(-32 3.0 11.4)" />
-        <ellipse cx="3.5" cy="14" rx="1.4" ry="0.66" transform="rotate(-14 3.5 14)" />
-        {/* destra */}
-        <path d="M18.6 17.4 C 21.6 15.4 22.4 12 21.4 9.2 C 20.6 11 19.6 12 18.2 12.6 C 19.2 13.8 19.2 15.6 18.6 17.4 Z" opacity="0.95" />
-        <ellipse cx="21.0" cy="11.4" rx="1.5" ry="0.7" transform="rotate(32 21.0 11.4)" />
-        <ellipse cx="20.5" cy="14" rx="1.4" ry="0.66" transform="rotate(14 20.5 14)" />
-      </g>
-      {/* corona sopra la coppa */}
-      <path d="M8.5 5.4 L9.9 3.2 L12 4.8 L14.1 3.2 L15.5 5.4 Z" fill={`url(#${g})`} stroke={line} strokeWidth="0.55" strokeLinejoin="round" />
-      <circle cx="12" cy="3.1" r="0.7" fill={`url(#${gem})`} />
-      <circle cx="12" cy="5.2" r="0.85" fill={`url(#${gem})`} />
-      {/* manici */}
-      <path d="M8 8.2 C 5.8 8.2 5.6 11 7.8 11.3" stroke={line} strokeWidth="1.2" strokeLinecap="round" fill="none" />
-      <path d="M16 8.2 C 18.2 8.2 18.4 11 16.2 11.3" stroke={line} strokeWidth="1.2" strokeLinecap="round" fill="none" />
-      {/* coppa */}
-      <path d="M7.6 6.6 H16.4 V8.6 C 16.4 11.5 14.5 13.4 12 13.4 C 9.5 13.4 7.6 11.5 7.6 8.6 Z" fill={`url(#${g})`} stroke={line} strokeWidth="0.7" strokeLinejoin="round" />
-      {/* stelo + base */}
-      <rect x="11" y="13.2" width="2" height="2.6" fill={`url(#${g})`} />
-      <rect x="8.6" y="15.6" width="6.8" height="1.5" rx="0.5" fill={`url(#${g})`} stroke={line} strokeWidth="0.5" />
-      <rect x="7.4" y="17" width="9.2" height="1.9" rx="0.7" fill={`url(#${g})`} stroke={line} strokeWidth="0.5" />
-      {/* riflesso sulla coppa */}
-      {active && <path d="M9.4 7.6 C 9 9 9.1 10.2 9.7 11.2" stroke="#FFFBEB" strokeWidth="0.8" strokeLinecap="round" opacity="0.55" fill="none" />}
-      </g>
+      {/* ♔ croce in cima */}
+      <path d="M11 1.6 H13 V3.4 H14.8 V5.4 H13 V7 H11 V5.4 H9.2 V3.4 H11 Z"
+        fill={`url(#${g})`} stroke={line} strokeWidth="0.5" strokeLinejoin="round" />
+      {/* testa / colletto sotto la croce */}
+      <path d="M9 7.6 C 9 6.6 15 6.6 15 7.6 C 15 8.5 14 9 12 9 C 10 9 9 8.5 9 7.6 Z"
+        fill={`url(#${g})`} stroke={line} strokeWidth="0.6" strokeLinejoin="round" />
+      {/* corpo svasato della pedina */}
+      <path d="M9.5 9 C 9.2 11 8 12.4 7.2 14.4 C 6.6 15.9 6.4 17 6.4 18 H17.6 C 17.6 17 17.4 15.9 16.8 14.4 C 16 12.4 14.8 11 14.5 9 Z"
+        fill={`url(#${g})`} stroke={line} strokeWidth="0.7" strokeLinejoin="round" />
+      {/* fascia centrale (collare) */}
+      <path d="M7.6 13.4 H16.4" stroke={line} strokeWidth="0.7" strokeLinecap="round" opacity="0.6" />
+      {/* base a due gradini */}
+      <rect x="6" y="18" width="12" height="1.7" rx="0.6" fill={`url(#${g})`} stroke={line} strokeWidth="0.5" />
+      <rect x="5" y="19.5" width="14" height="1.9" rx="0.8" fill={`url(#${g})`} stroke={line} strokeWidth="0.5" />
+      {/* riflesso */}
+      {active && <path d="M10 9.6 C 9.2 11.4 8.6 13 8.7 14.8" stroke="#FFFBEB" strokeWidth="0.8" strokeLinecap="round" opacity="0.5" fill="none" />}
     </svg>
   );
 };
