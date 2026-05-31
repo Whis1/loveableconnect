@@ -52,12 +52,15 @@ export const ChampionBadgesRow = ({
 
   const Badge = ({
     icon,
+    preview,
     active,
     count,
     title,
     desc,
   }: {
     icon: React.ReactNode;
+    /** Icona SEMPRE accesa (a colori), mostrata grande nel tooltip come anteprima. */
+    preview: React.ReactNode;
     active: boolean;
     count?: number;
     title: string;
@@ -80,7 +83,9 @@ export const ChampionBadgesRow = ({
           )}
         </button>
       </TooltipTrigger>
-      <TooltipContent side="top" className="max-w-[240px] text-left leading-relaxed">
+      <TooltipContent side="top" className="max-w-[240px] text-center leading-relaxed">
+        {/* 🔎 Anteprima dell'icona SBLOCCATA (accesa), più grande, sopra il titolo */}
+        <div className="flex justify-center mb-1.5">{preview}</div>
         <strong>{title}</strong>
         <br />
         {desc}
@@ -89,24 +94,29 @@ export const ChampionBadgesRow = ({
   );
 
   const showMilestones = typeof wins === "number" || typeof elo === "number";
+  // dimensione dell'icona-anteprima (accesa) mostrata nel tooltip
+  const previewCls = "w-12 h-12";
 
   // Gruppo 1 — titoli di classifica
   const rankBadges = (
     <>
       <Badge
         icon={<CampioneIcon className={iconCls} active={isChampion} />}
+        preview={<CampioneIcon className={previewCls} active />}
         active={isChampion}
         title="Champion"
         desc="Titolo ottenuto raggiungendo per la prima volta la vetta della classifica."
       />
       <Badge
         icon={<SettimanaIcon className={iconCls} active={badges.weeks > 0} />}
+        preview={<SettimanaIcon className={previewCls} active />}
         active={badges.weeks > 0}
         title="Weekly Champion"
         desc="Titolo ottenuto restando in prima posizione nella classifica per una settimana intera."
       />
       <Badge
         icon={<MeseIcon className={iconCls} active={badges.months > 0} />}
+        preview={<MeseIcon className={previewCls} active />}
         active={badges.months > 0}
         title="Monthly Champion"
         desc="Titolo ottenuto restando in prima posizione nella classifica per un mese intero."
@@ -114,6 +124,7 @@ export const ChampionBadgesRow = ({
       {typeof tournamentsWon === "number" && (
         <Badge
           icon={<TorneiIcon className={iconCls} active={tournamentsWon > 0} />}
+          preview={<TorneiIcon className={previewCls} active />}
           active={tournamentsWon > 0}
           count={tournamentsWon}
           title="Tournament Champion"
@@ -130,24 +141,28 @@ export const ChampionBadgesRow = ({
         <>
           <Badge
             icon={<VeteranIcon className={iconCls} active={wins >= 50} />}
+            preview={<VeteranIcon className={previewCls} active />}
             active={wins >= 50}
             title="Cunning Mind"
             desc="Titolo ottenuto vincendo 50 partite."
           />
           <Badge
             icon={<GladiatorIcon className={iconCls} active={wins >= 100} />}
+            preview={<GladiatorIcon className={previewCls} active />}
             active={wins >= 100}
             title="Strategic Mind"
             desc="Titolo ottenuto vincendo 100 partite."
           />
           <Badge
             icon={<WarlordIcon className={iconCls} active={wins >= 500} />}
+            preview={<WarlordIcon className={previewCls} active />}
             active={wins >= 500}
             title="Flawless Mind"
             desc="Titolo ottenuto vincendo 500 partite."
           />
           <Badge
             icon={<LegendIcon className={iconCls} active={wins >= 1000} />}
+            preview={<LegendIcon className={previewCls} active />}
             active={wins >= 1000}
             title="Masterful Mind"
             desc="Titolo ottenuto vincendo 1000 partite."
@@ -158,12 +173,14 @@ export const ChampionBadgesRow = ({
         <>
           <Badge
             icon={<EloMasterIcon className={iconCls} active={elo >= 2500} />}
+            preview={<EloMasterIcon className={previewCls} active />}
             active={elo >= 2500}
             title="Apex"
             desc="Titolo ottenuto raggiungendo i 2.500 punti ELO."
           />
           <Badge
             icon={<EloGrandmasterIcon className={iconCls} active={elo >= 3000} />}
+            preview={<EloGrandmasterIcon className={previewCls} active />}
             active={elo >= 3000}
             title="Zenith"
             desc="Titolo ottenuto raggiungendo i 3.000 punti ELO."
