@@ -320,40 +320,63 @@ export const MeseIcon: React.FC<ChampionIconProps> = ({ className, active = true
 //    di speciale, ma tutte sono disegnate nello stesso viewBox 24×24 con
 //    ingombro centrato simile → nel pannello appaiono della STESSA dimensione.
 //    `active` accende il gradient; se false l'icona è spenta/grigia.
-//    Vittorie (tema "Mind"): Cunning Mind(volpe-logo,50) →
+//    Vittorie (tema "Mind"): Cunning Mind(maschere teatro,50) →
 //      Strategic Mind(torre scacchi,100) → Flawless Mind(cervello,500) →
 //      Masterful Mind(occhio onnisciente,1000).
 //    ELO:    Apex(vetta,2500) → Zenith(cristalli blu/oro + stella su piedistallo,3000).
 // ───────────────────────────────────────────────────────────────────────────
 
-// 50 vittorie — CUNNING MIND: volpe-logo (silhouette + coda a cerchio + goccia, da immagine utente)
+// 50 vittorie — CUNNING MIND: 🎭 maschere del teatro (commedia magenta + tragedia ciano, brillanti/rare)
 export const VeteranIcon: React.FC<ChampionIconProps> = ({ className, active = true }) => {
-  const g = useGradId("ms-cunning");
-  const fox = active ? `url(#${g})` : "#6b7280";
+  const gM = useGradId("ms-cunning-m");
+  const gC = useGradId("ms-cunning-c");
+  const magenta = active ? `url(#${gM})` : "#6b7280";
+  const cyan = active ? `url(#${gC})` : "#9ca3af";
+  const mLine = active ? "#86198F" : "#374151";
+  const cLine = active ? "#0E7490" : "#4b5563";
+  const holes = active ? "#3B0764" : "#1f2937";
+  const cHoles = active ? "#083344" : "#1f2937";
+  // sagoma maschera teatrale centrata su cx
+  const maskShape = (cx: number) =>
+    `M ${cx - 3.6} 6 C ${cx - 3.6} 4.6 ${cx - 2} 3.8 ${cx} 3.8 C ${cx + 2} 3.8 ${cx + 3.6} 4.6 ${cx + 3.6} 6 C ${cx + 3.6} 9 ${cx + 2.6} 13 ${cx} 14.4 C ${cx - 2.6} 13 ${cx - 3.6} 9 ${cx - 3.6} 6 Z`;
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id={g} x1="4" y1="3" x2="20" y2="21" gradientUnits="userSpaceOnUse">
-          <stop stopColor={active ? "#FEF3C7" : "#9ca3af"} />
-          <stop offset="0.5" stopColor={active ? "#FBBF24" : "#6b7280"} />
-          <stop offset="1" stopColor={active ? "#B45309" : "#4b5563"} />
+        <linearGradient id={gM} x1="6" y1="3" x2="13" y2="15" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#F0ABFC" : "#9ca3af"} />
+          <stop offset="1" stopColor={active ? "#C026D3" : "#4b5563"} />
         </linearGradient>
-        {/* maschera: corpo+testa pieni, goccia e spacco coda "ritagliati" */}
-        <mask id={`${g}-m`}>
-          <rect width="24" height="24" fill="#000" />
-          {/* corpo a cerchio */}
-          <circle cx="12.5" cy="14" r="8.6" fill="#fff" />
-          {/* testa: muso a sinistra + 2 orecchie */}
-          <path fill="#fff" d="M2 6.6 L5.3 2.6 L6.8 5.7 C 7.7 5.1 8.7 4.8 9.8 4.8 C 10.1 4.8 10.4 4.82 10.7 4.86 L 12.8 1.9 L 14.1 5.9 C 15.3 6.8 16 8.1 16 9.8 C 16 9.8 14.1 8.1 11.3 8.45 C 7.2 8.95 5.4 8.7 2 6.6 Z" />
-          {/* goccia (foro) */}
-          <path fill="#000" d="M11.6 9.3 C 13.7 11.8 14.7 13.7 14.7 15.6 C 14.7 17.4 13.3 18.8 11.6 18.8 C 9.9 18.8 8.5 17.4 8.5 15.6 C 8.5 13.7 9.5 11.8 11.6 9.3 Z" />
-          {/* spacco coda (foro) in basso a destra */}
-          <path fill="#000" d="M21.3 14.4 C 21.3 18.1 19.2 20.9 16 22.1 C 18.4 20 19.5 17.2 18.8 14.2 C 19.9 14.6 20.7 15.6 21.3 14.4 Z" />
-        </mask>
+        <linearGradient id={gC} x1="11" y1="4" x2="18" y2="16" gradientUnits="userSpaceOnUse">
+          <stop stopColor={active ? "#A5F3FC" : "#a1a1aa"} />
+          <stop offset="1" stopColor={active ? "#06B6D4" : "#565d6b"} />
+        </linearGradient>
       </defs>
-      <rect width="24" height="24" fill={fox} mask={`url(#${g}-m)`} />
-      {/* glint sul corpo */}
-      {active && <circle cx="8.4" cy="11" r="0.9" fill="#FFFDF5" opacity="0.55" />}
+      {/* 🔧 normalizza: bbox y≈2.4..16.6 → centro y=12, altezza ~16.8 come le altre */}
+      <g transform="translate(12 11.9) scale(1.18) translate(-12 -9.3)">
+        {/* ✨ bagliori "rara" */}
+        {active && (
+          <g fill="#F5F3FF">
+            <path d="M3.4 4.4 l.3 .7 .7 .3 -.7 .3 -.3 .7 -.3 -.7 -.7 -.3 .7 -.3 z" opacity="0.9" />
+            <path d="M20.4 5.6 l.3 .7 .7 .3 -.7 .3 -.3 .7 -.3 -.7 -.7 -.3 .7 -.3 z" opacity="0.85" />
+          </g>
+        )}
+        {/* maschera SINISTRA — commedia (magenta, sorride) */}
+        <g transform="rotate(-12 9.5 9)">
+          <path d={maskShape(9.5)} fill={magenta} stroke={mLine} strokeWidth="0.5" strokeLinejoin="round" />
+          <ellipse cx="8" cy="7.5" rx="0.9" ry="1.2" fill={holes} />
+          <ellipse cx="11" cy="7.5" rx="0.9" ry="1.2" fill={holes} />
+          <path d="M7.6 10.4 C 8.4 11.6 10.6 11.6 11.4 10.4" stroke={holes} strokeWidth="0.85" fill="none" strokeLinecap="round" />
+          {active && <path d="M7 5.4 C 6.4 6.4 6.3 7.6 6.7 8.6" stroke="#FDF4FF" strokeWidth="0.6" strokeLinecap="round" opacity="0.7" fill="none" />}
+        </g>
+        {/* maschera DESTRA — tragedia (ciano, triste), un po' più in basso */}
+        <g transform="rotate(12 14.5 10) translate(0 1)">
+          <path d={maskShape(14.5)} fill={cyan} stroke={cLine} strokeWidth="0.5" strokeLinejoin="round" />
+          <ellipse cx="13" cy="7.5" rx="0.9" ry="1.2" fill={cHoles} />
+          <ellipse cx="16" cy="7.5" rx="0.9" ry="1.2" fill={cHoles} />
+          <path d="M12.6 11 C 13.4 9.8 15.6 9.8 16.4 11" stroke={cHoles} strokeWidth="0.85" fill="none" strokeLinecap="round" />
+          {active && <path d="M12 5.4 C 11.4 6.4 11.3 7.6 11.7 8.6" stroke="#ECFEFF" strokeWidth="0.6" strokeLinecap="round" opacity="0.7" fill="none" />}
+        </g>
+      </g>
     </svg>
   );
 };
