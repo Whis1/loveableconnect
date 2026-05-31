@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useBanCheck } from "@/hooks/useBanCheck";
-import { ArrowLeft, MapPin, Filter, RotateCcw, Search as SearchIcon, Heart, MessageCircle } from "lucide-react";
+import { ArrowLeft, MapPin, Filter, RotateCcw, Search as SearchIcon, Heart, MessageCircle, Sparkles } from "lucide-react";
 import { ProfileGridCard } from "@/components/ProfileGridCard";
+import { DestinyGame } from "@/components/DestinyGame";
 import { MatchBanner } from "@/components/MatchBanner";
 import { PageLoader } from "@/components/PageLoader";
 import { useTextTranslation } from "@/hooks/useTranslation";
@@ -88,6 +89,7 @@ const Explore = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
+  const [showDestiny, setShowDestiny] = useState(false);
   const [showGeoLoader, setShowGeoLoader] = useState(true);
   // Pagina corrente (0-indexed) e count totale dei profili disponibili
   const [currentPage, setCurrentPage] = useState(0);
@@ -829,7 +831,16 @@ const Explore = () => {
           onClose={() => setMatchBanner({ show: false, userName: "", userAvatar: null })}
         />
       )}
-      
+
+      {/* 🔮 Tenta il Destino */}
+      {showDestiny && currentUser && (
+        <DestinyGame
+          currentUserId={currentUser}
+          onClose={() => setShowDestiny(false)}
+          onMatch={(name, avatar) => { ignoreNextRealtimeRef.current = true; handleMatch(name, avatar); }}
+        />
+      )}
+
       {/* Background Image */}
       <div 
         className="fixed inset-0 z-0 opacity-15 dark:opacity-25" 
@@ -848,14 +859,25 @@ const Explore = () => {
               <ArrowLeft className="h-4 w-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">{t("explore.back")}</span>
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowFilters(!showFilters)}
-              size="sm"
-            >
-              <Filter className="h-4 w-4 md:mr-2" />
-              <span className="hidden sm:inline">{t("explore.filters")}</span>
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* 🔮 Tenta il Destino — minigioco di matching a click */}
+              <Button
+                onClick={() => setShowDestiny(true)}
+                size="sm"
+                className="bg-gradient-to-r from-fuchsia-500 to-pink-500 hover:from-fuchsia-600 hover:to-pink-600 text-white font-semibold shadow-lg shadow-fuchsia-500/25"
+              >
+                <Sparkles className="h-4 w-4 md:mr-2" />
+                <span className="hidden sm:inline">Tenta il Destino</span>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowFilters(!showFilters)}
+                size="sm"
+              >
+                <Filter className="h-4 w-4 md:mr-2" />
+                <span className="hidden sm:inline">{t("explore.filters")}</span>
+              </Button>
+            </div>
           </div>
 
           {/* Filters Panel */}
