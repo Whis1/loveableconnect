@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { profileImageUrl } from "@/lib/imageUrl";
 import { ParticipantRow } from "@/hooks/useTournament";
 
 interface TournamentOpponentSearchProps {
@@ -161,10 +162,10 @@ export const TournamentOpponentSearch = ({
     photos: string[] | null | undefined
   ): string => {
     if (avatar_url) {
-      return supabase.storage.from("profile-images").getPublicUrl(avatar_url).data.publicUrl;
+      return profileImageUrl(avatar_url, "card");
     }
     if (photos && photos.length > 0) {
-      return supabase.storage.from("profile-images").getPublicUrl(photos[0]).data.publicUrl;
+      return profileImageUrl(photos[0], "card");
     }
     return "";
   };

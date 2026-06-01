@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { useTextTranslation } from "@/hooks/useTranslation";
 import { ProfileDialog } from "./ProfileDialog";
 import { getGenericLocationPhrase } from "@/lib/utils";
+import { profileImageUrl } from "@/lib/imageUrl";
 import { useDailyLikes } from "@/hooks/useDailyLikes";
 import { useCredits } from "@/hooks/useCredits";
 import { useSendLike } from "@/hooks/useSendLike";
@@ -228,8 +229,10 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
     loadTranslation();
   }, [profile.bio, profile.translatedBio]);
 
+  // 🖼️ Avatar bacheca: versione OTTIMIZZATA (preset "grid", ~400px) invece
+  // dell'originale a piena risoluzione. Taglia drasticamente peso e banda.
   const avatarUrl = profile.avatar_url
-    ? supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl
+    ? profileImageUrl(profile.avatar_url, "grid")
     : null;
 
   // Preload avatar per rendering più veloce

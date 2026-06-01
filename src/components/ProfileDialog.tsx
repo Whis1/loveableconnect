@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { MapPin, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { profileImageUrl } from "@/lib/imageUrl";
 import { getGenericLocationPhrase } from "@/lib/utils";
 import profileBadge from "@/assets/profile-badge.png";
 import { SpotifySongCard } from "./SpotifySongCard";
@@ -76,19 +77,10 @@ export const ProfileDialog = ({
     if (initialProfile && initialProfile.id === profileId) {
       setProfile(initialProfile as Profile);
       if (initialProfile.avatar_url) {
-        const { data: urlData } = supabase.storage
-          .from("profile-images")
-          .getPublicUrl(initialProfile.avatar_url);
-        setAvatarUrl(urlData.publicUrl);
+        setAvatarUrl(profileImageUrl(initialProfile.avatar_url, "card"));
       }
       if (initialProfile.photos && initialProfile.photos.length > 0) {
-        const urls = initialProfile.photos.map((photo: string) => {
-          const { data: urlData } = supabase.storage
-            .from("profile-images")
-            .getPublicUrl(photo);
-          return urlData.publicUrl;
-        });
-        setPhotoUrls(urls);
+        setPhotoUrls(initialProfile.photos.map((p: string) => profileImageUrl(p, "card")));
       }
     }
 
@@ -114,23 +106,14 @@ export const ProfileDialog = ({
           favorite_songs: favoriteSongs
         });
         
-        // Get avatar URL
+        // Get avatar URL (ottimizzato)
         if (data.avatar_url) {
-          const { data: urlData } = supabase.storage
-            .from("profile-images")
-            .getPublicUrl(data.avatar_url);
-          setAvatarUrl(urlData.publicUrl);
+          setAvatarUrl(profileImageUrl(data.avatar_url, "card"));
         }
 
-        // Get photo URLs
+        // Get photo URLs (ottimizzati)
         if (data.photos && data.photos.length > 0) {
-          const urls = data.photos.map((photo: string) => {
-            const { data: urlData } = supabase.storage
-              .from("profile-images")
-              .getPublicUrl(photo);
-            return urlData.publicUrl;
-          });
-          setPhotoUrls(urls);
+          setPhotoUrls(data.photos.map((p: string) => profileImageUrl(p, "card")));
         }
       }
     };
@@ -162,23 +145,14 @@ export const ProfileDialog = ({
             favorite_songs: favoriteSongs
           });
           
-          // Update avatar URL if changed
+          // Update avatar URL if changed (ottimizzato)
           if (updatedProfile.avatar_url) {
-            const { data: urlData } = supabase.storage
-              .from("profile-images")
-              .getPublicUrl(updatedProfile.avatar_url);
-            setAvatarUrl(urlData.publicUrl);
+            setAvatarUrl(profileImageUrl(updatedProfile.avatar_url, "card"));
           }
-          
-          // Update photo URLs if changed
+
+          // Update photo URLs if changed (ottimizzati)
           if (updatedProfile.photos && updatedProfile.photos.length > 0) {
-            const urls = updatedProfile.photos.map((photo: string) => {
-              const { data: urlData } = supabase.storage
-                .from("profile-images")
-                .getPublicUrl(photo);
-              return urlData.publicUrl;
-            });
-            setPhotoUrls(urls);
+            setPhotoUrls(updatedProfile.photos.map((p: string) => profileImageUrl(p, "card")));
           }
         }
       )

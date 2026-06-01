@@ -10,6 +10,7 @@ import {
   ParticipantRow,
   TournamentRow,
 } from "@/hooks/useTournament";
+import { profileImageUrl } from "@/lib/imageUrl";
 
 const AUTO_START_DELAY_MS = 10000;
 
@@ -100,10 +101,10 @@ export const TournamentBracketView = ({
     const p = participantById.get(profileId);
     if (!p?.profile) return "";
     if (p.profile.avatar_url) {
-      return supabase.storage.from("profile-images").getPublicUrl(p.profile.avatar_url).data.publicUrl;
+      return profileImageUrl(p.profile.avatar_url, "grid");
     }
     if (p.profile.photos && p.profile.photos.length > 0) {
-      return supabase.storage.from("profile-images").getPublicUrl(p.profile.photos[0]).data.publicUrl;
+      return profileImageUrl(p.profile.photos[0], "grid");
     }
     return "";
   };

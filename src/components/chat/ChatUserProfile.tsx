@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { profileImageUrl } from "@/lib/imageUrl";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -187,14 +188,14 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
       <div className="p-4">
         {/* Header con Avatar e Nome */}
         <div className="flex items-center gap-3 mb-3">
-          <ImageDialog 
-            src={profile.avatar_url ? supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl : ''} 
+          <ImageDialog
+            src={profile.avatar_url ? profileImageUrl(profile.avatar_url, 'full') : ''}
             alt={profile.nickname}
           >
             <Avatar className="h-16 w-16 ring-2 ring-primary/20 cursor-pointer hover:ring-primary/40 transition-all shadow-md">
               {profile.avatar_url ? (
-                <AvatarImage 
-                  src={supabase.storage.from('profile-images').getPublicUrl(profile.avatar_url).data.publicUrl}
+                <AvatarImage
+                  src={profileImageUrl(profile.avatar_url, 'thumb')}
                 />
               ) : null}
               <AvatarFallback className="text-xl bg-gradient-to-br from-primary/20 to-secondary/20">
@@ -348,16 +349,18 @@ export const ChatUserProfile = ({ userId, currentUserId, showRealLocation = fals
             <ScrollArea className="w-full">
               <div className="flex gap-2 pb-2">
                 {profile.photos.map((photo, index) => {
-                  const photoUrl = supabase.storage.from('profile-images').getPublicUrl(photo).data.publicUrl;
-                  
+                  // Miniatura leggera (thumb), ma a click apre la versione grande (full).
+                  const thumbUrl = profileImageUrl(photo, 'thumb');
+                  const fullUrl = profileImageUrl(photo, 'full');
+
                   return (
-                    <ImageDialog 
-                      key={index} 
-                      src={photoUrl} 
+                    <ImageDialog
+                      key={index}
+                      src={fullUrl}
                       alt={`${t("chat.photo")} ${index + 1}`}
                     >
                       <img
-                        src={photoUrl}
+                        src={thumbUrl}
                         alt={`${t("chat.photo")} ${index + 1}`}
                         className="h-16 w-16 object-cover rounded-md cursor-pointer hover:opacity-80 hover:scale-105 transition-all flex-shrink-0 shadow-sm"
                       />

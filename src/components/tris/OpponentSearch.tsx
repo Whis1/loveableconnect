@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { computeAdminElos } from "@/lib/adminElo";
+import { profileImageUrl } from "@/lib/imageUrl";
 
 interface Profile {
   id: string;
@@ -112,9 +113,9 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
           <AvatarImage 
             src={
               profiles[currentIndex]?.avatar_url
-                ? supabase.storage.from('profile-images').getPublicUrl(profiles[currentIndex].avatar_url).data.publicUrl
-                : (profiles[currentIndex]?.photos && profiles[currentIndex].photos.length > 0 
-                    ? supabase.storage.from('profile-images').getPublicUrl(profiles[currentIndex].photos[0]).data.publicUrl
+                ? profileImageUrl(profiles[currentIndex].avatar_url, "card")
+                : (profiles[currentIndex]?.photos && profiles[currentIndex].photos.length > 0
+                    ? profileImageUrl(profiles[currentIndex].photos[0], "card")
                     : "")
             }
           />
