@@ -418,22 +418,32 @@ export function computeAdminElos(admins: AdminSeed[]): Map<string, number> {
   // 2) Ordina per ELO desc (tie-break id asc) per individuare le parità.
   computed.sort((x, y) => y.elo - x.elo || (x.id < y.id ? -1 : 1));
 
-  // 3) Risolve le parità col "duello": chi sta sotto ed è pari all'admin sopra
-  //    sfida → vince +20 (sopra), perde -10 (sotto). Lo scaling per posizione
-  //    nel gruppo (raro: 3+ pari) garantisce che restino tutti distinti.
-  let groupElo: number | null = null;
-  let tiedRank = 0;
+  // 3) Risolve le parità col "duello", SENZA mai crearne di nuove.
+  //    Scorriamo dal più forte al più debole tenendo l'ELO assegnato al
+  //    profilo immediatamente sopra (`prevElo`). Per ogni admin:
+  //      - se il suo ELO è STRETTAMENTE minore di prevElo → nessuna parità,
+  //        lo teniamo così com'è;
+  //      - se è >= prevElo (parità con chi sta sopra, o lo scavalca dopo un
+  //        precedente abbassamento) → "duello perso": scende al primo gradino
+  //        libero sotto prevElo, cioè prevElo - 10 (multiplo di 10, coerente
+  //        col sistema +20/-10). Mai sotto 100.
+  //    Così l'ELO è SEMPRE strettamente decrescente lungo la classifica:
+  //    nessun valore può ripetersi, e abbassando (mai alzando) non possiamo
+  //    scavalcare nessuno creando collisioni più in basso (il bug precedente).
+  //    duelWonOverTie resta usata per decidere, in modo deterministico e
+  //    stabile, di quanto scende quando ci sono più pari di fila.
+  let prevElo: number | null = null;
   for (const c of computed) {
-    if (groupElo !== null && c.elo === groupElo) {
-      tiedRank++;
-      const won = duelWonOverTie(c.id, groupElo);
-      const resolved = won ? groupElo + 20 * tiedRank : groupElo - 10 * tiedRank;
-      result.set(c.id, Math.max(100, resolved));
-    } else {
-      result.set(c.id, c.elo);
-      groupElo = c.elo;
-      tiedRank = 0;
+    let elo = c.elo;
+    if (prevElo !== null && elo >= prevElo) {
+      // Parità (o scavalcamento post-abbassamento): scende sotto il precedente.
+      // Chi "vincerebbe" il duello scende di poco (resta subito sotto), chi
+      // perde scende di un gradino in più: in entrambi i casi NON resta pari.
+      const step = duelWonOverTie(c.id, prevElo) ? 10 : 20;
+      elo = Math.max(100, prevElo - step);
     }
+    result.set(c.id, elo);
+    prevElo = elo;
   }
 
   return result;
