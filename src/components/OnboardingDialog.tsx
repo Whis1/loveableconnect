@@ -35,20 +35,25 @@ interface TraitQuestion {
   options: string[];
 }
 
-// Pool di domande sulla PERSONALITÀ DELL'UTENTE (come sei tu), pescate a caso.
-// Diverse da quelle di Tenta il Destino (che chiede "cosa cerchi"): qui
-// descriviamo CHI È l'utente, per suggerirlo agli altri.
+// Pool di domande sulla PERSONALITÀ e lo STILE dell'utente (come sei tu),
+// pescate a caso. NEUTRE rispetto all'intento: la gente entra per amore, ma
+// anche per divertimento, incontri occasionali o nuove amicizie. Niente
+// domande che presuppongono "anima gemella". Servono a descrivere CHI sei,
+// per suggerirti alle persone più affini in "Tenta il Destino".
 const TRAIT_POOL: TraitQuestion[] = [
-  { id: "character", text: "Come ti descriveresti?", options: ["Solare ed estroverso/a", "Calmo/a e riflessivo/a", "Spiritoso/a e ironico/a", "Romantico/a e sognatore/trice"] },
-  { id: "free_time", text: "Nel tempo libero ti trovo...", options: ["Fuori a esplorare", "A casa in relax", "A fare sport", "Tra arte, libri e musica"] },
+  // 🎯 Intento — la più importante, copre TUTTI i motivi per cui si entra
+  { id: "intent", text: "Cosa cerchi qui?", options: ["Divertimento e leggerezza", "Incontri occasionali 🔥", "Nuove amicizie", "Una relazione seria", "Sono qui per curiosità"] },
+  { id: "character", text: "Come ti descriveresti?", options: ["Solare ed estroverso/a", "Calmo/a e riflessivo/a", "Spiritoso/a e ironico/a", "Diretto/a e senza filtri"] },
+  { id: "free_time", text: "Nel tempo libero ti trovo...", options: ["Fuori a far festa", "A casa in relax", "A fare sport", "Tra arte, libri e musica"] },
   { id: "social_energy", text: "In mezzo alla gente sei...", options: ["L'anima della festa", "A mio agio con pochi amici", "Dipende dall'umore", "Più riservato/a"] },
-  { id: "ideal_partner", text: "Cosa cerchi in una persona?", options: ["Intelligenza e profondità", "Senso dell'umorismo", "Gentilezza e dolcezza", "Stile e fascino"] },
-  { id: "weekend_you", text: "Il tuo weekend perfetto?", options: ["Avventura e movimento", "Coccole e relax", "Amici e divertimento", "Cultura ed eventi"] },
-  { id: "love_style", text: "In amore sei più...", options: ["Passionale e intenso/a", "Tenero/a e premuroso/a", "Giocoso/a e leggero/a", "Leale e presente"] },
-  { id: "energy", text: "La tua energia è...", options: ["Mattiniero/a, sveglia all'alba", "Nottambulo/a, vivo di sera", "Equilibrata", "Caotica ma felice"] },
-  { id: "vibe", text: "Che vibe trasmetti?", options: ["Dolce e rassicurante", "Frizzante e travolgente", "Misteriosa e intrigante", "Solida e affidabile"] },
-  { id: "looking_for_serious", text: "Cosa stai cercando qui?", options: ["L'amore vero", "Una storia seria", "Nuove amicizie", "Vediamo dove porta 😊"] },
-  { id: "passion", text: "Cosa ti fa battere il cuore?", options: ["Viaggiare e scoprire", "Buon cibo e compagnia", "Musica e concerti", "Una bella conversazione"] },
+  { id: "first_thing", text: "Cosa noti per prima in una persona?", options: ["Il sorriso", "Il senso dell'umorismo", "Il fisico e lo stile", "Come ti fa sentire"] },
+  { id: "weekend_you", text: "Il tuo weekend perfetto?", options: ["Festa e movida", "Avventura all'aperto", "Relax totale", "Amici e chiacchiere"] },
+  { id: "energy", text: "La tua energia è...", options: ["Mattiniero/a", "Nottambulo/a, vivo di notte", "Equilibrata", "Caotica ma felice"] },
+  { id: "vibe", text: "Che vibe trasmetti?", options: ["Solare e alla mano", "Frizzante e travolgente", "Misteriosa e intrigante", "Tranquilla e genuina"] },
+  { id: "flirt", text: "Quando flirti sei...", options: ["Diretto/a e sicuro/a", "Giocoso/a e ironico/a", "Timido/a ma curioso/a", "Lascio fare all'altro/a"] },
+  { id: "free_tonight", text: "Stasera tipo...", options: ["Uscita last-minute", "Drink in un locale", "Serie TV e divano", "Vedo come gira 😏"] },
+  { id: "passion", text: "Cosa ti accende di più?", options: ["Viaggi e nuove esperienze", "Buon cibo e compagnia", "Musica e concerti", "Una bella conversazione"] },
+  { id: "rhythm", text: "Il tuo ritmo è più...", options: ["Vivo e pieno di cose", "Lento e godereccio", "Imprevedibile", "Dipende dalla giornata"] },
 ];
 
 function shuffle<T>(a: T[]): T[] {
@@ -153,8 +158,9 @@ export const OnboardingDialog = ({ userId, onComplete }: OnboardingDialogProps) 
                 Prima di iniziare, aiutaci a conoscerti: bastano pochi tap.
               </p>
               <p className="text-sm text-gray-400 leading-relaxed mb-7">
-                Personalizzeremo la tua esperienza e renderemo il tuo profilo più
-                facile da trovare per le persone giuste.
+                Che tu cerchi divertimento, nuove amicizie o qualcosa di più,
+                personalizzeremo la tua esperienza e ti faremo trovare dalle
+                persone più in sintonia con te.
               </p>
               <Button
                 onClick={() => setStep(1)}
@@ -242,8 +248,9 @@ export const OnboardingDialog = ({ userId, onComplete }: OnboardingDialogProps) 
               )}
 
               <p className="mt-6 text-center text-[11px] leading-relaxed text-gray-500">
-                Queste risposte ci aiutano a capire chi sei e a suggerire il tuo
-                profilo alle persone più affini nel sistema “Tenta il Destino”.
+                Queste risposte ci aiutano a capire che tipo sei e a suggerire il
+                tuo profilo alle persone più in sintonia con te nel sistema
+                “Tenta il Destino”.
               </p>
             </div>
           )}
