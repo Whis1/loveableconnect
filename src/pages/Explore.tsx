@@ -12,6 +12,7 @@ import { useBanCheck } from "@/hooks/useBanCheck";
 import { ArrowLeft, MapPin, Filter, RotateCcw, Search as SearchIcon, Heart, MessageCircle, Save } from "lucide-react";
 import { ProfileGridCard } from "@/components/ProfileGridCard";
 import { DestinyGame } from "@/components/DestinyGame";
+import { OnboardingDialog } from "@/components/OnboardingDialog";
 import { LoveCompassIcon } from "@/lib/championIcons";
 import { MatchBanner } from "@/components/MatchBanner";
 import { PageLoader } from "@/components/PageLoader";
@@ -94,6 +95,8 @@ const Explore = () => {
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [showDestiny, setShowDestiny] = useState(false);
+  // 🧭 Onboarding al primo accesso (mostrato dopo il caricamento, se non già fatto)
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [showGeoLoader, setShowGeoLoader] = useState(true);
   // Pagina corrente (0-indexed) e count totale dei profili disponibili
   const [currentPage, setCurrentPage] = useState(0);
@@ -249,6 +252,21 @@ const Explore = () => {
       await loadAllProfiles(session.user.id, matches);
 
       if (!cancelled) setLoading(false);
+
+      // 🧭 Onboarding al PRIMO accesso: se non ancora completato, mostralo
+      //    (dopo il caricamento standard della bacheca). best-effort: se la
+      //    colonna non esiste ancora o la query fallisce, semplicemente non
+      //    appare e non blocca nulla.
+      try {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("onboarding_completed")
+          .eq("id", session.user.id)
+          .maybeSingle();
+        if (!cancelled && prof && (prof as any).onboarding_completed === false) {
+          setShowOnboarding(true);
+        }
+      } catch { /* colonna assente o errore: ignora */ }
       // Nota: il setTimeout per chiudere showGeoLoader e' stato spostato
       // in un useEffect separato qui sotto, cosi' parte sempre anche se
       // questa async function si pianta su getSession o loadAllProfiles.
@@ -848,6 +866,47 @@ const Explore = () => {
     }
   };
 
+  // 🧭 Fine onboarding: applica i generi scelti come FILTRI SALVATI (così la
+  //    bacheca mostra subito i profili giusti e restano memorizzati) e chiude.
+  const handleOnboardingComplete = async (selectedGendersFromOnboarding: string[]) => {
+    setShowOnboarding(false);
+    if (!currentUser || selectedGendersFromOnboarding.length === 0) return;
+
+    const filters = {
+      genders: [...selectedGendersFromOnboarding],
+      orientations: [] as string[],
+      ageRange: [18, 60] as [number, number],
+    };
+    // Aggiorna UI dei filtri + modalità filtrata + memoria dispositivo.
+    setSelectedGenders(filters.genders);
+    setActiveFilters(filters);
+    try {
+      localStorage.setItem(EXPLORE_FILTERS_KEY, JSON.stringify(filters));
+    } catch { /* ignora */ }
+
+    setLoading(true);
+    try {
+      const { data: matchesData } = await withFallback(
+        supabase
+          .from("matches")
+          .select("user1_id, user2_id")
+          .or(`user1_id.eq.${currentUser},user2_id.eq.${currentUser}`),
+        { data: [], error: null },
+        4500
+      );
+      const matchedUserIds = new Set(
+        (matchesData || []).map(match =>
+          match.user1_id === currentUser ? match.user2_id : match.user1_id
+        )
+      );
+      await loadFilteredFirstPage(currentUser, matchedUserIds, filters);
+    } catch {
+      /* in caso di errore lascia la bacheca com'è */
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const toggleGender = (gender: string) => {
     setSelectedGenders(prev => 
       prev.includes(gender) 
@@ -927,6 +986,14 @@ const Explore = () => {
           currentUserId={currentUser}
           onClose={() => setShowDestiny(false)}
           onMatch={(name, avatar) => { ignoreNextRealtimeRef.current = true; handleMatch(name, avatar); }}
+        />
+      )}
+
+      {/* 🧭 Onboarding primo accesso */}
+      {showOnboarding && currentUser && (
+        <OnboardingDialog
+          userId={currentUser}
+          onComplete={handleOnboardingComplete}
         />
       )}
 
