@@ -250,13 +250,16 @@ export function InterestsAutocomplete({
             value={inputValue}
             onValueChange={setInputValue}
           />
-          <CommandList>
+          {/* 📜 Lista scrollabile: mostra TUTTI i risultati (non più solo 10),
+              scorrendo se sono tanti. max-h limita l'altezza così non invade
+              tutto il dialog. */}
+          <CommandList className="max-h-60 overflow-y-auto">
             {inputValue.trim() && filteredInterests.length === 0 && (
               <CommandEmpty>{t('common.noInterestsFound')}</CommandEmpty>
             )}
             {inputValue.trim() && filteredInterests.length > 0 && (
               <CommandGroup heading={t('common.selectAnInterest')}>
-                {filteredInterests.slice(0, 10).map((interest) => (
+                {filteredInterests.map((interest) => (
                   <CommandItem
                     key={interest}
                     onSelect={() => handleSelectInterest(interest)}
@@ -265,11 +268,6 @@ export function InterestsAutocomplete({
                     {interest}
                   </CommandItem>
                 ))}
-                {filteredInterests.length > 10 && (
-                  <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                    +{filteredInterests.length - 10} {t('common.moreResults')}
-                  </div>
-                )}
               </CommandGroup>
             )}
           </CommandList>
