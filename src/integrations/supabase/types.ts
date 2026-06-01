@@ -113,6 +113,27 @@ export type Database = {
         }
         Relationships: []
       }
+      app_banners: {
+        Row: {
+          created_at: string
+          id: string
+          image_path: string
+          position: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_path: string
+          position?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_path?: string
+          position?: number
+        }
+        Relationships: []
+      }
       banned_users: {
         Row: {
           banned_at: string
@@ -187,6 +208,27 @@ export type Database = {
           order_id?: string | null
           reason?: string | null
           transaction_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_top1_trophies: {
+        Row: {
+          award_date: string
+          awarded_at: string
+          user_elo: number
+          user_id: string
+        }
+        Insert: {
+          award_date: string
+          awarded_at?: string
+          user_elo: number
+          user_id: string
+        }
+        Update: {
+          award_date?: string
+          awarded_at?: string
+          user_elo?: number
           user_id?: string
         }
         Relationships: []
@@ -791,7 +833,10 @@ export type Database = {
       }
       support_messages: {
         Row: {
+          admin_id: string | null
           created_at: string
+          file_name: string | null
+          file_url: string | null
           id: string
           image_url: string | null
           is_admin_response: boolean
@@ -804,7 +849,10 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          admin_id?: string | null
           created_at?: string
+          file_name?: string | null
+          file_url?: string | null
           id?: string
           image_url?: string | null
           is_admin_response?: boolean
@@ -817,7 +865,10 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          admin_id?: string | null
           created_at?: string
+          file_name?: string | null
+          file_url?: string | null
           id?: string
           image_url?: string | null
           is_admin_response?: boolean
@@ -864,28 +915,289 @@ export type Database = {
         }
         Relationships: []
       }
+      tournament_matches: {
+        Row: {
+          bracket_side: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          is_user_match: boolean
+          loser_id: string | null
+          match_index: number
+          player_a_id: string | null
+          player_b_id: string | null
+          predetermined_winner_id: string | null
+          round: number
+          scheduled_end_at: string | null
+          started_at: string | null
+          status: string
+          tournament_id: string
+          updated_at: string
+          winner_id: string | null
+        }
+        Insert: {
+          bracket_side: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_user_match?: boolean
+          loser_id?: string | null
+          match_index: number
+          player_a_id?: string | null
+          player_b_id?: string | null
+          predetermined_winner_id?: string | null
+          round: number
+          scheduled_end_at?: string | null
+          started_at?: string | null
+          status?: string
+          tournament_id: string
+          updated_at?: string
+          winner_id?: string | null
+        }
+        Update: {
+          bracket_side?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_user_match?: boolean
+          loser_id?: string | null
+          match_index?: number
+          player_a_id?: string | null
+          player_b_id?: string | null
+          predetermined_winner_id?: string | null
+          round?: number
+          scheduled_end_at?: string | null
+          started_at?: string | null
+          status?: string
+          tournament_id?: string
+          updated_at?: string
+          winner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_matches_loser_id_fkey"
+            columns: ["loser_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_matches_player_a_id_fkey"
+            columns: ["player_a_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_matches_player_b_id_fkey"
+            columns: ["player_b_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_matches_predetermined_winner_id_fkey"
+            columns: ["predetermined_winner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_matches_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_matches_winner_id_fkey"
+            columns: ["winner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_participants: {
+        Row: {
+          bracket_side: string
+          created_at: string
+          eliminated_in_round: number | null
+          elo_snapshot: number
+          final_position: number | null
+          id: string
+          is_user: boolean
+          profile_id: string
+          slot: number
+          tournament_id: string
+        }
+        Insert: {
+          bracket_side: string
+          created_at?: string
+          eliminated_in_round?: number | null
+          elo_snapshot: number
+          final_position?: number | null
+          id?: string
+          is_user?: boolean
+          profile_id: string
+          slot: number
+          tournament_id: string
+        }
+        Update: {
+          bracket_side?: string
+          created_at?: string
+          eliminated_in_round?: number | null
+          elo_snapshot?: number
+          final_position?: number | null
+          id?: string
+          is_user?: boolean
+          profile_id?: string
+          slot?: number
+          tournament_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_participants_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_participants_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournaments: {
+        Row: {
+          created_at: string
+          current_round: number
+          finished_at: string | null
+          game_type: string
+          id: string
+          last_heartbeat_at: string
+          rewards_claimed: boolean
+          started_at: string
+          status: string
+          updated_at: string
+          user_final_position: number | null
+          user_id: string
+          user_slot: number
+          winner_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          current_round?: number
+          finished_at?: string | null
+          game_type: string
+          id?: string
+          last_heartbeat_at?: string
+          rewards_claimed?: boolean
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_final_position?: number | null
+          user_id: string
+          user_slot: number
+          winner_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          current_round?: number
+          finished_at?: string | null
+          game_type?: string
+          id?: string
+          last_heartbeat_at?: string
+          rewards_claimed?: boolean
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_final_position?: number | null
+          user_id?: string
+          user_slot?: number
+          winner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournaments_winner_id_fkey"
+            columns: ["winner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tris_games: {
         Row: {
           created_at: string
+          dama_draws: number
+          dama_losses: number
+          dama_wins: number
+          ever_champion: boolean
           games_played_today: number
           id: string
+          last_game_at: string | null
+          last_game_payment_type: string | null
+          last_known_rank: number | null
           last_reset_date: string
+          othello_draws: number
+          othello_losses: number
+          othello_wins: number
+          top_1_trophies: number
+          tournaments_won: number
+          tris_draws: number
+          tris_losses: number
+          tris_wins: number
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          dama_draws?: number
+          dama_losses?: number
+          dama_wins?: number
+          ever_champion?: boolean
           games_played_today?: number
           id?: string
+          last_game_at?: string | null
+          last_game_payment_type?: string | null
+          last_known_rank?: number | null
           last_reset_date?: string
+          othello_draws?: number
+          othello_losses?: number
+          othello_wins?: number
+          top_1_trophies?: number
+          tournaments_won?: number
+          tris_draws?: number
+          tris_losses?: number
+          tris_wins?: number
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          dama_draws?: number
+          dama_losses?: number
+          dama_wins?: number
+          ever_champion?: boolean
           games_played_today?: number
           id?: string
+          last_game_at?: string | null
+          last_game_payment_type?: string | null
+          last_known_rank?: number | null
           last_reset_date?: string
+          othello_draws?: number
+          othello_losses?: number
+          othello_wins?: number
+          top_1_trophies?: number
+          tournaments_won?: number
+          tris_draws?: number
+          tris_losses?: number
+          tris_wins?: number
           updated_at?: string
           user_id?: string
         }
@@ -1010,19 +1322,25 @@ export type Database = {
       }
       user_roles: {
         Row: {
+          admin_tier: number | null
           created_at: string
+          display_name: string | null
           id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
+          admin_tier?: number | null
           created_at?: string
+          display_name?: string | null
           id?: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
+          admin_tier?: number | null
           created_at?: string
+          display_name?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
@@ -1034,6 +1352,80 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _tournament_setup_match: {
+        Args: { _match_id: string; _user_id: string }
+        Returns: undefined
+      }
+      abandon_tournament: {
+        Args: { _reason?: string; _tournament_id: string }
+        Returns: undefined
+      }
+      admin_base_elo: { Args: { id: string }; Returns: number }
+      admin_bucket: { Args: { id: string; now_ms: number }; Returns: number }
+      admin_create_admin_user: {
+        Args: { p_email: string; p_password: string; p_tier: number }
+        Returns: {
+          message: string
+          success: boolean
+          user_id: string
+        }[]
+      }
+      admin_cum_drift: { Args: { cb: number; id: string }; Returns: number }
+      admin_demote: {
+        Args: { p_user_id: string }
+        Returns: {
+          message: string
+          success: boolean
+        }[]
+      }
+      admin_drift1: { Args: { b: number; id: string }; Returns: number }
+      admin_elo: { Args: { id: string; now_ms: number }; Returns: number }
+      admin_games: { Args: { b: number; id: string }; Returns: number }
+      admin_list_tiered: {
+        Args: never
+        Returns: {
+          admin_tier: number
+          created_at: string
+          email: string
+          user_id: string
+        }[]
+      }
+      admin_promote_to_tier: {
+        Args: { p_delete_profile?: boolean; p_email: string; p_tier: number }
+        Returns: {
+          message: string
+          success: boolean
+          user_id: string
+        }[]
+      }
+      advance_tournament: {
+        Args: { _tournament_id: string }
+        Returns: undefined
+      }
+      award_daily_champion_full: {
+        Args: never
+        Returns: {
+          awarded_date: string
+          processed_days: number
+          winner_kind: string
+        }[]
+      }
+      award_daily_top1_if_needed: {
+        Args: never
+        Returns: {
+          awarded_date: string
+          awarded_to: string
+          processed_days: number
+        }[]
+      }
+      award_my_daily_champion: { Args: never; Returns: boolean }
+      award_top1_trophy_if_promoted: {
+        Args: { p_current_rank: number; p_user_id: string }
+        Returns: {
+          awarded: boolean
+          total_trophies: number
+        }[]
+      }
       calculate_distance: {
         Args: { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
@@ -1063,6 +1455,20 @@ export type Database = {
           last_daily_reset: string
         }[]
       }
+      claim_tournament_rewards: {
+        Args: { _tournament_id: string }
+        Returns: {
+          credits_awarded: number
+          elo_delta: number
+          final_position: number
+          game_type: string
+          status: string
+        }[]
+      }
+      cleanup_abandoned_tournaments_internal: {
+        Args: never
+        Returns: undefined
+      }
       consume_daily_like: {
         Args: { _use_credits?: boolean; _user_id: string }
         Returns: {
@@ -1079,6 +1485,20 @@ export type Database = {
           success: boolean
         }[]
       }
+      create_tournament: {
+        Args: {
+          _admin_elos: number[]
+          _admin_ids: string[]
+          _game_type: string
+          _predetermined_winners: string[]
+          _user_elo: number
+        }
+        Returns: {
+          match_durations_seconds: number[]
+          tournament_id: string
+          user_slot: number
+        }[]
+      }
       create_user_report: {
         Args: {
           _match_id: string
@@ -1093,6 +1513,7 @@ export type Database = {
         Returns: boolean
       }
       deduct_message_credits: { Args: { _user_id: string }; Returns: boolean }
+      fnv1a: { Args: { s: string }; Returns: number }
       get_or_create_direct_chat: {
         Args: { _other_user_id: string }
         Returns: {
@@ -1114,6 +1535,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_game_stat: {
+        Args: { p_game: string; p_result: string; p_user_id: string }
+        Returns: undefined
+      }
       is_user_blocked: {
         Args: { user1_id: string; user2_id: string }
         Returns: boolean
@@ -1131,7 +1556,35 @@ export type Database = {
           success: boolean
         }[]
       }
+      mark_champion_reached: { Args: never; Returns: boolean }
+      mark_support_messages_read: {
+        Args: { p_user_id: string }
+        Returns: {
+          updated_count: number
+        }[]
+      }
+      report_user_match_result: {
+        Args: { _match_id: string; _user_won: boolean }
+        Returns: undefined
+      }
       reset_daily_credits: { Args: never; Returns: undefined }
+      resolve_npc_match:
+        | {
+            Args: { _match_id: string }
+            Returns: {
+              match_id: string
+              newly_resolved: boolean
+              winner_id: string
+            }[]
+          }
+        | {
+            Args: { _force?: boolean; _match_id: string }
+            Returns: {
+              match_id: string
+              newly_resolved: boolean
+              winner_id: string
+            }[]
+          }
       send_like: {
         Args: { _to_user_id: string; _use_credits?: boolean }
         Returns: {
@@ -1142,6 +1595,11 @@ export type Database = {
           new_balance: number
           success: boolean
         }[]
+      }
+      start_user_match: { Args: { _match_id: string }; Returns: undefined }
+      tournament_heartbeat: {
+        Args: { _tournament_id: string }
+        Returns: undefined
       }
       unlock_birthdate_for_user: {
         Args: { p_user_id: string }
