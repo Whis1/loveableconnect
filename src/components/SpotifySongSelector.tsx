@@ -129,17 +129,17 @@ export const SpotifySongSelector = ({
             {searchResults.map((song) => (
               <Card
                 key={song.id}
-                className="p-3 flex items-center gap-3 cursor-pointer hover:bg-accent transition-colors"
+                className="p-3 flex items-center gap-3 cursor-pointer hover:bg-accent transition-colors w-full max-w-full overflow-hidden"
                 onClick={() => handleAddSong(song)}
               >
                 {song.image_url ? (
                   <img
                     src={song.image_url}
                     alt={song.name}
-                    className="w-12 h-12 rounded object-cover"
+                    className="w-12 h-12 rounded object-cover shrink-0"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded bg-muted flex items-center justify-center">
+                  <div className="w-12 h-12 rounded bg-muted flex items-center justify-center shrink-0">
                     <Music className="h-6 w-6 text-muted-foreground" />
                   </div>
                 )}
@@ -166,25 +166,28 @@ export const SpotifySongSelector = ({
           </p>
           <div className="space-y-2">
             {selectedSongs.map((song) => (
-              <Card key={song.id} className="p-3 flex items-center gap-3">
+              <Card key={song.id} className="p-3 flex items-center gap-3 w-full max-w-full overflow-hidden">
                 {song.image_url ? (
                   <img
                     src={song.image_url}
                     alt={song.name}
-                    className="w-12 h-12 rounded object-cover"
+                    className="w-12 h-12 rounded object-cover shrink-0"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded bg-muted flex items-center justify-center">
+                  <div className="w-12 h-12 rounded bg-muted flex items-center justify-center shrink-0">
                     <Music className="h-6 w-6 text-muted-foreground" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
+                  {/* truncate + min-w-0 sul contenitore: i nomi lunghi vengono
+                      troncati con "..." invece di sfondare il pannello. */}
                   <p className="font-medium truncate">{song.name}</p>
                   <p className="text-sm text-muted-foreground truncate">{song.artist}</p>
                 </div>
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="shrink-0"
                   onClick={() => handleRemoveSong(song.id)}
                 >
                   <X className="h-4 w-4" />

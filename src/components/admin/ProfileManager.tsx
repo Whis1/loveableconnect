@@ -1497,8 +1497,10 @@ export const ProfileManager = () => {
                                 </div>
                               </div>
 
-                              {/* Pulsante Salva — chiude il dialog su successo */}
-                              <div className="flex justify-end pt-4 border-t">
+                              {/* Pulsante Salva — sticky in fondo: resta sempre
+                                  visibile e raggiungibile anche con contenuti
+                                  lunghi (es. tante canzoni dai nomi lunghi). */}
+                              <div className="sticky bottom-0 flex justify-end pt-4 pb-1 border-t bg-background">
                                 <Button
                                   onClick={async () => {
                                     const ok = await handleUpdateProfile(profile);
