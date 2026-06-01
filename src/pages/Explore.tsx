@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useBanCheck } from "@/hooks/useBanCheck";
-import { ArrowLeft, MapPin, Filter, RotateCcw, Search as SearchIcon, Heart, MessageCircle } from "lucide-react";
+import { ArrowLeft, MapPin, Filter, RotateCcw, Search as SearchIcon, Heart, MessageCircle, Save } from "lucide-react";
 import { ProfileGridCard } from "@/components/ProfileGridCard";
 import { DestinyGame } from "@/components/DestinyGame";
 import { LoveCompassIcon } from "@/lib/championIcons";
@@ -74,6 +74,9 @@ function rotationHashStr(str: string): number {
 function getRotationBucket(): number {
   return Math.floor((Date.now() - ROTATION_EPOCH) / ROTATION_INTERVAL_MS);
 }
+
+// 💾 Chiave localStorage per i filtri di ricerca salvati dall'utente.
+const EXPLORE_FILTERS_KEY = "explore_saved_filters";
 
 const Explore = () => {
   const navigate = useNavigate();
@@ -211,11 +214,37 @@ const Explore = () => {
         )
       );
       setMatchedProfileIds(matches);
+
+      // 💾 Filtri salvati dall'utente: se presenti, ripristina la ricerca
+      // filtrata invece di mostrare tutti i profili. Restano finché non si
+      // clicca Reset.
+      let savedFilters: { genders: string[]; orientations: string[]; ageRange: [number, number] } | null = null;
+      try {
+        const raw = localStorage.getItem(EXPLORE_FILTERS_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.genders) && Array.isArray(parsed.orientations) && Array.isArray(parsed.ageRange)) {
+            savedFilters = parsed;
+          }
+        }
+      } catch { /* ignora filtri corrotti */ }
+
+      if (savedFilters && !cancelled) {
+        // Ripristina UI dei filtri + modalità filtrata, poi carica pagina 0 filtrata.
+        setSelectedGenders(savedFilters.genders);
+        setSelectedOrientations(savedFilters.orientations);
+        setAgeRange(savedFilters.ageRange);
+        setActiveFilters(savedFilters);
+        await loadFilteredFirstPage(session.user.id, matches, savedFilters);
+        if (!cancelled) setLoading(false);
+        return;
+      }
+
       if (!cancelled && cachedProfiles.length > 0) {
         setProfiles((cachedProfiles as Profile[]).filter((profile) => !matches.has(profile.id)));
         setLoading(false);
       }
-      
+
       // Load all profiles automatically
       await loadAllProfiles(session.user.id, matches);
 
@@ -681,6 +710,78 @@ const Explore = () => {
 
   // RIMOSSO: loadMoreProfiles - ora carichi tutto subito
 
+  // 📄 Carica la PRIMA pagina della ricerca FILTRATA. Estratta come funzione
+  // riutilizzabile: usata sia da applyFilters (click "Salva") sia all'avvio
+  // quando ci sono filtri salvati. Accetta i filtri come parametro (evita i
+  // problemi di setState asincrono leggendo gli stati).
+  const loadFilteredFirstPage = async (
+    userId: string,
+    matchedUserIds: Set<string>,
+    filters: { genders: string[]; orientations: string[]; ageRange: [number, number] }
+  ) => {
+    setMatchedProfileIds(matchedUserIds);
+
+    // count: "exact" + esclusione match server-side → totalPages corretto.
+    let query = supabase
+      .from("profiles")
+      .select("*", { count: "exact" })
+      .neq("id", userId);
+    if (matchedUserIds.size > 0) {
+      const ids = Array.from(matchedUserIds).map((id) => `"${id}"`).join(",");
+      query = query.not("id", "in", `(${ids})`);
+    }
+    query = applyFilterClauses(query, filters);
+
+    const { data: profilesData, count, error } = await withTimeout(
+      query.order("last_active", { ascending: false, nullsFirst: false }).range(0, PROFILES_BATCH_SIZE - 1),
+      10000
+    );
+    if (error) throw error;
+
+    const fetched = (profilesData || []).length;
+    setTotalProfiles(count ?? fetched);
+    setCurrentPage(0);
+
+    let filteredProfiles: Profile[] = (profilesData || [])
+      .filter(profile => !matchedUserIds.has(profile.id)) as Profile[];
+
+    const profileIds = filteredProfiles.map(p => p.id);
+    const { data: subsData } = await withFallback(
+      supabase.rpc('get_subscription_types', { profile_ids: profileIds }),
+      { data: [], error: null },
+      3500
+    );
+    const creditsMap = new Map<string, string>((subsData || []).map((c: any) => [c.user_id, c.subscription_type]));
+
+    const rotationBucketFiltered = getRotationBucket();
+    const rotationKeyFiltered = (id: string) => rotationHashStr(`${id}-${rotationBucketFiltered}`);
+
+    filteredProfiles.sort((a, b) => {
+      const aSub = creditsMap.get(a.id);
+      const bSub = creditsMap.get(b.id);
+      const rank = (p: Profile, sub?: string) => {
+        if (sub === 'monthly') return 0;
+        if (p.is_admin_profile === true) return 1;
+        return 2;
+      };
+      const rA = rank(a, aSub);
+      const rB = rank(b, bSub);
+      if (rA !== rB) return rA - rB;
+      if (rA === 1) {
+        const kA = rotationKeyFiltered(a.id);
+        const kB = rotationKeyFiltered(b.id);
+        if (kA !== kB) return kA - kB;
+        return a.id < b.id ? -1 : 1;
+      }
+      const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
+      const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
+      return dateB - dateA;
+    });
+
+    setProfiles(filteredProfiles);
+    void loadOnlineStatuses(filteredProfiles.map(p => p.id));
+  };
+
   const applyFilters = async () => {
     if (!currentUser) return;
 
@@ -690,7 +791,7 @@ const Explore = () => {
 
     // 📄 Memorizza i filtri scelti: da qui in poi loadPage li applicherà a
     // OGNI pagina, quindi la ricerca filtrata usa gli stessi pulsanti
-    // Avanti/Indietro del flusso normale (niente più lista unica infinita).
+    // Avanti/Indietro del flusso normale.
     const filters = {
       genders: [...selectedGenders],
       orientations: [...selectedOrientations],
@@ -698,8 +799,13 @@ const Explore = () => {
     };
     setActiveFilters(filters);
 
+    // 💾 Memorizza i filtri sul dispositivo: restano salvati anche dopo
+    // refresh/chiusura, finché l'utente non clicca Reset.
     try {
-      // Get user's matches to exclude them
+      localStorage.setItem(EXPLORE_FILTERS_KEY, JSON.stringify(filters));
+    } catch { /* localStorage non disponibile: ignora */ }
+
+    try {
       const { data: matchesData } = await withFallback(
         supabase
           .from("matches")
@@ -708,90 +814,13 @@ const Explore = () => {
         { data: [], error: null },
         4500
       );
-
       const matchedUserIds = new Set(
         (matchesData || []).map(match =>
           match.user1_id === currentUser ? match.user2_id : match.user1_id
         )
       );
-      setMatchedProfileIds(matchedUserIds);
 
-      // 📄 PRIMA PAGINA filtrata con count totale (stesso pattern di loadAllProfiles).
-      // count: "exact" + esclusione match server-side → totalPages corretto.
-      let query = supabase
-        .from("profiles")
-        .select("*", { count: "exact" })
-        .neq("id", currentUser);
-      if (matchedUserIds.size > 0) {
-        const ids = Array.from(matchedUserIds).map((id) => `"${id}"`).join(",");
-        query = query.not("id", "in", `(${ids})`);
-      }
-      // Applica i vincoli di filtro (età/genere/orientamento)
-      query = applyFilterClauses(query, filters);
-
-      const { data: profilesData, count, error } = await withTimeout(
-        query.order("last_active", { ascending: false, nullsFirst: false }).range(0, PROFILES_BATCH_SIZE - 1),
-        10000
-      );
-
-      if (error) throw error;
-
-      const fetched = (profilesData || []).length;
-      // 📄 Total count → quante pagine ha la ricerca filtrata
-      setTotalProfiles(count ?? fetched);
-      setCurrentPage(0);
-
-      // Filter out profiles with existing matches (sicurezza client-side)
-      let filteredProfiles: Profile[] = (profilesData || [])
-        .filter(profile => !matchedUserIds.has(profile.id)) as Profile[];
-
-      // Fetch subscription types via RPC (bypasses RLS safely)
-      const profileIds = filteredProfiles.map(p => p.id);
-      const { data: subsData } = await withFallback(
-        supabase.rpc('get_subscription_types', { profile_ids: profileIds }),
-        { data: [], error: null },
-        3500
-      );
-      const creditsMap = new Map<string, string>((subsData || []).map((c: any) => [c.user_id, c.subscription_type]));
-
-      // Sort profiles: monthly subscribers first, then admin profiles (ROTATED), then by last_active
-      // 🔄 Stesso schema di rotazione del primo batch: gli admin in cima ruotano ogni 3 ore.
-      const rotationBucketFiltered = getRotationBucket();
-      const rotationKeyFiltered = (id: string) => rotationHashStr(`${id}-${rotationBucketFiltered}`);
-
-      filteredProfiles.sort((a, b) => {
-        const aSub = creditsMap.get(a.id);
-        const bSub = creditsMap.get(b.id);
-
-        const rank = (p: Profile, sub?: string) => {
-          if (sub === 'monthly') return 0; // monthly subscribers first
-          if (p.is_admin_profile === true) return 1; // then admin profiles
-          return 2; // then everyone else (standard + weekly)
-        };
-
-        const rA = rank(a, aSub);
-        const rB = rank(b, bSub);
-        if (rA !== rB) return rA - rB;
-
-        // 🔄 Admin profiles: ordinamento ruotato (cambia ogni ROTATION_HOURS ore).
-        if (rA === 1) {
-          const kA = rotationKeyFiltered(a.id);
-          const kB = rotationKeyFiltered(b.id);
-          if (kA !== kB) return kA - kB;
-          return a.id < b.id ? -1 : 1;
-        }
-
-        // Then sort by last active
-        const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
-        const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
-        return dateB - dateA;
-      });
-
-      // 📄 Carica solo la PRIMA pagina dei profili filtrati (le altre via Avanti)
-      setProfiles(filteredProfiles);
-
-      // Pre-carica gli stati online dei profili filtrati
-      void loadOnlineStatuses(filteredProfiles.map(p => p.id));
+      await loadFilteredFirstPage(currentUser, matchedUserIds, filters);
     } catch (error: any) {
       toast({
         title: "Errore",
@@ -810,6 +839,10 @@ const Explore = () => {
     // 📄 Disattiva la modalità filtrata: torna alla paginazione normale.
     setActiveFilters(null);
     setCurrentPage(0);
+    // 💾 Cancella anche i filtri salvati sul dispositivo.
+    try {
+      localStorage.removeItem(EXPLORE_FILTERS_KEY);
+    } catch { /* ignora */ }
     if (currentUser) {
       loadAllProfiles(currentUser);
     }
@@ -1035,7 +1068,7 @@ const Explore = () => {
                     className="h-11 px-10 bg-gradient-to-r from-pink-500 via-rose-500 to-purple-500 hover:from-pink-600 hover:via-rose-600 hover:to-purple-600 text-white font-bold shadow-lg shadow-pink-500/40"
                     disabled={loading}
                   >
-                    <SearchIcon className="h-4 w-4 mr-1.5" />
+                    <Save className="h-4 w-4 mr-1.5" />
                     {t("explore.searchButton")}
                   </Button>
                 </div>
