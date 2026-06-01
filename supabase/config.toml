@@ -45,6 +45,9 @@ verify_jwt = false
 [functions.send-support-email]
 verify_jwt = true
 
+[functions.notify-discord-support]
+verify_jwt = true
+
 [functions.subscribe-premium]
 verify_jwt = true
 

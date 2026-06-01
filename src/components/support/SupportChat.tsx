@@ -550,6 +550,13 @@ export const SupportChat = ({ userEmail, isLocationChangeRequest, newLocationDat
 
       // Se è il primo messaggio, invia un messaggio automatico di risposta
       if (isFirstMessage) {
+        // 🔔 Notifica Discord: avvisa l'admin di una NUOVA richiesta di supporto.
+        //    "best effort": se fallisce non blocca nulla (la function ritorna
+        //    sempre 200). Non aspettiamo la risposta (fire-and-forget).
+        void supabase.functions.invoke('notify-discord-support', {
+          body: { userEmail, message: messageText },
+        }).catch((e) => console.warn('notify-discord-support fallita (non bloccante):', e));
+
         setTimeout(async () => {
           await supabase
             .from('support_messages')
