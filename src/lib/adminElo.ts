@@ -388,125 +388,156 @@ export function computeAdminStats(id: string, allAdmins?: AdminSeed[]): AdminSta
   return { elo, baseElo: base, totalWins, totalLosses, totalDraws, top1Trophies, tournamentsWon };
 }
 
-// Mappa id -> ELO simulato corrente. Ogni admin aggiorna al suo ritmo:
-// alcuni ogni 2 ore, altri ogni 8, ognuno con offset diverso. Il drift
-// cumulativo amplifica le serie consecutive: un admin che ha avuto 3 buone
-// sessioni di fila puo' salire di +130 ELO, uno con 4 brutte sessioni puo'
-// crollare di -130 ELO. La classifica si muove in modo organico e meritocratico.
-// 🥊 Duello di parità (solo admin-vs-admin): quando un admin risulta con lo
-//    STESSO ELO dell'admin sopra di lui in classifica, "sfida" per superarlo.
-//    Esito deterministico e STABILE (finché l'ELO non cambia col drift, così
-//    non lampeggia): vince → +20 (passa sopra), perde → -10 (scende sotto).
-//    Risultato: non restano mai due admin con lo stesso ELO. 50% di vittoria,
-//    seed = id + valore della parità.
+// 🎲 Esito del duello di parità: 50/50 deterministico (stabile finché l'ELO
+//    grezzo non cambia, così la classifica non lampeggia tra refresh).
+//    seed = id + valore della parità. true = VINCE (sale), false = PERDE (scende).
 function duelWonOverTie(id: string, tieElo: number): boolean {
   return hash(`${id}#duel#${tieElo}`) % 100 < 50;
 }
 
-export function computeAdminElos(admins: AdminSeed[]): Map<string, number> {
-  const result = new Map<string, number>();
-  if (admins.length === 0) return result;
+// 🥊 MOTORE DEL DUELLO DI PARITÀ (vero 50/50).
+//    Quando un profilo si ritrova con lo STESSO ELO di un altro, "gioca una
+//    partita simulata": se la VINCE sale (+20), se la PERDE scende (-10),
+//    esattamente come una partita reale. 50% di probabilità, deterministico.
+//
+//    `canMove`: true per gli admin (ELO simulato → può essere mosso dal duello),
+//    false per gli utenti reali (ELO autentico, guadagnato con partite vere →
+//    NON si tocca mai). Quindi:
+//      - admin vs admin pari        → quello sotto duella (sale o scende)
+//      - admin pari a UTENTE reale  → l'admin duella (l'utente resta fermo)
+//      - utente reale vs utente reale pari → restano pari (legittimo, non
+//        possiamo simulare partite al posto loro)
+//
+//    L'occupied-set garantisce che, dopo gli spostamenti, non restino MAI due
+//    valori uguali (a parte fra due utenti reali). Chi vince cerca il primo
+//    gradino libero salendo, chi perde scendendo (multipli di 10, floor 100).
+interface TieEntry {
+  id: string;
+  elo: number;
+  canMove: boolean;
+}
 
-  const now = Date.now();
+function resolveTiesEngine(entries: TieEntry[]): Map<string, number> {
+  // Tutti i profili che condividono lo STESSO ELO grezzo formano un "gruppo di
+  // parità". All'interno di ciascun gruppo: chi NON può muoversi (utente reale)
+  // resta al valore; ogni admin "gioca la partita simulata" e finisce o appena
+  // SOPRA (+gradini) se vince, o appena SOTTO (-gradini) se perde. Lo
+  // spostamento è LOCALE attorno al valore di parità: non tocca chi sta su
+  // altri valori, quindi nessun effetto domino lungo tutta la classifica.
+  //
+  // ⚠️ Importante: ragioniamo per-gruppo e non con un occupied-set globale,
+  //    perché con centinaia di admin stipati in poche centinaia di punti un
+  //    "sali al primo slot libero" globale farebbe schizzare in vetta anche un
+  //    profilo scarso (bug). Qui invece i delta restano piccoli e plausibili.
+  const out = new Map<string, number>();
 
-  // 1) ELO grezzo simulato per ogni admin (base intrinseca + drift cumulativo).
-  const computed = admins.map((a) => {
-    const bucket = personalBucket(a.id, now);
-    return { id: a.id, elo: Math.max(100, baseElo(a.id) + cumulativeDrift(a.id, bucket)) };
-  });
-
-  // 2) Ordina per ELO desc (tie-break id asc) per individuare le parità.
-  computed.sort((x, y) => y.elo - x.elo || (x.id < y.id ? -1 : 1));
-
-  // 3) Risolve le parità col "duello", SENZA mai crearne di nuove.
-  //    Scorriamo dal più forte al più debole tenendo l'ELO assegnato al
-  //    profilo immediatamente sopra (`prevElo`). Per ogni admin:
-  //      - se il suo ELO è STRETTAMENTE minore di prevElo → nessuna parità,
-  //        lo teniamo così com'è;
-  //      - se è >= prevElo (parità con chi sta sopra, o lo scavalca dopo un
-  //        precedente abbassamento) → "duello perso": scende al primo gradino
-  //        libero sotto prevElo, cioè prevElo - 10 (multiplo di 10, coerente
-  //        col sistema +20/-10). Mai sotto 100.
-  //    Così l'ELO è SEMPRE strettamente decrescente lungo la classifica:
-  //    nessun valore può ripetersi, e abbassando (mai alzando) non possiamo
-  //    scavalcare nessuno creando collisioni più in basso (il bug precedente).
-  //    duelWonOverTie resta usata per decidere, in modo deterministico e
-  //    stabile, di quanto scende quando ci sono più pari di fila.
-  let prevElo: number | null = null;
-  for (const c of computed) {
-    let elo = c.elo;
-    if (prevElo !== null && elo >= prevElo) {
-      // Parità (o scavalcamento post-abbassamento): scende sotto il precedente.
-      // Chi "vincerebbe" il duello scende di poco (resta subito sotto), chi
-      // perde scende di un gradino in più: in entrambi i casi NON resta pari.
-      const step = duelWonOverTie(c.id, prevElo) ? 10 : 20;
-      elo = Math.max(100, prevElo - step);
-    }
-    result.set(c.id, elo);
-    prevElo = elo;
+  // Raggruppa per ELO grezzo.
+  const groups = new Map<number, TieEntry[]>();
+  for (const e of entries) {
+    const g = groups.get(e.elo);
+    if (g) g.push(e);
+    else groups.set(e.elo, [e]);
   }
 
-  return result;
+  // ── Passaggio 1: DUELLO. Ogni admin in parità gioca la partita simulata e
+  //    si sposta SOPRA (vince) o SOTTO (perde) il valore di parità. Spostamenti
+  //    locali e piccoli → niente effetto domino lungo la classifica.
+  for (const [elo, members] of groups) {
+    if (members.length === 1) {
+      out.set(members[0].id, members[0].elo);
+      continue;
+    }
+
+    const sorted = [...members].sort((a, b) => (a.id < b.id ? -1 : 1));
+
+    // Lo slot di parità resta a UN profilo: prima un utente reale (immobile);
+    // altrimenti il primo admin che "vince"; altrimenti il primo per id.
+    const realHolder = sorted.find((m) => !m.canMove);
+    const keeperId = realHolder
+      ? realHolder.id
+      : (sorted.find((m) => m.canMove && duelWonOverTie(m.id, elo))?.id ?? sorted[0].id);
+
+    let upStep = 0;
+    let downStep = 0;
+    for (const m of sorted) {
+      if (m.id === keeperId || !m.canMove) {
+        out.set(m.id, m.elo); // keeper o utente reale: fermo al suo valore
+        continue;
+      }
+      if (duelWonOverTie(m.id, elo)) {
+        upStep += 1;
+        out.set(m.id, elo + upStep * 10); // VINCE → sale
+      } else {
+        downStep += 1;
+        out.set(m.id, Math.max(100, elo - downStep * 10)); // PERDE → scende
+      }
+    }
+  }
+
+  // ── Passaggio 2: DECOLLISIONE finale. Il duello può aver spostato un admin
+  //    su un valore già occupato da un altro gruppo (es. un vincitore salito a
+  //    610 dove c'era già qualcuno). Qui rimuoviamo le collisioni RESIDUE senza
+  //    stravolgere l'ordine deciso dai duelli: scorriamo dal più alto al più
+  //    basso e, se un ADMIN coincide con un valore già preso, lo abbassiamo al
+  //    primo gradino libero sotto. Gli utenti reali non si toccano mai: se un
+  //    admin collide con un utente reale, è l'admin a cedere.
+  const order = entries
+    .map((e) => ({ id: e.id, canMove: e.canMove, v: out.get(e.id) as number }))
+    .sort((a, b) => b.v - a.v || (a.id < b.id ? -1 : 1));
+
+  const taken = new Set<number>();
+  // Prima "prenota" tutti i valori degli utenti reali (intoccabili).
+  for (const o of order) if (!o.canMove) taken.add(o.v);
+
+  for (const o of order) {
+    if (!o.canMove) continue; // utente reale: già prenotato, mai spostato
+    let v = o.v;
+    if (taken.has(v)) {
+      // Collisione: scendi al primo gradino libero (multipli di 10).
+      // Scorrendo dall'alto verso il basso, scendere è sempre possibile finché
+      // non si arriva al pavimento (100). NON risaliamo mai (evita il domino
+      // verso la vetta): se il fondo è saturo, l'admin resta a 100 insieme agli
+      // altri scarsissimi — è il fondo classifica, valore minimo e non visibile.
+      while (v > 100 && taken.has(v)) v -= 10;
+    }
+    out.set(o.id, v);
+    taken.add(v); // a 100 più admin possono coincidere: è il floor accettato
+  }
+
+  return out;
+}
+
+// ELO grezzo simulato di un admin (base intrinseca + drift cumulativo), PRIMA
+// di qualunque duello di parità. Usato dalla classifica per fondere admin e
+// utenti reali e risolvere le parità in un unico passaggio.
+export function rawAdminElo(id: string): number {
+  const now = Date.now();
+  return Math.max(100, baseElo(id) + cumulativeDrift(id, personalBucket(id, now)));
+}
+
+// Mappa id -> ELO admin corrente, con duello di parità risolto FRA GLI ADMIN.
+// Usata dove serve l'ELO "ufficiale" di un admin senza il contesto degli utenti
+// reali (cerca avversario, tornei, pannello admin). La classifica vera usa
+// invece resolveLeaderboardTies sulla lista fusa.
+export function computeAdminElos(admins: AdminSeed[]): Map<string, number> {
+  if (admins.length === 0) return new Map();
+  return resolveTiesEngine(
+    admins.map((a) => ({ id: a.id, elo: rawAdminElo(a.id), canMove: true }))
+  );
 }
 
 // 🥊 Duello di parità sulla CLASSIFICA COMPLETA (admin + utenti reali fusi).
-//    Risolve il caso in cui un profilo si ritrova con lo STESSO ELO di quello
-//    immediatamente sopra di lui in classifica, SIA che il vicino sia admin
-//    SIA che sia un utente reale.
-//
-//    Vincolo fondamentale: l'ELO degli UTENTI REALI è vero (guadagnato con
-//    partite vere, +20/-10) e NON può essere falsificato. Gli ELO admin sono
-//    invece simulati. Quindi in caso di parità è SEMPRE l'admin a "giocare la
-//    partita simulata per superare/cedere il passo": scende al primo gradino
-//    libero sotto il vicino (deterministico → niente lampeggi tra refresh).
-//
-//    Per ottenere questo, l'ordinamento in ingresso mette, a parità di ELO
-//    grezzo, l'UTENTE REALE PRIMA dell'admin: così l'utente prende lo slot al
-//    suo valore reale e l'admin, subito dopo, vede la parità e scende sotto.
-//    Risultato: nessun valore ripetuto, gli utenti reali non vengono mai
-//    toccati, e un eventuale pareggio fra DUE utenti reali resta (è legittimo:
-//    i loro punti sono autentici e non possiamo simulare partite per loro).
+//    Gli utenti reali (isAdmin=false) hanno ELO autentico e non si muovono mai;
+//    in caso di parità è l'admin a giocare la partita simulata (sale se vince,
+//    scende se perde). Vedi resolveTiesEngine per i dettagli.
 export interface RankEntry {
   id: string;
   elo: number;
   isAdmin: boolean;
 }
 
-// Ordina per ELO desc; a parità, utenti reali prima degli admin; poi id stabile.
-export function sortLeaderboardEntries(entries: RankEntry[]): RankEntry[] {
-  return [...entries].sort((a, b) => {
-    if (b.elo !== a.elo) return b.elo - a.elo;
-    if (a.isAdmin !== b.isAdmin) return a.isAdmin ? 1 : -1; // utente reale prima
-    return a.id < b.id ? -1 : 1;
-  });
-}
-
 export function resolveLeaderboardTies(entries: RankEntry[]): Map<string, number> {
-  const sorted = sortLeaderboardEntries(entries);
-  const out = new Map<string, number>();
-  let prevElo: number | null = null;
-
-  for (const e of sorted) {
-    let elo = e.elo;
-
-    if (prevElo !== null && elo >= prevElo) {
-      // Parità (o scavalcamento dopo un abbassamento) con chi sta sopra.
-      if (e.isAdmin) {
-        // L'admin "gioca la partita" e scende sotto al vicino: -10 se la
-        // "vince" (resta subito sotto), -20 se la "perde". In entrambi i casi
-        // NON resta pari. Deterministico via duelWonOverTie.
-        const step = duelWonOverTie(e.id, prevElo) ? 10 : 20;
-        elo = Math.max(100, prevElo - step);
-      }
-      // Utente reale pari a un altro utente reale sopra: pareggio legittimo,
-      // non lo tocchiamo (l'ordinamento mette i reali prima, quindi qui sopra
-      // non può esserci un admin allo stesso valore: l'admin sarebbe finito
-      // dopo e sceso).
-    }
-
-    out.set(e.id, elo);
-    prevElo = elo;
-  }
-
-  return out;
+  return resolveTiesEngine(
+    entries.map((e) => ({ id: e.id, elo: e.elo, canMove: e.isAdmin }))
+  );
 }
