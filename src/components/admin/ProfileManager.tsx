@@ -1203,8 +1203,8 @@ export const ProfileManager = () => {
                           <DialogHeader>
                             <DialogTitle>Modifica Profilo: {profile.nickname}</DialogTitle>
                           </DialogHeader>
-                          <ScrollArea className="max-h-[calc(90vh-120px)] pr-4">
-                            <div className="space-y-4 pt-4">
+                          <ScrollArea className="max-h-[calc(90vh-120px)] pr-4 [&>div>div]:!block">
+                            <div className="space-y-4 pt-4 w-full min-w-0 max-w-full">
                               {/* Avatar */}
                               <div className="space-y-2">
                                 <Label>Foto Profilo</Label>
