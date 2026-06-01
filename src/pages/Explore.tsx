@@ -218,6 +218,21 @@ const Explore = () => {
       );
       setMatchedProfileIds(matches);
 
+      // 🧭 Onboarding al PRIMO accesso: controllato SUBITO (prima dei filtri
+      //    salvati), altrimenti se ci sono filtri salvati la funzione faceva
+      //    return e l'onboarding non veniva mai mostrato. best-effort: se la
+      //    colonna non esiste o la query fallisce, semplicemente non appare.
+      try {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("onboarding_completed")
+          .eq("id", session.user.id)
+          .maybeSingle();
+        if (!cancelled && prof && (prof as any).onboarding_completed === false) {
+          setShowOnboarding(true);
+        }
+      } catch { /* colonna assente o errore: ignora */ }
+
       // 💾 Filtri salvati dall'utente: se presenti, ripristina la ricerca
       // filtrata invece di mostrare tutti i profili. Restano finché non si
       // clicca Reset.
@@ -252,21 +267,6 @@ const Explore = () => {
       await loadAllProfiles(session.user.id, matches);
 
       if (!cancelled) setLoading(false);
-
-      // 🧭 Onboarding al PRIMO accesso: se non ancora completato, mostralo
-      //    (dopo il caricamento standard della bacheca). best-effort: se la
-      //    colonna non esiste ancora o la query fallisce, semplicemente non
-      //    appare e non blocca nulla.
-      try {
-        const { data: prof } = await supabase
-          .from("profiles")
-          .select("onboarding_completed")
-          .eq("id", session.user.id)
-          .maybeSingle();
-        if (!cancelled && prof && (prof as any).onboarding_completed === false) {
-          setShowOnboarding(true);
-        }
-      } catch { /* colonna assente o errore: ignora */ }
       // Nota: il setTimeout per chiudere showGeoLoader e' stato spostato
       // in un useEffect separato qui sotto, cosi' parte sempre anche se
       // questa async function si pianta su getSession o loadAllProfiles.
