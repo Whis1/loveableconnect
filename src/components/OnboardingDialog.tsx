@@ -49,7 +49,7 @@ const TRAIT_POOL: TraitQuestion[] = [
   { id: "first_thing", text: "Cosa noti per prima in una persona?", options: ["Il sorriso", "Il senso dell'umorismo", "Il fisico e lo stile", "Come ti fa sentire"] },
   { id: "weekend_you", text: "Il tuo weekend perfetto?", options: ["Festa e movida", "Avventura all'aperto", "Relax totale", "Amici e chiacchiere"] },
   { id: "energy", text: "La tua energia è...", options: ["Mattiniero/a", "Nottambulo/a, vivo di notte", "Equilibrata", "Caotica ma felice"] },
-  { id: "vibe", text: "Che vibe trasmetti?", options: ["Solare e alla mano", "Frizzante e travolgente", "Misteriosa e intrigante", "Tranquilla e genuina"] },
+  { id: "vibe", text: "Che impressione dai di solito?", options: ["Solare e alla mano", "Energico/a e travolgente", "Riservato/a e intrigante", "Tranquillo/a e genuino/a"] },
   { id: "flirt", text: "Quando flirti sei...", options: ["Diretto/a e sicuro/a", "Giocoso/a e ironico/a", "Timido/a ma curioso/a", "Lascio fare all'altro/a"] },
   { id: "free_tonight", text: "Stasera tipo...", options: ["Uscita last-minute", "Drink in un locale", "Serie TV e divano", "Vedo come gira 😏"] },
   { id: "passion", text: "Cosa ti accende di più?", options: ["Viaggi e nuove esperienze", "Buon cibo e compagnia", "Musica e concerti", "Una bella conversazione"] },
