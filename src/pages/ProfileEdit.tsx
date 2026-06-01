@@ -1073,18 +1073,18 @@ const ProfileEdit = () => {
               )}
 
               <div className="flex gap-3">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="flex-1"
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="px-8"
                   onClick={() => navigate("/")}
                   disabled={saving}
                 >
                   {t('common.cancel')}
                 </Button>
-                <Button 
-                  type="submit" 
-                  className="flex-1" 
+                <Button
+                  type="submit"
+                  className="px-8"
                   disabled={saving}
                 >
                   <Save className="h-4 w-4 mr-2" />
