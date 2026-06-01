@@ -194,7 +194,7 @@ export const Tutorial = () => {
             </h2>
             
             <p className="text-muted-foreground mb-8">
-              Ti guideremo attraverso le funzionalità principali dell'app con un breve tutorial audio.
+              Ti guideremo attraverso le funzionalità principali dell'app con una breve introduzione audio.
             </p>
             
             <div className="flex flex-col gap-3">
@@ -204,7 +204,7 @@ export const Tutorial = () => {
                 className="w-full"
               >
                 <Volume2 className="mr-2 h-5 w-5" />
-                Inizia Tutorial
+                Inizia Introduzione
               </Button>
               
               <Button
@@ -213,7 +213,7 @@ export const Tutorial = () => {
                 size="lg"
                 className="w-full text-muted-foreground"
               >
-                Salta Tutorial
+                Salta Introduzione
               </Button>
             </div>
           </div>
@@ -294,7 +294,7 @@ export const Tutorial = () => {
             size="lg"
             className="shadow-lg min-w-[180px] bg-primary hover:bg-primary/90"
           >
-            Concludi Tutorial
+            Concludi Introduzione
           </Button>
         </div>
       )}
