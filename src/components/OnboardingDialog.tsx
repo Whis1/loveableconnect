@@ -158,21 +158,22 @@ export const OnboardingDialog = ({ userId, onComplete }: OnboardingDialogProps) 
                 Benvenuto/a su LoveableConnect! 💜
               </h2>
               <p className="text-gray-300 leading-relaxed mb-2">
-                Prima di iniziare, aiutaci a conoscerti: bastano pochi tap.
+                Prima di iniziare, aiutaci a conoscerti: bastano pochi click.
               </p>
               <p className="text-sm text-gray-400 leading-relaxed mb-7">
-                Che tu cerchi divertimento, nuove amicizie o qualcosa di più,
-                personalizzeremo la tua esperienza e ti faremo trovare dalle
+                Personalizzeremo la tua esperienza e ti faremo trovare dalle
                 persone più in sintonia con te.
               </p>
-              <Button
-                onClick={() => setStep(1)}
-                size="lg"
-                className="w-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-500 hover:from-pink-600 hover:via-rose-600 hover:to-purple-600 text-white font-bold shadow-lg shadow-pink-500/30"
-              >
-                <Sparkles className="w-5 h-5 mr-2" />
-                Iniziamo
-              </Button>
+              <div className="flex justify-center">
+                <Button
+                  onClick={() => setStep(1)}
+                  size="lg"
+                  className="px-10 bg-gradient-to-r from-pink-500 via-rose-500 to-purple-500 hover:from-pink-600 hover:via-rose-600 hover:to-purple-600 text-white font-bold shadow-lg shadow-pink-500/30"
+                >
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Iniziamo
+                </Button>
+              </div>
             </div>
           )}
 

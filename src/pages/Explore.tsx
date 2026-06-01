@@ -218,19 +218,18 @@ const Explore = () => {
       );
       setMatchedProfileIds(matches);
 
-      // 🧭 Onboarding al PRIMO accesso: controllato SUBITO (prima dei filtri
-      //    salvati), altrimenti se ci sono filtri salvati la funzione faceva
-      //    return e l'onboarding non veniva mai mostrato. best-effort: se la
-      //    colonna non esiste o la query fallisce, semplicemente non appare.
+      // 🧭 DECIDE SUBITO se serve l'onboarding (prima dei filtri salvati, che
+      //    altrimenti farebbero return saltandolo). Ma il pannello viene MOSTRATO
+      //    solo DOPO il caricamento dei profili (vedi sotto), così non appare su
+      //    schermo nero ma sopra una bacheca gia' popolata.
+      let needsOnboarding = false;
       try {
         const { data: prof } = await supabase
           .from("profiles")
           .select("onboarding_completed")
           .eq("id", session.user.id)
           .maybeSingle();
-        if (!cancelled && prof && (prof as any).onboarding_completed === false) {
-          setShowOnboarding(true);
-        }
+        needsOnboarding = !!(prof && (prof as any).onboarding_completed === false);
       } catch { /* colonna assente o errore: ignora */ }
 
       // 💾 Filtri salvati dall'utente: se presenti, ripristina la ricerca
@@ -255,6 +254,8 @@ const Explore = () => {
         setActiveFilters(savedFilters);
         await loadFilteredFirstPage(session.user.id, matches, savedFilters);
         if (!cancelled) setLoading(false);
+        // 🧭 Onboarding sopra la bacheca filtrata gia' caricata.
+        if (needsOnboarding && !cancelled) setShowOnboarding(true);
         return;
       }
 
@@ -267,6 +268,10 @@ const Explore = () => {
       await loadAllProfiles(session.user.id, matches);
 
       if (!cancelled) setLoading(false);
+
+      // 🧭 Onboarding mostrato ORA: i profili sono caricati e fanno da sfondo,
+      //    niente schermo nero dietro il pannello.
+      if (needsOnboarding && !cancelled) setShowOnboarding(true);
       // Nota: il setTimeout per chiudere showGeoLoader e' stato spostato
       // in un useEffect separato qui sotto, cosi' parte sempre anche se
       // questa async function si pianta su getSession o loadAllProfiles.
