@@ -1142,6 +1142,21 @@ export const ProfileManager = () => {
                       <div className="text-left">
                         <p className="font-semibold">{profile.nickname}</p>
                         <p className="text-sm text-muted-foreground">{profile.full_name}</p>
+                        {/* 🧑‍🤝‍🧑 Genere (sinistra) + Orientamento (destra) impostati */}
+                        {(profile.gender || profile.sexual_orientation) && (
+                          <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground/80">
+                            {profile.gender && (
+                              <span className="inline-flex items-center rounded bg-pink-500/10 text-pink-300 px-1.5 py-0.5">
+                                {getGenderLabel(profile.gender)}
+                              </span>
+                            )}
+                            {profile.sexual_orientation && (
+                              <span className="inline-flex items-center rounded bg-purple-500/10 text-purple-300 px-1.5 py-0.5">
+                                {getOrientationLabel(profile.sexual_orientation)}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </AccordionTrigger>
