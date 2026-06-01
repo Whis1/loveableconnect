@@ -7,7 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { computeChampionBadges, dateStringToDayNumber, ChampionBadges } from "@/lib/championBadges";
 import { ChampionBadgesRow } from "./ChampionBadgesRow";
 import { CampioneIcon, RankMedalIcon } from "@/lib/championIcons";
-import { computeAdminElos } from "@/lib/adminElo";
+import { computeAdminElos, resolveLeaderboardTies } from "@/lib/adminElo";
 import { ProfileStatsDialog } from "./ProfileStatsDialog";
 import { VictoryIcon, DefeatIcon } from "@/lib/gameIcons";
 
@@ -139,7 +139,9 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
 
       const adminElos = computeAdminElos(admins ?? []);
 
-      const entries: LeaderboardProfile[] = [
+      // ELO "grezzo" di ognuno: admin = simulato (già deduellato fra loro),
+      // utente reale = game_elo vero dal DB.
+      const rawEntries: LeaderboardProfile[] = [
         ...(admins ?? []).map((p) => ({
           id: p.id,
           nickname: p.nickname,
@@ -154,7 +156,17 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
           elo: p.game_elo ?? 1200,
           is_admin_profile: false,
         })),
-      ].sort((a, b) => b.elo - a.elo);
+      ];
+
+      // 🥊 Duello di parità sulla classifica FUSA: se un admin si ritrova con
+      //    lo stesso ELO del profilo sopra (admin O utente reale), "gioca" e
+      //    scende sotto. Gli utenti reali non vengono mai alterati.
+      const resolved = resolveLeaderboardTies(
+        rawEntries.map((e) => ({ id: e.id, elo: e.elo, isAdmin: e.is_admin_profile }))
+      );
+      const entries: LeaderboardProfile[] = rawEntries
+        .map((e) => ({ ...e, elo: resolved.get(e.id) ?? e.elo }))
+        .sort((a, b) => b.elo - a.elo);
 
       setTopPlayers(entries.slice(0, 5));
 
@@ -171,14 +183,18 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         }
         setUserElo(myElo);
 
+        // 🏆 myRank coerente con la classifica MOSTRATA (ELO già deduellati):
+        //    conta gli ADMIN il cui ELO risolto è > del mio, più gli UTENTI
+        //    reali (oltre i 10 caricati) con game_elo > del mio.
         let higher = 0;
-        adminElos.forEach((e) => {
-          if (e > (myElo as number)) higher++;
-        });
+        for (const e of entries) {
+          if (e.is_admin_profile && e.elo > (myElo as number)) higher++;
+        }
         const { count } = await supabase
           .from("profiles")
           .select("id", { count: "exact", head: true })
           .eq("is_admin_profile", false)
+          .neq("id", userId)
           .gt("game_elo", myElo);
         const myRank = higher + (count ?? 0) + 1;
         setUserRank(myRank);

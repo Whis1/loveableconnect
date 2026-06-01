@@ -448,3 +448,65 @@ export function computeAdminElos(admins: AdminSeed[]): Map<string, number> {
 
   return result;
 }
+
+// 🥊 Duello di parità sulla CLASSIFICA COMPLETA (admin + utenti reali fusi).
+//    Risolve il caso in cui un profilo si ritrova con lo STESSO ELO di quello
+//    immediatamente sopra di lui in classifica, SIA che il vicino sia admin
+//    SIA che sia un utente reale.
+//
+//    Vincolo fondamentale: l'ELO degli UTENTI REALI è vero (guadagnato con
+//    partite vere, +20/-10) e NON può essere falsificato. Gli ELO admin sono
+//    invece simulati. Quindi in caso di parità è SEMPRE l'admin a "giocare la
+//    partita simulata per superare/cedere il passo": scende al primo gradino
+//    libero sotto il vicino (deterministico → niente lampeggi tra refresh).
+//
+//    Per ottenere questo, l'ordinamento in ingresso mette, a parità di ELO
+//    grezzo, l'UTENTE REALE PRIMA dell'admin: così l'utente prende lo slot al
+//    suo valore reale e l'admin, subito dopo, vede la parità e scende sotto.
+//    Risultato: nessun valore ripetuto, gli utenti reali non vengono mai
+//    toccati, e un eventuale pareggio fra DUE utenti reali resta (è legittimo:
+//    i loro punti sono autentici e non possiamo simulare partite per loro).
+export interface RankEntry {
+  id: string;
+  elo: number;
+  isAdmin: boolean;
+}
+
+// Ordina per ELO desc; a parità, utenti reali prima degli admin; poi id stabile.
+export function sortLeaderboardEntries(entries: RankEntry[]): RankEntry[] {
+  return [...entries].sort((a, b) => {
+    if (b.elo !== a.elo) return b.elo - a.elo;
+    if (a.isAdmin !== b.isAdmin) return a.isAdmin ? 1 : -1; // utente reale prima
+    return a.id < b.id ? -1 : 1;
+  });
+}
+
+export function resolveLeaderboardTies(entries: RankEntry[]): Map<string, number> {
+  const sorted = sortLeaderboardEntries(entries);
+  const out = new Map<string, number>();
+  let prevElo: number | null = null;
+
+  for (const e of sorted) {
+    let elo = e.elo;
+
+    if (prevElo !== null && elo >= prevElo) {
+      // Parità (o scavalcamento dopo un abbassamento) con chi sta sopra.
+      if (e.isAdmin) {
+        // L'admin "gioca la partita" e scende sotto al vicino: -10 se la
+        // "vince" (resta subito sotto), -20 se la "perde". In entrambi i casi
+        // NON resta pari. Deterministico via duelWonOverTie.
+        const step = duelWonOverTie(e.id, prevElo) ? 10 : 20;
+        elo = Math.max(100, prevElo - step);
+      }
+      // Utente reale pari a un altro utente reale sopra: pareggio legittimo,
+      // non lo tocchiamo (l'ordinamento mette i reali prima, quindi qui sopra
+      // non può esserci un admin allo stesso valore: l'admin sarebbe finito
+      // dopo e sceso).
+    }
+
+    out.set(e.id, elo);
+    prevElo = elo;
+  }
+
+  return out;
+}
