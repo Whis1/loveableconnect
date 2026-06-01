@@ -289,28 +289,32 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
         </div>
 
         {/* Blocco inferiore: i due pulsanti centrati verticalmente nello
-            spazio rimasto, larghi quanto basta al loro contenuto (non a
-            tutta la larghezza del pannello). */}
-        <div className="flex-1 flex flex-col items-center justify-center gap-3 pt-8">
-          {/* Edit Button — gradiente rosa→viola, larghezza auto */}
-          <Button
-            onClick={() => navigate("/profile/edit")}
-            className="px-6 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border-0"
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            {t("dashboard.editProfile")}
-          </Button>
+            spazio rimasto. */}
+        <div className="flex-1 flex flex-col items-center justify-center pt-8">
+          {/* 📐 Wrapper w-fit: prende la larghezza del pulsante PIÙ LARGO; i due
+              bottoni con w-full diventano così identici di larghezza, a
+              prescindere dalla lunghezza del testo (anche in altre lingue). */}
+          <div className="flex flex-col items-stretch gap-3 w-fit">
+            {/* Edit Button — gradiente rosa→viola */}
+            <Button
+              onClick={() => navigate("/profile/edit")}
+              className="w-full px-6 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border-0"
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              {t("dashboard.editProfile")}
+            </Button>
 
-          {/* Anteprima Profilo: stesso gradiente del bottone Modifica
-              Profilo (richiesta dell'utente), si distingue solo per
-              l'icona occhio. */}
-          <Button
-            onClick={() => setShowPreview(true)}
-            className="px-6 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border-0"
-          >
-            <Eye className="h-4 w-4 mr-2" />
-            Anteprima Profilo
-          </Button>
+            {/* Anteprima Profilo: stesso gradiente del bottone Modifica
+                Profilo (richiesta dell'utente), si distingue solo per
+                l'icona occhio. */}
+            <Button
+              onClick={() => setShowPreview(true)}
+              className="w-full px-6 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border-0"
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Anteprima Profilo
+            </Button>
+          </div>
         </div>
       </CardContent>
 
