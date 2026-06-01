@@ -95,8 +95,11 @@ const Explore = () => {
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [showDestiny, setShowDestiny] = useState(false);
-  // 🧭 Onboarding al primo accesso (mostrato dopo il caricamento, se non già fatto)
+  // 🧭 Onboarding al primo accesso. `onboardingPending` = "va mostrato ma
+  //    aspetta la fine del loader di geolocalizzazione"; `showOnboarding` = è
+  //    effettivamente visibile (solo quando il loader è finito).
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingPending, setOnboardingPending] = useState(false);
   const [showGeoLoader, setShowGeoLoader] = useState(true);
   // Pagina corrente (0-indexed) e count totale dei profili disponibili
   const [currentPage, setCurrentPage] = useState(0);
@@ -170,6 +173,16 @@ const Explore = () => {
     const t = setTimeout(() => setShowGeoLoader(false), 5000);
     return () => clearTimeout(t);
   }, []);
+
+  // 🧭 Mostra l'onboarding SOLO quando il loader "Geolocalizzando profili" è
+  //    finito (showGeoLoader=false) e l'onboarding è in attesa. Così appare
+  //    dopo il caricamento programmato, non su schermo nero.
+  useEffect(() => {
+    if (onboardingPending && !showGeoLoader) {
+      setShowOnboarding(true);
+      setOnboardingPending(false);
+    }
+  }, [onboardingPending, showGeoLoader]);
 
   useEffect(() => {
     let cancelled = false;
@@ -254,8 +267,9 @@ const Explore = () => {
         setActiveFilters(savedFilters);
         await loadFilteredFirstPage(session.user.id, matches, savedFilters);
         if (!cancelled) setLoading(false);
-        // 🧭 Onboarding sopra la bacheca filtrata gia' caricata.
-        if (needsOnboarding && !cancelled) setShowOnboarding(true);
+        // 🧭 Segna che l'onboarding va mostrato: apparira' alla fine del loader
+        //    di geolocalizzazione (vedi useEffect dedicato).
+        if (needsOnboarding && !cancelled) setOnboardingPending(true);
         return;
       }
 
@@ -269,9 +283,9 @@ const Explore = () => {
 
       if (!cancelled) setLoading(false);
 
-      // 🧭 Onboarding mostrato ORA: i profili sono caricati e fanno da sfondo,
-      //    niente schermo nero dietro il pannello.
-      if (needsOnboarding && !cancelled) setShowOnboarding(true);
+      // 🧭 Segna che l'onboarding va mostrato: apparira' alla fine del loader
+      //    di geolocalizzazione (vedi useEffect dedicato).
+      if (needsOnboarding && !cancelled) setOnboardingPending(true);
       // Nota: il setTimeout per chiudere showGeoLoader e' stato spostato
       // in un useEffect separato qui sotto, cosi' parte sempre anche se
       // questa async function si pianta su getSession o loadAllProfiles.
