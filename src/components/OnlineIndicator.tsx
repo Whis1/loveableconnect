@@ -23,7 +23,9 @@ const OnlineIndicator = ({ userId, className, size = "md", preloadedStatus }: On
   };
 
   return (
-    <TooltipProvider>
+    // delayDuration=0 → il tooltip Online/Offline appare ISTANTANEO al passaggio
+    // del cursore (di default shadcn aspetta ~700ms).
+    <TooltipProvider delayDuration={0} disableHoverableContent>
       <Tooltip>
         <TooltipTrigger asChild>
           <div
