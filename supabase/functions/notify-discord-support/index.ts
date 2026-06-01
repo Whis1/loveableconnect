@@ -1,13 +1,13 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
-// 🔔 Notifica Discord per nuovi messaggi al supporto clienti.
+// 🔔 Notifiche Discord per LoveableConnect.
 //
-// Il frontend chiama questa funzione quando un utente apre una NUOVA
-// conversazione di supporto. La funzione manda un messaggio al canale Discord
-// tramite WEBHOOK, taggando l'admin.
+// Gestisce due tipi di evento (campo "type" nel body):
+//   - "support" (default): nuovo messaggio al supporto clienti
+//   - "signup": nuova registrazione utente (email o Google)
 //
-// I dati sensibili stanno nei Secret di Lovable Cloud (NON nel codice frontend,
-// così il webhook non è visibile/abusabile dagli utenti):
+// Manda un messaggio al canale Discord via WEBHOOK, taggando l'admin.
+// Dati sensibili nei Secret di Lovable Cloud (NON nel frontend):
 //   - DISCORD_SUPPORT_WEBHOOK_URL : URL del webhook del canale Discord
 //   - DISCORD_ADMIN_USER_ID       : il tuo User ID Discord (per il tag <@id>)
 
@@ -17,8 +17,11 @@ const corsHeaders = {
 };
 
 interface NotifyRequest {
+  type?: "support" | "signup";
   userEmail?: string;
   message?: string;
+  nickname?: string;
+  provider?: string; // es. "google" | "email"
 }
 
 serve(async (req) => {
@@ -30,8 +33,6 @@ serve(async (req) => {
     const webhookUrl = Deno.env.get("DISCORD_SUPPORT_WEBHOOK_URL");
     const adminUserId = Deno.env.get("DISCORD_ADMIN_USER_ID");
 
-    // Se il webhook non è configurato, non è un errore: semplicemente non
-    // notifichiamo (così il supporto continua a funzionare comunque).
     if (!webhookUrl) {
       return new Response(JSON.stringify({ skipped: "no webhook configured" }), {
         status: 200,
@@ -39,33 +40,54 @@ serve(async (req) => {
       });
     }
 
-    const { userEmail, message }: NotifyRequest = await req.json().catch(() => ({}));
-
-    // Tag che ti menziona (se hai messo l'ID). Senza ID, niente tag ma messaggio sì.
+    const payload: NotifyRequest = await req.json().catch(() => ({}));
+    const type = payload.type === "signup" ? "signup" : "support";
     const mention = adminUserId ? `<@${adminUserId}> ` : "";
+    const safeEmail = (payload.userEmail || "sconosciuto").slice(0, 200);
 
-    // Tronca il testo del messaggio per non superare i limiti di Discord.
-    const safeMessage = (message || "(nessun testo)").slice(0, 1500);
-    const safeEmail = (userEmail || "utente sconosciuto").slice(0, 200);
+    let body: Record<string, unknown>;
 
-    // Messaggio con "embed" carino (titolo + campi).
-    const body = {
-      content: `${mention}🆘 **Nuovo messaggio supporto clienti**`,
-      embeds: [
-        {
-          title: "Richiesta di supporto",
-          color: 0xec4899, // rosa LoveableConnect
-          fields: [
-            { name: "Utente", value: safeEmail, inline: false },
-            { name: "Messaggio", value: safeMessage, inline: false },
-          ],
-          timestamp: new Date().toISOString(),
-          footer: { text: "LoveableConnect • Supporto" },
-        },
-      ],
-      // allowed_mentions: permette esplicitamente di taggare l'utente indicato.
-      allowed_mentions: adminUserId ? { users: [adminUserId] } : { parse: [] },
-    };
+    if (type === "signup") {
+      // 🎉 Nuova registrazione
+      const nickname = (payload.nickname || "—").slice(0, 100);
+      const provider = (payload.provider || "email").slice(0, 50);
+      body = {
+        content: `${mention}🎉 **Nuova registrazione su LoveableConnect!**`,
+        embeds: [
+          {
+            title: "Nuovo utente registrato",
+            color: 0x9333ea, // viola
+            fields: [
+              { name: "Nickname", value: nickname, inline: true },
+              { name: "Metodo", value: provider === "google" ? "Google" : "Email", inline: true },
+              { name: "Email", value: safeEmail, inline: false },
+            ],
+            timestamp: new Date().toISOString(),
+            footer: { text: "LoveableConnect • Registrazioni" },
+          },
+        ],
+        allowed_mentions: adminUserId ? { users: [adminUserId] } : { parse: [] },
+      };
+    } else {
+      // 🆘 Messaggio di supporto
+      const safeMessage = (payload.message || "(nessun testo)").slice(0, 1500);
+      body = {
+        content: `${mention}🆘 **Nuovo messaggio supporto clienti**`,
+        embeds: [
+          {
+            title: "Richiesta di supporto",
+            color: 0xec4899, // rosa
+            fields: [
+              { name: "Utente", value: safeEmail, inline: false },
+              { name: "Messaggio", value: safeMessage, inline: false },
+            ],
+            timestamp: new Date().toISOString(),
+            footer: { text: "LoveableConnect • Supporto" },
+          },
+        ],
+        allowed_mentions: adminUserId ? { users: [adminUserId] } : { parse: [] },
+      };
+    }
 
     const res = await fetch(webhookUrl, {
       method: "POST",
@@ -76,7 +98,6 @@ serve(async (req) => {
     if (!res.ok) {
       const txt = await res.text();
       console.error("Discord webhook error:", res.status, txt);
-      // Non blocchiamo il supporto: ritorniamo 200 con nota.
       return new Response(JSON.stringify({ ok: false, status: res.status }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -89,8 +110,6 @@ serve(async (req) => {
     });
   } catch (error: any) {
     console.error("notify-discord-support error:", error);
-    // Anche in caso di errore, 200: la notifica è "best effort", non deve mai
-    // far fallire l'invio del messaggio di supporto lato utente.
     return new Response(JSON.stringify({ ok: false, error: error?.message }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
