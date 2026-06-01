@@ -47,55 +47,31 @@ export const SpotifySongSelector = ({
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
-  const searchWithFallbackApi = async (query: string): Promise<SpotifySong[]> => {
-    const response = await fetch(
-      `/api/music-search?query=${encodeURIComponent(query)}`
-    );
-
-    if (!response.ok) {
-      throw new Error("Fallback musicale non disponibile");
-    }
-
-    const data = await response.json();
-
-    return (data.tracks || []).filter(
-      (track: SpotifySong) => track.name && track.artist && track.preview_url
-    );
-  };
-
   const handleSearch = async (query = searchQuery.trim()) => {
     if (query === "") return;
 
     setIsSearching(true);
     try {
-      let tracksWithPreview: SpotifySong[] = [];
+      // 🎵 La edge function spotify-search ora usa iTunes come fonte (sempre
+      //    con anteprima) e ritorna SEMPRE { tracks: [...] } con status 200,
+      //    anche quando non trova nulla. Niente più fallback /api inesistente
+      //    che restituiva HTML e causava il crash "is not valid JSON".
+      const { data, error } = await supabase.functions.invoke('spotify-search', {
+        body: { query },
+      });
 
-      try {
-        const { data, error } = await supabase.functions.invoke('spotify-search', {
-          body: { query }
-        });
+      if (error) throw error;
 
-        if (error) throw error;
-
-        tracksWithPreview = (data?.tracks || []).filter(
-          (track: SpotifySong) => track.preview_url
-        );
-      } catch (spotifyError) {
-        console.warn('Spotify search failed, using fallback:', spotifyError);
-      }
-
-      if (tracksWithPreview.length === 0) {
-        tracksWithPreview = await searchWithFallbackApi(query);
-      }
+      const tracksWithPreview = (data?.tracks || []).filter(
+        (track: SpotifySong) => track.preview_url
+      );
 
       setSearchResults(tracksWithPreview);
     } catch (error: any) {
       console.error('Error searching songs:', error);
-      toast({
-        title: "Errore nella ricerca",
-        description: error.message || "Impossibile cercare le canzoni",
-        variant: "destructive",
-      });
+      // Nessun crash brutto: svuotiamo i risultati (il componente mostra il
+      // messaggio "Nessuna canzone con anteprima trovata").
+      setSearchResults([]);
     } finally {
       setIsSearching(false);
     }

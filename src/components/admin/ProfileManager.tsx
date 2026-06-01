@@ -195,27 +195,20 @@ function generateRandomQueryForAge(age: number | null | undefined): string {
   return `${seed} ${letter}`;
 }
 
-// Cerca brani su Spotify (con fallback /api/music-search) per una query.
+// Cerca brani per una query. Usa la edge function spotify-search, che ora si
+// appoggia a iTunes (sempre con anteprima) e ritorna sempre { tracks: [...] }.
+// RIMOSSO il vecchio fallback /api/music-search: quell'endpoint non esiste su
+// questo hosting e restituiva HTML, causando il crash "is not valid JSON".
 const searchTracks = async (query: string): Promise<any[]> => {
   try {
     const { data, error } = await supabase.functions.invoke("spotify-search", {
       body: { query },
     });
     if (!error) {
-      const tracks = (data?.tracks || []) as any[];
-      if (tracks.length > 0) return tracks;
+      return (data?.tracks || []) as any[];
     }
   } catch {
-    /* try fallback */
-  }
-  try {
-    const response = await fetch(`/api/music-search?query=${encodeURIComponent(query)}`);
-    if (response.ok) {
-      const json = await response.json();
-      return (json?.tracks || []) as any[];
-    }
-  } catch {
-    /* nothing more */
+    /* in caso di errore ritorna lista vuota, nessun crash */
   }
   return [];
 };
@@ -291,27 +284,8 @@ const searchOneSong = async (query: string): Promise<any | null> => {
     console.warn(`spotify-search KO per "${query}":`, e);
   }
 
-  // 2) Fallback API musicale (stesso flow di SpotifySongSelector)
-  try {
-    const response = await fetch(
-      `/api/music-search?query=${encodeURIComponent(query)}`
-    );
-    if (response.ok) {
-      const json = await response.json();
-      const tracks = (json?.tracks || []) as any[];
-      if (tracks.length > 0) {
-        const ideal = tracks.find((t) => t.preview_url && t.image_url);
-        if (ideal) return ideal;
-        const onlyImage = tracks.find((t) => t.image_url);
-        if (onlyImage) return onlyImage;
-        const onlyPreview = tracks.find((t) => t.preview_url);
-        if (onlyPreview) return onlyPreview;
-      }
-    }
-  } catch (e) {
-    console.warn(`/api/music-search KO per "${query}":`, e);
-  }
-
+  // (Rimosso il fallback /api/music-search: endpoint inesistente su questo
+  //  hosting, tornava HTML. La edge function ora usa gia' iTunes internamente.)
   return null;
 };
 
