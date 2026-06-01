@@ -51,7 +51,10 @@ const PRESETS: Record<ImagePreset, { width: number; quality: number }> = {
 export function storageImageUrl(
   bucket: string,
   path: string | null | undefined,
-  preset: ImagePreset = "grid"
+  preset: ImagePreset = "grid",
+  // "cover" (default) riempie e ritaglia; "contain" rimpicciolisce mantenendo
+  // l'intera immagine (usato dove mostriamo la foto intera senza tagli).
+  resize: "cover" | "contain" = "cover"
 ): string {
   if (!path) return "";
   // URL esterni (http/https): non trasformabili, ritorna così com'è.
@@ -60,7 +63,7 @@ export function storageImageUrl(
   const { width, quality } = PRESETS[preset];
   try {
     const { data } = supabase.storage.from(bucket).getPublicUrl(path, {
-      transform: { width, quality, resize: "cover" },
+      transform: { width, quality, resize },
     });
     return data.publicUrl;
   } catch {
@@ -73,7 +76,8 @@ export function storageImageUrl(
 /** Scorciatoia per il bucket usato dalle foto profilo/galleria. */
 export function profileImageUrl(
   path: string | null | undefined,
-  preset: ImagePreset = "grid"
+  preset: ImagePreset = "grid",
+  resize: "cover" | "contain" = "cover"
 ): string {
-  return storageImageUrl("profile-images", path, preset);
+  return storageImageUrl("profile-images", path, preset, resize);
 }

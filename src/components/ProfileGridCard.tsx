@@ -231,8 +231,14 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
 
   // 🖼️ Avatar bacheca: versione OTTIMIZZATA (preset "grid", ~400px) invece
   // dell'originale a piena risoluzione. Taglia drasticamente peso e banda.
+  // resize "contain" → la trasformazione server NON ritaglia: l'immagine intera
+  // arriva intera, poi il CSS (object-contain) la mostra tutta senza tagliare i volti.
   const avatarUrl = profile.avatar_url
-    ? profileImageUrl(profile.avatar_url, "grid")
+    ? profileImageUrl(profile.avatar_url, "grid", "contain")
+    : null;
+  // Versione "cover" SOLO per lo sfondo sfocato (lì il ritaglio va bene).
+  const avatarBgUrl = profile.avatar_url
+    ? profileImageUrl(profile.avatar_url, "grid", "cover")
     : null;
 
   // Preload avatar per rendering più veloce
@@ -507,11 +513,24 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
           {/* Main Image */}
           <div className="relative aspect-[3/4] overflow-hidden">
             {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt={profile.nickname}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
+              <>
+                {/* 🖼️ Sfondo: stessa foto SFOCATA e ingrandita, riempie le
+                    eventuali bande vuote (foto orizzontali/quadrate) in modo
+                    elegante invece di lasciare nero. */}
+                <img
+                  src={avatarBgUrl || avatarUrl}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 w-full h-full object-cover scale-110 blur-xl opacity-60"
+                />
+                {/* Foto INTERA, mai tagliata (object-contain): si vede tutto il
+                    volto. Sta sopra lo sfondo sfocato. */}
+                <img
+                  src={avatarUrl}
+                  alt={profile.nickname}
+                  className="relative w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
+                />
+              </>
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
                 <div className="text-6xl font-bold text-primary/20">
