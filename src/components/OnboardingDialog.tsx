@@ -208,15 +208,17 @@ export const OnboardingDialog = ({ userId, onComplete }: OnboardingDialogProps) 
                   );
                 })}
               </div>
-              <Button
-                onClick={() => setStep(2)}
-                disabled={genders.length === 0}
-                size="lg"
-                className="w-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-500 hover:from-pink-600 hover:via-rose-600 hover:to-purple-600 text-white font-bold shadow-lg shadow-pink-500/30 disabled:opacity-40"
-              >
-                Continua
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
+              <div className="flex justify-center">
+                <Button
+                  onClick={() => setStep(2)}
+                  disabled={genders.length === 0}
+                  size="lg"
+                  className="px-10 bg-gradient-to-r from-pink-500 via-rose-500 to-purple-500 hover:from-pink-600 hover:via-rose-600 hover:to-purple-600 text-white font-bold shadow-lg shadow-pink-500/30 disabled:opacity-40"
+                >
+                  Continua
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </div>
             </div>
           )}
 
