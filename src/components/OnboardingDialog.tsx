@@ -2,8 +2,9 @@ import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Heart, Sparkles, ArrowRight, Check, Loader2 } from "lucide-react";
+import { Sparkles, ArrowRight, Check, Loader2 } from "lucide-react";
 import { LoveCompassIcon } from "@/lib/championIcons";
+import loveableLogo from "@/assets/auth-logo.png";
 
 // 🧭 ONBOARDING al primo accesso nella bacheca.
 //
@@ -148,9 +149,11 @@ export const OnboardingDialog = ({ userId, onComplete }: OnboardingDialogProps) 
           {/* ───────── STEP 0: INTRO ───────── */}
           {step === 0 && (
             <div className="text-center">
-              <div className="mx-auto mb-5 w-20 h-20 rounded-full bg-gradient-to-br from-pink-500/20 to-purple-500/20 flex items-center justify-center">
-                <Heart className="w-10 h-10 text-pink-400" fill="currentColor" />
-              </div>
+              <img
+                src={loveableLogo}
+                alt="LoveableConnect"
+                className="mx-auto mb-5 w-24 h-24 object-contain drop-shadow-[0_4px_20px_rgba(236,72,153,0.4)]"
+              />
               <h2 className="text-2xl font-black bg-gradient-to-r from-pink-400 via-rose-400 to-purple-400 bg-clip-text text-transparent mb-3">
                 Benvenuto/a su LoveableConnect! 💜
               </h2>
