@@ -12,6 +12,7 @@ interface InterestsAutocompleteProps {
 
 const INTEREST_KEYS = [
   // Sport e Fitness
+  "sport",
   "soccer", "tennis", "basketball", "volleyball", "swimming", "running", "cycling",
   "yoga", "pilates", "gym", "fitness", "crossfit", "climbing",
   "surf", "snowboard", "skiing", "skating", "dancing", "martialArts",
@@ -75,6 +76,87 @@ const INTEREST_KEYS = [
   "rally", "karting", "vintageCars",
 ].sort();
 
+// 🔎 Sinonimi/categorie per la ricerca "smart": se l'utente cerca una di
+// queste parole (in italiano, inglese o varianti comuni), vengono proposte
+// anche tutte le voci `keys` correlate, anche se il termine non compare nel
+// loro nome. Es. "sport" → mostra calcio, palestra, fitness, tennis...
+const SEARCH_SYNONYMS: { terms: string[]; keys: string[] }[] = [
+  {
+    terms: ["sport", "sports", "allenamento", "atletica", "attività fisica"],
+    keys: [
+      "sport", "soccer", "tennis", "basketball", "volleyball", "swimming",
+      "running", "cycling", "yoga", "pilates", "gym", "fitness", "crossfit",
+      "climbing", "surf", "snowboard", "skiing", "skating", "boxing", "rugby",
+      "golf", "hiking", "trekking", "martialArts", "horseRiding",
+    ],
+  },
+  {
+    terms: ["musica", "music", "musicale", "suonare"],
+    keys: [
+      "music", "rock", "pop", "jazz", "classical", "hipHop", "rap", "reggae",
+      "metal", "indie", "electronic", "house", "techno", "blues", "folk",
+      "country", "rnb", "soul", "playGuitar", "piano", "drums", "dj",
+      "singing", "concerts", "festivals", "karaoke",
+    ],
+  },
+  {
+    terms: ["viaggi", "viaggio", "viaggiare", "travel", "vacanze", "vacanza"],
+    keys: [
+      "travel", "backpacking", "camping", "adventure", "exploring", "roadTrip",
+      "flights", "cruises", "beach", "mountains", "nature", "safari", "diving",
+      "snorkeling",
+    ],
+  },
+  {
+    terms: ["cibo", "food", "mangiare", "cucina", "gastronomia"],
+    keys: [
+      "cooking", "baking", "pastry", "wine", "beer", "cocktails", "coffee",
+      "tea", "restaurants", "streetFood", "foodTour", "vegan", "vegetarian",
+      "sushi", "pizza", "gourmet", "tastings",
+    ],
+  },
+  {
+    terms: ["arte", "art", "cultura", "culturale"],
+    keys: [
+      "art", "painting", "drawing", "sculpture", "photography", "cinema",
+      "theatre", "museums", "exhibitions", "architecture", "design",
+      "literature", "poetry", "writing", "calligraphy",
+    ],
+  },
+  {
+    terms: ["giochi", "gaming", "videogiochi", "games", "videogame", "console"],
+    keys: [
+      "gaming", "videoGames", "playstation", "xbox", "nintendo", "pcGaming",
+      "boardGames", "escapeRoom",
+    ],
+  },
+  {
+    terms: ["tecnologia", "tech", "technology", "informatica"],
+    keys: [
+      "technology", "programming", "coding", "ai", "robotics", "innovation",
+      "startups", "crypto", "nft", "vr",
+    ],
+  },
+  {
+    terms: ["animali", "animal", "pets", "animale"],
+    keys: ["animals", "dogs", "cats", "horseRiding", "wildlife"],
+  },
+  {
+    terms: ["motori", "motore", "auto", "macchine", "cars", "motors"],
+    keys: [
+      "cars", "motorcycles", "mechanics", "tuning", "formula1", "motoGP",
+      "rally", "karting", "vintageCars",
+    ],
+  },
+  {
+    terms: ["natura", "nature", "outdoor", "aria aperta"],
+    keys: [
+      "nature", "hiking", "trekking", "camping", "mountains", "beach",
+      "gardening", "plants", "fishing", "wildlife",
+    ],
+  },
+];
+
 export function InterestsAutocomplete({
   selectedInterests,
   onInterestsChange,
@@ -102,12 +184,24 @@ export function InterestsAutocomplete({
 
   useEffect(() => {
     if (inputValue.trim()) {
+      const q = inputValue.toLowerCase().trim();
+
+      // 🔎 Ricerca "smart": oltre al match diretto sul nome, alcune parole
+      // generiche/categorie (es. "sport") fanno comparire anche le voci
+      // correlate (calcio, palestra, fitness...). Le chiavi sono confrontate
+      // sia in IT che con sinonimi comuni, così "sport"/"musica"/"viaggi"
+      // propongono tutto il gruppo anche se la parola non è nel nome.
+      const matchedKeys = SEARCH_SYNONYMS
+        .filter((g) => g.terms.some((term) => term.includes(q) || q.includes(term)))
+        .flatMap((g) => g.keys);
+      const matchedKeySet = new Set(matchedKeys);
+
       const filtered = translatedInterests.filter(
         (interest) =>
-          interest.label.toLowerCase().includes(inputValue.toLowerCase()) &&
-          !selectedInterests.includes(interest.label)
+          !selectedInterests.includes(interest.label) &&
+          (interest.label.toLowerCase().includes(q) || matchedKeySet.has(interest.key))
       );
-      setFilteredInterests(filtered.map(i => i.label));
+      setFilteredInterests(filtered.map((i) => i.label));
     } else {
       setFilteredInterests([]);
     }
