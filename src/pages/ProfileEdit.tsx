@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
+import { compressImage } from "@/lib/compressImage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -369,28 +370,30 @@ const ProfileEdit = () => {
       let avatarPath = profile.avatar_url;
       let photosPaths = [...(profile.photos || [])];
 
-      // Upload avatar if changed
+      // Upload avatar if changed (compresso lato client prima dell'upload)
       if (avatarFile) {
-        const avatarExt = avatarFile.name.split('.').pop();
+        const compressed = await compressImage(avatarFile);
+        const avatarExt = compressed.type === "image/jpeg" ? "jpg" : (compressed.name.split('.').pop() || "jpg");
         const avatarFileName = `${userId}/avatar-${Date.now()}.${avatarExt}`;
-        
+
         const { error: avatarError } = await supabase.storage
           .from('profile-images')
-          .upload(avatarFileName, avatarFile, { upsert: true });
+          .upload(avatarFileName, compressed, { upsert: true });
 
         if (avatarError) throw avatarError;
         avatarPath = avatarFileName;
       }
 
-      // Upload new photos
+      // Upload new photos (compresse lato client prima dell'upload)
       if (photoFiles.length > 0) {
         for (const file of photoFiles) {
-          const photoExt = file.name.split('.').pop();
+          const compressed = await compressImage(file);
+          const photoExt = compressed.type === "image/jpeg" ? "jpg" : (compressed.name.split('.').pop() || "jpg");
           const photoFileName = `${userId}/photo-${Date.now()}-${Math.random().toString(36).substring(7)}.${photoExt}`;
-          
+
           const { error: photoError } = await supabase.storage
             .from('profile-images')
-            .upload(photoFileName, file);
+            .upload(photoFileName, compressed);
 
           if (photoError) throw photoError;
           photosPaths.push(photoFileName);
