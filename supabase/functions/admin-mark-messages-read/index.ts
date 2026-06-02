@@ -15,30 +15,43 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    const body = await req.json().catch(() => ({})) as { match_id?: string; admin_profile_id?: string }
+    const body = await req.json().catch(() => ({})) as { match_id?: string; admin_profile_id?: string; user_id?: string }
     const matchId = body.match_id
     const adminProfileId = body.admin_profile_id
+    const userId = body.user_id
 
-    if (!matchId || !adminProfileId) {
+    if (!matchId) {
       return new Response(
-        JSON.stringify({ success: false, error: 'match_id and admin_profile_id are required' }),
+        JSON.stringify({ success: false, error: 'match_id is required' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
 
-    const { error } = await supabase
+    // Segna come letti i messaggi NON letti in arrivo per l'admin.
+    // Criterio principale: i messaggi inviati dall'utente reale (sender_id =
+    // user_id). E' coerente con il conteggio in admin-secondary-get-conversations
+    // e robusto anche se il receiver_id fosse impostato in modo anomalo.
+    // Se user_id non e' disponibile, ripieghiamo sul receiver_id dell'admin.
+    let query = supabase
       .from('messages')
-      .update({ read: true })
+      .update({ read: true }, { count: 'exact' })
       .eq('match_id', matchId)
-      .eq('receiver_id', adminProfileId)
       .eq('read', false)
+
+    if (userId) {
+      query = query.eq('sender_id', userId)
+    } else if (adminProfileId) {
+      query = query.eq('receiver_id', adminProfileId)
+    }
+
+    const { error, count } = await query
 
     if (error) throw error
 
-    console.log(`Marked messages as read for match ${matchId} and admin ${adminProfileId}`)
+    console.log(`Marked ${count ?? 0} messages as read for match ${matchId} (user ${userId ?? '-'}, admin ${adminProfileId ?? '-'})`)
 
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ success: true, updated: count ?? 0 }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
   } catch (error) {

@@ -76,12 +76,17 @@ Deno.serve(async (req) => {
         
         const lastMessageAt = lastMsg?.created_at || (m as any).created_at
 
-        // Unread count for admin
+        // Unread count for admin.
+        // Contiamo i messaggi NON letti inviati dall'utente reale (sender_id =
+        // otherUserId). Usare il mittente e' piu' robusto del receiver_id:
+        // identifica con certezza i messaggi in arrivo per l'admin e resta
+        // coerente con la marcatura "letto" (admin-mark-messages-read), che usa
+        // lo stesso criterio. Cosi' aprendo la chat il badge si azzera davvero.
         const { count: unreadCount, error: cntErr } = await supabase
           .from('messages')
           .select('*', { count: 'exact', head: true })
           .eq('match_id', m.id)
-          .eq('receiver_id', adminId)
+          .eq('sender_id', otherUserId)
           .eq('read', false)
         if (cntErr) throw cntErr
         // Skip archived conversations that have no unread messages (allow reappear on new messages)

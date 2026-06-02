@@ -124,7 +124,11 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
 
     try {
       const { error } = await supabase.functions.invoke("admin-mark-messages-read", {
-        body: { match_id: conversation.matchId, admin_profile_id: conversation.adminProfileId },
+        body: {
+          match_id: conversation.matchId,
+          admin_profile_id: conversation.adminProfileId,
+          user_id: conversation.userId,
+        },
       });
       if (error) throw error;
     } catch (err) {
