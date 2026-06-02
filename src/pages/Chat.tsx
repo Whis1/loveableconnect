@@ -631,15 +631,18 @@ const Chat = () => {
     handleSendMessage(undefined, 'gif', gifUrl, 'GIF');
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  // Carica un File immagine e lo invia. Riusato da: input file e PASTE (Ctrl+V).
+  const uploadAndSendImage = async (file: File) => {
     if (!file || !currentUser) return;
 
     setUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
+      // Estensione robusta anche per immagini incollate (file.name puo' mancare).
+      const fileExt = (file.name && file.name.includes('.'))
+        ? file.name.split('.').pop()
+        : ((file.type && file.type.includes('/')) ? file.type.split('/')[1] : 'png');
       const fileName = `${currentUser}/${Date.now()}.${fileExt}`;
-      
+
       const { error: uploadError } = await supabase.storage
         .from('chat-images')
         .upload(fileName, file);
@@ -651,7 +654,7 @@ const Chat = () => {
         .getPublicUrl(fileName);
 
       await handleSendMessage(undefined, 'image', data.publicUrl, t("chat.photo"));
-      
+
       toast({
         title: t("chat.success"),
         description: t("chat.imageSent"),
@@ -665,6 +668,27 @@ const Chat = () => {
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) await uploadAndSendImage(file);
+  };
+
+  // 📋 Incolla un'immagine dagli appunti (Ctrl+V) direttamente nella chat.
+  const handlePaste = async (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) {
+          e.preventDefault();
+          await uploadAndSendImage(file);
+          break;
+        }
+      }
     }
   };
 
@@ -1053,6 +1077,7 @@ const Chat = () => {
                   <Input
                     value={newMessage}
                     onChange={handleInputChange}
+                    onPaste={handlePaste}
                     placeholder={t("chat.writeMessage")}
                     className="flex-1 text-sm md:text-base"
                     disabled={!!recordedAudio}
