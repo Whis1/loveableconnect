@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import { Users, MessageSquare, Save, Upload, X, Image as ImageIcon, Search, Heart, Link2, Send, Lock } from "lucide-react";
+import { Users, MessageSquare, Save, Upload, X, Image as ImageIcon, Search, Heart, Link2, Send, Lock, History, Clock } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AdminChatDialog } from "./AdminChatDialog";
 import { InterestsAutocomplete } from "@/components/InterestsAutocomplete";
@@ -334,6 +334,87 @@ function inferGenderFromName(nickname: string): string {
   return Math.random() < 0.5 ? "male" : "female";
 }
 
+// 🔍 Calcola un elenco leggibile delle modifiche tra il profilo PRIMA (snapshot
+//    all'apertura) e DOPO (al salvataggio). Usato per la cronologia modifiche.
+function computeProfileDiff(before: any, after: any): string[] {
+  const changes: string[] = [];
+
+  const arrDiff = (b: any[] = [], a: any[] = [], key: (x: any) => string = (x) => String(x)) => {
+    const bSet = new Set((b || []).map(key));
+    const aSet = new Set((a || []).map(key));
+    return {
+      added: (a || []).filter((x) => !bSet.has(key(x))),
+      removed: (b || []).filter((x) => !aSet.has(key(x))),
+    };
+  };
+
+  const scalar = (field: string, label: string) => {
+    const bv = before?.[field] ?? null;
+    const av = after?.[field] ?? null;
+    if (JSON.stringify(bv) !== JSON.stringify(av)) {
+      const fmt = (v: any) => (v === null || v === undefined || v === "" ? "(vuoto)" : String(v));
+      changes.push(`${label}: "${fmt(bv)}" → "${fmt(av)}"`);
+    }
+  };
+
+  scalar("nickname", "Nickname");
+  scalar("age", "Età");
+  scalar("city", "Città");
+  scalar("gender", "Genere");
+  scalar("sexual_orientation", "Orientamento");
+  scalar("relationship_status", "Stato relazione");
+  scalar("relationship_type", "Tipo relazione");
+
+  if ((before?.bio ?? "") !== (after?.bio ?? "")) changes.push("Bio modificata");
+
+  if ((before?.user_images_link ?? "") !== (after?.user_images_link ?? "")) {
+    const wasEmpty = !before?.user_images_link;
+    const isEmpty = !after?.user_images_link;
+    changes.push(
+      wasEmpty ? "Link immagini utente aggiunto" : isEmpty ? "Link immagini utente rimosso" : "Link immagini utente modificato"
+    );
+  }
+
+  if (JSON.stringify(before?.manual_online_status) !== JSON.stringify(after?.manual_online_status)) {
+    const label = (v: any) => (v === null || v === undefined ? "Automatico" : v ? "Forzato online" : "Forzato offline");
+    changes.push(`Stato online: ${label(before?.manual_online_status)} → ${label(after?.manual_online_status)}`);
+  }
+
+  {
+    const { added, removed } = arrDiff(before?.interests, after?.interests);
+    if (added.length) changes.push(`Interessi aggiunti: ${added.join(", ")}`);
+    if (removed.length) changes.push(`Interessi rimossi: ${removed.join(", ")}`);
+  }
+  {
+    const { added, removed } = arrDiff(before?.looking_for, after?.looking_for);
+    if (added.length) changes.push(`"Cerca" aggiunti: ${added.join(", ")}`);
+    if (removed.length) changes.push(`"Cerca" rimossi: ${removed.join(", ")}`);
+  }
+  {
+    const key = (s: any) => s?.id || `${s?.name}-${s?.artist}`;
+    const fmt = (s: any) => `${s?.name || "?"}${s?.artist ? " - " + s.artist : ""}`;
+    const { added, removed } = arrDiff(before?.favorite_songs, after?.favorite_songs, key);
+    if (added.length) changes.push(`Canzoni aggiunte: ${added.map(fmt).join(", ")}`);
+    if (removed.length) changes.push(`Canzoni rimosse: ${removed.map(fmt).join(", ")}`);
+  }
+  {
+    const { added, removed } = arrDiff(before?.photos, after?.photos);
+    if (added.length) changes.push(`Foto galleria aggiunte: ${added.length}`);
+    if (removed.length) changes.push(`Foto galleria rimosse: ${removed.length}`);
+  }
+  if ((before?.avatar_url ?? "") !== (after?.avatar_url ?? "")) changes.push("Foto profilo cambiata");
+
+  return changes;
+}
+
+interface ProfileEditEntry {
+  id: string;
+  admin_email: string | null;
+  profile_nickname: string | null;
+  changes: string;
+  created_at: string;
+}
+
 export const ProfileManager = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -365,6 +446,14 @@ export const ProfileManager = () => {
   const [unlocking, setUnlocking] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
+  // 📜 Cronologia modifiche profili (condivisa su DB tra admin).
+  const [editsOpen, setEditsOpen] = useState(false);
+  const [edits, setEdits] = useState<ProfileEditEntry[]>([]);
+  const [editsLoading, setEditsLoading] = useState(false);
+  // Snapshot del profilo all'apertura del dialog di modifica, per calcolare il
+  // diff al salvataggio e per scartare le modifiche su Annulla.
+  const editSnapshotRef = useRef<{ id: string; data: any } | null>(null);
+
   useEffect(() => {
     (async () => {
       try {
@@ -376,6 +465,54 @@ export const ProfileManager = () => {
       }
     })();
   }, []);
+
+  const openEditsHistory = async () => {
+    setEditsOpen(true);
+    setEditsLoading(true);
+    try {
+      const { data, error } = await (supabase as any).rpc("get_profile_edits");
+      if (error) throw error;
+      setEdits((data || []) as ProfileEditEntry[]);
+    } catch (err) {
+      console.warn("get_profile_edits non disponibile:", err);
+      setEdits([]);
+      toast({ title: "Cronologia non disponibile", description: "Applica la migrazione SQL per attivare la cronologia.", variant: "destructive" });
+    } finally {
+      setEditsLoading(false);
+    }
+  };
+
+  // Salva il profilo, registra il diff in cronologia (solo se ci sono modifiche).
+  const handleSaveProfileWithLog = async (profile: Profile): Promise<boolean> => {
+    const snap = editSnapshotRef.current;
+    const before = snap && snap.id === profile.id ? snap.data : null;
+    const ok = await handleUpdateProfile(profile);
+    if (ok && before) {
+      const changes = computeProfileDiff(before, profile);
+      if (changes.length > 0) {
+        try {
+          await (supabase as any).rpc("log_profile_edit", {
+            p_profile_id: profile.id,
+            p_profile_nickname: profile.nickname,
+            p_changes: changes.join("\n"),
+          });
+        } catch (e) {
+          console.warn("log_profile_edit non disponibile:", e);
+        }
+      }
+    }
+    return ok;
+  };
+
+  // Annulla: scarta le modifiche non salvate ricaricando i dati dal DB.
+  const handleCancelEdit = () => {
+    editSnapshotRef.current = null;
+    setEditingProfileId(null);
+    fetchProfiles();
+  };
+
+  const formatEditWhen = (ts: string) =>
+    new Date(ts).toLocaleString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
   // Richiede l'eliminazione del link immagini: se sbloccato procede, altrimenti
   // apre il pannello password.
@@ -1133,6 +1270,12 @@ export const ProfileManager = () => {
               />
             </div>
           </div>
+          <div className="pt-2">
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={openEditsHistory}>
+              <History className="h-4 w-4" />
+              Cronologia modifiche
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[600px] pr-4">
@@ -1236,9 +1379,17 @@ export const ProfileManager = () => {
                           editingProfileId per chiuderlo dopo il salvataggio */}
                       <Dialog
                         open={editingProfileId === profile.id}
-                        onOpenChange={(open) =>
-                          setEditingProfileId(open ? profile.id : null)
-                        }
+                        onOpenChange={(open) => {
+                          if (open) {
+                            // Snapshot del profilo per diff (al salvataggio) e
+                            // per scartare le modifiche (su Annulla/chiusura).
+                            editSnapshotRef.current = { id: profile.id, data: JSON.parse(JSON.stringify(profile)) };
+                            setEditingProfileId(profile.id);
+                          } else {
+                            // Chiusura senza salvare (X/Esc/click fuori): scarta.
+                            handleCancelEdit();
+                          }
+                        }}
                       >
                         <DialogTrigger asChild>
                           <Button variant="outline" className="flex-1">
@@ -1547,11 +1698,17 @@ export const ProfileManager = () => {
                               {/* Pulsante Salva — sticky in fondo: resta sempre
                                   visibile e raggiungibile anche con contenuti
                                   lunghi (es. tante canzoni dai nomi lunghi). */}
-                              <div className="sticky bottom-0 flex justify-end pt-4 pb-1 border-t bg-background">
+                              <div className="sticky bottom-0 flex justify-end gap-2 pt-4 pb-1 border-t bg-background">
+                                <Button variant="outline" onClick={handleCancelEdit}>
+                                  Annulla
+                                </Button>
                                 <Button
                                   onClick={async () => {
-                                    const ok = await handleUpdateProfile(profile);
-                                    if (ok) setEditingProfileId(null);
+                                    const ok = await handleSaveProfileWithLog(profile);
+                                    if (ok) {
+                                      editSnapshotRef.current = null;
+                                      setEditingProfileId(null);
+                                    }
                                   }}
                                 >
                                   <Save className="h-4 w-4 mr-2" />
@@ -1719,6 +1876,50 @@ export const ProfileManager = () => {
               {unlocking ? "Verifico..." : "Sblocca"}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cronologia modifiche profili (condivisa tra admin) */}
+      <Dialog open={editsOpen} onOpenChange={setEditsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Cronologia modifiche profili
+            </DialogTitle>
+          </DialogHeader>
+          {editsLoading ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">Caricamento...</div>
+          ) : edits.length === 0 ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              Nessuna modifica registrata.
+            </div>
+          ) : (
+            <ScrollArea className="max-h-[65vh] pr-3">
+              <div className="space-y-3">
+                {edits.map((e) => (
+                  <div key={e.id} className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <span className="font-semibold text-sm text-primary">{e.profile_nickname || "Profilo"}</span>
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                        <Clock className="h-3 w-3" />
+                        {formatEditWhen(e.created_at)}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground break-all">Admin: {e.admin_email || "—"}</p>
+                    <ul className="mt-2 space-y-1">
+                      {e.changes.split("\n").filter(Boolean).map((line, i) => (
+                        <li key={i} className="text-sm flex gap-2">
+                          <span className="text-primary">•</span>
+                          <span className="break-words">{line}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
         </DialogContent>
       </Dialog>
     </>
