@@ -190,13 +190,15 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  // Carica un File immagine e lo invia. Riusato da: input file, e PASTE (Ctrl+V).
+  const uploadAndSendImage = async (file: File) => {
     if (!file || !conversation) return;
-
     try {
       setUploading(true);
-      const fileName = `${Date.now()}_${file.name}`;
+      // Nome sicuro: se incolli, file.name puo' essere vuoto/strano → usa estensione dal type.
+      const ext = (file.type && file.type.includes("/")) ? file.type.split("/")[1] : "png";
+      const safeName = file.name && file.name.trim() ? file.name : `pasted_${Date.now()}.${ext}`;
+      const fileName = `${Date.now()}_${safeName}`;
       const { error: uploadError } = await supabase.storage
         .from("chat-images")
         .upload(fileName, file);
@@ -211,6 +213,27 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) await uploadAndSendImage(file);
+  };
+
+  // 📋 Incolla un'immagine dagli appunti (Ctrl+V) direttamente nella chat.
+  const handlePaste = async (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          e.preventDefault(); // non incollare il testo/nome del file
+          await uploadAndSendImage(file);
+          break;
+        }
+      }
     }
   };
 
@@ -411,6 +434,7 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Scrivi un messaggio..."
+              onPaste={handlePaste}
               onKeyPress={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
