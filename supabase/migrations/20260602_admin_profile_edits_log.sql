@@ -44,6 +44,9 @@ BEGIN
 
   SELECT email INTO v_email FROM auth.users WHERE id = auth.uid();
 
+  -- Pulizia automatica: via le voci piu' vecchie di 48 ore.
+  DELETE FROM admin_profile_edits WHERE created_at < now() - interval '48 hours';
+
   INSERT INTO admin_profile_edits (admin_id, admin_email, profile_id, profile_nickname, changes)
   VALUES (auth.uid(), v_email, p_profile_id, p_profile_nickname, p_changes);
 END;
@@ -51,7 +54,7 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.log_profile_edit(uuid, text, text) TO authenticated;
 
--- READ: cronologia modifiche (solo admin), ultimi 60 giorni.
+-- READ: cronologia modifiche (solo admin), ultime 48 ore.
 CREATE OR REPLACE FUNCTION public.get_profile_edits()
 RETURNS TABLE (
   id               uuid,
@@ -74,7 +77,7 @@ BEGIN
   RETURN QUERY
     SELECT a.id, a.admin_email, a.profile_nickname, a.changes, a.created_at
     FROM admin_profile_edits a
-    WHERE a.created_at >= now() - interval '60 days'
+    WHERE a.created_at >= now() - interval '48 hours'
     ORDER BY a.created_at DESC
     LIMIT 500;
 END;
