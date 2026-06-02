@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -63,6 +63,9 @@ const Matches = () => {
   const { t } = useTranslation();
   const { translateText } = useTextTranslation();
   const [matches, setMatches] = useState<MatchWithProfile[]>([]);
+  // Specchio dei match per accedervi dentro timer/listener senza ri-crearli.
+  const matchesRef = useRef<MatchWithProfile[]>([]);
+  useEffect(() => { matchesRef.current = matches; }, [matches]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [onlineStatuses, setOnlineStatuses] = useState<Map<string, { isOnline: boolean; showStatus: boolean }>>(new Map());
@@ -349,6 +352,62 @@ const Matches = () => {
       }
     };
   }, [navigate, toast, t]);
+
+  // 🔝 "Casella postale": riallinea i match per ULTIMO messaggio. Oltre al
+  // realtime (che sposta in cima all'arrivo di un messaggio), ricontrolliamo
+  // anche periodicamente e quando si torna sulla scheda, leggendo solo i
+  // timestamp (leggero) e riordinando. Cosi' chi scrive sale in cima in modo
+  // affidabile anche se il realtime perde un evento.
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const resortByLastMessage = async () => {
+      const current = matchesRef.current;
+      if (current.length === 0) return;
+      const ids = current.map((m) => m.id);
+      const { data, error } = await supabase
+        .from("messages")
+        .select("match_id, created_at")
+        .in("match_id", ids)
+        .order("created_at", { ascending: false })
+        .limit(800);
+      if (error || !data) return;
+
+      const lastMap = new Map<string, string>();
+      data.forEach((m: any) => {
+        if (!lastMap.has(m.match_id)) lastMap.set(m.match_id, m.created_at);
+      });
+
+      setMatches((prev) => {
+        const updated = prev.map((m) => ({
+          ...m,
+          last_message_at: lastMap.get(m.id) || m.last_message_at,
+        }));
+        // Riordina solo se l'ordine e' effettivamente cambiato (evita render inutili).
+        const sorted = [...updated].sort(
+          (a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime()
+        );
+        const sameOrder = sorted.every((m, i) => m.id === prev[i]?.id);
+        return sameOrder ? prev : sorted;
+      });
+    };
+
+    const onFocus = () => resortByLastMessage();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") resortByLastMessage();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") resortByLastMessage();
+    }, 20000);
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
+      clearInterval(interval);
+    };
+  }, [currentUserId]);
 
   const handleHideMatch = async (matchId: string, e: React.MouseEvent) => {
     e.stopPropagation();
