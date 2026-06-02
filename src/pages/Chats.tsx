@@ -323,7 +323,15 @@ const Chats = () => {
           fetchConversations(true);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        // Appena il canale realtime si connette (o si riconnette dopo un calo
+        // di rete / subito dopo il login), facciamo un fetch di allineamento:
+        // cosi' non perdiamo i messaggi arrivati prima che la sottoscrizione
+        // fosse pronta, ed evitiamo di dover ricaricare la pagina a mano.
+        if (status === "SUBSCRIBED") {
+          fetchConversations(true);
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);

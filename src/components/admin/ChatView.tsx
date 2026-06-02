@@ -73,7 +73,19 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
     scrollToBottom();
   }, [messages, conversation?.matchId]);
 
-  // Fallback realtime: ricontrolla i messaggi ogni 3 secondi, così i nuovi
+  // Segna i messaggi come letti OGNI volta che la lista messaggi cambia mentre
+  // la chat e' aperta. Copre in modo uniforme tutti i casi: caricamento
+  // iniziale, consegna realtime E polling di backup. Senza questo, un messaggio
+  // arrivato via polling (quando il realtime non si connette) restava "non
+  // letto" nel DB e il badge "1" riappariva al refresh anche dopo averlo letto.
+  // E' idempotente: la edge function aggiorna solo le righe con read=false.
+  useEffect(() => {
+    if (!conversation || messages.length === 0) return;
+    markAsRead();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, conversation?.matchId]);
+
+  // Fallback realtime: ricontrolla i messaggi ogni 2 secondi, così i nuovi
   // messaggi compaiono da soli anche se la consegna in tempo reale non funziona.
   useEffect(() => {
     if (!conversation) return;
@@ -98,7 +110,7 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
       } catch {
         // ignora errori temporanei del polling
       }
-    }, 3000);
+    }, 2000);
     return () => clearInterval(interval);
   }, [conversation?.matchId]);
 
@@ -153,9 +165,12 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
         },
         (payload) => {
           const newMsg = payload.new as Message;
-          setMessages((prev) => [...prev, newMsg]);
+          // Dedup: evita doppioni se lo stesso messaggio arriva anche dal
+          // polling di backup. markAsRead viene gestito dall'effect su [messages].
+          setMessages((prev) =>
+            prev.some((m) => m.id === newMsg.id) ? prev : [...prev, newMsg]
+          );
           setTimeout(scrollToBottom, 100);
-          markAsRead();
         }
       )
       .subscribe();
