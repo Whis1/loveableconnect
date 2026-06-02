@@ -16,7 +16,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Coins, Crown, Heart, Plus, XCircle, History, Send, Clock } from "lucide-react";
+import { Coins, Crown, Plus, XCircle, History, Send, Clock } from "lucide-react";
 
 // 🗂️ Cronologia azioni admin (crediti/like/abbonamenti) salvata sul dispositivo.
 //    Si auto-pulisce: vengono mostrate/salvate solo le voci delle ultime 24 ore.
@@ -74,7 +74,6 @@ export const UserCreditsManager = () => {
   const [loadingPremium, setLoadingPremium] = useState(false);
   const [loadingWeeklyPremium, setLoadingWeeklyPremium] = useState(false);
   const [loadingPlatinum, setLoadingPlatinum] = useState(false);
-  const [loadingUnlock, setLoadingUnlock] = useState(false);
   const [loadingLikes, setLoadingLikes] = useState(false);
   const [loadingRemoveSub, setLoadingRemoveSub] = useState(false);
 
@@ -352,23 +351,6 @@ export const UserCreditsManager = () => {
     }
   };
 
-  const handleUnlockLikes = async () => {
-    if (!userId) {
-      toast({ title: "Errore", description: "Inserisci user ID", variant: "destructive" });
-      return;
-    }
-    setLoadingUnlock(true);
-    try {
-      toast({
-        title: "Funzionalità rimossa",
-        description: "Il sistema di unlock globale è stato sostituito con lo sblocco per-profilo da 8 crediti",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingUnlock(false);
-    }
-  };
-
   // 🔧 Rimuove COMPLETAMENTE l'abbonamento da un account (resetta a free).
   const doRemoveSubscription = async (reasonText: string): Promise<boolean> => {
     const trimmedId = userId.trim();
@@ -482,24 +464,33 @@ export const UserCreditsManager = () => {
             />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Button onClick={() => requestAction("credits")} disabled={loading}>
+        {/* Tutti i pulsanti stessa larghezza (adattata al testo piu' lungo),
+            in colonna centrata e ordinata. */}
+        <div className="flex flex-col items-center gap-3 pt-1">
+          <Button
+            onClick={() => requestAction("credits")}
+            disabled={loading}
+            className="w-72 justify-center"
+          >
             <Coins className="h-4 w-4 mr-2" />
             {loading ? "Aggiungendo..." : "Aggiungi Crediti"}
           </Button>
 
-          <Button onClick={() => requestAction("likes")} disabled={loadingLikes} variant="secondary">
+          <Button
+            onClick={() => requestAction("likes")}
+            disabled={loadingLikes}
+            variant="secondary"
+            className="w-72 justify-center"
+          >
             <Plus className="h-4 w-4 mr-2" />
             {loadingLikes ? "Aggiungendo..." : "Aggiungi Like"}
           </Button>
-        </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-3">
           <Button
             onClick={() => requestAction("premium")}
             disabled={loadingPremium}
             variant="outline"
-            className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white border-0"
+            className="w-72 justify-center bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white border-0"
           >
             <Crown className="h-4 w-4 mr-2" />
             {loadingPremium ? "Assegnando..." : "Premium (30gg €399)"}
@@ -509,31 +500,29 @@ export const UserCreditsManager = () => {
             onClick={() => requestAction("platinum")}
             disabled={loadingPlatinum}
             variant="outline"
-            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0"
+            className="w-72 justify-center bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0"
           >
             <Crown className="h-4 w-4 mr-2" />
             {loadingPlatinum ? "Assegnando..." : "Platino (30gg €69)"}
           </Button>
-        </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Button onClick={() => requestAction("weekly")} disabled={loadingWeeklyPremium} variant="outline">
+          <Button
+            onClick={() => requestAction("weekly")}
+            disabled={loadingWeeklyPremium}
+            variant="outline"
+            className="w-72 justify-center"
+          >
             <Crown className="h-4 w-4 mr-2" />
             {loadingWeeklyPremium ? "Assegnando..." : "Premium (7gg)"}
           </Button>
 
-          <Button onClick={handleUnlockLikes} disabled={loadingUnlock} variant="outline">
-            <Heart className="h-4 w-4 mr-2" />
-            {loadingUnlock ? "Sbloccando..." : "Sblocca (24h)"}
-          </Button>
-        </div>
+          <div className="w-72 border-t border-border/40 my-1" />
 
-        <div className="pt-2 border-t border-border/40 space-y-3">
           <Button
             onClick={() => requestAction("remove")}
             disabled={loadingRemoveSub}
             variant="outline"
-            className="w-full bg-gradient-to-r from-red-500/10 to-orange-500/10 hover:from-red-500/20 hover:to-orange-500/20 border-red-500/30 text-red-600 dark:text-red-400"
+            className="w-72 justify-center bg-gradient-to-r from-red-500/10 to-orange-500/10 hover:from-red-500/20 hover:to-orange-500/20 border-red-500/30 text-red-600 dark:text-red-400"
           >
             <XCircle className="h-4 w-4 mr-2" />
             {loadingRemoveSub ? "Rimuovendo..." : "Rimuovi Abbonamento"}
