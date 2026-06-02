@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useLayoutEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -55,22 +55,42 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
   const [pendingImage, setPendingImage] = useState<{ file: File; url: string } | null>(null);
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [showAdminProfile, setShowAdminProfile] = useState(false);
+  const [adminAvatar, setAdminAvatar] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Tiene traccia dell'ultima conversazione per cui abbiamo gia' scrollato:
+  // distingue "apertura nuova chat" (salto istantaneo) da "nuovo messaggio"
+  // (scroll morbido).
+  const scrolledMatchRef = useRef<string | null>(null);
+
+  // Converte un path dello storage in URL pubblico (gli avatar sono salvati come
+  // path tipo "<id>/avatar-xxx.jpg"; se gia' http lo lascia com'e').
+  const getAvatarUrl = (path: string | null | undefined): string | undefined => {
+    if (!path) return undefined;
+    if (path.startsWith("http")) return path;
+    return supabase.storage.from("profile-images").getPublicUrl(path).data.publicUrl;
+  };
 
   useEffect(() => {
     if (!conversation) return;
     fetchMessages();
     markAsRead();
+    fetchAdminAvatar();
     const unsubscribe = subscribeToMessages();
     return () => {
       unsubscribe?.();
     };
   }, [conversation?.matchId]);
 
-  // Autoscroll quando cambiano i messaggi o la conversazione
-  useEffect(() => {
-    scrollToBottom();
+  // Posizionamento in fondo. All'APERTURA di una chat saltiamo subito all'ultimo
+  // messaggio in modo ISTANTANEO (useLayoutEffect = prima che il browser
+  // disegni, quindi nessuna animazione visibile). Per i messaggi che arrivano
+  // mentre la chat e' gia' aperta usiamo invece uno scroll morbido.
+  useLayoutEffect(() => {
+    if (!conversation || messages.length === 0) return;
+    const isNewConversation = scrolledMatchRef.current !== conversation.matchId;
+    scrolledMatchRef.current = conversation.matchId;
+    scrollToBottom(isNewConversation ? "auto" : "smooth");
   }, [messages, conversation?.matchId]);
 
   // Segna i messaggi come letti OGNI volta che la lista messaggi cambia mentre
@@ -126,10 +146,30 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
 
       if (error) throw error;
       setMessages(data.messages || []);
-      setTimeout(scrollToBottom, 100);
+      // Lo scroll iniziale e' gestito dal useLayoutEffect (salto istantaneo).
     } catch (error) {
       console.error("Error fetching messages:", error);
       toast.error("Errore nel caricamento dei messaggi");
+    }
+  };
+
+  // Recupera l'avatar del profilo admin per mostrarlo nei suoi messaggi.
+  const fetchAdminAvatar = async () => {
+    if (!conversation) return;
+    setAdminAvatar(null);
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("avatar_url, photos")
+        .eq("id", conversation.adminProfileId)
+        .maybeSingle();
+      const path =
+        (data?.avatar_url as string | null) ||
+        (Array.isArray(data?.photos) ? (data?.photos[0] as string) : null) ||
+        null;
+      setAdminAvatar(getAvatarUrl(path) ?? null);
+    } catch {
+      // se non riusciamo a recuperarlo, resta l'icona di fallback
     }
   };
 
@@ -178,7 +218,7 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
           setMessages((prev) =>
             prev.some((m) => m.id === newMsg.id) ? prev : [...prev, newMsg]
           );
-          setTimeout(scrollToBottom, 100);
+          // Lo scroll e' gestito dal useLayoutEffect su [messages].
         }
       )
       .subscribe();
@@ -188,8 +228,8 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
     };
   };
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = (behavior: ScrollBehavior = "auto") => {
+    messagesEndRef.current?.scrollIntoView({ behavior, block: "end" });
   };
 
   const handleSendMessage = async (content: string, type: "text" | "emoji" | "gif" | "image" | "voice" = "text", mediaUrl: string | null = null) => {
@@ -212,7 +252,7 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
 
       setNewMessage("");
       await fetchMessages();
-      setTimeout(scrollToBottom, 100);
+      // Lo scroll verso il basso e' gestito dal useLayoutEffect su [messages].
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error("Errore nell'invio del messaggio");
@@ -407,9 +447,9 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
                 mediaUrl={msg.media_url}
                 isOwn={msg.sender_id === conversation.adminProfileId}
                 senderAvatarUrl={
-                  msg.sender_id === conversation.userId
-                    ? conversation.userAvatar
-                    : null
+                  msg.sender_id === conversation.adminProfileId
+                    ? adminAvatar
+                    : getAvatarUrl(conversation.userAvatar) ?? null
                 }
                 timestamp={msg.created_at}
                 senderNickname={
