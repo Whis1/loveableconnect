@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { profileImageUrl } from "@/lib/imageUrl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -47,8 +46,15 @@ interface LikeWithProfile {
 
 const toPublicAvatarUrl = (path: string | null) => {
   if (!path) return null;
-  // 🖼️ Mini-avatar in lista like → versione ottimizzata leggera (thumb).
-  return profileImageUrl(path, "thumb") || null;
+  if (/^https?:\/\//i.test(path)) return path;
+  // Thumbnail QUADRATO (cover) per il cerchio avatar: leggero e ritagliato
+  // correttamente (mostra il centro/volto). IMPORTANTE: per "cover" servono sia
+  // width SIA height, altrimenti Supabase restituisce una fettina deformata
+  // (es. 96x1280) sulle foto verticali e "non si vede niente".
+  const { data } = supabase.storage.from("profile-images").getPublicUrl(path, {
+    transform: { width: 200, height: 200, resize: "cover", quality: 70 },
+  });
+  return data.publicUrl || null;
 };
 
 // Quando un profilo non ha avatar_url ma ha foto nella galleria, usiamo la
