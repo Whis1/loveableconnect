@@ -15,6 +15,7 @@ import { PageLoader } from "@/components/PageLoader";
 import matchHeartIcon from "@/assets/match-heart.png";
 import { withFallback } from "@/lib/async";
 import { getStoredUserId } from "@/lib/storedSession";
+import { useMatchNotification } from "@/contexts/MatchNotificationContext";
 
 interface MatchWithProfile {
   id: string;
@@ -66,6 +67,9 @@ const Matches = () => {
   // Specchio dei match per accedervi dentro timer/listener senza ri-crearli.
   const matchesRef = useRef<MatchWithProfile[]>([]);
   useEffect(() => { matchesRef.current = matches; }, [matches]);
+  // 🔔 Entrando nei match si "visualizza": ferma il lampeggio nella home.
+  const { markSeen: markMatchesSeen } = useMatchNotification();
+  useEffect(() => { markMatchesSeen(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [onlineStatuses, setOnlineStatuses] = useState<Map<string, { isOnline: boolean; showStatus: boolean }>>(new Map());

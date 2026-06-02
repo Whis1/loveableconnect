@@ -162,3 +162,17 @@ All colors MUST be HSL.
     }
   }
 }
+
+/* 🔔 Lampeggio LENTO per la card "I Tuoi Match" quando arrivano nuovi messaggi.
+   Glow rosa pulsante che attira l'attenzione senza essere fastidioso. */
+@keyframes match-slow-blink {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(244, 63, 94, 0);
+  }
+  50% {
+    box-shadow: 0 0 26px 6px rgba(244, 63, 94, 0.85);
+  }
+}
+.animate-match-blink {
+  animation: match-slow-blink 1.9s ease-in-out infinite;
+}

@@ -9,6 +9,7 @@ import { AdBanner } from "./components/AdBanner";
 import { AnimatedRoutes } from "./components/AnimatedRoutes";
 import { useApplyGamePendingPenalty } from "./hooks/useApplyGamePendingPenalty";
 import { useConnectionWatchdog } from "./hooks/useConnectionWatchdog";
+import { MatchNotificationProvider } from "./contexts/MatchNotificationContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,10 +32,10 @@ const AppShell = () => {
   //    + refresh proattivo ogni 90s + on visibility/focus.
   useConnectionWatchdog();
   return (
-    <>
+    <MatchNotificationProvider>
       <AdBanner />
       <AnimatedRoutes />
-    </>
+    </MatchNotificationProvider>
   );
 };
 

@@ -17,6 +17,7 @@ import { GeolocationBanner } from "@/components/GeolocationBanner";
 import { InboxDropdown } from "@/components/InboxDropdown";
 import { Tutorial } from "@/components/Tutorial";
 import { getStoredUserId } from "@/lib/storedSession";
+import { useMatchNotification } from "@/contexts/MatchNotificationContext";
 import loveIcon from "@/assets/love-icon.png";
 interface Profile {
   id: string;
@@ -41,6 +42,8 @@ const Dashboard = () => {
     t
   } = useTranslation();
   useBanCheck(); // Check if user is banned
+  // 🔔 Lampeggio della card Match quando arrivano nuovi messaggi (notifica home).
+  const { hasNew: hasNewMatchMsg } = useMatchNotification();
   const [user, setUser] = useState<User | null>(() => {
     const id = getStoredUserId();
     return id ? ({ id } as User) : null;
@@ -632,7 +635,16 @@ const Dashboard = () => {
             {/* Stats Cards - Redesigned */}
             <div className="grid gap-4 md:grid-cols-2">
               {/* Matches Card */}
-              <Card id="matches-card" className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-pink-500 to-rose-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+              <Card id="matches-card" className={`relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-pink-500 to-rose-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] ${hasNewMatchMsg ? "animate-match-blink" : ""}`}>
+                {hasNewMatchMsg && (
+                  <span className="absolute top-3 right-3 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white text-rose-600 text-xs font-bold shadow-lg">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600" />
+                    </span>
+                    Nuovi messaggi
+                  </span>
+                )}
                 {/* Card Background */}
                 <div className="absolute inset-0 opacity-10" style={{
                 backgroundImage: 'url(/images/love-background.png)',
