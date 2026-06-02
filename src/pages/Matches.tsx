@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { profileImageUrl } from "@/lib/imageUrl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ProfileAvatar } from "@/components/ProfileAvatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, MessageCircle, Trash2, Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -417,11 +417,12 @@ const Matches = () => {
                       <div className="flex flex-col md:flex-row md:items-center gap-4">
                         <div className="flex items-center gap-4 flex-1">
                           <div className="relative shrink-0">
-                            <ProfileAvatar
-                              src={match.otherUser.avatar_url}
-                              name={match.otherUser.nickname}
-                              className="h-16 w-16 md:h-20 md:w-20 border-4 border-primary/20 shadow-md"
-                            />
+                            <Avatar className="h-16 w-16 md:h-20 md:w-20 border-4 border-primary/20 shadow-md">
+                              <AvatarImage src={match.otherUser.avatar_url || undefined} />
+                              <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-xl">
+                                {match.otherUser.nickname.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
                           <div className="absolute -bottom-1 -right-1">
                             <OnlineIndicator userId={match.otherUser.id} size="md" preloadedStatus={onlineStatuses.get(match.otherUser.id)} />
                           </div>

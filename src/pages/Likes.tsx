@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { profileImageUrl } from "@/lib/imageUrl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ProfileAvatar } from "@/components/ProfileAvatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Heart, Lock, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -495,11 +495,12 @@ const Likes = () => {
                       <CardContent className="p-6">
                         <div className="flex items-start gap-4">
                           <div className="relative">
-                            <ProfileAvatar
-                              src={like.profile.avatar_url}
-                              name={like.profile.nickname}
-                              className={`h-20 w-20 border-4 border-pink-200/50 dark:border-pink-800/50 ${!isUnlocked ? 'blur-sm' : ''}`}
-                            />
+                            <Avatar className={`h-20 w-20 border-4 border-pink-200/50 dark:border-pink-800/50 ${!isUnlocked ? 'blur-sm' : ''}`}>
+                              <AvatarImage src={like.profile.avatar_url || undefined} />
+                              <AvatarFallback className="bg-gradient-to-br from-pink-400 to-purple-400 text-white text-xl">
+                                {like.profile.nickname?.[0]?.toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
                             {!isUnlocked && (
                               <div className="absolute inset-0 flex items-center justify-center">
                                 <Lock className="h-8 w-8 text-foreground/70" />
