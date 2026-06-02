@@ -41,13 +41,15 @@ BEGIN
     RAISE EXCEPTION 'Non autorizzato';
   END IF;
   SELECT email INTO v_email FROM auth.users WHERE id = auth.uid();
+  -- Pulizia automatica: via le voci piu' vecchie di 48 ore.
+  DELETE FROM admin_user_actions WHERE created_at < now() - interval '48 hours';
   INSERT INTO admin_user_actions (admin_id, admin_email, action_type, target_user_id, target_nickname, message, batch_id)
   VALUES (auth.uid(), v_email, p_action_type, p_target_user_id, p_target_nickname, p_message, p_batch_id);
 END;
 $$;
 GRANT EXECUTE ON FUNCTION public.log_user_action(text, uuid, text, text, uuid) TO authenticated;
 
--- READ: cronologia azioni (solo admin), ultimi 60 giorni.
+-- READ: cronologia azioni (solo admin), ultime 48 ore.
 CREATE OR REPLACE FUNCTION public.get_user_actions()
 RETURNS TABLE (
   id uuid, admin_email text, action_type text, target_nickname text,
@@ -63,7 +65,7 @@ BEGIN
     SELECT a.id, a.admin_email, a.action_type, a.target_nickname, a.message,
            a.batch_id, a.inbox_deleted, a.created_at
     FROM admin_user_actions a
-    WHERE a.created_at >= now() - interval '60 days'
+    WHERE a.created_at >= now() - interval '48 hours'
     ORDER BY a.created_at DESC
     LIMIT 500;
 END;
@@ -92,6 +94,8 @@ BEGIN
   GET DIAGNOSTICS v_count = ROW_COUNT;
 
   SELECT email INTO v_email FROM auth.users WHERE id = auth.uid();
+  -- Pulizia automatica: via le voci di cronologia piu' vecchie di 48 ore.
+  DELETE FROM admin_user_actions WHERE created_at < now() - interval '48 hours';
   INSERT INTO admin_user_actions (admin_id, admin_email, action_type, message, batch_id)
   VALUES (auth.uid(), v_email, 'inbox_all', p_message, v_batch);
 
