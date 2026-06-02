@@ -3,10 +3,64 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Coins, Crown, Heart, Plus, XCircle } from "lucide-react";
+import { Coins, Crown, Heart, Plus, XCircle, History, Send, Clock } from "lucide-react";
+
+// 🗂️ Cronologia azioni admin (crediti/like/abbonamenti) salvata sul dispositivo.
+//    Si auto-pulisce: vengono mostrate/salvate solo le voci delle ultime 24 ore.
+const HISTORY_KEY = "adminarrettu_credits_history_v1";
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+interface HistoryEntry {
+  id: string;
+  actionLabel: string;
+  userId: string;
+  reason: string;
+  timestamp: number;
+}
+
+const loadHistory = (): HistoryEntry[] => {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    const cutoff = Date.now() - DAY_MS;
+    return (arr as HistoryEntry[]).filter((e) => e && typeof e.timestamp === "number" && e.timestamp >= cutoff);
+  } catch {
+    return [];
+  }
+};
+
+const saveHistory = (entries: HistoryEntry[]) => {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(entries));
+  } catch {
+    // ignora errori di storage
+  }
+};
+
+type ActionKey = "credits" | "likes" | "premium" | "platinum" | "weekly";
+
+const ACTION_TITLES: Record<ActionKey, string> = {
+  credits: "Aggiungi Crediti",
+  likes: "Aggiungi Like",
+  premium: "Premium (30 giorni)",
+  platinum: "Platino (30 giorni)",
+  weekly: "Premium (7 giorni)",
+};
 
 export const UserCreditsManager = () => {
   const { toast } = useToast();
@@ -22,186 +76,222 @@ export const UserCreditsManager = () => {
   const [loadingLikes, setLoadingLikes] = useState(false);
   const [loadingRemoveSub, setLoadingRemoveSub] = useState(false);
 
-  const handleAddCredits = async () => {
-    if (!userId || !creditsAmount) {
-      toast({
-        title: "Errore",
-        description: "Inserisci user ID e quantità crediti",
-        variant: "destructive",
-      });
+  // 📝 Pannello "Motivo" + cronologia
+  const [pendingAction, setPendingAction] = useState<ActionKey | null>(null);
+  const [reason, setReason] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory());
+
+  const recordHistory = (actionLabel: string, targetUser: string, reasonText: string) => {
+    setHistory((prev) => {
+      const cutoff = Date.now() - DAY_MS;
+      const next: HistoryEntry[] = [
+        {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          actionLabel,
+          userId: targetUser,
+          reason: reasonText,
+          timestamp: Date.now(),
+        },
+        ...prev,
+      ].filter((e) => e.timestamp >= cutoff);
+      saveHistory(next);
+      return next;
+    });
+  };
+
+  // Apre il pannello "Motivo" per l'azione scelta, dopo aver validato gli input.
+  const requestAction = (key: ActionKey) => {
+    if (!userId.trim()) {
+      toast({ title: "Errore", description: "Inserisci lo User ID", variant: "destructive" });
       return;
     }
+    if (key === "credits" && !creditsAmount) {
+      toast({ title: "Errore", description: "Inserisci la quantità di crediti", variant: "destructive" });
+      return;
+    }
+    if (key === "likes" && !likesAmount) {
+      toast({ title: "Errore", description: "Inserisci la quantità di like", variant: "destructive" });
+      return;
+    }
+    setReason("");
+    setPendingAction(key);
+  };
 
+  // "Invia": valida il motivo, esegue l'azione e (se va a buon fine) registra
+  // la voce in cronologia, poi chiude il pannello.
+  const executeAction = async () => {
+    if (!pendingAction) return;
+    if (!reason.trim()) {
+      toast({ title: "Errore", description: "Inserisci il motivo", variant: "destructive" });
+      return;
+    }
+    setSubmitting(true);
+    let ok = false;
+    try {
+      switch (pendingAction) {
+        case "credits":
+          ok = await doAddCredits(reason.trim());
+          break;
+        case "likes":
+          ok = await doAddLikes(reason.trim());
+          break;
+        case "premium":
+          ok = await doAssignPremium(reason.trim());
+          break;
+        case "platinum":
+          ok = await doAssignPlatinum(reason.trim());
+          break;
+        case "weekly":
+          ok = await doAssignWeeklyPremium(reason.trim());
+          break;
+      }
+    } finally {
+      setSubmitting(false);
+    }
+    if (ok) {
+      setPendingAction(null);
+      setReason("");
+    }
+  };
+
+  const doAddCredits = async (reasonText: string): Promise<boolean> => {
+    const targetUser = userId.trim();
+    const amt = parseInt(creditsAmount);
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('admin-add-credits', {
-        body: { 
-          userId, 
-          creditsAmount: parseInt(creditsAmount) 
-        }
+      const { data, error } = await supabase.functions.invoke("admin-add-credits", {
+        body: { userId: targetUser, creditsAmount: amt },
       });
-
       if (error) throw error;
-
-      if (!data.success) {
-        throw new Error(data.error || 'Errore sconosciuto');
-      }
-
-      toast({
-        title: "Crediti aggiunti",
-        description: `${creditsAmount} crediti aggiunti all'utente (nuovo saldo: ${data.newBalance})`,
-      });
-
+      if (!data.success) throw new Error(data.error || "Errore sconosciuto");
+      toast({ title: "Crediti aggiunti", description: `${amt} crediti aggiunti (nuovo saldo: ${data.newBalance})` });
+      recordHistory(`Aggiunti ${amt} crediti`, targetUser, reasonText);
       setUserId("");
       setCreditsAmount("");
+      return true;
     } catch (error: any) {
       console.error("Error adding credits:", error);
-      toast({
-        title: "Errore",
-        description: error.message || "Impossibile aggiungere crediti",
-        variant: "destructive",
-      });
+      toast({ title: "Errore", description: error.message || "Impossibile aggiungere crediti", variant: "destructive" });
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAssignPremium = async () => {
-    if (!userId) {
-      toast({
-        title: "Errore",
-        description: "Inserisci user ID",
-        variant: "destructive",
+  const doAddLikes = async (reasonText: string): Promise<boolean> => {
+    const targetUser = userId.trim();
+    const amt = parseInt(likesAmount);
+    setLoadingLikes(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-add-likes", {
+        body: { userId: targetUser, likesAmount: amt },
       });
-      return;
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error || "Errore sconosciuto");
+      toast({ title: "Like Aggiunti", description: `${amt} like aggiunti (nuovo totale: ${data.newLikesRemaining})` });
+      recordHistory(`Aggiunti ${amt} like`, targetUser, reasonText);
+      setUserId("");
+      setLikesAmount("");
+      return true;
+    } catch (error: any) {
+      console.error("Error adding likes:", error);
+      toast({ title: "Errore", description: error.message || "Impossibile aggiungere like", variant: "destructive" });
+      return false;
+    } finally {
+      setLoadingLikes(false);
     }
+  };
 
+  const doAssignPremium = async (reasonText: string): Promise<boolean> => {
+    const targetUser = userId.trim();
     setLoadingPremium(true);
     try {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 30);
-
       const { error } = await supabase
         .from("user_credits")
-        .update({ 
+        .update({
           is_premium: true,
-          subscription_type: 'monthly',
-          premium_tier: 'premium',
+          subscription_type: "monthly",
+          premium_tier: "premium",
           premium_expires_at: expiresAt.toISOString(),
           balance: 999,
           daily_likes_remaining: 999,
         })
-        .eq("user_id", userId);
-
+        .eq("user_id", targetUser);
       if (error) throw error;
-
-      toast({
-        title: "Premium Mensile Assegnato",
-        description: "Abbonamento premium di 30 giorni assegnato",
-      });
-
+      toast({ title: "Premium Mensile Assegnato", description: "Abbonamento premium di 30 giorni assegnato" });
+      recordHistory("Premium 30 giorni", targetUser, reasonText);
       setUserId("");
+      return true;
     } catch (error: any) {
       console.error("Error assigning premium:", error);
-      toast({
-        title: "Errore",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Errore", description: error.message, variant: "destructive" });
+      return false;
     } finally {
       setLoadingPremium(false);
     }
   };
 
-  const handleAssignWeeklyPremium = async () => {
-    if (!userId) {
-      toast({
-        title: "Errore",
-        description: "Inserisci user ID",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const doAssignWeeklyPremium = async (reasonText: string): Promise<boolean> => {
+    const targetUser = userId.trim();
     setLoadingWeeklyPremium(true);
     try {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
-
       const { error } = await supabase
         .from("user_credits")
-        .update({ 
+        .update({
           is_premium: true,
-          subscription_type: 'weekly',
+          subscription_type: "weekly",
           premium_expires_at: expiresAt.toISOString(),
           balance: 40,
           daily_likes_remaining: 30,
           daily_free_chats_remaining: 5,
         })
-        .eq("user_id", userId);
-
+        .eq("user_id", targetUser);
       if (error) throw error;
-
-      toast({
-        title: "Premium Settimanale Assegnato",
-        description: "Abbonamento premium di 7 giorni assegnato",
-      });
-
+      toast({ title: "Premium Settimanale Assegnato", description: "Abbonamento premium di 7 giorni assegnato" });
+      recordHistory("Premium 7 giorni", targetUser, reasonText);
       setUserId("");
+      return true;
     } catch (error: any) {
       console.error("Error assigning weekly premium:", error);
-      toast({
-        title: "Errore",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Errore", description: error.message, variant: "destructive" });
+      return false;
     } finally {
       setLoadingWeeklyPremium(false);
     }
   };
 
-  const handleAssignPlatinum = async () => {
-    if (!userId) {
-      toast({
-        title: "Errore",
-        description: "Inserisci user ID",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const doAssignPlatinum = async (reasonText: string): Promise<boolean> => {
+    const targetUser = userId.trim();
     setLoadingPlatinum(true);
     try {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 30);
-
       const { error } = await supabase
         .from("user_credits")
-        .update({ 
+        .update({
           is_premium: true,
-          subscription_type: 'monthly',
-          premium_tier: 'standard',
+          subscription_type: "monthly",
+          premium_tier: "standard",
           premium_expires_at: expiresAt.toISOString(),
           balance: 70,
           daily_likes_remaining: 40,
         })
-        .eq("user_id", userId);
-
+        .eq("user_id", targetUser);
       if (error) throw error;
-
-      toast({
-        title: "Platino Assegnato",
-        description: "Abbonamento Platino di 30 giorni assegnato (€69,99)",
-      });
-
+      toast({ title: "Platino Assegnato", description: "Abbonamento Platino di 30 giorni assegnato (€69,99)" });
+      recordHistory("Platino 30 giorni", targetUser, reasonText);
       setUserId("");
+      return true;
     } catch (error: any) {
       console.error("Error assigning platinum:", error);
-      toast({
-        title: "Errore",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Errore", description: error.message, variant: "destructive" });
+      return false;
     } finally {
       setLoadingPlatinum(false);
     }
@@ -209,14 +299,9 @@ export const UserCreditsManager = () => {
 
   const handleUnlockLikes = async () => {
     if (!userId) {
-      toast({
-        title: "Errore",
-        description: "Inserisci user ID",
-        variant: "destructive",
-      });
+      toast({ title: "Errore", description: "Inserisci user ID", variant: "destructive" });
       return;
     }
-
     setLoadingUnlock(true);
     try {
       toast({
@@ -230,28 +315,20 @@ export const UserCreditsManager = () => {
   };
 
   // 🔧 Rimuove COMPLETAMENTE l'abbonamento da un account (resetta a free).
-  // Approccio diretto sul DB con .select() per accorgersi se l'UPDATE non
-  // tocca righe (RLS o userId errato) ed evitare il successo silenzioso.
   const handleRemoveSubscription = async () => {
     if (!userId) {
-      toast({
-        title: "Errore",
-        description: "Inserisci user ID",
-        variant: "destructive",
-      });
+      toast({ title: "Errore", description: "Inserisci user ID", variant: "destructive" });
       return;
     }
-
     const trimmedId = userId.trim();
     setLoadingRemoveSub(true);
     try {
-      // 1) Reset user_credits con .select() per sapere se RLS blocca
       const { data: updatedCredits, error: updateErr } = await supabase
         .from("user_credits")
         .update({
           is_premium: false,
-          subscription_type: 'none',
-          premium_tier: 'none',
+          subscription_type: "none",
+          premium_tier: "none",
           premium_expires_at: null,
         })
         .eq("user_id", trimmedId)
@@ -261,103 +338,65 @@ export const UserCreditsManager = () => {
       if (!updatedCredits || updatedCredits.length === 0) {
         throw new Error(
           "UPDATE su user_credits non ha modificato nessuna riga. " +
-          "Possibili cause: (a) RLS blocca l'admin, (b) userId errato, " +
-          "(c) la riga non esiste."
+            "Possibili cause: (a) RLS blocca l'admin, (b) userId errato, (c) la riga non esiste."
         );
       }
 
-      // 2) Reset tris_games (azzera contatore odierno)
       const today = new Date().toISOString().split("T")[0];
       const { data: updatedTris, error: trisErr } = await supabase
         .from("tris_games")
-        .update({
-          games_played_today: 0,
-          last_reset_date: today,
-        })
+        .update({ games_played_today: 0, last_reset_date: today })
         .eq("user_id", trimmedId)
         .select();
-
       if (trisErr) console.warn("tris_games update error (non bloccante):", trisErr);
-
       if (!updatedTris?.[0]) {
-        // Riga inesistente: la creiamo
         await supabase
           .from("tris_games")
           .insert({ user_id: trimmedId, games_played_today: 0, last_reset_date: today });
       }
 
-      // 3) Invalida la cache react-query così TrisGameBanner / CreditsDisplay
-      // si aggiornano IMMEDIATAMENTE senza dover ricaricare la pagina.
       queryClient.invalidateQueries({ queryKey: ["user-credits"] });
       queryClient.invalidateQueries({ queryKey: ["daily-likes"] });
 
-      toast({
-        title: "Abbonamento rimosso",
-        description: "Account riportato a Free. Counter partite azzerato.",
-      });
+      toast({ title: "Abbonamento rimosso", description: "Account riportato a Free. Counter partite azzerato." });
     } catch (error: any) {
       console.error("Error removing subscription:", error);
-      toast({
-        title: "Errore reset abbonamento",
-        description: error.message || "Impossibile resettare l'account",
-        variant: "destructive",
-      });
+      toast({ title: "Errore reset abbonamento", description: error.message || "Impossibile resettare l'account", variant: "destructive" });
     } finally {
       setLoadingRemoveSub(false);
     }
   };
 
-  const handleAddLikes = async () => {
-    if (!userId || !likesAmount) {
-      toast({
-        title: "Errore",
-        description: "Inserisci user ID e quantità like",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoadingLikes(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('admin-add-likes', {
-        body: { 
-          userId, 
-          likesAmount: parseInt(likesAmount) 
-        }
-      });
-
-      if (error) throw error;
-
-      if (!data.success) {
-        throw new Error(data.error || 'Errore sconosciuto');
-      }
-
-      toast({
-        title: "Like Aggiunti",
-        description: `${likesAmount} like aggiunti (nuovo totale: ${data.newLikesRemaining})`,
-      });
-
-      setUserId("");
-      setLikesAmount("");
-    } catch (error: any) {
-      console.error("Error adding likes:", error);
-      toast({
-        title: "Errore",
-        description: error.message || "Impossibile aggiungere like",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingLikes(false);
-    }
-  };
+  const formatWhen = (ts: number) =>
+    new Date(ts).toLocaleString("it-IT", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Coins className="h-5 w-5" />
-          Gestione crediti e abbonamenti Utente
-        </CardTitle>
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="flex items-center gap-2">
+            <Coins className="h-5 w-5" />
+            Gestione crediti e abbonamenti Utente
+          </CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 shrink-0"
+            onClick={() => {
+              setHistory(loadHistory());
+              setHistoryOpen(true);
+            }}
+          >
+            <History className="h-4 w-4" />
+            Cronologia
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
@@ -392,35 +431,31 @@ export const UserCreditsManager = () => {
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <Button onClick={handleAddCredits} disabled={loading}>
+          <Button onClick={() => requestAction("credits")} disabled={loading}>
             <Coins className="h-4 w-4 mr-2" />
             {loading ? "Aggiungendo..." : "Aggiungi Crediti"}
           </Button>
-          
-          <Button 
-            onClick={handleAddLikes} 
-            disabled={loadingLikes}
-            variant="secondary"
-          >
+
+          <Button onClick={() => requestAction("likes")} disabled={loadingLikes} variant="secondary">
             <Plus className="h-4 w-4 mr-2" />
             {loadingLikes ? "Aggiungendo..." : "Aggiungi Like"}
           </Button>
         </div>
-        
+
         <div className="grid grid-cols-2 gap-3 mb-3">
-          <Button 
-            onClick={handleAssignPremium} 
-            disabled={loadingPremium} 
+          <Button
+            onClick={() => requestAction("premium")}
+            disabled={loadingPremium}
             variant="outline"
             className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white border-0"
           >
             <Crown className="h-4 w-4 mr-2" />
             {loadingPremium ? "Assegnando..." : "Premium (30gg €399)"}
           </Button>
-          
-          <Button 
-            onClick={handleAssignPlatinum} 
-            disabled={loadingPlatinum} 
+
+          <Button
+            onClick={() => requestAction("platinum")}
+            disabled={loadingPlatinum}
             variant="outline"
             className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0"
           >
@@ -428,29 +463,19 @@ export const UserCreditsManager = () => {
             {loadingPlatinum ? "Assegnando..." : "Platino (30gg €69)"}
           </Button>
         </div>
-        
+
         <div className="grid grid-cols-2 gap-3">
-          <Button
-            onClick={handleAssignWeeklyPremium}
-            disabled={loadingWeeklyPremium}
-            variant="outline"
-          >
+          <Button onClick={() => requestAction("weekly")} disabled={loadingWeeklyPremium} variant="outline">
             <Crown className="h-4 w-4 mr-2" />
             {loadingWeeklyPremium ? "Assegnando..." : "Premium (7gg)"}
           </Button>
 
-          <Button
-            onClick={handleUnlockLikes}
-            disabled={loadingUnlock}
-            variant="outline"
-          >
+          <Button onClick={handleUnlockLikes} disabled={loadingUnlock} variant="outline">
             <Heart className="h-4 w-4 mr-2" />
             {loadingUnlock ? "Sbloccando..." : "Sblocca (24h)"}
           </Button>
         </div>
 
-        {/* 🔧 Reset account a free. Toast su successo/errore, niente
-            pannello con il dump del DB (l'utente non lo voleva). */}
         <div className="pt-2 border-t border-border/40 space-y-3">
           <Button
             onClick={handleRemoveSubscription}
@@ -463,6 +488,76 @@ export const UserCreditsManager = () => {
           </Button>
         </div>
       </CardContent>
+
+      {/* Pannello MOTIVO: appare al click su un'azione, esegue su Invia */}
+      <Dialog open={!!pendingAction} onOpenChange={(o) => { if (!o && !submitting) { setPendingAction(null); setReason(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Motivo</DialogTitle>
+            <DialogDescription>
+              {pendingAction ? ACTION_TITLES[pendingAction] : ""}
+              {userId.trim() ? ` · Utente: ${userId.trim()}` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Scrivi il motivo per cui stai assegnando questo..."
+            rows={4}
+            autoFocus
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setPendingAction(null); setReason(""); }} disabled={submitting}>
+              Annulla
+            </Button>
+            <Button onClick={executeAction} disabled={submitting || !reason.trim()} className="gap-2">
+              <Send className="h-4 w-4" />
+              {submitting ? "Invio..." : "Invia"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Pannello CRONOLOGIA: voci delle ultime 24 ore */}
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Cronologia (ultime 24 ore)
+            </DialogTitle>
+            <DialogDescription>
+              Crediti, like e abbonamenti assegnati. Le voci si rimuovono da sole dopo 24 ore.
+            </DialogDescription>
+          </DialogHeader>
+          {history.length === 0 ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              Nessuna voce nelle ultime 24 ore.
+            </div>
+          ) : (
+            <ScrollArea className="max-h-[60vh] pr-3">
+              <div className="space-y-3">
+                {history.map((e) => (
+                  <div key={e.id} className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold text-sm text-primary">{e.actionLabel}</span>
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                        <Clock className="h-3 w-3" />
+                        {formatWhen(e.timestamp)}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground break-all">Utente: {e.userId}</p>
+                    <p className="mt-1 text-sm break-words">
+                      <span className="text-muted-foreground">Motivo: </span>
+                      {e.reason}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
