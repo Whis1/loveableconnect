@@ -74,26 +74,28 @@ export const MessageBubble = ({
     return (
       <div className={`flex w-full items-end gap-2 px-2 md:px-4 ${isOwn ? "justify-start" : "justify-end"}`}>
         {isOwn && (
-          <Avatar className="h-12 w-12 shrink-0">
+          <Avatar className="h-11 w-11 shrink-0 ring-2 ring-pink-400/40">
             <AvatarImage src={senderAvatarUrl || undefined} alt="Profile" />
-            <AvatarFallback>
+            <AvatarFallback className="bg-gradient-to-br from-pink-500 to-fuchsia-600 text-white">
               <User className="h-5 w-5" />
             </AvatarFallback>
           </Avatar>
         )}
         <div
-          className={`max-w-[85%] sm:max-w-[75%] md:max-w-[68%] w-fit rounded-lg px-4 py-2 ${
-            messageType === 'emoji' ? 'bg-transparent' :
+          className={`max-w-[85%] sm:max-w-[75%] md:max-w-[68%] w-fit px-4 py-2.5 shadow-sm rounded-2xl ${
+            isOwn ? "rounded-bl-md" : "rounded-br-md"
+          } ${
+            messageType === 'emoji' ? 'bg-transparent shadow-none' :
             isOwn
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-foreground"
+              ? "bg-gradient-to-br from-pink-500 to-fuchsia-600 text-white shadow-pink-500/25"
+              : "bg-white/95 text-zinc-900 border border-black/5 dark:bg-white/10 dark:text-zinc-50 dark:border-white/10 backdrop-blur-sm"
           }`}
         >
           {renderContent()}
           <p
             className={`text-xs mt-1 ${
               messageType === 'emoji' ? 'text-muted-foreground text-center' :
-              isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
+              isOwn ? "text-white/75" : "text-zinc-500 dark:text-zinc-300/80"
             }`}
           >
             {new Date(timestamp).toLocaleString('it-IT', {
@@ -112,9 +114,9 @@ export const MessageBubble = ({
           </p>
         </div>
         {!isOwn && (
-          <Avatar className="h-12 w-12 shrink-0">
+          <Avatar className="h-11 w-11 shrink-0 ring-2 ring-purple-400/40">
             <AvatarImage src={senderAvatarUrl || undefined} alt="Profile" />
-            <AvatarFallback>
+            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
               <User className="h-5 w-5" />
             </AvatarFallback>
           </Avatar>

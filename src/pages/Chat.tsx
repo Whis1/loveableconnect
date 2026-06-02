@@ -895,7 +895,7 @@ const Chat = () => {
       <div className="container mx-auto max-w-2xl h-screen flex flex-col p-2 md:p-4">
         <Card className="flex-1 flex flex-col overflow-hidden shadow-xl">
           {/* Header with back button */}
-          <div className="border-b p-3 md:p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="border-b border-border/50 p-3 md:p-4 bg-white/80 dark:bg-[#1b1226]/85 backdrop-blur">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
                 <Button 
@@ -992,7 +992,7 @@ const Chat = () => {
           </div>
 
           {/* Messages Section */}
-          <CardContent className="flex-1 overflow-hidden p-0">
+          <CardContent className="flex-1 overflow-hidden p-0 bg-gradient-to-br from-fuchsia-50 via-white to-purple-50 dark:from-[#1e1430] dark:via-[#171022] dark:to-[#241430]">
             <ScrollArea className="h-full p-3 md:p-6">
               <div className="space-y-3 md:space-y-4">
                 {isChatPending && messages.length === 0 && (
@@ -1054,7 +1054,7 @@ const Chat = () => {
           </CardContent>
 
           {/* Input Section */}
-          <div className="border-t p-2 md:p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 space-y-2">
+          <div className="border-t border-border/50 p-2 md:p-4 bg-white/80 dark:bg-[#1b1226]/85 backdrop-blur space-y-2">
             {recordedAudio && (
               <VoicePreview
                 audioUrl={recordedAudio.url}
