@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Send, Paperclip, ChevronDown, ChevronUp, Gift } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, Gift, UserRound } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { GifPicker } from "@/components/chat/GifPicker";
@@ -13,7 +13,7 @@ import { VoiceRecorder } from "@/components/chat/VoiceRecorder";
 import { VoicePreview } from "@/components/chat/VoicePreview";
 import { ImagePreview } from "@/components/chat/ImagePreview";
 import { MessageBubble } from "@/components/chat/MessageBubble";
-import { ChatUserProfile } from "@/components/chat/ChatUserProfile";
+import { ProfileDialog } from "@/components/ProfileDialog";
 import { InsufficientCreditsBanner } from "@/components/chat/InsufficientCreditsBanner";
 import { VoicePremiumBanner } from "@/components/chat/VoicePremiumBanner";
 import { ReportUserDialog } from "@/components/chat/ReportUserDialog";
@@ -978,22 +978,19 @@ const Chat = () => {
                     />
                   </>
                 )}
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="outline"
                   size="sm"
-                  onClick={() => setShowProfile(!showProfile)}
-                  className="gap-1 md:gap-2 shrink-0"
+                  onClick={() => setShowProfile(true)}
+                  className="gap-1.5 shrink-0 rounded-full border-primary/40 bg-primary/5 text-primary hover:bg-primary/15 hover:text-primary transition-colors"
                 >
-                  {showProfile ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                  <span className="hidden sm:inline">{showProfile ? t("chat.hideProfile") : t("chat.showProfile")}</span>
+                  <UserRound className="h-4 w-4" />
+                  <span className="hidden sm:inline">Apri profilo</span>
                 </Button>
               </div>
             </div>
           </div>
 
-          {/* User Profile Section */}
-          {otherUser && showProfile && <ChatUserProfile userId={otherUser.id} />}
-          
           {/* Messages Section */}
           <CardContent className="flex-1 overflow-hidden p-0">
             <ScrollArea className="h-full p-3 md:p-6">
@@ -1140,10 +1137,20 @@ const Chat = () => {
         </Card>
       </div>
 
-      <VoicePremiumBanner 
+      <VoicePremiumBanner
         isVisible={showVoicePremiumBanner}
         onClose={() => setShowVoicePremiumBanner(false)}
       />
+
+      {/* Card profilo (la stessa della bacheca), aperta dal pulsante "Apri profilo". */}
+      {otherUser && currentUser && (
+        <ProfileDialog
+          profileId={otherUser.id}
+          currentUserId={currentUser}
+          open={showProfile}
+          onOpenChange={setShowProfile}
+        />
+      )}
     </div>
   );
 };
