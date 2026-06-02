@@ -11,6 +11,7 @@ import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { GifPicker } from "@/components/chat/GifPicker";
 import { VoiceRecorder } from "@/components/chat/VoiceRecorder";
 import { VoicePreview } from "@/components/chat/VoicePreview";
+import { ImagePreview } from "@/components/chat/ImagePreview";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ChatUserProfile } from "@/components/chat/ChatUserProfile";
 import { InsufficientCreditsBanner } from "@/components/chat/InsufficientCreditsBanner";
@@ -117,6 +118,7 @@ const Chat = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [recordedAudio, setRecordedAudio] = useState<{ blob: Blob; url: string } | null>(null);
+  const [pendingImage, setPendingImage] = useState<{ file: File; url: string } | null>(null);
   const [giftingSubscription, setGiftingSubscription] = useState(false);
   const [showGiftBanner, setShowGiftBanner] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
@@ -631,9 +633,20 @@ const Chat = () => {
     handleSendMessage(undefined, 'gif', gifUrl, 'GIF');
   };
 
-  // Carica un File immagine e lo invia. Riusato da: input file e PASTE (Ctrl+V).
-  const uploadAndSendImage = async (file: File) => {
+  // Mostra l'anteprima di un'immagine prima dell'invio (input file o PASTE Ctrl+V).
+  const queueImage = (file: File) => {
     if (!file || !currentUser) return;
+    // Sostituisce un'eventuale anteprima precedente liberandone la URL.
+    setPendingImage((prev) => {
+      if (prev) URL.revokeObjectURL(prev.url);
+      return { file, url: URL.createObjectURL(file) };
+    });
+  };
+
+  // Carica ed invia l'immagine attualmente in anteprima.
+  const sendPendingImage = async () => {
+    if (!pendingImage || !currentUser) return;
+    const { file } = pendingImage;
 
     setUploading(true);
     try {
@@ -655,6 +668,9 @@ const Chat = () => {
 
       await handleSendMessage(undefined, 'image', data.publicUrl, t("chat.photo"));
 
+      URL.revokeObjectURL(pendingImage.url);
+      setPendingImage(null);
+
       toast({
         title: t("chat.success"),
         description: t("chat.imageSent"),
@@ -667,17 +683,25 @@ const Chat = () => {
       });
     } finally {
       setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) await uploadAndSendImage(file);
+  // Annulla l'immagine in anteprima senza inviarla.
+  const cancelPendingImage = () => {
+    if (pendingImage) {
+      URL.revokeObjectURL(pendingImage.url);
+      setPendingImage(null);
+    }
   };
 
-  // 📋 Incolla un'immagine dagli appunti (Ctrl+V) direttamente nella chat.
-  const handlePaste = async (e: React.ClipboardEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) queueImage(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  // Incolla un'immagine dagli appunti (Ctrl+V): mostra l'anteprima, non invia subito.
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     const items = e.clipboardData?.items;
     if (!items) return;
     for (const item of items) {
@@ -685,7 +709,7 @@ const Chat = () => {
         const file = item.getAsFile();
         if (file) {
           e.preventDefault();
-          await uploadAndSendImage(file);
+          queueImage(file);
           break;
         }
       }
@@ -1041,6 +1065,14 @@ const Chat = () => {
                 onDelete={handleDeleteVoiceMessage}
               />
             )}
+            {pendingImage && (
+              <ImagePreview
+                imageUrl={pendingImage.url}
+                onSend={sendPendingImage}
+                onDelete={cancelPendingImage}
+                sending={uploading}
+              />
+            )}
             {isBlocked ? (
               <div className="text-center py-6 px-4">
                 <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 max-w-md mx-auto">
@@ -1067,7 +1099,7 @@ const Chat = () => {
                     variant="ghost" 
                     size="icon"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={isChatPending || uploading || !!recordedAudio}
+                    disabled={isChatPending || uploading || !!recordedAudio || !!pendingImage}
                     className="shrink-0 h-9 w-9 md:h-10 md:w-10"
                   >
                     <Paperclip className="h-4 w-4 md:h-5 md:w-5" />
@@ -1080,11 +1112,11 @@ const Chat = () => {
                     onPaste={handlePaste}
                     placeholder={t("chat.writeMessage")}
                     className="flex-1 text-sm md:text-base"
-                    disabled={!!recordedAudio}
+                    disabled={!!recordedAudio || !!pendingImage}
                   />
-                  <VoiceRecorder 
+                  <VoiceRecorder
                     onRecordingComplete={handleVoiceRecording}
-                    disabled={isChatPending || uploading || !!recordedAudio}
+                    disabled={isChatPending || uploading || !!recordedAudio || !!pendingImage}
                     isPremiumMonthly={Boolean(
                       credits?.is_premium &&
                       credits.subscription_type === 'monthly' &&
@@ -1095,7 +1127,7 @@ const Chat = () => {
                   />
                   <Button
                     type="submit"
-                    disabled={!newMessage.trim() || uploading || !!recordedAudio}
+                    disabled={!newMessage.trim() || uploading || !!recordedAudio || !!pendingImage}
                     className="shrink-0 h-9 w-9 md:h-10 md:w-10"
                     size="icon"
                   >

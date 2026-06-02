@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { GifPicker } from "@/components/chat/GifPicker";
 import { VoiceRecorder } from "@/components/chat/VoiceRecorder";
+import { ImagePreview } from "@/components/chat/ImagePreview";
 
 interface Conversation {
   userId: string;
@@ -51,6 +52,7 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
   const [uploading, setUploading] = useState(false);
   const [voicePreview, setVoicePreview] = useState<Blob | null>(null);
   const [voicePreviewUrl, setVoicePreviewUrl] = useState<string | null>(null);
+  const [pendingImage, setPendingImage] = useState<{ file: File; url: string } | null>(null);
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [showAdminProfile, setShowAdminProfile] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -190,9 +192,19 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
     }
   };
 
-  // Carica un File immagine e lo invia. Riusato da: input file, e PASTE (Ctrl+V).
-  const uploadAndSendImage = async (file: File) => {
+  // Mostra l'anteprima di un'immagine prima dell'invio (input file o PASTE Ctrl+V).
+  const queueImage = (file: File) => {
     if (!file || !conversation) return;
+    setPendingImage((prev) => {
+      if (prev) URL.revokeObjectURL(prev.url);
+      return { file, url: URL.createObjectURL(file) };
+    });
+  };
+
+  // Carica ed invia l'immagine attualmente in anteprima.
+  const sendPendingImage = async () => {
+    if (!pendingImage || !conversation) return;
+    const { file } = pendingImage;
     try {
       setUploading(true);
       // Nome sicuro: se incolli, file.name puo' essere vuoto/strano → usa estensione dal type.
@@ -207,22 +219,33 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
 
       const { data } = supabase.storage.from("chat-images").getPublicUrl(fileName);
       await handleSendMessage("", "image", data.publicUrl);
+
+      URL.revokeObjectURL(pendingImage.url);
+      setPendingImage(null);
     } catch (error) {
       console.error("Error uploading image:", error);
       toast.error("Errore nel caricamento dell'immagine");
     } finally {
       setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) await uploadAndSendImage(file);
+  // Annulla l'immagine in anteprima senza inviarla.
+  const cancelPendingImage = () => {
+    if (pendingImage) {
+      URL.revokeObjectURL(pendingImage.url);
+      setPendingImage(null);
+    }
   };
 
-  // 📋 Incolla un'immagine dagli appunti (Ctrl+V) direttamente nella chat.
-  const handlePaste = async (e: React.ClipboardEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) queueImage(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  // Incolla un'immagine dagli appunti (Ctrl+V): mostra l'anteprima, non invia subito.
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     const items = e.clipboardData?.items;
     if (!items) return;
     for (const item of items) {
@@ -230,7 +253,7 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
         const file = item.getAsFile();
         if (file) {
           e.preventDefault(); // non incollare il testo/nome del file
-          await uploadAndSendImage(file);
+          queueImage(file);
           break;
         }
       }
@@ -403,6 +426,18 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
             </div>
           )}
 
+          {/* Anteprima Immagine */}
+          {pendingImage && (
+            <div className="mb-3">
+              <ImagePreview
+                imageUrl={pendingImage.url}
+                onSend={sendPendingImage}
+                onDelete={cancelPendingImage}
+                sending={uploading}
+              />
+            </div>
+          )}
+
           <div className="flex gap-2">
             <input
               ref={fileInputRef}
@@ -415,7 +450,7 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
               variant="outline"
               size="icon"
               onClick={() => fileInputRef.current?.click()}
-              disabled={uploading || !!voicePreview}
+              disabled={uploading || !!voicePreview || !!pendingImage}
             >
               {uploading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -425,10 +460,10 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
             </Button>
             <EmojiPicker onEmojiSelect={(emoji) => handleSendMessage(emoji, "emoji")} />
             <GifPicker onGifSelect={(url) => handleSendMessage("", "gif", url)} />
-            <VoiceRecorder 
+            <VoiceRecorder
               onRecordingComplete={handleVoiceRecording}
               isPremiumMonthly={true}
-              disabled={uploading || !!voicePreview}
+              disabled={uploading || !!voicePreview || !!pendingImage}
             />
             <Input
               value={newMessage}
@@ -442,11 +477,11 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
                 }
               }}
               className="flex-1"
-              disabled={!!voicePreview}
+              disabled={!!voicePreview || !!pendingImage}
             />
             <Button
               onClick={() => handleSendMessage(newMessage)}
-              disabled={!newMessage.trim() || !!voicePreview}
+              disabled={!newMessage.trim() || !!voicePreview || !!pendingImage}
             >
               <Send className="h-4 w-4" />
             </Button>
