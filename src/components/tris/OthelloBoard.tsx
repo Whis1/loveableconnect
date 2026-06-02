@@ -118,7 +118,9 @@ function evaluateMove(board: Board, idx: number, flips: number[]): number {
 
 export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: OthelloBoardProps) => {
   const [board, setBoard] = useState<Board>(Array(64).fill(null));
-  const [isPlayerTurn, setIsPlayerTurn] = useState(true); // black inizia (player)
+  // 🎲 50/50 su chi inizia: a volte parte l'utente, a volte il profilo avversario.
+  // Se parte false, l'effetto che osserva isPlayerTurn fa muovere il bot per primo.
+  const [isPlayerTurn, setIsPlayerTurn] = useState(() => Math.random() < 0.5);
   const [gameOver, setGameOver] = useState(false);
   const [winner, setWinner] = useState<"player" | "bot" | "draw" | null>(null);
   // 🤝 Spareggio dopo pareggio in 1v1 normale → Carta-Forbici-Sasso (come torneo/Dama)
