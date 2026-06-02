@@ -155,15 +155,24 @@ export default function AdminArrettu() {
 
     setSendingBroadcast(true);
     try {
-      const { data, error } = await supabase.functions.invoke('admin-send-inbox-to-all', {
-        body: { message: broadcastMessage },
-      });
-
-      if (error) throw error;
+      // RPC: invia a tutti, registra in Cronologia Azioni e rende il messaggio
+      // eliminabile (batch). Fallback alla edge function se la RPC non c'e'.
+      let count = 0;
+      const rpc = await (supabase as any).rpc("send_inbox_to_all", { p_message: broadcastMessage });
+      if (!rpc.error && rpc.data) {
+        const row = Array.isArray(rpc.data) ? rpc.data[0] : rpc.data;
+        count = row?.count ?? 0;
+      } else {
+        const { data, error } = await supabase.functions.invoke('admin-send-inbox-to-all', {
+          body: { message: broadcastMessage },
+        });
+        if (error) throw error;
+        count = data?.count ?? 0;
+      }
 
       toast({
         title: "Messaggio inviato!",
-        description: `Inviato a ${data.count} utenti`,
+        description: `Inviato a ${count} utenti`,
       });
 
       setBroadcastMessage("");

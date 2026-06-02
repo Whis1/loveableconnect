@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Ban, ShieldCheck, RefreshCw, Send, AlertTriangle, EyeOff, Eye, Loader2, X, Receipt, Wallet, Calendar, CheckCircle2, Clock, XCircle, Crown, Coins } from "lucide-react";
+import { Search, Ban, ShieldCheck, RefreshCw, Send, AlertTriangle, EyeOff, Eye, Loader2, X, Receipt, Wallet, Calendar, CheckCircle2, Clock, XCircle, Crown, Coins, History, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -30,6 +30,75 @@ export function UserBanManager() {
   const [enlargedAvatar, setEnlargedAvatar] = useState<string | null>(null);
   // 💳 Dialog cronologia pagamenti (apre con pulsante sotto "Elimina Utente")
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
+  // 📜 Cronologia Azioni admin (ban/elimina/inbox singolo/inbox ALL)
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const [actions, setActions] = useState<any[]>([]);
+  const [actionsLoading, setActionsLoading] = useState(false);
+  const [deletingBatch, setDeletingBatch] = useState<string | null>(null);
+
+  // Registra un'azione admin nella cronologia condivisa (best-effort).
+  const logUserAction = async (
+    actionType: string,
+    targetUserId: string | null,
+    targetNickname: string | null,
+    message: string | null,
+    batchId: string | null
+  ) => {
+    try {
+      await (supabase as any).rpc("log_user_action", {
+        p_action_type: actionType,
+        p_target_user_id: targetUserId,
+        p_target_nickname: targetNickname,
+        p_message: message,
+        p_batch_id: batchId,
+      });
+    } catch (e) {
+      console.warn("log_user_action non disponibile:", e);
+    }
+  };
+
+  const openActionsHistory = async () => {
+    setActionsOpen(true);
+    setActionsLoading(true);
+    try {
+      const { data, error } = await (supabase as any).rpc("get_user_actions");
+      if (error) throw error;
+      setActions((data || []) as any[]);
+    } catch (e) {
+      console.warn("get_user_actions non disponibile:", e);
+      setActions([]);
+      toast({ title: "Cronologia non disponibile", description: "Applica la migrazione SQL per attivarla.", variant: "destructive" });
+    } finally {
+      setActionsLoading(false);
+    }
+  };
+
+  const handleDeleteInboxBatch = async (batchId: string) => {
+    if (!batchId) return;
+    if (!confirm("Eliminare questo messaggio dalle inbox degli utenti? Sparirà dalle loro notifiche.")) return;
+    setDeletingBatch(batchId);
+    try {
+      const { error } = await (supabase as any).rpc("delete_inbox_batch", { p_batch_id: batchId });
+      if (error) throw error;
+      toast({ title: "Messaggio eliminato", description: "Rimosso dalle inbox degli utenti." });
+      setActions((prev) => prev.map((a) => (a.batch_id === batchId ? { ...a, inbox_deleted: true } : a)));
+    } catch (e: any) {
+      toast({ title: "Errore", description: e?.message || "Impossibile eliminare il messaggio", variant: "destructive" });
+    } finally {
+      setDeletingBatch(null);
+    }
+  };
+
+  const ACTION_LABELS: Record<string, string> = {
+    ban: "Bannato",
+    unban: "Sbannato",
+    delete: "Eliminato utente",
+    inbox_single: "Messaggio inbox",
+    inbox_all: "Inbox ALL (tutti gli utenti)",
+  };
+
+  const formatActionWhen = (ts: string) =>
+    new Date(ts).toLocaleString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
   // Helper: trasforma path Storage in URL pubblica per gli avatar.
   // Pattern usato dal resto del codebase (ChatsList, ChatUserProfile, ecc).
@@ -196,6 +265,7 @@ export function UserBanManager() {
           'sotto per sapere come risolvere.'
         );
       }
+      await logUserAction('delete', selectedUser.id, selectedUser.nickname, isOrphan ? 'Profilo orfano' : null, null);
       toast({
         title: isOrphan ? 'Profilo eliminato' : 'Utente eliminato',
         description: isOrphan
@@ -337,6 +407,7 @@ export function UserBanManager() {
       }
 
       setIsBanned(true);
+      await logUserAction('ban', selectedUser.id, selectedUser.nickname, banReason || 'Ban amministrativo', null);
       await loadAllUsers();
       toast({
         title: 'Utente bannato',
@@ -367,6 +438,7 @@ export function UserBanManager() {
       }
 
       setIsBanned(false);
+      await logUserAction('unban', selectedUser.id, selectedUser.nickname, null, null);
       setBanReason('');
       await loadAllUsers();
       toast({
@@ -397,14 +469,19 @@ export function UserBanManager() {
 
     setSendingMessage(true);
     try {
+      const batchId = (crypto as any)?.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+      const msg = inboxMessage.trim();
       const { error } = await supabase
         .from('inbox_messages')
         .insert({
           user_id: selectedUser.id,
-          message: inboxMessage.trim(),
+          message: msg,
+          batch_id: batchId,
         });
 
       if (error) throw error;
+
+      await logUserAction('inbox_single', selectedUser.id, selectedUser.nickname, msg, batchId);
 
       toast({
         title: 'Messaggio inviato',
@@ -542,7 +619,13 @@ export function UserBanManager() {
 
           {/* Dettagli utente selezionato */}
           <div className="space-y-2">
-            <Label>Dettagli utente</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label>Dettagli utente</Label>
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={openActionsHistory}>
+                <History className="h-4 w-4" />
+                Cronologia Azioni
+              </Button>
+            </div>
             {selectedUser ? (
               <div className="h-[500px] border rounded-lg p-4 bg-muted/30 overflow-auto">
                 {detailsLoading ? (
@@ -1282,6 +1365,71 @@ export function UserBanManager() {
           />
         </div>
       )}
+
+      {/* Cronologia Azioni admin (ban/elimina/inbox singolo/inbox ALL) */}
+      <Dialog open={actionsOpen} onOpenChange={setActionsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Cronologia Azioni
+            </DialogTitle>
+            <DialogDescription>
+              Ban, eliminazioni e messaggi inbox (singoli e a tutti) eseguiti dagli admin.
+            </DialogDescription>
+          </DialogHeader>
+          {actionsLoading ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">Caricamento...</div>
+          ) : actions.length === 0 ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">Nessuna azione registrata.</div>
+          ) : (
+            <ScrollArea className="max-h-[65vh] pr-3">
+              <div className="space-y-3">
+                {actions.map((a) => {
+                  const isInbox = a.action_type === "inbox_single" || a.action_type === "inbox_all";
+                  return (
+                    <div key={a.id} className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <span className="font-semibold text-sm text-primary">
+                          {ACTION_LABELS[a.action_type] || a.action_type}
+                          {a.target_nickname ? `: ${a.target_nickname}` : ""}
+                        </span>
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                          <Clock className="h-3 w-3" />
+                          {formatActionWhen(a.created_at)}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 text-xs text-muted-foreground break-all">Admin: {a.admin_email || "—"}</p>
+                      {a.message && (
+                        <p className="mt-1 text-sm break-words">
+                          <span className="text-muted-foreground">Messaggio: </span>
+                          {a.message}
+                        </p>
+                      )}
+                      {isInbox && a.batch_id && (
+                        a.inbox_deleted ? (
+                          <p className="mt-2 text-xs italic text-muted-foreground">Messaggio eliminato dalle inbox</p>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-2 gap-1.5 text-red-600 dark:text-red-400 border-red-500/30 hover:bg-red-500/10"
+                            onClick={() => handleDeleteInboxBatch(a.batch_id)}
+                            disabled={deletingBatch === a.batch_id}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            {deletingBatch === a.batch_id ? "Elimino..." : "Elimina messaggio dalle inbox"}
+                          </Button>
+                        )
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
