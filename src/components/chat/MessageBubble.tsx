@@ -69,21 +69,22 @@ export const MessageBubble = ({
     }
   };
 
-  // Layout "a lati": i propri messaggi a sinistra, quelli dell'altro utente a destra.
+  // Layout "a lati" (standard messaggistica): i propri messaggi a DESTRA,
+  // quelli dell'altra persona a SINISTRA.
   if (sideLayout) {
     return (
-      <div className={`flex w-full items-end gap-2 px-2 md:px-4 ${isOwn ? "justify-start" : "justify-end"}`}>
-        {isOwn && (
-          <Avatar className="h-11 w-11 shrink-0 ring-2 ring-pink-400/40">
+      <div className={`flex w-full items-end gap-2 px-2 md:px-4 ${isOwn ? "justify-end" : "justify-start"}`}>
+        {!isOwn && (
+          <Avatar className="h-11 w-11 shrink-0 ring-2 ring-purple-400/40">
             <AvatarImage src={senderAvatarUrl || undefined} alt="Profile" />
-            <AvatarFallback className="bg-gradient-to-br from-pink-500 to-fuchsia-600 text-white">
+            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
               <User className="h-5 w-5" />
             </AvatarFallback>
           </Avatar>
         )}
         <div
           className={`max-w-[85%] sm:max-w-[75%] md:max-w-[68%] w-fit px-4 py-2.5 shadow-sm rounded-2xl ${
-            isOwn ? "rounded-bl-md" : "rounded-br-md"
+            isOwn ? "rounded-br-md" : "rounded-bl-md"
           } ${
             messageType === 'emoji' ? 'bg-transparent shadow-none' :
             isOwn
@@ -113,10 +114,10 @@ export const MessageBubble = ({
             )}
           </p>
         </div>
-        {!isOwn && (
-          <Avatar className="h-11 w-11 shrink-0 ring-2 ring-purple-400/40">
+        {isOwn && (
+          <Avatar className="h-11 w-11 shrink-0 ring-2 ring-pink-400/40">
             <AvatarImage src={senderAvatarUrl || undefined} alt="Profile" />
-            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
+            <AvatarFallback className="bg-gradient-to-br from-pink-500 to-fuchsia-600 text-white">
               <User className="h-5 w-5" />
             </AvatarFallback>
           </Avatar>

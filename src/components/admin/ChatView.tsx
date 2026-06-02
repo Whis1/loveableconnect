@@ -437,7 +437,7 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
         </div>
 
         {/* Messaggi */}
-        <ScrollArea className="flex-1 p-4">
+        <ScrollArea className="flex-1 p-4 bg-gradient-to-br from-fuchsia-50 via-white to-purple-50 dark:from-[#1e1430] dark:via-[#171022] dark:to-[#241430]">
           <div className="space-y-4">
             {messages.map((msg) => (
               <MessageBubble
@@ -453,11 +453,12 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
                 }
                 timestamp={msg.created_at}
                 senderNickname={
-                  msg.sender_id === conversation.adminProfileId 
+                  msg.sender_id === conversation.adminProfileId
                     ? (msg.admin_sender_nickname || undefined)
                     : undefined
                 }
                 showAdminLabel={true}
+                sideLayout
               />
             ))}
             <div ref={messagesEndRef} />
