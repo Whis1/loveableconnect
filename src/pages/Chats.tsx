@@ -185,13 +185,29 @@ const Chats = () => {
       }
 
       const list = data.conversations || [];
-      // Filtra le conversazioni archiviate localmente: il server puo' ancora
-      // restituirle (es. messaggi recenti), ma il chattors le ha nascoste.
+      // Filtra le conversazioni archiviate localmente, MA con un'eccezione
+      // importante: se una conversazione archiviata ha messaggi NON letti
+      // significa che e' arrivata nuova attivita' e deve "risorgere". In quel
+      // caso la mostriamo e togliamo anche il flag di archiviazione locale,
+      // cosi' torna pienamente visibile. (Il server fa gia' la stessa cosa:
+      // rimanda le archiviate solo quando hanno non letti.)
+      let archivedChanged = false;
       const sorted = [...list]
-        .filter((c: any) => !archivedRef.current.has(convKey(c)))
+        .filter((c: any) => {
+          const key = convKey(c);
+          const isArchived = archivedRef.current.has(key);
+          const hasUnread = (c.unreadCount || 0) > 0;
+          if (isArchived && hasUnread) {
+            archivedRef.current.delete(key);
+            archivedChanged = true;
+            return true;
+          }
+          return !isArchived;
+        })
         .sort(
           (a: any, b: any) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
         );
+      if (archivedChanged) persistArchived();
 
       // Riempie gli avatar mancanti: l'edge function admin-secondary-get-conversations
       // a volte ritorna userAvatar null. Andiamo a recuperare il primo elemento
@@ -376,6 +392,14 @@ const Chats = () => {
           onRefresh={fetchConversations}
           onArchived={(conv) => {
             const key = convKey(conv);
+            // 0. Segna i messaggi come letti: cosi' la conversazione resta
+            //    archiviata (0 non letti) e NON riappare al prossimo fetch.
+            //    Riapparira' solo quando arrivera' un messaggio nuovo.
+            supabase.functions
+              .invoke("admin-mark-messages-read", {
+                body: { match_id: conv.matchId, admin_profile_id: conv.adminProfileId, user_id: conv.userId },
+              })
+              .catch(() => {});
             // 1. Marca la conversazione come archiviata localmente, cosi'
             //    i prossimi fetch non la rimettono in lista.
             archivedRef.current.add(key);
