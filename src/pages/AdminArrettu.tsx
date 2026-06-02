@@ -10,7 +10,7 @@ import { UserBanManager } from "@/components/admin/UserBanManager";
 import { UserReportsMonitor } from "@/components/admin/UserReportsMonitor";
 import { BannerManager } from "@/components/admin/BannerManager";
 import { EmailTemplateManager } from "@/components/admin/EmailTemplateManager";
-import { Shield, LogOut, MessageSquare, UserPlus, Mail, Megaphone, Loader2 } from "lucide-react";
+import { Shield, LogOut, MessageSquare, UserPlus, Mail, Megaphone, Loader2, ChevronDown, ChevronUp, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -33,6 +33,17 @@ export default function AdminArrettu() {
   // 🔔 Conta messaggi non letti dal supporto utenti + beep automatico al nuovo
   const { unreadCount: unreadSupportCount } = useUnreadSupportMessages();
 
+  // 🔒 Pannelli protetti (Banner + Template Email): chiusi di default, apribili
+  //    a tendina solo dopo aver inserito la password una volta. L'accesso e'
+  //    salvato sul database per ogni admin.
+  const [panelsUnlocked, setPanelsUnlocked] = useState(false);
+  const [bannerOpen, setBannerOpen] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [panelPassword, setPanelPassword] = useState("");
+  const [unlocking, setUnlocking] = useState(false);
+  const [pendingPanel, setPendingPanel] = useState<"banner" | "email" | null>(null);
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsLoggedIn(!!session?.user);
@@ -42,6 +53,64 @@ export default function AdminArrettu() {
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  // Verifica se questo admin ha gia' sbloccato i pannelli protetti.
+  useEffect(() => {
+    if (isAdmin !== true) return;
+    (async () => {
+      try {
+        const { data, error } = await (supabase as any).rpc("has_admin_panel_access");
+        if (error) throw error;
+        setPanelsUnlocked(data === true);
+      } catch {
+        // fallback locale finche' la migrazione non e' applicata
+        setPanelsUnlocked(localStorage.getItem("admin_panels_unlocked") === "1");
+      }
+    })();
+  }, [isAdmin]);
+
+  const handlePanelToggle = (panel: "banner" | "email") => {
+    if (panelsUnlocked) {
+      if (panel === "banner") setBannerOpen((v) => !v);
+      else setEmailOpen((v) => !v);
+    } else {
+      setPendingPanel(panel);
+      setPanelPassword("");
+      setPasswordDialogOpen(true);
+    }
+  };
+
+  const submitPanelPassword = async () => {
+    setUnlocking(true);
+    try {
+      let ok = false;
+      try {
+        const { data, error } = await (supabase as any).rpc("unlock_admin_panels", {
+          p_password: panelPassword,
+        });
+        if (error) throw error;
+        ok = data === true;
+      } catch {
+        // fallback locale (RPC non ancora installata)
+        if (panelPassword === "39i4mdwe") {
+          localStorage.setItem("admin_panels_unlocked", "1");
+          ok = true;
+        }
+      }
+      if (ok) {
+        setPanelsUnlocked(true);
+        setPasswordDialogOpen(false);
+        setPanelPassword("");
+        if (pendingPanel === "banner") setBannerOpen(true);
+        if (pendingPanel === "email") setEmailOpen(true);
+        toast({ title: "Pannelli sbloccati", description: "Accesso salvato: non dovrai reinserire la password." });
+      } else {
+        toast({ title: "Password errata", description: "La password inserita non e' corretta", variant: "destructive" });
+      }
+    } finally {
+      setUnlocking(false);
+    }
+  };
 
   const handleLogin = async () => {
     try {
@@ -278,21 +347,93 @@ export default function AdminArrettu() {
 
         <UserCreditsManager />
         
-        <BannerManager />
-
+        {/* 🔒 Pannello Banner — a tendina, protetto da password */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => handlePanelToggle("banner")}
+            className="w-full flex items-center justify-between gap-2 p-6 text-left hover:bg-muted/30 transition-colors rounded-t-lg"
+          >
+            <span className="flex items-center gap-2 text-lg font-semibold">
+              <Megaphone className="h-5 w-5" />
+              Gestione Banner Pubblicitari
+            </span>
+            {panelsUnlocked ? (
+              bannerOpen ? <ChevronUp className="h-5 w-5 shrink-0 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground" />
+            ) : (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                <Lock className="h-4 w-4" /> Protetto
+              </span>
+            )}
+          </button>
+          {panelsUnlocked && bannerOpen && (
+            <CardContent className="pt-0">
+              <BannerManager bare />
+            </CardContent>
+          )}
+        </Card>
+
+        {/* 🔒 Pannello Template Email — a tendina, protetto da password */}
+        <Card>
+          <button
+            type="button"
+            onClick={() => handlePanelToggle("email")}
+            className="w-full flex items-center justify-between gap-2 p-6 text-left hover:bg-muted/30 transition-colors rounded-t-lg"
+          >
+            <span className="flex items-center gap-2 text-lg font-semibold">
               <Mail className="h-5 w-5" />
               Gestione Template Email
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <EmailTemplateManager />
-          </CardContent>
+            </span>
+            {panelsUnlocked ? (
+              emailOpen ? <ChevronUp className="h-5 w-5 shrink-0 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground" />
+            ) : (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                <Lock className="h-4 w-4" /> Protetto
+              </span>
+            )}
+          </button>
+          {panelsUnlocked && emailOpen && (
+            <CardContent className="pt-0">
+              <EmailTemplateManager />
+            </CardContent>
+          )}
         </Card>
 
       </div>
+
+      {/* Dialog password per sbloccare i pannelli protetti */}
+      <Dialog open={passwordDialogOpen} onOpenChange={(o) => { if (!unlocking) setPasswordDialogOpen(o); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5" />
+              Pannelli protetti
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Inserisci la password per sbloccare Banner Pubblicitari e Template Email.
+            Una volta inserita, l'accesso resta salvato per il tuo account.
+          </p>
+          <Input
+            type="password"
+            value={panelPassword}
+            onChange={(e) => setPanelPassword(e.target.value)}
+            placeholder="Password"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && panelPassword && !unlocking) submitPanelPassword();
+            }}
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setPasswordDialogOpen(false)} disabled={unlocking}>
+              Annulla
+            </Button>
+            <Button onClick={submitPanelPassword} disabled={unlocking || !panelPassword}>
+              {unlocking ? "Verifico..." : "Sblocca"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

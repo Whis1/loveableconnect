@@ -73,7 +73,7 @@ function saveLocalBanners(rows: BannerRow[]) {
   }
 }
 
-export const BannerManager = () => {
+export const BannerManager = ({ bare = false }: { bare?: boolean } = {}) => {
   const { toast } = useToast();
   const [banners, setBanners] = useState<BannerRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -239,16 +239,8 @@ export const BannerManager = () => {
     }
   };
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Gestione Banner Pubblicitari</CardTitle>
-        <CardDescription>
-          Aggiungi, rimuovi o visualizza i banner pubblicitari in rotazione.
-          I banner vengono mostrati ogni 3 minuti agli utenti free.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+  const inner = (
+    <div className="space-y-6">
         {/* ⚠️ Warning: tabella DB non ancora creata. Si lavora in modalità LOCAL
             (per-browser). Applica la migration per persistenza globale. */}
         {localMode && (
@@ -385,7 +377,23 @@ export const BannerManager = () => {
             <li>• Modifiche persistenti su DB: visibili a TUTTI gli utenti</li>
           </ul>
         </div>
-      </CardContent>
+    </div>
+  );
+
+  // Modalità "bare": solo il contenuto, senza la Card/intestazione esterna
+  // (usata quando il pannello e' avvolto da un contenitore a tendina).
+  if (bare) return inner;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Gestione Banner Pubblicitari</CardTitle>
+        <CardDescription>
+          Aggiungi, rimuovi o visualizza i banner pubblicitari in rotazione.
+          I banner vengono mostrati ogni 3 minuti agli utenti free.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>{inner}</CardContent>
     </Card>
   );
 };
