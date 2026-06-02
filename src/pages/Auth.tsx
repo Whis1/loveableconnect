@@ -450,14 +450,18 @@ const Auth = () => {
                       required
                     />
                   </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
+                  {/* 📐 Wrapper w-fit centrato: i due pulsanti (Accedi e Accedi
+                      con Google) prendono la stessa larghezza del piu' largo,
+                      adattata al testo "Accedi con Google". */}
+                  <div className="flex flex-col items-stretch gap-3 w-fit mx-auto">
+                  <Button type="submit" className="px-6" disabled={loading}>
                     {loading ? t('auth.signingIn') : t('auth.signin')}
                   </Button>
 
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    className="w-full"
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="px-6"
                     onClick={handleGoogleSignIn}
                     disabled={loading}
                   >
@@ -481,10 +485,11 @@ const Auth = () => {
                     </svg>
                     Accedi con Google
                   </Button>
-                  
-                  <Button 
-                    type="button" 
-                    variant="link" 
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="link"
                     className="w-full"
                     onClick={() => setShowForgotPassword(true)}
                   >
@@ -716,9 +721,11 @@ const Auth = () => {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? t('auth.signingUp') : t('auth.signup')}
-                </Button>
+                <div className="flex justify-center">
+                  <Button type="submit" className="px-10" disabled={loading}>
+                    {loading ? t('auth.signingUp') : t('auth.signup')}
+                  </Button>
+                </div>
               </form>
               )}
             </TabsContent>
