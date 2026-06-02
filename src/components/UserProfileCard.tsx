@@ -13,6 +13,9 @@ import { useAdminRole } from "@/hooks/useAdminRole";
 import { SpotifySongCard } from "@/components/SpotifySongCard";
 import { calculateAge } from "@/lib/utils";
 import { ProfileDialog } from "@/components/ProfileDialog";
+import { ProfileGridCard } from "@/components/ProfileGridCard";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Loader2, UserSquare2, LayoutGrid } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -46,10 +49,30 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [translatedBio, setTranslatedBio] = useState<string>('');
   const [translatedInterests, setTranslatedInterests] = useState<string[]>([]);
-  // Apertura del "Anteprima Profilo": mostra la card del proprio profilo
-  // come la vedrebbero gli altri utenti dalla bacheca.
-  const [showPreview, setShowPreview] = useState(false);
+  // Anteprima profilo: scelta tra "Interno" (ProfileDialog) ed "Esterno"
+  // (la card della bacheca, come la vedono gli altri utenti).
+  const [showChooser, setShowChooser] = useState(false);
+  const [showPreview, setShowPreview] = useState(false); // interno
+  const [showExternal, setShowExternal] = useState(false); // esterno (card bacheca)
+  const [externalProfile, setExternalProfile] = useState<any>(null);
+  const [externalLoading, setExternalLoading] = useState(false);
   const { translateText, translateArray } = useTextTranslation();
+
+  // Carica il profilo completo (dal DB) e apre l'anteprima della card esterna.
+  const openExternalPreview = async () => {
+    setShowChooser(false);
+    setShowExternal(true);
+    if (externalProfile) return; // gia' caricato
+    setExternalLoading(true);
+    try {
+      const { data } = await supabase.from("profiles").select("*").eq("id", userId).single();
+      setExternalProfile(data);
+    } catch (e) {
+      console.warn("Errore caricamento profilo esterno:", e);
+    } finally {
+      setExternalLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -308,7 +331,7 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
                 Profilo (richiesta dell'utente), si distingue solo per
                 l'icona occhio. */}
             <Button
-              onClick={() => setShowPreview(true)}
+              onClick={() => setShowChooser(true)}
               className="w-full px-6 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border-0"
             >
               <Eye className="h-4 w-4 mr-2" />
@@ -318,8 +341,42 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
         </div>
       </CardContent>
 
-      {/* Dialog: stesso ProfileDialog usato in bacheca/likes, mostra il
-          profilo completo (foto, bio, interessi, canzoni preferite, ecc.) */}
+      {/* Pannello scelta: Profilo Interno o Profilo Esterno */}
+      <Dialog open={showChooser} onOpenChange={setShowChooser}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              Anteprima profilo
+            </DialogTitle>
+            <DialogDescription>
+              Scegli come vuoi vedere il tuo profilo.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <button
+              type="button"
+              onClick={() => { setShowChooser(false); setShowPreview(true); }}
+              className="flex flex-col items-center gap-2 rounded-xl border border-border p-4 text-center hover:border-primary hover:bg-primary/5 transition-colors"
+            >
+              <UserSquare2 className="h-7 w-7 text-primary" />
+              <span className="font-semibold">Profilo Interno</span>
+              <span className="text-xs text-muted-foreground">La scheda completa con tutti i dettagli</span>
+            </button>
+            <button
+              type="button"
+              onClick={openExternalPreview}
+              className="flex flex-col items-center gap-2 rounded-xl border border-border p-4 text-center hover:border-primary hover:bg-primary/5 transition-colors"
+            >
+              <LayoutGrid className="h-7 w-7 text-primary" />
+              <span className="font-semibold">Profilo Esterno</span>
+              <span className="text-xs text-muted-foreground">La card come ti vedono nella bacheca</span>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Anteprima INTERNA: stesso ProfileDialog usato in bacheca/likes. */}
       {showPreview && currentUserId && (
         <ProfileDialog
           profileId={userId}
@@ -328,6 +385,30 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
           onOpenChange={setShowPreview}
         />
       )}
+
+      {/* Anteprima ESTERNA: la card della bacheca, sola lettura. */}
+      <Dialog open={showExternal} onOpenChange={setShowExternal}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Come ti vedono nella bacheca</DialogTitle>
+            <DialogDescription>Questa è la card che vedono gli altri utenti.</DialogDescription>
+          </DialogHeader>
+          {externalLoading || !externalProfile || !currentUserId ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            // pointer-events-none: anteprima puramente visiva (niente like/chat su se stessi).
+            <div className="pointer-events-none select-none">
+              <ProfileGridCard
+                profile={externalProfile}
+                currentUserId={currentUserId}
+                onLike={() => {}}
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
