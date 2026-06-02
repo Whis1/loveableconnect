@@ -466,63 +466,89 @@ export const UserCreditsManager = () => {
         </div>
         {/* Tutti i pulsanti stessa larghezza (adattata al testo piu' lungo),
             in colonna centrata e ordinata. */}
-        <div className="flex flex-col items-center gap-3 pt-1">
-          <Button
-            onClick={() => requestAction("credits")}
-            disabled={loading}
-            className="w-72 justify-center"
-          >
-            <Coins className="h-4 w-4 mr-2" />
-            {loading ? "Aggiungendo..." : "Aggiungi Crediti"}
-          </Button>
+        {/* Sezione: Crediti & Like */}
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">
+            Crediti & Like
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Button onClick={() => requestAction("credits")} disabled={loading} className="h-11 w-full justify-center">
+              <Coins className="h-4 w-4 mr-2" />
+              {loading ? "Aggiungendo..." : "Aggiungi Crediti"}
+            </Button>
+            <Button onClick={() => requestAction("likes")} disabled={loadingLikes} variant="secondary" className="h-11 w-full justify-center">
+              <Plus className="h-4 w-4 mr-2" />
+              {loadingLikes ? "Aggiungendo..." : "Aggiungi Like"}
+            </Button>
+          </div>
+        </div>
 
-          <Button
-            onClick={() => requestAction("likes")}
-            disabled={loadingLikes}
-            variant="secondary"
-            className="w-72 justify-center"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            {loadingLikes ? "Aggiungendo..." : "Aggiungi Like"}
-          </Button>
+        {/* Sezione: Abbonamenti (tier a due righe: titolo + durata/prezzo) */}
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">
+            Abbonamenti
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Button
+              onClick={() => requestAction("premium")}
+              disabled={loadingPremium}
+              variant="outline"
+              className="h-auto py-2.5 w-full flex-col gap-0.5 bg-gradient-to-br from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white border-0"
+            >
+              {loadingPremium ? (
+                <span className="text-sm">Assegnando...</span>
+              ) : (
+                <>
+                  <span className="flex items-center gap-1.5 text-sm font-semibold"><Crown className="h-4 w-4" /> Premium</span>
+                  <span className="text-[11px] font-medium opacity-90">30 giorni · €399</span>
+                </>
+              )}
+            </Button>
 
-          <Button
-            onClick={() => requestAction("premium")}
-            disabled={loadingPremium}
-            variant="outline"
-            className="w-72 justify-center bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white border-0"
-          >
-            <Crown className="h-4 w-4 mr-2" />
-            {loadingPremium ? "Assegnando..." : "Premium (30gg €399)"}
-          </Button>
+            <Button
+              onClick={() => requestAction("platinum")}
+              disabled={loadingPlatinum}
+              variant="outline"
+              className="h-auto py-2.5 w-full flex-col gap-0.5 bg-gradient-to-br from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0"
+            >
+              {loadingPlatinum ? (
+                <span className="text-sm">Assegnando...</span>
+              ) : (
+                <>
+                  <span className="flex items-center gap-1.5 text-sm font-semibold"><Crown className="h-4 w-4" /> Platino</span>
+                  <span className="text-[11px] font-medium opacity-90">30 giorni · €69</span>
+                </>
+              )}
+            </Button>
 
-          <Button
-            onClick={() => requestAction("platinum")}
-            disabled={loadingPlatinum}
-            variant="outline"
-            className="w-72 justify-center bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0"
-          >
-            <Crown className="h-4 w-4 mr-2" />
-            {loadingPlatinum ? "Assegnando..." : "Platino (30gg €69)"}
-          </Button>
+            <Button
+              onClick={() => requestAction("weekly")}
+              disabled={loadingWeeklyPremium}
+              variant="outline"
+              className="h-auto py-2.5 w-full flex-col gap-0.5"
+            >
+              {loadingWeeklyPremium ? (
+                <span className="text-sm">Assegnando...</span>
+              ) : (
+                <>
+                  <span className="flex items-center gap-1.5 text-sm font-semibold"><Crown className="h-4 w-4" /> Premium</span>
+                  <span className="text-[11px] font-medium text-muted-foreground">7 giorni</span>
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
 
-          <Button
-            onClick={() => requestAction("weekly")}
-            disabled={loadingWeeklyPremium}
-            variant="outline"
-            className="w-72 justify-center"
-          >
-            <Crown className="h-4 w-4 mr-2" />
-            {loadingWeeklyPremium ? "Assegnando..." : "Premium (7gg)"}
-          </Button>
-
-          <div className="w-72 border-t border-border/40 my-1" />
-
+        {/* Sezione: Gestione account */}
+        <div className="space-y-2 pt-2 border-t border-border/40">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">
+            Gestione account
+          </p>
           <Button
             onClick={() => requestAction("remove")}
             disabled={loadingRemoveSub}
             variant="outline"
-            className="w-72 justify-center bg-gradient-to-r from-red-500/10 to-orange-500/10 hover:from-red-500/20 hover:to-orange-500/20 border-red-500/30 text-red-600 dark:text-red-400"
+            className="h-11 w-full justify-center bg-gradient-to-r from-red-500/10 to-orange-500/10 hover:from-red-500/20 hover:to-orange-500/20 border-red-500/30 text-red-600 dark:text-red-400"
           >
             <XCircle className="h-4 w-4 mr-2" />
             {loadingRemoveSub ? "Rimuovendo..." : "Rimuovi Abbonamento"}
