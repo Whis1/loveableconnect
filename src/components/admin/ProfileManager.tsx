@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import { Users, MessageSquare, Save, Upload, X, Image as ImageIcon, Search, Heart, Link2, Send } from "lucide-react";
+import { Users, MessageSquare, Save, Upload, X, Image as ImageIcon, Search, Heart, Link2, Send, Lock } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AdminChatDialog } from "./AdminChatDialog";
 import { InterestsAutocomplete } from "@/components/InterestsAutocomplete";
@@ -355,6 +355,69 @@ export const ProfileManager = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [likesSearchQuery, setLikesSearchQuery] = useState("");
   const [tempImageLinks, setTempImageLinks] = useState<{ [profileId: string]: string }>({});
+
+  // 🔒 Eliminazione link immagini utente protetta da password (la stessa dei
+  //    pannelli Banner/Email). Sbloccata una volta, l'accesso resta salvato
+  //    sull'account admin (DB), con fallback locale finche' la migrazione non c'e'.
+  const [panelsUnlocked, setPanelsUnlocked] = useState(false);
+  const [pwDialogOpen, setPwDialogOpen] = useState(false);
+  const [pwInput, setPwInput] = useState("");
+  const [unlocking, setUnlocking] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data, error } = await (supabase as any).rpc("has_admin_panel_access");
+        if (error) throw error;
+        setPanelsUnlocked(data === true);
+      } catch {
+        setPanelsUnlocked(localStorage.getItem("admin_panels_unlocked") === "1");
+      }
+    })();
+  }, []);
+
+  // Richiede l'eliminazione del link immagini: se sbloccato procede, altrimenti
+  // apre il pannello password.
+  const requestDeleteImageLink = (profileId: string) => {
+    if (panelsUnlocked) {
+      handleDeleteImageLink(profileId);
+    } else {
+      setPendingDeleteId(profileId);
+      setPwInput("");
+      setPwDialogOpen(true);
+    }
+  };
+
+  const submitUnlockPassword = async () => {
+    setUnlocking(true);
+    try {
+      let ok = false;
+      try {
+        const { data, error } = await (supabase as any).rpc("unlock_admin_panels", { p_password: pwInput });
+        if (error) throw error;
+        ok = data === true;
+      } catch {
+        if (pwInput === "39i4mdwe") {
+          localStorage.setItem("admin_panels_unlocked", "1");
+          ok = true;
+        }
+      }
+      if (ok) {
+        setPanelsUnlocked(true);
+        setPwDialogOpen(false);
+        setPwInput("");
+        const id = pendingDeleteId;
+        setPendingDeleteId(null);
+        if (id) handleDeleteImageLink(id);
+        toast({ title: "Sbloccato", description: "Accesso salvato: non dovrai reinserire la password." });
+      } else {
+        toast({ title: "Password errata", description: "La password inserita non e' corretta", variant: "destructive" });
+      }
+    } finally {
+      setUnlocking(false);
+    }
+  };
 
   const getGenderLabel = (gender: string | null) => {
     if (!gender) return "";
@@ -1070,23 +1133,6 @@ export const ProfileManager = () => {
               />
             </div>
           </div>
-          {/* Pulsanti admin: allineamento e svuota canzoni. */}
-          <div className="pt-2 flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              onClick={handleAlignProfiles}
-              disabled={aligning || loading}
-            >
-              {aligning ? "Allineamento in corso..." : "🧹 Allinea Profili Admin"}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleClearAdminSongs}
-              disabled={aligning || loading}
-            >
-              🎵 Svuota canzoni admin
-            </Button>
-          </div>
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[600px] pr-4">
@@ -1149,12 +1195,13 @@ export const ProfileManager = () => {
                             Immagini utente
                           </a>
                           <Button
-                            onClick={() => handleDeleteImageLink(profile.id)}
+                            onClick={() => requestDeleteImageLink(profile.id)}
                             size="icon"
                             variant="ghost"
                             className="h-6 w-6"
+                            title={panelsUnlocked ? "Elimina link immagini" : "Protetto da password"}
                           >
-                            <X className="h-4 w-4" />
+                            {panelsUnlocked ? <X className="h-4 w-4" /> : <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
                           </Button>
                         </div>
                       )}
@@ -1640,6 +1687,40 @@ export const ProfileManager = () => {
           userNickname={selectedChatProfile.userNickname}
         />
       )}
+
+      {/* Dialog password per eliminare i link immagini utente */}
+      <Dialog open={pwDialogOpen} onOpenChange={(o) => { if (!unlocking) setPwDialogOpen(o); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5" />
+              Azione protetta
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Inserisci la password per poter eliminare i link delle immagini utente.
+            Una volta inserita, l'accesso resta salvato per il tuo account.
+          </p>
+          <Input
+            type="password"
+            value={pwInput}
+            onChange={(e) => setPwInput(e.target.value)}
+            placeholder="Password"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && pwInput && !unlocking) submitUnlockPassword();
+            }}
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setPwDialogOpen(false)} disabled={unlocking}>
+              Annulla
+            </Button>
+            <Button onClick={submitUnlockPassword} disabled={unlocking || !pwInput}>
+              {unlocking ? "Verifico..." : "Sblocca"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
