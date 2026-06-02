@@ -414,24 +414,6 @@ export const ProfileCreator = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Button
-          onClick={handleSeedProfiles}
-          disabled={seedLoading || loading}
-          variant="secondary"
-          className="w-full"
-        >
-          <Users className="h-4 w-4 mr-2" />
-          {seedLoading ? "Caricamento..." : "Carica 50 Casuali"}
-        </Button>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">oppure crea manualmente</span>
-          </div>
-        </div>
         {/* 📸 Avatar (foto profilo) */}
         <div className="space-y-2">
           <Label>Foto profilo</Label>
