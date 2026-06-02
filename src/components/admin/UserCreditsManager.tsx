@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ interface HistoryEntry {
   id: string;
   actionLabel: string;
   userId: string;
+  adminEmail: string;
   reason: string;
   timestamp: number;
 }
@@ -52,7 +53,7 @@ const saveHistory = (entries: HistoryEntry[]) => {
   }
 };
 
-type ActionKey = "credits" | "likes" | "premium" | "platinum" | "weekly";
+type ActionKey = "credits" | "likes" | "premium" | "platinum" | "weekly" | "remove";
 
 const ACTION_TITLES: Record<ActionKey, string> = {
   credits: "Aggiungi Crediti",
@@ -60,6 +61,7 @@ const ACTION_TITLES: Record<ActionKey, string> = {
   premium: "Premium (30 giorni)",
   platinum: "Platino (30 giorni)",
   weekly: "Premium (7 giorni)",
+  remove: "Rimuovi Abbonamento",
 };
 
 export const UserCreditsManager = () => {
@@ -82,6 +84,14 @@ export const UserCreditsManager = () => {
   const [submitting, setSubmitting] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory());
+  const [adminEmail, setAdminEmail] = useState<string>("");
+
+  // Recupera l'email dell'admin loggato (per registrarla in cronologia).
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setAdminEmail(data.user?.email ?? "");
+    });
+  }, []);
 
   const recordHistory = (actionLabel: string, targetUser: string, reasonText: string) => {
     setHistory((prev) => {
@@ -91,6 +101,7 @@ export const UserCreditsManager = () => {
           id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           actionLabel,
           userId: targetUser,
+          adminEmail: adminEmail || "Sconosciuto",
           reason: reasonText,
           timestamp: Date.now(),
         },
@@ -145,6 +156,9 @@ export const UserCreditsManager = () => {
           break;
         case "weekly":
           ok = await doAssignWeeklyPremium(reason.trim());
+          break;
+        case "remove":
+          ok = await doRemoveSubscription(reason.trim());
           break;
       }
     } finally {
@@ -315,11 +329,7 @@ export const UserCreditsManager = () => {
   };
 
   // 🔧 Rimuove COMPLETAMENTE l'abbonamento da un account (resetta a free).
-  const handleRemoveSubscription = async () => {
-    if (!userId) {
-      toast({ title: "Errore", description: "Inserisci user ID", variant: "destructive" });
-      return;
-    }
+  const doRemoveSubscription = async (reasonText: string): Promise<boolean> => {
     const trimmedId = userId.trim();
     setLoadingRemoveSub(true);
     try {
@@ -359,9 +369,13 @@ export const UserCreditsManager = () => {
       queryClient.invalidateQueries({ queryKey: ["daily-likes"] });
 
       toast({ title: "Abbonamento rimosso", description: "Account riportato a Free. Counter partite azzerato." });
+      recordHistory("Rimosso abbonamento", trimmedId, reasonText);
+      setUserId("");
+      return true;
     } catch (error: any) {
       console.error("Error removing subscription:", error);
       toast({ title: "Errore reset abbonamento", description: error.message || "Impossibile resettare l'account", variant: "destructive" });
+      return false;
     } finally {
       setLoadingRemoveSub(false);
     }
@@ -478,7 +492,7 @@ export const UserCreditsManager = () => {
 
         <div className="pt-2 border-t border-border/40 space-y-3">
           <Button
-            onClick={handleRemoveSubscription}
+            onClick={() => requestAction("remove")}
             disabled={loadingRemoveSub}
             variant="outline"
             className="w-full bg-gradient-to-r from-red-500/10 to-orange-500/10 hover:from-red-500/20 hover:to-orange-500/20 border-red-500/30 text-red-600 dark:text-red-400"
@@ -547,6 +561,9 @@ export const UserCreditsManager = () => {
                       </span>
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground break-all">Utente: {e.userId}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground break-all">
+                      Admin: {e.adminEmail || "—"}
+                    </p>
                     <p className="mt-1 text-sm break-words">
                       <span className="text-muted-foreground">Motivo: </span>
                       {e.reason}
