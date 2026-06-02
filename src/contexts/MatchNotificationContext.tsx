@@ -7,7 +7,11 @@ const LAST_SEEN_KEY = "matches_last_seen_at";
 
 // 🔔 Suono di notifica orecchiabile (tre note ascendenti) via Web Audio API,
 //    senza bisogno di file audio. Si sente su qualsiasi pagina.
+//    Rispetta la preferenza locale impostata in Modifica profilo (default: ON).
 function playMessageChime() {
+  try {
+    if (localStorage.getItem("notif_sound_enabled") === "0") return;
+  } catch { /* noop: se localStorage non disponibile, suona comunque */ }
   try {
     const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
     if (!Ctx) return;

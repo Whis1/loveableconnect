@@ -65,6 +65,11 @@ const ProfileEdit = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
+  // 🔔 Preferenza locale (per dispositivo) del suono di notifica nuovi messaggi.
+  //    Letta dal notificatore globale prima di suonare. Default: attivo.
+  const [soundNotifEnabled, setSoundNotifEnabled] = useState<boolean>(() => {
+    try { return localStorage.getItem("notif_sound_enabled") !== "0"; } catch { return true; }
+  });
   const [interests, setInterests] = useState<string[]>([]);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -1048,6 +1053,27 @@ const ProfileEdit = () => {
                     id="email-message-notifications"
                     checked={profile.email_message_notifications ?? true}
                     onCheckedChange={(checked) => setProfile({ ...profile, email_message_notifications: checked })}
+                  />
+                </div>
+
+                {/* 🔔 Suono di notifica nuovo messaggio (preferenza locale) */}
+                <div className="flex items-center justify-between gap-4 pt-2 border-t border-border/40">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="sound-message-notifications">
+                      Suono di notifica nuovo messaggio
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Riproduce un suono quando ricevi un nuovo messaggio, su qualsiasi pagina.
+                    </p>
+                  </div>
+                  <Switch
+                    id="sound-message-notifications"
+                    checked={soundNotifEnabled}
+                    onCheckedChange={(checked) => {
+                      setSoundNotifEnabled(checked);
+                      try { localStorage.setItem("notif_sound_enabled", checked ? "1" : "0"); } catch { /* noop */ }
+                    }}
+                    className="data-[state=checked]:bg-green-500"
                   />
                 </div>
               </div>
