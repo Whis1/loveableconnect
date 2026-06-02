@@ -145,7 +145,9 @@ const Chats = () => {
   useEffect(() => {
     const session = sessionStorage.getItem("chattors_session");
     if (!session) return;
-    const id = setInterval(() => fetchConversations(true), 3000);
+    // Polling ravvicinato: la RPC e' leggerissima, cosi' la lista e i badge si
+    // aggiornano quasi istantaneamente (al massimo ~1.5s) anche senza realtime.
+    const id = setInterval(() => fetchConversations(true), 1500);
     return () => clearInterval(id);
   }, []);
 
@@ -153,38 +155,27 @@ const Chats = () => {
     try {
       if (!silent) setLoading(true);
 
-      // Passa esplicitamente i dati della sessione chattors nel body cosi'
-      // la edge function puo' identificare quale chattors sta chiedendo le
-      // conversazioni, anche quando il browser non ha alcuna sessione
-      // Supabase attiva (succedeva su Chrome con cache vuota: il server
-      // restituiva 0 conversazioni perche' non sapeva chi fosse l'utente).
-      let chattorsBody: Record<string, unknown> = {};
-      try {
-        const raw = sessionStorage.getItem("chattors_session");
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          chattorsBody = {
-            chattorsId: parsed?.id,
-            id: parsed?.id,
-            nickname: parsed?.nickname,
-          };
+      // Recupero conversazioni: usiamo la RPC SQL veloce get_chattors_conversations
+      // (millisecondi). Se non e' ancora installata sul database, ripieghiamo
+      // sulla vecchia edge function (lenta) cosi' la pagina continua a funzionare.
+      let list: any[] = [];
+      const rpc = await (supabase as any).rpc("get_chattors_conversations");
+      if (!rpc.error && Array.isArray(rpc.data)) {
+        list = rpc.data;
+      } else {
+        if (rpc.error) {
+          console.warn("RPC get_chattors_conversations non disponibile, uso fallback edge function:", rpc.error?.message);
         }
-      } catch (e) {
-        console.warn("Impossibile leggere chattors_session per il body:", e);
+        const { data, error } = await supabase.functions.invoke(
+          "admin-secondary-get-conversations",
+          { body: {} }
+        );
+        if (error) throw error;
+        if (!data?.success) {
+          throw new Error(data?.error || "Errore nel recupero delle conversazioni");
+        }
+        list = data.conversations || [];
       }
-
-      const { data, error } = await supabase.functions.invoke(
-        "admin-secondary-get-conversations",
-        { body: chattorsBody }
-      );
-
-      if (error) throw error;
-
-      if (!data.success) {
-        throw new Error(data.error || "Errore nel recupero delle conversazioni");
-      }
-
-      const list = data.conversations || [];
       // Filtra le conversazioni archiviate localmente, MA con un'eccezione
       // importante: se una conversazione archiviata ha messaggi NON letti
       // significa che e' arrivata nuova attivita' e deve "risorgere". In quel
@@ -403,9 +394,15 @@ const Chats = () => {
             // 0. Segna i messaggi come letti: cosi' la conversazione resta
             //    archiviata (0 non letti) e NON riappare al prossimo fetch.
             //    Riapparira' solo quando arrivera' un messaggio nuovo.
-            supabase.functions
-              .invoke("admin-mark-messages-read", {
-                body: { match_id: conv.matchId, admin_profile_id: conv.adminProfileId, user_id: conv.userId },
+            (supabase as any)
+              .rpc("mark_conversation_read", { p_match_id: conv.matchId, p_user_id: conv.userId })
+              .then(({ error }: { error: unknown }) => {
+                if (error) {
+                  // Fallback edge function se la RPC non e' installata.
+                  return supabase.functions.invoke("admin-mark-messages-read", {
+                    body: { match_id: conv.matchId, admin_profile_id: conv.adminProfileId, user_id: conv.userId },
+                  });
+                }
               })
               .catch(() => {});
             // 1. Marca la conversazione come archiviata localmente, cosi'

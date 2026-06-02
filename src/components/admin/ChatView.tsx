@@ -85,8 +85,10 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, conversation?.matchId]);
 
-  // Fallback realtime: ricontrolla i messaggi ogni 2 secondi, così i nuovi
-  // messaggi compaiono da soli anche se la consegna in tempo reale non funziona.
+  // Fallback realtime: ricontrolla i messaggi ogni secondo, così i nuovi
+  // messaggi compaiono quasi istantaneamente anche se la consegna in tempo
+  // reale non funziona (i chattors usano la chiave anon e il realtime
+  // postgres_changes non viene consegnato all'anon per via dell'RLS).
   useEffect(() => {
     if (!conversation) return;
     const matchId = conversation.matchId;
@@ -110,7 +112,7 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
       } catch {
         // ignora errori temporanei del polling
       }
-    }, 2000);
+    }, 1000);
     return () => clearInterval(interval);
   }, [conversation?.matchId]);
 
@@ -135,14 +137,20 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
     if (!conversation) return;
 
     try {
-      const { error } = await supabase.functions.invoke("admin-mark-messages-read", {
-        body: {
-          match_id: conversation.matchId,
-          admin_profile_id: conversation.adminProfileId,
-          user_id: conversation.userId,
-        },
+      // RPC veloce e affidabile. Se non e' installata, fallback alla edge function.
+      const { error } = await (supabase as any).rpc("mark_conversation_read", {
+        p_match_id: conversation.matchId,
+        p_user_id: conversation.userId,
       });
-      if (error) throw error;
+      if (error) {
+        await supabase.functions.invoke("admin-mark-messages-read", {
+          body: {
+            match_id: conversation.matchId,
+            admin_profile_id: conversation.adminProfileId,
+            user_id: conversation.userId,
+          },
+        });
+      }
     } catch (err) {
       console.error("Errore nel segnare come letti:", err);
     } finally {
