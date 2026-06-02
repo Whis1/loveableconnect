@@ -6,8 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Crown, Shield, UserPlus, Loader2, Trash2, Plus, Eye, EyeOff } from "lucide-react";
+import { Crown, Shield, UserPlus, Loader2, Trash2, Plus, Eye, EyeOff, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+// Account admin protetto: non puo' essere revocato/eliminato da nessuno (niente
+// cestino). Confronto case-insensitive.
+const PROTECTED_ADMIN_EMAILS = ["admin@loveableconnect.internal"];
+const isProtectedAdmin = (email: string | null | undefined) =>
+  !!email && PROTECTED_ADMIN_EMAILS.includes(email.trim().toLowerCase());
 
 interface TieredAdminRow {
   user_id: string;
@@ -190,6 +196,11 @@ export const AdminTierManager = () => {
   };
 
   const handleDemote = async (row: TieredAdminRow) => {
+    // Sicurezza: l'account protetto non puo' essere revocato in nessun caso.
+    if (isProtectedAdmin(row.email)) {
+      toast({ title: "Account protetto", description: "Questo account non puo' essere eliminato.", variant: "destructive" });
+      return;
+    }
     if (!confirm(`Vuoi revocare i permessi admin di ${row.email}?`)) return;
     setDemotingId(row.user_id);
     try {
@@ -428,19 +439,29 @@ export const AdminTierManager = () => {
                       Promosso: {new Date(row.created_at).toLocaleDateString("it-IT")}
                     </p>
                   </div>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDemote(row)}
-                    disabled={demotingId === row.user_id}
-                    title="Revoca admin"
-                  >
-                    {demotingId === row.user_id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-4 w-4" />
-                    )}
-                  </Button>
+                  {isProtectedAdmin(row.email) ? (
+                    <span
+                      className="flex items-center gap-1 text-xs text-muted-foreground shrink-0"
+                      title="Account protetto: non eliminabile"
+                    >
+                      <Lock className="h-4 w-4" />
+                      Protetto
+                    </span>
+                  ) : (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDemote(row)}
+                      disabled={demotingId === row.user_id}
+                      title="Revoca admin"
+                    >
+                      {demotingId === row.user_id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
