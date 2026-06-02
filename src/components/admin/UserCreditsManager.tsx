@@ -83,33 +83,74 @@ export const UserCreditsManager = () => {
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory());
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [adminEmail, setAdminEmail] = useState<string>("");
 
-  // Recupera l'email dell'admin loggato (per registrarla in cronologia).
+  // Recupera l'email dell'admin loggato (serve solo al fallback locale).
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setAdminEmail(data.user?.email ?? "");
     });
   }, []);
 
-  const recordHistory = (actionLabel: string, targetUser: string, reasonText: string) => {
-    setHistory((prev) => {
+  // Registra l'azione nella cronologia CONDIVISA su database (visibile a tutti
+  // gli admin, email presa dal server). Se la RPC non e' ancora installata,
+  // ripiega sul salvataggio locale del dispositivo.
+  const recordHistory = async (actionLabel: string, targetUser: string, reasonText: string) => {
+    try {
+      const { error } = await (supabase as any).rpc("log_admin_credit_action", {
+        p_action_label: actionLabel,
+        p_target_user_id: targetUser,
+        p_reason: reasonText,
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.warn("RPC log_admin_credit_action non disponibile, uso fallback locale:", err);
       const cutoff = Date.now() - DAY_MS;
-      const next: HistoryEntry[] = [
-        {
-          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          actionLabel,
-          userId: targetUser,
-          adminEmail: adminEmail || "Sconosciuto",
-          reason: reasonText,
-          timestamp: Date.now(),
-        },
-        ...prev,
-      ].filter((e) => e.timestamp >= cutoff);
-      saveHistory(next);
-      return next;
-    });
+      const entry: HistoryEntry = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        actionLabel,
+        userId: targetUser,
+        adminEmail: adminEmail || "Sconosciuto",
+        reason: reasonText,
+        timestamp: Date.now(),
+      };
+      saveHistory([entry, ...loadHistory()].filter((e) => e.timestamp >= cutoff));
+    }
+  };
+
+  // Apre la cronologia caricandola dal database condiviso (fallback locale).
+  const openHistory = async () => {
+    setHistoryOpen(true);
+    setHistoryLoading(true);
+    try {
+      const { data, error } = await (supabase as any).rpc("get_admin_credit_actions");
+      if (error) throw error;
+      const rows = (data || []) as Array<{
+        id: string;
+        admin_email: string | null;
+        action_label: string;
+        target_user_id: string;
+        reason: string;
+        created_at: string;
+      }>;
+      setHistory(
+        rows.map((r) => ({
+          id: r.id,
+          actionLabel: r.action_label,
+          userId: r.target_user_id,
+          adminEmail: r.admin_email || "—",
+          reason: r.reason,
+          timestamp: new Date(r.created_at).getTime(),
+        }))
+      );
+    } catch (err) {
+      console.warn("RPC get_admin_credit_actions non disponibile, uso fallback locale:", err);
+      setHistory(loadHistory());
+    } finally {
+      setHistoryLoading(false);
+    }
   };
 
   // Apre il pannello "Motivo" per l'azione scelta, dopo aver validato gli input.
@@ -181,7 +222,7 @@ export const UserCreditsManager = () => {
       if (error) throw error;
       if (!data.success) throw new Error(data.error || "Errore sconosciuto");
       toast({ title: "Crediti aggiunti", description: `${amt} crediti aggiunti (nuovo saldo: ${data.newBalance})` });
-      recordHistory(`Aggiunti ${amt} crediti`, targetUser, reasonText);
+      await recordHistory(`Aggiunti ${amt} crediti`, targetUser, reasonText);
       setUserId("");
       setCreditsAmount("");
       return true;
@@ -205,7 +246,7 @@ export const UserCreditsManager = () => {
       if (error) throw error;
       if (!data.success) throw new Error(data.error || "Errore sconosciuto");
       toast({ title: "Like Aggiunti", description: `${amt} like aggiunti (nuovo totale: ${data.newLikesRemaining})` });
-      recordHistory(`Aggiunti ${amt} like`, targetUser, reasonText);
+      await recordHistory(`Aggiunti ${amt} like`, targetUser, reasonText);
       setUserId("");
       setLikesAmount("");
       return true;
@@ -237,7 +278,7 @@ export const UserCreditsManager = () => {
         .eq("user_id", targetUser);
       if (error) throw error;
       toast({ title: "Premium Mensile Assegnato", description: "Abbonamento premium di 30 giorni assegnato" });
-      recordHistory("Premium 30 giorni", targetUser, reasonText);
+      await recordHistory("Premium 30 giorni", targetUser, reasonText);
       setUserId("");
       return true;
     } catch (error: any) {
@@ -268,7 +309,7 @@ export const UserCreditsManager = () => {
         .eq("user_id", targetUser);
       if (error) throw error;
       toast({ title: "Premium Settimanale Assegnato", description: "Abbonamento premium di 7 giorni assegnato" });
-      recordHistory("Premium 7 giorni", targetUser, reasonText);
+      await recordHistory("Premium 7 giorni", targetUser, reasonText);
       setUserId("");
       return true;
     } catch (error: any) {
@@ -299,7 +340,7 @@ export const UserCreditsManager = () => {
         .eq("user_id", targetUser);
       if (error) throw error;
       toast({ title: "Platino Assegnato", description: "Abbonamento Platino di 30 giorni assegnato (€69,99)" });
-      recordHistory("Platino 30 giorni", targetUser, reasonText);
+      await recordHistory("Platino 30 giorni", targetUser, reasonText);
       setUserId("");
       return true;
     } catch (error: any) {
@@ -369,7 +410,7 @@ export const UserCreditsManager = () => {
       queryClient.invalidateQueries({ queryKey: ["daily-likes"] });
 
       toast({ title: "Abbonamento rimosso", description: "Account riportato a Free. Counter partite azzerato." });
-      recordHistory("Rimosso abbonamento", trimmedId, reasonText);
+      await recordHistory("Rimosso abbonamento", trimmedId, reasonText);
       setUserId("");
       return true;
     } catch (error: any) {
@@ -402,10 +443,7 @@ export const UserCreditsManager = () => {
             variant="outline"
             size="sm"
             className="gap-1.5 shrink-0"
-            onClick={() => {
-              setHistory(loadHistory());
-              setHistoryOpen(true);
-            }}
+            onClick={openHistory}
           >
             <History className="h-4 w-4" />
             Cronologia
@@ -544,7 +582,9 @@ export const UserCreditsManager = () => {
               Crediti, like e abbonamenti assegnati. Le voci si rimuovono da sole dopo 24 ore.
             </DialogDescription>
           </DialogHeader>
-          {history.length === 0 ? (
+          {historyLoading ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">Caricamento...</div>
+          ) : history.length === 0 ? (
             <div className="py-10 text-center text-sm text-muted-foreground">
               Nessuna voce nelle ultime 24 ore.
             </div>
