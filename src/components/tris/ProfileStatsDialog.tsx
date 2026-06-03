@@ -314,7 +314,7 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
       <DialogContent className="sm:max-w-md p-0 overflow-hidden">
         {profile && (
           <>
-            <div className={`relative p-6 pb-12 ${theme.id !== "none" ? "bg-gradient-to-br from-amber-400/20 via-amber-500/10 to-yellow-600/20" : "bg-gradient-to-br from-primary/40 via-purple-500/30 to-pink-500/40"}`}>
+            <div className="relative bg-gradient-to-br from-primary/40 via-purple-500/30 to-pink-500/40 p-6 pb-12">
               <DialogHeader>
                 <DialogTitle className="sr-only">{profile.nickname}</DialogTitle>
               </DialogHeader>
@@ -347,7 +347,7 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
               </div>
             </div>
 
-            <div className={`px-6 py-5 -mt-6 bg-background relative rounded-t-3xl ${theme.panelClass}`}>
+            <div className={`px-6 py-5 -mt-6 bg-background relative rounded-t-3xl overflow-hidden ${theme.nameClass ? "pt-gold-shine-bg" : ""}`}>
               {loading ? (
                 <div className="flex justify-center py-8">
                   <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
