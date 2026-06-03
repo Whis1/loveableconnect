@@ -12,7 +12,8 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import { Users, MessageSquare, Save, Upload, X, Image as ImageIcon, Search, Heart, Link2, Send, Lock, History, Clock } from "lucide-react";
+import { Users, MessageSquare, Save, Upload, X, Image as ImageIcon, Search, Heart, Link2, Send, Lock, History, Clock, Sparkles, Check } from "lucide-react";
+import { PROFILE_THEMES, getProfileTheme } from "@/lib/profileThemes";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AdminChatDialog } from "./AdminChatDialog";
 import { InterestsAutocomplete } from "@/components/InterestsAutocomplete";
@@ -45,6 +46,7 @@ interface Profile {
   favorite_songs?: SpotifySong[] | null;
   user_images_link?: string | null;
   manual_online_status?: boolean | null;
+  profile_theme?: string | null;
 }
 
 interface Message {
@@ -424,6 +426,10 @@ export const ProfileManager = () => {
   // Id del profilo il cui dialog di modifica e' aperto. Rendiamo il
   // Dialog "controllato" cosi' possiamo chiuderlo dopo Salva Modifiche.
   const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
+  // Dialog "Temi": id del profilo aperto, tema selezionato e stato di salvataggio.
+  const [themeDialogId, setThemeDialogId] = useState<string | null>(null);
+  const [themeSelected, setThemeSelected] = useState<string>("none");
+  const [themeSaving, setThemeSaving] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -616,6 +622,40 @@ export const ProfileManager = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 🎨 Apertura dialog "Temi": legge il tema attuale del profilo dal DB.
+  const openThemeDialog = async (profileId: string) => {
+    setThemeDialogId(profileId);
+    setThemeSelected("none");
+    const { data } = await (supabase.from("profiles") as any)
+      .select("profile_theme")
+      .eq("id", profileId)
+      .maybeSingle();
+    setThemeSelected(data?.profile_theme ?? "none");
+  };
+
+  // 🎨 Salva il tema scelto sul profilo admin.
+  const saveProfileTheme = async (profileId: string) => {
+    setThemeSaving(true);
+    try {
+      const { error } = await (supabase.from("profiles") as any)
+        .update({ profile_theme: themeSelected })
+        .eq("id", profileId);
+      if (error) throw error;
+      setProfiles(profiles.map((p) => (p.id === profileId ? { ...p, profile_theme: themeSelected } : p)));
+      toast({
+        title: "Tema salvato",
+        description: themeSelected === "none"
+          ? "Tema rimosso dal profilo."
+          : `Tema "${getProfileTheme(themeSelected).name}" applicato al profilo.`,
+      });
+      setThemeDialogId(null);
+    } catch (e: any) {
+      toast({ title: "Errore", description: e.message, variant: "destructive" });
+    } finally {
+      setThemeSaving(false);
     }
   };
 
@@ -1717,6 +1757,66 @@ export const ProfileManager = () => {
                               </div>
                             </div>
                           </ScrollArea>
+                        </DialogContent>
+                      </Dialog>
+
+                      {/* Dialog Temi (personalizzazione estetica del profilo admin) */}
+                      <Dialog
+                        open={themeDialogId === profile.id}
+                        onOpenChange={(open) => { if (open) openThemeDialog(profile.id); else setThemeDialogId(null); }}
+                      >
+                        <DialogTrigger asChild>
+                          <Button variant="outline" className="flex-1">
+                            <Sparkles className="h-4 w-4 mr-2" />
+                            Temi
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2">
+                              <Sparkles className="h-5 w-5 text-amber-500" />
+                              Tema profilo: {profile.nickname}
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4 pt-2">
+                            <div className="flex flex-wrap gap-2">
+                              {PROFILE_THEMES.map((th) => {
+                                const active = th.id === themeSelected;
+                                return (
+                                  <button
+                                    key={th.id}
+                                    type="button"
+                                    disabled={th.comingSoon}
+                                    onClick={() => setThemeSelected(th.id)}
+                                    className={`relative flex items-center gap-2 rounded-xl border px-3 py-2 transition-all ${
+                                      active ? "border-amber-500 ring-2 ring-amber-400/50" : "border-border hover:border-primary/50"
+                                    } ${th.comingSoon ? "opacity-50 cursor-not-allowed" : ""}`}
+                                  >
+                                    <span
+                                      className="h-6 w-6 rounded-full border border-white/40 shadow"
+                                      style={{ background: th.swatch }}
+                                    />
+                                    <span className="text-sm font-medium">{th.name}</span>
+                                    {active && !th.comingSoon && <Check className="h-4 w-4 text-amber-500" />}
+                                    {th.comingSoon && (
+                                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Presto</span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <div className="rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground">
+                              {getProfileTheme(themeSelected).description}
+                            </div>
+                            <div className="flex justify-end gap-2">
+                              <Button variant="outline" onClick={() => setThemeDialogId(null)} disabled={themeSaving}>
+                                Annulla
+                              </Button>
+                              <Button onClick={() => saveProfileTheme(profile.id)} disabled={themeSaving}>
+                                {themeSaving ? "Salvataggio..." : "Salva tema"}
+                              </Button>
+                            </div>
+                          </div>
                         </DialogContent>
                       </Dialog>
 
