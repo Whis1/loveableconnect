@@ -109,13 +109,15 @@ export const ProfileCustomizationDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto border-purple-500/20 bg-gradient-to-br from-[#241433] via-[#1a1026] to-[#2a1640]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-amber-500" />
-            Personalizzazione
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <Sparkles className="h-5 w-5 text-pink-400" />
+            <span className="bg-gradient-to-r from-pink-400 via-fuchsia-400 to-indigo-400 bg-clip-text text-transparent font-extrabold">
+              Personalizzazione
+            </span>
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-purple-200/70">
             Scegli un tema estetico e guarda in tempo reale come ti vedono gli altri utenti.
           </DialogDescription>
         </DialogHeader>
@@ -131,15 +133,17 @@ export const ProfileCustomizationDialog = ({
                 type="button"
                 onClick={() => handleSelect(th.id)}
                 disabled={th.comingSoon}
-                className={`relative flex items-center gap-2 rounded-xl border px-3 py-2 transition-all ${
-                  active ? "border-amber-500 ring-2 ring-amber-400/50" : "border-border hover:border-primary/50"
+                className={`relative flex items-center gap-2 rounded-xl border px-3 py-2 transition-all backdrop-blur-sm ${
+                  active
+                    ? "border-amber-400 bg-amber-400/10 ring-2 ring-amber-400/40 shadow-lg shadow-amber-500/10"
+                    : "border-white/10 bg-white/5 hover:border-pink-400/40 hover:bg-white/10"
                 } ${th.comingSoon ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 <span
                   className="h-6 w-6 rounded-full border border-white/40 shadow"
                   style={{ background: th.swatch }}
                 />
-                <span className="text-sm font-medium">{th.name}</span>
+                <span className="text-sm font-medium text-purple-50">{th.name}</span>
                 {active && !th.comingSoon && <Check className="h-4 w-4 text-amber-500" />}
                 {thLocked && !th.comingSoon && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
                 {th.comingSoon && (
@@ -151,7 +155,7 @@ export const ProfileCustomizationDialog = ({
         </div>
 
         {/* Descrizione tema + nota lucchetto */}
-        <div className="rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground">
+        <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-purple-100/80 backdrop-blur-sm">
           {theme.description}
           {locked && (
             <div className="mt-1.5 flex items-center gap-1.5 font-medium text-amber-600 dark:text-amber-400">
@@ -165,7 +169,7 @@ export const ProfileCustomizationDialog = ({
           {/* Card esterna (bacheca) — componente REALE, esattamente come la
               vedono gli altri utenti nella bacheca. */}
           <div className="space-y-2">
-            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <div className="text-xs font-semibold uppercase tracking-wide text-pink-300/70">
               Card esterna (bacheca)
             </div>
             {/* pointer-events-none: anteprima visiva, niente like/chat su se stessi.
@@ -183,7 +187,7 @@ export const ProfileCustomizationDialog = ({
               Altezza pari alla card esterna (stretch della griglia) + scroll
               interno per i contenuti, cosi' il pannello non diventa lunghissimo. */}
           <div className="space-y-2 flex flex-col">
-            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <div className="text-xs font-semibold uppercase tracking-wide text-pink-300/70">
               Card interna (profilo aperto)
             </div>
             <div className="relative flex-1 min-h-[500px]">
@@ -303,7 +307,7 @@ export const ProfileCustomizationDialog = ({
 
         {/* Avatar negli altri contesti */}
         <div className="space-y-2">
-          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <div className="text-xs font-semibold uppercase tracking-wide text-pink-300/70">
             Come ti vedono gli altri utenti
           </div>
           <div className="grid grid-cols-3 gap-3">
@@ -327,7 +331,12 @@ export const ProfileCustomizationDialog = ({
 
         {/* Footer */}
         <div className="flex justify-end gap-2 pt-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={saving}
+            className="border-white/15 bg-white/5 text-purple-100 hover:bg-white/10 hover:text-white"
+          >
             Annulla
           </Button>
           {locked ? (
@@ -338,7 +347,11 @@ export const ProfileCustomizationDialog = ({
               <Crown className="h-4 w-4 mr-2" /> Sblocca con Premium
             </Button>
           ) : (
-            <Button onClick={handleSave} disabled={saving}>
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 text-white border-0 shadow-lg"
+            >
               {saving ? "Salvataggio..." : "Salva personalizzazione"}
             </Button>
           )}
