@@ -248,12 +248,12 @@ All colors MUST be HSL.
   filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.55));
 }
 
-/* Pannello testi della card: velatura dorata fissa (niente giunture) + una
-   banda di luce morbida che attraversa ogni tanto, mossa con translateX cosi'
-   da NON creare la "linea" del gradiente ripetuto. Sempre leggibile. */
+/* Pannello testi della card: velatura dorata fissa (sempre presente) + una
+   banda di luce morbida che attraversa la card SOLO all'hover, con una singola
+   passata. Togliendo e ripassando il cursore, la passata riparte. */
 @keyframes pt-gold-sheen {
-  0%        { transform: translateX(-120%); }
-  55%, 100% { transform: translateX(120%); }
+  from { transform: translateX(-120%); }
+  to   { transform: translateX(120%); }
 }
 .pt-gold-panel {
   position: relative;
@@ -272,9 +272,13 @@ All colors MUST be HSL.
   background: linear-gradient(
     105deg,
     transparent 38%,
-    rgba(255, 240, 170, 0.35) 50%,
+    rgba(255, 240, 170, 0.4) 50%,
     transparent 62%
   );
-  transform: translateX(-120%);
-  animation: pt-gold-sheen 6s ease-in-out infinite;
+  transform: translateX(-120%); /* a riposo: nascosto a sinistra */
+}
+/* Il flusso parte solo passando il cursore sulla card (cornice del tema) e fa
+   una sola passata; ripassando il cursore riparte. */
+.pt-gold-frame:hover .pt-gold-panel::before {
+  animation: pt-gold-sheen 1.1s ease-out;
 }
