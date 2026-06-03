@@ -567,8 +567,8 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
             )}
           </div>
 
-          {/* Info Section */}
-          <div className="p-4 space-y-2.5">
+          {/* Info Section (+ eventuale velatura del tema) */}
+          <div className={`p-4 space-y-2.5 ${profileTheme.panelClass}`}>
             {/* Name and Age */}
             <div className="flex items-baseline gap-2">
               <h3 className={`text-lg font-bold truncate ${profileTheme.nameClass || "text-foreground"}`}>

@@ -448,8 +448,8 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
       <Dialog open={showExternal} onOpenChange={setShowExternal}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Come ti vedono nella bacheca</DialogTitle>
-            <DialogDescription>Questa è la card che vedono gli altri utenti.</DialogDescription>
+            <DialogTitle>Come ti vedono nella bacheca profili</DialogTitle>
+            <DialogDescription className="sr-only">Anteprima della tua card di bacheca</DialogDescription>
           </DialogHeader>
           {externalLoading || !externalProfile || !currentUserId ? (
             <div className="flex items-center justify-center py-12">
