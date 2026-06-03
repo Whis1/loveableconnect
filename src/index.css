@@ -248,12 +248,18 @@ All colors MUST be HSL.
   filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.55));
 }
 
-/* Pannello testi della card: velatura dorata leggera e semi-trasparente,
-   tarata bassa per non compromettere la leggibilita' dei testi sopra. */
+/* Pannello testi della card: velatura dorata semi-trasparente con un'onda
+   che scorre lentamente (effetto fluido), tarata per restare leggibile. */
+@keyframes pt-gold-panel-flow { to { background-position: 200% 0; } }
 .pt-gold-panel {
   background-image: linear-gradient(
-    to bottom,
-    rgba(255, 215, 0, 0.05),
-    rgba(184, 134, 11, 0.13)
+    100deg,
+    rgba(184, 134, 11, 0.16) 0%,
+    rgba(255, 236, 150, 0.26) 25%,
+    rgba(184, 134, 11, 0.16) 50%,
+    rgba(255, 236, 150, 0.26) 75%,
+    rgba(184, 134, 11, 0.16) 100%
   );
+  background-size: 200% 100%;
+  animation: pt-gold-panel-flow 7s linear infinite;
 }

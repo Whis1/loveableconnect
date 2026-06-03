@@ -192,11 +192,6 @@ export const ProfileCustomizationDialog = ({
                 <div className="h-full rounded-[0.8rem] overflow-hidden border border-border bg-card shadow-lg flex flex-col">
                   {/* Header con foto verticale grande, come nella scheda reale */}
                   <div className="relative shrink-0 px-4 pt-5 pb-3 bg-gradient-to-br from-primary/20 via-primary/10 to-background flex flex-col items-center">
-                  {isPremium && (
-                    <div className="mb-2">
-                      <PremiumBadge />
-                    </div>
-                  )}
                   {/* Contorno della foto tematizzato col tema selezionato. */}
                   <div className={theme.frameClass}>
                     <div className="relative w-40 h-48 rounded-2xl border-4 border-background shadow-xl overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5">
@@ -217,6 +212,11 @@ export const ProfileCustomizationDialog = ({
                     nascosto, niente "vicino alle tue parti"). */}
                 <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 space-y-3">
                   <div className="text-center space-y-2">
+                    {isPremium && (
+                      <div className="flex justify-center">
+                        <PremiumBadge />
+                      </div>
+                    )}
                     <div
                       className={`text-xl font-black ${
                         theme.nameClass || "bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent"
