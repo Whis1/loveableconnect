@@ -12,7 +12,7 @@ const TITOLARE_NOME = "Giuseppe Chighini";
 const TITOLARE_EMAIL = "loveableconnect@hotmail.com";
 const NOME_SITO = "LoveableConnect";
 const URL_SITO = "https://loveableconnect.vercel.app";
-const DATA_AGGIORNAMENTO = "31 maggio 2026";
+const DATA_AGGIORNAMENTO = "3 giugno 2026";
 
 const TermsAndConditions = () => {
   const navigate = useNavigate();
@@ -122,7 +122,8 @@ const TermsAndConditions = () => {
                         <strong>Dati di profilo:</strong> immagini caricate, biografia,
                         interessi, brani musicali preferiti (selezionati tramite Spotify),
                         preferenze relative alle persone con cui si desidera entrare in
-                        contatto.
+                        contatto, tema estetico/personalizzazione grafica del profilo
+                        eventualmente selezionata.
                       </li>
                       <li>
                         <strong>Dati di utilizzo:</strong> messaggi inviati e ricevuti
@@ -530,10 +531,14 @@ const TermsAndConditions = () => {
                     </p>
                     <p>
                       In alternativa è disponibile un{" "}
-                      <strong>abbonamento Premium</strong> che fornisce crediti illimitati
-                      o un set ampliato di funzionalità (a titolo esemplificativo: like
-                      illimitati, visualizzazione di chi ha messo like, invio di messaggi
-                      vocali, sblocco diretto delle chat). Il dettaglio puntuale dei
+                      <strong>abbonamento Premium</strong>, disponibile in più piani
+                      (a titolo esemplificativo settimanale, mensile e di livello
+                      superiore), che fornisce crediti illimitati o un set ampliato di
+                      funzionalità (a titolo esemplificativo: like illimitati,
+                      visualizzazione di chi ha messo like, invio di messaggi vocali,
+                      sblocco diretto delle chat, partite extra nei minigame,
+                      personalizzazione estetica del profilo, badge Premium e messaggio
+                      prioritario). Il dettaglio puntuale dei piani, dei prezzi e dei
                       benefici dell'abbonamento è quello indicato sul Sito al momento
                       della sottoscrizione.
                     </p>
@@ -605,6 +610,46 @@ const TermsAndConditions = () => {
                         recedere prima dell'applicazione delle modifiche.
                       </li>
                     </ul>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">
+                      6.3 Personalizzazione estetica, badge e messaggio prioritario
+                    </h3>
+                    <p>
+                      L'abbonamento Premium può includere funzioni estetiche e di
+                      visibilità aggiuntive, tra cui:
+                    </p>
+                    <ul className="list-disc list-inside space-y-2 pl-4">
+                      <li>
+                        <strong>Personalizzazione estetica del profilo:</strong> possibilità
+                        di attivare temi grafici esclusivi (ad esempio effetti animati su
+                        avatar, nome e card del profilo). Si tratta di effetti puramente
+                        estetici: non modificano i contenuti del profilo, non alterano i
+                        dati mostrati e non conferiscono alcun vantaggio competitivo nei
+                        minigame, nella classifica o nei tornei.
+                      </li>
+                      <li>
+                        <strong>Badge &laquo;Premium&raquo;:</strong> un contrassegno visivo
+                        mostrato sul profilo che identifica l'utente come abbonato. È
+                        riservato esclusivamente agli abbonati Premium e viene rimosso
+                        automaticamente al termine dell'abbonamento.
+                      </li>
+                      <li>
+                        <strong>Messaggio prioritario:</strong> il messaggio inviato può
+                        essere evidenziato e mantenuto in cima alla lista dei contatti del
+                        destinatario finché non viene visualizzato, così da aumentare la
+                        probabilità che venga letto. La funzione non garantisce in alcun
+                        modo una risposta né l'effettiva lettura: resta piena facoltà del
+                        destinatario leggere, ignorare o eliminare il messaggio.
+                      </li>
+                    </ul>
+                    <p>
+                      Le funzioni disponibili, i relativi effetti e i piani che le includono
+                      sono quelli indicati sul Sito al momento della sottoscrizione e possono
+                      essere modificati, ampliati o sostituiti nel tempo, senza che ciò
+                      incida sugli abbonamenti già attivi fino alla loro scadenza.
+                    </p>
                   </div>
 
                   <div className="space-y-3">
