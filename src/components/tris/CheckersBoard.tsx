@@ -8,6 +8,7 @@ import { GameResultOverlay } from "./GameResultOverlay";
 import { ProfileStatsDialog } from "./ProfileStatsDialog";
 import { ProfileThemeRing } from "@/components/ProfileThemeRing";
 import { useProfileTheme } from "@/hooks/useProfileTheme";
+import { getProfileTheme } from "@/lib/profileThemes";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { RockPaperScissors } from "@/components/tournament/RockPaperScissors";
 import { Wrench, Handshake } from "lucide-react";
@@ -1464,7 +1465,7 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
             )}
           </button>
           <div>
-            <p className="font-bold">{currentUserProfile?.nickname || "Tu"}</p>
+            <p className={`font-bold ${getProfileTheme(currentUserProfile?.profile_theme).nameClass}`}>{currentUserProfile?.nickname || "Tu"}</p>
             <p className="text-xs text-muted-foreground">Tu</p>
             <p className="text-xs font-semibold text-primary">ELO: {userElo}</p>
           </div>
@@ -1485,7 +1486,7 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
         {/* Opponent */}
         <div className="flex items-center space-x-3 relative">
           <div>
-            <p className="font-bold text-right">{opponent.nickname}</p>
+            <p className={`font-bold text-right ${getProfileTheme(opponentTheme).nameClass}`}>{opponent.nickname}</p>
             <p className="text-xs text-muted-foreground text-right">Sfidante</p>
             <p className="text-xs font-semibold text-destructive text-right">ELO: {opponentElo}</p>
           </div>

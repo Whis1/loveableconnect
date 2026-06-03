@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProfileThemeRing } from "@/components/ProfileThemeRing";
+import { getProfileTheme } from "@/lib/profileThemes";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy, ChevronDown, ChevronUp, Crown } from "lucide-react";
@@ -314,9 +315,12 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
           {/* 🎮 Header: avatar + nickname + ELO + posizione */}
           <div className="relative flex items-center gap-4">
             <div className="relative shrink-0">
-              <div className="absolute -inset-0.5 rounded-full bg-gradient-to-br from-pink-400 via-fuchsia-500 to-indigo-500 opacity-70 blur-[2px]" />
+              {/* Alone rosa solo se NON c'e' un tema (col tema si vede solo l'oro) */}
+              {!getProfileTheme(userProfile?.profile_theme).avatarClass && (
+                <div className="absolute -inset-0.5 rounded-full bg-gradient-to-br from-pink-400 via-fuchsia-500 to-indigo-500 opacity-70 blur-[2px]" />
+              )}
               <ProfileThemeRing themeId={userProfile?.profile_theme} className="relative">
-                <Avatar className="relative w-16 h-16 border-2 border-pink-400/70 shadow-lg shadow-pink-500/30">
+                <Avatar className={`relative w-16 h-16 border-2 ${getProfileTheme(userProfile?.profile_theme).avatarClass ? "border-transparent shadow-none" : "border-pink-400/70 shadow-lg shadow-pink-500/30"}`}>
                   <AvatarImage src={getAvatarUrl(userProfile?.avatar_url ?? null)} />
                   <AvatarFallback className="bg-fuchsia-500/20 text-pink-200 font-bold">
                     {(userProfile?.nickname ?? userProfile?.full_name ?? "ME").slice(0, 2).toUpperCase()}
@@ -325,7 +329,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
               </ProfileThemeRing>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-black text-lg truncate bg-gradient-to-r from-pink-200 via-fuchsia-200 to-indigo-200 bg-clip-text text-transparent">
+              <p className={`font-black text-lg truncate ${getProfileTheme(userProfile?.profile_theme).nameClass || "bg-gradient-to-r from-pink-200 via-fuchsia-200 to-indigo-200 bg-clip-text text-transparent"}`}>
                 {userProfile?.nickname ?? userProfile?.full_name ?? "Tu"}
               </p>
               <div className="flex items-baseline gap-1.5">
@@ -430,7 +434,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
                 </ProfileThemeRing>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-base truncate">
-                    <span className={getRankNicknameClass(index)}>{player.nickname}</span>
+                    <span className={getProfileTheme(player.profile_theme).nameClass || getRankNicknameClass(index)}>{player.nickname}</span>
                     {player.id === userId && <span className="text-xs text-primary ml-2">(Tu)</span>}
                   </p>
                   <div className="mt-0.5">{renderRankBadge(index, "sm")}</div>

@@ -15,6 +15,7 @@ import { CampioneIcon, RankMedalIcon } from "@/lib/championIcons";
 import { renderRankBadge, getRankNicknameClass } from "./EloLeaderboard";
 import { useSendLike } from "@/hooks/useSendLike";
 import { ProfileThemeRing } from "@/components/ProfileThemeRing";
+import { getProfileTheme } from "@/lib/profileThemes";
 
 interface ProfileLike {
   id: string;
@@ -87,6 +88,7 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
     })();
     return () => { active = false; };
   }, [profile?.id]);
+  const theme = getProfileTheme(themeId);
 
   // 🐛 FIX LOOP RICARICA: prima la dep era [profile] (l'intero oggetto).
   // TrisBoard/CheckersBoard ricreano un NUOVO oggetto profile ad ogni render
@@ -312,7 +314,7 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
       <DialogContent className="sm:max-w-md p-0 overflow-hidden">
         {profile && (
           <>
-            <div className="relative bg-gradient-to-br from-primary/40 via-purple-500/30 to-pink-500/40 p-6 pb-12">
+            <div className={`relative p-6 pb-12 ${theme.id !== "none" ? "bg-gradient-to-br from-amber-400/20 via-amber-500/10 to-yellow-600/20" : "bg-gradient-to-br from-primary/40 via-purple-500/30 to-pink-500/40"}`}>
               <DialogHeader>
                 <DialogTitle className="sr-only">{profile.nickname}</DialogTitle>
               </DialogHeader>
@@ -330,7 +332,9 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
                 </ProfileThemeRing>
                 <div className="text-center">
                   <h3 className="text-2xl font-bold drop-shadow-lg">
-                    {showRank && topIndex !== null && topIndex >= 0 && topIndex < 5 ? (
+                    {theme.nameClass ? (
+                      <span className={theme.nameClass}>{profile.nickname}</span>
+                    ) : showRank && topIndex !== null && topIndex >= 0 && topIndex < 5 ? (
                       <span className={getRankNicknameClass(topIndex)}>{profile.nickname}</span>
                     ) : (
                       <span className="text-white">{profile.nickname}</span>
@@ -343,7 +347,7 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
               </div>
             </div>
 
-            <div className="px-6 py-5 -mt-6 bg-background relative rounded-t-3xl">
+            <div className={`px-6 py-5 -mt-6 bg-background relative rounded-t-3xl ${theme.panelClass}`}>
               {loading ? (
                 <div className="flex justify-center py-8">
                   <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
