@@ -164,7 +164,7 @@ const Credits = () => {
                       </div>
                       <ul className="space-y-1.5 mt-3 text-sm text-muted-foreground">
                         <li className="flex items-center gap-2">
-                          <Zap className="h-4 w-4 text-amber-500 shrink-0" />
+                          <Coins className="h-4 w-4 text-amber-500 shrink-0" />
                           <span><strong>Crediti illimitati</strong></span>
                         </li>
                         <li className="flex items-center gap-2">
@@ -344,9 +344,14 @@ const Credits = () => {
                 </div>
               )
             ) : (
-              <div>
-                <div className="text-4xl font-bold text-primary mb-2">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-4xl font-bold text-primary">
+                  <Coins className="h-8 w-8 shrink-0" />
                   {credits?.balance || 0} {t("credits.credits")}
+                </div>
+                <div className="flex items-center gap-2 text-3xl font-bold text-pink-600 dark:text-pink-400">
+                  <Heart className="h-7 w-7 shrink-0" />
+                  {credits?.daily_likes_remaining ?? 0} Like
                 </div>
               </div>
             )}
@@ -511,7 +516,7 @@ const Credits = () => {
                 <div className="text-3xl font-bold">€399,99{t("credits.perMonth")}</div>
                 <ul className="space-y-2">
                   <li className="flex items-center gap-2">
-                    <Zap className="h-5 w-5 text-amber-500" />
+                    <Coins className="h-5 w-5 text-amber-500" />
                     <span><strong>{t("credits.unlimitedCredits")}</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
