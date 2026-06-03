@@ -1451,7 +1451,7 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
             title="Vedi le tue statistiche"
           >
             <ProfileThemeRing themeId={currentUserProfile?.profile_theme}>
-              <Avatar className="w-14 h-14 border-2 border-primary">
+              <Avatar className={`w-14 h-14 border-2 ${getProfileTheme(currentUserProfile?.profile_theme).avatarClass ? "border-transparent" : "border-primary"}`}>
                 <AvatarImage src={getAvatarUrl(currentUserProfile?.avatar_url)} />
                 <AvatarFallback>
                   {currentUserProfile?.nickname.slice(0, 2).toUpperCase() || "Tu"}
@@ -1497,7 +1497,7 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
             title={`Vedi statistiche di ${opponent.nickname}`}
           >
             <ProfileThemeRing themeId={opponentTheme}>
-              <Avatar className="w-14 h-14 border-2 border-destructive">
+              <Avatar className={`w-14 h-14 border-2 ${getProfileTheme(opponentTheme).avatarClass ? "border-transparent" : "border-destructive"}`}>
                 <AvatarImage src={getAvatarUrl(opponent.avatar_url)} />
                 <AvatarFallback>
                   {opponent.nickname.slice(0, 2).toUpperCase()}

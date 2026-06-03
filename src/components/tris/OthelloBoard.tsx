@@ -743,7 +743,7 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
             title={`Vedi statistiche di ${opponent.nickname}`}
           >
             <ProfileThemeRing themeId={opponentTheme}>
-              <Avatar className="w-14 h-14 border-2 border-destructive">
+              <Avatar className={`w-14 h-14 border-2 ${getProfileTheme(opponentTheme).avatarClass ? "border-transparent" : "border-destructive"}`}>
                 <AvatarImage src={getAvatarUrl(opponent.avatar_url)} />
                 <AvatarFallback>{opponent.nickname.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
