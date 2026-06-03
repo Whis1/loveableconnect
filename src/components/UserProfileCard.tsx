@@ -466,7 +466,7 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
           avatarUrl={avatarUrl}
           city={profile.city}
           age={profile.age ?? (profile.birthdate ? calculateAge(profile.birthdate) : null)}
-          isPremium={isPremium}
+          isPremium={isPremium || isAdmin}
           currentTheme={((profile as any).profile_theme as ProfileThemeId) || "none"}
           onSaved={(themeId) =>
             setProfile((p) => (p ? ({ ...p, profile_theme: themeId } as Profile) : p))
