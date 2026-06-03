@@ -49,9 +49,6 @@ interface ProfileDialogProps {
   // il dialog si apre ISTANTANEO senza fare un'altra query. Risolve il
   // problema "skeleton vuoto per minuti" quando la rete è satura.
   initialProfile?: Partial<Profile> & { id: string };
-  // Forza la visualizzazione del badge Premium (es. anteprima del proprio
-  // profilo per admin/test). Se non passato, usa lo stato Premium reale.
-  forcePremium?: boolean;
 }
 
 export const ProfileDialog = ({
@@ -60,7 +57,6 @@ export const ProfileDialog = ({
   open,
   onOpenChange,
   initialProfile,
-  forcePremium,
 }: ProfileDialogProps) => {
   const { t } = useTranslation();
   const [profile, setProfile] = useState<Profile | null>(
@@ -71,28 +67,7 @@ export const ProfileDialog = ({
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [translatedBio, setTranslatedBio] = useState<string>('');
   const [translatedInterests, setTranslatedInterests] = useState<string[]>([]);
-  const [isPremiumProfile, setIsPremiumProfile] = useState(false);
   const { translateText, translateArray } = useTextTranslation();
-
-  // Stato Premium del profilo mostrato (per il badge "Premium").
-  useEffect(() => {
-    if (!open || !profileId) return;
-    let active = true;
-    (async () => {
-      const { data } = await supabase
-        .from("user_credits")
-        .select("is_premium, premium_expires_at")
-        .eq("user_id", profileId)
-        .maybeSingle();
-      if (!active) return;
-      setIsPremiumProfile(
-        !!(data?.is_premium && (!data.premium_expires_at || new Date(data.premium_expires_at) > new Date()))
-      );
-    })();
-    return () => {
-      active = false;
-    };
-  }, [open, profileId]);
 
   useEffect(() => {
     if (!open || !profileId) return;
@@ -393,7 +368,7 @@ export const ProfileDialog = ({
           <div className="px-6 pb-6 space-y-6 mt-6">
             {/* Name and Basic Info */}
             <div className="text-center space-y-3">
-              {(forcePremium || isPremiumProfile) && (
+              {theme.badge && (
                 <div className="flex justify-center">
                   <PremiumBadge />
                 </div>

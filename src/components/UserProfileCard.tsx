@@ -346,7 +346,7 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
             >
               {profile.nickname}
             </h2>
-            {isPremium && <PremiumBadge />}
+            {selfTheme.badge && <PremiumBadge />}
           </div>
         </div>
 
@@ -440,7 +440,6 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
           currentUserId={currentUserId}
           open={showPreview}
           onOpenChange={setShowPreview}
-          forcePremium={isPremium || isAdmin}
         />
       )}
 
@@ -461,7 +460,6 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
               <ProfileGridCard
                 profile={externalProfile}
                 currentUserId={currentUserId}
-                showPremiumBadge={isPremium || isAdmin}
                 onLike={() => {}}
               />
             </div>

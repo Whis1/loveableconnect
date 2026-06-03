@@ -33,6 +33,8 @@ export interface ProfileTheme {
   iconClass: string;
   /** Tinta leggera/semi-trasparente per il pannello testi della card. */
   panelClass: string;
+  /** Se true, il tema mostra il badge "Premium" sul profilo. */
+  badge: boolean;
 }
 
 export const PROFILE_THEMES: ProfileTheme[] = [
@@ -47,6 +49,7 @@ export const PROFILE_THEMES: ProfileTheme[] = [
     nameClass: "",
     iconClass: "",
     panelClass: "",
+    badge: false,
   },
   {
     id: "gold",
@@ -59,6 +62,7 @@ export const PROFILE_THEMES: ProfileTheme[] = [
     nameClass: "pt-gold-name",
     iconClass: "pt-gold-icon",
     panelClass: "pt-gold-panel",
+    badge: true,
   },
   // --- In arrivo (mostrano che il sistema e' estendibile) ---
   {
@@ -73,6 +77,7 @@ export const PROFILE_THEMES: ProfileTheme[] = [
     nameClass: "",
     iconClass: "",
     panelClass: "",
+    badge: false,
   },
   {
     id: "ice",
@@ -86,6 +91,7 @@ export const PROFILE_THEMES: ProfileTheme[] = [
     nameClass: "",
     iconClass: "",
     panelClass: "",
+    badge: false,
   },
   {
     id: "fire",
@@ -99,6 +105,7 @@ export const PROFILE_THEMES: ProfileTheme[] = [
     nameClass: "",
     iconClass: "",
     panelClass: "",
+    badge: false,
   },
 ];
 

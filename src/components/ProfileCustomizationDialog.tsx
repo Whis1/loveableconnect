@@ -174,7 +174,6 @@ export const ProfileCustomizationDialog = ({
               <ProfileGridCard
                 profile={{ ...profile, profile_theme: selected }}
                 currentUserId={currentUserId}
-                showPremiumBadge={isPremium}
                 onLike={() => {}}
               />
             </div>
@@ -212,7 +211,7 @@ export const ProfileCustomizationDialog = ({
                     nascosto, niente "vicino alle tue parti"). */}
                 <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 space-y-3">
                   <div className="text-center space-y-2">
-                    {isPremium && (
+                    {theme.badge && (
                       <div className="flex justify-center">
                         <PremiumBadge />
                       </div>

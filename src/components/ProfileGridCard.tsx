@@ -49,12 +49,11 @@ interface ProfileGridCardProps {
   likedProfileIds?: Set<string>;
   hasActiveMatch?: boolean; // Pre-caricato da pagina parent
   onlineStatus?: { isOnline: boolean; showStatus: boolean }; // Pre-caricato da pagina parent
-  showPremiumBadge?: boolean; // mostra il badge "Premium" sulla card
   onLike: (profileId: string) => void;
   onMatch?: (profileName: string, profileAvatar: string | null) => void;
 }
 
-const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, hasActiveMatch = false, onlineStatus, showPremiumBadge = false, onLike, onMatch }: ProfileGridCardProps) => {
+const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, hasActiveMatch = false, onlineStatus, onLike, onMatch }: ProfileGridCardProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -552,8 +551,8 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
               <OnlineIndicator userId={profile.id} size="lg" preloadedStatus={onlineStatus} />
             </div>
 
-            {/* Badge Premium (abbonati) */}
-            {showPremiumBadge && (
+            {/* Badge Premium: caratteristica del tema "Estetica Premium". */}
+            {profileTheme.badge && (
               <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10">
                 <PremiumBadge />
               </div>
