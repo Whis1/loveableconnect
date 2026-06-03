@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Coins, Crown, Zap, Shield, Eye, Heart, Gamepad2, Loader2, Sparkles, Rocket, Pin } from "lucide-react";
+import { ArrowLeft, Coins, Crown, Zap, Shield, Eye, Heart, Gamepad2, Loader2, Sparkles, Rocket, Pin, BadgeCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 
@@ -200,7 +200,7 @@ const Credits = () => {
                           <span><strong>Posizione prioritaria nella bacheca: sempre tra i primi profili mostrati</strong></span>
                         </li>
                         <li className="flex items-center gap-2">
-                          <Crown className="h-4 w-4 text-amber-500 shrink-0" />
+                          <BadgeCheck className="h-4 w-4 text-amber-500 shrink-0" />
                           <span><strong>Badge premium sul profilo</strong></span>
                         </li>
                         <li className="flex items-center gap-2">
@@ -568,7 +568,7 @@ const Credits = () => {
                     <span><strong>Posizione prioritaria nella bacheca: sempre tra i primi profili mostrati</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Crown className="h-5 w-5 text-amber-500" />
+                    <BadgeCheck className="h-5 w-5 text-amber-500" />
                     <span><strong>Badge premium sul profilo</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
