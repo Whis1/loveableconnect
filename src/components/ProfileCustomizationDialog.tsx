@@ -185,30 +185,52 @@ export const ProfileCustomizationDialog = ({
             </div>
           </div>
 
-          {/* Card interna (profilo) */}
+          {/* Card interna (scheda profilo che si apre cliccando la card esterna) */}
           <div className="space-y-2">
             <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Card interna (profilo)
+              Card interna (profilo aperto)
             </div>
             <div className={theme.frameClass}>
-              <div className="rounded-[0.8rem] border border-border bg-card shadow-lg p-5 flex flex-col items-center text-center gap-3">
-                <AvatarVisual className={`h-24 w-24 ${theme.avatarClass}`} />
-                <div
-                  className={`text-xl font-black ${
-                    theme.nameClass || "bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent"
-                  }`}
-                >
-                  {nickname}
-                </div>
-                {(city || age) && (
-                  <div className="text-xs text-muted-foreground">
-                    {[age ? `${age} anni` : null, city].filter(Boolean).join(" · ")}
+              <div className="rounded-[0.8rem] overflow-hidden border border-border bg-card shadow-lg">
+                {/* Header con foto verticale grande, come nella scheda reale */}
+                <div className="relative px-4 pt-5 pb-3 bg-gradient-to-br from-primary/20 via-primary/10 to-background flex flex-col items-center">
+                  <div className="relative w-40 h-48 rounded-2xl border-4 border-background shadow-xl overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-7xl font-bold text-primary/40">
+                        {initial}
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                   </div>
-                )}
-                <div className="flex flex-wrap justify-center gap-1.5 pt-1">
-                  <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[11px]">Relazione</span>
-                  <span className="px-2 py-0.5 rounded-full bg-secondary/10 text-secondary text-[11px]">Musica</span>
-                  <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[11px]">Viaggi</span>
+                </div>
+                {/* Contenuto: nome + pill + posizione + interessi */}
+                <div className="px-4 pb-4 space-y-2 text-center">
+                  <div
+                    className={`text-xl font-black ${
+                      theme.nameClass || "bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent"
+                    }`}
+                  >
+                    {nickname}
+                  </div>
+                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                    {age != null && (
+                      <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                        {age} anni
+                      </span>
+                    )}
+                    {city && (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-semibold">
+                        <MapPin className="h-3 w-3" /> {city}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap justify-center gap-1.5 pt-1">
+                    <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[11px]">Viaggi</span>
+                    <span className="px-2 py-0.5 rounded-full bg-secondary/10 text-secondary text-[11px]">Musica</span>
+                    <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[11px]">Cinema</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -218,7 +240,7 @@ export const ProfileCustomizationDialog = ({
         {/* Avatar negli altri contesti */}
         <div className="space-y-2">
           <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Avatar negli altri contesti
+            Come ti vedono gli altri utenti
           </div>
           <div className="grid grid-cols-3 gap-3">
             {[
