@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Loader2, UserSquare2, LayoutGrid, Sparkles } from "lucide-react";
 import { ProfileCustomizationDialog } from "@/components/ProfileCustomizationDialog";
 import { getProfileTheme, type ProfileThemeId } from "@/lib/profileThemes";
+import { PremiumBadge } from "@/components/PremiumBadge";
 
 interface Profile {
   id: string;
@@ -335,8 +336,8 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
             </div>
           </div>
 
-          {/* Nickname */}
-          <div className="space-y-1">
+          {/* Nickname (+ badge Premium per gli abbonati) */}
+          <div className="space-y-2 flex flex-col items-center">
             <h2
               className={`text-3xl font-black ${
                 selfTheme.nameClass ||
@@ -345,6 +346,7 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
             >
               {profile.nickname}
             </h2>
+            {isPremium && <PremiumBadge />}
           </div>
         </div>
 
@@ -457,11 +459,13 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
       </Dialog>
 
       {/* Pannello Personalizzazione: temi estetici con anteprime live. */}
-      {showCustomize && profile && (
+      {showCustomize && profile && currentUserId && (
         <ProfileCustomizationDialog
           open={showCustomize}
           onOpenChange={setShowCustomize}
           userId={userId}
+          profile={profile}
+          currentUserId={currentUserId}
           nickname={profile.nickname}
           avatarUrl={avatarUrl}
           city={profile.city}

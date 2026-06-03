@@ -20,6 +20,7 @@ import { SpotifySongCard } from "./SpotifySongCard";
 import { InsufficientCreditsBanner } from "@/components/chat/InsufficientCreditsBanner";
 import OnlineIndicator from "./OnlineIndicator";
 import { getProfileTheme } from "@/lib/profileThemes";
+import { PremiumBadge } from "./PremiumBadge";
 
 interface Profile {
   id: string;
@@ -48,11 +49,12 @@ interface ProfileGridCardProps {
   likedProfileIds?: Set<string>;
   hasActiveMatch?: boolean; // Pre-caricato da pagina parent
   onlineStatus?: { isOnline: boolean; showStatus: boolean }; // Pre-caricato da pagina parent
+  showPremiumBadge?: boolean; // mostra il badge "Premium" sulla card
   onLike: (profileId: string) => void;
   onMatch?: (profileName: string, profileAvatar: string | null) => void;
 }
 
-const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, hasActiveMatch = false, onlineStatus, onLike, onMatch }: ProfileGridCardProps) => {
+const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, hasActiveMatch = false, onlineStatus, showPremiumBadge = false, onLike, onMatch }: ProfileGridCardProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -548,6 +550,13 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
             <div className="absolute top-3 left-3">
               <OnlineIndicator userId={profile.id} size="lg" preloadedStatus={onlineStatus} />
             </div>
+
+            {/* Badge Premium (abbonati) */}
+            {showPremiumBadge && (
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10">
+                <PremiumBadge />
+              </div>
+            )}
 
             {/* Distance Badge */}
             {profile.distance && (

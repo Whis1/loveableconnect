@@ -9,15 +9,20 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, MessageCircle, Lock, Crown, Check, Sparkles, Gamepad2, MapPin } from "lucide-react";
+import { Heart, Lock, Crown, Check, Sparkles, Gamepad2, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PROFILE_THEMES, getProfileTheme, type ProfileThemeId } from "@/lib/profileThemes";
+import { ProfileGridCard } from "@/components/ProfileGridCard";
+import { PremiumBadge } from "@/components/PremiumBadge";
 
 interface ProfileCustomizationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userId: string;
+  /** Profilo completo (per renderizzare la card di bacheca reale). */
+  profile: any;
+  currentUserId: string;
   nickname: string;
   avatarUrl: string | null;
   city?: string | null;
@@ -31,6 +36,8 @@ export const ProfileCustomizationDialog = ({
   open,
   onOpenChange,
   userId,
+  profile,
+  currentUserId,
   nickname,
   avatarUrl,
   city,
@@ -147,41 +154,21 @@ export const ProfileCustomizationDialog = ({
 
         {/* Anteprime card */}
         <div className="grid gap-4 sm:grid-cols-2">
-          {/* Card esterna (bacheca) */}
+          {/* Card esterna (bacheca) — componente REALE, esattamente come la
+              vedono gli altri utenti nella bacheca. */}
           <div className="space-y-2">
             <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Card esterna (bacheca)
             </div>
-            <div className={theme.frameClass}>
-              <div className="rounded-[0.8rem] overflow-hidden border border-border bg-card shadow-lg">
-                <div className="aspect-[3/4] bg-gradient-to-br from-pink-500/20 to-purple-600/10 relative">
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-6xl font-black text-primary/30">
-                      {initial}
-                    </div>
-                  )}
-                </div>
-                <div className="p-3 space-y-1">
-                  <div className={`text-lg font-bold ${theme.nameClass || "text-foreground"}`}>
-                    {nickname}{age ? `, ${age}` : ""}
-                  </div>
-                  {city && (
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <MapPin className="h-3 w-3" /> {city}
-                    </div>
-                  )}
-                  <div className="flex gap-2 pt-1">
-                    <span className="flex-1 inline-flex items-center justify-center gap-1 rounded-md bg-primary/10 text-primary text-xs py-1.5">
-                      <Heart className="h-3.5 w-3.5" /> Like
-                    </span>
-                    <span className="flex-1 inline-flex items-center justify-center gap-1 rounded-md bg-secondary/10 text-secondary text-xs py-1.5">
-                      <MessageCircle className="h-3.5 w-3.5" /> Chat
-                    </span>
-                  </div>
-                </div>
-              </div>
+            {/* pointer-events-none: anteprima visiva, niente like/chat su se stessi.
+                profile_theme: selected → la card mostra il tema in anteprima. */}
+            <div className="pointer-events-none select-none">
+              <ProfileGridCard
+                profile={{ ...profile, profile_theme: selected }}
+                currentUserId={currentUserId}
+                showPremiumBadge={isPremium}
+                onLike={() => {}}
+              />
             </div>
           </div>
 
@@ -194,15 +181,23 @@ export const ProfileCustomizationDialog = ({
               <div className="rounded-[0.8rem] overflow-hidden border border-border bg-card shadow-lg">
                 {/* Header con foto verticale grande, come nella scheda reale */}
                 <div className="relative px-4 pt-5 pb-3 bg-gradient-to-br from-primary/20 via-primary/10 to-background flex flex-col items-center">
-                  <div className="relative w-40 h-48 rounded-2xl border-4 border-background shadow-xl overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5">
-                    {avatarUrl ? (
-                      <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-7xl font-bold text-primary/40">
-                        {initial}
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                  {isPremium && (
+                    <div className="mb-2">
+                      <PremiumBadge />
+                    </div>
+                  )}
+                  {/* Contorno della foto tematizzato col tema selezionato. */}
+                  <div className={theme.frameClass}>
+                    <div className="relative w-40 h-48 rounded-2xl border-4 border-background shadow-xl overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5">
+                      {avatarUrl ? (
+                        <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-7xl font-bold text-primary/40">
+                          {initial}
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                    </div>
                   </div>
                 </div>
                 {/* Contenuto: nome + pill + posizione + interessi */}
