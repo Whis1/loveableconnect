@@ -506,8 +506,9 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
     setShowProfileDialog(true);
   };
 
-  // Tema estetico del profilo (es. cornice dorata) come lo vedono gli altri.
-  const themeFrameClass = getProfileTheme(profile.profile_theme).frameClass;
+  // Tema estetico del profilo (es. cornice/nome dorati) come lo vedono gli altri.
+  const profileTheme = getProfileTheme(profile.profile_theme);
+  const themeFrameClass = profileTheme.frameClass;
 
   return (
     <>
@@ -570,9 +571,9 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
           <div className="p-4 space-y-2.5">
             {/* Name and Age */}
             <div className="flex items-baseline gap-2">
-              <h3 className="text-lg font-bold text-foreground truncate">
-                {profile.nickname.length > 12 
-                  ? `${profile.nickname.substring(0, 12)}...` 
+              <h3 className={`text-lg font-bold truncate ${profileTheme.nameClass || "text-foreground"}`}>
+                {profile.nickname.length > 12
+                  ? `${profile.nickname.substring(0, 12)}...`
                   : profile.nickname}
               </h3>
               {profile.age && (

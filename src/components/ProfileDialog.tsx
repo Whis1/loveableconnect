@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { profileImageUrl } from "@/lib/imageUrl";
 import { getGenericLocationPhrase } from "@/lib/utils";
 import { getProfileTheme } from "@/lib/profileThemes";
+import { PremiumBadge } from "@/components/PremiumBadge";
 import profileBadge from "@/assets/profile-badge.png";
 import { SpotifySongCard } from "./SpotifySongCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -66,7 +67,28 @@ export const ProfileDialog = ({
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [translatedBio, setTranslatedBio] = useState<string>('');
   const [translatedInterests, setTranslatedInterests] = useState<string[]>([]);
+  const [isPremiumProfile, setIsPremiumProfile] = useState(false);
   const { translateText, translateArray } = useTextTranslation();
+
+  // Stato Premium del profilo mostrato (per il badge "Premium").
+  useEffect(() => {
+    if (!open || !profileId) return;
+    let active = true;
+    (async () => {
+      const { data } = await supabase
+        .from("user_credits")
+        .select("is_premium, premium_expires_at")
+        .eq("user_id", profileId)
+        .maybeSingle();
+      if (!active) return;
+      setIsPremiumProfile(
+        !!(data?.is_premium && (!data.premium_expires_at || new Date(data.premium_expires_at) > new Date()))
+      );
+    })();
+    return () => {
+      active = false;
+    };
+  }, [open, profileId]);
 
   useEffect(() => {
     if (!open || !profileId) return;
@@ -367,6 +389,11 @@ export const ProfileDialog = ({
           <div className="px-6 pb-6 space-y-6 mt-6">
             {/* Name and Basic Info */}
             <div className="text-center space-y-3">
+              {isPremiumProfile && (
+                <div className="flex justify-center">
+                  <PremiumBadge />
+                </div>
+              )}
               <h2
                 className={`text-3xl font-bold ${
                   theme.nameClass || "bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent"

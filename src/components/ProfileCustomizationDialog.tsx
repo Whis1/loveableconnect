@@ -180,15 +180,18 @@ export const ProfileCustomizationDialog = ({
             </div>
           </div>
 
-          {/* Card interna (scheda profilo che si apre cliccando la card esterna) */}
-          <div className="space-y-2">
+          {/* Card interna (scheda che si apre cliccando la card esterna).
+              Altezza pari alla card esterna (stretch della griglia) + scroll
+              interno per i contenuti, cosi' il pannello non diventa lunghissimo. */}
+          <div className="space-y-2 flex flex-col">
             <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Card interna (profilo aperto)
             </div>
-            <div className={theme.frameClass}>
-              <div className="rounded-[0.8rem] overflow-hidden border border-border bg-card shadow-lg">
-                {/* Header con foto verticale grande, come nella scheda reale */}
-                <div className="relative px-4 pt-5 pb-3 bg-gradient-to-br from-primary/20 via-primary/10 to-background flex flex-col items-center">
+            <div className="relative flex-1 min-h-[500px]">
+              <div className={`absolute inset-0 ${theme.frameClass} h-full`}>
+                <div className="h-full rounded-[0.8rem] overflow-hidden border border-border bg-card shadow-lg flex flex-col">
+                  {/* Header con foto verticale grande, come nella scheda reale */}
+                  <div className="relative shrink-0 px-4 pt-5 pb-3 bg-gradient-to-br from-primary/20 via-primary/10 to-background flex flex-col items-center">
                   {isPremium && (
                     <div className="mb-2">
                       <PremiumBadge />
@@ -212,7 +215,7 @@ export const ProfileCustomizationDialog = ({
                     orientamento + Bio + Stato relazionale + Cerca.
                     NB: nessun luogo (nella scheda del proprio profilo e'
                     nascosto, niente "vicino alle tue parti"). */}
-                <div className="px-4 pb-4 space-y-3">
+                <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 space-y-3">
                   <div className="text-center space-y-2">
                     <div
                       className={`text-xl font-black ${
@@ -292,6 +295,7 @@ export const ProfileCustomizationDialog = ({
                       </div>
                     </div>
                   )}
+                </div>
                 </div>
               </div>
             </div>
