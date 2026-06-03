@@ -38,6 +38,36 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_credit_actions: {
+        Row: {
+          action_label: string
+          admin_email: string | null
+          admin_id: string | null
+          created_at: string
+          id: string
+          reason: string
+          target_user_id: string
+        }
+        Insert: {
+          action_label: string
+          admin_email?: string | null
+          admin_id?: string | null
+          created_at?: string
+          id?: string
+          reason: string
+          target_user_id: string
+        }
+        Update: {
+          action_label?: string
+          admin_email?: string | null
+          admin_id?: string | null
+          created_at?: string
+          id?: string
+          reason?: string
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       admin_notifications: {
         Row: {
           admin_profile_id: string
@@ -83,6 +113,51 @@ export type Database = {
           },
         ]
       }
+      admin_panel_unlocks: {
+        Row: {
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      admin_profile_edits: {
+        Row: {
+          admin_email: string | null
+          admin_id: string | null
+          changes: string
+          created_at: string
+          id: string
+          profile_id: string | null
+          profile_nickname: string | null
+        }
+        Insert: {
+          admin_email?: string | null
+          admin_id?: string | null
+          changes: string
+          created_at?: string
+          id?: string
+          profile_id?: string | null
+          profile_nickname?: string | null
+        }
+        Update: {
+          admin_email?: string | null
+          admin_id?: string | null
+          changes?: string
+          created_at?: string
+          id?: string
+          profile_id?: string | null
+          profile_nickname?: string | null
+        }
+        Relationships: []
+      }
       admin_secondary_accounts: {
         Row: {
           created_at: string
@@ -110,6 +185,45 @@ export type Database = {
           last_login?: string | null
           nickname?: string
           password_hash?: string
+        }
+        Relationships: []
+      }
+      admin_user_actions: {
+        Row: {
+          action_type: string
+          admin_email: string | null
+          admin_id: string | null
+          batch_id: string | null
+          created_at: string
+          id: string
+          inbox_deleted: boolean
+          message: string | null
+          target_nickname: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          admin_email?: string | null
+          admin_id?: string | null
+          batch_id?: string | null
+          created_at?: string
+          id?: string
+          inbox_deleted?: boolean
+          message?: string | null
+          target_nickname?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          admin_email?: string | null
+          admin_id?: string | null
+          batch_id?: string | null
+          created_at?: string
+          id?: string
+          inbox_deleted?: boolean
+          message?: string | null
+          target_nickname?: string | null
+          target_user_id?: string | null
         }
         Relationships: []
       }
@@ -334,6 +448,7 @@ export type Database = {
       }
       inbox_messages: {
         Row: {
+          batch_id: string | null
           created_at: string
           id: string
           message: string
@@ -341,6 +456,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          batch_id?: string | null
           created_at?: string
           id?: string
           message: string
@@ -348,6 +464,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          batch_id?: string | null
           created_at?: string
           id?: string
           message?: string
@@ -618,6 +735,7 @@ export type Database = {
           birthdate_locked: boolean | null
           city: string | null
           created_at: string
+          destiny_traits: Json | null
           email_like_notifications: boolean
           email_message_notifications: boolean
           favorite_songs: Json | null
@@ -634,6 +752,7 @@ export type Database = {
           looking_for: string[] | null
           manual_online_status: boolean | null
           nickname: string
+          onboarding_completed: boolean
           photos: string[] | null
           relationship_status: string | null
           relationship_type: string | null
@@ -651,6 +770,7 @@ export type Database = {
           birthdate_locked?: boolean | null
           city?: string | null
           created_at?: string
+          destiny_traits?: Json | null
           email_like_notifications?: boolean
           email_message_notifications?: boolean
           favorite_songs?: Json | null
@@ -667,6 +787,7 @@ export type Database = {
           looking_for?: string[] | null
           manual_online_status?: boolean | null
           nickname: string
+          onboarding_completed?: boolean
           photos?: string[] | null
           relationship_status?: string | null
           relationship_type?: string | null
@@ -684,6 +805,7 @@ export type Database = {
           birthdate_locked?: boolean | null
           city?: string | null
           created_at?: string
+          destiny_traits?: Json | null
           email_like_notifications?: boolean
           email_message_notifications?: boolean
           favorite_songs?: Json | null
@@ -700,6 +822,7 @@ export type Database = {
           looking_for?: string[] | null
           manual_online_status?: boolean | null
           nickname?: string
+          onboarding_completed?: boolean
           photos?: string[] | null
           relationship_status?: string | null
           relationship_type?: string | null
@@ -1513,12 +1636,50 @@ export type Database = {
         Returns: boolean
       }
       deduct_message_credits: { Args: { _user_id: string }; Returns: boolean }
+      delete_inbox_batch: { Args: { p_batch_id: string }; Returns: number }
       fnv1a: { Args: { s: string }; Returns: number }
+      get_admin_credit_actions: {
+        Args: never
+        Returns: {
+          action_label: string
+          admin_email: string
+          created_at: string
+          id: string
+          reason: string
+          target_user_id: string
+        }[]
+      }
+      get_chattors_conversations: {
+        Args: never
+        Returns: {
+          adminNickname: string
+          adminProfileId: string
+          lastMessageAt: string
+          matchId: string
+          unreadCount: number
+          userAvatar: string
+          userCity: string
+          userId: string
+          userLatitude: number
+          userLongitude: number
+          userNickname: string
+        }[]
+      }
       get_or_create_direct_chat: {
         Args: { _other_user_id: string }
         Returns: {
           match_id: string
           was_created: boolean
+        }[]
+      }
+      get_profile_edits: {
+        Args: never
+        Returns: {
+          admin_email: string
+          changes: string
+          created_at: string
+          id: string
+          profile_nickname: string
         }[]
       }
       get_subscription_types: {
@@ -1528,6 +1689,20 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_user_actions: {
+        Args: never
+        Returns: {
+          action_type: string
+          admin_email: string
+          batch_id: string
+          created_at: string
+          id: string
+          inbox_deleted: boolean
+          message: string
+          target_nickname: string
+        }[]
+      }
+      has_admin_panel_access: { Args: never; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1556,7 +1731,37 @@ export type Database = {
           success: boolean
         }[]
       }
+      log_admin_credit_action: {
+        Args: {
+          p_action_label: string
+          p_reason: string
+          p_target_user_id: string
+        }
+        Returns: undefined
+      }
+      log_profile_edit: {
+        Args: {
+          p_changes: string
+          p_profile_id: string
+          p_profile_nickname: string
+        }
+        Returns: undefined
+      }
+      log_user_action: {
+        Args: {
+          p_action_type: string
+          p_batch_id: string
+          p_message: string
+          p_target_nickname: string
+          p_target_user_id: string
+        }
+        Returns: undefined
+      }
       mark_champion_reached: { Args: never; Returns: boolean }
+      mark_conversation_read: {
+        Args: { p_match_id: string; p_user_id: string }
+        Returns: number
+      }
       mark_support_messages_read: {
         Args: { p_user_id: string }
         Returns: {
@@ -1585,6 +1790,13 @@ export type Database = {
               winner_id: string
             }[]
           }
+      send_inbox_to_all: {
+        Args: { p_message: string }
+        Returns: {
+          batch_id: string
+          count: number
+        }[]
+      }
       send_like: {
         Args: { _to_user_id: string; _use_credits?: boolean }
         Returns: {
@@ -1601,6 +1813,7 @@ export type Database = {
         Args: { _tournament_id: string }
         Returns: undefined
       }
+      unlock_admin_panels: { Args: { p_password: string }; Returns: boolean }
       unlock_birthdate_for_user: {
         Args: { p_user_id: string }
         Returns: undefined
