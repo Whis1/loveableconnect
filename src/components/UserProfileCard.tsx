@@ -15,7 +15,9 @@ import { calculateAge } from "@/lib/utils";
 import { ProfileDialog } from "@/components/ProfileDialog";
 import { ProfileGridCard } from "@/components/ProfileGridCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, UserSquare2, LayoutGrid } from "lucide-react";
+import { Loader2, UserSquare2, LayoutGrid, Sparkles } from "lucide-react";
+import { ProfileCustomizationDialog } from "@/components/ProfileCustomizationDialog";
+import { getProfileTheme, type ProfileThemeId } from "@/lib/profileThemes";
 
 interface Profile {
   id: string;
@@ -34,6 +36,7 @@ interface Profile {
   favorite_songs: any[] | null;
   translatedBio?: string | null;
   translatedInterests?: string[] | null;
+  profile_theme?: string | null;
 }
 
 interface UserProfileCardProps {
@@ -56,7 +59,13 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
   const [showExternal, setShowExternal] = useState(false); // esterno (card bacheca)
   const [externalProfile, setExternalProfile] = useState<any>(null);
   const [externalLoading, setExternalLoading] = useState(false);
+  // Personalizzazione (temi estetici) — riservata agli abbonati Premium.
+  const [showCustomize, setShowCustomize] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
   const { translateText, translateArray } = useTextTranslation();
+
+  // Tema estetico selezionato dall'utente (salvato in profiles.profile_theme).
+  const selfTheme = getProfileTheme((profile as any)?.profile_theme);
 
   // Carica il profilo completo (dal DB) e apre l'anteprima della card esterna.
   const openExternalPreview = async () => {
@@ -83,6 +92,27 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
     };
     fetchCurrentUser();
   }, []);
+
+  // Stato Premium dell'utente: serve a sbloccare i temi estetici.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { data } = await supabase
+        .from("user_credits")
+        .select("is_premium, premium_expires_at")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!active) return;
+      const prem = !!(
+        data?.is_premium &&
+        (!data.premium_expires_at || new Date(data.premium_expires_at) > new Date())
+      );
+      setIsPremium(prem);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [userId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -292,20 +322,27 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
       <CardContent className="p-8 relative z-10 flex-1 flex flex-col">
         {/* Blocco superiore: avatar + nickname, ancorato in alto */}
         <div className="flex flex-col items-center text-center space-y-6">
-          {/* Avatar with gradient border */}
+          {/* Avatar with gradient border (+ eventuale tema estetico) */}
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 rounded-full blur-md opacity-50 animate-pulse" />
-            <Avatar className="h-36 w-36 border-4 border-white dark:border-gray-800 shadow-2xl relative">
-              <AvatarImage src={avatarUrl || undefined} />
-              <AvatarFallback className="text-5xl font-bold bg-gradient-to-br from-pink-500 to-purple-600 text-white">
-                {profile.nickname?.charAt(0) || profile.full_name?.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
+            <div className={selfTheme.avatarClass}>
+              <Avatar className="h-36 w-36 border-4 border-white dark:border-gray-800 shadow-2xl relative">
+                <AvatarImage src={avatarUrl || undefined} />
+                <AvatarFallback className="text-5xl font-bold bg-gradient-to-br from-pink-500 to-purple-600 text-white">
+                  {profile.nickname?.charAt(0) || profile.full_name?.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+            </div>
           </div>
 
           {/* Nickname */}
           <div className="space-y-1">
-            <h2 className="text-3xl font-black bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+            <h2
+              className={`text-3xl font-black ${
+                selfTheme.nameClass ||
+                "bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent"
+              }`}
+            >
               {profile.nickname}
             </h2>
           </div>
@@ -336,6 +373,15 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
             >
               <Eye className="h-4 w-4 mr-2" />
               Anteprima Profilo
+            </Button>
+
+            {/* Personalizzazione: temi estetici del profilo (Premium). */}
+            <Button
+              onClick={() => setShowCustomize(true)}
+              className="w-full px-6 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border-0"
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              Personalizzazione
             </Button>
           </div>
         </div>
@@ -409,6 +455,24 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Pannello Personalizzazione: temi estetici con anteprime live. */}
+      {showCustomize && profile && (
+        <ProfileCustomizationDialog
+          open={showCustomize}
+          onOpenChange={setShowCustomize}
+          userId={userId}
+          nickname={profile.nickname}
+          avatarUrl={avatarUrl}
+          city={profile.city}
+          age={profile.age ?? (profile.birthdate ? calculateAge(profile.birthdate) : null)}
+          isPremium={isPremium}
+          currentTheme={((profile as any).profile_theme as ProfileThemeId) || "none"}
+          onSaved={(themeId) =>
+            setProfile((p) => (p ? ({ ...p, profile_theme: themeId } as Profile) : p))
+          }
+        />
+      )}
     </Card>
   );
 };

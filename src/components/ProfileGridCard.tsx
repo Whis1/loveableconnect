@@ -19,6 +19,7 @@ import { ChatConfirmationBanner } from "./ChatConfirmationBanner";
 import { SpotifySongCard } from "./SpotifySongCard";
 import { InsufficientCreditsBanner } from "@/components/chat/InsufficientCreditsBanner";
 import OnlineIndicator from "./OnlineIndicator";
+import { getProfileTheme } from "@/lib/profileThemes";
 
 interface Profile {
   id: string;
@@ -38,6 +39,7 @@ interface Profile {
   translatedBio?: string | null;
   translatedInterests?: string[] | null;
   favorite_songs?: any[] | null;
+  profile_theme?: string | null;
 }
 
 interface ProfileGridCardProps {
@@ -502,10 +504,13 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
     setShowProfileDialog(true);
   };
 
+  // Tema estetico del profilo (es. cornice dorata) come lo vedono gli altri.
+  const themeFrameClass = getProfileTheme(profile.profile_theme).frameClass;
+
   return (
     <>
-      <div 
-        className="group relative cursor-pointer"
+      <div
+        className={`group relative cursor-pointer ${themeFrameClass}`}
         onClick={handleCardClick}
       >
         {/* Card Container */}
