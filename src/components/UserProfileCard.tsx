@@ -327,7 +327,7 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 rounded-full blur-md opacity-50 animate-pulse" />
             <div className={selfTheme.avatarClass}>
-              <Avatar className="h-36 w-36 border-4 border-white dark:border-gray-800 shadow-2xl relative">
+              <Avatar className={`h-36 w-36 border-4 shadow-2xl relative ${selfTheme.avatarClass ? "border-transparent" : "border-white dark:border-gray-800"}`}>
                 <AvatarImage src={avatarUrl || undefined} />
                 <AvatarFallback className="text-5xl font-bold bg-gradient-to-br from-pink-500 to-purple-600 text-white">
                   {profile.nickname?.charAt(0) || profile.full_name?.charAt(0)}
