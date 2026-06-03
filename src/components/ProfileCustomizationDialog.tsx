@@ -9,10 +9,17 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Lock, Crown, Check, Sparkles, Gamepad2, MapPin } from "lucide-react";
+import { Heart, Lock, Crown, Check, Sparkles, Gamepad2, User } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PROFILE_THEMES, getProfileTheme, type ProfileThemeId } from "@/lib/profileThemes";
+import {
+  getGenderLabel,
+  getOrientationLabel,
+  getRelationshipStatusLabel,
+  getRelationshipTypeLabel,
+} from "@/lib/profileLabels";
 import { ProfileGridCard } from "@/components/ProfileGridCard";
 import { PremiumBadge } from "@/components/PremiumBadge";
 
@@ -40,7 +47,6 @@ export const ProfileCustomizationDialog = ({
   currentUserId,
   nickname,
   avatarUrl,
-  city,
   age,
   isPremium,
   currentTheme,
@@ -48,6 +54,7 @@ export const ProfileCustomizationDialog = ({
 }: ProfileCustomizationDialogProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<ProfileThemeId>(currentTheme);
   const [saving, setSaving] = useState(false);
 
@@ -200,31 +207,59 @@ export const ProfileCustomizationDialog = ({
                     </div>
                   </div>
                 </div>
-                {/* Contenuto: nome + pill + posizione + interessi */}
-                <div className="px-4 pb-4 space-y-2 text-center">
-                  <div
-                    className={`text-xl font-black ${
-                      theme.nameClass || "bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent"
-                    }`}
-                  >
-                    {nickname}
-                  </div>
-                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                    {age != null && (
-                      <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
-                        {age} anni
-                      </span>
-                    )}
-                    {city && (
+                {/* Contenuto come la scheda reale: nome + pill eta'/genere/
+                    orientamento + Bio + Stato relazionale + Cerca.
+                    NB: nessun luogo (nella scheda del proprio profilo e'
+                    nascosto, niente "vicino alle tue parti"). */}
+                <div className="px-4 pb-4 space-y-3">
+                  <div className="text-center space-y-2">
+                    <div
+                      className={`text-xl font-black ${
+                        theme.nameClass || "bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent"
+                      }`}
+                    >
+                      {nickname}
+                    </div>
+                    <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                      {age != null && (
+                        <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                          {age} {t("userProfile.years")}
+                        </span>
+                      )}
                       <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-semibold">
-                        <MapPin className="h-3 w-3" /> {city}
+                        <User className="h-3 w-3" /> {getGenderLabel(t, profile?.gender)}
                       </span>
-                    )}
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-pink-500/10 text-pink-600 dark:text-pink-400 text-xs font-semibold">
+                        <User className="h-3 w-3" /> {getOrientationLabel(t, profile?.sexual_orientation)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap justify-center gap-1.5 pt-1">
-                    <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[11px]">Viaggi</span>
-                    <span className="px-2 py-0.5 rounded-full bg-secondary/10 text-secondary text-[11px]">Musica</span>
-                    <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[11px]">Cinema</span>
+
+                  {profile?.bio && (
+                    <div className="rounded-xl border border-border/50 bg-card/60 p-3">
+                      <div className="flex items-center gap-1.5 text-sm font-semibold mb-1">
+                        <User className="h-4 w-4 text-primary" /> Bio
+                      </div>
+                      <p className="text-xs text-muted-foreground italic">"{profile.bio}"</p>
+                    </div>
+                  )}
+
+                  <div className="rounded-xl border border-border/50 bg-card/60 p-3">
+                    <div className="flex items-center gap-1.5 text-sm font-semibold mb-1">
+                      <User className="h-4 w-4 text-primary" /> {t("common.relationshipStatus")}
+                    </div>
+                    <div className="text-xs font-medium">
+                      {getRelationshipStatusLabel(t, profile?.relationship_status)}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
+                    <div className="flex items-center gap-1.5 text-sm font-semibold mb-1">
+                      <User className="h-4 w-4 text-primary" /> {t("common.lookingFor")}
+                    </div>
+                    <div className="text-xs font-medium text-primary">
+                      {getRelationshipTypeLabel(t, profile?.relationship_type)}
+                    </div>
                   </div>
                 </div>
               </div>
