@@ -6,7 +6,7 @@ import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, Users, Sparkles, Search, MessageCircle, Trophy } from "lucide-react";
+import { Heart, Users, Sparkles, Search, MessageCircle, Trophy, ThumbsUp } from "lucide-react";
 import { UserProfileCard } from "@/components/UserProfileCard";
 import { useTranslation } from "react-i18next";
 import { CreditsDisplay } from "@/components/CreditsDisplay";
@@ -683,7 +683,7 @@ const Dashboard = () => {
                 <CardHeader className="relative">
                   <CardTitle className="flex items-center gap-3 text-white">
                     <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
-                      <Sparkles className="h-5 w-5" />
+                      <ThumbsUp className="h-5 w-5" />
                     </div>
                     <span className="font-bold">{t("dashboard.likesReceived")}</span>
                   </CardTitle>
