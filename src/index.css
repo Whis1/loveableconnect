@@ -241,21 +241,18 @@ All colors MUST be HSL.
   animation: pt-gold-shine 3s linear infinite;
 }
 
-/* Stesso gradiente/effetto del nome dorato, ma usato come SFONDO (semi-
-   trasparente, per restare leggibile) su un pannello scuro: l'oro scorre. */
+/* Sfondo dorato FISSO (niente animazione che scorre) con lo stesso colore
+   acceso del nome dorato: giallo/oro brillante, ma con un velo leggermente
+   trasparente per non spegnere del tutto i testi sopra. */
 .pt-gold-shine-bg {
   background-image: linear-gradient(
-    90deg,
-    rgba(184, 134, 11, 0.18),
-    rgba(255, 230, 128, 0.30),
-    rgba(255, 215, 0, 0.26),
-    rgba(255, 247, 204, 0.32),
-    rgba(255, 215, 0, 0.26),
-    rgba(255, 230, 128, 0.30),
-    rgba(184, 134, 11, 0.18)
+    135deg,
+    rgba(184, 134, 11, 0.55),
+    rgba(255, 215, 0, 0.82),
+    rgba(255, 240, 150, 0.92),
+    rgba(255, 215, 0, 0.82),
+    rgba(184, 134, 11, 0.55)
   );
-  background-size: 200% auto;
-  animation: pt-gold-shine 3.5s linear infinite;
 }
 
 /* Icone (omini, nota musicale, ecc.): le icone Lucide usano currentColor, quindi
