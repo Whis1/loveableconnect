@@ -366,9 +366,135 @@ const Credits = () => {
 
           return (
           <>
+            {/* Weekly Premium — nascosto se utente ha Weekly, Platino o Premium */}
+            {showWeeklyCard && (
+              <Card className="mb-6 border-2 border-purple-500/50 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Zap className="h-8 w-8 text-purple-500" />
+                      <div>
+                        <CardTitle className="text-2xl">Premium Settimanale</CardTitle>
+                        <CardDescription>Prova l'esperienza Premium per 7 giorni</CardDescription>
+                      </div>
+                    </div>
+                    <Badge className="bg-purple-500 text-white">Prova</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-baseline gap-2">
+                    <div className="text-3xl font-bold text-purple-600">€6,99</div>
+                    <div className="text-sm text-muted-foreground line-through">€13,99</div>
+                    <div className="text-sm font-medium">/settimana</div>
+                  </div>
+                  <div className="text-sm text-purple-600 font-medium">
+                    🎉 Offerta prima settimana! Poi €13,99/settimana
+                  </div>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-center gap-2">
+                      <Coins className="h-4 w-4 text-purple-500" />
+                      <span><strong>26 crediti giornalieri</strong></span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Heart className="h-4 w-4 text-purple-500" />
+                      <span><strong>10 like giornalieri</strong></span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Gamepad2 className="h-4 w-4 text-purple-500" />
+                      <span><strong>10 partite giornaliere tra utenti</strong></span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-purple-500">
+                        <rect width="18" height="18" x="3" y="3" rx="2"/>
+                        <path d="M3 9h18"/>
+                        <path d="m9 16 3-3 3 3"/>
+                      </svg>
+                      <span><strong>Rimozione completa delle pubblicità</strong></span>
+                    </li>
+                  </ul>
+                  <Button
+                    onClick={() => handleSubscribePremium("weekly")}
+                    disabled={purchasing}
+                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                    size="lg"
+                  >
+                    {purchasing ? t("credits.processing") : "Inizia Prova Settimanale"}
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Rinnovo automatico. Disdici quando vuoi il rinnovo automatico.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Standard Monthly (Platino) — nascosto se utente ha gia' Platino o Premium */}
+            {showPlatinumCard && (
+            <Card className="mb-6 border-2 border-blue-500/50 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Crown className="h-8 w-8 text-blue-500" />
+                    <div>
+                      <CardTitle className="text-2xl">Platino</CardTitle>
+                      <CardDescription>Funzionalità avanzate a un prezzo accessibile</CardDescription>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-3xl font-bold">€69,99{t("credits.perMonth")}</div>
+                <ul className="space-y-2">
+                  <li className="flex items-center gap-2">
+                    <Coins className="h-5 w-5 text-blue-500" />
+                    <span><strong>40 crediti giornalieri</strong></span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Heart className="h-5 w-5 text-blue-500" />
+                    <span><strong>20 like giornalieri</strong></span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Eye className="h-5 w-5 text-blue-500" />
+                    <span><strong>Visualizzazione Like illimitata</strong></span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Gamepad2 className="h-5 w-5 text-blue-500" />
+                    <span><strong>20 partite giornaliere tra utenti</strong></span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-blue-500" />
+                    <span><strong>Accesso al sistema di disattivazione/attivazione dello stato online del profilo</strong></span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Crown className="h-5 w-5 text-blue-500" />
+                    <span><strong>Posizione prioritaria nella bacheca: sempre tra i primi profili mostrati</strong></span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-blue-500">
+                      <rect width="18" height="18" x="3" y="3" rx="2"/>
+                      <path d="M3 9h18"/>
+                      <path d="m9 16 3-3 3 3"/>
+                    </svg>
+                    <span><strong>Rimozione completa delle pubblicità</strong></span>
+                  </li>
+                </ul>
+                <Button
+                  onClick={() => handleSubscribePremium("monthly", "standard")}
+                  disabled={purchasing}
+                  className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
+                  size="lg"
+                >
+                  {purchasing ? t("credits.processing") : "Diventa Platino"}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  {t("credits.autoRenewal")}
+                </p>
+              </CardContent>
+            </Card>
+            )}
+
             {/* Monthly Premium */}
             {showPremiumCard && (
-            <Card className="mb-6 border-2 border-amber-500/50 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20">
+            <Card className="mb-8 border-2 border-amber-500/50 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -442,132 +568,6 @@ const Credits = () => {
                 </p>
               </CardContent>
             </Card>
-            )}
-
-            {/* Standard Monthly (Platino) — nascosto se utente ha gia' Platino o Premium */}
-            {showPlatinumCard && (
-            <Card className="mb-6 border-2 border-blue-500/50 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Crown className="h-8 w-8 text-blue-500" />
-                    <div>
-                      <CardTitle className="text-2xl">Platino</CardTitle>
-                      <CardDescription>Funzionalità avanzate a un prezzo accessibile</CardDescription>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-3xl font-bold">€69,99{t("credits.perMonth")}</div>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2">
-                    <Coins className="h-5 w-5 text-blue-500" />
-                    <span><strong>40 crediti giornalieri</strong></span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Heart className="h-5 w-5 text-blue-500" />
-                    <span><strong>20 like giornalieri</strong></span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Eye className="h-5 w-5 text-blue-500" />
-                    <span><strong>Visualizzazione Like illimitata</strong></span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Gamepad2 className="h-5 w-5 text-blue-500" />
-                    <span><strong>20 partite giornaliere tra utenti</strong></span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Shield className="h-5 w-5 text-blue-500" />
-                    <span><strong>Accesso al sistema di disattivazione/attivazione dello stato online del profilo</strong></span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Crown className="h-5 w-5 text-blue-500" />
-                    <span><strong>Posizione prioritaria nella bacheca: sempre tra i primi profili mostrati</strong></span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-blue-500">
-                      <rect width="18" height="18" x="3" y="3" rx="2"/>
-                      <path d="M3 9h18"/>
-                      <path d="m9 16 3-3 3 3"/>
-                    </svg>
-                    <span><strong>Rimozione completa delle pubblicità</strong></span>
-                  </li>
-                </ul>
-                <Button
-                  onClick={() => handleSubscribePremium("monthly", "standard")}
-                  disabled={purchasing}
-                  className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
-                  size="lg"
-                >
-                  {purchasing ? t("credits.processing") : "Diventa Platino"}
-                </Button>
-                <p className="text-xs text-muted-foreground text-center">
-                  {t("credits.autoRenewal")}
-                </p>
-              </CardContent>
-            </Card>
-            )}
-
-            {/* Weekly Premium — nascosto se utente ha Weekly, Platino o Premium */}
-            {showWeeklyCard && (
-              <Card className="mb-8 border-2 border-purple-500/50 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Zap className="h-8 w-8 text-purple-500" />
-                      <div>
-                        <CardTitle className="text-2xl">Premium Settimanale</CardTitle>
-                        <CardDescription>Prova l'esperienza Premium per 7 giorni</CardDescription>
-                      </div>
-                    </div>
-                    <Badge className="bg-purple-500 text-white">Prova</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-baseline gap-2">
-                    <div className="text-3xl font-bold text-purple-600">€6,99</div>
-                    <div className="text-sm text-muted-foreground line-through">€13,99</div>
-                    <div className="text-sm font-medium">/settimana</div>
-                  </div>
-                  <div className="text-sm text-purple-600 font-medium">
-                    🎉 Offerta prima settimana! Poi €13,99/settimana
-                  </div>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-center gap-2">
-                      <Coins className="h-4 w-4 text-purple-500" />
-                      <span><strong>26 crediti giornalieri</strong></span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Heart className="h-4 w-4 text-purple-500" />
-                      <span><strong>10 like giornalieri</strong></span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Gamepad2 className="h-4 w-4 text-purple-500" />
-                      <span><strong>10 partite giornaliere tra utenti</strong></span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-purple-500">
-                        <rect width="18" height="18" x="3" y="3" rx="2"/>
-                        <path d="M3 9h18"/>
-                        <path d="m9 16 3-3 3 3"/>
-                      </svg>
-                      <span><strong>Rimozione completa delle pubblicità</strong></span>
-                    </li>
-                  </ul>
-                  <Button
-                    onClick={() => handleSubscribePremium("weekly")}
-                    disabled={purchasing}
-                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
-                    size="lg"
-                  >
-                    {purchasing ? t("credits.processing") : "Inizia Prova Settimanale"}
-                  </Button>
-                  <p className="text-xs text-muted-foreground text-center">
-                    Rinnovo automatico. Disdici quando vuoi il rinnovo automatico.
-                  </p>
-                </CardContent>
-              </Card>
             )}
           </>
           );
