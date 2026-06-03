@@ -9,8 +9,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Lock, Crown, Check, Sparkles, Gamepad2, User } from "lucide-react";
+import { Heart, Lock, Crown, Check, Sparkles, Gamepad2, User, Music } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { SpotifySongCard } from "@/components/SpotifySongCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PROFILE_THEMES, getProfileTheme, type ProfileThemeId } from "@/lib/profileThemes";
@@ -238,7 +239,7 @@ export const ProfileCustomizationDialog = ({
                   {profile?.bio && (
                     <div className="rounded-xl border border-border/50 bg-card/60 p-3">
                       <div className="flex items-center gap-1.5 text-sm font-semibold mb-1">
-                        <User className="h-4 w-4 text-primary" /> Bio
+                        <User className="h-4 w-4 text-primary" /> <span className={theme.nameClass}>Bio</span>
                       </div>
                       <p className="text-xs text-muted-foreground italic">"{profile.bio}"</p>
                     </div>
@@ -246,7 +247,7 @@ export const ProfileCustomizationDialog = ({
 
                   <div className="rounded-xl border border-border/50 bg-card/60 p-3">
                     <div className="flex items-center gap-1.5 text-sm font-semibold mb-1">
-                      <User className="h-4 w-4 text-primary" /> {t("common.relationshipStatus")}
+                      <User className="h-4 w-4 text-primary" /> <span className={theme.nameClass}>{t("common.relationshipStatus")}</span>
                     </div>
                     <div className="text-xs font-medium">
                       {getRelationshipStatusLabel(t, profile?.relationship_status)}
@@ -255,12 +256,42 @@ export const ProfileCustomizationDialog = ({
 
                   <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
                     <div className="flex items-center gap-1.5 text-sm font-semibold mb-1">
-                      <User className="h-4 w-4 text-primary" /> {t("common.lookingFor")}
+                      <User className="h-4 w-4 text-primary" /> <span className={theme.nameClass}>{t("common.lookingFor")}</span>
                     </div>
                     <div className="text-xs font-medium text-primary">
                       {getRelationshipTypeLabel(t, profile?.relationship_type)}
                     </div>
                   </div>
+
+                  {/* Interessi: solo se l'utente ne ha inseriti. */}
+                  {profile?.interests && profile.interests.length > 0 && (
+                    <div className="rounded-xl border border-border/50 bg-card/60 p-3">
+                      <div className="flex items-center gap-1.5 text-sm font-semibold mb-2">
+                        <User className="h-4 w-4 text-primary" /> <span className={theme.nameClass}>{t("common.interests")}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {profile.interests.map((interest: string, i: number) => (
+                          <span key={i} className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-medium">
+                            {interest}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Canzoni preferite: solo se l'utente ne ha inserite. */}
+                  {profile?.favorite_songs && profile.favorite_songs.length > 0 && (
+                    <div className="rounded-xl border border-border/50 bg-card/60 p-3">
+                      <div className="flex items-center gap-1.5 text-sm font-semibold mb-2">
+                        <Music className="h-4 w-4 text-primary" /> <span className={theme.nameClass}>Canzoni Preferite</span>
+                      </div>
+                      <div className="flex gap-2 overflow-x-auto pb-1">
+                        {profile.favorite_songs.map((song: any, i: number) => (
+                          <SpotifySongCard key={i} song={song} size="small" />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

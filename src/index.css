@@ -184,72 +184,47 @@ All colors MUST be HSL.
    ========================================================================= */
 
 /* --- ESTETICA PREMIUM (oro elettrico) --------------------------------- */
-@keyframes pt-gold-spin { to { transform: rotate(1turn); } }
+/* Angolo animato registrato: ruotando il "from" del conic-gradient l'oro
+   scorre fluido lungo TUTTO il bordo (angoli inclusi) senza spezzoni. Il
+   gradiente e' lo SFONDO della cornice (padding = spessore del bordo) e il
+   figlio opaco lo maschera al centro: niente pseudo-elemento rotante, quindi
+   copertura sempre completa. */
+@property --pt-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes pt-gold-rotate { to { --pt-angle: 360deg; } }
 @keyframes pt-gold-glow {
   0%, 100% { box-shadow: 0 0 16px rgba(255, 193, 7, 0.45); }
   50%      { box-shadow: 0 0 34px 5px rgba(255, 215, 0, 0.9); }
 }
 @keyframes pt-gold-shine { to { background-position: 200% center; } }
 
-/* Cornice: padding = spessore bordo; lo pseudo ::before ruota un conic-gradient
-   dorato dietro al contenuto creando l'effetto "elettricità" che scorre. */
 .pt-gold-frame {
-  position: relative;
   padding: 3px;
   border-radius: 0.95rem;
-  overflow: hidden;
-  isolation: isolate;
-  animation: pt-gold-glow 2.6s ease-in-out infinite;
-}
-.pt-gold-frame::before {
-  content: "";
-  position: absolute;
-  z-index: 0;
-  left: -50%;
-  top: -50%;
-  width: 200%;
-  height: 200%;
   background: conic-gradient(
-    from 0deg,
+    from var(--pt-angle),
     #fff7cc, #ffd027, #a9760a, #fff3a8, #ffcc00, #8a6508, #ffe680, #fff7cc
   );
-  animation: pt-gold-spin 3.4s linear infinite;
+  animation: pt-gold-rotate 3.4s linear infinite, pt-gold-glow 2.6s ease-in-out infinite;
 }
-/* Il figlio diretto (la card vera) sta sopra al gradiente e lo maschera al
-   centro, lasciando vedere l'oro solo lungo il bordo (il padding di 3px). */
 .pt-gold-frame > * {
-  position: relative;
-  z-index: 1;
   border-radius: calc(0.95rem - 3px);
 }
 
-/* Avatar: stesso anello dorato rotante, in tondo. */
 .pt-gold-avatar {
-  position: relative;
   padding: 3px;
   border-radius: 9999px;
-  overflow: hidden;
-  isolation: isolate;
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.75);
-  animation: pt-gold-glow 2.6s ease-in-out infinite;
-}
-.pt-gold-avatar::before {
-  content: "";
-  position: absolute;
-  z-index: 0;
-  left: -50%;
-  top: -50%;
-  width: 200%;
-  height: 200%;
   background: conic-gradient(
-    from 0deg,
+    from var(--pt-angle),
     #fff7cc, #ffd027, #a9760a, #fff3a8, #ffcc00, #8a6508, #ffe680, #fff7cc
   );
-  animation: pt-gold-spin 3.4s linear infinite;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.75);
+  animation: pt-gold-rotate 3.4s linear infinite, pt-gold-glow 2.6s ease-in-out infinite;
 }
 .pt-gold-avatar > * {
-  position: relative;
-  z-index: 1;
   border-radius: 9999px;
 }
 

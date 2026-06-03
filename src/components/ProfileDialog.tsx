@@ -12,6 +12,7 @@ import { MapPin, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { profileImageUrl } from "@/lib/imageUrl";
 import { getGenericLocationPhrase } from "@/lib/utils";
+import { getProfileTheme } from "@/lib/profileThemes";
 import profileBadge from "@/assets/profile-badge.png";
 import { SpotifySongCard } from "./SpotifySongCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -285,6 +286,11 @@ export const ProfileDialog = ({
   // nulla. Adesso il dialog si apre comunque mostrando uno scheletro.
   if (!open) return null;
 
+  // Tema estetico del profilo (es. cornice/effetti dorati): si applica anche
+  // quando l'utente vede l'anteprima del proprio profilo, e quando altri lo
+  // aprono (se il profilo viene caricato con il campo profile_theme).
+  const theme = getProfileTheme((profile as any)?.profile_theme);
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -321,26 +327,28 @@ export const ProfileDialog = ({
             {/* Avatar Rectangle */}
             <div className="relative flex flex-col items-center">
               <div className="relative group">
-                {/* Main Rectangle Card */}
-                <div 
-                  className="relative w-72 h-80 rounded-3xl border-4 border-background shadow-2xl overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 transform transition-transform duration-300 group-hover:scale-105 cursor-pointer"
-                  onClick={() => avatarUrl && setSelectedImage(avatarUrl)}
-                >
-                  {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt={profile.nickname}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <span className="text-8xl font-bold text-primary/40">
-                        {profile.nickname?.charAt(0) || profile.full_name?.charAt(0)}
-                      </span>
-                    </div>
-                  )}
-                  {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
+                {/* Main Rectangle Card (+ eventuale cornice tematizzata) */}
+                <div className={theme.frameClass}>
+                  <div
+                    className="relative w-72 h-80 rounded-3xl border-4 border-background shadow-2xl overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 transform transition-transform duration-300 group-hover:scale-105 cursor-pointer"
+                    onClick={() => avatarUrl && setSelectedImage(avatarUrl)}
+                  >
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt={profile.nickname}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-8xl font-bold text-primary/40">
+                          {profile.nickname?.charAt(0) || profile.full_name?.charAt(0)}
+                        </span>
+                      </div>
+                    )}
+                    {/* Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
+                  </div>
                 </div>
                 
                 {/* Profile Badge */}
@@ -359,7 +367,11 @@ export const ProfileDialog = ({
           <div className="px-6 pb-6 space-y-6 mt-6">
             {/* Name and Basic Info */}
             <div className="text-center space-y-3">
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
+              <h2
+                className={`text-3xl font-bold ${
+                  theme.nameClass || "bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent"
+                }`}
+              >
                 {profile.nickname || profile.full_name}
               </h2>
               
@@ -396,7 +408,7 @@ export const ProfileDialog = ({
             {/* Photo Gallery */}
             {photoUrls.length > 0 && (
               <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
-                <h3 className="font-semibold text-lg mb-4">Galleria Foto</h3>
+                <h3 className={`font-semibold text-lg mb-4 ${theme.nameClass}`}>Galleria Foto</h3>
                 <div className="grid grid-cols-3 gap-3">
                   {photoUrls.map((url, index) => (
                     <div
@@ -421,7 +433,7 @@ export const ProfileDialog = ({
               <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
                 <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
                   <User className="h-5 w-5 text-primary" />
-                  Bio
+                  <span className={theme.nameClass}>Bio</span>
                 </h3>
                 <p className="text-muted-foreground leading-relaxed italic">
                   "{translatedBio || profile.bio}"
@@ -433,7 +445,7 @@ export const ProfileDialog = ({
             <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
               <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
                 <User className="h-5 w-5 text-primary" />
-                {t('common.relationshipStatus')}
+                <span className={theme.nameClass}>{t('common.relationshipStatus')}</span>
               </h3>
               <div className="text-base font-medium">
                 {getRelationshipStatusLabel(profile.relationship_status)}
@@ -444,7 +456,7 @@ export const ProfileDialog = ({
             <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-5 shadow-sm border border-primary/20">
               <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
                 <User className="h-5 w-5 text-primary" />
-                {t('common.lookingFor')}
+                <span className={theme.nameClass}>{t('common.lookingFor')}</span>
               </h3>
               {/* Filtra vecchi valori italiani salvati erroneamente in
                   looking_for (che dovrebbe contenere solo generi), per
@@ -486,7 +498,7 @@ export const ProfileDialog = ({
             {/* Interests Section */}
             {profile.interests && profile.interests.length > 0 && (
               <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
-                <h3 className="font-semibold text-lg mb-4">{t('common.interests')}</h3>
+                <h3 className={`font-semibold text-lg mb-4 ${theme.nameClass}`}>{t('common.interests')}</h3>
                 <div className="flex flex-wrap gap-2">
                   {(translatedInterests.length > 0 ? translatedInterests : profile.interests).map((interest, index) => (
                     <span
@@ -505,7 +517,7 @@ export const ProfileDialog = ({
               <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
                 <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                   <Music className="h-5 w-5 text-primary" />
-                  Canzoni Preferite
+                  <span className={theme.nameClass}>Canzoni Preferite</span>
                 </h3>
                 <ScrollArea className="w-full">
                   <div className="flex gap-4 pb-2">
