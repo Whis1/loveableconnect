@@ -248,18 +248,33 @@ All colors MUST be HSL.
   filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.55));
 }
 
-/* Pannello testi della card: velatura dorata semi-trasparente con un'onda
-   che scorre lentamente (effetto fluido), tarata per restare leggibile. */
-@keyframes pt-gold-panel-flow { to { background-position: 200% 0; } }
+/* Pannello testi della card: velatura dorata fissa (niente giunture) + una
+   banda di luce morbida che attraversa ogni tanto, mossa con translateX cosi'
+   da NON creare la "linea" del gradiente ripetuto. Sempre leggibile. */
+@keyframes pt-gold-sheen {
+  0%        { transform: translateX(-120%); }
+  55%, 100% { transform: translateX(120%); }
+}
 .pt-gold-panel {
+  position: relative;
+  overflow: hidden;
   background-image: linear-gradient(
-    100deg,
-    rgba(184, 134, 11, 0.16) 0%,
-    rgba(255, 236, 150, 0.26) 25%,
-    rgba(184, 134, 11, 0.16) 50%,
-    rgba(255, 236, 150, 0.26) 75%,
-    rgba(184, 134, 11, 0.16) 100%
+    to bottom,
+    rgba(255, 215, 0, 0.08),
+    rgba(184, 134, 11, 0.16)
   );
-  background-size: 200% 100%;
-  animation: pt-gold-panel-flow 7s linear infinite;
+}
+.pt-gold-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 38%,
+    rgba(255, 240, 170, 0.35) 50%,
+    transparent 62%
+  );
+  transform: translateX(-120%);
+  animation: pt-gold-sheen 6s ease-in-out infinite;
 }
