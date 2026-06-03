@@ -11,7 +11,7 @@ import {
 import { MapPin, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { profileImageUrl } from "@/lib/imageUrl";
-import { getGenericLocationPhrase } from "@/lib/utils";
+import { getGenericLocationPhrase, calculateAge } from "@/lib/utils";
 import { getProfileTheme } from "@/lib/profileThemes";
 import { PremiumBadge } from "@/components/PremiumBadge";
 import profileBadge from "@/assets/profile-badge.png";
@@ -292,6 +292,11 @@ export const ProfileDialog = ({
   // aprono (se il profilo viene caricato con il campo profile_theme).
   const theme = getProfileTheme((profile as any)?.profile_theme);
 
+  // Eta': se il campo age e' vuoto, la ricaviamo dalla data di nascita.
+  const displayAge = profile
+    ? (profile.age ?? (profile.birthdate ? calculateAge(profile.birthdate) : null))
+    : null;
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -383,9 +388,9 @@ export const ProfileDialog = ({
               
               {/* Age, Gender, Orientation Pills */}
               <div className="flex items-center justify-center gap-2 flex-wrap">
-                {profile.age && (
+                {displayAge && (
                   <div className="px-4 py-1.5 rounded-full bg-primary/10 text-primary font-semibold text-sm">
-                    {profile.age} {t('userProfile.years')}
+                    {displayAge} {t('userProfile.years')}
                   </div>
                 )}
                 <div className="px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-500/10 to-blue-600/10 text-blue-600 dark:text-blue-400 font-semibold text-sm">

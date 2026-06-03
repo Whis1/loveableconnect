@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useTextTranslation } from "@/hooks/useTranslation";
 import { ProfileDialog } from "./ProfileDialog";
-import { getGenericLocationPhrase } from "@/lib/utils";
+import { getGenericLocationPhrase, calculateAge } from "@/lib/utils";
 import { profileImageUrl } from "@/lib/imageUrl";
 import { useDailyLikes } from "@/hooks/useDailyLikes";
 import { useCredits } from "@/hooks/useCredits";
@@ -509,6 +509,9 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
   const profileTheme = getProfileTheme(profile.profile_theme);
   const themeFrameClass = profileTheme.frameClass;
 
+  // Eta': se il campo age e' vuoto, la ricaviamo dalla data di nascita.
+  const displayAge = profile.age ?? (profile.birthdate ? calculateAge(profile.birthdate) : null);
+
   return (
     <>
       <div
@@ -575,9 +578,9 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
                   ? `${profile.nickname.substring(0, 12)}...`
                   : profile.nickname}
               </h3>
-              {profile.age && (
+              {displayAge && (
                 <span className="text-base text-muted-foreground font-medium">
-                  {profile.age} {t('userProfile.years')}
+                  {displayAge} {t('userProfile.years')}
                 </span>
               )}
             </div>
