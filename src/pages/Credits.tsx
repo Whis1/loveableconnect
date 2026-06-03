@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Coins, Crown, Zap, Shield, Eye, Heart, Gamepad2, Loader2 } from "lucide-react";
+import { ArrowLeft, Coins, Crown, Zap, Shield, Eye, Heart, Gamepad2, Loader2, Sparkles, Rocket, Pin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 
@@ -552,12 +552,28 @@ const Credits = () => {
                     <span><strong>Posizione prioritaria nella bacheca: sempre tra i primi profili mostrati</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
+                    <Crown className="h-5 w-5 text-amber-500" />
+                    <span><strong>Badge PREMIUM sul profilo</strong></span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-amber-500" />
+                    <span><strong>Sblocco tema personalizzazione: Effetti grafici PREMIUM esclusivi sul profilo</strong></span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Rocket className="h-5 w-5 text-amber-500" />
+                    <span><strong>Accesso anticipato alle nuove funzioni</strong></span>
+                  </li>
+                  <li className="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-amber-500">
                       <rect width="18" height="18" x="3" y="3" rx="2"/>
                       <path d="M3 9h18"/>
                       <path d="m9 16 3-3 3 3"/>
                     </svg>
                     <span><strong>Rimozione completa delle pubblicità</strong></span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Pin className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                    <span><strong>Messaggio Prioritario:</strong> il messaggio inviato a un utente si fisserà in cima alla sua lista match fino a quando non verrà visualizzato, aumentando le probabilità che venga visto e letto per primo.</span>
                   </li>
                 </ul>
                 <Button
