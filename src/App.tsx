@@ -10,6 +10,7 @@ import { AnimatedRoutes } from "./components/AnimatedRoutes";
 import { useApplyGamePendingPenalty } from "./hooks/useApplyGamePendingPenalty";
 import { useConnectionWatchdog } from "./hooks/useConnectionWatchdog";
 import { MatchNotificationProvider } from "./contexts/MatchNotificationContext";
+import { SupportRatingGate } from "./components/SupportRatingGate";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,6 +36,7 @@ const AppShell = () => {
     <MatchNotificationProvider>
       <AdBanner />
       <AnimatedRoutes />
+      <SupportRatingGate />
     </MatchNotificationProvider>
   );
 };

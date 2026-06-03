@@ -389,6 +389,15 @@ export const SupportChatMonitor = () => {
 
       if (error || !data?.success) throw new Error(error?.message || data?.error || 'Delete failed');
 
+      // ⭐ Conclusa l'assistenza: crea la richiesta di valutazione per l'utente.
+      //    Apparira' a lui (pannello stelle) ovunque si trovi. Non blocca il
+      //    flusso se fallisce.
+      try {
+        await (supabase.from('support_ratings') as any).insert({ user_id: userId, status: 'pending' });
+      } catch (ratingErr) {
+        console.warn('Impossibile creare la richiesta di valutazione:', ratingErr);
+      }
+
       toast({
         title: "Conversazione eliminata",
         description: "La conversazione è stata eliminata con successo",
