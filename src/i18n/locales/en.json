@@ -503,9 +503,9 @@
     "errorTitle": "Error",
     "errorPurchasing": "Unable to start purchase",
     "errorSubscribing": "Unable to start subscription",
-    "credits50": "Starter",
-    "credits130": "Popular",
-    "credits220": "Mega"
+    "credits50": "50 Credits",
+    "credits130": "150 Credits",
+    "credits220": "350 Credits"
   },
   "support": {
     "back": "Back",

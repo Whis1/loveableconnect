@@ -200,9 +200,9 @@
     "errorTitle": "خطأ",
     "errorPurchasing": "تعذر بدء الشراء",
     "errorSubscribing": "تعذر بدء الاشتراك",
-    "credits50": "Starter",
-    "credits130": "الأكثر شيوعًا",
-    "credits220": "Mega"
+    "credits50": "50 رصيد",
+    "credits130": "150 رصيد",
+    "credits220": "350 رصيد"
   },
   "explore": {
     "back": "رجوع",
