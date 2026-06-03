@@ -25,8 +25,6 @@ const CREDIT_PACKAGES: Record<string, { price_id: string; credits: number; amoun
     amount: 1999,
   },
   // Mega — 350 crediti — €39,99
-  // ⚠️ TODO: sostituire price_id con quello del NUOVO Prezzo €39,99 su Stripe.
-  //     Finche' resta quello vecchio, Stripe addebita ancora €29,99.
   credits_220: {
     price_id: "price_1Te9s8K6IHDbrxmEdBSgmQfR",
     credits: 350,
