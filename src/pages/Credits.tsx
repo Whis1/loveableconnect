@@ -189,7 +189,7 @@ const Credits = () => {
                         </li>
                         <li className="flex items-center gap-2">
                           <Shield className="h-4 w-4 text-amber-500 shrink-0" />
-                          <span><strong>Disattivazione/attivazione dello stato online del profilo</strong></span>
+                          <span><strong>Accesso al sistema di disattivazione/attivazione dello stato online del profilo</strong></span>
                         </li>
                         <li className="flex items-center gap-2">
                           <Gamepad2 className="h-4 w-4 text-amber-500 shrink-0" />
@@ -197,7 +197,19 @@ const Credits = () => {
                         </li>
                         <li className="flex items-center gap-2">
                           <Crown className="h-4 w-4 text-amber-500 shrink-0" />
-                          <span><strong>Posizione prioritaria nella bacheca</strong></span>
+                          <span><strong>Posizione prioritaria nella bacheca: sempre tra i primi profili mostrati</strong></span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Crown className="h-4 w-4 text-amber-500 shrink-0" />
+                          <span><strong>Badge premium sul profilo</strong></span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-amber-500 shrink-0" />
+                          <span><strong>Sblocco tema personalizzazione: effetti grafici premium esclusivi sul profilo</strong></span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Rocket className="h-4 w-4 text-amber-500 shrink-0" />
+                          <span><strong>Accesso anticipato alle nuove funzioni</strong></span>
                         </li>
                         <li className="flex items-center gap-2">
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-amber-500 shrink-0">
@@ -206,6 +218,10 @@ const Credits = () => {
                             <path d="m9 16 3-3 3 3"/>
                           </svg>
                           <span><strong>Rimozione completa delle pubblicità</strong></span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Pin className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                          <span><strong>Messaggio prioritario: il messaggio inviato a un utente si fisserà in cima alla sua lista match fino a quando non verrà visualizzato, aumentando le probabilità che venga visto e letto per primo.</strong></span>
                         </li>
                       </ul>
                       {credits.premium_expires_at && (
@@ -256,11 +272,11 @@ const Credits = () => {
                         </li>
                         <li className="flex items-center gap-2">
                           <Shield className="h-4 w-4 text-blue-500 shrink-0" />
-                          <span><strong>Disattivazione/attivazione dello stato online del profilo</strong></span>
+                          <span><strong>Accesso al sistema di disattivazione/attivazione dello stato online del profilo</strong></span>
                         </li>
                         <li className="flex items-center gap-2">
                           <Crown className="h-4 w-4 text-blue-500 shrink-0" />
-                          <span><strong>Posizione prioritaria nella bacheca</strong></span>
+                          <span><strong>Posizione prioritaria nella bacheca: sempre tra i primi profili mostrati</strong></span>
                         </li>
                         <li className="flex items-center gap-2">
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-blue-500 shrink-0">
