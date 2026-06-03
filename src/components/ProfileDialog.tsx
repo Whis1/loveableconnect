@@ -506,18 +506,18 @@ export const ProfileDialog = ({
                 {hasLookingFor || profile.relationship_type ? (
                   <>
                     {hasLookingFor && (
-                      <div className="text-base font-medium text-primary">
+                      <div className="text-base font-medium">
                         {cleanLookingFor.map((item) => getGenderLabel(item)).join(", ")}
                       </div>
                     )}
                     {profile.relationship_type && (
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-base font-medium">
                         {getRelationshipTypeLabel(profile.relationship_type)}
                       </div>
                     )}
                   </>
                 ) : (
-                  <div className="text-base font-medium text-muted-foreground">
+                  <div className="text-base font-medium">
                     {t('common.notSpecified')}
                   </div>
                 )}
