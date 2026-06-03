@@ -173,11 +173,11 @@ const Credits = () => {
                         </li>
                         <li className="flex items-center gap-2">
                           <Eye className="h-4 w-4 text-amber-500 shrink-0" />
-                          <span><strong>Visualizzazione Like illimitata</strong></span>
+                          <span><strong>Visualizzazione like illimitata</strong></span>
                         </li>
                         <li className="flex items-center gap-2">
                           <Zap className="h-4 w-4 text-amber-500 shrink-0" />
-                          <span><strong>Sblocco Chat con nuovi profili Illimitato</strong></span>
+                          <span><strong>Sblocco chat con nuovi profili illimitato</strong></span>
                         </li>
                         <li className="flex items-center gap-2">
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-amber-500 shrink-0">
@@ -248,7 +248,7 @@ const Credits = () => {
                         </li>
                         <li className="flex items-center gap-2">
                           <Eye className="h-4 w-4 text-blue-500 shrink-0" />
-                          <span><strong>Visualizzazione Like illimitata</strong></span>
+                          <span><strong>Visualizzazione like illimitata</strong></span>
                         </li>
                         <li className="flex items-center gap-2">
                           <Gamepad2 className="h-4 w-4 text-blue-500 shrink-0" />
@@ -459,7 +459,7 @@ const Credits = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <Eye className="h-5 w-5 text-blue-500" />
-                    <span><strong>Visualizzazione Like illimitata</strong></span>
+                    <span><strong>Visualizzazione like illimitata</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Gamepad2 className="h-5 w-5 text-blue-500" />
@@ -525,11 +525,11 @@ const Credits = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <Eye className="h-5 w-5 text-amber-500" />
-                    <span><strong>Visualizzazione Like illimitata</strong></span>
+                    <span><strong>Visualizzazione like illimitata</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Zap className="h-5 w-5 text-amber-500" />
-                    <span><strong>Sblocco Chat con nuovi profili Illimitato</strong></span>
+                    <span><strong>Sblocco chat con nuovi profili illimitato</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-amber-500">
@@ -553,11 +553,11 @@ const Credits = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <Crown className="h-5 w-5 text-amber-500" />
-                    <span><strong>Badge PREMIUM sul profilo</strong></span>
+                    <span><strong>Badge premium sul profilo</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Sparkles className="h-5 w-5 text-amber-500" />
-                    <span><strong>Sblocco tema personalizzazione: Effetti grafici PREMIUM esclusivi sul profilo</strong></span>
+                    <span><strong>Sblocco tema personalizzazione: effetti grafici premium esclusivi sul profilo</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Rocket className="h-5 w-5 text-amber-500" />
@@ -573,7 +573,7 @@ const Credits = () => {
                   </li>
                   <li className="flex items-start gap-2">
                     <Pin className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                    <span><strong>Messaggio Prioritario:</strong> il messaggio inviato a un utente si fisserà in cima alla sua lista match fino a quando non verrà visualizzato, aumentando le probabilità che venga visto e letto per primo.</span>
+                    <span><strong>Messaggio prioritario: il messaggio inviato a un utente si fisserà in cima alla sua lista match fino a quando non verrà visualizzato, aumentando le probabilità che venga visto e letto per primo.</strong></span>
                   </li>
                 </ul>
                 <Button
