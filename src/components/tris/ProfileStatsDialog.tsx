@@ -14,6 +14,7 @@ import { ChampionBadgesRow } from "./ChampionBadgesRow";
 import { CampioneIcon, RankMedalIcon } from "@/lib/championIcons";
 import { renderRankBadge, getRankNicknameClass } from "./EloLeaderboard";
 import { useSendLike } from "@/hooks/useSendLike";
+import { ProfileThemeRing } from "@/components/ProfileThemeRing";
 
 interface ProfileLike {
   id: string;
@@ -71,6 +72,21 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
   const [showCreditsExhausted, setShowCreditsExhausted] = useState(false);
   const [userBalance, setUserBalance] = useState<number>(0);
   const { sendLike } = useSendLike(currentUserId);
+
+  // 🎨 Tema estetico del profilo (anello dorato sull'avatar se attivo).
+  const [themeId, setThemeId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!profile?.id) { setThemeId(null); return; }
+    let active = true;
+    (async () => {
+      const { data } = await (supabase.from("profiles") as any)
+        .select("profile_theme")
+        .eq("id", profile.id)
+        .maybeSingle();
+      if (active) setThemeId(data?.profile_theme ?? null);
+    })();
+    return () => { active = false; };
+  }, [profile?.id]);
 
   // 🐛 FIX LOOP RICARICA: prima la dep era [profile] (l'intero oggetto).
   // TrisBoard/CheckersBoard ricreano un NUOVO oggetto profile ad ogni render
@@ -304,12 +320,14 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
                 {showRank && topIndex !== null && topIndex >= 0 && topIndex < 5 && (
                   <div>{getTrophyIcon(topIndex)}</div>
                 )}
-                <Avatar className="w-24 h-24 border-4 border-white/40 shadow-2xl">
-                  <AvatarImage src={getAvatarUrl(profile.avatar_url)} />
-                  <AvatarFallback className="text-3xl bg-primary/20">
-                    {profile.nickname.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                <ProfileThemeRing themeId={themeId}>
+                  <Avatar className="w-24 h-24 border-4 border-white/40 shadow-2xl">
+                    <AvatarImage src={getAvatarUrl(profile.avatar_url)} />
+                    <AvatarFallback className="text-3xl bg-primary/20">
+                      {profile.nickname.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </ProfileThemeRing>
                 <div className="text-center">
                   <h3 className="text-2xl font-bold drop-shadow-lg">
                     {showRank && topIndex !== null && topIndex >= 0 && topIndex < 5 ? (

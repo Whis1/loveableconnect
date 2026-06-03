@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { computeAdminElos } from "@/lib/adminElo";
 import { profileImageUrl } from "@/lib/imageUrl";
+import { ProfileThemeRing } from "@/components/ProfileThemeRing";
 
 interface Profile {
   id: string;
@@ -13,6 +14,7 @@ interface Profile {
   photos: string[] | null;
   game_elo?: number;
   is_admin_profile?: boolean;
+  profile_theme?: string | null;
 }
 
 interface OpponentSearchProps {
@@ -43,7 +45,7 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
     // Tutti i profili admin: serve l'elenco completo per calcolare gli ELO
     const { data: adminProfiles } = await supabase
       .from("profiles")
-      .select("id, nickname, avatar_url, photos, game_elo, is_admin_profile")
+      .select("id, nickname, avatar_url, photos, game_elo, is_admin_profile, profile_theme")
       .eq("is_admin_profile", true);
 
     if (adminProfiles && adminProfiles.length > 0) {
@@ -109,20 +111,22 @@ export const OpponentSearch = ({ onOpponentFound }: OpponentSearchProps) => {
       <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
       <h3 className="text-xl font-bold mb-4">🔍 Ricerca sfidante...</h3>
       <div className="flex justify-center items-center space-x-4 animate-pulse">
-        <Avatar className="w-20 h-20 border-4 border-primary">
-          <AvatarImage 
-            src={
-              profiles[currentIndex]?.avatar_url
-                ? profileImageUrl(profiles[currentIndex].avatar_url, "card")
-                : (profiles[currentIndex]?.photos && profiles[currentIndex].photos.length > 0
-                    ? profileImageUrl(profiles[currentIndex].photos[0], "card")
-                    : "")
-            }
-          />
-          <AvatarFallback>
-            {profiles[currentIndex]?.nickname.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+        <ProfileThemeRing themeId={profiles[currentIndex]?.profile_theme}>
+          <Avatar className="w-20 h-20 border-4 border-primary">
+            <AvatarImage
+              src={
+                profiles[currentIndex]?.avatar_url
+                  ? profileImageUrl(profiles[currentIndex].avatar_url, "card")
+                  : (profiles[currentIndex]?.photos && profiles[currentIndex].photos.length > 0
+                      ? profileImageUrl(profiles[currentIndex].photos[0], "card")
+                      : "")
+              }
+            />
+            <AvatarFallback>
+              {profiles[currentIndex]?.nickname.slice(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+        </ProfileThemeRing>
         <div>
           <p className="font-bold text-lg">{profiles[currentIndex]?.nickname}</p>
           <p className="text-sm text-muted-foreground">ELO: {profiles[currentIndex]?.game_elo || 1200}</p>

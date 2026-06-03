@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProfileThemeRing } from "@/components/ProfileThemeRing";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy, ChevronDown, ChevronUp, Crown } from "lucide-react";
@@ -17,6 +18,7 @@ interface LeaderboardProfile {
   avatar_url: string | null;
   elo: number;
   is_admin_profile: boolean;
+  profile_theme?: string | null;
 }
 
 interface EloLeaderboardProps {
@@ -93,6 +95,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     nickname: string | null;
     full_name: string;
     avatar_url: string | null;
+    profile_theme?: string | null;
   } | null>(null);
   // 🏆 Stats personali dell'utente: V/S/trofei/tornei_vinti + titoli campione
   const [userStats, setUserStats] = useState<{
@@ -127,12 +130,12 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     try {
       const { data: admins } = await supabase
         .from("profiles")
-        .select("id, nickname, avatar_url, game_elo")
+        .select("id, nickname, avatar_url, game_elo, profile_theme")
         .eq("is_admin_profile", true);
 
       const { data: realUsers } = await supabase
         .from("profiles")
-        .select("id, nickname, avatar_url, game_elo")
+        .select("id, nickname, avatar_url, game_elo, profile_theme")
         .eq("is_admin_profile", false)
         .order("game_elo", { ascending: false })
         .limit(10);
@@ -148,6 +151,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
           avatar_url: p.avatar_url,
           elo: adminElos.get(p.id) ?? 1200,
           is_admin_profile: true,
+          profile_theme: (p as any).profile_theme ?? null,
         })),
         ...(realUsers ?? []).map((p) => ({
           id: p.id,
@@ -155,6 +159,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
           avatar_url: p.avatar_url,
           elo: p.game_elo ?? 1200,
           is_admin_profile: false,
+          profile_theme: (p as any).profile_theme ?? null,
         })),
       ];
 
@@ -244,7 +249,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         // 👤 Profilo: nickname + avatar per la card stile partita
         const { data: profile } = await supabase
           .from("profiles")
-          .select("nickname, full_name, avatar_url")
+          .select("nickname, full_name, avatar_url, profile_theme")
           .eq("id", userId)
           .maybeSingle();
         if (profile) {
@@ -310,12 +315,14 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
           <div className="relative flex items-center gap-4">
             <div className="relative shrink-0">
               <div className="absolute -inset-0.5 rounded-full bg-gradient-to-br from-pink-400 via-fuchsia-500 to-indigo-500 opacity-70 blur-[2px]" />
-              <Avatar className="relative w-16 h-16 border-2 border-pink-400/70 shadow-lg shadow-pink-500/30">
-                <AvatarImage src={getAvatarUrl(userProfile?.avatar_url ?? null)} />
-                <AvatarFallback className="bg-fuchsia-500/20 text-pink-200 font-bold">
-                  {(userProfile?.nickname ?? userProfile?.full_name ?? "ME").slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <ProfileThemeRing themeId={userProfile?.profile_theme} className="relative">
+                <Avatar className="relative w-16 h-16 border-2 border-pink-400/70 shadow-lg shadow-pink-500/30">
+                  <AvatarImage src={getAvatarUrl(userProfile?.avatar_url ?? null)} />
+                  <AvatarFallback className="bg-fuchsia-500/20 text-pink-200 font-bold">
+                    {(userProfile?.nickname ?? userProfile?.full_name ?? "ME").slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </ProfileThemeRing>
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-black text-lg truncate bg-gradient-to-r from-pink-200 via-fuchsia-200 to-indigo-200 bg-clip-text text-transparent">
@@ -415,10 +422,12 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
                 }`}
               >
                 <div className="flex items-center justify-center w-10 shrink-0">{getTrophyIcon(index)}</div>
-                <Avatar className="w-10 h-10 border-2 border-primary/50 shrink-0">
-                  <AvatarImage src={getAvatarUrl(player.avatar_url)} />
-                  <AvatarFallback>{player.nickname.slice(0, 2).toUpperCase()}</AvatarFallback>
-                </Avatar>
+                <ProfileThemeRing themeId={player.profile_theme} className="shrink-0">
+                  <Avatar className="w-10 h-10 border-2 border-primary/50 shrink-0">
+                    <AvatarImage src={getAvatarUrl(player.avatar_url)} />
+                    <AvatarFallback>{player.nickname.slice(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                </ProfileThemeRing>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-base truncate">
                     <span className={getRankNicknameClass(index)}>{player.nickname}</span>

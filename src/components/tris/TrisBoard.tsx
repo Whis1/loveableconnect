@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { GameResultOverlay } from "./GameResultOverlay";
 import { ProfileStatsDialog } from "./ProfileStatsDialog";
+import { ProfileThemeRing } from "@/components/ProfileThemeRing";
+import { useProfileTheme } from "@/hooks/useProfileTheme";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 interface Profile {
@@ -15,6 +17,7 @@ interface Profile {
   avatar_url: string | null;
   game_elo?: number;
   is_admin_profile?: boolean;
+  profile_theme?: string | null;
 }
 
 interface TrisBoardProps {
@@ -63,6 +66,7 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
   const [winner, setWinner] = useState<"player" | "bot" | "draw" | null>(null);
   const [showEmoji, setShowEmoji] = useState(false);
   const [currentUserProfile, setCurrentUserProfile] = useState<Profile | null>(null);
+  const opponentTheme = useProfileTheme(opponent.id);
   // 🆕 Avatar cliccabile durante la partita → apre ProfileStatsDialog
   const [clickedProfile, setClickedProfile] = useState<Profile | null>(null);
   const [userEmoji, setUserEmoji] = useState<string | null>(null);
@@ -280,7 +284,7 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
 
     const { data } = await supabase
       .from("profiles")
-      .select("id, nickname, avatar_url, game_elo")
+      .select("id, nickname, avatar_url, game_elo, profile_theme")
       .eq("id", session.user.id)
       .single();
 
@@ -606,12 +610,14 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
             className="relative cursor-pointer hover:scale-110 transition-transform"
             title="Vedi le tue statistiche"
           >
-            <Avatar className="w-14 h-14 border-2 border-primary">
-              <AvatarImage src={getAvatarUrl(currentUserProfile?.avatar_url)} />
-              <AvatarFallback>
-                {currentUserProfile?.nickname.slice(0, 2).toUpperCase() || "Tu"}
-              </AvatarFallback>
-            </Avatar>
+            <ProfileThemeRing themeId={currentUserProfile?.profile_theme}>
+              <Avatar className="w-14 h-14 border-2 border-primary">
+                <AvatarImage src={getAvatarUrl(currentUserProfile?.avatar_url)} />
+                <AvatarFallback>
+                  {currentUserProfile?.nickname.slice(0, 2).toUpperCase() || "Tu"}
+                </AvatarFallback>
+              </Avatar>
+            </ProfileThemeRing>
             {userEmoji && (
               <div className="absolute -right-8 top-1/2 -translate-y-1/2 text-3xl animate-bounce">
                 {userEmoji}
@@ -648,12 +654,14 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
             className="relative cursor-pointer hover:scale-110 transition-transform"
             title={`Vedi statistiche di ${opponent.nickname}`}
           >
-            <Avatar className="w-14 h-14 border-2 border-destructive">
-              <AvatarImage src={getAvatarUrl(opponent.avatar_url)} />
-              <AvatarFallback>
-                {opponent.nickname.slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <ProfileThemeRing themeId={opponentTheme}>
+              <Avatar className="w-14 h-14 border-2 border-destructive">
+                <AvatarImage src={getAvatarUrl(opponent.avatar_url)} />
+                <AvatarFallback>
+                  {opponent.nickname.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </ProfileThemeRing>
             {opponentEmoji && (
               <div className="absolute -left-8 top-1/2 -translate-y-1/2 text-3xl animate-bounce">
                 {opponentEmoji}
