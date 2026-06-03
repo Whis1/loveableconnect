@@ -79,12 +79,12 @@ serve(async (req) => {
     let initialFreeChats = 0;
 
     if (isWeekly) {
-      initialCredits = 40;
-      initialLikes = 30;
+      initialCredits = 26;
+      initialLikes = 10;
       initialFreeChats = 5;
     } else if (subscriptionType === "monthly" && tier === "standard") {
-      initialCredits = 70;
-      initialLikes = 40;
+      initialCredits = 40;
+      initialLikes = 20;
       initialFreeChats = 0;
     } else {
       // monthly premium → unlimited

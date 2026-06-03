@@ -36,7 +36,7 @@ const Credits = () => {
     {
       id: "credits_130",
       name: t("credits.credits130"),
-      credits: 130,
+      credits: 150,
       price: "€19,99",
       priceValue: 1999,
       popular: true,
@@ -44,9 +44,9 @@ const Credits = () => {
     {
       id: "credits_220",
       name: t("credits.credits220"),
-      credits: 220,
-      price: "€29,99",
-      priceValue: 2999,
+      credits: 350,
+      price: "€39,99",
+      priceValue: 3999,
       popular: false,
     },
   ];
@@ -240,11 +240,11 @@ const Credits = () => {
                       <ul className="space-y-1.5 mt-3 text-sm text-muted-foreground">
                         <li className="flex items-center gap-2">
                           <Coins className="h-4 w-4 text-blue-500 shrink-0" />
-                          <span><strong>70 crediti giornalieri</strong> (attuale: {credits.balance})</span>
+                          <span><strong>40 crediti giornalieri</strong> (attuale: {credits.balance})</span>
                         </li>
                         <li className="flex items-center gap-2">
                           <Heart className="h-4 w-4 text-blue-500 shrink-0" />
-                          <span><strong>40 like giornalieri</strong></span>
+                          <span><strong>20 like giornalieri</strong></span>
                         </li>
                         <li className="flex items-center gap-2">
                           <Eye className="h-4 w-4 text-blue-500 shrink-0" />
@@ -303,11 +303,11 @@ const Credits = () => {
                       <ul className="space-y-1.5 mt-3 text-sm text-muted-foreground">
                         <li className="flex items-center gap-2">
                           <Coins className="h-4 w-4 text-purple-500 shrink-0" />
-                          <span><strong>40 crediti giornalieri</strong> (attuale: {credits.balance})</span>
+                          <span><strong>26 crediti giornalieri</strong> (attuale: {credits.balance})</span>
                         </li>
                         <li className="flex items-center gap-2">
                           <Heart className="h-4 w-4 text-purple-500 shrink-0" />
-                          <span><strong>30 like giornalieri</strong></span>
+                          <span><strong>10 like giornalieri</strong></span>
                         </li>
                         <li className="flex items-center gap-2">
                           <Gamepad2 className="h-4 w-4 text-purple-500 shrink-0" />
@@ -463,11 +463,11 @@ const Credits = () => {
                 <ul className="space-y-2">
                   <li className="flex items-center gap-2">
                     <Coins className="h-5 w-5 text-blue-500" />
-                    <span><strong>70 crediti giornalieri</strong></span>
+                    <span><strong>40 crediti giornalieri</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Heart className="h-5 w-5 text-blue-500" />
-                    <span><strong>40 like giornalieri</strong></span>
+                    <span><strong>20 like giornalieri</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Eye className="h-5 w-5 text-blue-500" />
@@ -536,11 +536,11 @@ const Credits = () => {
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-center gap-2">
                       <Coins className="h-4 w-4 text-purple-500" />
-                      <span><strong>40 crediti giornalieri</strong></span>
+                      <span><strong>26 crediti giornalieri</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Heart className="h-4 w-4 text-purple-500" />
-                      <span><strong>30 like giornalieri</strong></span>
+                      <span><strong>10 like giornalieri</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Gamepad2 className="h-4 w-4 text-purple-500" />

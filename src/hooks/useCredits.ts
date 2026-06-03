@@ -70,15 +70,15 @@ const fetchCredits = async (): Promise<UserCredits | null> => {
   if (!existingCredits) {
     await supabase.from("user_credits").insert({
       user_id: userId,
-      balance: 26,
+      balance: 10,
     });
     return {
-      balance: 26,
+      balance: 10,
       is_premium: false,
       last_daily_reset: new Date().toISOString(),
       premium_expires_at: null,
       credits_depleted_at: null,
-      daily_likes_remaining: 8,
+      daily_likes_remaining: 5,
       daily_likes_reset_at: null,
       subscription_type: 'none',
     };

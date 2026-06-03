@@ -561,7 +561,7 @@
     "buy": "Acquista",
     "vatIncluded": "IVA inclusa • Nessuna scadenza",
     "howCreditsWork": "Come Funzionano i Crediti?",
-    "freeCreditsDaily": "• Ogni utente ha 16 crediti e 8 Like giornalieri.",
+    "freeCreditsDaily": "• Ogni utente ha 10 crediti e 5 Like giornalieri.",
     "messageCost": "• Ogni messaggio inviato costa 2 crediti",
     "creditsNoExpire": "• I crediti acquistati non scadono mai",
     "premiumUnlimited": "• l'Abbonamento Premium ha crediti illimitati",
@@ -569,9 +569,9 @@
     "errorTitle": "Errore",
     "errorPurchasing": "Impossibile avviare l'acquisto",
     "errorSubscribing": "Impossibile avviare l'abbonamento",
-    "credits50": "50 Crediti",
-    "credits130": "130 Crediti",
-    "credits220": "220 Crediti",
+    "credits50": "Starter",
+    "credits130": "Popolare",
+    "credits220": "Mega",
     "rechargeOrSubscribe": "Ricarica o Abbonati"
   },
   "support": {

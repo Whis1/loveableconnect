@@ -115,7 +115,7 @@ serve(async (req) => {
         throw new Error(`Failed to update credits: ${updCreditsErr.message}`);
       }
     } else {
-      newBalance = 16 + purchase.credits_amount;
+      newBalance = 10 + purchase.credits_amount;
       const { error: insCreditsErr } = await supabaseClient.from("user_credits").insert({
         user_id: user.id,
         balance: newBalance,

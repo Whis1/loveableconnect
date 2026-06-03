@@ -7,21 +7,30 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// NB: il prezzo addebitato dipende dal "price_id" del Prezzo su Stripe, NON da
+//     "amount" (che e' solo per il record/visualizzazione). Per cambiare un
+//     prezzo bisogna aggiornare/creare il Prezzo su Stripe e mettere qui il
+//     nuovo price_id. I crediti accreditati dipendono invece da "credits".
 const CREDIT_PACKAGES: Record<string, { price_id: string; credits: number; amount: number }> = {
+  // Starter — 50 crediti — €9,99 (prezzo invariato)
   credits_50: {
     price_id: "price_1SIchHK6IHDbrxmEQkyoofLd",
     credits: 50,
     amount: 999,
   },
+  // Popolare — 150 crediti — €19,99 (prezzo invariato)
   credits_130: {
     price_id: "price_1SMT8gK6IHDbrxmEXnAtItze",
-    credits: 130,
+    credits: 150,
     amount: 1999,
   },
+  // Mega — 350 crediti — €39,99
+  // ⚠️ TODO: sostituire price_id con quello del NUOVO Prezzo €39,99 su Stripe.
+  //     Finche' resta quello vecchio, Stripe addebita ancora €29,99.
   credits_220: {
     price_id: "price_1SMT8xK6IHDbrxmErSyTnBOa",
-    credits: 220,
-    amount: 2999,
+    credits: 350,
+    amount: 3999,
   },
 };
 

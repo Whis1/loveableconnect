@@ -58,10 +58,10 @@ export const DailyLikesDisplay = ({ likesRemaining, isPremium, resetAt, loading,
 
   const timeRemaining = formatTimeRemaining();
   
-  // Monthly standard (platino) = 40 like max, Weekly premium = 30 like max, free = 8 like max
+  // Monthly standard (platino) = 20 like max, Weekly premium = 10 like max, free = 5 like max
   const isMonthlyStandard = isPremium && subscriptionType === 'monthly' && premiumTier === 'standard';
   const isWeeklyPremium = isPremium && subscriptionType === 'weekly';
-  const maxLikes = isMonthlyStandard ? 40 : isWeeklyPremium ? 30 : 8;
+  const maxLikes = isMonthlyStandard ? 20 : isWeeklyPremium ? 10 : 5;
 
   return (
     // items-start: il bottone "1/8 Like" prende solo la larghezza che gli

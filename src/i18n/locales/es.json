@@ -488,7 +488,7 @@
     "buy": "Comprar",
     "vatIncluded": "IVA incluido • Sin caducidad",
     "howCreditsWork": "¿Cómo Funcionan los Créditos?",
-    "freeCreditsDaily": "• Cada usuario recibe 26 créditos gratis cada 24 horas después del primer uso de 2 créditos",
+    "freeCreditsDaily": "• Cada usuario recibe 10 créditos y 5 Me gusta gratis cada día",
     "messageCost": "• Cada mensaje enviado cuesta 2 créditos",
     "creditsNoExpire": "• Los créditos comprados nunca caducan",
     "premiumUnlimited": "• Los suscriptores Premium tienen créditos ilimitados",
@@ -496,9 +496,9 @@
     "errorTitle": "Error",
     "errorPurchasing": "No se pudo iniciar la compra",
     "errorSubscribing": "No se pudo iniciar la suscripción",
-    "credits50": "50 Créditos",
-    "credits130": "130 Créditos",
-    "credits220": "220 Créditos"
+    "credits50": "Starter",
+    "credits130": "Popular",
+    "credits220": "Mega"
   },
   "support": {
     "back": "Atrás",

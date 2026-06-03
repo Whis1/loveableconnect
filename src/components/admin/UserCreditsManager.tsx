@@ -301,8 +301,8 @@ export const UserCreditsManager = () => {
           is_premium: true,
           subscription_type: "weekly",
           premium_expires_at: expiresAt.toISOString(),
-          balance: 40,
-          daily_likes_remaining: 30,
+          balance: 26,
+          daily_likes_remaining: 10,
           daily_free_chats_remaining: 5,
         })
         .eq("user_id", targetUser);
@@ -333,8 +333,8 @@ export const UserCreditsManager = () => {
           subscription_type: "monthly",
           premium_tier: "standard",
           premium_expires_at: expiresAt.toISOString(),
-          balance: 70,
-          daily_likes_remaining: 40,
+          balance: 40,
+          daily_likes_remaining: 20,
         })
         .eq("user_id", targetUser);
       if (error) throw error;

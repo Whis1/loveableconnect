@@ -24,10 +24,10 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
 
 function planBenefits(subscriptionType: string, tier: string) {
   if (subscriptionType === "weekly") {
-    return { balance: 40, daily_likes_remaining: 30, daily_free_chats_remaining: 5 };
+    return { balance: 26, daily_likes_remaining: 10, daily_free_chats_remaining: 5 };
   }
   if (subscriptionType === "monthly" && tier === "standard") {
-    return { balance: 70, daily_likes_remaining: 40, daily_free_chats_remaining: 0 };
+    return { balance: 40, daily_likes_remaining: 20, daily_free_chats_remaining: 0 };
   }
   // monthly premium (default)
   return { balance: 999999, daily_likes_remaining: 999999, daily_free_chats_remaining: 999999 };
