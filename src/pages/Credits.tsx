@@ -193,7 +193,7 @@ const Credits = () => {
                         </li>
                         <li className="flex items-center gap-2">
                           <Gamepad2 className="h-4 w-4 text-amber-500 shrink-0" />
-                          <span><strong>Sfide tra utenti illimitate</strong></span>
+                          <span><strong>Partite giornaliere tra utenti illimitate</strong></span>
                         </li>
                         <li className="flex items-center gap-2">
                           <Crown className="h-4 w-4 text-amber-500 shrink-0" />
@@ -414,7 +414,7 @@ const Credits = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <Gamepad2 className="h-5 w-5 text-amber-500" />
-                    <span><strong>Sfide tra utenti illimitate</strong></span>
+                    <span><strong>Partite giornaliere tra utenti illimitate</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Crown className="h-5 w-5 text-amber-500" />
@@ -544,7 +544,7 @@ const Credits = () => {
                     </li>
                     <li className="flex items-center gap-2">
                       <Gamepad2 className="h-4 w-4 text-purple-500" />
-                      <span><strong>Possibilità di disputare 10 partite giornaliere tra utenti</strong></span>
+                      <span><strong>10 partite giornaliere tra utenti</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-purple-500">
