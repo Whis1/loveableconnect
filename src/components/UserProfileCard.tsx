@@ -389,36 +389,45 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
         </div>
       </CardContent>
 
-      {/* Pannello scelta: Profilo Interno o Profilo Esterno */}
+      {/* Pannello scelta: Profilo Interno o Profilo Esterno (tema sito) */}
       <Dialog open={showChooser} onOpenChange={setShowChooser}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5" />
-              Anteprima profilo
+            <DialogTitle className="flex items-center justify-center gap-2 text-xl">
+              <Eye className="h-5 w-5 text-primary" />
+              <span className="bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent font-extrabold">
+                Anteprima profilo
+              </span>
             </DialogTitle>
-            <DialogDescription>
-              Scegli come vuoi vedere il tuo profilo.
+            {/* descrizione nascosta solo per accessibilità */}
+            <DialogDescription className="sr-only">
+              Scegli come vedere il tuo profilo
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
             <button
               type="button"
               onClick={() => { setShowChooser(false); setShowPreview(true); }}
-              className="flex flex-col items-center gap-2 rounded-xl border border-border p-4 text-center hover:border-primary hover:bg-primary/5 transition-colors"
+              className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-transparent bg-gradient-to-br from-pink-500/10 via-purple-500/10 to-indigo-500/10 p-6 text-center transition-all hover:border-primary/40 hover:from-pink-500/20 hover:via-purple-500/20 hover:to-indigo-500/20 hover:shadow-lg"
             >
-              <UserSquare2 className="h-7 w-7 text-primary" />
-              <span className="font-semibold">Profilo Interno</span>
-              <span className="text-xs text-muted-foreground">La scheda completa con tutti i dettagli</span>
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 text-white shadow-md transition-transform group-hover:scale-110">
+                <UserSquare2 className="h-7 w-7" />
+              </div>
+              <span className="font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                Profilo Interno
+              </span>
             </button>
             <button
               type="button"
               onClick={openExternalPreview}
-              className="flex flex-col items-center gap-2 rounded-xl border border-border p-4 text-center hover:border-primary hover:bg-primary/5 transition-colors"
+              className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-transparent bg-gradient-to-br from-pink-500/10 via-purple-500/10 to-indigo-500/10 p-6 text-center transition-all hover:border-primary/40 hover:from-pink-500/20 hover:via-purple-500/20 hover:to-indigo-500/20 hover:shadow-lg"
             >
-              <LayoutGrid className="h-7 w-7 text-primary" />
-              <span className="font-semibold">Profilo Esterno</span>
-              <span className="text-xs text-muted-foreground">La card come ti vedono nella bacheca</span>
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 text-white shadow-md transition-transform group-hover:scale-110">
+                <LayoutGrid className="h-7 w-7" />
+              </div>
+              <span className="font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                Profilo Esterno
+              </span>
             </button>
           </div>
         </DialogContent>
@@ -431,6 +440,7 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
           currentUserId={currentUserId}
           open={showPreview}
           onOpenChange={setShowPreview}
+          forcePremium={isPremium || isAdmin}
         />
       )}
 
@@ -451,6 +461,7 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
               <ProfileGridCard
                 profile={externalProfile}
                 currentUserId={currentUserId}
+                showPremiumBadge={isPremium || isAdmin}
                 onLike={() => {}}
               />
             </div>

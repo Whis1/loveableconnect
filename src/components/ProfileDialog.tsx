@@ -49,6 +49,9 @@ interface ProfileDialogProps {
   // il dialog si apre ISTANTANEO senza fare un'altra query. Risolve il
   // problema "skeleton vuoto per minuti" quando la rete è satura.
   initialProfile?: Partial<Profile> & { id: string };
+  // Forza la visualizzazione del badge Premium (es. anteprima del proprio
+  // profilo per admin/test). Se non passato, usa lo stato Premium reale.
+  forcePremium?: boolean;
 }
 
 export const ProfileDialog = ({
@@ -57,6 +60,7 @@ export const ProfileDialog = ({
   open,
   onOpenChange,
   initialProfile,
+  forcePremium,
 }: ProfileDialogProps) => {
   const { t } = useTranslation();
   const [profile, setProfile] = useState<Profile | null>(
@@ -389,7 +393,7 @@ export const ProfileDialog = ({
           <div className="px-6 pb-6 space-y-6 mt-6">
             {/* Name and Basic Info */}
             <div className="text-center space-y-3">
-              {isPremiumProfile && (
+              {(forcePremium || isPremiumProfile) && (
                 <div className="flex justify-center">
                   <PremiumBadge />
                 </div>
