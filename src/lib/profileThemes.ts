@@ -29,6 +29,8 @@ export interface ProfileTheme {
   avatarClass: string;
   /** Classe applicata al testo del nome. */
   nameClass: string;
+  /** Classe applicata alle icone (omini, nota musicale, ecc.). */
+  iconClass: string;
 }
 
 export const PROFILE_THEMES: ProfileTheme[] = [
@@ -41,6 +43,7 @@ export const PROFILE_THEMES: ProfileTheme[] = [
     frameClass: "",
     avatarClass: "",
     nameClass: "",
+    iconClass: "",
   },
   {
     id: "gold",
@@ -51,6 +54,7 @@ export const PROFILE_THEMES: ProfileTheme[] = [
     frameClass: "pt-gold-frame",
     avatarClass: "pt-gold-avatar",
     nameClass: "pt-gold-name",
+    iconClass: "pt-gold-icon",
   },
   // --- In arrivo (mostrano che il sistema e' estendibile) ---
   {
@@ -63,6 +67,7 @@ export const PROFILE_THEMES: ProfileTheme[] = [
     frameClass: "",
     avatarClass: "",
     nameClass: "",
+    iconClass: "",
   },
   {
     id: "ice",
@@ -74,6 +79,7 @@ export const PROFILE_THEMES: ProfileTheme[] = [
     frameClass: "",
     avatarClass: "",
     nameClass: "",
+    iconClass: "",
   },
   {
     id: "fire",
@@ -85,6 +91,7 @@ export const PROFILE_THEMES: ProfileTheme[] = [
     frameClass: "",
     avatarClass: "",
     nameClass: "",
+    iconClass: "",
   },
 ];
 

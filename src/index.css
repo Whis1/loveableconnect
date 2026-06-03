@@ -240,3 +240,10 @@ All colors MUST be HSL.
   color: transparent;
   animation: pt-gold-shine 3s linear infinite;
 }
+
+/* Icone (omini, nota musicale, ecc.): le icone Lucide usano currentColor, quindi
+   basta colorarle d'oro + un leggero glow per intonarle al tema. */
+.pt-gold-icon {
+  color: #ffd700;
+  filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.55));
+}

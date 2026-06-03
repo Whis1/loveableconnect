@@ -459,7 +459,7 @@ export const ProfileDialog = ({
             {profile.bio && (
               <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
                 <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                  <User className="h-5 w-5 text-primary" />
+                  <User className={`h-5 w-5 ${theme.iconClass || "text-primary"}`} />
                   <span className={theme.nameClass}>Bio</span>
                 </h3>
                 <p className="text-muted-foreground leading-relaxed italic">
@@ -471,7 +471,7 @@ export const ProfileDialog = ({
             {/* Relationship Status Section */}
             <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
               <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                <User className="h-5 w-5 text-primary" />
+                <User className={`h-5 w-5 ${theme.iconClass || "text-primary"}`} />
                 <span className={theme.nameClass}>{t('common.relationshipStatus')}</span>
               </h3>
               <div className="text-base font-medium">
@@ -482,7 +482,7 @@ export const ProfileDialog = ({
             {/* Looking For Section */}
             <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-5 shadow-sm border border-primary/20">
               <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                <User className="h-5 w-5 text-primary" />
+                <User className={`h-5 w-5 ${theme.iconClass || "text-primary"}`} />
                 <span className={theme.nameClass}>{t('common.lookingFor')}</span>
               </h3>
               {/* Filtra vecchi valori italiani salvati erroneamente in
@@ -543,7 +543,7 @@ export const ProfileDialog = ({
             {profile.favorite_songs && profile.favorite_songs.length > 0 && (
               <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
                 <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                  <Music className="h-5 w-5 text-primary" />
+                  <Music className={`h-5 w-5 ${theme.iconClass || "text-primary"}`} />
                   <span className={theme.nameClass}>Canzoni Preferite</span>
                 </h3>
                 <ScrollArea className="w-full">

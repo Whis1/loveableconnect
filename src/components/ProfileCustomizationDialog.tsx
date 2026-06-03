@@ -242,7 +242,7 @@ export const ProfileCustomizationDialog = ({
                   {profile?.bio && (
                     <div className="rounded-xl border border-border/50 bg-card/60 p-3">
                       <div className="flex items-center gap-1.5 text-sm font-semibold mb-1">
-                        <User className="h-4 w-4 text-primary" /> <span className={theme.nameClass}>Bio</span>
+                        <User className={`h-4 w-4 ${theme.iconClass || "text-primary"}`} /> <span className={theme.nameClass}>Bio</span>
                       </div>
                       <p className="text-xs text-muted-foreground italic">"{profile.bio}"</p>
                     </div>
@@ -250,7 +250,7 @@ export const ProfileCustomizationDialog = ({
 
                   <div className="rounded-xl border border-border/50 bg-card/60 p-3">
                     <div className="flex items-center gap-1.5 text-sm font-semibold mb-1">
-                      <User className="h-4 w-4 text-primary" /> <span className={theme.nameClass}>{t("common.relationshipStatus")}</span>
+                      <User className={`h-4 w-4 ${theme.iconClass || "text-primary"}`} /> <span className={theme.nameClass}>{t("common.relationshipStatus")}</span>
                     </div>
                     <div className="text-xs font-medium">
                       {getRelationshipStatusLabel(t, profile?.relationship_status)}
@@ -259,9 +259,9 @@ export const ProfileCustomizationDialog = ({
 
                   <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
                     <div className="flex items-center gap-1.5 text-sm font-semibold mb-1">
-                      <User className="h-4 w-4 text-primary" /> <span className={theme.nameClass}>{t("common.lookingFor")}</span>
+                      <User className={`h-4 w-4 ${theme.iconClass || "text-primary"}`} /> <span className={theme.nameClass}>{t("common.lookingFor")}</span>
                     </div>
-                    <div className="text-xs font-medium text-primary">
+                    <div className="text-xs font-medium">
                       {getRelationshipTypeLabel(t, profile?.relationship_type)}
                     </div>
                   </div>
@@ -270,7 +270,7 @@ export const ProfileCustomizationDialog = ({
                   {profile?.interests && profile.interests.length > 0 && (
                     <div className="rounded-xl border border-border/50 bg-card/60 p-3">
                       <div className="flex items-center gap-1.5 text-sm font-semibold mb-2">
-                        <User className="h-4 w-4 text-primary" /> <span className={theme.nameClass}>{t("common.interests")}</span>
+                        <User className={`h-4 w-4 ${theme.iconClass || "text-primary"}`} /> <span className={theme.nameClass}>{t("common.interests")}</span>
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                         {profile.interests.map((interest: string, i: number) => (
@@ -286,7 +286,7 @@ export const ProfileCustomizationDialog = ({
                   {profile?.favorite_songs && profile.favorite_songs.length > 0 && (
                     <div className="rounded-xl border border-border/50 bg-card/60 p-3">
                       <div className="flex items-center gap-1.5 text-sm font-semibold mb-2">
-                        <Music className="h-4 w-4 text-primary" /> <span className={theme.nameClass}>Canzoni Preferite</span>
+                        <Music className={`h-4 w-4 ${theme.iconClass || "text-primary"}`} /> <span className={theme.nameClass}>Canzoni Preferite</span>
                       </div>
                       <div className="flex gap-2 overflow-x-auto pb-1">
                         {profile.favorite_songs.map((song: any, i: number) => (
