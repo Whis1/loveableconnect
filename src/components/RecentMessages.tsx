@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProfileThemeRing } from "@/components/ProfileThemeRing";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Send } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,7 @@ interface MatchWithLastMessage {
   otherUserId: string;
   otherUserName: string;
   otherUserAvatar: string | null;
+  otherUserTheme: string | null;
   lastMessage: string;
   lastMessageTime: string;
   unreadCount: number;
@@ -72,7 +74,7 @@ export const RecentMessages = ({ currentUserId }: RecentMessagesProps) => {
           // Get other user's profile
           const { data: profile } = await supabase
             .from("profiles")
-            .select("full_name, nickname, avatar_url")
+            .select("full_name, nickname, avatar_url, profile_theme")
             .eq("id", otherUserId)
             .single();
 
@@ -106,6 +108,7 @@ export const RecentMessages = ({ currentUserId }: RecentMessagesProps) => {
             otherUserId,
             otherUserName: profile?.nickname || profile?.full_name || "Utente",
             otherUserAvatar: avatarUrl,
+            otherUserTheme: (profile as any)?.profile_theme ?? null,
             lastMessage: lastMessage?.content || "Inizia una conversazione",
             lastMessageTime: lastMessage?.created_at || match.id,
             unreadCount: unreadCount || 0,
@@ -206,12 +209,14 @@ export const RecentMessages = ({ currentUserId }: RecentMessagesProps) => {
                 onClick={() => navigate(`/chat/${match.match_id}`)}
                 className="flex items-start gap-2 p-2.5 rounded-lg bg-white/10 backdrop-blur-sm hover:bg-white/20 cursor-pointer transition-all duration-300 border border-white/20"
               >
-                <Avatar className="h-10 w-10 border-2 border-white/30">
-                  <AvatarImage src={match.otherUserAvatar || undefined} />
-                  <AvatarFallback className="bg-white/20 text-white font-bold text-sm">
-                    {match.otherUserName.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
+                <ProfileThemeRing themeId={match.otherUserTheme} className="shrink-0">
+                  <Avatar className="h-10 w-10 border-2 border-white/30">
+                    <AvatarImage src={match.otherUserAvatar || undefined} />
+                    <AvatarFallback className="bg-white/20 text-white font-bold text-sm">
+                      {match.otherUserName.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                </ProfileThemeRing>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-semibold text-xs truncate text-white">

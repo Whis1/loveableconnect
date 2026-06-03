@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProfileThemeRing } from "@/components/ProfileThemeRing";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, MessageCircle, Trash2, Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -30,6 +31,7 @@ interface MatchWithProfile {
     bio: string | null;
     city: string | null;
     translatedBio?: string | null;
+    profile_theme?: string | null;
   };
 }
 
@@ -143,7 +145,7 @@ const Matches = () => {
           ? withFallback(
               supabase
                 .from("profiles")
-                .select("id, full_name, nickname, is_admin_profile, avatar_url, photos, bio, city, show_online_status, last_active, manual_online_status")
+                .select("id, full_name, nickname, is_admin_profile, avatar_url, photos, bio, city, show_online_status, last_active, manual_online_status, profile_theme")
                 .in("id", otherUserIds),
               { data: [], error: null },
               7000
@@ -257,7 +259,7 @@ const Matches = () => {
 
             const { data: profile } = await supabase
               .from("profiles")
-              .select("id, full_name, nickname, is_admin_profile, avatar_url, photos, bio, city")
+              .select("id, full_name, nickname, is_admin_profile, avatar_url, photos, bio, city, profile_theme")
               .eq("id", otherUserId)
               .single();
 
@@ -486,12 +488,14 @@ const Matches = () => {
                       <div className="flex flex-col md:flex-row md:items-center gap-4">
                         <div className="flex items-center gap-4 flex-1">
                           <div className="relative shrink-0">
-                            <Avatar className="h-16 w-16 md:h-20 md:w-20 border-4 border-primary/20 shadow-md">
-                              <AvatarImage src={match.otherUser.avatar_url || undefined} />
-                              <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-xl">
-                                {match.otherUser.nickname.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
+                            <ProfileThemeRing themeId={match.otherUser.profile_theme}>
+                              <Avatar className="h-16 w-16 md:h-20 md:w-20 border-4 border-primary/20 shadow-md">
+                                <AvatarImage src={match.otherUser.avatar_url || undefined} />
+                                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-xl">
+                                  {match.otherUser.nickname.charAt(0)}
+                                </AvatarFallback>
+                              </Avatar>
+                            </ProfileThemeRing>
                           <div className="absolute -bottom-1 -right-1">
                             <OnlineIndicator userId={match.otherUser.id} size="md" preloadedStatus={onlineStatuses.get(match.otherUser.id)} />
                           </div>

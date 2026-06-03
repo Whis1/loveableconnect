@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProfileThemeRing } from "@/components/ProfileThemeRing";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Heart, Lock, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -41,6 +42,7 @@ interface LikeWithProfile {
     translatedOrientation?: string | null;
     translatedRelationshipType?: string | null;
     translatedLookingFor?: string[] | null;
+    profile_theme?: string | null;
   };
 }
 
@@ -119,7 +121,7 @@ const Likes = () => {
     const { data: profilesData } = await withFallback(
       supabase
         .from("profiles")
-        .select("id, full_name, nickname, avatar_url, photos, bio, age, interests, gender, sexual_orientation, relationship_status, relationship_type, looking_for")
+        .select("id, full_name, nickname, avatar_url, photos, bio, age, interests, gender, sexual_orientation, relationship_status, relationship_type, looking_for, profile_theme")
         .in("id", fromIds),
       { data: [], error: null },
       5000
@@ -501,12 +503,14 @@ const Likes = () => {
                       <CardContent className="p-6">
                         <div className="flex items-start gap-4">
                           <div className="relative">
-                            <Avatar className={`h-20 w-20 border-4 border-pink-200/50 dark:border-pink-800/50 ${!isUnlocked ? 'blur-sm' : ''}`}>
-                              <AvatarImage src={like.profile.avatar_url || undefined} />
-                              <AvatarFallback className="bg-gradient-to-br from-pink-400 to-purple-400 text-white text-xl">
-                                {like.profile.nickname?.[0]?.toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
+                            <ProfileThemeRing themeId={isUnlocked ? like.profile.profile_theme : null}>
+                              <Avatar className={`h-20 w-20 border-4 border-pink-200/50 dark:border-pink-800/50 ${!isUnlocked ? 'blur-sm' : ''}`}>
+                                <AvatarImage src={like.profile.avatar_url || undefined} />
+                                <AvatarFallback className="bg-gradient-to-br from-pink-400 to-purple-400 text-white text-xl">
+                                  {like.profile.nickname?.[0]?.toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                            </ProfileThemeRing>
                             {!isUnlocked && (
                               <div className="absolute inset-0 flex items-center justify-center">
                                 <Lock className="h-8 w-8 text-foreground/70" />
