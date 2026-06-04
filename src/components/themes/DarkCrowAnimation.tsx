@@ -24,9 +24,11 @@ interface DarkCrowAnimationProps {
 const INCOMING_MS = 1700;
 const LEAVING_MS = 1400;
 
-// Path della foto reale del corvo (PNG trasparente). Se manca o non carica,
-// si usa il corvo SVG come fallback (così il prototipo non si rompe mai).
-const CROW_IMG_SRC = "/themes/dark-crow/crow.png";
+// Foto reali del corvo (PNG trasparenti): una in VOLO (arrivo/partenza) e una
+// POSATA (mentre sta sulla card). Se mancano o non caricano, si usa il corvo
+// SVG come fallback (così il prototipo non si rompe mai).
+const CROW_FLY_SRC = "/themes/dark-crow/crow-fly.png";
+const CROW_PERCH_SRC = "/themes/dark-crow/crow-perched.png";
 
 export const DarkCrowAnimation = ({ active = false, playToken, perchMs = 5000 }: DarkCrowAnimationProps) => {
   const [phase, setPhase] = useState<Phase>("idle");
@@ -70,14 +72,28 @@ export const DarkCrowAnimation = ({ active = false, playToken, perchMs = 5000 }:
       {phase !== "idle" && (
         <div className={`dc-crow dc-${phase} ${usePhoto ? "dc-crow-photo" : flapping ? "dc-flapping" : ""}`}>
           {usePhoto ? (
-            <img
-              className="dc-crow-img"
-              src={CROW_IMG_SRC}
-              alt=""
-              aria-hidden="true"
-              draggable={false}
-              onError={() => setUsePhoto(false)}
-            />
+            <>
+              {/* Posa in VOLO (arrivo e partenza) */}
+              <img
+                className="dc-crow-img dc-crow-fly"
+                src={CROW_FLY_SRC}
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+                style={{ opacity: showPerched ? 0 : 1 }}
+                onError={() => setUsePhoto(false)}
+              />
+              {/* Posa POSATA (mentre sta sulla card) */}
+              <img
+                className="dc-crow-img dc-crow-perch"
+                src={CROW_PERCH_SRC}
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+                style={{ opacity: showPerched ? 1 : 0 }}
+                onError={() => setUsePhoto(false)}
+              />
+            </>
           ) : (
           <svg viewBox="0 0 120 80" width={120} height={80} aria-hidden="true">
             <defs>
