@@ -465,7 +465,26 @@ All colors MUST be HSL.
 /* Mostra/nascondi le due pose del corvo (volo simmetrico vs posato di lato) */
 .dc-pose-flying, .dc-pose-perched { transition: opacity 0.2s ease; }
 
+/* --- CORVO FOTO REALE (PNG trasparente) --- */
+.dc-crow-photo { width: 150px; height: 104px; margin-left: -75px; }
+.dc-crow-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 6px 9px rgba(0, 0, 0, 0.55));
+}
+/* leggero "veleggio" durante le fasi di volo (banca dolcemente) */
+.dc-crow-photo.dc-incoming .dc-crow-img,
+.dc-crow-photo.dc-leaving .dc-crow-img {
+  animation: dc-soar 0.9s ease-in-out infinite alternate;
+}
+@keyframes dc-soar {
+  from { transform: rotate(-3deg) translateY(0); }
+  to   { transform: rotate(3deg) translateY(-2px); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dc-moon, .dc-fog-bottom, .dc-fog-mid,
-  .dc-crow, .dc-wing-l, .dc-wing-r { animation: none !important; }
+  .dc-crow, .dc-wing-l, .dc-wing-r, .dc-crow-img { animation: none !important; }
 }

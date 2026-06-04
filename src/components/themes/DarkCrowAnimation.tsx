@@ -24,9 +24,14 @@ interface DarkCrowAnimationProps {
 const INCOMING_MS = 1700;
 const LEAVING_MS = 1400;
 
+// Path della foto reale del corvo (PNG trasparente). Se manca o non carica,
+// si usa il corvo SVG come fallback (così il prototipo non si rompe mai).
+const CROW_IMG_SRC = "/themes/dark-crow/crow.png";
+
 export const DarkCrowAnimation = ({ active = false, playToken, perchMs = 5000 }: DarkCrowAnimationProps) => {
   const [phase, setPhase] = useState<Phase>("idle");
   const [strikeKey, setStrikeKey] = useState(0);
+  const [usePhoto, setUsePhoto] = useState(true); // false se l'immagine non c'è
   const timers = useRef<number[]>([]);
 
   useEffect(() => {
@@ -63,7 +68,17 @@ export const DarkCrowAnimation = ({ active = false, playToken, perchMs = 5000 }:
       </div>
 
       {phase !== "idle" && (
-        <div className={`dc-crow dc-${phase} ${flapping ? "dc-flapping" : ""}`}>
+        <div className={`dc-crow dc-${phase} ${usePhoto ? "dc-crow-photo" : flapping ? "dc-flapping" : ""}`}>
+          {usePhoto ? (
+            <img
+              className="dc-crow-img"
+              src={CROW_IMG_SRC}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              onError={() => setUsePhoto(false)}
+            />
+          ) : (
           <svg viewBox="0 0 120 80" width={120} height={80} aria-hidden="true">
             <defs>
               <filter id="dc-eye-glow" x="-200%" y="-200%" width="500%" height="500%">
@@ -123,6 +138,7 @@ export const DarkCrowAnimation = ({ active = false, playToken, perchMs = 5000 }:
               <path d="M52 63 L58 63 M58 63 L64 63" stroke="#05050a" strokeWidth={1.6} fill="none" />
             </g>
           </svg>
+          )}
         </div>
       )}
     </div>
