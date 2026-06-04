@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Heart, MessageCircle, MapPin, RotateCw, Moon, ShieldAlert, Loader2, User, Trophy, Crown } from "lucide-react";
-import { DarkCrowAnimation } from "@/components/themes/DarkCrowAnimation";
+import { DarkCrowAnimation, DarkCrowFlock } from "@/components/themes/DarkCrowAnimation";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import profileBadge from "@/assets/profile-badge.png";
 
@@ -73,8 +73,8 @@ const AvatarContext = ({ label }: { label: string }) => (
 
 /** Card interna VERA (ProfileDialog): hero con grande rettangolo avatar +
  *  nome centrato + pillole + sezioni Stato/Cerca, tutto tematizzato. */
-const InternalCard = () => (
-  <div className="w-[340px] overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#1a1226] via-[#140e1f] to-[#0a0810]">
+const InternalCard = ({ playToken }: { playToken: number }) => (
+  <div className="relative w-[340px] overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#1a1226] via-[#140e1f] to-[#0a0810]">
     {/* Hero con rettangolo avatar */}
     <div className="relative bg-gradient-to-br from-primary/20 via-primary/10 to-transparent p-6">
       <div className="relative mx-auto w-fit">
@@ -118,6 +118,9 @@ const InternalCard = () => (
         <div className="text-base font-medium text-white/80">Incontri casuali</div>
       </div>
     </div>
+
+    {/* Stormo di corvi che irrompe all'apertura della scheda */}
+    <DarkCrowFlock playToken={playToken} />
   </div>
 );
 
@@ -176,6 +179,13 @@ export default function DarkCrowPreview() {
   const [previewToken, setPreviewToken] = useState(0);
   useEffect(() => {
     const id = window.setTimeout(() => setPreviewToken(1), 400);
+    return () => clearTimeout(id);
+  }, []);
+
+  // --- Card interna: lo stormo irrompe all'apertura (autoplay) + "Rivedi" ---
+  const [internalToken, setInternalToken] = useState(0);
+  useEffect(() => {
+    const id = window.setTimeout(() => setInternalToken(1), 800);
     return () => clearTimeout(id);
   }, []);
 
@@ -270,7 +280,13 @@ export default function DarkCrowPreview() {
           <div className="flex flex-wrap items-start gap-8">
             <div>
               <div className="mb-3 text-xs text-white/40">Card interna (profilo aperto)</div>
-              <InternalCard />
+              <InternalCard playToken={internalToken} />
+              <button
+                onClick={() => setInternalToken((t) => t + 1)}
+                className="mt-3 inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow transition hover:from-purple-500 hover:to-indigo-500"
+              >
+                <RotateCw className="h-3.5 w-3.5" /> Rivedi apertura
+              </button>
             </div>
             <div>
               <div className="mb-3 text-xs text-white/40">Card apribile (statistiche, in partita / classifica)</div>

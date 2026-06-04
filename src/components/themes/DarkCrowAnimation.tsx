@@ -36,3 +36,21 @@ export const DarkCrowAnimation = ({ playToken }: DarkCrowAnimationProps) => {
     </div>
   );
 };
+
+/**
+ * "Irruzione" dello stormo di corvi: all'apertura della scheda profilo i corvi
+ * compaiono DI COLPO, volano (WebP animato) e si dissolvono a fine gif, con un
+ * paio di lampi. Pensato per la card interna (ProfileDialog). Guidato da CSS
+ * (dc-flock-cycle), ri-montato ad ogni cambio di playToken.
+ */
+const FLOCK_SRC = "/themes/dark-crow/ravens.webp";
+
+export const DarkCrowFlock = ({ playToken }: { playToken: number }) => {
+  if (!playToken) return null;
+  return (
+    <div className="dc-flock" key={playToken}>
+      <div className="dc-lightning dc-flock-lightning" />
+      <img className="dc-flock-img" src={FLOCK_SRC} alt="" aria-hidden="true" draggable={false} />
+    </div>
+  );
+};
