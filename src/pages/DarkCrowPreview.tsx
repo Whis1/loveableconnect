@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Heart, MessageCircle, MapPin, RotateCw, Moon } from "lucide-react";
+import { Heart, MessageCircle, MapPin, RotateCw, Moon, ShieldAlert, Loader2 } from "lucide-react";
 import { DarkCrowAnimation } from "@/components/themes/DarkCrowAnimation";
+import { useAdminRole } from "@/hooks/useAdminRole";
 
 const COOLDOWN_MS = 20000;
 
@@ -49,6 +50,9 @@ const MockCard = ({ active, playToken }: { active: boolean; playToken: number })
 );
 
 export default function DarkCrowPreview() {
+  // 🔒 Pagina di prototipo: visibile SOLO agli account admin.
+  const { isAdmin, loading: adminLoading } = useAdminRole();
+
   // --- Card BACHECA: hover attiva l'atmosfera, il corvo parte se non in cooldown ---
   const [bachecaActive, setBachecaActive] = useState(false);
   const [bachecaToken, setBachecaToken] = useState(0);
@@ -82,6 +86,30 @@ export default function DarkCrowPreview() {
     const id = window.setTimeout(() => setPreviewToken(1), 400);
     return () => clearTimeout(id);
   }, []);
+
+  // Caricamento ruolo
+  if (adminLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#0c0814] text-white/70">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
+
+  // Blocco accesso ai non-admin
+  if (!isAdmin) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#160d22] to-[#080610] px-6 text-center">
+        <div className="max-w-sm rounded-2xl border border-white/10 bg-white/[0.03] p-8">
+          <ShieldAlert className="mx-auto mb-3 h-10 w-10 text-purple-300/70" />
+          <h1 className="mb-2 text-xl font-bold text-white">Pagina riservata</h1>
+          <p className="text-sm text-white/60">
+            Questa anteprima è accessibile solo agli account amministratore.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#160d22] via-[#0f0a1a] to-[#080610] px-6 py-10 text-white">
