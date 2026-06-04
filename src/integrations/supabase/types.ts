@@ -754,6 +754,7 @@ export type Database = {
           nickname: string
           onboarding_completed: boolean
           photos: string[] | null
+          profile_theme: string
           relationship_status: string | null
           relationship_type: string | null
           sexual_orientation: string | null
@@ -789,6 +790,7 @@ export type Database = {
           nickname: string
           onboarding_completed?: boolean
           photos?: string[] | null
+          profile_theme?: string
           relationship_status?: string | null
           relationship_type?: string | null
           sexual_orientation?: string | null
@@ -824,6 +826,7 @@ export type Database = {
           nickname?: string
           onboarding_completed?: boolean
           photos?: string[] | null
+          profile_theme?: string
           relationship_status?: string | null
           relationship_type?: string | null
           sexual_orientation?: string | null
@@ -1002,6 +1005,45 @@ export type Database = {
           request_type?: string | null
           user_email?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      support_ratings: {
+        Row: {
+          admins: Json | null
+          assisted_at: string | null
+          comment: string | null
+          created_at: string
+          id: string
+          rating: number | null
+          status: string
+          submitted_at: string | null
+          user_email: string | null
+          user_id: string
+        }
+        Insert: {
+          admins?: Json | null
+          assisted_at?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: number | null
+          status?: string
+          submitted_at?: string | null
+          user_email?: string | null
+          user_id: string
+        }
+        Update: {
+          admins?: Json | null
+          assisted_at?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: number | null
+          status?: string
+          submitted_at?: string | null
+          user_email?: string | null
+          user_id?: string
         }
         Relationships: []
       }
