@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, MessageCircle, User, Trash2, MapPin, Check, X, Calendar, UserX, Copy, Image as ImageIcon, Paperclip, FileText, Shield, Mail, Search } from "lucide-react";
+import { Send, MessageCircle, User, Trash2, MapPin, Check, X, Calendar, UserX, Copy, Image as ImageIcon, Paperclip, FileText, Shield, Mail, Search, Star, Loader2, MessageSquareText } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -47,6 +48,10 @@ export const SupportChatMonitor = () => {
   const [messages, setMessages] = useState<SupportMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  // ⭐ Valutazioni assistenze: dialog + dati (solo quelle inviate, < 48h).
+  const [showRatings, setShowRatings] = useState(false);
+  const [ratings, setRatings] = useState<any[]>([]);
+  const [loadingRatings, setLoadingRatings] = useState(false);
   // 📛 Mappa admin_id → display_name per mostrare il nome di chi ha risposto
   const [adminNames, setAdminNames] = useState<Record<string, string>>({});
   // 🔍 Filtro ricerca conversazioni
@@ -374,6 +379,29 @@ export const SupportChatMonitor = () => {
     if (fileGenericInputRef.current) fileGenericInputRef.current.value = '';
   };
 
+  // ⭐ Apre il dialog "Valutazioni Assistenze": prima elimina quelle piu'
+  //    vecchie di 48h, poi carica le valutazioni INVIATE dagli utenti.
+  const openRatings = async () => {
+    setShowRatings(true);
+    setLoadingRatings(true);
+    try {
+      const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+      // pulizia 48h (best-effort)
+      await (supabase.from("support_ratings") as any).delete().lt("created_at", cutoff);
+      const { data } = await (supabase.from("support_ratings") as any)
+        .select("id, user_id, user_email, admins, assisted_at, rating, comment, submitted_at, created_at")
+        .eq("status", "submitted")
+        .gte("created_at", cutoff)
+        .order("submitted_at", { ascending: false });
+      setRatings(data || []);
+    } catch (e) {
+      console.warn("Errore caricamento valutazioni:", e);
+      setRatings([]);
+    } finally {
+      setLoadingRatings(false);
+    }
+  };
+
   const handleDeleteConversation = async (userId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     
@@ -389,14 +417,8 @@ export const SupportChatMonitor = () => {
 
       if (error || !data?.success) throw new Error(error?.message || data?.error || 'Delete failed');
 
-      // ⭐ Conclusa l'assistenza: crea la richiesta di valutazione per l'utente.
-      //    Apparira' a lui (pannello stelle) ovunque si trovi. Non blocca il
-      //    flusso se fallisce.
-      try {
-        await (supabase.from('support_ratings') as any).insert({ user_id: userId, status: 'pending' });
-      } catch (ratingErr) {
-        console.warn('Impossibile creare la richiesta di valutazione:', ratingErr);
-      }
+      // ⭐ La richiesta di valutazione (con metadati admin/utente) viene creata
+      //    dall'edge function admin-delete-support-conversation prima del delete.
 
       toast({
         title: "Conversazione eliminata",
@@ -862,11 +884,22 @@ export const SupportChatMonitor = () => {
               </p>
             </div>
           </div>
-          {totalUnread > 0 && (
-            <Badge className="bg-red-500 hover:bg-red-500 text-white shadow-md animate-pulse">
-              {totalUnread} non lett{totalUnread === 1 ? 'o' : 'i'}
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={openRatings}
+              className="gap-1.5 border-amber-400/40 text-amber-500 hover:bg-amber-500/10 hover:text-amber-400"
+            >
+              <Star className="h-4 w-4" />
+              Valutazioni Assistenze
+            </Button>
+            {totalUnread > 0 && (
+              <Badge className="bg-red-500 hover:bg-red-500 text-white shadow-md animate-pulse">
+                {totalUnread} non lett{totalUnread === 1 ? 'o' : 'i'}
+              </Badge>
+            )}
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0 overflow-hidden">
@@ -1445,6 +1478,84 @@ export const SupportChatMonitor = () => {
           </div>
         </div>
       </CardContent>
+
+      {/* ⭐ Dialog Valutazioni Assistenze */}
+      <Dialog open={showRatings} onOpenChange={setShowRatings}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5 text-amber-500" />
+              Valutazioni Assistenze
+            </DialogTitle>
+            <DialogDescription>
+              Valutazioni inviate dagli utenti a fine assistenza. Si cancellano
+              automaticamente dopo 48 ore.
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingRatings ? (
+            <div className="flex justify-center py-10">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : ratings.length === 0 ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              Nessuna valutazione recente.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {ratings.map((r) => (
+                <div key={r.id} className="rounded-xl border border-border/60 bg-muted/20 p-4 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-0.5">
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <Star
+                          key={n}
+                          className={`h-4 w-4 ${
+                            (r.rating ?? 0) >= n ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"
+                          }`}
+                        />
+                      ))}
+                      <span className="ml-1.5 text-sm font-semibold">{r.rating}/5</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {r.assisted_at
+                        ? new Date(r.assisted_at).toLocaleString("it-IT")
+                        : r.submitted_at
+                        ? new Date(r.submitted_at).toLocaleString("it-IT")
+                        : ""}
+                    </span>
+                  </div>
+
+                  <div className="text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">Utente:</span> {r.user_email || "—"}
+                    <span className="opacity-60"> · ID {r.user_id}</span>
+                  </div>
+
+                  <div className="text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">Admin che hanno assistito:</span>{" "}
+                    {Array.isArray(r.admins) && r.admins.length > 0
+                      ? r.admins.map((a: any, i: number) => (
+                          <span key={i}>
+                            {i > 0 ? ", " : ""}
+                            {a.nickname}
+                            {a.email ? ` (${a.email})` : ""}
+                          </span>
+                        ))
+                      : "—"}
+                  </div>
+
+                  {r.comment && (
+                    <div className="flex items-start gap-1.5 rounded-lg bg-background/50 p-2 text-sm">
+                      <MessageSquareText className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <span className="italic">"{r.comment}"</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
