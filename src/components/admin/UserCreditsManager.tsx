@@ -363,6 +363,12 @@ export const UserCreditsManager = () => {
           subscription_type: "none",
           premium_tier: "none",
           premium_expires_at: null,
+          // 🔧 Riporta crediti e like al default Free (10 / 5). Senza questo,
+          //    restavano i 999 crediti "illimitati" del premium.
+          balance: 10,
+          daily_likes_remaining: 5,
+          daily_free_chats_remaining: 0,
+          credits_depleted_at: null,
         })
         .eq("user_id", trimmedId)
         .select();
@@ -374,6 +380,13 @@ export const UserCreditsManager = () => {
             "Possibili cause: (a) RLS blocca l'admin, (b) userId errato, (c) la riga non esiste."
         );
       }
+
+      // 🎨 Rimuove il tema "Estetica Premium": senza abbonamento non deve
+      //    restare attivo. Riporta il profilo a nessun tema.
+      const { error: themeErr } = await (supabase.from("profiles") as any)
+        .update({ profile_theme: "none" })
+        .eq("id", trimmedId);
+      if (themeErr) console.warn("reset profile_theme error (non bloccante):", themeErr);
 
       const today = new Date().toISOString().split("T")[0];
       const { data: updatedTris, error: trisErr } = await supabase

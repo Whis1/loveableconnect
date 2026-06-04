@@ -294,11 +294,27 @@ async function processSubscriptionDeleted(subscription: Stripe.Subscription) {
       is_premium: false,
       subscription_type: "none",
       premium_tier: "none",
+      premium_expires_at: null,
+      // Riporta al default Free: senza rinnovo i 999 crediti "illimitati"
+      // devono sparire.
+      balance: 10,
+      daily_likes_remaining: 5,
+      daily_free_chats_remaining: 0,
+      credits_depleted_at: null,
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", userId);
-  if (error) log("ERROR clearing subscription", { error });
-  else log("Subscription cleared", { userId });
+  if (error) {
+    log("ERROR clearing subscription", { error });
+    return;
+  }
+  // Rimuove il tema "Estetica Premium" (esclusivo del premium).
+  const { error: themeErr } = await supabase
+    .from("profiles")
+    .update({ profile_theme: "none" })
+    .eq("id", userId);
+  if (themeErr) log("ERROR clearing profile_theme", { themeErr });
+  log("Subscription cleared", { userId });
 }
 
 serve(async (req) => {

@@ -84,6 +84,37 @@ const fetchCredits = async (): Promise<UserCredits | null> => {
     };
   }
 
+  // 🛡️ SCADENZA PREMIUM (rete di sicurezza in tempo reale).
+  // Se il premium risulta ancora attivo (is_premium) ma la data di scadenza è
+  // passata, il DB non è stato ancora ripulito (il cron/webhook non sono
+  // passati): forziamo subito il reset a Free tramite RPC SECURITY DEFINER
+  // (crediti 10 / like 5 + rimozione tema). Così l'utente NON resta con i 999
+  // crediti e il tema premium dopo la scadenza, senza dover ricaricare.
+  if (
+    existingCredits.is_premium &&
+    existingCredits.premium_expires_at &&
+    new Date(existingCredits.premium_expires_at).getTime() < Date.now()
+  ) {
+    try {
+      const { data: didReset } = await (supabase as any).rpc("enforce_premium_expiry");
+      if (didReset) {
+        return {
+          balance: 10,
+          is_premium: false,
+          last_daily_reset: existingCredits.last_daily_reset ?? new Date().toISOString(),
+          premium_expires_at: null,
+          credits_depleted_at: null,
+          daily_likes_remaining: 5,
+          daily_likes_reset_at: existingCredits.daily_likes_reset_at ?? null,
+          subscription_type: "none",
+          premium_tier: "none",
+        };
+      }
+    } catch (e) {
+      console.warn("enforce_premium_expiry failed:", e);
+    }
+  }
+
   // 🛡️ Anche la RPC check_and_reset_user_credits può rallentare: con timeout
   // fallback ai dati esistenti, così l'utente vede ALMENO i suoi crediti
   // anche se il reset giornaliero non parte (verrà fatto al prossimo fetch).

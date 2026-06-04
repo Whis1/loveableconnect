@@ -285,14 +285,16 @@ serve(async (req) => {
           console.error(`Error sending expiry notification to ${user.email}:`, emailError);
         }
 
-        // Update user to non-premium and reset to free tier values
+        // Update user to non-premium and reset to free tier values (10 / 5)
         await supabaseClient
           .from("user_credits")
           .update({
             is_premium: false,
             subscription_type: 'none',
-            balance: 16,
-            daily_likes_remaining: 8,
+            premium_tier: 'none',
+            premium_expires_at: null,
+            balance: 10,
+            daily_likes_remaining: 5,
             daily_free_chats_remaining: 0,
             daily_likes_reset_at: null,
             daily_free_chats_reset_at: null,
@@ -300,6 +302,12 @@ serve(async (req) => {
             updated_at: now.toISOString(),
           })
           .eq("user_id", userCredit.user_id);
+
+        // Rimuove il tema "Estetica Premium" alla scadenza dell'abbonamento.
+        await supabaseClient
+          .from("profiles")
+          .update({ profile_theme: 'none' })
+          .eq("id", userCredit.user_id);
       }
     }
 
