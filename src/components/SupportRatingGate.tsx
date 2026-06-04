@@ -43,19 +43,26 @@ export const SupportRatingGate = () => {
     };
   }, []);
 
-  // Controllo richieste pendenti + realtime
+  // Reset del form ogni volta che si apre un nuovo pannello.
+  useEffect(() => {
+    if (pendingId) {
+      setRating(0);
+      setHover(0);
+      setComment("");
+    }
+  }, [pendingId]);
+
+  // Controllo richieste pendenti: realtime (istantaneo) + polling di sicurezza
+  // e ricontrollo quando la tab torna in primo piano (robustezza se la
+  // realtime non consegna, es. tab aperta prima dell'attivazione realtime).
   useEffect(() => {
     if (!userId) {
       setPendingId(null);
       return;
     }
     let active = true;
-    const reset = () => {
-      setRating(0);
-      setHover(0);
-      setComment("");
-    };
-    (async () => {
+
+    const check = async () => {
       const { data } = await (supabase.from("support_ratings") as any)
         .select("id")
         .eq("user_id", userId)
@@ -63,11 +70,11 @@ export const SupportRatingGate = () => {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      if (active && data?.id) {
-        reset();
-        setPendingId(data.id);
-      }
-    })();
+      // Apri solo se non ne stiamo gia' mostrando una (no override durante l'uso).
+      if (active && data?.id) setPendingId((cur) => cur ?? data.id);
+    };
+
+    check();
 
     const channel = supabase
       .channel(`support-rating-${userId}`)
@@ -76,16 +83,23 @@ export const SupportRatingGate = () => {
         { event: "INSERT", schema: "public", table: "support_ratings", filter: `user_id=eq.${userId}` },
         (payload) => {
           if ((payload.new as any)?.status === "pending") {
-            reset();
-            setPendingId((payload.new as any).id);
+            setPendingId((cur) => cur ?? (payload.new as any).id);
           }
         }
       )
       .subscribe();
 
+    const interval = setInterval(check, 8000);
+    const onVisible = () => { if (document.visibilityState === "visible") check(); };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", check);
+
     return () => {
       active = false;
       supabase.removeChannel(channel);
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", check);
     };
   }, [userId]);
 
