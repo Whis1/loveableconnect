@@ -465,23 +465,19 @@ All colors MUST be HSL.
 /* Mostra/nascondi le due pose del corvo (volo simmetrico vs posato di lato) */
 .dc-pose-flying, .dc-pose-perched { transition: opacity 0.2s ease; }
 
-/* --- CORVO FOTO REALE (PNG trasparente), due pose sovrapposte --- */
-.dc-crow-photo { width: 150px; height: 116px; margin-left: -75px; }
+/* --- CORVO FOTO REALE (PNG trasparente), posa singola --- */
+.dc-crow-photo { width: 150px; height: 128px; margin-left: -75px; }
 .dc-crow-img {
-  position: absolute;
-  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: contain;
-  transition: opacity 0.25s ease;
+  object-position: bottom; /* i piedi appoggiano in basso, sopra i pulsanti */
+  display: block;
   filter: drop-shadow(0 6px 9px rgba(0, 0, 0, 0.55));
 }
-.dc-crow-fly { object-position: center; }
-/* la posa "posata" appoggia i piedi in basso (sopra i pulsanti) */
-.dc-crow-perch { object-position: bottom; }
-/* leggero "veleggio" SOLO sulla posa in volo, durante arrivo/partenza */
-.dc-crow-photo.dc-incoming .dc-crow-fly,
-.dc-crow-photo.dc-leaving .dc-crow-fly {
+/* leggero "veleggio" (banca dolcemente) durante arrivo e partenza */
+.dc-crow-photo.dc-incoming .dc-crow-img,
+.dc-crow-photo.dc-leaving .dc-crow-img {
   animation: dc-soar 0.9s ease-in-out infinite alternate;
 }
 @keyframes dc-soar {
