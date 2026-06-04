@@ -385,23 +385,52 @@ All colors MUST be HSL.
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(120% 50% at 50% -10%, rgba(190, 210, 255, 0.9), transparent 60%);
+    radial-gradient(150% 85% at 50% -15%, rgba(224, 234, 255, 1), rgba(150, 175, 255, 0.32) 48%, transparent 74%);
+  mix-blend-mode: screen; /* fulmine additivo: lampo elettrico più violento */
   opacity: 0;
 }
-/* I lampi sono sincronizzati col ciclo: due flash mentre la scena e' piena. */
+/* Tempesta violenta: piu' fulmini, alcuni con sfarfallio (doppio/triplo lampo),
+   sincronizzati col ciclo della scena. */
 .dc-lightning-cycle {
   animation: dc-flash-cycle 8s linear forwards;
 }
 @keyframes dc-flash-cycle {
-  0%, 16% { opacity: 0; }
-  18%     { opacity: 0.85; }
-  20%     { opacity: 0.1; }
-  22%     { opacity: 0.6; }
-  25%     { opacity: 0; }
-  46%     { opacity: 0; }
-  48%     { opacity: 0.7; }
-  51%     { opacity: 0; }
-  100%    { opacity: 0; }
+  0%   { opacity: 0; }
+  /* fulmine 1 - ingresso, triplo sfarfallio */
+  6%   { opacity: 0; }
+  7%   { opacity: 0.95; }
+  8%   { opacity: 0.12; }
+  9%   { opacity: 1; }
+  10%  { opacity: 0.08; }
+  11%  { opacity: 0.65; }
+  13%  { opacity: 0; }
+  /* fulmine 2 - secco */
+  20%  { opacity: 0; }
+  21%  { opacity: 1; }
+  23%  { opacity: 0.1; }
+  24%  { opacity: 0.5; }
+  26%  { opacity: 0; }
+  /* fulmine 3 - grande e violento (doppio) */
+  34%  { opacity: 0; }
+  35%  { opacity: 1; }
+  36%  { opacity: 0.2; }
+  37%  { opacity: 1; }
+  39%  { opacity: 0.1; }
+  40%  { opacity: 0.75; }
+  43%  { opacity: 0; }
+  /* fulmine 4 */
+  50%  { opacity: 0; }
+  51%  { opacity: 0.95; }
+  53%  { opacity: 0.12; }
+  55%  { opacity: 0; }
+  /* fulmine 5 - finale, doppio sfarfallio */
+  60%  { opacity: 0; }
+  61%  { opacity: 1; }
+  62%  { opacity: 0.15; }
+  63%  { opacity: 0.9; }
+  65%  { opacity: 0.1; }
+  67%  { opacity: 0; }
+  100% { opacity: 0; }
 }
 
 /* --- CORVO reale (WebP animato), statico: appare/scompare con la scena.
