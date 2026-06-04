@@ -18,7 +18,7 @@ const MockCard = ({ playToken }: { playToken: number }) => (
       {/* Info */}
       <div className="space-y-2.5 p-4">
         <div className="flex items-baseline gap-2">
-          <h3 className="text-lg font-bold text-white">SMPSHOW</h3>
+          <h3 className="text-lg font-bold dc-name">SMPSHOW</h3>
           <span className="text-base font-medium text-white/50">28 anni</span>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-white/45">

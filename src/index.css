@@ -316,6 +316,24 @@ All colors MUST be HSL.
     0 0 18px rgba(60, 50, 110, 0.35);
 }
 
+/* Nickname "nero lucido": stesso effetto del nickname premium (testo a
+   gradiente con riflesso che scorre), ma nero glossy con sheen bianco.
+   Riusa la keyframe pt-gold-shine (scorre la background-position). */
+.dc-name {
+  background: linear-gradient(
+    90deg,
+    #1c1c22, #3c3c46, #dcdce8, #ffffff, #dcdce8, #3c3c46, #1c1c22
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter:
+    drop-shadow(0 1px 1px rgba(0, 0, 0, 0.7))
+    drop-shadow(0 0 6px rgba(160, 160, 210, 0.35));
+  animation: pt-gold-shine 3s linear infinite;
+}
+
 /* La "scena": contiene tutto e ne gestisce la dissolvenza in/out. Ritagliata
    ai bordi della card. Ri-montata ad ogni play (key) per ripartire da capo. */
 .dc-scene {
