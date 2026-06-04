@@ -298,9 +298,10 @@ All colors MUST be HSL.
 }
 
 /* =========================================================================
-   TEMA "DARK CROW" (prototipo) — atmosfera notturna: luna, nebbia, lampi
-   e un corvo stilizzato che scende, si posa e svolazza via.
-   Tutto su transform/opacity per restare leggero anche su mobile.
+   TEMA "DARK CROW" (prototipo) — modello "solo dissolvenza":
+   corvo reale (WebP), luna, nebbia e lampi appaiono insieme in dissolvenza,
+   restano un istante e si dissolvono lentamente tutti insieme. Niente
+   movimento. Un ciclo dura ~8s ed e' guidato da CSS su .dc-scene.
    ========================================================================= */
 
 /* Cornice scura del tema (base statica, sempre visibile) */
@@ -315,22 +316,23 @@ All colors MUST be HSL.
     0 0 18px rgba(60, 50, 110, 0.35);
 }
 
-/* Layer overlay che contiene atmosfera + corvo: NON ritaglia (il corvo esce). */
-.dc-overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: visible;
-  z-index: 5;
-}
-
-/* Atmosfera (luna/nebbia/lampi) ritagliata ai bordi della card. */
-.dc-atmosphere {
+/* La "scena": contiene tutto e ne gestisce la dissolvenza in/out. Ritagliata
+   ai bordi della card. Ri-montata ad ogni play (key) per ripartire da capo. */
+.dc-scene {
   position: absolute;
   inset: 0;
   overflow: hidden;
   border-radius: 0.8rem;
   pointer-events: none;
+  z-index: 5;
+  opacity: 0;
+  animation: dc-cycle 8s ease forwards;
+}
+@keyframes dc-cycle {
+  0%   { opacity: 0; }   /* invisibile */
+  15%  { opacity: 1; }   /* dissolvenza IN ~1.2s */
+  66%  { opacity: 1; }   /* resta pieno */
+  100% { opacity: 0; }   /* dissolvenza OUT lenta ~2.7s */
 }
 
 /* --- LUNA (in alto a destra) --- */
@@ -349,7 +351,7 @@ All colors MUST be HSL.
   opacity: 0.55;
   transition: opacity 0.6s ease, filter 0.6s ease;
 }
-.dc-active .dc-moon {
+.dc-scene .dc-moon {
   opacity: 0.9;
   animation: dc-moon-pulse 6s ease-in-out infinite;
 }
@@ -385,8 +387,8 @@ All colors MUST be HSL.
 }
 .dc-fog-bottom { bottom: 4%; }
 .dc-fog-mid    { bottom: 38%; }
-.dc-active .dc-fog-bottom { opacity: 1; animation: dc-fog-drift 16s linear infinite; }
-.dc-active .dc-fog-mid    { opacity: 0.7; animation: dc-fog-drift 24s linear infinite reverse; }
+.dc-scene .dc-fog-bottom { opacity: 1; animation: dc-fog-drift 16s linear infinite; }
+.dc-scene .dc-fog-mid    { opacity: 0.7; animation: dc-fog-drift 24s linear infinite reverse; }
 @keyframes dc-fog-drift {
   from { transform: translateX(-6%); }
   to   { transform: translateX(6%); }
@@ -401,91 +403,34 @@ All colors MUST be HSL.
     radial-gradient(120% 50% at 50% -10%, rgba(190, 210, 255, 0.9), transparent 60%);
   opacity: 0;
 }
-.dc-lightning.dc-strike {
-  animation: dc-flash 1.5s ease-out;
+/* I lampi sono sincronizzati col ciclo: due flash mentre la scena e' piena. */
+.dc-lightning-cycle {
+  animation: dc-flash-cycle 8s linear forwards;
 }
-@keyframes dc-flash {
-  0%   { opacity: 0; }
-  4%   { opacity: 0.85; }
-  8%   { opacity: 0.1; }
-  12%  { opacity: 0.7; }
-  20%  { opacity: 0; }
-  100% { opacity: 0; }
+@keyframes dc-flash-cycle {
+  0%, 16% { opacity: 0; }
+  18%     { opacity: 0.85; }
+  20%     { opacity: 0.1; }
+  22%     { opacity: 0.6; }
+  25%     { opacity: 0; }
+  46%     { opacity: 0; }
+  48%     { opacity: 0.7; }
+  51%     { opacity: 0; }
+  100%    { opacity: 0; }
 }
 
-/* --- CORVO: contenitore mosso lungo il percorso --- */
-.dc-crow {
+/* --- CORVO reale (WebP animato), statico: appare/scompare con la scena --- */
+.dc-crow-static {
   position: absolute;
   left: 50%;
-  bottom: 58px; /* punto d'appoggio: appena sopra i pulsanti Mi Piace/Chat */
-  top: auto;
-  width: 120px;
-  height: 80px;
-  margin-left: -60px;
-  will-change: transform, opacity;
-  transform: translate3d(0, 0, 0) scale(1);
-  opacity: 0;
-}
-/* fase: in arrivo dall'alto fino al punto d'appoggio (sopra i pulsanti) */
-.dc-crow.dc-incoming { animation: dc-incoming 1.7s cubic-bezier(0.3, 0.7, 0.4, 1) forwards; }
-@keyframes dc-incoming {
-  0%   { transform: translate3d(40px, -320px, 0) scale(0.38) rotate(8deg);  opacity: 0; }
-  18%  { opacity: 1; }
-  100% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); opacity: 1; }
-}
-/* fase: posato, leggera oscillazione */
-.dc-crow.dc-perched { transform: translate3d(0,0,0) scale(1); opacity: 1; animation: dc-bob 2.4s ease-in-out infinite; }
-@keyframes dc-bob {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  50%      { transform: translate3d(0, -2px, 0) scale(1); }
-}
-/* fase: svolazza via verso l'alto a destra */
-.dc-crow.dc-leaving { animation: dc-leaving 1.4s ease-in forwards; }
-@keyframes dc-leaving {
-  0%   { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); opacity: 1; }
-  30%  { transform: translate3d(-12px, -16px, 0) scale(1) rotate(6deg); opacity: 1; }
-  100% { transform: translate3d(-150px, -150px, 0) scale(0.42) rotate(14deg); opacity: 0; }
-}
-
-/* Ali che battono (solo nelle fasi di volo). Origine sulla "spalla". */
-.dc-wing { transform-box: fill-box; }
-.dc-wing-l { transform-origin: 92% 30%; }
-.dc-wing-r { transform-origin: 8% 30%; }
-.dc-flapping .dc-wing-l { animation: dc-flap-l 0.34s ease-in-out infinite; }
-.dc-flapping .dc-wing-r { animation: dc-flap-r 0.34s ease-in-out infinite; }
-@keyframes dc-flap-l {
-  0%, 100% { transform: rotate(16deg); }
-  50%      { transform: rotate(-22deg); }
-}
-@keyframes dc-flap-r {
-  0%, 100% { transform: rotate(-16deg); }
-  50%      { transform: rotate(22deg); }
-}
-
-/* Mostra/nascondi le due pose del corvo (volo simmetrico vs posato di lato) */
-.dc-pose-flying, .dc-pose-perched { transition: opacity 0.2s ease; }
-
-/* --- CORVO FOTO REALE (PNG trasparente), posa singola --- */
-.dc-crow-photo { width: 150px; height: 128px; margin-left: -75px; }
-.dc-crow-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: bottom; /* i piedi appoggiano in basso, sopra i pulsanti */
-  display: block;
-  filter: drop-shadow(0 6px 9px rgba(0, 0, 0, 0.55));
-}
-/* leggero "veleggio" (banca dolcemente) durante arrivo e partenza */
-.dc-crow-photo.dc-incoming .dc-crow-img,
-.dc-crow-photo.dc-leaving .dc-crow-img {
-  animation: dc-soar 0.9s ease-in-out infinite alternate;
-}
-@keyframes dc-soar {
-  from { transform: rotate(-3deg) translateY(0); }
-  to   { transform: rotate(3deg) translateY(-2px); }
+  bottom: 30px;        /* poggia nella zona dei pulsanti */
+  width: 116px;
+  margin-left: -58px;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.6));
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dc-moon, .dc-fog-bottom, .dc-fog-mid,
-  .dc-crow, .dc-wing-l, .dc-wing-r, .dc-crow-img { animation: none !important; }
+  .dc-scene { animation: none; opacity: 1; }
+  .dc-scene .dc-moon, .dc-scene .dc-fog-bottom, .dc-scene .dc-fog-mid,
+  .dc-lightning-cycle { animation: none !important; }
 }

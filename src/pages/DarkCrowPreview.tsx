@@ -6,7 +6,7 @@ import { useAdminRole } from "@/hooks/useAdminRole";
 const COOLDOWN_MS = 20000;
 
 /** Card finta in stile bacheca, tema Dark Crow. */
-const MockCard = ({ active, playToken }: { active: boolean; playToken: number }) => (
+const MockCard = ({ playToken }: { playToken: number }) => (
   <div className="dc-frame relative w-[300px] select-none">
     <div className="dc-card relative overflow-hidden rounded-[0.8rem] bg-[#0c0a14]">
       {/* Foto (placeholder) */}
@@ -45,7 +45,7 @@ const MockCard = ({ active, playToken }: { active: boolean; playToken: number })
     </div>
 
     {/* Overlay animato del tema (corvo + atmosfera) */}
-    <DarkCrowAnimation active={active} playToken={playToken} />
+    <DarkCrowAnimation playToken={playToken} />
   </div>
 );
 
@@ -53,8 +53,7 @@ export default function DarkCrowPreview() {
   // 🔒 Pagina di prototipo: visibile SOLO agli account admin.
   const { isAdmin, loading: adminLoading } = useAdminRole();
 
-  // --- Card BACHECA: hover attiva l'atmosfera, il corvo parte se non in cooldown ---
-  const [bachecaActive, setBachecaActive] = useState(false);
+  // --- Card BACHECA: l'hover avvia il ciclo (se non in cooldown 20s) ---
   const [bachecaToken, setBachecaToken] = useState(0);
   const [cooldownLeft, setCooldownLeft] = useState(0);
   const lastPlayed = useRef(0);
@@ -72,7 +71,6 @@ export default function DarkCrowPreview() {
   }, []);
 
   const handleEnter = () => {
-    setBachecaActive(true);
     const now = Date.now();
     if (now - lastPlayed.current >= COOLDOWN_MS) {
       lastPlayed.current = now;
@@ -121,9 +119,10 @@ export default function DarkCrowPreview() {
           </h1>
         </div>
         <p className="mb-8 max-w-2xl text-sm text-white/60">
-          Atmosfera notturna: luna, nebbia e lampi. Un corvo scende dall'alto, si posa sopra i pulsanti
-          per qualche secondo e poi svolazza via. A riposo la card resta scura e statica; l'animazione
-          parte al passaggio del cursore (in bacheca) o automaticamente (nell'anteprima del pannello).
+          Atmosfera notturna: un corvo reale, la luna, la nebbia e i lampi appaiono insieme in
+          dissolvenza, restano un istante e poi si dissolvono lentamente tutti insieme. In bacheca
+          parte al passaggio del cursore (cooldown 20s); nell'anteprima del pannello parte da sola
+          (e si rivede ad ogni click sul tema).
         </p>
 
         <div className="grid gap-10 md:grid-cols-2">
@@ -132,8 +131,8 @@ export default function DarkCrowPreview() {
             <div className="mb-4 text-xs font-semibold uppercase tracking-wider text-purple-300/70">
               Card in bacheca — passa il cursore
             </div>
-            <div onMouseEnter={handleEnter} onMouseLeave={() => setBachecaActive(false)}>
-              <MockCard active={bachecaActive} playToken={bachecaToken} />
+            <div onMouseEnter={handleEnter}>
+              <MockCard playToken={bachecaToken} />
             </div>
             <div className="mt-4 h-5 text-xs text-white/50">
               {cooldownLeft > 0 ? (
@@ -151,7 +150,7 @@ export default function DarkCrowPreview() {
             <div className="mb-4 text-xs font-semibold uppercase tracking-wider text-purple-300/70">
               Anteprima nel pannello — autoplay
             </div>
-            <MockCard active playToken={previewToken} />
+            <MockCard playToken={previewToken} />
             <button
               onClick={() => setPreviewToken((t) => t + 1)}
               className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition hover:from-purple-500 hover:to-indigo-500"
