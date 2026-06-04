@@ -296,3 +296,176 @@ All colors MUST be HSL.
 .pt-gold-frame:hover .pt-gold-panel::before {
   animation: pt-gold-sheen 1.1s ease-out;
 }
+
+/* =========================================================================
+   TEMA "DARK CROW" (prototipo) — atmosfera notturna: luna, nebbia, lampi
+   e un corvo stilizzato che scende, si posa e svolazza via.
+   Tutto su transform/opacity per restare leggero anche su mobile.
+   ========================================================================= */
+
+/* Cornice scura del tema (base statica, sempre visibile) */
+.dc-frame {
+  position: relative;
+  border-radius: 0.85rem;
+  padding: 2px;
+  background:
+    linear-gradient(160deg, #2a2540 0%, #14101f 45%, #0a0810 100%);
+  box-shadow:
+    0 0 0 1px rgba(120, 110, 170, 0.25),
+    0 0 18px rgba(60, 50, 110, 0.35);
+}
+
+/* Layer overlay che contiene atmosfera + corvo: NON ritaglia (il corvo esce). */
+.dc-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 5;
+}
+
+/* Atmosfera (luna/nebbia/lampi) ritagliata ai bordi della card. */
+.dc-atmosphere {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 0.8rem;
+  pointer-events: none;
+}
+
+/* --- LUNA (in alto a destra) --- */
+.dc-moon {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 38% 38%, #f4f1ff 0%, #cfc6f0 45%, #9a8fc4 75%, #6f6699 100%);
+  box-shadow:
+    0 0 16px 4px rgba(200, 190, 255, 0.35),
+    inset -6px -6px 10px rgba(60, 50, 100, 0.5);
+  opacity: 0.55;
+  transition: opacity 0.6s ease, filter 0.6s ease;
+}
+.dc-active .dc-moon {
+  opacity: 0.9;
+  animation: dc-moon-pulse 6s ease-in-out infinite;
+}
+.dc-moon::after { /* craterini */
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 60% 30%, rgba(90,80,130,0.45) 0 4px, transparent 5px),
+    radial-gradient(circle at 40% 62%, rgba(90,80,130,0.4) 0 3px, transparent 4px),
+    radial-gradient(circle at 72% 65%, rgba(90,80,130,0.35) 0 2px, transparent 3px);
+}
+@keyframes dc-moon-pulse {
+  0%, 100% { filter: brightness(1); }
+  50%      { filter: brightness(1.18); }
+}
+
+/* --- NEBBIA (due strati che scorrono lenti) --- */
+.dc-fog {
+  position: absolute;
+  left: -20%;
+  right: -20%;
+  height: 60%;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 100% at 20% 50%, rgba(180,180,210,0.16), transparent 70%),
+    radial-gradient(50% 100% at 65% 40%, rgba(160,160,200,0.13), transparent 70%),
+    radial-gradient(45% 100% at 90% 60%, rgba(180,180,210,0.12), transparent 70%);
+  filter: blur(4px);
+  opacity: 0;
+  transition: opacity 0.7s ease;
+}
+.dc-fog-bottom { bottom: 4%; }
+.dc-fog-mid    { bottom: 38%; }
+.dc-active .dc-fog-bottom { opacity: 1; animation: dc-fog-drift 16s linear infinite; }
+.dc-active .dc-fog-mid    { opacity: 0.7; animation: dc-fog-drift 24s linear infinite reverse; }
+@keyframes dc-fog-drift {
+  from { transform: translateX(-6%); }
+  to   { transform: translateX(6%); }
+}
+
+/* --- LAMPI (overlay flash + bagliore in alto) --- */
+.dc-lightning {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 50% at 50% -10%, rgba(190, 210, 255, 0.9), transparent 60%);
+  opacity: 0;
+}
+.dc-lightning.dc-strike {
+  animation: dc-flash 1.5s ease-out;
+}
+@keyframes dc-flash {
+  0%   { opacity: 0; }
+  4%   { opacity: 0.85; }
+  8%   { opacity: 0.1; }
+  12%  { opacity: 0.7; }
+  20%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+/* --- CORVO: contenitore mosso lungo il percorso --- */
+.dc-crow {
+  position: absolute;
+  left: 50%;
+  bottom: 58px; /* punto d'appoggio: appena sopra i pulsanti Mi Piace/Chat */
+  top: auto;
+  width: 120px;
+  height: 80px;
+  margin-left: -60px;
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0) scale(1);
+  opacity: 0;
+}
+/* fase: in arrivo dall'alto fino al punto d'appoggio (sopra i pulsanti) */
+.dc-crow.dc-incoming { animation: dc-incoming 1.7s cubic-bezier(0.3, 0.7, 0.4, 1) forwards; }
+@keyframes dc-incoming {
+  0%   { transform: translate3d(40px, -320px, 0) scale(0.38) rotate(8deg);  opacity: 0; }
+  18%  { opacity: 1; }
+  100% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); opacity: 1; }
+}
+/* fase: posato, leggera oscillazione */
+.dc-crow.dc-perched { transform: translate3d(0,0,0) scale(1); opacity: 1; animation: dc-bob 2.4s ease-in-out infinite; }
+@keyframes dc-bob {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(0, -2px, 0) scale(1); }
+}
+/* fase: svolazza via verso l'alto a destra */
+.dc-crow.dc-leaving { animation: dc-leaving 1.4s ease-in forwards; }
+@keyframes dc-leaving {
+  0%   { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); opacity: 1; }
+  30%  { transform: translate3d(10px, -14px, 0) scale(1) rotate(-6deg); opacity: 1; }
+  100% { transform: translate3d(150px, -150px, 0) scale(0.4) rotate(-16deg); opacity: 0; }
+}
+
+/* Ali che battono (solo nelle fasi di volo). Origine sulla "spalla". */
+.dc-wing { transform-box: fill-box; }
+.dc-wing-l { transform-origin: 92% 30%; }
+.dc-wing-r { transform-origin: 8% 30%; }
+.dc-flapping .dc-wing-l { animation: dc-flap-l 0.34s ease-in-out infinite; }
+.dc-flapping .dc-wing-r { animation: dc-flap-r 0.34s ease-in-out infinite; }
+@keyframes dc-flap-l {
+  0%, 100% { transform: rotate(16deg); }
+  50%      { transform: rotate(-22deg); }
+}
+@keyframes dc-flap-r {
+  0%, 100% { transform: rotate(-16deg); }
+  50%      { transform: rotate(22deg); }
+}
+
+/* Mostra/nascondi le due pose del corvo (volo simmetrico vs posato di lato) */
+.dc-pose-flying, .dc-pose-perched { transition: opacity 0.2s ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dc-moon, .dc-fog-bottom, .dc-fog-mid,
+  .dc-crow, .dc-wing-l, .dc-wing-r { animation: none !important; }
+}
