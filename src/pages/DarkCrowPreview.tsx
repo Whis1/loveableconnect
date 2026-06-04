@@ -49,6 +49,78 @@ const MockCard = ({ playToken }: { playToken: number }) => (
   </div>
 );
 
+/** Avatar con anello tematizzato "nero lucido". */
+const Avatar = ({ size = 60 }: { size?: number }) => (
+  <div className="dc-avatar">
+    <div
+      className="flex items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-700 font-bold text-white"
+      style={{ width: size, height: size, fontSize: size * 0.4 }}
+    >
+      S
+    </div>
+  </div>
+);
+
+/** Mini-contesto: avatar con anello + nickname (i tuoi match, like, classifica, partite). */
+const AvatarContext = ({ label }: { label: string }) => (
+  <div className="flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+    <Avatar size={60} />
+    <span className="text-sm font-bold dc-name">SMPSHOW</span>
+    <span className="text-[11px] uppercase tracking-wide text-white/40">{label}</span>
+  </div>
+);
+
+/** Card interna (come "profilo aperto"): cornice + nome + campi tematizzati. */
+const InternalCard = () => (
+  <div className="dc-frame w-[240px]">
+    <div className="overflow-hidden rounded-[0.8rem] bg-[#0c0a14]">
+      <div className="flex aspect-square items-center justify-center bg-gradient-to-br from-[#1c1636] via-[#120e22] to-[#08060f]">
+        <span className="text-6xl font-bold text-white/10">S</span>
+      </div>
+      <div className="dc-panel space-y-2.5 p-4">
+        <div className="dc-name text-lg font-bold">SMPSHOW</div>
+        <div className="flex flex-wrap gap-1.5">
+          <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70">28 anni</span>
+          <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70">Donna</span>
+          <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70">Omosessuale</span>
+        </div>
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5">
+            <Heart className="dc-icon h-3.5 w-3.5" />
+            <span className="dc-name text-xs font-semibold">Stato relazionale:</span>
+          </div>
+          <div className="pl-5 text-xs text-white/70">Fidanzato/a</div>
+        </div>
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5">
+            <MapPin className="dc-icon h-3.5 w-3.5" />
+            <span className="dc-name text-xs font-semibold">Cerca:</span>
+          </div>
+          <div className="pl-5 text-xs text-white/70">Incontri casuali</div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+/** Card apribile (statistiche): header classico + parte bassa tematizzata. */
+const StatsCard = () => (
+  <div className="w-[240px] overflow-hidden rounded-xl border border-white/10">
+    <div className="bg-gradient-to-r from-primary/40 via-purple-500/30 to-pink-500/40 p-4 text-center">
+      <div className="text-xs font-semibold uppercase tracking-wide text-white/80">Statistiche giocatore</div>
+    </div>
+    <div className="dc-shine-bg flex flex-col items-center gap-2 p-4">
+      <Avatar size={64} />
+      <div className="dc-name text-base font-bold">SMPSHOW</div>
+      <div className="mt-1 flex gap-5 text-center text-white">
+        <div><div className="text-lg font-bold">1850</div><div className="text-[10px] text-white/60">ELO</div></div>
+        <div><div className="text-lg font-bold">42</div><div className="text-[10px] text-white/60">Vittorie</div></div>
+        <div><div className="text-lg font-bold">7</div><div className="text-[10px] text-white/60">Tornei</div></div>
+      </div>
+    </div>
+  </div>
+);
+
 export default function DarkCrowPreview() {
   // 🔒 Pagina di prototipo: visibile SOLO agli account admin.
   const { isAdmin, loading: adminLoading } = useAdminRole();
@@ -160,13 +232,38 @@ export default function DarkCrowPreview() {
           </div>
         </div>
 
+        {/* --- ALTRI CONTESTI: come si vede il tema altrove --- */}
+        <div className="mt-14">
+          <div className="mb-5 text-xs font-semibold uppercase tracking-wider text-purple-300/70">
+            Come si vede negli altri contesti
+          </div>
+
+          <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <AvatarContext label="I tuoi match" />
+            <AvatarContext label="Like ricevuti" />
+            <AvatarContext label="Classifica" />
+            <AvatarContext label="Durante le partite" />
+          </div>
+
+          <div className="flex flex-wrap items-start gap-8">
+            <div>
+              <div className="mb-3 text-xs text-white/40">Card interna (profilo aperto)</div>
+              <InternalCard />
+            </div>
+            <div>
+              <div className="mb-3 text-xs text-white/40">Card apribile (statistiche, in partita / classifica)</div>
+              <StatsCard />
+            </div>
+          </div>
+        </div>
+
         <div className="mt-12 rounded-xl border border-white/10 bg-white/[0.03] p-5 text-sm text-white/60">
           <p className="mb-2 font-semibold text-white/80">Note prototipo</p>
           <ul className="list-disc space-y-1 pl-5">
-            <li>Corvo, luna, nebbia e lampi sono fatti in casa (SVG + CSS), zero dipendenze esterne e zero problemi di licenza.</li>
-            <li>In bacheca l'animazione parte all'hover con cooldown di 20s; nell'anteprima parte da sola.</li>
-            <li>Il corvo definitivo si potrà sostituire con una Lottie rifinita senza cambiare la logica.</li>
-            <li>Rispetta <code>prefers-reduced-motion</code> (se l'utente ha disattivato le animazioni di sistema, restano statiche).</li>
+            <li>Corvo (WebP animato) e luna sono immagini reali; nebbia e lampi sono CSS.</li>
+            <li>La scena (corvo + luna + nebbia + lampi) appare e si dissolve insieme. In bacheca parte all'hover con cooldown 20s; nell'anteprima parte da sola.</li>
+            <li>Negli altri contesti il tema applica l'anello avatar e il nickname "nero lucido" (niente scena/tempesta, solo come l'oro premium).</li>
+            <li>Rispetta <code>prefers-reduced-motion</code> (se l'utente ha disattivato le animazioni, restano statiche).</li>
           </ul>
         </div>
       </div>

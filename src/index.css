@@ -334,6 +334,51 @@ All colors MUST be HSL.
   animation: pt-gold-shine 3s linear infinite;
 }
 
+/* Anello avatar "nero lucido": cerchio conic scuro/metallico con riflesso
+   argenteo che ruota + alone freddo. Stessa meccanica dell'anello oro. */
+@keyframes dc-glow {
+  0%, 100% { box-shadow: 0 0 4px rgba(150, 140, 210, 0.25); }
+  50%      { box-shadow: 0 0 9px 1px rgba(175, 165, 235, 0.45); }
+}
+.dc-avatar {
+  padding: 3px;
+  border-radius: 9999px;
+  background: conic-gradient(
+    from var(--pt-angle),
+    #0a0a10, #4a4a58, #ecedf6, #2a2a34, #ccccda, #15151c, #5a5a68, #0a0a10
+  );
+  box-shadow: 0 0 6px rgba(150, 140, 210, 0.3);
+  animation: pt-gold-rotate 3.4s linear infinite, dc-glow 2.6s ease-in-out infinite;
+}
+.dc-avatar > * { border-radius: 9999px; }
+
+/* Icone del tema (campi card interna): argento/violaceo con leggero alone. */
+.dc-icon {
+  color: #c9c4e6;
+  filter: drop-shadow(0 0 3px rgba(150, 140, 210, 0.4));
+}
+
+/* Velatura del pannello info (card) nel tema dark. */
+.dc-panel {
+  background-image: linear-gradient(
+    to bottom,
+    rgba(120, 110, 170, 0.06),
+    rgba(20, 18, 30, 0.22)
+  );
+}
+
+/* Sfondo FISSO metallico scuro per la parte bassa della card statistiche. */
+.dc-shine-bg {
+  background-image: linear-gradient(
+    135deg,
+    rgba(18, 18, 26, 0.92),
+    rgba(64, 64, 78, 0.85),
+    rgba(150, 150, 172, 0.5),
+    rgba(64, 64, 78, 0.85),
+    rgba(18, 18, 26, 0.92)
+  );
+}
+
 /* La "scena": contiene tutto e ne gestisce la dissolvenza in/out. Ritagliata
    ai bordi della card. Ri-montata ad ogni play (key) per ripartire da capo. */
 .dc-scene {
