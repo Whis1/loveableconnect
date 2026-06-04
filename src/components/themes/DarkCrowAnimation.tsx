@@ -22,7 +22,7 @@ export const DarkCrowAnimation = ({ playToken }: DarkCrowAnimationProps) => {
 
   return (
     <div className="dc-scene" key={playToken}>
-      <div className="dc-moon" />
+      <img className="dc-moon" src="/themes/dark-crow/moon.png" alt="" aria-hidden="true" draggable={false} />
       <div className="dc-fog dc-fog-mid" />
       <div className="dc-fog dc-fog-bottom" />
       <div className="dc-lightning dc-lightning-cycle" />

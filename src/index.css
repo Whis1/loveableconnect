@@ -338,36 +338,21 @@ All colors MUST be HSL.
 /* --- LUNA (in alto a destra) --- */
 .dc-moon {
   position: absolute;
-  top: 10px;
+  top: 12px;
   right: 14px;
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 38% 38%, #f4f1ff 0%, #cfc6f0 45%, #9a8fc4 75%, #6f6699 100%);
-  box-shadow:
-    0 0 16px 4px rgba(200, 190, 255, 0.35),
-    inset -6px -6px 10px rgba(60, 50, 100, 0.5);
-  opacity: 0.55;
-  transition: opacity 0.6s ease, filter 0.6s ease;
+  width: 56px;
+  height: 56px;
+  opacity: 0.6;
+  filter: drop-shadow(0 0 12px rgba(200, 190, 255, 0.4));
+  transition: opacity 0.6s ease;
 }
 .dc-scene .dc-moon {
-  opacity: 0.9;
+  opacity: 0.95;
   animation: dc-moon-pulse 6s ease-in-out infinite;
 }
-.dc-moon::after { /* craterini */
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 60% 30%, rgba(90,80,130,0.45) 0 4px, transparent 5px),
-    radial-gradient(circle at 40% 62%, rgba(90,80,130,0.4) 0 3px, transparent 4px),
-    radial-gradient(circle at 72% 65%, rgba(90,80,130,0.35) 0 2px, transparent 3px);
-}
 @keyframes dc-moon-pulse {
-  0%, 100% { filter: brightness(1); }
-  50%      { filter: brightness(1.18); }
+  0%, 100% { filter: brightness(1) drop-shadow(0 0 12px rgba(200, 190, 255, 0.35)); }
+  50%      { filter: brightness(1.12) drop-shadow(0 0 18px rgba(210, 200, 255, 0.55)); }
 }
 
 /* --- NEBBIA (due strati che scorrono lenti) --- */
@@ -419,14 +404,16 @@ All colors MUST be HSL.
   100%    { opacity: 0; }
 }
 
-/* --- CORVO reale (WebP animato), statico: appare/scompare con la scena --- */
+/* --- CORVO reale (WebP animato), statico: appare/scompare con la scena.
+   Posizionato sopra il pulsante Chat (destra), appollaiato sul bordo
+   superiore del pulsante senza coprirlo. --- */
 .dc-crow-static {
   position: absolute;
-  left: 50%;
-  bottom: 30px;        /* poggia nella zona dei pulsanti */
-  width: 116px;
-  margin-left: -58px;
-  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.6));
+  left: 72%;           /* centrato sul pulsante Chat (a destra) */
+  bottom: 52px;        /* i piedi appoggiano sul bordo sopra il pulsante */
+  width: 100px;
+  margin-left: -50px;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.55));
 }
 
 @media (prefers-reduced-motion: reduce) {
