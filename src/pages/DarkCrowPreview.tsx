@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Heart, MessageCircle, MapPin, RotateCw, Moon, ShieldAlert, Loader2 } from "lucide-react";
+import { Heart, MessageCircle, MapPin, RotateCw, Moon, ShieldAlert, Loader2, User, Trophy, Crown } from "lucide-react";
 import { DarkCrowAnimation } from "@/components/themes/DarkCrowAnimation";
 import { useAdminRole } from "@/hooks/useAdminRole";
+import profileBadge from "@/assets/profile-badge.png";
 
 const COOLDOWN_MS = 20000;
 
@@ -70,52 +71,73 @@ const AvatarContext = ({ label }: { label: string }) => (
   </div>
 );
 
-/** Card interna (come "profilo aperto"): cornice + nome + campi tematizzati. */
+/** Card interna VERA (ProfileDialog): hero con grande rettangolo avatar +
+ *  nome centrato + pillole + sezioni Stato/Cerca, tutto tematizzato. */
 const InternalCard = () => (
-  <div className="dc-frame w-[240px]">
-    <div className="overflow-hidden rounded-[0.8rem] bg-[#0c0a14]">
-      <div className="flex aspect-square items-center justify-center bg-gradient-to-br from-[#1c1636] via-[#120e22] to-[#08060f]">
-        <span className="text-6xl font-bold text-white/10">S</span>
+  <div className="w-[340px] overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#1a1226] via-[#140e1f] to-[#0a0810]">
+    {/* Hero con rettangolo avatar */}
+    <div className="relative bg-gradient-to-br from-primary/20 via-primary/10 to-transparent p-6">
+      <div className="relative mx-auto w-fit">
+        <div className="dc-frame">
+          <div className="relative flex h-64 w-52 items-center justify-center overflow-hidden rounded-3xl border-4 border-[#0a0810] bg-gradient-to-br from-primary/20 to-primary/5">
+            <span className="text-7xl font-bold text-white/15">S</span>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+          </div>
+        </div>
+        <div className="absolute -right-3 -top-3 h-12 w-12 rotate-12 overflow-hidden rounded-2xl shadow-2xl">
+          <img src={profileBadge} alt="" className="h-full w-full object-contain" />
+        </div>
       </div>
-      <div className="dc-panel space-y-2.5 p-4">
-        <div className="dc-name text-lg font-bold">SMPSHOW</div>
-        <div className="flex flex-wrap gap-1.5">
-          <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70">28 anni</span>
-          <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70">Donna</span>
-          <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70">Omosessuale</span>
+    </div>
+
+    {/* Contenuto */}
+    <div className="space-y-5 px-6 pb-6">
+      <div className="space-y-3 text-center">
+        <h2 className="dc-name text-3xl font-bold">SMPSHOW</h2>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <span className="rounded-full bg-primary/10 px-4 py-1.5 text-sm font-semibold text-primary">28 anni</span>
+          <span className="rounded-full bg-blue-500/10 px-4 py-1.5 text-sm font-semibold text-blue-400"><User className="mr-1 inline h-3.5 w-3.5" />Donna</span>
+          <span className="rounded-full bg-pink-500/10 px-4 py-1.5 text-sm font-semibold text-pink-400"><User className="mr-1 inline h-3.5 w-3.5" />Omosessuale</span>
         </div>
-        <div className="space-y-1">
-          <div className="flex items-center gap-1.5">
-            <Heart className="dc-icon h-3.5 w-3.5" />
-            <span className="dc-name text-xs font-semibold">Stato relazionale:</span>
-          </div>
-          <div className="pl-5 text-xs text-white/70">Fidanzato/a</div>
+        <div className="flex items-center justify-center gap-2 text-white/50">
+          <MapPin className="h-4 w-4" /><span className="text-sm">Vicino alle tue parti</span>
         </div>
-        <div className="space-y-1">
-          <div className="flex items-center gap-1.5">
-            <MapPin className="dc-icon h-3.5 w-3.5" />
-            <span className="dc-name text-xs font-semibold">Cerca:</span>
-          </div>
-          <div className="pl-5 text-xs text-white/70">Incontri casuali</div>
-        </div>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+        <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold">
+          <User className="dc-icon h-5 w-5" /><span className="dc-name">Stato relazionale</span>
+        </h3>
+        <div className="text-base font-medium text-white/80">Fidanzato/a</div>
+      </div>
+
+      <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
+        <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold">
+          <User className="dc-icon h-5 w-5" /><span className="dc-name">Cosa cerca</span>
+        </h3>
+        <div className="text-base font-medium text-white/80">Incontri casuali</div>
       </div>
     </div>
   </div>
 );
 
-/** Card apribile (statistiche): header classico + parte bassa tematizzata. */
+/** Card statistiche VERA (ProfileStatsDialog): header viola con avatar+nome,
+ *  sotto parte tematizzata con ELO grande e medaglie (niente V/S). */
 const StatsCard = () => (
-  <div className="w-[240px] overflow-hidden rounded-xl border border-white/10">
-    <div className="bg-gradient-to-r from-primary/40 via-purple-500/30 to-pink-500/40 p-4 text-center">
-      <div className="text-xs font-semibold uppercase tracking-wide text-white/80">Statistiche giocatore</div>
+  <div className="w-[300px] overflow-hidden rounded-2xl border border-white/10">
+    <div className="flex flex-col items-center gap-3 bg-gradient-to-br from-primary/40 via-purple-500/30 to-pink-500/40 p-6 pb-12">
+      <Avatar size={88} />
+      <span className="dc-name text-2xl font-bold drop-shadow-lg">SMPSHOW</span>
     </div>
-    <div className="dc-shine-bg flex flex-col items-center gap-2 p-4">
-      <Avatar size={64} />
-      <div className="dc-name text-base font-bold">SMPSHOW</div>
-      <div className="mt-1 flex gap-5 text-center text-white">
-        <div><div className="text-lg font-bold">1850</div><div className="text-[10px] text-white/60">ELO</div></div>
-        <div><div className="text-lg font-bold">42</div><div className="text-[10px] text-white/60">Vittorie</div></div>
-        <div><div className="text-lg font-bold">7</div><div className="text-[10px] text-white/60">Tornei</div></div>
+    <div className="dc-shine-bg -mt-6 rounded-t-3xl px-6 py-5 text-center">
+      <p className="bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-xs font-bold uppercase tracking-[0.3em] text-transparent">
+        ELO
+      </p>
+      <p className="text-4xl font-bold text-primary drop-shadow-[0_0_12px_rgba(244,114,182,0.5)]">1850</p>
+      <div className="mt-3 flex justify-center gap-2">
+        <Crown className="h-7 w-7 text-amber-400" />
+        <Trophy className="h-7 w-7 text-amber-300" />
+        <Trophy className="h-7 w-7 text-purple-300" />
       </div>
     </div>
   </div>
