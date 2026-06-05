@@ -1679,6 +1679,7 @@ export type Database = {
       }
       deduct_message_credits: { Args: { _user_id: string }; Returns: boolean }
       delete_inbox_batch: { Args: { p_batch_id: string }; Returns: number }
+      enforce_premium_expiry: { Args: never; Returns: boolean }
       fnv1a: { Args: { s: string }; Returns: number }
       get_admin_credit_actions: {
         Args: never
