@@ -59,7 +59,7 @@ serve(async (req) => {
       const { data: existingNickname, error: nicknameError } = await supabaseAdmin
         .from("profiles")
         .select("id")
-        .ilike("nickname", trimmedNickname)
+        .ilike("nickname", trimmedNickname.replace(/[\\%_]/g, "\\$&"))
         .limit(1);
 
       if (nicknameError) {

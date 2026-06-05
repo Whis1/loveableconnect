@@ -38,7 +38,7 @@ serve(async (req) => {
     let query = supabaseAdmin
       .from("profiles")
       .select("id")
-      .ilike("nickname", nickname);
+      .ilike("nickname", nickname.replace(/[\\%_]/g, "\\$&"));
 
     if (currentProfileId) {
       query = query.neq("id", currentProfileId);

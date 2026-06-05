@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
         const { data: existingNickname, error: nicknameError } = await supabaseAdmin
           .from("profiles")
           .select("id")
-          .ilike("nickname", trimmedNickname)
+          .ilike("nickname", trimmedNickname.replace(/[\\%_]/g, "\\$&"))
           .neq("id", profileId)
           .limit(1);
 
