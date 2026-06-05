@@ -52,6 +52,32 @@ serve(async (req) => {
       }
     );
 
+    // Server-side nickname uniqueness check (case-insensitive, trimmed)
+    // mirrors the unique index on lower(btrim(nickname))
+    const trimmedNickname = (nickname ?? "").trim();
+    if (trimmedNickname) {
+      const { data: existingNickname, error: nicknameError } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .ilike("nickname", trimmedNickname)
+        .limit(1);
+
+      if (nicknameError) {
+        console.error("Error checking nickname uniqueness:", nicknameError);
+        throw nicknameError;
+      }
+
+      if (existingNickname && existingNickname.length > 0) {
+        return new Response(
+          JSON.stringify({ error: "Questo nickname è già in uso" }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+    }
+
     // Generate signup link - this creates the user AND returns confirmation link
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: "signup",
