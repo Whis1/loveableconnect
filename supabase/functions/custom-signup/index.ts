@@ -59,7 +59,7 @@ serve(async (req) => {
       const { data: existingNickname, error: nicknameError } = await supabaseAdmin
         .from("profiles")
         .select("id")
-        .ilike("nickname", trimmedNickname)
+        .ilike("nickname", trimmedNickname.replace(/[\\%_]/g, "\\$&"))
         .limit(1);
 
       if (nicknameError) {
@@ -69,7 +69,7 @@ serve(async (req) => {
 
       if (existingNickname && existingNickname.length > 0) {
         return new Response(
-          JSON.stringify({ error: "Questo nickname è già in uso" }),
+          JSON.stringify({ error: "Nickname già utilizzato da un altro utente" }),
           {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" },

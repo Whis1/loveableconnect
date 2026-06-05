@@ -45,6 +45,38 @@ Deno.serve(async (req) => {
 
     console.log(`Updating profile: ${profileId}`, updates);
 
+    // If nickname is being changed, enforce case-insensitive, trimmed uniqueness
+    // across ALL profiles (including admin profiles), excluding the current one.
+    if (typeof updates.nickname === "string") {
+      const trimmedNickname = updates.nickname.trim();
+      // keep stored value trimmed to match the unique index on lower(btrim(nickname))
+      updates.nickname = trimmedNickname;
+
+      if (trimmedNickname) {
+        const { data: existingNickname, error: nicknameError } = await supabaseAdmin
+          .from("profiles")
+          .select("id")
+          .ilike("nickname", trimmedNickname.replace(/[\\%_]/g, "\\$&"))
+          .neq("id", profileId)
+          .limit(1);
+
+        if (nicknameError) {
+          console.error("Error checking nickname uniqueness:", nicknameError);
+          throw nicknameError;
+        }
+
+        if (existingNickname && existingNickname.length > 0) {
+          return new Response(
+            JSON.stringify({ success: false, error: "Nickname già utilizzato da un altro utente" }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            }
+          );
+        }
+      }
+    }
+
     // If birthdate is provided, calculate and add age
     if (updates.birthdate) {
       updates.age = calculateAge(updates.birthdate);
