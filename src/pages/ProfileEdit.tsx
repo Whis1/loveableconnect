@@ -22,6 +22,8 @@ import { PageLoader } from "@/components/PageLoader";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useNicknameAvailability } from "@/hooks/useNicknameAvailability";
+import { isNicknameDuplicateError, isNicknameTaken, NICKNAME_TAKEN_MESSAGE, normalizeNickname } from "@/lib/nickname";
 
 interface SpotifySong {
   id: string;
@@ -93,6 +95,9 @@ const ProfileEdit = () => {
     premium_tier: string | null;
   } | null>(null);
   const [ageConsent, setAgeConsent] = useState(false);
+  const nicknameAvailability = useNicknameAvailability(profile?.nickname ?? "", profile?.id, {
+    enabled: Boolean(profile?.nickname),
+  });
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -316,6 +321,16 @@ const ProfileEdit = () => {
     e.preventDefault();
     
     if (!profile) return;
+    const normalizedNickname = normalizeNickname(profile.nickname);
+
+    if (!normalizedNickname) {
+      toast({
+        title: "Errore",
+        description: "Inserisci un nickname valido.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Validate birthdate if required
     if (requiresCompletion && (!birthDay || !birthMonth || !birthYear)) {
@@ -375,6 +390,15 @@ const ProfileEdit = () => {
       let avatarPath = profile.avatar_url;
       let photosPaths = [...(profile.photos || [])];
 
+      if (await isNicknameTaken(normalizedNickname, profile.id)) {
+        toast({
+          title: "Errore",
+          description: NICKNAME_TAKEN_MESSAGE,
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Upload avatar if changed (compresso lato client prima dell'upload)
       if (avatarFile) {
         const compressed = await compressImage(avatarFile);
@@ -414,7 +438,7 @@ const ProfileEdit = () => {
       const { error } = await supabase
         .from("profiles")
         .update({
-          nickname: profile.nickname,
+          nickname: normalizedNickname,
           bio: profile.bio,
           birthdate: birthdate,
           gender: profile.gender,
@@ -447,7 +471,7 @@ const ProfileEdit = () => {
     } catch (error: any) {
       toast({
         title: t('profile.error'),
-        description: error.message,
+        description: isNicknameDuplicateError(error) ? NICKNAME_TAKEN_MESSAGE : error.message,
         variant: "destructive",
       });
     } finally {
@@ -732,9 +756,16 @@ const ProfileEdit = () => {
                     id="nickname"
                     value={profile.nickname}
                     onChange={(e) => setProfile({ ...profile, nickname: e.target.value })}
+                    className={nicknameAvailability.isTaken ? "border-red-500 focus-visible:ring-red-500" : undefined}
+                    aria-invalid={nicknameAvailability.isTaken}
                     maxLength={18}
                     required
                   />
+                  {nicknameAvailability.isTaken && (
+                    <p className="text-xs font-semibold text-red-500 dark:text-red-400">
+                      {NICKNAME_TAKEN_MESSAGE}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -1063,7 +1094,7 @@ const ProfileEdit = () => {
                       Suono di notifica nuovo messaggio
                     </Label>
                     <p className="text-sm text-muted-foreground">
-                      Riproduce un suono quando ricevi un nuovo messaggio, su qualsiasi pagina.
+                      Riproduce un suono quando ricevi un nuovo messaggio.
                     </p>
                   </div>
                   <Switch

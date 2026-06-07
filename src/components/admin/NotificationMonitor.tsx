@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Bell, Heart, MessageSquare, Check, Trash2 } from "lucide-react";
+import { Bell, Heart, MessageSquare, Check, Trash2, LogIn, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
@@ -14,7 +14,7 @@ interface Notification {
   id: string;
   admin_profile_id: string;
   user_id: string;
-  interaction_type: 'like' | 'message';
+  interaction_type: 'like' | 'message' | 'login' | 'logout';
   message_preview?: string;
   created_at: string;
   read: boolean;
@@ -26,6 +26,83 @@ interface Notification {
     nickname: string;
   };
 }
+
+const DUPLICATE_WINDOW_MS = 15_000;
+
+const notificationKey = (notification: Notification) => [
+  notification.admin_profile_id,
+  notification.user_id,
+  notification.interaction_type,
+  notification.message_preview ?? "",
+].join("|");
+
+const dedupeNotifications = (items: Notification[]) => {
+  const deduped: Notification[] = [];
+
+  [...items]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .forEach((notification) => {
+      const currentTime = new Date(notification.created_at).getTime();
+      const existing = deduped.find((candidate) => {
+        if (notificationKey(candidate) !== notificationKey(notification)) return false;
+        const candidateTime = new Date(candidate.created_at).getTime();
+        return Math.abs(candidateTime - currentTime) <= DUPLICATE_WINDOW_MS;
+      });
+
+      if (existing) {
+        existing.read = existing.read && notification.read;
+        return;
+      }
+
+      deduped.push({ ...notification });
+    });
+
+  return deduped;
+};
+
+const getNotificationIcon = (type: Notification["interaction_type"]) => {
+  if (type === "like") {
+    return <Heart className="h-3.5 w-3.5 text-rose-500" fill="currentColor" />;
+  }
+
+  if (type === "message") {
+    return <MessageSquare className="h-3.5 w-3.5 text-blue-500" />;
+  }
+
+  if (type === "login") {
+    return <LogIn className="h-3.5 w-3.5 text-emerald-400" />;
+  }
+
+  return <LogOut className="h-3.5 w-3.5 text-slate-400" />;
+};
+
+const getNotificationText = (notification: Notification) => {
+  if (notification.interaction_type === "like") {
+    return {
+      action: "ha messo like a",
+      target: notification.admin_profile?.nickname || "Profilo admin",
+    };
+  }
+
+  if (notification.interaction_type === "message") {
+    return {
+      action: "ha scritto a",
+      target: notification.admin_profile?.nickname || "Profilo admin",
+    };
+  }
+
+  if (notification.interaction_type === "login") {
+    return {
+      action: "è entrato online",
+      target: "",
+    };
+  }
+
+  return {
+    action: "è uscito offline",
+    target: "",
+  };
+};
 
 export const NotificationMonitor = () => {
   const { toast } = useToast();
@@ -40,7 +117,7 @@ export const NotificationMonitor = () => {
       });
 
       if (error) throw error;
-      setNotifications((data as any)?.notifications || []);
+      setNotifications(dedupeNotifications((data as any)?.notifications || []));
     } catch (error: any) {
       console.error("Error fetching notifications:", error);
       toast({
@@ -190,7 +267,7 @@ export const NotificationMonitor = () => {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <CardTitle className="flex items-center gap-2">
@@ -240,23 +317,26 @@ export const NotificationMonitor = () => {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         <ScrollArea className="h-[600px] pr-4">
           {notifications.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">
               {filter === 'unread' ? 'Nessuna notifica non letta' : 'Nessuna notifica'}
             </p>
           ) : (
-            <div className="space-y-2">
-              {notifications.map((notification) => (
+            <div className="space-y-1.5">
+              {notifications.map((notification) => {
+                const text = getNotificationText(notification);
+
+                return (
                 <div
                   key={notification.id}
-                  className={`border rounded-lg p-4 ${
-                    !notification.read ? 'bg-accent/50' : ''
+                  className={`border rounded-md px-3 py-2 ${
+                    !notification.read ? 'bg-accent/40' : ''
                   }`}
                 >
-                  <div className="flex items-start gap-3">
-                    <Avatar className="h-10 w-10">
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8 shrink-0">
                       {notification.user_profile?.avatar_url ? (
                         <AvatarImage 
                           src={supabase.storage
@@ -269,34 +349,29 @@ export const NotificationMonitor = () => {
                       </AvatarFallback>
                     </Avatar>
 
-                    <div className="flex-1 space-y-1">
-                      <div className="flex items-center gap-2">
-                        {notification.interaction_type === 'like' ? (
-                          <Heart className="h-4 w-4 text-rose-500" fill="currentColor" />
-                        ) : (
-                          <MessageSquare className="h-4 w-4 text-blue-500" />
-                        )}
-                        <span className="font-semibold">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 items-center gap-1.5 text-sm leading-tight">
+                        <span className="shrink-0">{getNotificationIcon(notification.interaction_type)}</span>
+                        <span className="max-w-[120px] truncate font-semibold">
                           {notification.user_profile?.nickname || 'Utente sconosciuto'}
                         </span>
-                        <span className="text-sm text-muted-foreground">
-                          {notification.interaction_type === 'like' 
-                            ? 'ha messo like a'
-                            : 'ha inviato un messaggio a'
-                          }
+                        <span className="truncate text-muted-foreground">
+                          {text.action}
                         </span>
-                        <span className="font-semibold">
-                          {notification.admin_profile?.nickname || 'Profilo admin'}
-                        </span>
+                        {text.target && (
+                          <span className="max-w-[120px] truncate font-semibold">
+                            {text.target}
+                          </span>
+                        )}
                       </div>
 
                       {notification.message_preview && (
-                        <p className="text-sm text-muted-foreground italic">
+                        <p className="truncate text-xs text-muted-foreground italic">
                           "{notification.message_preview}"
                         </p>
                       )}
 
-                      <p className="text-xs text-muted-foreground">
+                      <p className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
                         {formatDistanceToNow(new Date(notification.created_at), {
                           addSuffix: true,
                           locale: it,
@@ -308,14 +383,16 @@ export const NotificationMonitor = () => {
                       <Button
                         variant="ghost"
                         size="sm"
+                        className="h-7 w-7 shrink-0 p-0"
                         onClick={() => handleMarkAsRead(notification.id)}
                       >
-                        <Check className="h-4 w-4" />
+                        <Check className="h-3.5 w-3.5" />
                       </Button>
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </ScrollArea>

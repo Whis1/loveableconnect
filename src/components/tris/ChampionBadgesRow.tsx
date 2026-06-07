@@ -27,6 +27,8 @@ interface ChampionBadgesRowProps {
   wins?: number;
   /** ELO del profilo: sblocca ELO Expert (2500) / ELO Virtuoso (3000). */
   elo?: number;
+  apexUnlocked?: boolean;
+  zenithUnlocked?: boolean;
   /** Se true, il profilo è ATTUALMENTE primo in classifica → sblocca Champion subito. */
   isCurrentlyFirst?: boolean;
   /** Disposizione: una riga con divisore ("inline") o due righe ("stacked"). */
@@ -40,6 +42,8 @@ export const ChampionBadgesRow = ({
   tournamentsWon,
   wins,
   elo,
+  apexUnlocked = false,
+  zenithUnlocked = false,
   isCurrentlyFirst = false,
   layout = "inline",
   size = "md",
@@ -49,6 +53,8 @@ export const ChampionBadgesRow = ({
 
   // 🏆 Champion: ottenuto se è stato #1 in passato OPPURE se è primo ORA.
   const isChampion = badges.everChampion || isCurrentlyFirst;
+  const hasApex = apexUnlocked || (typeof elo === "number" && elo >= 2500);
+  const hasZenith = zenithUnlocked || (typeof elo === "number" && elo >= 3000);
 
   const Badge = ({
     icon,
@@ -172,16 +178,16 @@ export const ChampionBadgesRow = ({
       {typeof elo === "number" && (
         <>
           <Badge
-            icon={<EloMasterIcon className={iconCls} active={elo >= 2500} />}
+            icon={<EloMasterIcon className={iconCls} active={hasApex} />}
             preview={<EloMasterIcon className={previewCls} active />}
-            active={elo >= 2500}
+            active={hasApex}
             title="Apex"
             desc="Titolo ottenuto raggiungendo i 2.500 punti ELO."
           />
           <Badge
-            icon={<EloGrandmasterIcon className={iconCls} active={elo >= 3000} />}
+            icon={<EloGrandmasterIcon className={iconCls} active={hasZenith} />}
             preview={<EloGrandmasterIcon className={previewCls} active />}
-            active={elo >= 3000}
+            active={hasZenith}
             title="Zenith"
             desc="Titolo ottenuto raggiungendo i 3.000 punti ELO."
           />

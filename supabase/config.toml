@@ -120,6 +120,9 @@ verify_jwt = false
 [functions.check-subscription-expiry]
 verify_jwt = false
 
+[functions.check-nickname]
+verify_jwt = false
+
 [functions.admin-secondary-create]
 verify_jwt = false
 

@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
 
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, nickname, full_name, age, city, avatar_url, bio, is_admin_profile')
+      .select('id, nickname, full_name, age, gender, sexual_orientation, city, avatar_url, bio, is_admin_profile, last_active, last_login_at, last_logout_at, manual_online_status, show_online_status')
       .eq('is_admin_profile', false)
       .order('created_at', { ascending: false });
 

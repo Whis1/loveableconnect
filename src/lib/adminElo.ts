@@ -346,11 +346,16 @@ function computeAdminTournamentsWon(id: string): number {
   const base = baseElo(id);
   if (base < 2000) return 0;
 
-  // Probabilita' per bucket settimanale (0..10000)
+  // Probabilita' per bucket settimanale (0..10000). Tarata alta per gli admin
+  // con ELO base elevato: dopo qualche weekend devono comparire Tournament
+  // Champion sui profili davvero forti, senza regalarlo ai profili medi.
   let probPerWeek: number;
-  if (base >= 2800) probPerWeek = 1500;       // 15%
-  else if (base >= 2500) probPerWeek = 800;   // 8%
-  else probPerWeek = 400;                     // 4%
+  if (base >= 2950) probPerWeek = 8500;       // 85%
+  else if (base >= 2800) probPerWeek = 7000;  // 70%
+  else if (base >= 2600) probPerWeek = 4500;  // 45%
+  else if (base >= 2400) probPerWeek = 2500;  // 25%
+  else if (base >= 2200) probPerWeek = 1200;  // 12%
+  else probPerWeek = 600;                     // 6%
 
   const totalWeeks = Math.floor((now - TOURNAMENT_EPOCH) / TOURNAMENT_BUCKET_MS);
   let count = 0;
@@ -510,20 +515,38 @@ function resolveTiesEngine(entries: TieEntry[]): Map<string, number> {
 // ELO grezzo simulato di un admin (base intrinseca + drift cumulativo), PRIMA
 // di qualunque duello di parità. Usato dalla classifica per fondere admin e
 // utenti reali e risolvere le parità in un unico passaggio.
-export function rawAdminElo(id: string): number {
-  const now = Date.now();
+export function rawAdminEloAt(id: string, now: number): number {
   return Math.max(100, baseElo(id) + cumulativeDrift(id, personalBucket(id, now)));
+}
+
+export function rawAdminElo(id: string): number {
+  return rawAdminEloAt(id, Date.now());
+}
+
+export function computeAdminPeakElo(id: string, now = Date.now()): number {
+  const currentBucket = personalBucket(id, now);
+  if (currentBucket < 0) return rawAdminEloAt(id, now);
+
+  let peak = rawAdminEloAt(id, now);
+  for (let b = 0; b <= currentBucket; b++) {
+    peak = Math.max(peak, Math.max(100, baseElo(id) + cumulativeDrift(id, b)));
+  }
+  return peak;
 }
 
 // Mappa id -> ELO admin corrente, con duello di parità risolto FRA GLI ADMIN.
 // Usata dove serve l'ELO "ufficiale" di un admin senza il contesto degli utenti
 // reali (cerca avversario, tornei, pannello admin). La classifica vera usa
 // invece resolveLeaderboardTies sulla lista fusa.
-export function computeAdminElos(admins: AdminSeed[]): Map<string, number> {
+export function computeAdminElosAt(admins: AdminSeed[], now: number): Map<string, number> {
   if (admins.length === 0) return new Map();
   return resolveTiesEngine(
-    admins.map((a) => ({ id: a.id, elo: rawAdminElo(a.id), canMove: true }))
+    admins.map((a) => ({ id: a.id, elo: rawAdminEloAt(a.id, now), canMove: true }))
   );
+}
+
+export function computeAdminElos(admins: AdminSeed[]): Map<string, number> {
+  return computeAdminElosAt(admins, Date.now());
 }
 
 // 🥊 Duello di parità sulla CLASSIFICA COMPLETA (admin + utenti reali fusi).
@@ -540,4 +563,88 @@ export function resolveLeaderboardTies(entries: RankEntry[]): Map<string, number
   return resolveTiesEngine(
     entries.map((e) => ({ id: e.id, elo: e.elo, canMove: e.isAdmin }))
   );
+}
+
+function adminBucketStartMs(id: string, now: number): number {
+  const freqMs = personalFrequencyMs(id);
+  const offsetMs = personalOffsetMs(id, freqMs);
+  const bucket = personalBucket(id, now);
+  if (bucket < 0) return EPOCH;
+  return EPOCH + offsetMs + bucket * freqMs;
+}
+
+function leaderboardRanksAt(entries: RankEntry[], now: number): Map<string, number> {
+  const adminSeeds = entries.filter((entry) => entry.isAdmin).map((entry) => ({ id: entry.id }));
+  const adminElos = computeAdminElosAt(adminSeeds, now);
+  const resolved = resolveLeaderboardTies(
+    entries.map((entry) => ({
+      id: entry.id,
+      isAdmin: entry.isAdmin,
+      elo: entry.isAdmin ? (adminElos.get(entry.id) ?? rawAdminEloAt(entry.id, now)) : entry.elo,
+    }))
+  );
+
+  const ranked = entries
+    .map((entry, order) => ({
+      id: entry.id,
+      order,
+      elo: resolved.get(entry.id) ?? entry.elo,
+    }))
+    .sort((a, b) => b.elo - a.elo || a.order - b.order);
+
+  return new Map(ranked.map((entry, index) => [entry.id, index + 1]));
+}
+
+export function computeLeaderboardRankDurations(
+  entries: RankEntry[],
+  targetIds: string[],
+  now = Date.now(),
+  maxLookbackMs = 180 * DAY_MS
+): Map<string, number> {
+  const targets = Array.from(new Set(targetIds));
+  const durations = new Map<string, number>();
+  if (entries.length === 0 || targets.length === 0) return durations;
+
+  const currentRanks = leaderboardRanksAt(entries, now);
+  const lowerBound = Math.max(EPOCH, now - maxLookbackMs);
+  const remaining = new Set(targets.filter((id) => currentRanks.has(id)));
+
+  const cursors = entries
+    .filter((entry) => entry.isAdmin)
+    .map((entry) => ({
+      id: entry.id,
+      freqMs: personalFrequencyMs(entry.id),
+      eventTime: adminBucketStartMs(entry.id, now),
+    }));
+
+  while (remaining.size > 0) {
+    let latestEvent = -Infinity;
+    for (const cursor of cursors) {
+      if (cursor.eventTime > lowerBound && cursor.eventTime <= now && cursor.eventTime > latestEvent) {
+        latestEvent = cursor.eventTime;
+      }
+    }
+
+    if (!Number.isFinite(latestEvent)) break;
+
+    const ranksBeforeEvent = leaderboardRanksAt(entries, Math.max(EPOCH, latestEvent - 1));
+    for (const id of Array.from(remaining)) {
+      if (ranksBeforeEvent.get(id) !== currentRanks.get(id)) {
+        durations.set(id, Math.max(0, now - latestEvent));
+        remaining.delete(id);
+      }
+    }
+
+    for (const cursor of cursors) {
+      if (cursor.eventTime === latestEvent) {
+        cursor.eventTime -= cursor.freqMs;
+      }
+    }
+  }
+
+  for (const id of remaining) {
+    durations.set(id, Math.max(0, now - lowerBound));
+  }
+
+  return durations;
 }

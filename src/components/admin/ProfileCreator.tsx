@@ -10,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { UserPlus, Users, Camera, Upload, X, Music, Link2 } from "lucide-react";
 import { InterestsAutocomplete } from "@/components/InterestsAutocomplete";
 import { SpotifySongSelector } from "@/components/SpotifySongSelector";
+import { useNicknameAvailability } from "@/hooks/useNicknameAvailability";
+import { isNicknameDuplicateError, isNicknameTaken, NICKNAME_TAKEN_MESSAGE, normalizeNickname } from "@/lib/nickname";
 
 interface SpotifySong {
   id: string;
@@ -81,6 +83,9 @@ export const ProfileCreator = () => {
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [favoriteSongs, setFavoriteSongs] = useState<SpotifySong[]>([]);
+  const nicknameAvailability = useNicknameAvailability(formData.nickname, undefined, {
+    enabled: Boolean(formData.nickname.trim()),
+  });
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const photosInputRef = useRef<HTMLInputElement>(null);
 
@@ -301,7 +306,9 @@ export const ProfileCreator = () => {
   };
 
   const handleCreateProfile = async () => {
-    if (!formData.nickname) {
+    const normalizedNickname = normalizeNickname(formData.nickname);
+
+    if (!normalizedNickname) {
       toast({
         title: "Errore",
         description: "Inserisci almeno il nickname",
@@ -312,6 +319,15 @@ export const ProfileCreator = () => {
 
     setLoading(true);
     try {
+      if (await isNicknameTaken(normalizedNickname)) {
+        toast({
+          title: "Errore",
+          description: NICKNAME_TAKEN_MESSAGE,
+          variant: "destructive",
+        });
+        return;
+      }
+
       const profileId = crypto.randomUUID();
       console.log("Creating profile with ID:", profileId);
 
@@ -343,8 +359,8 @@ export const ProfileCreator = () => {
 
       const { data, error: profileError } = await supabase.from("profiles").insert({
         id: profileId,
-        nickname: formData.nickname,
-        full_name: formData.nickname,
+        nickname: normalizedNickname,
+        full_name: normalizedNickname,
         age: formData.age ? parseInt(formData.age) : null,
         birthdate: formData.birthdate || null,
         bio: formData.bio || null,
@@ -372,7 +388,7 @@ export const ProfileCreator = () => {
 
       toast({
         title: "Profilo creato",
-        description: `Profilo ${formData.nickname} creato con successo`,
+        description: `Profilo ${normalizedNickname} creato con successo`,
       });
 
       setFormData({
@@ -397,7 +413,7 @@ export const ProfileCreator = () => {
       console.error("Error creating profile:", error);
       toast({
         title: "Errore",
-        description: error.message || "Errore durante la creazione del profilo",
+        description: isNicknameDuplicateError(error) ? NICKNAME_TAKEN_MESSAGE : (error.message || "Errore durante la creazione del profilo"),
         variant: "destructive",
       });
     } finally {
@@ -504,7 +520,14 @@ export const ProfileCreator = () => {
             id="nickname"
             value={formData.nickname}
             onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
+            className={nicknameAvailability.isTaken ? "border-red-500 focus-visible:ring-red-500" : undefined}
+            aria-invalid={nicknameAvailability.isTaken}
           />
+          {nicknameAvailability.isTaken && (
+            <p className="text-xs font-semibold text-red-500 dark:text-red-400">
+              {NICKNAME_TAKEN_MESSAGE}
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">

@@ -1,10 +1,18 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const normalizeNickname = (value: string | null | undefined): string => (value ?? "").trim();
+
+const nicknameKey = (value: string | null | undefined): string =>
+  normalizeNickname(value).toLocaleLowerCase("it-IT");
+
+const escapeIlikePattern = (value: string): string =>
+  value.replace(/[\\%_]/g, (match) => `\\${match}`);
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -12,56 +20,61 @@ serve(async (req) => {
   }
 
   try {
-    const body = await req.json().catch(() => ({}));
-    const rawNickname = typeof body?.nickname === "string" ? body.nickname : "";
-    const nickname = rawNickname.trim();
-    const currentProfileId =
-      typeof body?.current_profile_id === "string" && body.current_profile_id
-        ? body.current_profile_id
-        : null;
+    const { nickname, current_profile_id } = await req.json().catch(() => ({}));
+    const normalized = normalizeNickname(nickname);
 
-    if (!nickname) {
+    if (!normalized) {
       return new Response(
-        JSON.stringify({ taken: false, error: "Nickname mancante" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ taken: false }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { autoRefreshToken: false, persistSession: false } }
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      },
     );
 
-    // Case-insensitive, trimmed match (mirrors the unique index on lower(btrim(nickname))).
-    // Compare against trim+lower of stored nickname to ignore leading/trailing spaces.
-    let query = supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from("profiles")
-      .select("id")
-      .ilike("nickname", nickname.replace(/[\\%_]/g, "\\$&"));
+      .select("id, nickname")
+      .ilike("nickname", escapeIlikePattern(normalized))
+      .limit(25);
 
-    if (currentProfileId) {
-      query = query.neq("id", currentProfileId);
-    }
+    if (error) throw error;
 
-    const { data, error } = await query.limit(1);
-
-    if (error) {
-      console.error("Error checking nickname:", error);
-      throw error;
-    }
-
-    const taken = !!data && data.length > 0;
+    const wantedKey = nicknameKey(normalized);
+    const taken = (data ?? []).some((profile) =>
+      profile.id !== current_profile_id &&
+      nicknameKey(profile.nickname) === wantedKey
+    );
 
     return new Response(
       JSON.stringify({ taken }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
     );
-  } catch (error: any) {
-    console.error("Error in check-nickname:", error);
+  } catch (error) {
+    console.error("check-nickname error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
     return new Response(
-      JSON.stringify({ taken: false, error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: errorMessage }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
     );
   }
 });

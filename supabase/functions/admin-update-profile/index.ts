@@ -20,6 +20,22 @@ function calculateAge(birthdate: string): number {
   return age;
 }
 
+const NICKNAME_TAKEN_MESSAGE = "Nickname già utilizzato da un altro utente";
+
+const normalizeNickname = (value: string | null | undefined): string => (value ?? "").trim();
+
+const nicknameKey = (value: string | null | undefined): string =>
+  normalizeNickname(value).toLocaleLowerCase("it-IT");
+
+const escapeIlikePattern = (value: string): string =>
+  value.replace(/[\\%_]/g, (match) => `\\${match}`);
+
+const isNicknameDuplicateError = (error: unknown): boolean => {
+  const anyError = error as { code?: string; message?: string; details?: string; hint?: string };
+  const text = `${anyError?.code ?? ""} ${anyError?.message ?? ""} ${anyError?.details ?? ""} ${anyError?.hint ?? ""}`.toLowerCase();
+  return text.includes("23505") || text.includes("duplicate key") || text.includes("profiles_nickname_unique_ci");
+};
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -45,41 +61,51 @@ Deno.serve(async (req) => {
 
     console.log(`Updating profile: ${profileId}`, updates);
 
-    // If nickname is being changed, enforce case-insensitive, trimmed uniqueness
-    // across ALL profiles (including admin profiles), excluding the current one.
-    if (typeof updates.nickname === "string") {
-      const trimmedNickname = updates.nickname.trim();
-      // keep stored value trimmed to match the unique index on lower(btrim(nickname))
-      updates.nickname = trimmedNickname;
-
-      if (trimmedNickname) {
-        const { data: existingNickname, error: nicknameError } = await supabaseAdmin
-          .from("profiles")
-          .select("id")
-          .ilike("nickname", trimmedNickname.replace(/[\\%_]/g, "\\$&"))
-          .neq("id", profileId)
-          .limit(1);
-
-        if (nicknameError) {
-          console.error("Error checking nickname uniqueness:", nicknameError);
-          throw nicknameError;
-        }
-
-        if (existingNickname && existingNickname.length > 0) {
-          return new Response(
-            JSON.stringify({ success: false, error: "Nickname già utilizzato da un altro utente" }),
-            {
-              status: 400,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            }
-          );
-        }
-      }
-    }
-
     // If birthdate is provided, calculate and add age
     if (updates.birthdate) {
       updates.age = calculateAge(updates.birthdate);
+    }
+
+    if (typeof updates.nickname === 'string') {
+      const cleanNickname = normalizeNickname(updates.nickname);
+
+      if (!cleanNickname) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Inserisci un nickname valido.' }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+
+      const { data: existingProfiles, error: nicknameCheckError } = await supabaseAdmin
+        .from('profiles')
+        .select('id, nickname')
+        .ilike('nickname', escapeIlikePattern(cleanNickname))
+        .limit(25);
+
+      if (nicknameCheckError) {
+        console.error('Nickname check error:', nicknameCheckError);
+        throw nicknameCheckError;
+      }
+
+      const nicknameAlreadyExists = (existingProfiles ?? []).some((profile) =>
+        profile.id !== profileId &&
+        nicknameKey(profile.nickname) === nicknameKey(cleanNickname)
+      );
+
+      if (nicknameAlreadyExists) {
+        return new Response(
+          JSON.stringify({ success: false, error: NICKNAME_TAKEN_MESSAGE }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+
+      updates.nickname = cleanNickname;
     }
 
     const { data, error } = await supabaseAdmin
@@ -105,6 +131,18 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error('Error in admin-update-profile function:', error);
+    if (isNicknameDuplicateError(error)) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: NICKNAME_TAKEN_MESSAGE
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
+    }
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ 

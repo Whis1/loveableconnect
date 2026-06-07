@@ -62,6 +62,7 @@ Deno.serve(async (req) => {
         credits: credits || null,
         purchases: purchases || [],
         auth_created_at: authUser.user.created_at,
+        auth_last_sign_in_at: authUser.user.last_sign_in_at || null,
         auth_provider: authUser.user.app_metadata.provider || 'email',
         auth_email: authUser.user.email || null,
       }),

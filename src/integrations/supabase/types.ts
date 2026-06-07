@@ -76,6 +76,8 @@ export type Database = {
           interaction_type: string
           message_preview: string | null
           read: boolean
+          source_id: string | null
+          source_table: string | null
           user_id: string
         }
         Insert: {
@@ -85,6 +87,8 @@ export type Database = {
           interaction_type: string
           message_preview?: string | null
           read?: boolean
+          source_id?: string | null
+          source_table?: string | null
           user_id: string
         }
         Update: {
@@ -94,6 +98,8 @@ export type Database = {
           interaction_type?: string
           message_preview?: string | null
           read?: boolean
+          source_id?: string | null
+          source_table?: string | null
           user_id?: string
         }
         Relationships: [
@@ -746,6 +752,8 @@ export type Database = {
           interests: string[] | null
           is_admin_profile: boolean
           last_active: string | null
+          last_login_at: string | null
+          last_logout_at: string | null
           latitude: number | null
           location_locked: boolean | null
           longitude: number | null
@@ -782,6 +790,8 @@ export type Database = {
           interests?: string[] | null
           is_admin_profile?: boolean
           last_active?: string | null
+          last_login_at?: string | null
+          last_logout_at?: string | null
           latitude?: number | null
           location_locked?: boolean | null
           longitude?: number | null
@@ -818,6 +828,8 @@ export type Database = {
           interests?: string[] | null
           is_admin_profile?: boolean
           last_active?: string | null
+          last_login_at?: string | null
+          last_logout_at?: string | null
           latitude?: number | null
           location_locked?: boolean | null
           longitude?: number | null
@@ -1679,7 +1691,6 @@ export type Database = {
       }
       deduct_message_credits: { Args: { _user_id: string }; Returns: boolean }
       delete_inbox_batch: { Args: { p_batch_id: string }; Returns: number }
-      enforce_premium_expiry: { Args: never; Returns: boolean }
       fnv1a: { Args: { s: string }; Returns: number }
       get_admin_credit_actions: {
         Args: never

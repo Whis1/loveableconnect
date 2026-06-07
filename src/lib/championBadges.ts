@@ -58,6 +58,42 @@ export function computeChampionBadges(dayNumbers: number[]): ChampionBadges {
   return { everChampion: true, weeks, months };
 }
 
+export function computeStrictChampionBadges(
+  top1StreakStartedAt: string | Date | null | undefined,
+  everChampion = false,
+  now = Date.now()
+): ChampionBadges {
+  if (!top1StreakStartedAt) {
+    return { everChampion, weeks: 0, months: 0 };
+  }
+
+  const startedAtMs =
+    top1StreakStartedAt instanceof Date
+      ? top1StreakStartedAt.getTime()
+      : new Date(top1StreakStartedAt).getTime();
+  if (!Number.isFinite(startedAtMs)) {
+    return { everChampion, weeks: 0, months: 0 };
+  }
+
+  const fullDays = Math.max(0, Math.floor((now - startedAtMs) / DAY_MS));
+  return {
+    everChampion: true,
+    weeks: Math.floor(fullDays / 7),
+    months: Math.floor(fullDays / 30),
+  };
+}
+
+export function mergeChampionBadges(...badgeSets: ChampionBadges[]): ChampionBadges {
+  return badgeSets.reduce<ChampionBadges>(
+    (merged, badges) => ({
+      everChampion: merged.everChampion || badges.everChampion,
+      weeks: Math.max(merged.weeks, badges.weeks),
+      months: Math.max(merged.months, badges.months),
+    }),
+    { everChampion: false, weeks: 0, months: 0 }
+  );
+}
+
 /** Converte una data 'YYYY-MM-DD' nel numero di giorno (UTC). */
 export function dateStringToDayNumber(dateStr: string): number {
   const [y, m, d] = dateStr.split("-").map(Number);

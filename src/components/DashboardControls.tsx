@@ -4,12 +4,14 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { markCurrentUserOffline } from "@/hooks/usePresenceTracking";
 
 export const DashboardControls = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
   const handleSignOut = async () => {
+    await markCurrentUserOffline();
     await supabase.auth.signOut();
     navigate("/auth");
   };

@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useUnreadSupportMessages } from "@/hooks/useUnreadSupportMessages";
+import { markCurrentUserOffline } from "@/hooks/usePresenceTracking";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export default function AdminArrettu() {
@@ -133,6 +134,7 @@ export default function AdminArrettu() {
   };
 
   const handleLogout = async () => {
+    await markCurrentUserOffline();
     await supabase.auth.signOut();
     setIsLoggedIn(false);
     setNickname("");

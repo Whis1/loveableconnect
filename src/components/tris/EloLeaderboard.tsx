@@ -6,12 +6,24 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy, ChevronDown, ChevronUp, Crown } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { computeChampionBadges, dateStringToDayNumber, ChampionBadges } from "@/lib/championBadges";
+import {
+  computeChampionBadges,
+  computeStrictChampionBadges,
+  mergeChampionBadges,
+  dateStringToDayNumber,
+  ChampionBadges,
+} from "@/lib/championBadges";
 import { ChampionBadgesRow } from "./ChampionBadgesRow";
 import { CampioneIcon, RankMedalIcon } from "@/lib/championIcons";
-import { computeAdminElos, resolveLeaderboardTies } from "@/lib/adminElo";
+import {
+  computeAdminElos,
+  computeAdminStats,
+  computeLeaderboardRankDurations,
+  resolveLeaderboardTies,
+} from "@/lib/adminElo";
 import { ProfileStatsDialog } from "./ProfileStatsDialog";
 import { VictoryIcon, DefeatIcon } from "@/lib/gameIcons";
+import { refreshLeaderboardRankStreaks, streakMapByProfileId } from "@/lib/leaderboardStreaks";
 
 interface LeaderboardProfile {
   id: string;
@@ -20,11 +32,16 @@ interface LeaderboardProfile {
   elo: number;
   is_admin_profile: boolean;
   profile_theme?: string | null;
+  debugWins?: number;
+  debugLosses?: number;
+  rankDurationMs?: number | null;
 }
 
 interface EloLeaderboardProps {
   userId?: string;
 }
+
+const INTERNAL_ADMIN_EMAIL = "admin@loveableconnect.internal";
 
 // 🎨 Badge esportato per riuso (ProfileStatsDialog ecc).
 // Gradient e colori coerenti col tema rosa/viola/oro. NIENTE emoji nel badge
@@ -105,12 +122,15 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     trophies: number;
     tournamentsWon: number;
     badges: ChampionBadges;
+    apexUnlocked: boolean;
+    zenithUnlocked: boolean;
   } | null>(null);
   // 🆕 Default true: la classifica è APERTA appena si entra. Click sulla
   // tendina per chiuderla.
   const [isOpen, setIsOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<LeaderboardProfile | null>(null);
+  const [showAdminRankDebug, setShowAdminRankDebug] = useState(false);
 
   useEffect(() => {
     if (isLoading) return;
@@ -129,6 +149,13 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     //    chiamato SOLO quando l'utente è #1 nella classifica COMPLETA (admin inclusi).
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const canSeeAdminRankDebug =
+        sessionData.session?.user.email?.trim().toLowerCase() === INTERNAL_ADMIN_EMAIL;
+      if (showAdminRankDebug !== canSeeAdminRankDebug) {
+        setShowAdminRankDebug(canSeeAdminRankDebug);
+      }
+
       const { data: admins } = await supabase
         .from("profiles")
         .select("id, nickname, avatar_url, game_elo, profile_theme")
@@ -174,7 +201,64 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         .map((e) => ({ ...e, elo: resolved.get(e.id) ?? e.elo }))
         .sort((a, b) => b.elo - a.elo);
 
-      setTopPlayers(entries.slice(0, 5));
+      const streakRows = await refreshLeaderboardRankStreaks();
+      const streakById = streakMapByProfileId(streakRows);
+
+      let topFive = entries.slice(0, 5);
+
+      if (canSeeAdminRankDebug) {
+        const topIds = topFive.map((player) => player.id);
+        const rankDurations = computeLeaderboardRankDurations(
+          rawEntries.map((entry) => ({
+            id: entry.id,
+            elo: entry.elo,
+            isAdmin: entry.is_admin_profile,
+          })),
+          topIds
+        );
+        const statsById = new Map<string, { wins: number; losses: number }>();
+        const adminSeeds = (admins ?? []).map((admin) => ({ id: admin.id }));
+
+        for (const player of topFive) {
+          if (player.is_admin_profile) {
+            const stats = computeAdminStats(player.id, adminSeeds);
+            statsById.set(player.id, {
+              wins: stats.totalWins,
+              losses: stats.totalLosses,
+            });
+          }
+        }
+
+        const realTopIds = topFive.filter((player) => !player.is_admin_profile).map((player) => player.id);
+        if (realTopIds.length > 0) {
+          const { data: realStatsRows } = await supabase
+            .from("tris_games")
+            .select("user_id, tris_wins, tris_losses, dama_wins, dama_losses, othello_wins, othello_losses")
+            .in("user_id", realTopIds);
+
+          for (const row of realStatsRows ?? []) {
+            statsById.set(row.user_id, {
+              wins: (row.tris_wins ?? 0) + (row.dama_wins ?? 0) + (row.othello_wins ?? 0),
+              losses: (row.tris_losses ?? 0) + (row.dama_losses ?? 0) + (row.othello_losses ?? 0),
+            });
+          }
+        }
+
+        topFive = topFive.map((player) => {
+          const stats = statsById.get(player.id);
+          const dbStreak = streakById.get(player.id);
+          return {
+            ...player,
+            debugWins: stats?.wins ?? 0,
+            debugLosses: stats?.losses ?? 0,
+            rankDurationMs: dbStreak?.rank_started_at
+              ? Math.max(0, Date.now() - new Date(dbStreak.rank_started_at).getTime())
+              : rankDurations.get(player.id) ?? null,
+          };
+        });
+      }
+
+      setTopPlayers(topFive);
 
       if (userId) {
         const mine = entries.find((e) => e.id === userId);
@@ -221,7 +305,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         // 🏆 Carica vittorie/sconfitte/trofei/tornei_vinti dell'utente da tris_games
         const { data: tris } = await supabase
           .from("tris_games")
-          .select("tris_wins, tris_losses, dama_wins, dama_losses, othello_wins, othello_losses, top_1_trophies, tournaments_won, ever_champion")
+          .select("*")
           .eq("user_id", userId)
           .order("updated_at", { ascending: false })
           .limit(1)
@@ -235,16 +319,34 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
         const champDays = (champRows ?? []).map((r: any) => dateStringToDayNumber(r.award_date));
 
         const row = tris as any;
-        const badges = computeChampionBadges(champDays);
-        // Champion sbloccato se: flag persistente, oppure è #1 adesso, oppure
-        // lo era in uno snapshot passato (computeChampionBadges).
-        badges.everChampion = badges.everChampion || !!row?.ever_champion || myRank === 1;
+        const historicalBadges = computeChampionBadges(champDays);
+        const storedBadges = {
+          everChampion: !!row?.ever_champion,
+          weeks: Math.max(0, Number(row?.weekly_champion_titles ?? 0)),
+          months: Math.max(0, Number(row?.monthly_champion_titles ?? 0)),
+        };
+        const maxEloReached = Math.max(myElo as number, Number(row?.max_elo_reached ?? 0));
+        const apexUnlocked = !!row?.apex_unlocked || maxEloReached >= 2500;
+        const zenithUnlocked = !!row?.zenith_unlocked || maxEloReached >= 3000;
+        const streak = streakById.get(userId);
+        const currentStreakBadges = streak
+          ? computeStrictChampionBadges(
+              streak.current_rank === 1 ? streak.top1_streak_started_at : null,
+              historicalBadges.everChampion || storedBadges.everChampion || myRank === 1
+            )
+          : { everChampion: historicalBadges.everChampion || storedBadges.everChampion || myRank === 1, weeks: 0, months: 0 };
+        const badges = mergeChampionBadges(storedBadges, historicalBadges, currentStreakBadges);
+        // I titoli gia' ottenuti restano permanenti. La streak corrente puo'
+        // solo aggiungere un nuovo Weekly/Monthly, mai spegnerne uno storico.
+        badges.everChampion = badges.everChampion || storedBadges.everChampion || myRank === 1;
         setUserStats({
           wins: (row?.tris_wins ?? 0) + (row?.dama_wins ?? 0) + (row?.othello_wins ?? 0),
           losses: (row?.tris_losses ?? 0) + (row?.dama_losses ?? 0) + (row?.othello_losses ?? 0),
           trophies: row?.top_1_trophies ?? 0,
           tournamentsWon: row?.tournaments_won ?? 0,
           badges,
+          apexUnlocked,
+          zenithUnlocked,
         });
 
         // 👤 Profilo: nickname + avatar per la card stile partita
@@ -300,6 +402,45 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
     return `${userRank}°`;
   };
 
+
+  const formatRankDuration = (durationMs?: number | null) => {
+    if (!durationMs || durationMs < 60 * 1000) return "meno di 1 min";
+
+    const unit = (value: number, singular: string, plural: string) =>
+      `${value} ${value === 1 ? singular : plural}`;
+
+    const totalMinutes = Math.floor(durationMs / (60 * 1000));
+    const totalHours = Math.floor(totalMinutes / 60);
+    const totalDays = Math.floor(totalHours / 24);
+    const totalWeeks = Math.floor(totalDays / 7);
+    const totalMonths = Math.floor(totalDays / 30);
+
+    if (totalMonths > 0) {
+      const weeks = Math.floor((totalDays % 30) / 7);
+      return weeks > 0
+        ? `${unit(totalMonths, "mese", "mesi")} ${unit(weeks, "settimana", "settimane")}`
+        : unit(totalMonths, "mese", "mesi");
+    }
+    if (totalWeeks > 0) {
+      const days = totalDays % 7;
+      return days > 0
+        ? `${unit(totalWeeks, "settimana", "settimane")} ${unit(days, "giorno", "giorni")}`
+        : unit(totalWeeks, "settimana", "settimane");
+    }
+    if (totalDays > 0) {
+      const hours = totalHours % 24;
+      return hours > 0
+        ? `${unit(totalDays, "giorno", "giorni")} ${unit(hours, "ora", "ore")}`
+        : unit(totalDays, "giorno", "giorni");
+    }
+    if (totalHours > 0) {
+      const minutes = totalMinutes % 60;
+      return minutes > 0
+        ? `${unit(totalHours, "ora", "ore")} ${unit(minutes, "min", "min")}`
+        : unit(totalHours, "ora", "ore");
+    }
+    return `${totalMinutes} min`;
+  };
 
   const selectedProfileIndex = selectedProfile
     ? topPlayers.findIndex((p) => p.id === selectedProfile.id)
@@ -372,6 +513,8 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
                 tournamentsWon={userStats.tournamentsWon}
                 wins={userStats.wins}
                 elo={userElo}
+                apexUnlocked={userStats.apexUnlocked}
+                zenithUnlocked={userStats.zenithUnlocked}
                 isCurrentlyFirst={userRank === 1}
                 layout="inline"
                 size="md"
@@ -438,6 +581,13 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
                     {player.id === userId && <span className="text-xs text-primary ml-2">(Tu)</span>}
                   </p>
                   <div className="mt-0.5">{renderRankBadge(index, "sm")}</div>
+                  {showAdminRankDebug && (
+                    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] font-semibold text-pink-100/70">
+                      <span>V {player.debugWins ?? 0}</span>
+                      <span>S {player.debugLosses ?? 0}</span>
+                      <span>In posizione da {formatRankDuration(player.rankDurationMs)}</span>
+                    </div>
+                  )}
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-xs text-muted-foreground">ELO</p>

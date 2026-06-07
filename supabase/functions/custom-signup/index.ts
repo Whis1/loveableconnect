@@ -20,6 +20,22 @@ interface SignupRequest {
   redirect_to: string;
 }
 
+const NICKNAME_TAKEN_MESSAGE = "Nickname già utilizzato da un altro utente";
+
+const normalizeNickname = (value: string | null | undefined): string => (value ?? "").trim();
+
+const nicknameKey = (value: string | null | undefined): string =>
+  normalizeNickname(value).toLocaleLowerCase("it-IT");
+
+const escapeIlikePattern = (value: string): string =>
+  value.replace(/[\\%_]/g, (match) => `\\${match}`);
+
+const isNicknameDuplicateError = (error: unknown): boolean => {
+  const anyError = error as { code?: string; message?: string; details?: string; hint?: string };
+  const text = `${anyError?.code ?? ""} ${anyError?.message ?? ""} ${anyError?.details ?? ""} ${anyError?.hint ?? ""}`.toLowerCase();
+  return text.includes("23505") || text.includes("duplicate key") || text.includes("profiles_nickname_unique_ci");
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -39,6 +55,17 @@ serve(async (req) => {
     }: SignupRequest = await req.json();
 
     console.log("Custom signup request for:", email);
+    const cleanNickname = normalizeNickname(nickname);
+
+    if (!cleanNickname) {
+      return new Response(
+        JSON.stringify({ error: "Inserisci un nickname valido." }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
 
     // Initialize Supabase Admin client
     const supabaseAdmin = createClient(
@@ -52,30 +79,29 @@ serve(async (req) => {
       }
     );
 
-    // Server-side nickname uniqueness check (case-insensitive, trimmed)
-    // mirrors the unique index on lower(btrim(nickname))
-    const trimmedNickname = (nickname ?? "").trim();
-    if (trimmedNickname) {
-      const { data: existingNickname, error: nicknameError } = await supabaseAdmin
-        .from("profiles")
-        .select("id")
-        .ilike("nickname", trimmedNickname.replace(/[\\%_]/g, "\\$&"))
-        .limit(1);
+    const { data: existingProfiles, error: nicknameCheckError } = await supabaseAdmin
+      .from("profiles")
+      .select("id, nickname")
+      .ilike("nickname", escapeIlikePattern(cleanNickname))
+      .limit(25);
 
-      if (nicknameError) {
-        console.error("Error checking nickname uniqueness:", nicknameError);
-        throw nicknameError;
-      }
+    if (nicknameCheckError) {
+      console.error("Error checking nickname:", nicknameCheckError);
+      throw nicknameCheckError;
+    }
 
-      if (existingNickname && existingNickname.length > 0) {
-        return new Response(
-          JSON.stringify({ error: "Nickname già utilizzato da un altro utente" }),
-          {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
+    const nicknameAlreadyExists = (existingProfiles ?? []).some((profile) =>
+      nicknameKey(profile.nickname) === nicknameKey(cleanNickname)
+    );
+
+    if (nicknameAlreadyExists) {
+      return new Response(
+        JSON.stringify({ error: NICKNAME_TAKEN_MESSAGE }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     // Generate signup link - this creates the user AND returns confirmation link
@@ -86,7 +112,7 @@ serve(async (req) => {
       options: {
         redirectTo: redirect_to,
         data: {
-          nickname,
+          nickname: cleanNickname,
           birthdate,
           city,
           gender,
@@ -123,7 +149,7 @@ serve(async (req) => {
     }
 
     const templateVariables = {
-      ...userTemplateVars(nickname || "Utente", ['recipient']),
+      ...userTemplateVars(cleanNickname || "Utente", ['recipient']),
       confirmLink: confirmationUrl,
     };
     const subject = replaceTemplateVars(template.subject, templateVariables);
@@ -185,6 +211,16 @@ serve(async (req) => {
     );
   } catch (error: any) {
     console.error("Error in custom-signup:", error);
+
+    if (isNicknameDuplicateError(error)) {
+      return new Response(
+        JSON.stringify({ error: NICKNAME_TAKEN_MESSAGE }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
     
     // Handle duplicate email error
     if (error.message?.includes("already been registered") || error.message?.includes("already exists") || error.message?.includes("duplicate key")) {

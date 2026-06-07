@@ -11,7 +11,7 @@ import { useLanguageDetection } from "@/hooks/useLanguageDetection";
 const TITOLARE_NOME = "Giuseppe Chighini";
 const TITOLARE_EMAIL = "loveableconnect@hotmail.com";
 const NOME_SITO = "LoveableConnect";
-const URL_SITO = "https://loveableconnect.vercel.app";
+const URL_SITO = "https://loveableconnect.it";
 const DATA_AGGIORNAMENTO = "3 giugno 2026";
 
 const TermsAndConditions = () => {

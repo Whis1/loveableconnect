@@ -8,14 +8,21 @@ import { Trophy, Heart, Check, Loader2, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 import { VictoryIcon, DefeatIcon } from "@/lib/gameIcons";
-import { computeAdminStats, computeAdminChampionDays } from "@/lib/adminElo";
-import { computeChampionBadges, dateStringToDayNumber, ChampionBadges } from "@/lib/championBadges";
+import { computeAdminStats, computeAdminChampionDays, computeAdminPeakElo } from "@/lib/adminElo";
+import {
+  computeChampionBadges,
+  computeStrictChampionBadges,
+  mergeChampionBadges,
+  dateStringToDayNumber,
+  ChampionBadges,
+} from "@/lib/championBadges";
 import { ChampionBadgesRow } from "./ChampionBadgesRow";
 import { CampioneIcon, RankMedalIcon } from "@/lib/championIcons";
 import { renderRankBadge, getRankNicknameClass } from "./EloLeaderboard";
 import { useSendLike } from "@/hooks/useSendLike";
 import { ProfileThemeRing } from "@/components/ProfileThemeRing";
 import { getProfileTheme } from "@/lib/profileThemes";
+import { refreshLeaderboardRankStreaks, streakMapByProfileId } from "@/lib/leaderboardStreaks";
 
 interface ProfileLike {
   id: string;
@@ -32,6 +39,8 @@ interface ProfileStats {
   top1Trophies: number;
   tournamentsWon: number;
   badges: ChampionBadges;
+  apexUnlocked: boolean;
+  zenithUnlocked: boolean;
 }
 
 interface Props {
@@ -109,6 +118,10 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
     (async () => {
       setLoading(true);
       try {
+        const streakRows = await refreshLeaderboardRankStreaks();
+        if (cancelled) return;
+        const streak = streakMapByProfileId(streakRows).get(profileId);
+
         if (isAdmin) {
           const { data: admins } = await supabase
             .from("profiles")
@@ -117,15 +130,25 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
           if (cancelled) return;
 
           const adminStats = computeAdminStats(profileId, admins ?? []);
+          const adminPeakElo = computeAdminPeakElo(profileId);
           // 🏅 Titoli campione admin (serie consecutive da #1, simulate)
           const champDays = computeAdminChampionDays(profileId, (admins ?? []) as any);
+          const historicalBadges = computeChampionBadges(champDays);
+          const currentStreakBadges = streak
+            ? computeStrictChampionBadges(
+                streak.current_rank === 1 ? streak.top1_streak_started_at : null,
+                historicalBadges.everChampion || topIndex === 0
+              )
+            : { everChampion: historicalBadges.everChampion || topIndex === 0, weeks: 0, months: 0 };
           setStats({
             elo: fallbackElo ?? adminStats.elo,
             totalWins: adminStats.totalWins,
             totalLosses: adminStats.totalLosses,
             top1Trophies: adminStats.top1Trophies,
             tournamentsWon: adminStats.tournamentsWon,
-            badges: computeChampionBadges(champDays),
+            badges: mergeChampionBadges(historicalBadges, currentStreakBadges),
+            apexUnlocked: adminPeakElo >= 2500 || fallbackElo >= 2500,
+            zenithUnlocked: adminPeakElo >= 3000 || fallbackElo >= 3000,
           });
         } else {
           const { data: tris } = await supabase
@@ -147,9 +170,24 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
           const champDays = (champRows ?? []).map((r: any) => dateStringToDayNumber(r.award_date));
 
           const row = tris as any;
-          const realBadges = computeChampionBadges(champDays);
+          const historicalBadges = computeChampionBadges(champDays);
+          const storedBadges = {
+            everChampion: !!row?.ever_champion,
+            weeks: Math.max(0, Number(row?.weekly_champion_titles ?? 0)),
+            months: Math.max(0, Number(row?.monthly_champion_titles ?? 0)),
+          };
+          const maxEloReached = Math.max(fallbackElo, Number(row?.max_elo_reached ?? 0));
+          const apexUnlocked = !!row?.apex_unlocked || maxEloReached >= 2500;
+          const zenithUnlocked = !!row?.zenith_unlocked || maxEloReached >= 3000;
+          const currentStreakBadges = streak
+            ? computeStrictChampionBadges(
+                streak.current_rank === 1 ? streak.top1_streak_started_at : null,
+                historicalBadges.everChampion || storedBadges.everChampion || topIndex === 0
+              )
+            : { everChampion: historicalBadges.everChampion || storedBadges.everChampion || topIndex === 0, weeks: 0, months: 0 };
+          const realBadges = mergeChampionBadges(storedBadges, historicalBadges, currentStreakBadges);
           // 🏆 Champion obiettivo: flag persistente ever_champion (o snapshot storici).
-          realBadges.everChampion = realBadges.everChampion || !!row?.ever_champion;
+          realBadges.everChampion = realBadges.everChampion || storedBadges.everChampion;
           setStats({
             elo: fallbackElo,
             totalWins: (row?.tris_wins ?? 0) + (row?.dama_wins ?? 0) + (row?.othello_wins ?? 0),
@@ -157,6 +195,8 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
             top1Trophies: row?.top_1_trophies ?? 0,
             tournamentsWon: row?.tournaments_won ?? 0,
             badges: realBadges,
+            apexUnlocked,
+            zenithUnlocked,
           });
         }
       } catch (e) {
@@ -169,6 +209,8 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
             top1Trophies: 0,
             tournamentsWon: 0,
             badges: { everChampion: false, weeks: 0, months: 0 },
+            apexUnlocked: fallbackElo >= 2500,
+            zenithUnlocked: fallbackElo >= 3000,
           });
         }
       } finally {
@@ -371,6 +413,8 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
                       tournamentsWon={stats.tournamentsWon}
                       wins={stats.totalWins}
                       elo={stats.elo}
+                      apexUnlocked={stats.apexUnlocked}
+                      zenithUnlocked={stats.zenithUnlocked}
                       isCurrentlyFirst={topIndex === 0}
                       layout="stacked"
                       size="md"

@@ -471,7 +471,7 @@ def slide_traction():
     items = [
         ("Codice pronto.", "Funzionalità core (auth, profili, match, chat, giochi, pagamenti) tutte operative."),
         ("Infrastruttura scalabile.", "Backend serverless Supabase, deploy Vercel, monitoring attivo."),
-        ("Sito live.", "https://loveableconnect.vercel.app/, testabile end-to-end."),
+        ("Sito live.", "https://loveableconnect.it/, testabile end-to-end."),
         ("Nessuna metrica reale di trazione.", "Non abbiamo ancora aperto agli utenti reali; cerchiamo un partner per il lancio."),
     ]
     for title, desc in items:
@@ -718,7 +718,7 @@ def slide_contacts():
     c.setFillColor(TEXT_MAIN)
     c.drawCentredString(PAGE_W / 2, PAGE_H / 2 - 130, "daishxvii@gmail.com")
     c.drawCentredString(PAGE_W / 2, PAGE_H / 2 - 160, "+39 342 1209673")
-    c.drawCentredString(PAGE_W / 2, PAGE_H / 2 - 190, "https://loveableconnect.vercel.app/")
+    c.drawCentredString(PAGE_W / 2, PAGE_H / 2 - 190, "https://loveableconnect.it/")
 
     c.setFont("Helvetica-Oblique", 13)
     c.setFillColor(TEXT_DIM)
