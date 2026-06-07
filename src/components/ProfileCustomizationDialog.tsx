@@ -73,6 +73,11 @@ export const ProfileCustomizationDialog = ({
   const theme = getProfileTheme(selected);
   const initial = (nickname?.charAt(0) || "?").toUpperCase();
   const owns = (id: string) => ownedThemes.includes(id);
+  // 🐦 Dark Crow: superfici NERE come nel prototipo (niente marroncino del tema base).
+  const isDC = selected === "darkcrow";
+  const dcSection = "rounded-xl border border-white/10 bg-white/[0.04] p-3";
+  const sectionCls = isDC ? dcSection : "rounded-xl border border-border/50 bg-card/60 p-3";
+  const seekCls = isDC ? dcSection : "rounded-xl border border-primary/20 bg-primary/5 p-3";
   // Bloccato da abbonamento (tema premium e utente non abbonato).
   const lockedPremium = theme.premium && !isPremium;
   // Bloccato perché tema a pagamento una-tantum non ancora acquistato.
@@ -237,11 +242,11 @@ export const ProfileCustomizationDialog = ({
             </div>
             <div className="relative flex-1 min-h-[500px]">
               <div className={`absolute inset-0 ${theme.frameClass} h-full`}>
-                <div className="relative h-full rounded-[0.8rem] overflow-hidden border border-border bg-card shadow-lg flex flex-col">
+                <div className={`relative h-full rounded-[0.8rem] overflow-hidden border shadow-lg flex flex-col ${isDC ? "border-[#2a2540] bg-[#0c0a14]" : "border-border bg-card"}`}>
                   {/* 🐦 Stormo che irrompe quando si (ri)seleziona Dark Crow. */}
                   {selected === "darkcrow" && <DarkCrowFlock playToken={dcPreviewToken} />}
                   {/* Header con foto verticale grande, come nella scheda reale */}
-                  <div className="relative shrink-0 px-4 pt-5 pb-3 bg-gradient-to-br from-primary/20 via-primary/10 to-background flex flex-col items-center">
+                  <div className={`relative shrink-0 px-4 pt-5 pb-3 flex flex-col items-center ${isDC ? "bg-gradient-to-br from-[#1c1636] via-[#120e22] to-[#08060f]" : "bg-gradient-to-br from-primary/20 via-primary/10 to-background"}`}>
                   {/* Contorno della foto tematizzato col tema selezionato. */}
                   <div className={theme.frameClass}>
                     <div className="relative w-40 h-48 rounded-2xl border-4 border-background shadow-xl overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5">
@@ -290,7 +295,7 @@ export const ProfileCustomizationDialog = ({
                   </div>
 
                   {profile?.bio && (
-                    <div className="rounded-xl border border-border/50 bg-card/60 p-3">
+                    <div className={sectionCls}>
                       <div className="flex items-center gap-1.5 text-sm font-semibold mb-1">
                         <User className={`h-4 w-4 ${theme.iconClass || "text-primary"}`} /> <span className={theme.nameClass}>Bio</span>
                       </div>
@@ -298,7 +303,7 @@ export const ProfileCustomizationDialog = ({
                     </div>
                   )}
 
-                  <div className="rounded-xl border border-border/50 bg-card/60 p-3">
+                  <div className={sectionCls}>
                     <div className="flex items-center gap-1.5 text-sm font-semibold mb-1">
                       <User className={`h-4 w-4 ${theme.iconClass || "text-primary"}`} /> <span className={theme.nameClass}>{t("common.relationshipStatus")}</span>
                     </div>
@@ -307,7 +312,7 @@ export const ProfileCustomizationDialog = ({
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
+                  <div className={seekCls}>
                     <div className="flex items-center gap-1.5 text-sm font-semibold mb-1">
                       <User className={`h-4 w-4 ${theme.iconClass || "text-primary"}`} /> <span className={theme.nameClass}>{t("common.lookingFor")}</span>
                     </div>
@@ -318,7 +323,7 @@ export const ProfileCustomizationDialog = ({
 
                   {/* Interessi: solo se l'utente ne ha inseriti. */}
                   {profile?.interests && profile.interests.length > 0 && (
-                    <div className="rounded-xl border border-border/50 bg-card/60 p-3">
+                    <div className={sectionCls}>
                       <div className="flex items-center gap-1.5 text-sm font-semibold mb-2">
                         <User className={`h-4 w-4 ${theme.iconClass || "text-primary"}`} /> <span className={theme.nameClass}>{t("common.interests")}</span>
                       </div>
@@ -334,7 +339,7 @@ export const ProfileCustomizationDialog = ({
 
                   {/* Canzoni preferite: solo se l'utente ne ha inserite. */}
                   {profile?.favorite_songs && profile.favorite_songs.length > 0 && (
-                    <div className="rounded-xl border border-border/50 bg-card/60 p-3">
+                    <div className={sectionCls}>
                       <div className="flex items-center gap-1.5 text-sm font-semibold mb-2">
                         <Music className={`h-4 w-4 ${theme.iconClass || "text-primary"}`} /> <span className={theme.nameClass}>Canzoni Preferite</span>
                       </div>

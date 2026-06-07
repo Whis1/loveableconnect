@@ -544,8 +544,14 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
         onClick={handleCardClick}
         onMouseEnter={handleDarkCrowHover}
       >
-        {/* Card Container */}
-        <div className="relative rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 bg-card border-2 border-border hover:border-primary/50">
+        {/* Card Container — Dark Crow: superficie nera come nel prototipo. */}
+        <div
+          className={`relative rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border-2 ${
+            isDarkCrow
+              ? "bg-[#0c0a14] border-[#2a2540]"
+              : "bg-card border-border hover:border-primary/50"
+          }`}
+        >
           {/* Main Image */}
           <div className="relative aspect-[3/4] overflow-hidden">
             {avatarUrl ? (
