@@ -805,6 +805,7 @@ export type Database = {
           manual_online_status: boolean | null
           nickname: string
           onboarding_completed: boolean
+          owned_themes: string[]
           photos: string[] | null
           profile_theme: string
           relationship_status: string | null
@@ -843,6 +844,7 @@ export type Database = {
           manual_online_status?: boolean | null
           nickname: string
           onboarding_completed?: boolean
+          owned_themes?: string[]
           photos?: string[] | null
           profile_theme?: string
           relationship_status?: string | null
@@ -881,6 +883,7 @@ export type Database = {
           manual_online_status?: boolean | null
           nickname?: string
           onboarding_completed?: boolean
+          owned_themes?: string[]
           photos?: string[] | null
           profile_theme?: string
           relationship_status?: string | null
