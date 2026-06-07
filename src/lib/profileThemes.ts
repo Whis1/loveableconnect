@@ -72,7 +72,7 @@ export const PROFILE_THEMES: ProfileTheme[] = [
     id: "darkcrow",
     name: "Tema Dark Crow",
     description:
-      "Atmosfera notturna ed epica: corvo reale, luna, nebbia e lampi che appaiono e si dissolvono. Nickname nero lucido, anello e cornice scuri.\nTema Dark Crow: dopo l'acquisto di 9,99€ sarà tuo per sempre.",
+      "Atmosfera notturna ed epica: corvo reale, luna, nebbia e lampi che appaiono e si dissolvono. Nickname nero lucido, anello e cornice scuri.",
     premium: false, // NON e' un gate da abbonamento: si acquista a parte
     oneTime: true,
     price: "9,99",

@@ -55,9 +55,12 @@ interface ProfileGridCardProps {
   /** 🐦 Trigger ESTERNO della scena Dark Crow (es. anteprima nel pannello
    *  Personalizzazione, dove l'hover non parte). Ogni cambio fa ripartire. */
   darkCrowPlayToken?: number;
+  /** Nasconde "Vicino alle tue parti": usato nelle ANTEPRIME del proprio
+   *  profilo (personalizzazione / anteprima), dove la location non ha senso. */
+  hideLocation?: boolean;
 }
 
-const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, hasActiveMatch = false, onlineStatus, onLike, onMatch, darkCrowPlayToken }: ProfileGridCardProps) => {
+const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, hasActiveMatch = false, onlineStatus, onLike, onMatch, darkCrowPlayToken, hideLocation = false }: ProfileGridCardProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -617,11 +620,13 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
               )}
             </div>
 
-            {/* Location */}
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-primary" />
-              <span className="truncate">{getGenericLocationPhrase()}</span>
-            </div>
+            {/* Location — nascosta nelle anteprime del proprio profilo. */}
+            {!hideLocation && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-primary" />
+                <span className="truncate">{getGenericLocationPhrase()}</span>
+              </div>
+            )}
 
             {/* Gender & Orientation Pills */}
             <div className="flex items-center gap-1.5 flex-wrap">

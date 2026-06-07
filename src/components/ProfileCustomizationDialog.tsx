@@ -208,7 +208,7 @@ export const ProfileCustomizationDialog = ({
           )}
           {lockedOneTime && (
             <div className="mt-1.5 flex items-center gap-1.5 font-medium text-amber-300">
-              <Sparkles className="h-4 w-4" /> Tema a pagamento: {theme.price}€ una tantum, poi è tuo per sempre.
+              <Sparkles className="h-4 w-4" /> Tema Dark Crow: dopo l'acquisto di {theme.price}€ sarà tuo per sempre.
             </div>
           )}
         </div>
@@ -229,6 +229,7 @@ export const ProfileCustomizationDialog = ({
                 currentUserId={currentUserId}
                 onLike={() => {}}
                 darkCrowPlayToken={dcPreviewToken}
+                hideLocation
               />
             </div>
           </div>

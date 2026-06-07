@@ -461,6 +461,7 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
                 profile={externalProfile}
                 currentUserId={currentUserId}
                 onLike={() => {}}
+                hideLocation
               />
             </div>
           )}
