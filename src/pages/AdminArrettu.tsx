@@ -26,6 +26,8 @@ export default function AdminArrettu() {
   const [password, setPassword] = useState("");
   const [inboxAllDialogOpen, setInboxAllDialogOpen] = useState(false);
   const [broadcastMessage, setBroadcastMessage] = useState("");
+  const [broadcastCredits, setBroadcastCredits] = useState("");
+  const [broadcastLikes, setBroadcastLikes] = useState("");
   const [sendingBroadcast, setSendingBroadcast] = useState(false);
   const { isAdmin, adminTier, loading: adminLoading } = useAdminRole();
   // Tier 1 = full access. Tier 2 = ridotto (no Profili & Chat, no Creazione).
@@ -160,7 +162,13 @@ export default function AdminArrettu() {
       // RPC: invia a tutti, registra in Cronologia Azioni e rende il messaggio
       // eliminabile (batch). Fallback alla edge function se la RPC non c'e'.
       let count = 0;
-      const rpc = await (supabase as any).rpc("send_inbox_to_all", { p_message: broadcastMessage });
+      const credits = Math.max(0, parseInt(broadcastCredits, 10) || 0);
+      const likes = Math.max(0, parseInt(broadcastLikes, 10) || 0);
+      const rpc = await (supabase as any).rpc("send_inbox_to_all", {
+        p_message: broadcastMessage,
+        p_credits: credits,
+        p_likes: likes,
+      });
       if (!rpc.error && rpc.data) {
         const row = Array.isArray(rpc.data) ? rpc.data[0] : rpc.data;
         count = row?.count ?? 0;
@@ -172,12 +180,17 @@ export default function AdminArrettu() {
         count = data?.count ?? 0;
       }
 
+      const giftParts: string[] = [];
+      if (credits > 0) giftParts.push(`${credits} crediti`);
+      if (likes > 0) giftParts.push(`${likes} like`);
       toast({
         title: "Messaggio inviato!",
-        description: `Inviato a ${count} utenti`,
+        description: `Inviato a ${count} utenti${giftParts.length ? ` con regalo: ${giftParts.join(" e ")}` : ""}`,
       });
 
       setBroadcastMessage("");
+      setBroadcastCredits("");
+      setBroadcastLikes("");
       setInboxAllDialogOpen(false);
     } catch (error: any) {
       console.error('Error sending broadcast:', error);
@@ -335,7 +348,34 @@ export default function AdminArrettu() {
                       rows={6}
                     />
                   </div>
-                  <Button 
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="broadcast-credits">Crediti in regalo (opz.)</Label>
+                      <Input
+                        id="broadcast-credits"
+                        type="number"
+                        min={0}
+                        placeholder="0"
+                        value={broadcastCredits}
+                        onChange={(e) => setBroadcastCredits(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="broadcast-likes">Like in regalo (opz.)</Label>
+                      <Input
+                        id="broadcast-likes"
+                        type="number"
+                        min={0}
+                        placeholder="0"
+                        value={broadcastLikes}
+                        onChange={(e) => setBroadcastLikes(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Se inserisci crediti o like, all'utente comparirà nell'inbox un pulsante "Riscatta".
+                  </p>
+                  <Button
                     onClick={handleSendBroadcast} 
                     disabled={sendingBroadcast || !broadcastMessage.trim()}
                     className="w-full"

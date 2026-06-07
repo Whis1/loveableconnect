@@ -25,6 +25,8 @@ export function UserBanManager() {
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [bannedUsersMap, setBannedUsersMap] = useState<Map<string, any>>(new Map());
   const [inboxMessage, setInboxMessage] = useState("");
+  const [inboxCredits, setInboxCredits] = useState("");
+  const [inboxLikes, setInboxLikes] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
   // 🖼 Avatar ingrandito (overlay) - click sul cerchio del Dettagli utente
   const [enlargedAvatar, setEnlargedAvatar] = useState<string | null>(null);
@@ -538,23 +540,32 @@ export function UserBanManager() {
     try {
       const batchId = (crypto as any)?.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
       const msg = inboxMessage.trim();
+      const credits = Math.max(0, parseInt(inboxCredits, 10) || 0);
+      const likes = Math.max(0, parseInt(inboxLikes, 10) || 0);
       const { error } = await supabase
         .from('inbox_messages')
         .insert({
           user_id: selectedUser.id,
           message: msg,
           batch_id: batchId,
-        });
+          reward_credits: credits,
+          reward_likes: likes,
+        } as any);
 
       if (error) throw error;
 
       await logUserAction('inbox_single', selectedUser.id, selectedUser.nickname, msg, batchId);
 
+      const giftParts: string[] = [];
+      if (credits > 0) giftParts.push(`${credits} crediti`);
+      if (likes > 0) giftParts.push(`${likes} like`);
       toast({
         title: 'Messaggio inviato',
-        description: `Il messaggio è stato inviato a ${selectedUser.nickname}`,
+        description: `Inviato a ${selectedUser.nickname}${giftParts.length ? ` con regalo: ${giftParts.join(' e ')}` : ''}`,
       });
       setInboxMessage('');
+      setInboxCredits('');
+      setInboxLikes('');
     } catch (error: any) {
       console.error('Error sending inbox message:', error);
       toast({
@@ -1176,6 +1187,33 @@ export function UserBanManager() {
                         onChange={(e) => setInboxMessage(e.target.value)}
                         rows={3}
                       />
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <Label htmlFor="inboxCredits" className="text-xs">Crediti regalo (opz.)</Label>
+                          <Input
+                            id="inboxCredits"
+                            type="number"
+                            min={0}
+                            placeholder="0"
+                            value={inboxCredits}
+                            onChange={(e) => setInboxCredits(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="inboxLikes" className="text-xs">Like regalo (opz.)</Label>
+                          <Input
+                            id="inboxLikes"
+                            type="number"
+                            min={0}
+                            placeholder="0"
+                            value={inboxLikes}
+                            onChange={(e) => setInboxLikes(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        Con crediti o like, all'utente comparirà nell'inbox un pulsante "Riscatta".
+                      </p>
                       <Button
                         onClick={handleSendInboxMessage}
                         disabled={sendingMessage || !inboxMessage.trim()}

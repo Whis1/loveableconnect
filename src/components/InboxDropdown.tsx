@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, X, Heart } from "lucide-react";
+import { Mail, X, Heart, Gift, Coins, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import loveableConnectIcon from "@/assets/loveable-connect-icon.png";
@@ -19,6 +19,9 @@ interface InboxMessage {
   message: string;
   created_at: string;
   read: boolean;
+  reward_credits?: number | null;
+  reward_likes?: number | null;
+  reward_claimed?: boolean | null;
 }
 
 export const InboxDropdown = () => {
@@ -29,6 +32,81 @@ export const InboxDropdown = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const [claimingId, setClaimingId] = useState<string | null>(null);
+
+  // 🎁 Riscatta la ricompensa (crediti/like) allegata a un messaggio inbox.
+  const handleClaim = async (message: InboxMessage) => {
+    if (claimingId) return;
+    setClaimingId(message.id);
+    try {
+      const { data, error } = await (supabase as any).rpc("claim_inbox_reward", { p_message_id: message.id });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      const credits = row?.credits ?? 0;
+      const likes = row?.likes ?? 0;
+      const already = row?.already ?? false;
+      if (already) {
+        toast({ title: "Già riscattato", description: "Questo regalo era già stato riscattato." });
+      } else {
+        const parts: string[] = [];
+        if (credits > 0) parts.push(`${credits} crediti`);
+        if (likes > 0) parts.push(`${likes} like`);
+        toast({
+          title: "Regalo riscattato! 🎁",
+          description: parts.length ? `Hai ricevuto ${parts.join(" e ")}.` : "Regalo riscattato.",
+        });
+      }
+      setSelectedMessage((cur) => (cur && cur.id === message.id ? { ...cur, reward_claimed: true } : cur));
+      fetchMessages();
+    } catch (e: any) {
+      toast({ title: "Errore", description: e.message || "Impossibile riscattare il regalo", variant: "destructive" });
+    } finally {
+      setClaimingId(null);
+    }
+  };
+
+  // Box "Riscatta" mostrato solo se il messaggio ha una ricompensa allegata.
+  const renderReward = (message: InboxMessage) => {
+    const credits = message.reward_credits ?? 0;
+    const likes = message.reward_likes ?? 0;
+    if (credits <= 0 && likes <= 0) return null;
+    return (
+      <div className="mt-3 rounded-lg border border-amber-400/40 bg-gradient-to-br from-amber-500/10 to-pink-500/10 p-3">
+        <div className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-amber-600 dark:text-amber-300">
+          <Gift className="h-4 w-4" /> Un regalo per te!
+        </div>
+        <div className="mb-2 flex items-center gap-4 text-sm">
+          {credits > 0 && (
+            <span className="inline-flex items-center gap-1 font-medium">
+              <Coins className="h-4 w-4 text-yellow-500" /> {credits} crediti
+            </span>
+          )}
+          {likes > 0 && (
+            <span className="inline-flex items-center gap-1 font-medium">
+              <Heart className="h-4 w-4 fill-current text-pink-500" /> {likes} like
+            </span>
+          )}
+        </div>
+        {message.reward_claimed ? (
+          <div className="flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+            <Check className="h-3.5 w-3.5" /> Riscattato
+          </div>
+        ) : (
+          <Button
+            size="sm"
+            className="w-full bg-gradient-to-r from-amber-500 to-pink-500 text-white hover:from-amber-600 hover:to-pink-600"
+            disabled={claimingId === message.id}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClaim(message);
+            }}
+          >
+            {claimingId === message.id ? "Riscatto..." : "Riscatta"}
+          </Button>
+        )}
+      </div>
+    );
+  };
 
   useEffect(() => {
     fetchMessages();
@@ -219,6 +297,7 @@ export const InboxDropdown = () => {
                     <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap break-words">
                       {message.message}
                     </p>
+                    {renderReward(message)}
                   </div>
                 ))}
               </div>
@@ -254,6 +333,7 @@ export const InboxDropdown = () => {
                   {selectedMessage.message}
                 </p>
               </div>
+              {renderReward(selectedMessage)}
               <Button
                 variant="destructive"
                 className="w-full"
