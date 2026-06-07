@@ -41,6 +41,7 @@ interface Profile {
   longitude: number | null;
   last_active: string | null;
   is_admin_profile: boolean;
+  profile_theme?: string | null;
   distance?: number;
   translatedBio?: string | null;
   translatedInterests?: string[] | null;
@@ -93,7 +94,9 @@ function sortByPriority(list: Profile[], creditsMap: Map<string, string>): Profi
   const rotationBucket = getRotationBucket();
   const rotationKey = (id: string) => rotationHashStr(`${id}-${rotationBucket}`);
   const rank = (p: Profile, sub?: string) => {
-    if (sub === "monthly") return 0; // premium mensile + platino
+    // Premium mensile/platino OPPURE profilo col "Tema Esclusivo Premium" (oro):
+    // quest'ultimo (tipicamente admin) vale come premium → priorità in cima.
+    if (sub === "monthly" || p.profile_theme === "gold") return 0;
     if (p.is_admin_profile === true) return 1;
     return 2;
   };
