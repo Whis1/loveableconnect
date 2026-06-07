@@ -76,6 +76,43 @@ function getRotationBucket(): number {
   return Math.floor((Date.now() - ROTATION_EPOCH) / ROTATION_INTERVAL_MS);
 }
 
+// 🔝 Quanti profili caricare in un colpo per poterli ordinare GLOBALMENTE
+// (priorità premium) e poi paginare lato client. Cap alto per coprire tutto
+// il dataset realistico del sito.
+const FETCH_CAP = 1000;
+
+/**
+ * Ordina i profili per PRIORITÀ globale:
+ *  - abbonati mensili (premium mensile / platino) in cima (rank 0),
+ *  - poi i profili admin, ruotati ogni ROTATION_HOURS (rank 1),
+ *  - poi tutti gli altri (free, settimanale) per last_active desc (rank 2).
+ * Va applicato sull'INTERO elenco prima della paginazione, altrimenti i
+ * premium non in cima per recency sparirebbero dalle prime pagine.
+ */
+function sortByPriority(list: Profile[], creditsMap: Map<string, string>): Profile[] {
+  const rotationBucket = getRotationBucket();
+  const rotationKey = (id: string) => rotationHashStr(`${id}-${rotationBucket}`);
+  const rank = (p: Profile, sub?: string) => {
+    if (sub === "monthly") return 0; // premium mensile + platino
+    if (p.is_admin_profile === true) return 1;
+    return 2;
+  };
+  return [...list].sort((a, b) => {
+    const rA = rank(a, creditsMap.get(a.id));
+    const rB = rank(b, creditsMap.get(b.id));
+    if (rA !== rB) return rA - rB;
+    if (rA === 1) {
+      const kA = rotationKey(a.id);
+      const kB = rotationKey(b.id);
+      if (kA !== kB) return kA - kB;
+      return a.id < b.id ? -1 : 1;
+    }
+    const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
+    const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
+    return dateB - dateA;
+  });
+}
+
 // 💾 Chiave localStorage per i filtri di ricerca salvati dall'utente.
 const EXPLORE_FILTERS_KEY = "explore_saved_filters";
 
@@ -108,6 +145,9 @@ const Explore = () => {
   const [pageError, setPageError] = useState(false);
   // Legacy refs (unused dopo migrazione paginazione, mantenuti per compat type)
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  // 🔝 Elenco COMPLETO ordinato globalmente (priorità premium). La paginazione
+  // Avanti/Indietro affetta semplicemente questo array lato client.
+  const allSortedRef = useRef<Profile[]>([]);
   // 📄 PAGINAZIONE: rimossi prefetch + observer refs (legacy infinite scroll)
 
   // Pre-caricare matches e hidden matches per performance
@@ -455,15 +495,15 @@ const Explore = () => {
         setMatchedProfileIds(matchedUserIds);
       }
 
-      // 📄 PRIMA PAGINA con retry automatico (stesso pattern di loadPage)
+      // 🔝 Carica TUTTI i profili (cap alto) con retry automatico, per poterli
+      // ordinare GLOBALMENTE (priorità premium) e paginare lato client.
       let profilesData: any[] | null = null;
-      let count: number | null = null;
       let error: any = null;
       const MAX_RETRIES = 3;
       for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
         let query = supabase
           .from("profiles")
-          .select("*", { count: "exact" })
+          .select("*")
           .neq("id", userId);
         if (matchedUserIds.size > 0) {
           const ids = Array.from(matchedUserIds).map((id) => `"${id}"`).join(",");
@@ -473,12 +513,11 @@ const Explore = () => {
           const result = await withTimeout(
             query
               .order("last_active", { ascending: false, nullsFirst: false })
-              .range(0, PROFILES_BATCH_SIZE - 1),
-            10000
+              .range(0, FETCH_CAP - 1),
+            12000
           );
           if (result.error) throw result.error;
           profilesData = result.data;
-          count = result.count;
           error = null;
           break;
         } catch (e: any) {
@@ -493,72 +532,31 @@ const Explore = () => {
 
       if (error) throw error;
 
-      const fetched = (profilesData || []).length;
-      // 📄 Total count → ci dice quante pagine ci sono in totale
-      setTotalProfiles(count ?? fetched);
-      setCurrentPage(0);
-      console.log(
-        `🔍 Explore loadAllProfiles: fetched=${fetched}, batch=${PROFILES_BATCH_SIZE}, total=${count}, matchedFiltered=${matchedUserIds.size}`
-      );
-
       // I match sono gia' esclusi server-side, ma per sicurezza filtriamo
-      // di nuovo client-side (caso edge: race condition con matchedProfileIds
-      // appena aggiornati e non ancora propagati al server).
+      // di nuovo client-side (caso edge: race con matchedProfileIds).
       let allProfiles: Profile[] = (profilesData || [])
         .filter(profile => !matchedUserIds.has(profile.id)) as Profile[];
-      
-      // Fetch subscription types via RPC (bypasses RLS safely)
+
+      // Tipi di abbonamento (per la priorità) via RPC (bypassa RLS).
       const profileIds = allProfiles.map(p => p.id);
       const { data: subsData } = await withFallback(
         supabase.rpc('get_subscription_types', { profile_ids: profileIds }),
         { data: [], error: null },
-        3500
+        4500
       );
       const creditsMap = new Map<string, string>((subsData || []).map((c: any) => [c.user_id, c.subscription_type]));
-      
-      // Sort profiles: monthly subscribers first, then admin profiles (ROTATED), then by last_active
-      // 🔄 Bucket di rotazione: ogni 3 ore cambiano i profili admin in cima.
-      const rotationBucket = getRotationBucket();
-      const rotationKey = (id: string) => rotationHashStr(`${id}-${rotationBucket}`);
 
-      allProfiles.sort((a, b) => {
-        const aSub = creditsMap.get(a.id);
-        const bSub = creditsMap.get(b.id);
+      // 🔝 Ordina GLOBALMENTE (premium in cima) e salva l'elenco completo;
+      // la paginazione poi affetta questo array lato client.
+      const sorted = sortByPriority(allProfiles, creditsMap);
+      allSortedRef.current = sorted;
+      setTotalProfiles(sorted.length);
+      setCurrentPage(0);
+      console.log(`🔍 Explore: caricati=${sorted.length} profili, ordinati per priorità globale`);
 
-        const rank = (p: Profile, sub?: string) => {
-          if (sub === 'monthly') return 0; // monthly subscribers first
-          if (p.is_admin_profile === true) return 1; // then admin profiles
-          return 2; // then everyone else (standard + weekly)
-        };
-
-        const rA = rank(a, aSub);
-        const rB = rank(b, bSub);
-        if (rA !== rB) return rA - rB;
-
-        // 🔄 Admin profiles: ordinamento ruotato (cambia ogni ROTATION_HOURS ore).
-        // Stessa terna (a.id, b.id, rotationBucket) → stesso ordine.
-        // Bucket diverso → ordine diverso, deterministico, senza randomness lato client.
-        if (rA === 1) {
-          const kA = rotationKey(a.id);
-          const kB = rotationKey(b.id);
-          if (kA !== kB) return kA - kB;
-          // Tie-break stabile sull'id, nel caso (estremamente raro) di collisione hash.
-          return a.id < b.id ? -1 : 1;
-        }
-
-        // Then sort by last active (per monthly subscribers e utenti standard)
-        const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
-        const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
-        return dateB - dateA;
-      });
-
-      // CARICA TUTTI i profili subito, no paginazione
-      setProfiles(allProfiles);
-
-      // Pre-carica gli stati online di tutti i profili
-      void loadOnlineStatuses(allProfiles.map(p => p.id));
-
-      // 📄 Paginazione: niente più prefetch infinite-scroll
+      const firstPage = sorted.slice(0, PROFILES_BATCH_SIZE);
+      setProfiles(firstPage);
+      void loadOnlineStatuses(firstPage.map(p => p.id));
     } catch (error: any) {
       setPageError(true);
       toast({
@@ -571,120 +569,19 @@ const Explore = () => {
     }
   };
 
-  // 📄 Cambia pagina con retry AUTOMATICO + refresh sessione fra tentativi.
-  // Logica bulletproof:
-  //   - 3 tentativi automatici (utente non vede errori sui glitch transitori)
-  //   - Backoff esponenziale fra retry (500ms, 1s, 1.5s)
-  //   - refreshSession() prima di ogni retry (risolve token scaduti)
-  //   - Errore visibile SOLO se tutti e 3 i tentativi falliscono
-  //   - Scroll to top quando la pagina cambia (UX pulita)
-  const loadPage = async (pageIndex: number) => {
-    if (!currentUser || loadingPage || pageIndex < 0) return;
+  // 📄 Cambio pagina LATO CLIENT: l'elenco completo è già stato caricato e
+  // ordinato globalmente (allSortedRef), quindi qui basta affettarlo. Niente
+  // più re-query per pagina (che riportava il bug della priorità per-pagina).
+  const loadPage = (pageIndex: number) => {
+    if (pageIndex < 0 || pageIndex >= totalPages) return;
     if (pageIndex === currentPage && profiles.length > 0) return;
-
-    setLoadingPage(true);
-    setPageError(false);
-
-    const MAX_RETRIES = 3;
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      try {
-        let query = supabase
-          .from("profiles")
-          .select("*")
-          .neq("id", currentUser);
-        if (matchedProfileIds.size > 0) {
-          const ids = Array.from(matchedProfileIds).map((id) => `"${id}"`).join(",");
-          query = query.not("id", "in", `(${ids})`);
-        }
-        // 🔎 Applica i filtri attivi (se presenti) a questa pagina.
-        query = applyFilterClauses(query, activeFilters);
-        const from = pageIndex * PROFILES_BATCH_SIZE;
-        const to = from + PROFILES_BATCH_SIZE - 1;
-        const { data, error } = await withTimeout(
-          query.order("last_active", { ascending: false, nullsFirst: false }).range(from, to),
-          10000
-        );
-        if (error) throw error;
-
-        let pageProfiles = (data || []).filter((p) => !matchedProfileIds.has(p.id)) as Profile[];
-
-        // Subscription sort + admin rotation (BEST-EFFORT: se la RPC fallisce,
-        // mostriamo comunque i profili senza ranking premium)
-        const profileIds = pageProfiles.map((p) => p.id);
-        let subsData: any[] | null = null;
-        try {
-          const subsResult = await withFallback(
-            supabase.rpc("get_subscription_types", { profile_ids: profileIds }),
-            { data: [], error: null },
-            4000
-          );
-          subsData = subsResult.data;
-        } catch {
-          subsData = [];
-        }
-        const creditsMap = new Map<string, string>(
-          (subsData || []).map((c: any) => [c.user_id, c.subscription_type])
-        );
-        const rotationBucket = getRotationBucket();
-        const rotationKey = (id: string) => rotationHashStr(`${id}-${rotationBucket}`);
-
-        pageProfiles.sort((a, b) => {
-          const aSub = creditsMap.get(a.id);
-          const bSub = creditsMap.get(b.id);
-          const rank = (p: Profile, sub?: string) => {
-            if (sub === "monthly") return 0;
-            if (p.is_admin_profile === true) return 1;
-            return 2;
-          };
-          const rA = rank(a, aSub);
-          const rB = rank(b, bSub);
-          if (rA !== rB) return rA - rB;
-          if (rA === 1) {
-            const kA = rotationKey(a.id);
-            const kB = rotationKey(b.id);
-            if (kA !== kB) return kA - kB;
-            return a.id < b.id ? -1 : 1;
-          }
-          const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
-          const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
-          return dateB - dateA;
-        });
-
-        // ✅ SUCCESSO
-        setProfiles(pageProfiles);
-        setCurrentPage(pageIndex);
-        void loadOnlineStatuses(pageProfiles.map((p) => p.id));
-        window.scrollTo({ top: 0, behavior: "smooth" });
-        setLoadingPage(false);
-        return;
-      } catch (e: any) {
-        const isLastAttempt = attempt === MAX_RETRIES - 1;
-        console.warn(
-          `🔁 loadPage tentativo ${attempt + 1}/${MAX_RETRIES} fallito${isLastAttempt ? " (DEFINITIVO)" : " (retry...)"}:`,
-          e?.message || e
-        );
-        if (!isLastAttempt) {
-          // Backoff progressivo + refresh sessione (risolve JWT scaduto)
-          const delay = 500 * (attempt + 1);
-          await new Promise((r) => setTimeout(r, delay));
-          try {
-            await supabase.auth.refreshSession();
-          } catch {
-            // refresh fallito, continueremo con il token corrente
-          }
-          continue;
-        }
-        // Tutti i tentativi esauriti: errore visibile
-        setPageError(true);
-        toast({
-          title: "Connessione lenta",
-          description: "Riprova fra qualche istante.",
-          variant: "destructive",
-        });
-        setLoadingPage(false);
-        return;
-      }
-    }
+    const from = pageIndex * PROFILES_BATCH_SIZE;
+    const to = from + PROFILES_BATCH_SIZE;
+    const pageProfiles = allSortedRef.current.slice(from, to);
+    setProfiles(pageProfiles);
+    setCurrentPage(pageIndex);
+    void loadOnlineStatuses(pageProfiles.map((p) => p.id));
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // 📄 PAGINAZIONE: nessun observer né scroll listener — UI con bottoni
@@ -758,10 +655,12 @@ const Explore = () => {
   ) => {
     setMatchedProfileIds(matchedUserIds);
 
-    // count: "exact" + esclusione match server-side → totalPages corretto.
+    // 🔝 Carica TUTTI i profili che matchano i filtri (cap alto), ordina
+    // globalmente (premium in cima) e pagina lato client. Così i premium
+    // appaiono in cima anche nella ricerca filtrata e non spariscono.
     let query = supabase
       .from("profiles")
-      .select("*", { count: "exact" })
+      .select("*")
       .neq("id", userId);
     if (matchedUserIds.size > 0) {
       const ids = Array.from(matchedUserIds).map((id) => `"${id}"`).join(",");
@@ -769,15 +668,11 @@ const Explore = () => {
     }
     query = applyFilterClauses(query, filters);
 
-    const { data: profilesData, count, error } = await withTimeout(
-      query.order("last_active", { ascending: false, nullsFirst: false }).range(0, PROFILES_BATCH_SIZE - 1),
-      10000
+    const { data: profilesData, error } = await withTimeout(
+      query.order("last_active", { ascending: false, nullsFirst: false }).range(0, FETCH_CAP - 1),
+      12000
     );
     if (error) throw error;
-
-    const fetched = (profilesData || []).length;
-    setTotalProfiles(count ?? fetched);
-    setCurrentPage(0);
 
     let filteredProfiles: Profile[] = (profilesData || [])
       .filter(profile => !matchedUserIds.has(profile.id)) as Profile[];
@@ -786,37 +681,18 @@ const Explore = () => {
     const { data: subsData } = await withFallback(
       supabase.rpc('get_subscription_types', { profile_ids: profileIds }),
       { data: [], error: null },
-      3500
+      4500
     );
     const creditsMap = new Map<string, string>((subsData || []).map((c: any) => [c.user_id, c.subscription_type]));
 
-    const rotationBucketFiltered = getRotationBucket();
-    const rotationKeyFiltered = (id: string) => rotationHashStr(`${id}-${rotationBucketFiltered}`);
+    const sorted = sortByPriority(filteredProfiles, creditsMap);
+    allSortedRef.current = sorted;
+    setTotalProfiles(sorted.length);
+    setCurrentPage(0);
 
-    filteredProfiles.sort((a, b) => {
-      const aSub = creditsMap.get(a.id);
-      const bSub = creditsMap.get(b.id);
-      const rank = (p: Profile, sub?: string) => {
-        if (sub === 'monthly') return 0;
-        if (p.is_admin_profile === true) return 1;
-        return 2;
-      };
-      const rA = rank(a, aSub);
-      const rB = rank(b, bSub);
-      if (rA !== rB) return rA - rB;
-      if (rA === 1) {
-        const kA = rotationKeyFiltered(a.id);
-        const kB = rotationKeyFiltered(b.id);
-        if (kA !== kB) return kA - kB;
-        return a.id < b.id ? -1 : 1;
-      }
-      const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
-      const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
-      return dateB - dateA;
-    });
-
-    setProfiles(filteredProfiles);
-    void loadOnlineStatuses(filteredProfiles.map(p => p.id));
+    const firstPage = sorted.slice(0, PROFILES_BATCH_SIZE);
+    setProfiles(firstPage);
+    void loadOnlineStatuses(firstPage.map(p => p.id));
   };
 
   const applyFilters = async () => {
