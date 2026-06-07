@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import { InsufficientCreditsBanner } from "@/components/chat/InsufficientCredits
 import OnlineIndicator from "./OnlineIndicator";
 import { getProfileTheme } from "@/lib/profileThemes";
 import { PremiumBadge } from "./PremiumBadge";
+import { DarkCrowAnimation } from "./themes/DarkCrowAnimation";
 
 interface Profile {
   id: string;
@@ -67,6 +68,9 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
   const [isCreatingChat, setIsCreatingChat] = useState(false);
   const [showCreditsBanner, setShowCreditsBanner] = useState(false);
   const [translatedBio, setTranslatedBio] = useState<string>('');
+  // 🐦 Dark Crow: token che fa ripartire la scena + timestamp ultimo avvio (cooldown).
+  const [dcToken, setDcToken] = useState(0);
+  const dcLastPlayed = useRef(0);
   const { translateText } = useTextTranslation();
   const { likesRemaining, resetAt } = useDailyLikes();
   const { credits } = useCredits();
@@ -509,6 +513,18 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
   const profileTheme = getProfileTheme(profile.profile_theme);
   const themeFrameClass = profileTheme.frameClass;
 
+  // 🐦 Tema Dark Crow: scena animata (corvo + luna + nebbia + lampi) che parte
+  //    all'hover sulla card, con cooldown di 20s. Solo per questo tema.
+  const isDarkCrow = profileTheme.id === "darkcrow";
+  const handleDarkCrowHover = () => {
+    if (!isDarkCrow) return;
+    const now = Date.now();
+    if (now - dcLastPlayed.current >= 20000) {
+      dcLastPlayed.current = now;
+      setDcToken((t) => t + 1);
+    }
+  };
+
   // Eta': se il campo age e' vuoto, la ricaviamo dalla data di nascita.
   const displayAge = profile.age ?? (profile.birthdate ? calculateAge(profile.birthdate) : null);
 
@@ -517,6 +533,7 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
       <div
         className={`group relative cursor-pointer ${themeFrameClass}`}
         onClick={handleCardClick}
+        onMouseEnter={handleDarkCrowHover}
       >
         {/* Card Container */}
         <div className="relative rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 bg-card border-2 border-border hover:border-primary/50">
@@ -642,6 +659,8 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
             </div>
           </div>
         </div>
+        {/* 🐦 Scena animata del Tema Dark Crow (overlay sopra la card). */}
+        {isDarkCrow && <DarkCrowAnimation playToken={dcToken} />}
       </div>
 
       <ProfileDialog

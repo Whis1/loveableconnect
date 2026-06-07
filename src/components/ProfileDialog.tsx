@@ -14,6 +14,7 @@ import { profileImageUrl } from "@/lib/imageUrl";
 import { getGenericLocationPhrase, calculateAge } from "@/lib/utils";
 import { getProfileTheme } from "@/lib/profileThemes";
 import { PremiumBadge } from "@/components/PremiumBadge";
+import { DarkCrowFlock } from "@/components/themes/DarkCrowAnimation";
 import profileBadge from "@/assets/profile-badge.png";
 import { SpotifySongCard } from "./SpotifySongCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -68,6 +69,8 @@ export const ProfileDialog = ({
   const [translatedBio, setTranslatedBio] = useState<string>('');
   const [translatedInterests, setTranslatedInterests] = useState<string[]>([]);
   const { translateText, translateArray } = useTextTranslation();
+  // 🐦 Tema Dark Crow: token per far irrompere lo stormo all'apertura scheda.
+  const [flockToken, setFlockToken] = useState(0);
 
   useEffect(() => {
     if (!open || !profileId) return;
@@ -184,6 +187,16 @@ export const ProfileDialog = ({
     };
     loadTranslations();
   }, [profile?.bio, profile?.interests, profile?.translatedBio, profile?.translatedInterests]);
+
+  // 🐦 All'apertura della scheda con tema Dark Crow, fai irrompere lo stormo
+  //    di corvi (con un piccolo ritardo per lasciar comparire il dialog).
+  useEffect(() => {
+    if (!open || !profile) return;
+    if (getProfileTheme((profile as any)?.profile_theme).id !== "darkcrow") return;
+    const id = window.setTimeout(() => setFlockToken((t) => t + 1), 250);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, profile?.id]);
 
   const getGenderLabel = (gender: string | null | undefined) => {
     if (!gender) return t('common.notSpecified');
@@ -305,6 +318,9 @@ export const ProfileDialog = ({
         >
           <DialogTitle className="sr-only">Profilo utente</DialogTitle>
           <DialogDescription className="sr-only">Dettagli del profilo e azioni</DialogDescription>
+
+          {/* 🐦 Tema Dark Crow: lo stormo irrompe all'apertura della scheda. */}
+          {theme.id === "darkcrow" && <DarkCrowFlock playToken={flockToken} />}
 
           {/* Scheletro mostrato finche' la fetch del profilo non completa */}
           {!profile && (

@@ -11,7 +11,7 @@
 //
 // Il valore "id" e' quello salvato in profiles.profile_theme.
 
-export type ProfileThemeId = "none" | "gold" | "neon" | "ice" | "fire";
+export type ProfileThemeId = "none" | "gold" | "darkcrow";
 
 export interface ProfileTheme {
   id: ProfileThemeId;
@@ -21,6 +21,10 @@ export interface ProfileTheme {
   premium: boolean;
   /** Tema annunciato ma non ancora selezionabile. */
   comingSoon?: boolean;
+  /** Acquisto una-tantum (permanente): si compra a parte, non con l'abbonamento. */
+  oneTime?: boolean;
+  /** Prezzo mostrato (es. "9,99") per i temi a pagamento una-tantum. */
+  price?: string;
   /** Gradiente mostrato nel pallino di scelta. */
   swatch: string;
   /** Classe applicata al contenitore/cornice della card. */
@@ -64,47 +68,20 @@ export const PROFILE_THEMES: ProfileTheme[] = [
     panelClass: "pt-gold-panel",
     badge: true,
   },
-  // --- In arrivo (mostrano che il sistema e' estendibile) ---
   {
-    id: "neon",
-    name: "Neon Viola",
-    description: "Contorni al neon viola/ciano pulsanti. In arrivo.",
-    premium: true,
-    comingSoon: true,
-    swatch: "linear-gradient(135deg,#a855f7,#22d3ee)",
-    frameClass: "",
-    avatarClass: "",
-    nameClass: "",
-    iconClass: "",
-    panelClass: "",
-    badge: false,
-  },
-  {
-    id: "ice",
-    name: "Ghiaccio",
-    description: "Bordo cristallino azzurro con riflessi. In arrivo.",
-    premium: true,
-    comingSoon: true,
-    swatch: "linear-gradient(135deg,#e0f2fe,#38bdf8,#0369a1)",
-    frameClass: "",
-    avatarClass: "",
-    nameClass: "",
-    iconClass: "",
-    panelClass: "",
-    badge: false,
-  },
-  {
-    id: "fire",
-    name: "Fuoco",
-    description: "Fiamme arancioni che danzano sul contorno. In arrivo.",
-    premium: true,
-    comingSoon: true,
-    swatch: "linear-gradient(135deg,#fde68a,#f97316,#b91c1c)",
-    frameClass: "",
-    avatarClass: "",
-    nameClass: "",
-    iconClass: "",
-    panelClass: "",
+    id: "darkcrow",
+    name: "Tema Dark Crow",
+    description:
+      "Atmosfera notturna ed epica: corvo reale, luna, nebbia e lampi che appaiono e si dissolvono. Nickname nero lucido, anello e cornice scuri. Acquisto una-tantum, tuo per sempre.",
+    premium: false, // NON e' un gate da abbonamento: si acquista a parte
+    oneTime: true,
+    price: "9,99",
+    swatch: "linear-gradient(135deg,#2a2540,#14101f,#0a0810)",
+    frameClass: "dc-frame",
+    avatarClass: "dc-avatar",
+    nameClass: "dc-name",
+    iconClass: "dc-icon",
+    panelClass: "dc-panel",
     badge: false,
   },
 ];

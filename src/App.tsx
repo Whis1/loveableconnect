@@ -12,6 +12,7 @@ import { useConnectionWatchdog } from "./hooks/useConnectionWatchdog";
 import { usePresenceTracking } from "./hooks/usePresenceTracking";
 import { MatchNotificationProvider } from "./contexts/MatchNotificationContext";
 import { SupportRatingGate } from "./components/SupportRatingGate";
+import { ThemePurchaseGate } from "./components/ThemePurchaseGate";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,6 +40,7 @@ const AppShell = () => {
       <AdBanner />
       <AnimatedRoutes />
       <SupportRatingGate />
+      <ThemePurchaseGate />
     </MatchNotificationProvider>
   );
 };

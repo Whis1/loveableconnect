@@ -36,6 +36,8 @@ interface ProfileCustomizationDialogProps {
   city?: string | null;
   age?: number | null;
   isPremium: boolean;
+  /** Temi acquistati una-tantum (permanenti), es. ["darkcrow"]. */
+  ownedThemes?: string[];
   currentTheme: ProfileThemeId;
   onSaved: (theme: ProfileThemeId) => void;
 }
@@ -50,6 +52,7 @@ export const ProfileCustomizationDialog = ({
   avatarUrl,
   age,
   isPremium,
+  ownedThemes = [],
   currentTheme,
   onSaved,
 }: ProfileCustomizationDialogProps) => {
@@ -58,10 +61,16 @@ export const ProfileCustomizationDialog = ({
   const { t } = useTranslation();
   const [selected, setSelected] = useState<ProfileThemeId>(currentTheme);
   const [saving, setSaving] = useState(false);
+  const [buying, setBuying] = useState(false);
 
   const theme = getProfileTheme(selected);
   const initial = (nickname?.charAt(0) || "?").toUpperCase();
-  const locked = theme.premium && !isPremium;
+  const owns = (id: string) => ownedThemes.includes(id);
+  // Bloccato da abbonamento (tema premium e utente non abbonato).
+  const lockedPremium = theme.premium && !isPremium;
+  // Bloccato perché tema a pagamento una-tantum non ancora acquistato.
+  const lockedOneTime = theme.oneTime === true && !owns(selected);
+  const locked = lockedPremium || lockedOneTime;
 
   const handleSelect = (id: ProfileThemeId) => {
     const t = getProfileTheme(id);
@@ -69,9 +78,32 @@ export const ProfileCustomizationDialog = ({
     setSelected(id);
   };
 
+  // Acquisto una-tantum del tema (es. Dark Crow): apre il checkout Stripe.
+  const handleBuy = async () => {
+    setBuying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-theme-payment", { body: {} });
+      if (error) throw error;
+      const url = (data as any)?.url;
+      if (url) {
+        window.location.href = url;
+        return;
+      }
+      throw new Error("URL di pagamento non disponibile");
+    } catch (e: any) {
+      toast({ title: "Errore", description: e.message || "Impossibile avviare l'acquisto", variant: "destructive" });
+      setBuying(false);
+    }
+  };
+
   const handleSave = async () => {
+    // Tema a pagamento una-tantum non posseduto → avvia l'acquisto.
+    if (lockedOneTime) {
+      await handleBuy();
+      return;
+    }
     // Tema riservato e utente non Premium → invito all'upgrade.
-    if (locked) {
+    if (lockedPremium) {
       onOpenChange(false);
       navigate("/credits");
       return;
@@ -126,7 +158,7 @@ export const ProfileCustomizationDialog = ({
         <div className="flex flex-wrap gap-2">
           {PROFILE_THEMES.map((th) => {
             const active = th.id === selected;
-            const thLocked = th.premium && !isPremium;
+            const thLocked = (th.premium && !isPremium) || (th.oneTime === true && !owns(th.id));
             return (
               <button
                 key={th.id}
@@ -157,9 +189,14 @@ export const ProfileCustomizationDialog = ({
         {/* Descrizione tema + nota lucchetto */}
         <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-purple-100/80 backdrop-blur-sm">
           {theme.description}
-          {locked && (
+          {lockedPremium && (
             <div className="mt-1.5 flex items-center gap-1.5 font-medium text-amber-600 dark:text-amber-400">
               <Crown className="h-4 w-4" /> Riservato agli abbonati Premium.
+            </div>
+          )}
+          {lockedOneTime && (
+            <div className="mt-1.5 flex items-center gap-1.5 font-medium text-amber-300">
+              <Sparkles className="h-4 w-4" /> Tema a pagamento: {theme.price}€ una tantum, poi è tuo per sempre.
             </div>
           )}
         </div>
@@ -339,7 +376,21 @@ export const ProfileCustomizationDialog = ({
           >
             Annulla
           </Button>
-          {locked ? (
+          {lockedOneTime ? (
+            <Button
+              onClick={handleSave}
+              disabled={buying}
+              className="bg-gradient-to-r from-purple-600 via-fuchsia-600 to-indigo-600 hover:from-purple-500 hover:via-fuchsia-500 hover:to-indigo-500 text-white border-0 shadow-lg"
+            >
+              {buying ? (
+                "Avvio pagamento..."
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2" /> Acquista {theme.price}€
+                </>
+              )}
+            </Button>
+          ) : lockedPremium ? (
             <Button
               onClick={handleSave}
               className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white"
