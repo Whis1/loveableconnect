@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Dialog,
@@ -23,6 +23,7 @@ import {
 } from "@/lib/profileLabels";
 import { ProfileGridCard } from "@/components/ProfileGridCard";
 import { PremiumBadge } from "@/components/PremiumBadge";
+import { DarkCrowFlock } from "@/components/themes/DarkCrowAnimation";
 
 interface ProfileCustomizationDialogProps {
   open: boolean;
@@ -62,6 +63,12 @@ export const ProfileCustomizationDialog = ({
   const [selected, setSelected] = useState<ProfileThemeId>(currentTheme);
   const [saving, setSaving] = useState(false);
   const [buying, setBuying] = useState(false);
+  // 🐦 Ogni volta che si (ri)seleziona Dark Crow, fa ripartire le anteprime
+  //    animate (scena in card esterna + stormo in card interna).
+  const [dcPreviewToken, setDcPreviewToken] = useState(0);
+  useEffect(() => {
+    if (selected === "darkcrow") setDcPreviewToken((t) => t + 1);
+  }, [selected]);
 
   const theme = getProfileTheme(selected);
   const initial = (nickname?.charAt(0) || "?").toUpperCase();
@@ -216,6 +223,7 @@ export const ProfileCustomizationDialog = ({
                 profile={{ ...profile, profile_theme: selected }}
                 currentUserId={currentUserId}
                 onLike={() => {}}
+                darkCrowPlayToken={dcPreviewToken}
               />
             </div>
           </div>
@@ -229,7 +237,9 @@ export const ProfileCustomizationDialog = ({
             </div>
             <div className="relative flex-1 min-h-[500px]">
               <div className={`absolute inset-0 ${theme.frameClass} h-full`}>
-                <div className="h-full rounded-[0.8rem] overflow-hidden border border-border bg-card shadow-lg flex flex-col">
+                <div className="relative h-full rounded-[0.8rem] overflow-hidden border border-border bg-card shadow-lg flex flex-col">
+                  {/* 🐦 Stormo che irrompe quando si (ri)seleziona Dark Crow. */}
+                  {selected === "darkcrow" && <DarkCrowFlock playToken={dcPreviewToken} />}
                   {/* Header con foto verticale grande, come nella scheda reale */}
                   <div className="relative shrink-0 px-4 pt-5 pb-3 bg-gradient-to-br from-primary/20 via-primary/10 to-background flex flex-col items-center">
                   {/* Contorno della foto tematizzato col tema selezionato. */}

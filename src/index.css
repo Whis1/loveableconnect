@@ -304,9 +304,10 @@ All colors MUST be HSL.
    movimento. Un ciclo dura ~8s ed e' guidato da CSS su .dc-scene.
    ========================================================================= */
 
-/* Cornice scura del tema (base statica, sempre visibile) */
+/* Cornice scura del tema (base statica, sempre visibile).
+   NB: niente position qui — sulla card bacheca c'e' gia' Tailwind `relative`,
+   e forzare position:relative romperebbe le anteprime `absolute inset-0`. */
 .dc-frame {
-  position: relative;
   border-radius: 0.85rem;
   padding: 2px;
   background:

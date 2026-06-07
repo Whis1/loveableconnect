@@ -52,9 +52,12 @@ interface ProfileGridCardProps {
   onlineStatus?: { isOnline: boolean; showStatus: boolean }; // Pre-caricato da pagina parent
   onLike: (profileId: string) => void;
   onMatch?: (profileName: string, profileAvatar: string | null) => void;
+  /** 🐦 Trigger ESTERNO della scena Dark Crow (es. anteprima nel pannello
+   *  Personalizzazione, dove l'hover non parte). Ogni cambio fa ripartire. */
+  darkCrowPlayToken?: number;
 }
 
-const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, hasActiveMatch = false, onlineStatus, onLike, onMatch }: ProfileGridCardProps) => {
+const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, hasActiveMatch = false, onlineStatus, onLike, onMatch, darkCrowPlayToken }: ProfileGridCardProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -524,6 +527,12 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
       setDcToken((t) => t + 1);
     }
   };
+  // Trigger esterno (anteprima pannello): quando il token del genitore cambia,
+  // fai ripartire la scena anche senza hover.
+  useEffect(() => {
+    if (isDarkCrow && darkCrowPlayToken) setDcToken((t) => t + 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [darkCrowPlayToken]);
 
   // Eta': se il campo age e' vuoto, la ricaviamo dalla data di nascita.
   const displayAge = profile.age ?? (profile.birthdate ? calculateAge(profile.birthdate) : null);
