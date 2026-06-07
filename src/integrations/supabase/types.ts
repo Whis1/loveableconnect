@@ -479,6 +479,50 @@ export type Database = {
         }
         Relationships: []
       }
+      leaderboard_rank_streaks: {
+        Row: {
+          created_at: string
+          current_elo: number
+          current_rank: number
+          is_admin_profile: boolean
+          last_checked_at: string
+          profile_id: string
+          rank_started_at: string
+          top1_streak_started_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_elo?: number
+          current_rank: number
+          is_admin_profile?: boolean
+          last_checked_at?: string
+          profile_id: string
+          rank_started_at?: string
+          top1_streak_started_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_elo?: number
+          current_rank?: number
+          is_admin_profile?: boolean
+          last_checked_at?: string
+          profile_id?: string
+          rank_started_at?: string
+          top1_streak_started_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leaderboard_rank_streaks_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       likes: {
         Row: {
           created_at: string
@@ -1310,6 +1354,7 @@ export type Database = {
       }
       tris_games: {
         Row: {
+          apex_unlocked: boolean
           created_at: string
           dama_draws: number
           dama_losses: number
@@ -1321,6 +1366,8 @@ export type Database = {
           last_game_payment_type: string | null
           last_known_rank: number | null
           last_reset_date: string
+          max_elo_reached: number
+          monthly_champion_titles: number
           othello_draws: number
           othello_losses: number
           othello_wins: number
@@ -1331,8 +1378,11 @@ export type Database = {
           tris_wins: number
           updated_at: string
           user_id: string
+          weekly_champion_titles: number
+          zenith_unlocked: boolean
         }
         Insert: {
+          apex_unlocked?: boolean
           created_at?: string
           dama_draws?: number
           dama_losses?: number
@@ -1344,6 +1394,8 @@ export type Database = {
           last_game_payment_type?: string | null
           last_known_rank?: number | null
           last_reset_date?: string
+          max_elo_reached?: number
+          monthly_champion_titles?: number
           othello_draws?: number
           othello_losses?: number
           othello_wins?: number
@@ -1354,8 +1406,11 @@ export type Database = {
           tris_wins?: number
           updated_at?: string
           user_id: string
+          weekly_champion_titles?: number
+          zenith_unlocked?: boolean
         }
         Update: {
+          apex_unlocked?: boolean
           created_at?: string
           dama_draws?: number
           dama_losses?: number
@@ -1367,6 +1422,8 @@ export type Database = {
           last_game_payment_type?: string | null
           last_known_rank?: number | null
           last_reset_date?: string
+          max_elo_reached?: number
+          monthly_champion_titles?: number
           othello_draws?: number
           othello_losses?: number
           othello_wins?: number
@@ -1377,6 +1434,8 @@ export type Database = {
           tris_wins?: number
           updated_at?: string
           user_id?: string
+          weekly_champion_titles?: number
+          zenith_unlocked?: boolean
         }
         Relationships: []
       }
@@ -1691,6 +1750,7 @@ export type Database = {
       }
       deduct_message_credits: { Args: { _user_id: string }; Returns: boolean }
       delete_inbox_batch: { Args: { p_batch_id: string }; Returns: number }
+      enforce_premium_expiry: { Args: never; Returns: boolean }
       fnv1a: { Args: { s: string }; Returns: number }
       get_admin_credit_actions: {
         Args: never
@@ -1822,6 +1882,19 @@ export type Database = {
           updated_count: number
         }[]
       }
+      refresh_leaderboard_rank_streaks: {
+        Args: never
+        Returns: {
+          current_elo: number
+          current_rank: number
+          is_admin_profile: boolean
+          last_checked_at: string
+          profile_id: string
+          rank_started_at: string
+          top1_streak_seconds: number
+          top1_streak_started_at: string
+        }[]
+      }
       report_user_match_result: {
         Args: { _match_id: string; _user_won: boolean }
         Returns: undefined
@@ -1863,6 +1936,14 @@ export type Database = {
         }[]
       }
       start_user_match: { Args: { _match_id: string }; Returns: undefined }
+      sync_champion_title_counters: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
+      sync_elo_milestone_titles: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       tournament_heartbeat: {
         Args: { _tournament_id: string }
         Returns: undefined
