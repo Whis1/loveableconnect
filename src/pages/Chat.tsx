@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Send, Paperclip, Gift, UserRound } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, UserRound } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { GifPicker } from "@/components/chat/GifPicker";
@@ -936,16 +936,6 @@ const Chat = () => {
               <div className="flex items-center gap-1">
                 {otherUser && activeMatchId && (
                   <>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleShowGiftBanner}
-                      disabled={giftingSubscription}
-                      className="text-primary hover:text-primary hover:bg-primary/10"
-                      title="Regala abbonamento Premium"
-                    >
-                      <Gift className="h-5 w-5" />
-                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
