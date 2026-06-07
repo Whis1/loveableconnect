@@ -528,12 +528,12 @@ All colors MUST be HSL.
 .dc-flock-img {
   position: absolute;
   left: 50%;
-  top: 14%;               /* piu' in basso: i corvi non stanno solo in cima */
-  width: 200%;            /* piu' grandi, coprono anche la parte centrale/bassa */
+  top: -8%;
+  width: 175%;            /* piu' grande: copre molta piu' card, i lati escono (tagliati) */
   transform: translateX(-50%);
-  /* Sfuma sopra e sotto: niente "linea" del bordo del rettangolo. */
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 10%, #000 86%, transparent 100%);
-          mask-image: linear-gradient(to bottom, transparent 0%, #000 10%, #000 86%, transparent 100%);
+  /* Sfuma sopra e sotto cosi' sparisce la "linea" del bordo del rettangolo. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 15%, #000 80%, transparent 100%);
+          mask-image: linear-gradient(to bottom, transparent 0%, #000 15%, #000 80%, transparent 100%);
 }
 .dc-flock-lightning { animation: dc-flock-flash 3.8s linear forwards; }
 @keyframes dc-flock-flash {
