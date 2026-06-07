@@ -446,8 +446,14 @@ const Explore = () => {
     filters: { genders: string[]; orientations: string[]; ageRange: [number, number] } | null
   ) => {
     if (!filters) return query;
-    // Età — se il massimo è 60 significa "60+": nessun limite superiore.
-    query = query.gte("age", filters.ageRange[0]);
+    // Età: applichiamo i limiti SOLO se l'utente ha ristretto il range dal
+    // default [18, 60]. Col range pieno NON filtriamo per età, altrimenti la
+    // condizione "age >= 18" esclude i profili con colonna `age` NULL (età
+    // ricavata dalla data di nascita) — era il motivo per cui i premium
+    // sparivano cliccando "Salva" anche senza scegliere alcuna categoria.
+    if (filters.ageRange[0] > 18) {
+      query = query.gte("age", filters.ageRange[0]);
+    }
     if (filters.ageRange[1] < 60) {
       query = query.lte("age", filters.ageRange[1]);
     }
