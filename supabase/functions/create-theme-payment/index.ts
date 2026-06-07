@@ -8,8 +8,7 @@ const corsHeaders = {
 };
 
 // 🟣 Prezzo Stripe del Tema Dark Crow (9,99€ una-tantum, permanente).
-// TODO: sostituire con l'ID reale creato su Stripe via Lovable.
-const DARKCROW_PRICE_ID = "price_REPLACE_WITH_DARKCROW_999";
+const DARKCROW_PRICE_ID = "price_1TfhWfK6IHDbrxmEYYcNT5EH";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
