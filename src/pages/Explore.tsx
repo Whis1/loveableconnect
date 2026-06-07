@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useBanCheck } from "@/hooks/useBanCheck";
-import { Home, MapPin, Filter, RotateCcw, Search as SearchIcon, Heart, MessageCircle, Save } from "lucide-react";
+import { ArrowLeft, MapPin, Filter, RotateCcw, Search as SearchIcon, Heart, MessageCircle, Save } from "lucide-react";
 import { ProfileGridCard } from "@/components/ProfileGridCard";
 import { DestinyGame } from "@/components/DestinyGame";
 import { OnboardingDialog } from "@/components/OnboardingDialog";
@@ -916,7 +916,7 @@ const Explore = () => {
         <div className="container mx-auto max-w-7xl relative z-10">
           <div className="mb-3 md:mb-4 flex justify-between items-center gap-2">
             <Button variant="ghost" onClick={() => navigate("/")} size="sm">
-              <Home className="h-4 w-4 mr-1 md:mr-2" />
+              <ArrowLeft className="h-4 w-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">Home Page</span>
             </Button>
             <div className="flex items-center gap-2">
