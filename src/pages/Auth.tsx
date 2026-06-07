@@ -14,6 +14,8 @@ import { PlacesAutocomplete } from "@/components/PlacesAutocomplete";
 import { useLanguageDetection } from "@/hooks/useLanguageDetection";
 import { CookieBanner } from "@/components/CookieBanner";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useNicknameAvailability } from "@/hooks/useNicknameAvailability";
+import { isNicknameDuplicateError, isNicknameTaken, NICKNAME_TAKEN_MESSAGE, normalizeNickname } from "@/lib/nickname";
 import authHeartBg from "@/assets/auth-heart-background.png";
 import authLogo from "@/assets/auth-logo.png";
 
@@ -53,6 +55,9 @@ const Auth = () => {
   const [ageConsent, setAgeConsent] = useState(false);
   const [resendingEmail, setResendingEmail] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const nicknameAvailability = useNicknameAvailability(nickname, undefined, {
+    enabled: !emailSent && Boolean(nickname.trim()),
+  });
 
   useEffect(() => {
     // Check cookie consent
@@ -145,8 +150,9 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    const normalizedNickname = normalizeNickname(nickname);
     
-    if (!email || !password || !nickname || !birthDay || !birthMonth || !birthYear || !city || !gender || !sexualOrientation || !relationshipStatus) {
+    if (!email || !password || !normalizedNickname || !birthDay || !birthMonth || !birthYear || !city || !gender || !sexualOrientation || !relationshipStatus) {
       toast({
         title: t('auth.errorSignUp'),
         description: t('auth.errorAllFields'),
@@ -188,12 +194,25 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      try {
+        if (await isNicknameTaken(normalizedNickname)) {
+          toast({
+            title: t('auth.errorSignUp'),
+            description: NICKNAME_TAKEN_MESSAGE,
+            variant: "destructive",
+          });
+          return;
+        }
+      } catch (nicknameCheckError) {
+        console.warn("Client nickname availability check skipped:", nicknameCheckError);
+      }
+
       // Use custom signup edge function that handles everything
       const { data, error } = await supabase.functions.invoke('custom-signup', {
         body: {
           email,
           password,
-          nickname,
+          nickname: normalizedNickname,
           birthdate,
           city,
           gender,
@@ -214,7 +233,7 @@ const Auth = () => {
     } catch (error: any) {
       toast({
         title: t('auth.errorSignUp'),
-        description: error.message,
+        description: isNicknameDuplicateError(error) ? NICKNAME_TAKEN_MESSAGE : error.message,
         variant: "destructive",
       });
     } finally {
@@ -569,9 +588,16 @@ const Auth = () => {
                     placeholder={t('profile.nickname')}
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
+                    className={nicknameAvailability.isTaken ? "border-red-500 focus-visible:ring-red-500" : undefined}
+                    aria-invalid={nicknameAvailability.isTaken}
                     maxLength={18}
                     required
                   />
+                  {nicknameAvailability.isTaken && (
+                    <p className="text-xs font-semibold text-red-500 dark:text-red-400">
+                      {NICKNAME_TAKEN_MESSAGE}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Data di Nascita</Label>

@@ -18,7 +18,6 @@ import { MatchBanner } from "@/components/MatchBanner";
 import { PageLoader } from "@/components/PageLoader";
 import { useTextTranslation } from "@/hooks/useTranslation";
 import { useLikes } from "@/hooks/useLikes";
-import { useProfiles } from "@/hooks/useProfiles";
 import { withFallback, withTimeout } from "@/lib/async";
 
 interface Profile {
@@ -41,6 +40,7 @@ interface Profile {
   longitude: number | null;
   last_active: string | null;
   is_admin_profile: boolean;
+  profile_theme?: string | null;
   distance?: number;
   translatedBio?: string | null;
   translatedInterests?: string[] | null;
@@ -49,31 +49,6 @@ interface Profile {
 interface UserLocation {
   latitude: number;
   longitude: number;
-}
-
-// 🔄 Rotazione profili admin in cima alla bacheca.
-// Ogni ROTATION_HOURS ore, l'ordine degli admin in prima fila cambia
-// in modo deterministico (basato su un hash id+bucket).
-// Gli utenti reali NON sono toccati: per apparire in prima fila devono
-// fare l'abbonamento mensile (rank 0). Gli admin sono rank 1 e ruotano
-// fra loro mantenendosi sempre prima degli altri utenti standard.
-const ROTATION_HOURS = 3;
-const ROTATION_EPOCH = Date.UTC(2026, 0, 1); // 1 Jan 2026 UTC
-const ROTATION_INTERVAL_MS = ROTATION_HOURS * 60 * 60 * 1000;
-
-/** FNV-1a 32-bit hash su stringa, restituisce uint32 deterministico. */
-function rotationHashStr(str: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
-/** Calcola il bucket di rotazione corrente (incrementa ogni ROTATION_HOURS). */
-function getRotationBucket(): number {
-  return Math.floor((Date.now() - ROTATION_EPOCH) / ROTATION_INTERVAL_MS);
 }
 
 // 💾 Chiave localStorage per i filtri di ricerca salvati dall'utente.
@@ -86,7 +61,6 @@ const Explore = () => {
   const { translateProfiles } = useTextTranslation();
   useBanCheck(); // Check if user is banned
   const { likedProfileIds } = useLikes();
-  const { profiles: cachedProfiles } = useProfiles();
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   // 📄 PAGINAZIONE CLASSICA: 20 profili per pagina, pulsanti Prev/Next.
   // Più affidabile dell'infinite scroll: niente caricamento infinito, niente
@@ -108,6 +82,8 @@ const Explore = () => {
   const [pageError, setPageError] = useState(false);
   // Legacy refs (unused dopo migrazione paginazione, mantenuti per compat type)
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const profileSnapshotRef = useRef<Profile[]>([]);
+  const pageCacheRef = useRef<Map<number, Profile[]>>(new Map());
   // 📄 PAGINAZIONE: rimossi prefetch + observer refs (legacy infinite scroll)
 
   // Pre-caricare matches e hidden matches per performance
@@ -151,16 +127,16 @@ const Explore = () => {
 
   // Map canonical filter values to synonyms actually present in DB (Italian/English variants)
   const genderSynonymsMap: Record<string, string[]> = {
-    "male": ["male", "uomo", "maschio", "man", "m"],
-    "female": ["female", "donna", "femmina", "woman", "f"],
-    "transgender": ["transgender", "trans"],
-    "genderfluid": ["genderfluid", "gender-fluid", "gender fluid"],
-    "non-binary": ["non-binary", "non binary", "nonbinary", "non binario", "enby"],
+    "male": ["male", "uomo", "maschio", "maschile", "man", "men", "boy", "ragazzo", "m"],
+    "female": ["female", "donna", "femmina", "femminile", "woman", "women", "girl", "ragazza", "f"],
+    "transgender": ["transgender", "trans", "transexual", "transessuale"],
+    "genderfluid": ["genderfluid", "gender-fluid", "gender fluid", "gender fluido"],
+    "non-binary": ["non-binary", "non binary", "nonbinary", "non binario", "nonbinario", "enby"],
   };
 
   const orientationSynonymsMap: Record<string, string[]> = {
     "heterosexual": ["heterosexual", "eterosessuale", "etero", "straight"],
-    "homosexual": ["homosexual", "omosessuale", "gay", "lesbian", "lesbo"],
+    "homosexual": ["homosexual", "omosessuale", "gay", "lesbian", "lesbica", "lesbo"],
     "bisexual": ["bisexual", "bisessuale", "bi"],
     "pansexual": ["pansexual", "pansessuale", "pansexuale", "pan"],
   };
@@ -245,40 +221,13 @@ const Explore = () => {
         needsOnboarding = !!(prof && (prof as any).onboarding_completed === false);
       } catch { /* colonna assente o errore: ignora */ }
 
-      // 💾 Filtri salvati dall'utente: se presenti, ripristina la ricerca
-      // filtrata invece di mostrare tutti i profili. Restano finché non si
-      // clicca Reset.
-      let savedFilters: { genders: string[]; orientations: string[]; ageRange: [number, number] } | null = null;
-      try {
-        const raw = localStorage.getItem(EXPLORE_FILTERS_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed && Array.isArray(parsed.genders) && Array.isArray(parsed.orientations) && Array.isArray(parsed.ageRange)) {
-            savedFilters = parsed;
-          }
-        }
-      } catch { /* ignora filtri corrotti */ }
+      // I filtri salvati non vengono applicati automaticamente all'ingresso:
+      // se restano nascosti possono far sparire profili Premium dalla bacheca
+      // finale dando l'impressione che l'ordinamento sia rotto.
 
-      if (savedFilters && !cancelled) {
-        // Ripristina UI dei filtri + modalità filtrata, poi carica pagina 0 filtrata.
-        setSelectedGenders(savedFilters.genders);
-        setSelectedOrientations(savedFilters.orientations);
-        setAgeRange(savedFilters.ageRange);
-        setActiveFilters(savedFilters);
-        await loadFilteredFirstPage(session.user.id, matches, savedFilters);
-        if (!cancelled) setLoading(false);
-        // 🧭 Segna che l'onboarding va mostrato: apparira' alla fine del loader
-        //    di geolocalizzazione (vedi useEffect dedicato).
-        if (needsOnboarding && !cancelled) setOnboardingPending(true);
-        return;
-      }
-
-      if (!cancelled && cachedProfiles.length > 0) {
-        setProfiles((cachedProfiles as Profile[]).filter((profile) => !matches.has(profile.id)));
-        setLoading(false);
-      }
-
-      // Load all profiles automatically
+      // Load the ordered snapshot before showing the board. The generic cached
+      // profile list can briefly show a different order and then be replaced,
+      // which looks like premium profiles appear and disappear.
       await loadAllProfiles(session.user.id, matches);
 
       if (!cancelled) setLoading(false);
@@ -318,6 +267,18 @@ const Explore = () => {
           if (!error && updatedProfile) {
             // Update profile without translation for performance
             const updated = updatedProfile as Profile;
+
+            profileSnapshotRef.current = profileSnapshotRef.current.map((profile) =>
+              profile.id === updated.id ? { ...profile, ...updated } : profile
+            );
+            pageCacheRef.current = new Map(
+              Array.from(pageCacheRef.current.entries()).map(([pageIndex, pageProfiles]) => [
+                pageIndex,
+                pageProfiles.map((profile) =>
+                  profile.id === updated.id ? { ...profile, ...updated } : profile
+                ),
+              ])
+            );
             
             setProfiles(prev => prev.map(p => 
               p.id === updated.id ? updated : p
@@ -411,21 +372,179 @@ const Explore = () => {
     if (filters.ageRange[1] < 60) {
       query = query.lte("age", filters.ageRange[1]);
     }
-    // Genere (con sinonimi DB)
-    if (filters.genders.length > 0) {
-      const genderValues = Array.from(
-        new Set(filters.genders.flatMap((g) => genderSynonymsMap[g] || [g]))
-      );
-      query = query.in("gender", genderValues);
-    }
-    // Orientamento (con sinonimi DB)
-    if (filters.orientations.length > 0) {
-      const orientationValues = Array.from(
-        new Set(filters.orientations.flatMap((o) => orientationSynonymsMap[o] || [o]))
-      );
-      query = query.in("sexual_orientation", orientationValues);
-    }
+    // Genere e orientamento vengono filtrati lato client con normalizzazione:
+    // nel DB possono esserci varianti con maiuscole, italiano/inglese o spazi.
     return query;
+  };
+
+  const normalizeFilterValue = (value: string | null | undefined) =>
+    (value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase()
+      .replace(/[_-]+/g, " ")
+      .replace(/\s+/g, " ");
+
+  const buildNormalizedFilterSet = (values: string[], synonyms: Record<string, string[]>) =>
+    new Set(values.flatMap((value) => synonyms[value] || [value]).map(normalizeFilterValue));
+
+  const valueMatchesNormalizedSet = (value: string | null | undefined, acceptedValues: Set<string>) => {
+    const normalizedValue = normalizeFilterValue(value);
+    if (!normalizedValue) return false;
+    if (acceptedValues.has(normalizedValue)) return true;
+
+    const tokens = normalizedValue.split(" ").filter(Boolean);
+    if (tokens.some((token) => acceptedValues.has(token))) return true;
+
+    return false;
+  };
+
+  const profileMatchesFilters = (
+    profile: Profile,
+    filters: { genders: string[]; orientations: string[]; ageRange: [number, number] } | null
+  ) => {
+    if (!filters) return true;
+
+    if (filters.genders.length > 0) {
+      const acceptedGenders = buildNormalizedFilterSet(filters.genders, genderSynonymsMap);
+      if (!valueMatchesNormalizedSet(profile.gender, acceptedGenders)) return false;
+    }
+
+    if (filters.orientations.length > 0) {
+      const acceptedOrientations = buildNormalizedFilterSet(filters.orientations, orientationSynonymsMap);
+      if (!valueMatchesNormalizedSet(profile.sexual_orientation, acceptedOrientations)) return false;
+    }
+
+    return true;
+  };
+
+  const getSnapshotPage = (snapshot: Profile[], pageIndex: number) => {
+    const cached = pageCacheRef.current.get(pageIndex);
+    if (cached) return cached;
+
+    const from = pageIndex * PROFILES_BATCH_SIZE;
+    const pageProfiles = snapshot.slice(from, from + PROFILES_BATCH_SIZE);
+
+    pageCacheRef.current.set(pageIndex, pageProfiles);
+    return pageProfiles;
+  };
+
+  const showSnapshotPage = (
+    pageIndex: number,
+    snapshot = profileSnapshotRef.current,
+    scrollToTop = false
+  ) => {
+    const maxPageIndex = Math.max(0, Math.ceil(snapshot.length / PROFILES_BATCH_SIZE) - 1);
+    const safePageIndex = Math.min(Math.max(pageIndex, 0), maxPageIndex);
+    const pageProfiles = getSnapshotPage(snapshot, safePageIndex);
+
+    setProfiles(pageProfiles);
+    setCurrentPage(safePageIndex);
+    void loadOnlineStatuses(pageProfiles.map((p) => p.id));
+
+    if (scrollToTop) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const setSnapshotAndShowFirstPage = (snapshot: Profile[]) => {
+    profileSnapshotRef.current = snapshot;
+    pageCacheRef.current = new Map();
+    setTotalProfiles(snapshot.length);
+    showSnapshotPage(0, snapshot);
+  };
+
+  const getSubscriptionTypesMap = async (profileIds: string[]) => {
+    const subscriptions = new Map<string, string>();
+    const uniqueIds = Array.from(new Set(profileIds.filter(Boolean)));
+    const SUBSCRIPTION_CHUNK_SIZE = 150;
+
+    for (let i = 0; i < uniqueIds.length; i += SUBSCRIPTION_CHUNK_SIZE) {
+      const chunk = uniqueIds.slice(i, i + SUBSCRIPTION_CHUNK_SIZE);
+      const { data: subsData } = await withFallback(
+        supabase.rpc("get_subscription_types", { profile_ids: chunk }),
+        { data: [], error: null },
+        5000
+      );
+
+      (subsData || []).forEach((subscription: any) => {
+        if (subscription?.user_id) {
+          subscriptions.set(subscription.user_id, subscription.subscription_type);
+        }
+      });
+    }
+
+    return subscriptions;
+  };
+
+  const sortExploreProfiles = async (items: Profile[]) => {
+    const uniqueProfiles = Array.from(new Map(items.map((profile) => [profile.id, profile])).values());
+    const profileIds = uniqueProfiles.map((p) => p.id);
+    const creditsMap = await getSubscriptionTypesMap(profileIds);
+    return uniqueProfiles.sort((a, b) => {
+      const aSub = creditsMap.get(a.id);
+      const bSub = creditsMap.get(b.id);
+      const rank = (p: Profile, sub?: string) => {
+        // Monthly includes both Premium and Platinum/Standard monthly plans.
+        if (sub === "monthly") return 0;
+        if (p.is_admin_profile === true) return 1;
+        return 2;
+      };
+      const rA = rank(a, aSub);
+      const rB = rank(b, bSub);
+      if (rA !== rB) return rA - rB;
+      const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
+      const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
+      if (dateA !== dateB) return dateB - dateA;
+      return a.id < b.id ? -1 : 1;
+    });
+  };
+
+  const fetchProfileSnapshot = async (
+    userId: string,
+    matchedUserIds: Set<string>,
+    filters: { genders: string[]; orientations: string[]; ageRange: [number, number] } | null
+  ) => {
+    const SNAPSHOT_CHUNK_SIZE = 1000;
+    let from = 0;
+    let totalCount: number | null = null;
+    const collected: Profile[] = [];
+
+    while (true) {
+      let query = supabase
+        .from("profiles")
+        .select("*", { count: "exact" })
+        .neq("id", userId);
+
+      if (matchedUserIds.size > 0) {
+        const ids = Array.from(matchedUserIds).map((id) => `"${id}"`).join(",");
+        query = query.not("id", "in", `(${ids})`);
+      }
+
+      query = applyFilterClauses(query, filters);
+
+      const { data, count, error } = await withTimeout(
+        query
+          .order("last_active", { ascending: false, nullsFirst: false })
+          .order("id", { ascending: true })
+          .range(from, from + SNAPSHOT_CHUNK_SIZE - 1),
+        15000
+      );
+
+      if (error) throw error;
+      const rows = (data || []) as Profile[];
+      collected.push(
+        ...rows.filter((profile) => !matchedUserIds.has(profile.id) && profileMatchesFilters(profile, filters))
+      );
+      totalCount = count ?? totalCount;
+
+      if (rows.length < SNAPSHOT_CHUNK_SIZE) break;
+      if (totalCount !== null && from + rows.length >= totalCount) break;
+      from += SNAPSHOT_CHUNK_SIZE;
+    }
+
+    return sortExploreProfiles(collected);
   };
 
   const loadAllProfiles = async (userId: string, preloadedMatches?: Set<string>) => {
@@ -454,6 +573,14 @@ const Explore = () => {
         );
         setMatchedProfileIds(matchedUserIds);
       }
+
+      setMatchedProfileIds(matchedUserIds);
+      const snapshot = await fetchProfileSnapshot(userId, matchedUserIds, null);
+      setSnapshotAndShowFirstPage(snapshot);
+      console.log(
+        `Explore snapshot: total=${snapshot.length}, pageSize=${PROFILES_BATCH_SIZE}, matchedFiltered=${matchedUserIds.size}`
+      );
+      return;
 
       // 📄 PRIMA PAGINA con retry automatico (stesso pattern di loadPage)
       let profilesData: any[] | null = null;
@@ -516,10 +643,8 @@ const Explore = () => {
       );
       const creditsMap = new Map<string, string>((subsData || []).map((c: any) => [c.user_id, c.subscription_type]));
       
-      // Sort profiles: monthly subscribers first, then admin profiles (ROTATED), then by last_active
-      // 🔄 Bucket di rotazione: ogni 3 ore cambiano i profili admin in cima.
-      const rotationBucket = getRotationBucket();
-      const rotationKey = (id: string) => rotationHashStr(`${id}-${rotationBucket}`);
+      // Sort profiles: monthly subscribers first, then admin profiles,
+      // then real free/weekly users at the end.
 
       allProfiles.sort((a, b) => {
         const aSub = creditsMap.get(a.id);
@@ -527,26 +652,15 @@ const Explore = () => {
 
         const rank = (p: Profile, sub?: string) => {
           if (sub === 'monthly') return 0; // monthly subscribers first
-          if (p.is_admin_profile === true) return 1; // then admin profiles
-          return 2; // then everyone else (standard + weekly)
+          if (p.is_admin_profile === true) return 1; // admin profiles after monthly
+          return 2; // real free/weekly users at the end
         };
 
         const rA = rank(a, aSub);
         const rB = rank(b, bSub);
         if (rA !== rB) return rA - rB;
 
-        // 🔄 Admin profiles: ordinamento ruotato (cambia ogni ROTATION_HOURS ore).
-        // Stessa terna (a.id, b.id, rotationBucket) → stesso ordine.
-        // Bucket diverso → ordine diverso, deterministico, senza randomness lato client.
-        if (rA === 1) {
-          const kA = rotationKey(a.id);
-          const kB = rotationKey(b.id);
-          if (kA !== kB) return kA - kB;
-          // Tie-break stabile sull'id, nel caso (estremamente raro) di collisione hash.
-          return a.id < b.id ? -1 : 1;
-        }
-
-        // Then sort by last active (per monthly subscribers e utenti standard)
+        // Then sort by last active.
         const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
         const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
         return dateB - dateA;
@@ -582,6 +696,14 @@ const Explore = () => {
     if (!currentUser || loadingPage || pageIndex < 0) return;
     if (pageIndex === currentPage && profiles.length > 0) return;
 
+    if (profileSnapshotRef.current.length > 0) {
+      setLoadingPage(true);
+      setPageError(false);
+      showSnapshotPage(pageIndex, profileSnapshotRef.current, true);
+      setLoadingPage(false);
+      return;
+    }
+
     setLoadingPage(true);
     setPageError(false);
 
@@ -608,26 +730,8 @@ const Explore = () => {
 
         let pageProfiles = (data || []).filter((p) => !matchedProfileIds.has(p.id)) as Profile[];
 
-        // Subscription sort + admin rotation (BEST-EFFORT: se la RPC fallisce,
-        // mostriamo comunque i profili senza ranking premium)
         const profileIds = pageProfiles.map((p) => p.id);
-        let subsData: any[] | null = null;
-        try {
-          const subsResult = await withFallback(
-            supabase.rpc("get_subscription_types", { profile_ids: profileIds }),
-            { data: [], error: null },
-            4000
-          );
-          subsData = subsResult.data;
-        } catch {
-          subsData = [];
-        }
-        const creditsMap = new Map<string, string>(
-          (subsData || []).map((c: any) => [c.user_id, c.subscription_type])
-        );
-        const rotationBucket = getRotationBucket();
-        const rotationKey = (id: string) => rotationHashStr(`${id}-${rotationBucket}`);
-
+        const creditsMap = await getSubscriptionTypesMap(profileIds);
         pageProfiles.sort((a, b) => {
           const aSub = creditsMap.get(a.id);
           const bSub = creditsMap.get(b.id);
@@ -639,12 +743,6 @@ const Explore = () => {
           const rA = rank(a, aSub);
           const rB = rank(b, bSub);
           if (rA !== rB) return rA - rB;
-          if (rA === 1) {
-            const kA = rotationKey(a.id);
-            const kB = rotationKey(b.id);
-            if (kA !== kB) return kA - kB;
-            return a.id < b.id ? -1 : 1;
-          }
           const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
           const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
           return dateB - dateA;
@@ -758,6 +856,10 @@ const Explore = () => {
   ) => {
     setMatchedProfileIds(matchedUserIds);
 
+    const snapshot = await fetchProfileSnapshot(userId, matchedUserIds, filters);
+    setSnapshotAndShowFirstPage(snapshot);
+    return;
+
     // count: "exact" + esclusione match server-side → totalPages corretto.
     let query = supabase
       .from("profiles")
@@ -790,9 +892,6 @@ const Explore = () => {
     );
     const creditsMap = new Map<string, string>((subsData || []).map((c: any) => [c.user_id, c.subscription_type]));
 
-    const rotationBucketFiltered = getRotationBucket();
-    const rotationKeyFiltered = (id: string) => rotationHashStr(`${id}-${rotationBucketFiltered}`);
-
     filteredProfiles.sort((a, b) => {
       const aSub = creditsMap.get(a.id);
       const bSub = creditsMap.get(b.id);
@@ -804,12 +903,6 @@ const Explore = () => {
       const rA = rank(a, aSub);
       const rB = rank(b, bSub);
       if (rA !== rB) return rA - rB;
-      if (rA === 1) {
-        const kA = rotationKeyFiltered(a.id);
-        const kB = rotationKeyFiltered(b.id);
-        if (kA !== kB) return kA - kB;
-        return a.id < b.id ? -1 : 1;
-      }
       const dateA = a.last_active ? new Date(a.last_active).getTime() : 0;
       const dateB = b.last_active ? new Date(b.last_active).getTime() : 0;
       return dateB - dateA;

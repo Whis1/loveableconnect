@@ -9,6 +9,7 @@ import { AdBanner } from "./components/AdBanner";
 import { AnimatedRoutes } from "./components/AnimatedRoutes";
 import { useApplyGamePendingPenalty } from "./hooks/useApplyGamePendingPenalty";
 import { useConnectionWatchdog } from "./hooks/useConnectionWatchdog";
+import { usePresenceTracking } from "./hooks/usePresenceTracking";
 import { MatchNotificationProvider } from "./contexts/MatchNotificationContext";
 import { SupportRatingGate } from "./components/SupportRatingGate";
 
@@ -32,6 +33,7 @@ const AppShell = () => {
   //    (3 in 15s → chiude channel zombie + refresh JWT + invalida query)
   //    + refresh proattivo ogni 90s + on visibility/focus.
   useConnectionWatchdog();
+  usePresenceTracking();
   return (
     <MatchNotificationProvider>
       <AdBanner />

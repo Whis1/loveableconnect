@@ -6,6 +6,7 @@ import { Shield, ArrowLeft, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminRole } from "@/hooks/useAdminRole";
+import { markCurrentUserOffline } from "@/hooks/usePresenceTracking";
 
 export default function AdminCreateProfile() {
   const navigate = useNavigate();
@@ -24,6 +25,7 @@ export default function AdminCreateProfile() {
   }, []);
 
   const handleLogout = async () => {
+    await markCurrentUserOffline();
     await supabase.auth.signOut();
     setIsLoggedIn(false);
     toast({

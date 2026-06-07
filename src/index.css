@@ -528,10 +528,12 @@ All colors MUST be HSL.
 .dc-flock-img {
   position: absolute;
   left: 50%;
-  top: 4%;
-  width: 122%;
+  top: -8%;
+  width: 175%;            /* piu' grande: copre molta piu' card, i lati escono (tagliati) */
   transform: translateX(-50%);
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+  /* Sfuma sopra e sotto cosi' sparisce la "linea" del bordo del rettangolo. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 15%, #000 80%, transparent 100%);
+          mask-image: linear-gradient(to bottom, transparent 0%, #000 15%, #000 80%, transparent 100%);
 }
 .dc-flock-lightning { animation: dc-flock-flash 3.8s linear forwards; }
 @keyframes dc-flock-flash {

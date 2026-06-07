@@ -18,6 +18,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AdminChatDialog } from "./AdminChatDialog";
 import { InterestsAutocomplete } from "@/components/InterestsAutocomplete";
 import { SpotifySongSelector } from "@/components/SpotifySongSelector";
+import { NicknameAvailabilityMessage } from "@/components/NicknameAvailabilityMessage";
+import { isNicknameDuplicateError, isNicknameTaken, NICKNAME_TAKEN_MESSAGE, normalizeNickname } from "@/lib/nickname";
 
 interface SpotifySong {
   id: string;
@@ -900,11 +902,31 @@ export const ProfileManager = () => {
 
   const handleUpdateProfile = async (profile: Profile): Promise<boolean> => {
     try {
+      const normalizedNickname = normalizeNickname(profile.nickname);
+
+      if (!normalizedNickname) {
+        toast({
+          title: "Errore",
+          description: "Inserisci un nickname valido.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      if (await isNicknameTaken(normalizedNickname, profile.id)) {
+        toast({
+          title: "Errore",
+          description: NICKNAME_TAKEN_MESSAGE,
+          variant: "destructive",
+        });
+        return false;
+      }
+
       const { data, error } = await supabase.functions.invoke('admin-update-profile', {
         body: {
             profileId: profile.id,
             updates: {
-              nickname: profile.nickname,
+              nickname: normalizedNickname,
               age: profile.age,
               bio: profile.bio,
               city: profile.city,
@@ -936,7 +958,7 @@ export const ProfileManager = () => {
       console.error("Error updating profile:", error);
       toast({
         title: "Errore",
-        description: error.message,
+        description: isNicknameDuplicateError(error) ? NICKNAME_TAKEN_MESSAGE : error.message,
         variant: "destructive",
       });
       return false;
@@ -1529,6 +1551,10 @@ export const ProfileManager = () => {
                                       const updated = { ...profile, nickname: e.target.value };
                                       setProfiles(profiles.map((p) => (p.id === profile.id ? updated : p)));
                                     }}
+                                  />
+                                  <NicknameAvailabilityMessage
+                                    nickname={profile.nickname}
+                                    currentProfileId={profile.id}
                                   />
                                 </div>
                                 <div className="space-y-2">

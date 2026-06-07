@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Ban, ShieldCheck, RefreshCw, Send, AlertTriangle, EyeOff, Eye, Loader2, X, Receipt, Wallet, Calendar, CheckCircle2, Clock, XCircle, Crown, Coins, History, Trash2 } from "lucide-react";
+import { Search, Ban, ShieldCheck, RefreshCw, Send, AlertTriangle, EyeOff, Eye, Loader2, X, Receipt, Wallet, Calendar, CheckCircle2, Clock, XCircle, Crown, Coins, History, Trash2, LogIn, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -100,6 +100,43 @@ export function UserBanManager() {
   const formatActionWhen = (ts: string) =>
     new Date(ts).toLocaleString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
+  const formatPresenceWhen = (ts: string | null | undefined) => {
+    if (!ts) return "N/A";
+    const date = new Date(ts);
+    if (Number.isNaN(date.getTime())) return "N/A";
+    return date.toLocaleString("it-IT", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  };
+
+  const getPresenceInfo = (profile: any) => {
+    const lastActive = profile?.last_active ? new Date(profile.last_active) : null;
+    const automaticOnline = Boolean(
+      lastActive && Date.now() - lastActive.getTime() <= 2 * 60 * 1000
+    );
+    const hasManualStatus = profile?.manual_online_status !== null && profile?.manual_online_status !== undefined;
+    const isOnline = hasManualStatus ? Boolean(profile.manual_online_status) : automaticOnline;
+    const lastLoginAt = profile?.last_login_at || profile?.last_active || null;
+    const estimatedLogoutAt =
+      !isOnline && profile?.last_active
+        ? new Date(new Date(profile.last_active).getTime() + 2 * 60 * 1000).toISOString()
+        : null;
+    const lastLogoutAt = profile?.last_logout_at || estimatedLogoutAt;
+
+    return {
+      isOnline,
+      isManual: hasManualStatus,
+      lastLoginAt,
+      lastLogoutAt,
+      isEstimatedLogout: !profile?.last_logout_at && Boolean(estimatedLogoutAt),
+    };
+  };
+
   // Helper: trasforma path Storage in URL pubblica per gli avatar.
   // Pattern usato dal resto del codebase (ChatsList, ChatUserProfile, ecc).
   const getAvatarUrl = (path: string | null | undefined): string => {
@@ -124,6 +161,36 @@ export function UserBanManager() {
   useEffect(() => {
     loadAllUsers();
   }, []);
+
+  useEffect(() => {
+    if (!selectedUser?.id) return;
+
+    const channel = supabase
+      .channel(`admin-user-presence-${selectedUser.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "profiles",
+          filter: `id=eq.${selectedUser.id}`,
+        },
+        (payload) => {
+          const nextProfile = payload.new as any;
+          setSelectedUser((prev: any) =>
+            prev?.id === selectedUser.id ? { ...prev, ...nextProfile } : prev
+          );
+          setUserDetails((prev: any) =>
+            prev ? { ...prev, profile: { ...(prev.profile ?? {}), ...nextProfile } } : prev
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedUser?.id]);
 
   useEffect(() => {
     const base = showOrphans
@@ -500,6 +567,20 @@ export function UserBanManager() {
     }
   };
 
+  const selectedDetailProfile = userDetails?.profile ?? selectedUser;
+  const selectedPresence = getPresenceInfo(selectedDetailProfile);
+  const visiblePresenceCounts = filteredUsers.reduce(
+    (counts, user) => {
+      if (getPresenceInfo(user).isOnline) {
+        counts.online += 1;
+      } else {
+        counts.offline += 1;
+      }
+      return counts;
+    },
+    { online: 0, offline: 0 }
+  );
+
   return (
     <Card>
       <CardHeader>
@@ -551,7 +632,17 @@ export function UserBanManager() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Lista utenti */}
           <div className="space-y-2">
-            <Label>Utenti trovati ({filteredUsers.length})</Label>
+            <div className="flex flex-wrap items-center gap-2">
+              <Label>Utenti trovati ({filteredUsers.length})</Label>
+              <span className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2 py-0.5 text-xs font-semibold text-green-500">
+                <span className="h-2 w-2 rounded-full bg-green-500" />
+                Online {visiblePresenceCounts.online}
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-500/15 px-2 py-0.5 text-xs font-semibold text-slate-400">
+                <span className="h-2 w-2 rounded-full bg-slate-500" />
+                Offline {visiblePresenceCounts.offline}
+              </span>
+            </div>
             <ScrollArea className="h-[500px] border rounded-lg p-2">
               {loading ? (
                 <div className="text-center py-8 text-muted-foreground">
@@ -659,15 +750,59 @@ export function UserBanManager() {
                         )}
                       </button>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-xl">
-                          {selectedUser.nickname}
-                        </h3>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-semibold text-xl">
+                            {selectedUser.nickname}
+                          </h3>
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                              selectedPresence.isOnline
+                                ? "bg-green-500/15 text-green-500"
+                                : "bg-slate-500/15 text-slate-400"
+                            }`}
+                          >
+                            <span
+                              className={`h-2 w-2 rounded-full ${
+                                selectedPresence.isOnline ? "bg-green-500" : "bg-slate-500"
+                              }`}
+                            />
+                            {selectedPresence.isOnline ? "Online" : "Offline"}
+                          </span>
+                          {selectedPresence.isManual && (
+                            <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-500">
+                              Stato forzato
+                            </span>
+                          )}
+                        </div>
                         <p className="text-sm text-muted-foreground">
                           {selectedUser.full_name}
                         </p>
                         <p className="text-xs text-muted-foreground font-mono mt-1">
                           ID: {selectedUser.id}
                         </p>
+                        <div className="mt-2 grid grid-cols-1 gap-1 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            <LogIn className="h-3.5 w-3.5 text-green-500" />
+                            <span>Login:</span>
+                            <span className="font-medium text-foreground">
+                              {formatPresenceWhen(selectedPresence.lastLoginAt)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <LogOut className="h-3.5 w-3.5 text-slate-400" />
+                            <span>Logout:</span>
+                            <span className="font-medium text-foreground">
+                              {selectedPresence.isOnline
+                                ? "Ancora online"
+                                : formatPresenceWhen(selectedPresence.lastLogoutAt)}
+                            </span>
+                            {!selectedPresence.isOnline && selectedPresence.isEstimatedLogout && (
+                              <span className="text-[10px] uppercase tracking-wide text-amber-500">
+                                stimato
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                       {isBanned && (
                         <div className="flex flex-col items-center gap-1 text-destructive">
