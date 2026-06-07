@@ -63,6 +63,11 @@ export const DailyLikesDisplay = ({ likesRemaining, isPremium, resetAt, loading,
   const isWeeklyPremium = isPremium && subscriptionType === 'weekly';
   const maxLikes = isMonthlyStandard ? 20 : isWeeklyPremium ? 10 : 5;
 
+  // Quando l'utente ha like bonus (regalati dall'inbox) il totale puo' superare
+  // il massimo giornaliero: in quel caso mostriamo solo il numero (es. "15 Like")
+  // invece di un denominatore fuorviante tipo "15/5".
+  const hasBonusLikes = likesRemaining > maxLikes;
+
   return (
     // items-start: il bottone "1/8 Like" prende solo la larghezza che gli
     // serve, niente piu' pillola lunga inutile.
@@ -79,7 +84,7 @@ export const DailyLikesDisplay = ({ likesRemaining, isPremium, resetAt, loading,
         {isWeeklyPremium && <Crown className="h-4 w-4 text-purple-500" />}
         <Heart className={`h-4 w-4 ${isMonthlyStandard ? 'text-blue-500' : isWeeklyPremium ? 'text-purple-500' : 'text-primary'}`} />
         <span className={`font-medium ${isMonthlyStandard ? 'text-blue-600 dark:text-blue-400' : isWeeklyPremium ? 'text-purple-600 dark:text-purple-400' : ''}`}>
-          {Math.max(0, likesRemaining)}/{maxLikes} Like
+          {Math.max(0, likesRemaining)}{hasBonusLikes ? '' : `/${maxLikes}`} Like
         </span>
       </Button>
       {timeRemaining && likesRemaining < maxLikes && (

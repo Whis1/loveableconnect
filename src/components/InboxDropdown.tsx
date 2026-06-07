@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, X, Heart, Gift, Coins, Check } from "lucide-react";
@@ -32,6 +33,7 @@ export const InboxDropdown = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [claimingId, setClaimingId] = useState<string | null>(null);
 
   // 🎁 Riscatta la ricompensa (crediti/like) allegata a un messaggio inbox.
@@ -57,6 +59,11 @@ export const InboxDropdown = () => {
         });
       }
       setSelectedMessage((cur) => (cur && cur.id === message.id ? { ...cur, reward_claimed: true } : cur));
+      // Aggiorna subito i contatori in alto (crediti e like) senza aspettare il
+      // polling: invalidiamo le query React Query usate da CreditsDisplay e
+      // DailyLikesDisplay cosi' il saldo si aggiorna in tempo reale.
+      queryClient.invalidateQueries({ queryKey: ["user-credits"] });
+      queryClient.invalidateQueries({ queryKey: ["daily-likes"] });
       fetchMessages();
     } catch (e: any) {
       toast({ title: "Errore", description: e.message || "Impossibile riscattare il regalo", variant: "destructive" });
