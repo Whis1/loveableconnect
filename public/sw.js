@@ -13,6 +13,12 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(clients.claim());
 });
 
+// Fetch handler minimo: necessario perche' il sito sia considerato una PWA
+// "installabile" (Aggiungi a schermata Home / pacchetto Google Play).
+// Non chiama respondWith, quindi lascia la gestione di rete predefinita del
+// browser invariata: nessun caching, nessun cambiamento di comportamento.
+self.addEventListener('fetch', () => {});
+
 // Handle push notifications
 self.addEventListener('push', (event) => {
   console.log('🔔 Push notification received:', event);
