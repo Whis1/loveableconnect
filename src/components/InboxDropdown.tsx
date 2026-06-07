@@ -116,26 +116,48 @@ export const InboxDropdown = () => {
   };
 
   useEffect(() => {
-    fetchMessages();
-    
-    // Realtime subscription
-    const channel = supabase
-      .channel('inbox-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'inbox_messages',
-        },
-        () => {
-          fetchMessages();
-        }
-      )
-      .subscribe();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    const setup = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const userId = session.user.id;
+
+      fetchMessages();
+
+      // Canale per-utente con filtro su user_id: e' lo stesso pattern che
+      // funziona gia' per le notifiche dei messaggi (MatchNotificationContext).
+      // Con la RLS attiva sulla tabella, il filtro e' necessario per ricevere
+      // gli eventi in tempo reale.
+      channel = supabase
+        .channel(`inbox-${userId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'inbox_messages',
+            filter: `user_id=eq.${userId}`,
+          },
+          () => {
+            fetchMessages();
+          }
+        )
+        .subscribe();
+    };
+
+    setup();
+
+    // Fallback: se il realtime non consegna (rete, sessione, ecc.) ricontrolliamo
+    // periodicamente, cosi' il messaggio compare comunque entro pochi secondi
+    // senza dover ricaricare la pagina.
+    const pollId = window.setInterval(() => {
+      fetchMessages();
+    }, 20000);
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
+      window.clearInterval(pollId);
     };
   }, []);
 
