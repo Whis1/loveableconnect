@@ -37,6 +37,9 @@ export interface ProfileTheme {
   iconClass: string;
   /** Tinta leggera/semi-trasparente per il pannello testi della card. */
   panelClass: string;
+  /** Sfondo FISSO per la parte bassa della card statistiche (sfida/partite/
+   *  classifica). Specifico per tema: oro per il premium, scuro per Dark Crow. */
+  shineBgClass?: string;
   /** Se true, il tema mostra il badge "Premium" sul profilo. */
   badge: boolean;
 }
@@ -66,6 +69,7 @@ export const PROFILE_THEMES: ProfileTheme[] = [
     nameClass: "pt-gold-name",
     iconClass: "pt-gold-icon",
     panelClass: "pt-gold-panel",
+    shineBgClass: "pt-gold-shine-bg",
     badge: true,
   },
   {
@@ -82,6 +86,7 @@ export const PROFILE_THEMES: ProfileTheme[] = [
     nameClass: "dc-name",
     iconClass: "dc-icon",
     panelClass: "dc-panel",
+    shineBgClass: "dc-shine-bg",
     badge: false,
   },
 ];

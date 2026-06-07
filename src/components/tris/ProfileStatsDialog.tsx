@@ -389,7 +389,7 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
               </div>
             </div>
 
-            <div className={`px-6 py-5 -mt-6 bg-background relative rounded-t-3xl overflow-hidden ${theme.nameClass ? "pt-gold-shine-bg" : ""}`}>
+            <div className={`px-6 py-5 -mt-6 bg-background relative rounded-t-3xl overflow-hidden ${theme.shineBgClass || ""}`}>
               {loading ? (
                 <div className="flex justify-center py-8">
                   <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
