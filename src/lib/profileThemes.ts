@@ -57,7 +57,7 @@ export const PROFILE_THEMES: ProfileTheme[] = [
   },
   {
     id: "gold",
-    name: "Estetica Premium",
+    name: "Tema Esclusivo Premium",
     description: "Bordo dorato con elettricità che scorre e un glow acceso. Lussuoso.",
     premium: true,
     swatch: "linear-gradient(135deg,#fff7cc,#ffd700,#b8860b)",
@@ -72,7 +72,7 @@ export const PROFILE_THEMES: ProfileTheme[] = [
     id: "darkcrow",
     name: "Tema Dark Crow",
     description:
-      "Atmosfera notturna ed epica: corvo reale, luna, nebbia e lampi che appaiono e si dissolvono. Nickname nero lucido, anello e cornice scuri. Acquisto una-tantum, tuo per sempre.",
+      "Atmosfera notturna ed epica: corvo reale, luna, nebbia e lampi che appaiono e si dissolvono. Nickname nero lucido, anello e cornice scuri.\nTema Dark Crow: dopo l'acquisto di 9,99€ sarà tuo per sempre.",
     premium: false, // NON e' un gate da abbonamento: si acquista a parte
     oneTime: true,
     price: "9,99",

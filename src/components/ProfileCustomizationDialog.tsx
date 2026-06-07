@@ -199,7 +199,7 @@ export const ProfileCustomizationDialog = ({
         </div>
 
         {/* Descrizione tema + nota lucchetto */}
-        <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-purple-100/80 backdrop-blur-sm">
+        <div className="whitespace-pre-line rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-purple-100/80 backdrop-blur-sm">
           {theme.description}
           {lockedPremium && (
             <div className="mt-1.5 flex items-center gap-1.5 font-medium text-amber-600 dark:text-amber-400">
