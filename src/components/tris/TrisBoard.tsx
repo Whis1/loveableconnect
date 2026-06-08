@@ -592,9 +592,9 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
         </div>
       )}
       {/* Players Row */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center gap-2 mb-6">
         {/* Current User - Left */}
-        <div className="flex items-center space-x-3 relative">
+        <div className="flex items-center gap-2 min-w-0 flex-1 relative">
           <button
             type="button"
             onClick={() => {
@@ -608,11 +608,11 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
                 });
               }
             }}
-            className="relative cursor-pointer hover:scale-110 transition-transform"
+            className="relative shrink-0 cursor-pointer hover:scale-110 transition-transform"
             title="Vedi le tue statistiche"
           >
             <ProfileThemeRing themeId={currentUserProfile?.profile_theme}>
-              <Avatar className={`w-14 h-14 border-2 ${getProfileTheme(currentUserProfile?.profile_theme).avatarClass ? "border-transparent" : "border-primary"}`}>
+              <Avatar className={`w-11 h-11 md:w-14 md:h-14 border-2 ${getProfileTheme(currentUserProfile?.profile_theme).avatarClass ? "border-transparent" : "border-primary"}`}>
                 <AvatarImage src={getAvatarUrl(currentUserProfile?.avatar_url)} />
                 <AvatarFallback>
                   {currentUserProfile?.nickname.slice(0, 2).toUpperCase() || "Tu"}
@@ -625,8 +625,8 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
               </div>
             )}
           </button>
-          <div>
-            <p className={`font-bold ${getProfileTheme(currentUserProfile?.profile_theme).nameClass}`}>{currentUserProfile?.nickname || "Tu"}</p>
+          <div className="min-w-0">
+            <p className={`font-bold truncate ${getProfileTheme(currentUserProfile?.profile_theme).nameClass}`}>{currentUserProfile?.nickname || "Tu"}</p>
             <p className="text-xs text-muted-foreground">Tu</p>
             <p className="text-xs font-semibold text-primary">ELO: {userElo}</p>
           </div>
@@ -643,20 +643,20 @@ export const TrisBoard = ({ opponent, onGameEnd }: TrisBoardProps) => {
         </Button>
 
         {/* Opponent - Right */}
-        <div className="flex items-center space-x-3 relative">
-          <div>
-            <p className={`font-bold text-right ${getProfileTheme(opponentTheme).nameClass}`}>{opponent.nickname}</p>
+        <div className="flex items-center gap-2 min-w-0 flex-1 justify-end relative">
+          <div className="min-w-0">
+            <p className={`font-bold text-right truncate ${getProfileTheme(opponentTheme).nameClass}`}>{opponent.nickname}</p>
             <p className="text-xs text-muted-foreground text-right">Sfidante</p>
             <p className="text-xs font-semibold text-destructive text-right">ELO: {opponentElo}</p>
           </div>
           <button
             type="button"
             onClick={() => setClickedProfile({ ...opponent, is_admin_profile: opponent.is_admin_profile ?? true })}
-            className="relative cursor-pointer hover:scale-110 transition-transform"
+            className="relative shrink-0 cursor-pointer hover:scale-110 transition-transform"
             title={`Vedi statistiche di ${opponent.nickname}`}
           >
             <ProfileThemeRing themeId={opponentTheme}>
-              <Avatar className={`w-14 h-14 border-2 ${getProfileTheme(opponentTheme).avatarClass ? "border-transparent" : "border-destructive"}`}>
+              <Avatar className={`w-11 h-11 md:w-14 md:h-14 border-2 ${getProfileTheme(opponentTheme).avatarClass ? "border-transparent" : "border-destructive"}`}>
                 <AvatarImage src={getAvatarUrl(opponent.avatar_url)} />
                 <AvatarFallback>
                   {opponent.nickname.slice(0, 2).toUpperCase()}
