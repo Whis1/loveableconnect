@@ -17,7 +17,7 @@ export const DashboardControls = () => {
   };
 
   return (
-    <div className="fixed top-3 left-3 z-50 flex items-center gap-1.5 md:gap-2">
+    <div className="fixed top-safe-3 left-3 z-50 flex items-center gap-1.5 md:gap-2">
       <LanguageSwitcher />
       {/* 🌓 Pulsante tema chiaro/scuro NASCOSTO su richiesta: il sito resta nel
           tema scuro di default. Per riattivarlo, ripristinare il <Button> con

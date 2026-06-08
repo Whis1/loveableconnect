@@ -99,8 +99,38 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    /* Impedisce a iOS/Android di ingrandire automaticamente i testi in
+       orizzontale e gestisce le aree sicure (notch / barra di stato) quando
+       il sito gira come app installata (display standalone). */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-background text-foreground;
+    /* Niente scroll orizzontale accidentale: e' la causa numero uno dei
+       "pulsanti che escono dal pannello" su telefono. */
+    overflow-x: hidden;
+    /* Evita il "rimbalzo" elastico e il pull-to-refresh dentro l'app. */
+    overscroll-behavior-y: none;
+    /* Tap puliti senza il rettangolo grigio di evidenziazione su mobile. */
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer utilities {
+  /* Padding/posizionamento che rispettano le aree sicure del telefono
+     (notch in alto, barra gesti in basso). Su schermi senza notch valgono 0,
+     quindi non cambiano nulla; con notch evitano contenuti tagliati. */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .top-safe-3 {
+    top: calc(env(safe-area-inset-top) + 0.75rem);
   }
 }
 
