@@ -506,11 +506,11 @@ const Matches = () => {
                             </h3>
                             <img src={matchHeartIcon} alt="Match" className="h-5 w-5 md:h-6 md:w-6 object-contain shrink-0" />
                           </div>
-                          <div className="mt-1">
-                            <Badge variant="secondary" className="text-[11px] md:text-xs font-normal max-w-full truncate">
-                              <Heart className="h-3 w-3 mr-1 fill-current shrink-0" />
+                          <div className="mt-1 flex items-start gap-1 text-[11px] md:text-xs text-muted-foreground">
+                            <Heart className="h-3 w-3 mt-0.5 fill-current text-pink-500 shrink-0" />
+                            <span>
                               {t("matches.matchSince")} {new Date(match.created_at).toLocaleDateString()}
-                            </Badge>
+                            </span>
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">

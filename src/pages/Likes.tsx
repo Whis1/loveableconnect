@@ -495,9 +495,9 @@ const Likes = () => {
                   const isUnlocked = hasPremiumLikeAccess || unlockedProfiles.has(like.from_user_id);
                   
                   return (
-                    <Card 
-                      key={like.id} 
-                      className="overflow-hidden hover:shadow-lg transition-all cursor-pointer border border-border/50"
+                    <Card
+                      key={like.id}
+                      className="overflow-hidden transition-all cursor-pointer border-2 border-pink-500/40 bg-gradient-to-br from-pink-500/10 via-purple-500/[0.06] to-background shadow-[0_6px_28px_-8px_rgba(244,114,182,0.4)] hover:border-pink-500/70 hover:shadow-[0_8px_34px_-6px_rgba(244,114,182,0.55)]"
                       onClick={() => handleProfileClick(like.from_user_id)}
                     >
                       <CardContent className="p-4 md:p-6">
@@ -551,7 +551,7 @@ const Likes = () => {
                                     e.stopPropagation();
                                     setProfileDialogId(like.from_user_id);
                                   }}
-                                  className="w-full sm:w-auto"
+                                  className="w-full sm:w-auto border-pink-400/60 bg-pink-500/10 text-pink-100 hover:bg-pink-500/25 hover:text-white hover:border-pink-400"
                                 >
                                   <Eye className="h-4 w-4 mr-2" />
                                   Apri profilo
