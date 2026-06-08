@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Edit, MapPin, Heart, Music, Eye } from "lucide-react";
+import { Edit, MapPin, Heart, Music, Eye, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -15,7 +15,7 @@ import { calculateAge } from "@/lib/utils";
 import { ProfileDialog } from "@/components/ProfileDialog";
 import { ProfileGridCard } from "@/components/ProfileGridCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, UserSquare2, LayoutGrid, Sparkles } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { ProfileCustomizationDialog } from "@/components/ProfileCustomizationDialog";
 import { getProfileTheme, type ProfileThemeId } from "@/lib/profileThemes";
 import { PremiumBadge } from "@/components/PremiumBadge";
@@ -55,7 +55,6 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
   const [translatedInterests, setTranslatedInterests] = useState<string[]>([]);
   // Anteprima profilo: scelta tra "Interno" (ProfileDialog) ed "Esterno"
   // (la card della bacheca, come la vedono gli altri utenti).
-  const [showChooser, setShowChooser] = useState(false);
   const [showPreview, setShowPreview] = useState(false); // interno
   const [showExternal, setShowExternal] = useState(false); // esterno (card bacheca)
   const [externalProfile, setExternalProfile] = useState<any>(null);
@@ -70,7 +69,6 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
 
   // Carica il profilo completo (dal DB) e apre l'anteprima della card esterna.
   const openExternalPreview = async () => {
-    setShowChooser(false);
     setShowExternal(true);
     if (externalProfile) return; // gia' caricato
     setExternalLoading(true);
@@ -370,7 +368,7 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
                 Profilo (richiesta dell'utente), si distingue solo per
                 l'icona occhio. */}
             <Button
-              onClick={() => setShowChooser(true)}
+              onClick={openExternalPreview}
               className="w-full px-6 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border-0"
             >
               <Eye className="h-4 w-4 mr-2" />
@@ -389,61 +387,21 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
         </div>
       </CardContent>
 
-      {/* Pannello scelta: Profilo Interno o Profilo Esterno (tema sito) */}
-      <Dialog open={showChooser} onOpenChange={setShowChooser}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-center gap-2 text-xl">
-              <Eye className="h-5 w-5 text-primary" />
-              <span className="bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent font-extrabold">
-                Anteprima profilo
-              </span>
-            </DialogTitle>
-            {/* descrizione nascosta solo per accessibilità */}
-            <DialogDescription className="sr-only">
-              Scegli come vedere il tuo profilo
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-            <button
-              type="button"
-              onClick={() => { setShowChooser(false); setShowPreview(true); }}
-              className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-transparent bg-gradient-to-br from-pink-500/10 via-purple-500/10 to-indigo-500/10 p-6 text-center transition-all hover:border-primary/40 hover:from-pink-500/20 hover:via-purple-500/20 hover:to-indigo-500/20 hover:shadow-lg"
-            >
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 text-white shadow-md transition-transform group-hover:scale-110">
-                <UserSquare2 className="h-7 w-7" />
-              </div>
-              <span className="font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                Profilo Interno
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={openExternalPreview}
-              className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-transparent bg-gradient-to-br from-pink-500/10 via-purple-500/10 to-indigo-500/10 p-6 text-center transition-all hover:border-primary/40 hover:from-pink-500/20 hover:via-purple-500/20 hover:to-indigo-500/20 hover:shadow-lg"
-            >
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 text-white shadow-md transition-transform group-hover:scale-110">
-                <LayoutGrid className="h-7 w-7" />
-              </div>
-              <span className="font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                Profilo Esterno
-              </span>
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Anteprima INTERNA: stesso ProfileDialog usato in bacheca/likes. */}
+      {/* Anteprima INTERNA (slide 2): stesso ProfileDialog usato in
+          bacheca/likes. La freccia ← (onBack) torna alla card esterna,
+          la X chiude tutta l'anteprima. */}
       {showPreview && currentUserId && (
         <ProfileDialog
           profileId={userId}
           currentUserId={currentUserId}
           open={showPreview}
           onOpenChange={setShowPreview}
+          onBack={() => { setShowPreview(false); setShowExternal(true); }}
         />
       )}
 
-      {/* Anteprima ESTERNA: la card della bacheca, sola lettura. */}
+      {/* Anteprima ESTERNA (slide 1): la card della bacheca, sola lettura.
+          La freccia → porta alla card interna; la X chiude l'anteprima. */}
       <Dialog open={showExternal} onOpenChange={setShowExternal}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
@@ -455,15 +413,24 @@ export const UserProfileCard = ({ userId }: UserProfileCardProps) => {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            // pointer-events-none: anteprima puramente visiva (niente like/chat su se stessi).
-            <div className="pointer-events-none select-none">
-              <ProfileGridCard
-                profile={externalProfile}
-                currentUserId={currentUserId}
-                onLike={() => {}}
-                hideLocation
-              />
-            </div>
+            <>
+              {/* pointer-events-none: anteprima puramente visiva (niente like/chat su se stessi). */}
+              <div className="pointer-events-none select-none">
+                <ProfileGridCard
+                  profile={externalProfile}
+                  currentUserId={currentUserId}
+                  onLike={() => {}}
+                  hideLocation
+                />
+              </div>
+              <Button
+                onClick={() => { setShowExternal(false); setShowPreview(true); }}
+                className="mt-4 w-full bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 text-white font-semibold shadow-lg"
+              >
+                Vedi card interna
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </>
           )}
         </DialogContent>
       </Dialog>

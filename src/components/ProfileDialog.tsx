@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { MapPin, User } from "lucide-react";
+import { MapPin, User, ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { profileImageUrl } from "@/lib/imageUrl";
 import { getGenericLocationPhrase, calculateAge } from "@/lib/utils";
@@ -46,6 +46,9 @@ interface ProfileDialogProps {
   currentUserId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** 🔙 Se passata, mostra una freccia "indietro" in alto a sinistra (usata
+   *  dall'anteprima a carosello per tornare alla card esterna). */
+  onBack?: () => void;
   // 🚀 Pre-load: passando i dati già caricati nella card della bacheca,
   // il dialog si apre ISTANTANEO senza fare un'altra query. Risolve il
   // problema "skeleton vuoto per minuti" quando la rete è satura.
@@ -58,6 +61,7 @@ export const ProfileDialog = ({
   open,
   onOpenChange,
   initialProfile,
+  onBack,
 }: ProfileDialogProps) => {
   const { t } = useTranslation();
   const [profile, setProfile] = useState<Profile | null>(
@@ -327,6 +331,19 @@ export const ProfileDialog = ({
         >
           <DialogTitle className="sr-only">Profilo utente</DialogTitle>
           <DialogDescription className="sr-only">Dettagli del profilo e azioni</DialogDescription>
+
+          {/* 🔙 Freccia indietro (solo in anteprima a carosello): torna alla
+              card esterna. La X in alto a destra chiude tutta l'anteprima. */}
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              aria-label="Torna alla card esterna"
+              className="absolute left-3 top-3 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur transition-colors hover:bg-black/65"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+          )}
 
           {/* 🐦 Tema Dark Crow: lo stormo irrompe all'apertura della scheda. */}
           {theme.id === "darkcrow" && <DarkCrowFlock playToken={flockToken} />}

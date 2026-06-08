@@ -76,7 +76,7 @@ export const ProfileCustomizationDialog = ({
   // 🐦 Dark Crow: superfici NERE come nel prototipo (niente marroncino del tema base).
   const isDC = selected === "darkcrow";
   const dcSection = "rounded-xl border border-white/10 bg-white/[0.04] p-3";
-  const sectionCls = isDC ? dcSection : "rounded-xl border border-border/50 bg-card/60 p-3";
+  const sectionCls = isDC ? dcSection : "rounded-xl border border-purple-500/20 bg-gradient-to-br from-purple-500/[0.08] to-fuchsia-500/[0.05] p-3";
   const seekCls = isDC ? dcSection : "rounded-xl border border-primary/20 bg-primary/5 p-3";
   // Bloccato da abbonamento (tema premium e utente non abbonato).
   const lockedPremium = theme.premium && !isPremium;
@@ -243,11 +243,11 @@ export const ProfileCustomizationDialog = ({
             </div>
             <div className="relative flex-1 min-h-[500px]">
               <div className={`absolute inset-0 ${theme.frameClass} h-full`}>
-                <div className={`relative h-full rounded-[0.8rem] overflow-hidden border shadow-lg flex flex-col ${isDC ? "border-[#2a2540] bg-[#0c0a14]" : "border-border bg-card"}`}>
+                <div className={`relative h-full rounded-[0.8rem] overflow-hidden border shadow-lg flex flex-col ${isDC ? "border-[#2a2540] bg-[#0c0a14]" : "border-purple-500/25 bg-gradient-to-br from-[#1d1430] via-[#15101f] to-[#241433]"}`}>
                   {/* 🐦 Stormo che irrompe quando si (ri)seleziona Dark Crow. */}
                   {selected === "darkcrow" && <DarkCrowFlock playToken={dcPreviewToken} />}
                   {/* Header con foto verticale grande, come nella scheda reale */}
-                  <div className={`relative shrink-0 px-4 pt-5 pb-3 flex flex-col items-center ${isDC ? "bg-gradient-to-br from-[#1c1636] via-[#120e22] to-[#08060f]" : "bg-gradient-to-br from-primary/20 via-primary/10 to-background"}`}>
+                  <div className={`relative shrink-0 px-4 pt-5 pb-3 flex flex-col items-center ${isDC ? "bg-gradient-to-br from-[#1c1636] via-[#120e22] to-[#08060f]" : "bg-gradient-to-br from-primary/25 via-purple-600/15 to-[#1b1228]"}`}>
                   {/* Contorno della foto tematizzato col tema selezionato. */}
                   <div className={theme.frameClass}>
                     <div className="relative w-40 h-48 rounded-2xl border-4 border-background shadow-xl overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5">
