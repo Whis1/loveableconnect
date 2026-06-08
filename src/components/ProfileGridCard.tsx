@@ -522,6 +522,7 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
   // 🐦 Tema Dark Crow: scena animata (corvo + luna + nebbia + lampi) che parte
   //    all'hover sulla card, con cooldown di 20s. Solo per questo tema.
   const isDarkCrow = profileTheme.id === "darkcrow";
+  const isGold = profileTheme.id === "gold";
   const handleDarkCrowHover = () => {
     if (!isDarkCrow) return;
     const now = Date.now();
@@ -552,7 +553,9 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
           className={`relative rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border-2 ${
             isDarkCrow
               ? "bg-[#0c0a14] border-[#2a2540]"
-              : "bg-card border-border hover:border-primary/50"
+              : isGold
+              ? "bg-card border-border hover:border-primary/50"
+              : "bg-gradient-to-br from-[#271640] via-[#1b1330] to-[#301742] border-purple-500/25 hover:border-primary/60"
           }`}
         >
           {/* Main Image */}

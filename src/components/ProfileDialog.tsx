@@ -309,7 +309,7 @@ export const ProfileDialog = ({
   const isDC = theme.id === "darkcrow";
   const cardSection = isDC
     ? "rounded-2xl p-5 shadow-sm border border-white/10 bg-white/[0.04]"
-    : "bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50";
+    : "bg-gradient-to-br from-purple-500/[0.08] to-fuchsia-500/[0.05] rounded-2xl p-5 shadow-sm border border-purple-500/20";
   const seekSection = isDC
     ? "rounded-2xl p-5 shadow-sm border border-white/10 bg-white/[0.04]"
     : "bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-5 shadow-sm border border-primary/20";
@@ -323,7 +323,7 @@ export const ProfileDialog = ({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
-          className={`max-w-3xl max-h-[90vh] overflow-y-auto p-0 ${isDC ? "bg-[#0a0810]" : "bg-gradient-to-br from-background via-background to-primary/5"}`}
+          className={`max-w-3xl max-h-[90vh] overflow-y-auto p-0 ${isDC ? "bg-[#0a0810]" : "bg-gradient-to-br from-[#1d1430] via-[#15101f] to-[#241433]"}`}
         >
           <DialogTitle className="sr-only">Profilo utente</DialogTitle>
           <DialogDescription className="sr-only">Dettagli del profilo e azioni</DialogDescription>
@@ -352,7 +352,7 @@ export const ProfileDialog = ({
           {profile && (
           <>
           {/* Hero Section with Avatar Rectangle */}
-          <div className={`relative p-6 overflow-hidden ${isDC ? "bg-gradient-to-br from-[#1c1636] via-[#120e22] to-[#08060f]" : "bg-gradient-to-br from-primary/20 via-primary/10 to-background"}`}>
+          <div className={`relative p-6 overflow-hidden ${isDC ? "bg-gradient-to-br from-[#1c1636] via-[#120e22] to-[#08060f]" : "bg-gradient-to-br from-primary/25 via-purple-600/15 to-[#1b1228]"}`}>
             <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIHN0cm9rZT0iY3VycmVudENvbG9yIiBzdHJva2Utb3BhY2l0eT0iLjEiLz48L2c+PC9zdmc+')] opacity-20"></div>
             
             {/* Avatar Rectangle */}
@@ -478,7 +478,7 @@ export const ProfileDialog = ({
             )}
 
             {/* Relationship Status Section */}
-            <div className="bg-gradient-to-br from-card to-card/50 rounded-2xl p-5 shadow-sm border border-border/50">
+            <div className="bg-gradient-to-br from-purple-500/[0.08] to-fuchsia-500/[0.05] rounded-2xl p-5 shadow-sm border border-purple-500/20">
               <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
                 <User className={`h-5 w-5 ${theme.iconClass || "text-primary"}`} />
                 <span className={theme.nameClass}>{t('common.relationshipStatus')}</span>
