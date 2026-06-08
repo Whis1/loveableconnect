@@ -454,7 +454,7 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(244,114,182,0.16),transparent_55%)]" />
 
           {/* 🎮 Header: avatar + nickname + ELO + posizione */}
-          <div className="relative flex items-center gap-4">
+          <div className="relative flex items-center gap-3 sm:gap-4">
             <div className="relative shrink-0">
               {/* Alone rosa solo se NON c'e' un tema (col tema si vede solo l'oro) */}
               {!getProfileTheme(userProfile?.profile_theme).avatarClass && (
