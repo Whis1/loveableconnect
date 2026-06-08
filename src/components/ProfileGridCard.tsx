@@ -566,7 +566,7 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
                   src={avatarBgUrl || avatarUrl}
                   alt=""
                   aria-hidden="true"
-                  className="absolute inset-0 w-full h-full object-cover scale-110 blur-xl opacity-60"
+                  className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl"
                 />
                 {/* Foto INTERA, mai tagliata (object-contain): si vede tutto il
                     volto. Sta sopra lo sfondo sfocato. */}

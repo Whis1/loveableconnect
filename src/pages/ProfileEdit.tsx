@@ -633,7 +633,7 @@ const ProfileEdit = () => {
               {/* Avatar Section */}
               <div className="space-y-4">
                 <Label>{t('profile.avatar')}</Label>
-                <div className="flex items-center gap-6">
+                <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
                   {avatarPreview ? (
                     <div className="relative group">
                       <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary/20 shadow-xl ring-2 ring-primary/10">
@@ -661,7 +661,7 @@ const ProfileEdit = () => {
                       <Camera className="h-12 w-12 text-primary/60" />
                     </div>
                   )}
-                  <div className="flex-1">
+                  <div className="flex-1 w-full min-w-0 text-center sm:text-left">
                     <Input
                       id="avatar-upload"
                       type="file"

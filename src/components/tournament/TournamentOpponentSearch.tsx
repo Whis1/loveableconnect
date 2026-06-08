@@ -211,7 +211,7 @@ export const TournamentOpponentSearch = ({
             return (
               <div
                 key={p.id}
-                className={`relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-colors duration-200 ${
+                className={`relative flex flex-col items-center gap-2 p-2 sm:p-3 rounded-xl border-2 transition-colors duration-200 min-w-0 ${
                   isSettled
                     ? p.is_user
                       ? "border-cyan-400 bg-cyan-500/15 scale-105 shadow-lg shadow-cyan-500/40"
@@ -239,7 +239,7 @@ export const TournamentOpponentSearch = ({
                     {nickname?.[0] ?? "?"}
                   </AvatarFallback>
                 </Avatar>
-                <div className="text-center min-h-[36px]">
+                <div className="text-center min-h-[36px] w-full min-w-0">
                   <p className="text-xs font-semibold truncate w-full">{nickname}</p>
                   <p
                     className={`text-[10px] font-medium ${

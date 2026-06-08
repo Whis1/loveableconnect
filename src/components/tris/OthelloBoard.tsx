@@ -676,17 +676,17 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
         </div>
       )}
       {/* Header con avatar (player sx, opponent dx) */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between gap-2 mb-4">
         {/* Player (sx) */}
-        <div className="flex items-center space-x-3 relative">
+        <div className="flex items-center gap-2 min-w-0 flex-1 relative">
           <button
             type="button"
             onClick={() => currentUserProfile && setClickedProfile(currentUserProfile)}
-            className="relative cursor-pointer hover:scale-110 transition-transform"
+            className="relative shrink-0 cursor-pointer hover:scale-110 transition-transform"
             title="Vedi le tue statistiche"
           >
             <ProfileThemeRing themeId={currentUserProfile?.profile_theme}>
-              <Avatar className="w-14 h-14 border-2 border-gray-900 dark:border-gray-100">
+              <Avatar className="w-11 h-11 md:w-14 md:h-14 border-2 border-gray-900 dark:border-gray-100">
                 <AvatarImage src={getAvatarUrl(currentUserProfile?.avatar_url || null)} />
                 <AvatarFallback>
                   {currentUserProfile?.nickname?.slice(0, 2).toUpperCase() || "ME"}
@@ -699,15 +699,15 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
               </div>
             )}
           </button>
-          <div>
-            <p className={`font-bold ${getProfileTheme(currentUserProfile?.profile_theme).nameClass}`}>{currentUserProfile?.nickname || "Tu"}</p>
+          <div className="min-w-0">
+            <p className={`font-bold truncate ${getProfileTheme(currentUserProfile?.profile_theme).nameClass}`}>{currentUserProfile?.nickname || "Tu"}</p>
             <p className="text-xs text-muted-foreground">⚫ Nero · {black}</p>
             <p className="text-xs font-semibold text-primary">ELO: {userElo}</p>
           </div>
         </div>
 
         {/* Timer & emoji button */}
-        <div className="flex flex-col items-center gap-1">
+        <div className="flex flex-col items-center gap-1 shrink-0 px-1">
           <div
             className={cn(
               "text-2xl font-black",
@@ -730,20 +730,20 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
         </div>
 
         {/* Opponent (dx) */}
-        <div className="flex items-center space-x-3 relative">
-          <div>
-            <p className={`font-bold text-right ${getProfileTheme(opponentTheme).nameClass}`}>{opponent.nickname}</p>
+        <div className="flex items-center gap-2 min-w-0 flex-1 justify-end relative">
+          <div className="min-w-0">
+            <p className={`font-bold text-right truncate ${getProfileTheme(opponentTheme).nameClass}`}>{opponent.nickname}</p>
             <p className="text-xs text-muted-foreground text-right">⚪ Bianco · {white}</p>
             <p className="text-xs font-semibold text-destructive text-right">ELO: {opponentElo}</p>
           </div>
           <button
             type="button"
             onClick={() => setClickedProfile({ ...opponent, is_admin_profile: opponent.is_admin_profile ?? true })}
-            className="relative cursor-pointer hover:scale-110 transition-transform"
+            className="relative shrink-0 cursor-pointer hover:scale-110 transition-transform"
             title={`Vedi statistiche di ${opponent.nickname}`}
           >
             <ProfileThemeRing themeId={opponentTheme}>
-              <Avatar className={`w-14 h-14 border-2 ${getProfileTheme(opponentTheme).avatarClass ? "border-transparent" : "border-destructive"}`}>
+              <Avatar className={`w-11 h-11 md:w-14 md:h-14 border-2 ${getProfileTheme(opponentTheme).avatarClass ? "border-transparent" : "border-destructive"}`}>
                 <AvatarImage src={getAvatarUrl(opponent.avatar_url)} />
                 <AvatarFallback>{opponent.nickname.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
