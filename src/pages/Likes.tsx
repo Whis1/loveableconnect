@@ -500,11 +500,11 @@ const Likes = () => {
                       className="overflow-hidden hover:shadow-lg transition-all cursor-pointer border border-border/50"
                       onClick={() => handleProfileClick(like.from_user_id)}
                     >
-                      <CardContent className="p-6">
-                        <div className="flex items-start gap-4">
-                          <div className="relative">
+                      <CardContent className="p-4 md:p-6">
+                        <div className="flex items-start gap-3 md:gap-4">
+                          <div className="relative shrink-0">
                             <ProfileThemeRing themeId={isUnlocked ? like.profile.profile_theme : null}>
-                              <Avatar className={`h-20 w-20 border-4 border-pink-200/50 dark:border-pink-800/50 ${!isUnlocked ? 'blur-sm' : ''}`}>
+                              <Avatar className={`h-16 w-16 md:h-20 md:w-20 border-4 border-pink-200/50 dark:border-pink-800/50 ${!isUnlocked ? 'blur-sm' : ''}`}>
                                 <AvatarImage src={like.profile.avatar_url || undefined} />
                                 <AvatarFallback className="bg-gradient-to-br from-pink-400 to-purple-400 text-white text-xl">
                                   {like.profile.nickname?.[0]?.toUpperCase()}
@@ -531,7 +531,7 @@ const Likes = () => {
                                 <p className="text-sm">Clicca per visualizzare (8 crediti)</p>
                               </div>
                             ) : (
-                              <div className="flex flex-wrap gap-2">
+                              <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2">
                                 <Button
                                   size="sm"
                                   onClick={(e) => {
@@ -539,7 +539,7 @@ const Likes = () => {
                                     handleLikeBack(like.id, like.from_user_id, like.profile.nickname);
                                   }}
                                   disabled={likingUserId === like.from_user_id}
-                                  className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600"
+                                  className="w-full sm:w-auto bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600"
                                 >
                                   <Heart className="h-4 w-4 mr-2" />
                                   {likingUserId === like.from_user_id ? t("likes.liking") : t("likes.likeBack")}
@@ -551,6 +551,7 @@ const Likes = () => {
                                     e.stopPropagation();
                                     setProfileDialogId(like.from_user_id);
                                   }}
+                                  className="w-full sm:w-auto"
                                 >
                                   <Eye className="h-4 w-4 mr-2" />
                                   Apri profilo
