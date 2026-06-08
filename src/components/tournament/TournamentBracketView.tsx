@@ -50,6 +50,37 @@ export const TournamentBracketView = ({
     return () => clearInterval(t);
   }, [isAdmin]);
 
+  // 📱 SOLO MOBILE (< 768px): mostra l'intero tabellone a 5 colonne (come su PC)
+  //    rimpicciolito per farlo entrare tutto nello schermo, senza scroll. Su
+  //    desktop NON viene applicata alcuna trasformazione: resta identico.
+  const bracketWrapRef = useRef<HTMLDivElement>(null);
+  const bracketInnerRef = useRef<HTMLDivElement>(null);
+  const [bracketFit, setBracketFit] = useState<{ scale: number; height: number | null }>({
+    scale: 1,
+    height: null,
+  });
+  useEffect(() => {
+    const measure = () => {
+      const wrap = bracketWrapRef.current;
+      const inner = bracketInnerRef.current;
+      if (!wrap || !inner) return;
+      if (window.innerWidth >= 768) {
+        setBracketFit({ scale: 1, height: null });
+        return;
+      }
+      // La CSS transform non altera scrollWidth/Height: misuriamo sempre la
+      // dimensione "reale" e calcoliamo di quanto rimpicciolire per stare dentro.
+      const available = wrap.clientWidth;
+      const naturalW = inner.scrollWidth;
+      const naturalH = inner.scrollHeight;
+      const s = naturalW > available ? available / naturalW : 1;
+      setBracketFit({ scale: s, height: s < 1 ? Math.ceil(naturalH * s) : null });
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [matches, participants]);
+
   const formatCountdown = (endAt: string | null): string => {
     if (!endAt) return "";
     const diff = new Date(endAt).getTime() - now;
@@ -259,8 +290,18 @@ export const TournamentBracketView = ({
         </Button>
       </div>
 
-      {/* Bracket grid responsive */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-4 items-center">
+      {/* Bracket grid responsive. Su mobile l'intero albero a 5 colonne (come su
+          PC) viene rimpicciolito per stare nello schermo, senza scroll. */}
+      <div
+        ref={bracketWrapRef}
+        className="overflow-hidden md:overflow-visible"
+        style={bracketFit.height ? { height: bracketFit.height } : undefined}
+      >
+        <div
+          ref={bracketInnerRef}
+          className="grid grid-cols-[repeat(5,7rem)] md:grid-cols-5 gap-2 md:gap-4 items-start md:items-center origin-top-left"
+          style={bracketFit.scale !== 1 ? { transform: `scale(${bracketFit.scale})` } : undefined}
+        >
         {/* Colonna 1: Quarti SX */}
         <div className="space-y-4">
           <p className="text-[10px] uppercase tracking-wide text-muted-foreground text-center font-bold">
@@ -271,7 +312,7 @@ export const TournamentBracketView = ({
         </div>
 
         {/* Colonna 2: Semi SX */}
-        <div className="space-y-4 md:pt-12">
+        <div className="space-y-4 pt-6 md:pt-12">
           <p className="text-[10px] uppercase tracking-wide text-muted-foreground text-center font-bold">
             Semi SX
           </p>
@@ -279,7 +320,7 @@ export const TournamentBracketView = ({
         </div>
 
         {/* Colonna 3: Finale */}
-        <div className="space-y-4 md:pt-24">
+        <div className="space-y-4 pt-12 md:pt-24">
           <p className="text-[10px] uppercase tracking-wide text-pink-300 text-center font-black inline-flex items-center justify-center gap-1 w-full">
             <Trophy className="w-3 h-3" />
             FINALE
@@ -288,7 +329,7 @@ export const TournamentBracketView = ({
         </div>
 
         {/* Colonna 4: Semi DX */}
-        <div className="space-y-4 md:pt-12">
+        <div className="space-y-4 pt-6 md:pt-12">
           <p className="text-[10px] uppercase tracking-wide text-muted-foreground text-center font-bold">
             Semi DX
           </p>
@@ -302,6 +343,7 @@ export const TournamentBracketView = ({
           </p>
           <MatchCard match={quarterRight1} />
           <MatchCard match={quarterRight2} />
+        </div>
         </div>
       </div>
 
