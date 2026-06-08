@@ -1,6 +1,7 @@
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { InstallAppButton } from "@/components/InstallAppButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -30,6 +31,7 @@ export const DashboardControls = () => {
         <LogOut className="h-4 w-4 md:mr-2" />
         <span className="hidden md:inline">{t("dashboard.signOut")}</span>
       </Button>
+      <InstallAppButton />
     </div>
   );
 };
