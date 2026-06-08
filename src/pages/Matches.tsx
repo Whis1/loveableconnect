@@ -520,7 +520,7 @@ const Matches = () => {
                               size="sm"
                               className="shrink-0"
                             >
-                              <MessageCircle className="h-4 w-4 md:mr-2" />
+                              <MessageCircle className="h-4 w-4 md:mr-1" />
                               <span className="hidden md:inline">{t("matches.chat")}</span>
                             </Button>
                             {getUnreadForMatch(match.id) > 0 && (
