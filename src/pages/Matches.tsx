@@ -506,10 +506,10 @@ const Matches = () => {
                             </h3>
                             <img src={matchHeartIcon} alt="Match" className="h-5 w-5 md:h-6 md:w-6 object-contain shrink-0" />
                           </div>
-                          <div className="mt-1 flex items-start gap-1 text-[11px] md:text-xs text-muted-foreground">
-                            <Heart className="h-3 w-3 mt-0.5 fill-current text-pink-500 shrink-0" />
-                            <span>
-                              {t("matches.matchSince")} {new Date(match.created_at).toLocaleDateString()}
+                          <div className="mt-1">
+                            <span className="inline-flex items-start gap-1 max-w-full rounded-full border border-pink-400/40 bg-pink-500/5 px-2 py-0.5 text-[11px] md:text-xs font-medium text-pink-600 dark:text-pink-300">
+                              <Heart className="h-3 w-3 mt-px fill-current shrink-0" />
+                              <span>{t("matches.matchSince")} {new Date(match.created_at).toLocaleDateString()}</span>
                             </span>
                           </div>
                         </div>
@@ -517,11 +517,11 @@ const Matches = () => {
                           <div className="relative">
                             <Button
                               onClick={() => navigate(`/chat/${match.id}`)}
-                              size="icon"
-                              className="h-10 w-10 rounded-full"
-                              aria-label={t("matches.chat")}
+                              size="sm"
+                              className="shrink-0"
                             >
-                              <MessageCircle className="h-4 w-4" />
+                              <MessageCircle className="h-4 w-4 md:mr-2" />
+                              <span className="hidden md:inline">{t("matches.chat")}</span>
                             </Button>
                             {getUnreadForMatch(match.id) > 0 && (
                               <Badge
