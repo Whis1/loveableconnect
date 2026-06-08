@@ -77,7 +77,7 @@ export const GifPicker = ({ onGifSelect }: GifPickerProps) => {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" type="button">
+        <Button variant="ghost" size="icon" type="button" className="h-9 w-9 md:h-10 md:w-10 shrink-0">
           <Image className="h-5 w-5" />
         </Button>
       </PopoverTrigger>

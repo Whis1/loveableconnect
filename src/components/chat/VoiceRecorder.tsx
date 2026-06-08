@@ -79,14 +79,14 @@ export const VoiceRecorder = ({ onRecordingComplete, disabled = false, isPremium
       variant="default"
       onClick={isRecording ? stopRecording : startRecording}
       disabled={disabled || isProcessing}
-      className="bg-gradient-to-br from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 border-0 shrink-0 shadow-lg"
+      className="h-9 w-9 md:h-10 md:w-10 bg-gradient-to-br from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 border-0 shrink-0 shadow-lg"
     >
       {isProcessing ? (
-        <Loader2 className="h-6 w-6 animate-spin text-white" />
+        <Loader2 className="h-5 w-5 animate-spin text-white" />
       ) : isRecording ? (
-        <Square className="h-6 w-6 text-white fill-white" />
+        <Square className="h-5 w-5 text-white fill-white" />
       ) : (
-        <Mic className="h-6 w-6 text-white" />
+        <Mic className="h-5 w-5 text-white" />
       )}
     </Button>
   );

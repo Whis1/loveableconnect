@@ -1073,7 +1073,7 @@ const Chat = () => {
               </div>
             ) : (
               <form onSubmit={(e) => handleSendMessage(e)}>
-                <div className="flex gap-1 md:gap-2 items-center">
+                <div className="flex gap-1 items-center">
                   <input
                     ref={fileInputRef}
                     type="file"

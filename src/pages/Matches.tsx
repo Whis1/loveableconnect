@@ -485,49 +485,47 @@ const Matches = () => {
                 {matches.map((match) => (
                   <Card key={match.id} className="overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-lg bg-gradient-to-br from-background to-accent/5">
                     <CardContent className="p-4 md:p-5">
-                      <div className="flex flex-col md:flex-row md:items-center gap-4">
-                        <div className="flex items-center gap-4 flex-1">
-                          <div className="relative shrink-0">
-                            <ProfileThemeRing themeId={match.otherUser.profile_theme}>
-                              <Avatar className="h-16 w-16 md:h-20 md:w-20 border-4 border-primary/20 shadow-md">
-                                <AvatarImage src={match.otherUser.avatar_url || undefined} />
-                                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-xl">
-                                  {match.otherUser.nickname.charAt(0)}
-                                </AvatarFallback>
-                              </Avatar>
-                            </ProfileThemeRing>
+                      <div className="flex items-center gap-3">
+                        <div className="relative shrink-0">
+                          <ProfileThemeRing themeId={match.otherUser.profile_theme}>
+                            <Avatar className="h-14 w-14 md:h-20 md:w-20 border-4 border-primary/20 shadow-md">
+                              <AvatarImage src={match.otherUser.avatar_url || undefined} />
+                              <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-xl">
+                                {match.otherUser.nickname.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                          </ProfileThemeRing>
                           <div className="absolute -bottom-1 -right-1">
                             <OnlineIndicator userId={match.otherUser.id} size="md" preloadedStatus={onlineStatuses.get(match.otherUser.id)} />
                           </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="font-bold text-base md:text-xl truncate bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                              {match.otherUser.nickname}
+                            </h3>
+                            <img src={matchHeartIcon} alt="Match" className="h-5 w-5 md:h-6 md:w-6 object-contain shrink-0" />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-bold text-lg md:text-xl truncate bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                                {match.otherUser.nickname}
-                              </h3>
-                              <img src={matchHeartIcon} alt="Match" className="h-5 w-5 md:h-6 md:w-6 object-contain shrink-0" />
-                            </div>
-                            <div className="flex items-center gap-2 mt-2">
-                              <Badge variant="secondary" className="text-xs">
-                                <Heart className="h-3 w-3 mr-1 fill-current" />
-                                {t("matches.matchSince")} {new Date(match.created_at).toLocaleDateString()}
-                              </Badge>
-                            </div>
+                          <div className="mt-1">
+                            <Badge variant="secondary" className="text-[11px] md:text-xs font-normal max-w-full truncate">
+                              <Heart className="h-3 w-3 mr-1 fill-current shrink-0" />
+                              {t("matches.matchSince")} {new Date(match.created_at).toLocaleDateString()}
+                            </Badge>
                           </div>
                         </div>
-                        <div className="flex gap-2 justify-end md:ml-4">
+                        <div className="flex items-center gap-1.5 shrink-0">
                           <div className="relative">
                             <Button
                               onClick={() => navigate(`/chat/${match.id}`)}
-                              size="sm"
-                              className="flex-1 md:flex-none"
+                              size="icon"
+                              className="h-10 w-10 rounded-full"
+                              aria-label={t("matches.chat")}
                             >
-                              <MessageCircle className="h-4 w-4 md:mr-2" />
-                              <span className="hidden md:inline">{t("matches.chat")}</span>
+                              <MessageCircle className="h-4 w-4" />
                             </Button>
                             {getUnreadForMatch(match.id) > 0 && (
-                              <Badge 
-                                variant="destructive" 
+                              <Badge
+                                variant="destructive"
                                 className="absolute -top-1 -right-1 h-4 w-4 md:h-5 md:w-5 flex items-center justify-center p-0 text-[10px] md:text-xs"
                               >
                                 {getUnreadForMatch(match.id)}
@@ -538,7 +536,8 @@ const Matches = () => {
                             variant="ghost"
                             size="icon"
                             onClick={(e) => handleHideMatch(match.id, e)}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10 h-9 w-9 md:h-10 md:w-10"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10 h-10 w-10"
+                            aria-label="Elimina"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

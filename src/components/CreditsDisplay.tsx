@@ -66,7 +66,7 @@ export const CreditsDisplay = () => {
     credits.credits_depleted_at !== undefined;
 
   return (
-    <div className="flex flex-col lg:flex-row gap-2">
+    <div className="flex flex-row items-start gap-2">
       {/* Daily Likes Display */}
       <DailyLikesDisplay
         likesRemaining={dailyLikes.likesRemaining}

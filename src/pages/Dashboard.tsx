@@ -596,31 +596,28 @@ const Dashboard = () => {
       <DashboardControls />
       
       <div className="container mx-auto p-3 md:p-4 max-w-7xl relative z-10 pt-16 md:pt-4">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between md:justify-end items-center gap-4 md:gap-6 mb-6 md:mb-8">
-          <div className="flex items-center gap-3 order-2 md:order-1">
-            <img src={loveIcon} alt="Love Icon" className="h-12 w-12 md:h-14 md:w-14" />
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-                {t("dashboard.title")}
-              </h1>
-              
-            </div>
+        {/* Header. Su mobile: titolo + icone (trofeo, posta) su una riga
+            ordinata, e il saldo (like/crediti) va a capo allineato a destra,
+            cosi' non si accavallano piu'. Su desktop sta tutto su una riga. */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-3 mb-6 md:mb-8">
+          <div className="flex items-center gap-2 min-w-0 mr-auto">
+            <img src={loveIcon} alt="Love Icon" className="h-10 w-10 md:h-14 md:w-14 shrink-0" />
+            <h1 className="text-xl md:text-3xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent truncate">
+              {t("dashboard.title")}
+            </h1>
           </div>
-          <div className="flex items-center gap-2 order-1 md:order-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/sfida")}
-              className="h-12 w-12"
-              aria-label="Sfida"
-            >
-              <Trophy className="h-6 w-6 text-primary" />
-            </Button>
-            <InboxDropdown />
-            <div id="credits-display">
-              <CreditsDisplay />
-            </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/sfida")}
+            className="h-11 w-11 md:h-12 md:w-12 shrink-0"
+            aria-label="Sfida"
+          >
+            <Trophy className="h-6 w-6 text-primary" />
+          </Button>
+          <InboxDropdown />
+          <div id="credits-display" className="w-full flex justify-end md:w-auto">
+            <CreditsDisplay />
           </div>
         </div>
 
