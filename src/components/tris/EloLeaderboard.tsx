@@ -469,22 +469,22 @@ export const EloLeaderboard = ({ userId }: EloLeaderboardProps) => {
                 </Avatar>
               </ProfileThemeRing>
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 overflow-hidden">
               <p className={`font-black text-lg truncate ${getProfileTheme(userProfile?.profile_theme).nameClass || "bg-gradient-to-r from-pink-200 via-fuchsia-200 to-indigo-200 bg-clip-text text-transparent"}`}>
                 {userProfile?.nickname ?? userProfile?.full_name ?? "Tu"}
               </p>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-2xl font-black uppercase tracking-wide text-pink-300/70 leading-none">ELO</span>
-                <span className="text-2xl font-black bg-gradient-to-r from-pink-300 to-fuchsia-300 bg-clip-text text-transparent leading-none">
+              <div className="flex items-baseline gap-1.5 min-w-0">
+                <span className="text-xl sm:text-2xl font-black uppercase tracking-wide text-pink-300/70 leading-none shrink-0">ELO</span>
+                <span className="text-xl sm:text-2xl font-black bg-gradient-to-r from-pink-300 to-fuchsia-300 bg-clip-text text-transparent leading-none truncate">
                   {userElo}
                 </span>
               </div>
             </div>
-            <div className="flex flex-col items-center shrink-0 px-3 py-1.5 rounded-xl bg-white/[0.04] border border-pink-500/20">
+            <div className="flex flex-col items-center shrink-0 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/[0.04] border border-pink-500/20">
               <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold">
                 Posizione
               </span>
-              <span className="text-2xl font-black bg-gradient-to-r from-amber-300 via-pink-300 to-fuchsia-300 bg-clip-text text-transparent leading-tight">
+              <span className="text-xl sm:text-2xl font-black bg-gradient-to-r from-amber-300 via-pink-300 to-fuchsia-300 bg-clip-text text-transparent leading-tight">
                 {getRankDisplay()}
               </span>
             </div>

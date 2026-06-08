@@ -840,9 +840,9 @@ const ProfileEdit = () => {
                         type="button"
                         variant="outline"
                         onClick={() => setShowLocationRequest(true)}
-                        className="w-full"
+                        className="w-full h-auto min-h-10 py-2 whitespace-normal leading-tight text-xs sm:text-sm"
                       >
-                        <MapPin className="h-4 w-4 mr-2" />
+                        <MapPin className="h-4 w-4 mr-2 shrink-0" />
                         {t('profile.requestLocationChange')}
                       </Button>
                     </div>
@@ -884,9 +884,9 @@ const ProfileEdit = () => {
                         type="button"
                         variant="outline"
                         onClick={() => setShowBirthdateRequest(true)}
-                        className="w-full"
+                        className="w-full h-auto min-h-10 py-2 whitespace-normal leading-tight text-xs sm:text-sm"
                       >
-                        <Calendar className="h-4 w-4 mr-2" />
+                        <Calendar className="h-4 w-4 mr-2 shrink-0" />
                         Richiedi Cambio Data di Nascita
                       </Button>
                     </div>
@@ -1129,11 +1129,11 @@ const ProfileEdit = () => {
                 </div>
               )}
 
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   type="button"
                   variant="outline"
-                  className="px-8"
+                  className="w-full sm:w-auto sm:px-8"
                   onClick={() => navigate("/")}
                   disabled={saving}
                 >
@@ -1141,7 +1141,7 @@ const ProfileEdit = () => {
                 </Button>
                 <Button
                   type="submit"
-                  className="px-8"
+                  className="w-full sm:w-auto sm:px-8"
                   disabled={saving}
                 >
                   <Save className="h-4 w-4 mr-2" />
@@ -1167,8 +1167,8 @@ const ProfileEdit = () => {
                   ) : (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="destructive" type="button">
-                          <X className="h-4 w-4 mr-2" />
+                        <Button variant="destructive" type="button" className="w-full sm:w-auto h-auto min-h-10 py-2 whitespace-normal leading-tight">
+                          <X className="h-4 w-4 mr-2 shrink-0" />
                           Richiedi Eliminazione Account
                         </Button>
                       </AlertDialogTrigger>
