@@ -892,7 +892,7 @@ const Chat = () => {
         isVisible={showCreditsBanner} 
         onClose={() => setShowCreditsBanner(false)} 
       />
-      <div className="container mx-auto max-w-2xl h-screen flex flex-col p-2 md:p-4">
+      <div className="container mx-auto max-w-2xl h-[100dvh] flex flex-col p-2 md:p-4">
         <Card className="flex-1 flex flex-col overflow-hidden shadow-xl">
           {/* Header with back button */}
           <div className="border-b border-border/50 p-3 md:p-4 bg-white/80 dark:bg-[#1b1226]/85 backdrop-blur">
@@ -1044,7 +1044,7 @@ const Chat = () => {
           </CardContent>
 
           {/* Input Section */}
-          <div className="border-t border-border/50 p-2 md:p-4 bg-white/80 dark:bg-[#1b1226]/85 backdrop-blur space-y-2">
+          <div className="border-t border-border/50 p-2 md:p-4 pb-[calc(0.5rem_+_env(safe-area-inset-bottom))] md:pb-4 bg-white/80 dark:bg-[#1b1226]/85 backdrop-blur space-y-2">
             {recordedAudio && (
               <VoicePreview
                 audioUrl={recordedAudio.url}
