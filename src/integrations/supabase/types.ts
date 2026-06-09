@@ -353,6 +353,27 @@ export type Database = {
         }
         Relationships: []
       }
+      dismissed_likes: {
+        Row: {
+          created_at: string
+          from_user_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_user_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          from_user_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_templates: {
         Row: {
           created_at: string | null
@@ -428,6 +449,27 @@ export type Database = {
         }
         Relationships: []
       }
+      gift_credit_purchases: {
+        Row: {
+          created_at: string
+          credits: number
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits: number
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits?: number
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       hidden_matches: {
         Row: {
           hidden_at: string
@@ -459,6 +501,9 @@ export type Database = {
           id: string
           message: string
           read: boolean
+          reward_claimed: boolean
+          reward_credits: number
+          reward_likes: number
           user_id: string
         }
         Insert: {
@@ -467,6 +512,9 @@ export type Database = {
           id?: string
           message: string
           read?: boolean
+          reward_claimed?: boolean
+          reward_credits?: number
+          reward_likes?: number
           user_id: string
         }
         Update: {
@@ -475,6 +523,9 @@ export type Database = {
           id?: string
           message?: string
           read?: boolean
+          reward_claimed?: boolean
+          reward_credits?: number
+          reward_likes?: number
           user_id?: string
         }
         Relationships: []
@@ -1469,12 +1520,14 @@ export type Database = {
       user_credits: {
         Row: {
           balance: number
+          bonus_likes: number
           created_at: string
           credits_depleted_at: string | null
           daily_free_chats_remaining: number | null
           daily_free_chats_reset_at: string | null
           daily_likes_remaining: number
           daily_likes_reset_at: string | null
+          gift_credits: number
           has_used_weekly_trial: boolean | null
           id: string
           is_premium: boolean
@@ -1489,12 +1542,14 @@ export type Database = {
         }
         Insert: {
           balance?: number
+          bonus_likes?: number
           created_at?: string
           credits_depleted_at?: string | null
           daily_free_chats_remaining?: number | null
           daily_free_chats_reset_at?: string | null
           daily_likes_remaining?: number
           daily_likes_reset_at?: string | null
+          gift_credits?: number
           has_used_weekly_trial?: boolean | null
           id?: string
           is_premium?: boolean
@@ -1509,12 +1564,14 @@ export type Database = {
         }
         Update: {
           balance?: number
+          bonus_likes?: number
           created_at?: string
           credits_depleted_at?: string | null
           daily_free_chats_remaining?: number | null
           daily_free_chats_reset_at?: string | null
           daily_likes_remaining?: number
           daily_likes_reset_at?: string | null
+          gift_credits?: number
           has_used_weekly_trial?: boolean | null
           id?: string
           is_premium?: boolean
@@ -1692,6 +1749,14 @@ export type Database = {
           balance: number
           is_premium: boolean
           last_daily_reset: string
+        }[]
+      }
+      claim_inbox_reward: {
+        Args: { p_message_id: string }
+        Returns: {
+          already: boolean
+          credits: number
+          likes: number
         }[]
       }
       claim_tournament_rewards: {
@@ -1920,8 +1985,16 @@ export type Database = {
               winner_id: string
             }[]
           }
+      send_chat_gift: {
+        Args: { p_gift_id: string; p_match_id: string; p_receiver: string }
+        Returns: {
+          error: string
+          new_gift_balance: number
+          success: boolean
+        }[]
+      }
       send_inbox_to_all: {
-        Args: { p_message: string }
+        Args: { p_credits?: number; p_likes?: number; p_message: string }
         Returns: {
           batch_id: string
           count: number
