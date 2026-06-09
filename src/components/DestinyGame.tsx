@@ -6,6 +6,7 @@ import { ProfileGridCard } from "@/components/ProfileGridCard";
 import { useLikes } from "@/hooks/useLikes";
 import { X, ArrowRight, Loader2, LogOut } from "lucide-react";
 import { LoveCompassIcon } from "@/lib/championIcons";
+import { calculateAge } from "@/lib/utils";
 import loveableLogo from "@/assets/loveable-connect-icon.png";
 
 // 🔮 "Tenta il Destino" — minigioco di matching a click.
@@ -37,6 +38,8 @@ const ORIENTATION_OPTIONS = [
 ];
 
 // ── Domande FISSE (sempre presenti) ──────────────────────────────────────────
+// age_band e spicy_seek NON sono scenografiche: filtrano davvero la ricerca
+// (fascia d'età del profilo + coerenza tra cosa cerchi tu e cosa cerca l'altro).
 const FIXED_QUESTIONS: DestinyQuestion[] = [
   {
     id: "zodiac",
@@ -48,6 +51,11 @@ const FIXED_QUESTIONS: DestinyQuestion[] = [
     id: "age_band",
     text: "Che fascia d'età cerchi?",
     options: ["18-25", "26-35", "36-45", "46-60", "60+"],
+  },
+  {
+    id: "spicy_seek",
+    text: "Cosa cerchi davvero qui?",
+    options: ["L'amore della vita", "Una storia seria", "Avventure leggere", "Solo divertimento 🔥"],
   },
 ];
 
@@ -72,7 +80,6 @@ const QUESTION_POOL: DestinyQuestion[] = [
   { id: "season", text: "La tua stagione del cuore?", options: ["Primavera", "Estate", "Autunno", "Inverno"] },
   { id: "risk", text: "Quanto sei avventuroso/a?", options: ["Vivo per il brivido", "Mi piace un rischio calcolato", "Meglio la sicurezza", "Dipende"] },
   // 🔥 domande piccanti / intime
-  { id: "spicy_seek", text: "Cosa cerchi davvero qui?", options: ["L'amore della vita", "Una storia seria", "Avventure leggere", "Solo divertimento 🔥"] },
   { id: "spicy_first", text: "Al primo appuntamento, un bacio...", options: ["Solo se scatta la scintilla", "Assolutamente sì", "Meglio aspettare", "Chi lo sa… 😏"] },
   { id: "spicy_temp", text: "Come ti descriveresti?", options: ["Romantico/a inguaribile", "Passionale e intenso/a", "Giocoso/a e malizioso/a", "Un mistero da scoprire"] },
   { id: "spicy_msg", text: "Ricevi un messaggio audace a tarda notte. Tu...", options: ["Sorrido e rispondo subito", "Mi incuriosisco", "Dipende da chi lo manda", "Preferisco le cose lente"] },
@@ -103,6 +110,47 @@ const matchesAlias = (raw: string | null, opt: { value: string; aliases: string[
   return k === opt.value || opt.aliases.includes(k);
 };
 
+// ── Coerenza vera tra risposte e profili ─────────────────────────────────────
+
+// Fasce d'età della domanda fissa → range numerico.
+const AGE_BANDS: Record<string, [number, number]> = {
+  "18-25": [18, 25],
+  "26-35": [26, 35],
+  "36-45": [36, 45],
+  "46-60": [46, 60],
+  "60+": [60, 120],
+};
+
+// Cosa dichiara di cercare un profilo (da relationship_type + looking_for,
+// con tutte le varianti storiche italiano/inglese presenti nel DB).
+type ProfileIntent = "serious" | "casual" | "friendship" | "open" | null;
+const profileIntent = (p: { relationship_type?: string | null; looking_for?: string[] | null }): ProfileIntent => {
+  const raw = [p.relationship_type || "", ...(p.looking_for || [])].map((s) => String(s).toLowerCase().trim());
+  if (raw.some((v) => ["serious", "relazione seria", "serious relationship"].includes(v))) return "serious";
+  if (raw.some((v) => ["casual", "incontri casuali", "casual dating"].includes(v))) return "casual";
+  if (raw.some((v) => ["open", "relazione aperta", "open relationship"].includes(v))) return "open";
+  if (raw.some((v) => ["friendship", "amicizia"].includes(v))) return "friendship";
+  return null;
+};
+
+// Cosa cerca l'utente, dalla risposta alla domanda fissa "Cosa cerchi davvero qui?".
+const userIntentFromAnswer = (answer: string | undefined): "serious" | "fun" | null => {
+  if (!answer) return null;
+  if (answer === "L'amore della vita" || answer === "Una storia seria") return "serious";
+  if (answer === "Avventure leggere" || answer.startsWith("Solo divertimento")) return "fun";
+  return null;
+};
+
+// true = contraddizione netta (mai mostrare): chi cerca divertimento non deve
+// vedere chi dichiara una relazione seria, e viceversa. I profili che non
+// dichiarano nulla restano sempre ammessi.
+const intentConflict = (user: "serious" | "fun" | null, prof: ProfileIntent): boolean => {
+  if (!user || !prof) return false;
+  if (user === "fun" && prof === "serious") return true;
+  if (user === "serious" && (prof === "casual" || prof === "open")) return true;
+  return false;
+};
+
 export const DestinyGame = ({ currentUserId, onClose, onMatch }: DestinyGameProps) => {
   const { likedProfileIds } = useLikes();
 
@@ -122,10 +170,14 @@ export const DestinyGame = ({ currentUserId, onClose, onMatch }: DestinyGameProp
   const [current, setCurrent] = useState<any | null>(null);
 
   // ── Carica + filtra i profili compatibili, poi mostra il primo ─────────────
+  // Le risposte contano davvero: fascia d'età e "Cosa cerchi davvero qui?"
+  // ordinano il mazzo, e i profili in contraddizione netta (es. tu cerchi
+  // divertimento, l'altro dichiara una relazione seria) vengono ESCLUSI.
   const runSearch = useCallback(
-    async (excludeId?: string) => {
+    async (excludeId?: string, answersOverride?: Record<string, string>) => {
       setPhase("searching");
       const started = Date.now();
+      const ans = answersOverride ?? answers;
 
       let working = pool;
       // prima ricerca: scarica e filtra
@@ -141,12 +193,42 @@ export const DestinyGame = ({ currentUserId, onClose, onMatch }: DestinyGameProp
         const gOpt = GENDER_OPTIONS.find((o) => o.value === wantGender);
         const oOpt = ORIENTATION_OPTIONS.find((o) => o.value === wantOrientation);
 
-        working = (data || []).filter((p: any) => {
+        const base = (data || []).filter((p: any) => {
           const okG = !gOpt || matchesAlias(p.gender, gOpt);
           const okO = !oOpt || matchesAlias(p.sexual_orientation, oOpt);
           return okG && okO;
         });
-        working = shuffle(working);
+
+        // 1) Contraddizioni di intento: mai nel mazzo.
+        const uIntent = userIntentFromAnswer(ans["spicy_seek"]);
+        const coherent = base.filter((p: any) => !intentConflict(uIntent, profileIntent(p)));
+
+        // 2) Fascia d'età: prima i profili nella fascia richiesta, poi i
+        //    vicini (entro 5 anni), poi gli altri. Cosi' il "Continua"
+        //    degrada con grazia invece di pescare a caso.
+        const band = AGE_BANDS[ans["age_band"] || ""];
+        const ageOf = (p: any): number | null =>
+          p.age ?? (p.birthdate ? calculateAge(p.birthdate) : null);
+        const tier = (p: any): number => {
+          if (!band) return 0;
+          const a = ageOf(p);
+          if (a == null) return 1; // età ignota: secondo piano, non escluso
+          if (a >= band[0] && a <= band[1]) return 0;
+          if (a >= band[0] - 5 && a <= band[1] + 5) return 1;
+          return 2;
+        };
+        // 3) Dentro ogni fascia, prima chi dichiara un intento allineato al tuo.
+        const intentRank = (p: any): number => {
+          if (!uIntent) return 0;
+          const pi = profileIntent(p);
+          if (!pi) return 1;
+          if (uIntent === "serious") return pi === "serious" ? 0 : 1;
+          return pi === "casual" || pi === "open" ? 0 : 1;
+        };
+
+        working = shuffle(coherent).sort(
+          (a: any, b: any) => tier(a) - tier(b) || intentRank(a) - intentRank(b)
+        );
       }
 
       // escludi il profilo scartato/visto
@@ -169,16 +251,19 @@ export const DestinyGame = ({ currentUserId, onClose, onMatch }: DestinyGameProp
       setPool(rest);
       setPhase("result");
     },
-    [pool, wantGender, wantOrientation, currentUserId]
+    [pool, wantGender, wantOrientation, currentUserId, answers]
   );
 
   const handleAnswer = (qid: string, value: string) => {
-    setAnswers((prev) => ({ ...prev, [qid]: value }));
+    // Costruiamo subito l'oggetto completo: lo stato React non sarebbe ancora
+    // aggiornato quando parte la ricerca sull'ultima risposta.
+    const next = { ...answers, [qid]: value };
+    setAnswers(next);
     if (qIndex < sessionQuestions.length - 1) {
       setQIndex((i) => i + 1);
     } else {
-      // ultima risposta data → avvia ricerca
-      runSearch();
+      // ultima risposta data → avvia ricerca con TUTTE le risposte
+      runSearch(undefined, next);
     }
   };
 
