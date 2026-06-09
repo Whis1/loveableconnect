@@ -10,8 +10,8 @@ const corsHeaders = {
 // 🎁 Pacchetti di CREDITI REGALO (saldo separato, usabile solo per i regali in chat).
 //    Sostituire i price ID con quelli creati su Stripe.
 const GIFT_PACKS: Record<string, { priceId: string; credits: number }> = {
-  small: { priceId: "PRICE_ID_PACCHETTO_4_99", credits: 25 },  // 4,99 €
-  big: { priceId: "PRICE_ID_PACCHETTO_19_99", credits: 100 },  // 19,99 €
+  small: { priceId: "price_1TgYdcK6IHDbrxmEss7xbq7P", credits: 25 },  // 4,99 €
+  big: { priceId: "price_1TgYeHK6IHDbrxmECCYJlpXM", credits: 100 },  // 19,99 €
 };
 
 serve(async (req) => {
