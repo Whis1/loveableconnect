@@ -1,5 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
@@ -92,6 +92,9 @@ const Dashboard = () => {
   );
   const [showGeolocationBanner, setShowGeolocationBanner] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
+  // 🙅 from_user_id dei like scartati con "Non mi interessa": il contatore
+  //    "Like Ricevuti" della home li esclude.
+  const dismissedLikesRef = useRef<Set<string>>(new Set());
 
   // ============================================================
   // Real-time del contatore "Like Ricevuti" sulla home
@@ -104,6 +107,33 @@ const Dashboard = () => {
   useEffect(() => {
     const userId = getStoredUserId();
     if (!userId) return;
+
+    // 🙅 Like scartati con "Non mi interessa" (pagina Like Ricevuti): il
+    //    contatore della home deve escluderli, altrimenti resta il numero
+    //    fisso anche dopo lo scarto. Caricati al mount (la dashboard si
+    //    rimonta tornando dalla pagina Like) e usati da realtime e polling.
+    const loadDismissed = async () => {
+      try {
+        const { data } = await (supabase as any)
+          .from("dismissed_likes")
+          .select("from_user_id")
+          .eq("user_id", userId);
+        dismissedLikesRef.current = new Set(
+          ((data || []) as any[]).map((d) => d.from_user_id)
+        );
+      } catch {
+        /* tabella assente o errore transitorio: nessun filtro */
+      }
+    };
+    loadDismissed().then(() => {
+      // Ripulisce subito il valore mostrato (anche quello dalla cache).
+      setLikesReceived((prev) => {
+        const filtered = prev.filter((l: any) => !dismissedLikesRef.current.has(l.from_user_id));
+        if (filtered.length === prev.length) return prev;
+        writeCache("likes", filtered);
+        return filtered;
+      });
+    });
 
     // Filtro server-side: riceviamo solo gli INSERT che ci riguardano,
     // niente eventi inutili. Cosi' anche se Realtime ha throttling, ci
@@ -120,6 +150,7 @@ const Dashboard = () => {
         },
         (payload) => {
           const newLike = payload.new as any;
+          if (dismissedLikesRef.current.has(newLike.from_user_id)) return;
           setLikesReceived((prev) => {
             // Evita duplicati se l'evento arriva due volte (realtime +
             // polling possono sovrapporsi).
@@ -163,12 +194,15 @@ const Dashboard = () => {
           .select("*")
           .eq("to_user_id", userId);
         if (data) {
+          const visible = data.filter(
+            (l: any) => !dismissedLikesRef.current.has(l.from_user_id)
+          );
           setLikesReceived((prev) => {
             // Aggiorna solo se il numero e' davvero cambiato, per evitare
             // re-render inutili.
-            if (prev.length === data.length) return prev;
-            writeCache("likes", data);
-            return data;
+            if (prev.length === visible.length) return prev;
+            writeCache("likes", visible);
+            return visible;
           });
         }
       } catch (e) {
@@ -395,7 +429,9 @@ const Dashboard = () => {
       setMatches(visibleMatches);
       writeCache("matches", visibleMatches);
 
-      const likesData = likesRes.data || [];
+      const likesData = (likesRes.data || []).filter(
+        (l: any) => !dismissedLikesRef.current.has(l.from_user_id)
+      );
       setLikesReceived(likesData);
       writeCache("likes", likesData);
 
@@ -433,7 +469,7 @@ const Dashboard = () => {
         table: 'likes'
       }, payload => {
         const newLike = payload.new as any;
-        if (newLike.to_user_id === session.user.id) {
+        if (newLike.to_user_id === session.user.id && !dismissedLikesRef.current.has(newLike.from_user_id)) {
           setLikesReceived(prev => [newLike, ...prev]);
         }
       }).on('postgres_changes', {
@@ -459,7 +495,9 @@ const Dashboard = () => {
           const {
             data: likesData
           } = await supabase.from("likes").select("*").eq("to_user_id", session.user.id);
-          setLikesReceived(likesData || []);
+          setLikesReceived((likesData || []).filter(
+            (l: any) => !dismissedLikesRef.current.has(l.from_user_id)
+          ));
         }
       }).subscribe();
 
