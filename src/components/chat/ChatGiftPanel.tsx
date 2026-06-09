@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { Coins, Gift, Loader2 } from "lucide-react";
 import { CHAT_GIFTS, GIFT_PACKS, type ChatGift } from "@/lib/chatGifts";
@@ -35,6 +36,9 @@ export const ChatGiftPanel = ({
   const [balance, setBalance] = useState<number | null>(null);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [buyingPack, setBuyingPack] = useState<string | null>(null);
+  // Regalo cliccato senza saldo sufficiente: apre il popover di acquisto
+  // ancorato alla card dell'emoji (niente toast invasivo).
+  const [insufficientGiftId, setInsufficientGiftId] = useState<string | null>(null);
 
   // Saldo crediti regalo: letto a ogni apertura del pannello.
   useEffect(() => {
@@ -58,11 +62,7 @@ export const ChatGiftPanel = ({
   const handleSend = async (gift: ChatGift) => {
     if (sendingId) return;
     if (balance !== null && balance < gift.cost) {
-      toast({
-        title: "Crediti regalo insufficienti",
-        description: "Acquista un pacchetto qui sotto per inviare questo regalo.",
-        variant: "destructive",
-      });
+      setInsufficientGiftId(gift.id);
       return;
     }
     setSendingId(gift.id);
@@ -77,11 +77,7 @@ export const ChatGiftPanel = ({
       if (!row?.success) {
         if (row?.error === "INSUFFICIENT") {
           setBalance(row?.new_gift_balance ?? 0);
-          toast({
-            title: "Crediti regalo insufficienti",
-            description: "Acquista un pacchetto qui sotto per inviare questo regalo.",
-            variant: "destructive",
-          });
+          setInsufficientGiftId(gift.id);
         } else {
           toast({ title: "Errore", description: "Invio del regalo non riuscito. Riprova.", variant: "destructive" });
         }
@@ -146,22 +142,62 @@ export const ChatGiftPanel = ({
         {/* Catalogo regali */}
         <div className="grid grid-cols-2 gap-2">
           {CHAT_GIFTS.map((gift) => (
-            <button
+            <Popover
               key={gift.id}
-              type="button"
-              disabled={sendingId !== null}
-              onClick={() => handleSend(gift)}
-              className="group flex flex-col items-center gap-1 rounded-xl border border-purple-500/25 bg-gradient-to-br from-purple-500/[0.08] to-fuchsia-500/[0.05] p-3 text-center transition-all hover:border-pink-400/60 hover:bg-pink-500/10 active:scale-[0.97] disabled:opacity-60"
+              open={insufficientGiftId === gift.id}
+              onOpenChange={(o) => {
+                if (!o) setInsufficientGiftId(null);
+              }}
             >
-              <span className="text-3xl leading-none transition-transform group-hover:scale-125">
-                {sendingId === gift.id ? <Loader2 className="h-7 w-7 animate-spin text-pink-400" /> : gift.emoji}
-              </span>
-              <span className="text-sm font-bold">{gift.name}</span>
-              <span className="text-[10px] text-muted-foreground leading-tight">{gift.description}</span>
-              <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-bold text-amber-300">
-                <Coins className="h-3 w-3" /> {gift.cost}
-              </span>
-            </button>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  disabled={sendingId !== null}
+                  onClick={() => handleSend(gift)}
+                  className="group flex flex-col items-center gap-1 rounded-xl border border-purple-500/25 bg-gradient-to-br from-purple-500/[0.08] to-fuchsia-500/[0.05] p-3 text-center transition-all hover:border-pink-400/60 hover:bg-pink-500/10 active:scale-[0.97] disabled:opacity-60"
+                >
+                  <span className="text-3xl leading-none transition-transform group-hover:scale-125">
+                    {sendingId === gift.id ? <Loader2 className="h-7 w-7 animate-spin text-pink-400" /> : gift.emoji}
+                  </span>
+                  <span className="text-sm font-bold">{gift.name}</span>
+                  <span className="text-[10px] text-muted-foreground leading-tight">{gift.description}</span>
+                  <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-bold text-amber-300">
+                    <Coins className="h-3 w-3" /> {gift.cost}
+                  </span>
+                </button>
+              </PopoverTrigger>
+              {/* 💡 Saldo insufficiente: popover ancorato all'emoji cliccata,
+                  con acquisto diretto del pacchetto adatto. */}
+              <PopoverContent
+                side="top"
+                align="center"
+                className="w-60 rounded-xl border-pink-500/40 bg-gradient-to-br from-[#2a1640] via-[#1d1226] to-[#241433] p-3 shadow-[0_8px_30px_-8px_rgba(244,114,182,0.5)]"
+              >
+                <p className="mb-2 text-center text-sm font-bold bg-gradient-to-r from-pink-300 via-fuchsia-300 to-amber-300 bg-clip-text text-transparent">
+                  Crediti regalo insufficienti
+                </p>
+                <div className="grid gap-1.5">
+                  {GIFT_PACKS.map((pack) => (
+                    <Button
+                      key={pack.id}
+                      size="sm"
+                      disabled={buyingPack !== null}
+                      onClick={() => handleBuy(pack.id)}
+                      className="h-9 justify-between bg-gradient-to-r from-amber-500/90 to-pink-500/90 text-white font-semibold hover:from-amber-500 hover:to-pink-500"
+                    >
+                      <span>
+                        {buyingPack === pack.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          `Acquista ${pack.credits} crediti`
+                        )}
+                      </span>
+                      <span className="text-xs opacity-90">{pack.priceLabel}</span>
+                    </Button>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
           ))}
         </div>
 
