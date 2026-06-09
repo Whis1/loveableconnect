@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Send, Paperclip, UserRound } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, Gift, UserRound } from "lucide-react";
+import { ChatGiftPanel } from "@/components/chat/ChatGiftPanel";
+import { parseGiftMessage } from "@/lib/chatGifts";
 import { useToast } from "@/hooks/use-toast";
 import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { GifPicker } from "@/components/chat/GifPicker";
@@ -121,6 +123,8 @@ const Chat = () => {
   const [pendingImage, setPendingImage] = useState<{ file: File; url: string } | null>(null);
   const [giftingSubscription, setGiftingSubscription] = useState(false);
   const [showGiftBanner, setShowGiftBanner] = useState(false);
+  // 🎁 Pannello regali in chat (emoji a crediti regalo).
+  const [showGiftPanel, setShowGiftPanel] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const [otherUserOnlineStatus, setOtherUserOnlineStatus] = useState<{ isOnline: boolean; showStatus: boolean } | undefined>();
@@ -939,6 +943,15 @@ const Chat = () => {
                     <Button
                       variant="ghost"
                       size="icon"
+                      onClick={() => setShowGiftPanel(true)}
+                      className="text-primary hover:text-primary hover:bg-primary/10"
+                      title="Fai un regalo"
+                    >
+                      <Gift className="h-5 w-5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={isBlocked ? handleUnblock : handleBlock}
                       className={isBlocked ? "text-green-600 hover:text-green-600 hover:bg-green-100 dark:hover:bg-green-900" : "text-destructive hover:text-destructive hover:bg-destructive/10"}
                       title={isBlocked ? "Sblocca utente" : "Blocca utente"}
@@ -1020,7 +1033,25 @@ const Chat = () => {
                 {messages.map((message) => {
                   const isOwn = message.sender_id === currentUser;
                   const senderAvatar = isOwn ? myAvatar : otherUser?.avatar_url || null;
-                  
+
+                  // 🎁 Messaggio-regalo: bolla speciale animata al posto del testo.
+                  const gift = parseGiftMessage(message.content);
+                  if (gift) {
+                    return (
+                      <div key={message.id} className={`flex ${isOwn ? "justify-end" : "justify-start"} my-2`}>
+                        <div className="animate-bounce-in flex flex-col items-center gap-1 rounded-2xl border border-pink-400/50 bg-gradient-to-br from-pink-500/15 via-fuchsia-500/10 to-amber-500/10 px-6 py-3 shadow-[0_4px_24px_-6px_rgba(244,114,182,0.5)]">
+                          <span className="text-5xl leading-none drop-shadow-[0_2px_8px_rgba(244,114,182,0.6)]">{gift.emoji}</span>
+                          <span className="text-sm font-bold bg-gradient-to-r from-pink-300 via-fuchsia-300 to-amber-300 bg-clip-text text-transparent">
+                            {isOwn ? `Hai regalato: ${gift.name}` : `Ti ha regalato: ${gift.name}!`}
+                          </span>
+                          <span className="text-[11px] font-semibold text-amber-300">
+                            {isOwn ? `${gift.cost} crediti donati` : `+${gift.cost} crediti per te`}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  }
+
                   return (
                     <MessageBubble
                       key={message.id}
@@ -1139,6 +1170,17 @@ const Chat = () => {
           currentUserId={currentUser}
           open={showProfile}
           onOpenChange={setShowProfile}
+        />
+      )}
+
+      {/* 🎁 Pannello regali (emoji a crediti regalo) */}
+      {otherUser && activeMatchId && (
+        <ChatGiftPanel
+          open={showGiftPanel}
+          onOpenChange={setShowGiftPanel}
+          matchId={activeMatchId}
+          receiverId={otherUser.id}
+          receiverNickname={otherUser.nickname}
         />
       )}
     </div>

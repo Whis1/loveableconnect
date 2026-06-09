@@ -13,6 +13,7 @@ import { usePresenceTracking } from "./hooks/usePresenceTracking";
 import { MatchNotificationProvider } from "./contexts/MatchNotificationContext";
 import { SupportRatingGate } from "./components/SupportRatingGate";
 import { ThemePurchaseGate } from "./components/ThemePurchaseGate";
+import { GiftCreditsPurchaseGate } from "./components/GiftCreditsPurchaseGate";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -41,6 +42,7 @@ const AppShell = () => {
       <AnimatedRoutes />
       <SupportRatingGate />
       <ThemePurchaseGate />
+      <GiftCreditsPurchaseGate />
     </MatchNotificationProvider>
   );
 };
