@@ -40,8 +40,10 @@ begin
     when 'cuore' then 6
     when 'frusta' then 8
     when 'champagne' then 10
+    when 'cane' then 12
+    when 'schiavo' then 15
     when 'diamante' then 20
-    when 'corvo' then 50
+    when 'anello' then 50
     else null
   end;
   if v_cost is null then

@@ -18,12 +18,19 @@ export const CHAT_GIFTS: ChatGift[] = [
   { id: "cuore", emoji: "❤️", name: "Cuore", description: "Quando le parole non bastano", cost: 6 },
   { id: "frusta", emoji: "⛓️", name: "Frusta", description: "Per chi ha capito il gioco", cost: 8 },
   { id: "champagne", emoji: "🍾", name: "Champagne", description: "C'è qualcosa da festeggiare", cost: 10 },
+  { id: "cane", emoji: "🐶", name: "Cane", description: "Per chi sogna una padrona che comanda", cost: 12 },
+  { id: "schiavo", emoji: "🥷", name: "Schiavo", description: "Obbedienza totale, nessuna domanda", cost: 15 },
   { id: "diamante", emoji: "💎", name: "Diamante", description: "Un gesto che brilla davvero", cost: 20 },
+  { id: "anello", emoji: "💍", name: "Anello", description: "La proposta che non si rifiuta", cost: 50 },
+];
+
+// Regali ritirati dal listino ma ancora renderizzabili se presenti in vecchie chat.
+const LEGACY_GIFTS: ChatGift[] = [
   { id: "corvo", emoji: "🐦‍⬛", name: "Corvo Nero", description: "Il regalo leggendario, per pochi", cost: 50 },
 ];
 
 export const getChatGift = (id: string): ChatGift | undefined =>
-  CHAT_GIFTS.find((g) => g.id === id);
+  CHAT_GIFTS.find((g) => g.id === id) ?? LEGACY_GIFTS.find((g) => g.id === id);
 
 // I regali viaggiano come messaggi normali con contenuto "[gift:<id>]".
 const GIFT_RE = /^\[gift:([a-z_]+)\]$/;
