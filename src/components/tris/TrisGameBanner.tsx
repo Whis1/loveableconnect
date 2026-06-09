@@ -14,9 +14,9 @@ import { getStoredUserId } from "@/lib/storedSession";
 import { useToast } from "@/hooks/use-toast";
 import { useCredits } from "@/hooks/useCredits";
 import { InsufficientCreditsBanner } from "@/components/chat/InsufficientCreditsBanner";
-import trisIcon from "@/assets/tris-icon.png";
-import damaIcon from "@/assets/dama-icon.png";
-import othelloIcon from "@/assets/othello-icon.png";
+import trisIcon from "@/assets/tris-icon.webp";
+import damaIcon from "@/assets/dama-icon.webp";
+import othelloIcon from "@/assets/othello-icon.webp";
 
 interface Profile {
   id: string;

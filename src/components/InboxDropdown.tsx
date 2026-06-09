@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Mail, X, Heart, Gift, Coins, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import loveableConnectIcon from "@/assets/loveable-connect-icon.png";
+import loveableConnectIcon from "@/assets/loveable-connect-icon.webp";
 import {
   Dialog,
   DialogContent,

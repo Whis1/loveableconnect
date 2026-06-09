@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useTextTranslation } from "@/hooks/useTranslation";
-import profileBackground from "@/assets/profile-background.png";
+import profileBackground from "@/assets/profile-background.webp";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { SpotifySongCard } from "@/components/SpotifySongCard";
 import { calculateAge } from "@/lib/utils";

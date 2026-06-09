@@ -7,7 +7,7 @@ import { useLikes } from "@/hooks/useLikes";
 import { X, ArrowRight, Loader2, LogOut } from "lucide-react";
 import { LoveCompassIcon } from "@/lib/championIcons";
 import { calculateAge } from "@/lib/utils";
-import loveableLogo from "@/assets/loveable-connect-icon.png";
+import loveableLogo from "@/assets/loveable-connect-icon.webp";
 
 // 🔮 "Tenta il Destino" — minigioco di matching a click.
 // Flusso: scegli genere+orientamento desiderati (FILTRO reale) → rispondi a un

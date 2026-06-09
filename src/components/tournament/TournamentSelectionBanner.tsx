@@ -1,8 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trophy, X, Loader2 } from "lucide-react";
-import othelloIcon from "@/assets/othello-icon.png";
-import damaIcon from "@/assets/dama-icon.png";
+import othelloIcon from "@/assets/othello-icon.webp";
+import damaIcon from "@/assets/dama-icon.webp";
 import { MedalIcon, EliminatedIcon } from "@/lib/championIcons";
 
 interface TournamentSelectionBannerProps {

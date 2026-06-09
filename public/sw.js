@@ -26,8 +26,8 @@ self.addEventListener('push', (event) => {
   let notificationData = {
     title: '💕 LoveableConnect',
     body: 'Hai una nuova notifica',
-    icon: '/images/love-background.png',
-    badge: '/images/love-background.png',
+    icon: '/images/love-background.webp',
+    badge: '/images/love-background.webp',
     data: { url: '/' }
   };
 

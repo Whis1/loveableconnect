@@ -1,7 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import loveableIcon from "@/assets/loveable-connect-icon.png";
-import matchHeart from "@/assets/match-heart.png";
+import loveableIcon from "@/assets/loveable-connect-icon.webp";
+import matchHeart from "@/assets/match-heart.webp";
 
 interface RouteTransitionOverlayProps {
   routeKey: string;

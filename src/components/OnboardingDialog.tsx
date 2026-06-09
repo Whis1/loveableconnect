@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sparkles, ArrowRight, Check, Loader2 } from "lucide-react";
 import { LoveCompassIcon } from "@/lib/championIcons";
-import loveableLogo from "@/assets/auth-logo.png";
+import loveableLogo from "@/assets/auth-logo.webp";
 
 // 🧭 ONBOARDING al primo accesso nella bacheca.
 //

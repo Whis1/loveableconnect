@@ -16,8 +16,8 @@ import { CookieBanner } from "@/components/CookieBanner";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useNicknameAvailability } from "@/hooks/useNicknameAvailability";
 import { isNicknameDuplicateError, isNicknameTaken, NICKNAME_TAKEN_MESSAGE, normalizeNickname } from "@/lib/nickname";
-import authHeartBg from "@/assets/auth-heart-background.png";
-import authLogo from "@/assets/auth-logo.png";
+import authHeartBg from "@/assets/auth-heart-background.webp";
+import authLogo from "@/assets/auth-logo.webp";
 
 // In caso di errore una Edge Function restituisce il motivo reale nel corpo
 // della risposta; senza leggerlo il client mostra solo il generico
@@ -382,7 +382,7 @@ const Auth = () => {
       <div 
         className="fixed inset-0 z-0 opacity-20 dark:opacity-30" 
         style={{
-          backgroundImage: 'url(/images/love-background.png)',
+          backgroundImage: 'url(/images/love-background.webp)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'

@@ -11,7 +11,7 @@ const Sfida = () => {
       <div
         className="fixed inset-0 z-0 opacity-20 dark:opacity-30"
         style={{
-          backgroundImage: "url(/images/love-background.png)",
+          backgroundImage: "url(/images/love-background.webp)",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",

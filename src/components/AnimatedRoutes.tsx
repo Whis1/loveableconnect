@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { PageTransition } from "./PageTransition";
@@ -13,20 +14,31 @@ import Chat from "@/pages/Chat";
 import Messages from "@/pages/Messages";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
-import TermsAndConditions from "@/pages/TermsAndConditions";
 import Credits from "@/pages/Credits";
 import PurchaseSuccess from "@/pages/PurchaseSuccess";
 import PremiumSuccess from "@/pages/PremiumSuccess";
 import Support from "@/pages/Support";
-import AdminArrettu from "@/pages/AdminArrettu";
-import AdminProfiles from "@/pages/AdminProfiles";
-import AdminSupport from "@/pages/AdminSupport";
-import AdminCreateProfile from "@/pages/AdminCreateProfile";
-import Chats from "@/pages/Chats";
-import ChattorsLogin from "@/pages/ChattorsLogin";
 import AuthCallback from "@/pages/AuthCallback";
 import Sfida from "@/pages/Sfida";
-import DarkCrowPreview from "@/pages/DarkCrowPreview";
+
+// ⚡ Pagine RARE caricate solo quando si visitano (lazy): non finiscono nel
+//    bundle iniziale che scaricano tutti gli utenti. Nessun cambiamento
+//    visivo o di funzionamento: solo il primo accesso a queste pagine
+//    scarica il loro pezzo di codice.
+const TermsAndConditions = lazy(() => import("@/pages/TermsAndConditions"));
+const AdminArrettu = lazy(() => import("@/pages/AdminArrettu"));
+const AdminProfiles = lazy(() => import("@/pages/AdminProfiles"));
+const AdminSupport = lazy(() => import("@/pages/AdminSupport"));
+const AdminCreateProfile = lazy(() => import("@/pages/AdminCreateProfile"));
+const Chats = lazy(() => import("@/pages/Chats"));
+const ChattorsLogin = lazy(() => import("@/pages/ChattorsLogin"));
+const DarkCrowPreview = lazy(() => import("@/pages/DarkCrowPreview"));
+
+// Wrapper con Suspense per le pagine lazy (fallback nullo: la transizione di
+// rotta gia' esistente copre il breve istante di caricamento).
+const L = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={null}>{children}</Suspense>
+);
 
 export const AnimatedRoutes = () => {
   const location = useLocation();
@@ -46,20 +58,20 @@ export const AnimatedRoutes = () => {
           <Route path="/messages" element={<PageTransition><Messages /></PageTransition>} />
           <Route path="/chat/:matchId" element={<PageTransition><Chat /></PageTransition>} />
           <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
-          <Route path="/terms" element={<PageTransition><TermsAndConditions /></PageTransition>} />
+          <Route path="/terms" element={<PageTransition><L><TermsAndConditions /></L></PageTransition>} />
           <Route path="/credits" element={<PageTransition><Credits /></PageTransition>} />
           <Route path="/purchase-success" element={<PageTransition><PurchaseSuccess /></PageTransition>} />
           <Route path="/premium-success" element={<PageTransition><PremiumSuccess /></PageTransition>} />
           <Route path="/support" element={<PageTransition><Support /></PageTransition>} />
-          <Route path="/adminarrettu" element={<PageTransition><AdminArrettu /></PageTransition>} />
-          <Route path="/admin/profiles" element={<PageTransition><AdminProfiles /></PageTransition>} />
-          <Route path="/admin/support" element={<PageTransition><AdminSupport /></PageTransition>} />
-          <Route path="/admin/create-profile" element={<PageTransition><AdminCreateProfile /></PageTransition>} />
-          <Route path="/chattors-login" element={<PageTransition><ChattorsLogin /></PageTransition>} />
-          <Route path="/chattors" element={<PageTransition><Chats /></PageTransition>} />
+          <Route path="/adminarrettu" element={<PageTransition><L><AdminArrettu /></L></PageTransition>} />
+          <Route path="/admin/profiles" element={<PageTransition><L><AdminProfiles /></L></PageTransition>} />
+          <Route path="/admin/support" element={<PageTransition><L><AdminSupport /></L></PageTransition>} />
+          <Route path="/admin/create-profile" element={<PageTransition><L><AdminCreateProfile /></L></PageTransition>} />
+          <Route path="/chattors-login" element={<PageTransition><L><ChattorsLogin /></L></PageTransition>} />
+          <Route path="/chattors" element={<PageTransition><L><Chats /></L></PageTransition>} />
           <Route path="/auth/callback" element={<PageTransition><AuthCallback /></PageTransition>} />
           <Route path="/sfida" element={<PageTransition><Sfida /></PageTransition>} />
-          <Route path="/dark-crow-preview" element={<PageTransition><DarkCrowPreview /></PageTransition>} />
+          <Route path="/dark-crow-preview" element={<PageTransition><L><DarkCrowPreview /></L></PageTransition>} />
           <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
         </Routes>
       </AnimatePresence>

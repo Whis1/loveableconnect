@@ -18,7 +18,7 @@ import { InboxDropdown } from "@/components/InboxDropdown";
 import { Tutorial } from "@/components/Tutorial";
 import { getStoredUserId } from "@/lib/storedSession";
 import { useMatchNotification } from "@/contexts/MatchNotificationContext";
-import loveIcon from "@/assets/love-icon.png";
+import loveIcon from "@/assets/love-icon.webp";
 interface Profile {
   id: string;
   full_name: string;
@@ -587,7 +587,7 @@ const Dashboard = () => {
       {showTutorial && <Tutorial />}
       {/* Background Image */}
       <div className="fixed inset-0 z-0 opacity-20 dark:opacity-30" style={{
-      backgroundImage: 'url(/images/love-background.png)',
+      backgroundImage: 'url(/images/love-background.webp)',
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat'
@@ -644,7 +644,7 @@ const Dashboard = () => {
                 )}
                 {/* Card Background */}
                 <div className="absolute inset-0 opacity-10" style={{
-                backgroundImage: 'url(/images/love-background.png)',
+                backgroundImage: 'url(/images/love-background.webp)',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center'
               }} />
@@ -672,7 +672,7 @@ const Dashboard = () => {
               <Card id="likes-card" className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
                 {/* Card Background */}
                 <div className="absolute inset-0 opacity-10" style={{
-                backgroundImage: 'url(/images/love-background.png)',
+                backgroundImage: 'url(/images/love-background.webp)',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center'
               }} />
@@ -703,7 +703,7 @@ const Dashboard = () => {
               <Card id="discover-card" className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer" onClick={handleExploreClick}>
                 {/* Card Background */}
                 <div className="absolute inset-0 opacity-10" style={{
-                backgroundImage: 'url(/images/love-background.png)',
+                backgroundImage: 'url(/images/love-background.webp)',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center'
               }} />
@@ -731,7 +731,7 @@ const Dashboard = () => {
               {/* Support Card */}
               <Card id="support-card" className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white group hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer" onClick={() => navigate("/support")}>
                 <div className="absolute inset-0 opacity-10" style={{
-                backgroundImage: 'url(/images/love-background.png)',
+                backgroundImage: 'url(/images/love-background.webp)',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center'
               }} />

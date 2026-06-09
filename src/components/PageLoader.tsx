@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import matchHeart from "@/assets/match-heart.png";
+import matchHeart from "@/assets/match-heart.webp";
 
 export const PageLoader = () => {
   return (

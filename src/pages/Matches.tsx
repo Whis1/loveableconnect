@@ -13,7 +13,7 @@ import { useTextTranslation } from "@/hooks/useTranslation";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import OnlineIndicator from "@/components/OnlineIndicator";
 import { PageLoader } from "@/components/PageLoader";
-import matchHeartIcon from "@/assets/match-heart.png";
+import matchHeartIcon from "@/assets/match-heart.webp";
 import { withFallback } from "@/lib/async";
 import { getStoredUserId } from "@/lib/storedSession";
 import { useMatchNotification } from "@/contexts/MatchNotificationContext";
@@ -453,7 +453,7 @@ const Matches = () => {
           </Button>
         </div>
 
-        <Card className="bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/images/app-background.png')" }}>
+        <Card className="bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/images/app-background.webp')" }}>
           <CardHeader className="p-3 md:p-6">
             <CardTitle className="text-xl md:text-2xl">{t("matches.title")}</CardTitle>
           </CardHeader>

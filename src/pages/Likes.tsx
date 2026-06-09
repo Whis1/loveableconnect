@@ -13,7 +13,7 @@ import { useTextTranslation } from "@/hooks/useTranslation";
 import { MatchBanner } from "@/components/MatchBanner";
 import { PageLoader } from "@/components/PageLoader";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import likesHeartIcon from "@/assets/likes-heart-icon.png";
+import likesHeartIcon from "@/assets/likes-heart-icon.webp";
 import { useCredits } from "@/hooks/useCredits";
 import { useSendLike } from "@/hooks/useSendLike";
 import { withFallback, withTimeout } from "@/lib/async";
