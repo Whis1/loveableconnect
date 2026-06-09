@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProfileThemeRing } from "@/components/ProfileThemeRing";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Heart, Lock, Eye } from "lucide-react";
+import { ArrowLeft, Heart, Lock, Eye, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useTextTranslation } from "@/hooks/useTranslation";
@@ -88,6 +88,7 @@ const Likes = () => {
     userAvatar: null,
   });
   const [likingUserId, setLikingUserId] = useState<string | null>(null);
+  const [dismissingId, setDismissingId] = useState<string | null>(null);
   const { sendLike } = useSendLike(currentUserId);
   const [unlockingProfileId, setUnlockingProfileId] = useState<string | null>(null);
   const [showUnlockDialog, setShowUnlockDialog] = useState(false);
@@ -113,7 +114,24 @@ const Likes = () => {
 
     if (error) throw error;
 
-    const rows = likesData || [];
+    let rows = likesData || [];
+    if (rows.length === 0) return [];
+
+    // 🙅 Escludi i like che ho marcato "Non mi interessa" (il like dell'altro
+    //    utente resta nel DB, lo nascondo solo dalla MIA lista). Se la tabella
+    //    non esiste o la query fallisce, mostro tutti (degrada con grazia).
+    try {
+      const { data: dismissed } = await (supabase as any)
+        .from("dismissed_likes")
+        .select("from_user_id")
+        .eq("user_id", userId);
+      if (dismissed && dismissed.length) {
+        const dismissedSet = new Set(dismissed.map((d: any) => d.from_user_id));
+        rows = rows.filter((l) => !dismissedSet.has(l.from_user_id));
+      }
+    } catch {
+      /* tabella assente o errore transitorio: nessun filtro */
+    }
     if (rows.length === 0) return [];
 
     // Un'unica query per tutti i profili: niente .single() per riga (falliva a caso).
@@ -366,6 +384,32 @@ const Likes = () => {
     }
   };
 
+  // 🙅 "Non mi interessa": nasconde il like dalla mia lista (il like resta
+  //    nel DB dell'altro utente). Rimozione ottimistica + persistenza.
+  const handleNotInterested = async (likeId: string, fromUserId: string) => {
+    if (!currentUserId || dismissingId) return;
+    setDismissingId(fromUserId);
+    setLikes((prev) => prev.filter((l) => l.id !== likeId));
+    try {
+      const { error } = await (supabase as any)
+        .from("dismissed_likes")
+        .upsert(
+          { user_id: currentUserId, from_user_id: fromUserId },
+          { onConflict: "user_id,from_user_id" }
+        );
+      if (error) throw error;
+    } catch (e) {
+      console.error("Errore 'Non mi interessa':", e);
+      toast({
+        title: "Errore",
+        description: "Non è stato possibile nascondere questo like. Riprova.",
+        variant: "destructive",
+      });
+    } finally {
+      setDismissingId(null);
+    }
+  };
+
   const handleLikeBack = async (likeId: string, userId: string, userName: string) => {
     if (!currentUserId || likingUserId) return;
     
@@ -543,6 +587,19 @@ const Likes = () => {
                                 >
                                   <Heart className="h-4 w-4 mr-2" />
                                   {likingUserId === like.from_user_id ? t("likes.liking") : t("likes.likeBack")}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleNotInterested(like.id, like.from_user_id);
+                                  }}
+                                  disabled={dismissingId === like.from_user_id}
+                                  className="w-full sm:w-auto border-muted-foreground/30 text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                                >
+                                  <X className="h-4 w-4 mr-2" />
+                                  Non mi interessa
                                 </Button>
                                 <Button
                                   size="sm"
