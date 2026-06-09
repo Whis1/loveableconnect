@@ -27,8 +27,9 @@ type Phase = "intro" | "questions" | "searching" | "result" | "empty";
 const GENDER_OPTIONS = [
   { value: "male", label: "Uomo", aliases: ["male", "uomo", "m"] },
   { value: "female", label: "Donna", aliases: ["female", "donna", "f"] },
-  { value: "non-binary", label: "Non binario", aliases: ["non-binary", "non binario", "nonbinary", "genderfluid", "transgender", "trans"] },
-  { value: "any", label: "Indifferente", aliases: [] },
+  { value: "non-binary", label: "Non binario", aliases: ["non-binary", "non binario", "nonbinary"] },
+  { value: "transgender", label: "Transgender", aliases: ["transgender", "trans", "transexual", "transessuale"] },
+  { value: "genderfluid", label: "Genderfluid", aliases: ["genderfluid", "gender fluid"] },
 ];
 const ORIENTATION_OPTIONS = [
   { value: "heterosexual", label: "Eterosessuale", aliases: ["heterosexual", "eterosessuale", "etero"] },
