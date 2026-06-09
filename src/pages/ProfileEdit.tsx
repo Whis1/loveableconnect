@@ -75,6 +75,9 @@ const ProfileEdit = () => {
   const [interests, setInterests] = useState<string[]>([]);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  // 🗑️ true quando l'utente rimuove la foto profilo (X): al salvataggio
+  //    azzera avatar_url nel DB, altrimenti la foto rimossa "riappare".
+  const [avatarRemoved, setAvatarRemoved] = useState(false);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [lookingFor, setLookingFor] = useState<string[]>([]);
@@ -232,6 +235,7 @@ const ProfileEdit = () => {
     const file = e.target.files?.[0];
     if (file) {
       setAvatarFile(file);
+      setAvatarRemoved(false);
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatarPreview(reader.result as string);
@@ -411,6 +415,10 @@ const ProfileEdit = () => {
 
         if (avatarError) throw avatarError;
         avatarPath = avatarFileName;
+      } else if (avatarRemoved) {
+        // L'utente ha rimosso la foto profilo senza caricarne una nuova:
+        // azzera avatar_url cosi' la rimozione e' definitiva.
+        avatarPath = null;
       }
 
       // Upload new photos (compresse lato client prima dell'upload)
@@ -651,6 +659,7 @@ const ProfileEdit = () => {
                         onClick={() => {
                           setAvatarPreview(null);
                           setAvatarFile(null);
+                          setAvatarRemoved(true);
                         }}
                       >
                         <X className="h-4 w-4" />
