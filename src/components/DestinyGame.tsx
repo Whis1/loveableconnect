@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -59,32 +59,65 @@ const FIXED_QUESTIONS: DestinyQuestion[] = [
   },
 ];
 
-// ── Pool di domande RANDOM (scenografiche, pescate a caso ogni volta) ────────
-const QUESTION_POOL: DestinyQuestion[] = [
-  { id: "evening", text: "La serata ideale?", options: ["Cena a lume di candela", "Serata tra amici", "Film e coccole sul divano", "Avventura all'ultimo minuto"] },
+// ── Domande a tema in base a "Cosa cerchi davvero qui?" ──────────────────────
+// Chi cerca divertimento riceve domande piccanti/provocanti; chi cerca una
+// storia seria riceve domande romantiche/di coppia. Le NEUTRE (leggere)
+// stanno in entrambi i mazzi per dare varieta'.
+const NEUTRAL_POOL: DestinyQuestion[] = [
   { id: "travel", text: "La vacanza dei sogni?", options: ["Spiaggia e relax", "Città d'arte", "Montagna e natura", "Viaggio zaino in spalla"] },
   { id: "music", text: "La colonna sonora della tua vita?", options: ["Pop", "Rock", "Indie", "Musica classica", "Hip-hop / Rap"] },
-  { id: "love_lang", text: "Come dimostri affetto?", options: ["Con le parole", "Con i gesti", "Con il tempo insieme", "Con i regali"] },
-  { id: "if_fight", text: "E se litigaste in coppia, cosa faresti?", options: ["Ne parlo subito", "Mi prendo un momento", "Cerco un compromesso", "Sdrammatizzo con ironia"] },
-  { id: "if_surprise", text: "Il/la partner ti organizza una sorpresa: tu...", options: ["Adoro le sorprese!", "Mi imbarazzo un po'", "Preferisco saperlo prima", "Ricambio subito"] },
   { id: "weekend", text: "Il weekend perfetto?", options: ["Fuori a esplorare", "A casa in pieno relax", "Sport e attività", "Cultura: mostre, libri, teatro"] },
   { id: "cook", text: "In cucina sei...", options: ["Uno chef provetto", "Cavo solo l'essenziale", "Disastro totale (ordino)", "Adoro provare ricette nuove"] },
   { id: "morning", text: "Mattiniero o nottambulo?", options: ["Sveglia all'alba", "Il mio momento è la sera", "Dipende dai giorni", "Dormo appena posso"] },
   { id: "pet", text: "Animali?", options: ["Amo i cani", "Team gatti", "Tutti gli animali!", "Meglio senza"] },
+  { id: "social", text: "Quanto sei social?", options: ["Sempre in mezzo alla gente", "Pochi ma buoni", "Dipende dall'umore", "Più tipo casa e relax"] },
+  { id: "spontaneity", text: "Cosa ti attrae di più?", options: ["L'intelligenza", "Il senso dell'umorismo", "La gentilezza", "L'aspetto e lo stile"] },
+  { id: "season", text: "La tua stagione del cuore?", options: ["Primavera", "Estate", "Autunno", "Inverno"] },
+  { id: "risk", text: "Quanto sei avventuroso/a?", options: ["Vivo per il brivido", "Mi piace un rischio calcolato", "Meglio la sicurezza", "Dipende"] },
+];
+
+// 💘 Mazzo SERIO: amore, coppia, futuro insieme.
+const SERIOUS_POOL: DestinyQuestion[] = [
+  { id: "evening", text: "La serata ideale?", options: ["Cena a lume di candela", "Serata tra amici", "Film e coccole sul divano", "Avventura all'ultimo minuto"] },
+  { id: "love_lang", text: "Come dimostri affetto?", options: ["Con le parole", "Con i gesti", "Con il tempo insieme", "Con i regali"] },
+  { id: "if_fight", text: "E se litigaste in coppia, cosa faresti?", options: ["Ne parlo subito", "Mi prendo un momento", "Cerco un compromesso", "Sdrammatizzo con ironia"] },
+  { id: "if_surprise", text: "Il/la partner ti organizza una sorpresa: tu...", options: ["Adoro le sorprese!", "Mi imbarazzo un po'", "Preferisco saperlo prima", "Ricambio subito"] },
   { id: "ideal_date", text: "Il primo appuntamento ideale?", options: ["Aperitivo informale", "Passeggiata e chiacchiere", "Qualcosa di originale", "Cena elegante"] },
   { id: "future", text: "Come ti vedi tra 5 anni?", options: ["In una relazione stabile", "A viaggiare per il mondo", "Realizzato nel lavoro", "Vivo alla giornata"] },
   { id: "if_far", text: "E se l'anima gemella vivesse lontano?", options: ["La distanza non è un problema", "Ci proverei volentieri", "Preferisco vicinanza", "Dipende dal feeling"] },
-  { id: "social", text: "Quanto sei social?", options: ["Sempre in mezzo alla gente", "Pochi ma buoni", "Dipende dall'umore", "Più tipo casa e relax"] },
-  { id: "spontaneity", text: "Cosa ti attrae di più?", options: ["L'intelligenza", "Il senso dell'umorismo", "La gentilezza", "L'aspetto e lo stile"] },
   { id: "if_gift", text: "Il regalo che vorresti ricevere?", options: ["Qualcosa di fatto a mano", "Un'esperienza insieme", "Una sorpresa romantica", "Qualcosa di utile"] },
-  { id: "season", text: "La tua stagione del cuore?", options: ["Primavera", "Estate", "Autunno", "Inverno"] },
-  { id: "risk", text: "Quanto sei avventuroso/a?", options: ["Vivo per il brivido", "Mi piace un rischio calcolato", "Meglio la sicurezza", "Dipende"] },
-  // 🔥 domande piccanti / intime
+  { id: "ideal_partner", text: "Il/la partner ideale dev'essere...", options: ["Dolce e premuroso/a", "Ambizioso/a e determinato/a", "Divertente e solare", "Fedele e presente"] },
+  { id: "romance", text: "Il gesto romantico che ti scioglie?", options: ["Una lettera scritta a mano", "Una sorpresa inaspettata", "Le piccole attenzioni quotidiane", "Un viaggio organizzato per due"] },
+  { id: "family", text: "Famiglia e futuro?", options: ["Sogno una famiglia", "Prima la coppia, poi si vedrà", "Convivenza assoluta", "Un passo alla volta"] },
+  { id: "sunday", text: "La domenica perfetta in coppia?", options: ["Colazione a letto", "Pranzo dai parenti", "Gita fuori porta", "Relax totale insieme"] },
+];
+
+// 🔥 Mazzo PICCANTE: provocante, eccitante, da incontri leggeri.
+const SPICY_POOL: DestinyQuestion[] = [
   { id: "spicy_first", text: "Al primo appuntamento, un bacio...", options: ["Solo se scatta la scintilla", "Assolutamente sì", "Meglio aspettare", "Chi lo sa… 😏"] },
   { id: "spicy_temp", text: "Come ti descriveresti?", options: ["Romantico/a inguaribile", "Passionale e intenso/a", "Giocoso/a e malizioso/a", "Un mistero da scoprire"] },
   { id: "spicy_msg", text: "Ricevi un messaggio audace a tarda notte. Tu...", options: ["Sorrido e rispondo subito", "Mi incuriosisco", "Dipende da chi lo manda", "Preferisco le cose lente"] },
   { id: "spicy_dream", text: "Il tuo lato segreto è più...", options: ["Tenero e coccoloso", "Audace e intraprendente", "Timido ma curioso", "Esplosivo 🔥"] },
+  { id: "spicy_replay", text: "Dopo una notte di fuoco...", options: ["Si replica, assolutamente", "Vediamo come mi sento", "Ognuno per la sua strada", "Dipende dalla notte 😏"] },
+  { id: "spicy_spark", text: "Cosa ti accende subito?", options: ["Uno sguardo intenso", "Un messaggio audace", "Un profumo irresistibile", "Il proibito"] },
+  { id: "spicy_weapon", text: "La tua arma di seduzione?", options: ["Lo sguardo", "Le parole giuste", "Il sorriso malizioso", "Il mistero"] },
+  { id: "spicy_drink", text: "Il drink di una serata piccante?", options: ["Tequila, dritti al punto", "Vino rosso, con calma", "Cocktail colorato", "Niente alcol, sono già pericoloso/a"] },
+  { id: "spicy_place", text: "L'appuntamento più eccitante?", options: ["A casa, divano e poca luce", "Locale buio e musica", "Sotto le stelle", "Dove capita, improvvisando"] },
+  { id: "spicy_text", text: "Il messaggio che ti conquista?", options: ["Diretto e senza giri", "Un indizio malizioso", "Una foto intrigante", "Quello alle 2 di notte"] },
 ];
+
+// 3 fisse + 7 a tema = 10 domande totali.
+const TOTAL_QUESTIONS = 10;
+
+// Compone le 7 domande a tema: 4 dal mazzo dell'intento + 3 neutre, mescolate.
+const buildThemedQuestions = (seekAnswer: string): DestinyQuestion[] => {
+  const intent = userIntentFromAnswer(seekAnswer);
+  const themed = intent === "fun" ? SPICY_POOL : SERIOUS_POOL;
+  return shuffle([
+    ...shuffle(themed).slice(0, 4),
+    ...shuffle(NEUTRAL_POOL).slice(0, 3),
+  ]);
+};
 
 interface DestinyQuestion {
   id: string;
@@ -158,11 +191,11 @@ export const DestinyGame = ({ currentUserId, onClose, onMatch }: DestinyGameProp
   const [wantGender, setWantGender] = useState<string | null>(null);
   const [wantOrientation, setWantOrientation] = useState<string | null>(null);
 
-  // domande di questa sessione (fisse + random) generate una volta
-  const sessionQuestions = useMemo<DestinyQuestion[]>(
-    () => [...FIXED_QUESTIONS, ...shuffle(QUESTION_POOL).slice(0, 6)],
-    []
-  );
+  // Domande della sessione: si parte dalle 3 fisse; le 7 a tema vengono
+  // aggiunte appena l'utente risponde a "Cosa cerchi davvero qui?" (cosi'
+  // chi cerca divertimento riceve domande piccanti, chi cerca una storia
+  // seria riceve domande romantiche).
+  const [sessionQuestions, setSessionQuestions] = useState<DestinyQuestion[]>([...FIXED_QUESTIONS]);
   const [qIndex, setQIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
@@ -259,6 +292,15 @@ export const DestinyGame = ({ currentUserId, onClose, onMatch }: DestinyGameProp
     // aggiornato quando parte la ricerca sull'ultima risposta.
     const next = { ...answers, [qid]: value };
     setAnswers(next);
+
+    // Risposta a "Cosa cerchi davvero qui?" → si compone il mazzo a tema
+    // (piccante per divertimento, romantico per storia seria) e si prosegue.
+    if (qid === "spicy_seek") {
+      setSessionQuestions([...FIXED_QUESTIONS, ...buildThemedQuestions(value)]);
+      setQIndex((i) => i + 1);
+      return;
+    }
+
     if (qIndex < sessionQuestions.length - 1) {
       setQIndex((i) => i + 1);
     } else {
@@ -359,9 +401,9 @@ export const DestinyGame = ({ currentUserId, onClose, onMatch }: DestinyGameProp
           {/* ── STEP DOMANDE ── */}
           {phase === "questions" && q && (
             <div className="space-y-5">
-              {/* progress */}
+              {/* progress (sempre su 10: il mazzo a tema si aggiunge in corsa) */}
               <div className="flex items-center gap-1.5">
-                {sessionQuestions.map((_, i) => (
+                {Array.from({ length: TOTAL_QUESTIONS }).map((_, i) => (
                   <div
                     key={i}
                     className={`h-1.5 flex-1 rounded-full transition-colors ${
@@ -390,7 +432,7 @@ export const DestinyGame = ({ currentUserId, onClose, onMatch }: DestinyGameProp
               </div>
 
               <p className="text-center text-[11px] text-foreground/40">
-                Domanda {qIndex + 1} di {sessionQuestions.length}
+                Domanda {qIndex + 1} di {TOTAL_QUESTIONS}
               </p>
             </div>
           )}
