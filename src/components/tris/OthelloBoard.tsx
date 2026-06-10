@@ -787,7 +787,7 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
 
       {/* Emoji picker */}
       {showEmoji && (
-        <div className="flex flex-wrap gap-2 mb-4 p-3 bg-background/50 rounded-lg max-h-32 overflow-y-auto">
+        <div className="lc-scroll flex flex-wrap gap-2 mb-4 p-3 bg-background/50 rounded-lg max-h-32 overflow-y-auto">
           {EMOJIS.map((emoji) => (
             <Button
               key={emoji}
