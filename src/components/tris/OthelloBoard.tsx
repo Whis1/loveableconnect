@@ -438,8 +438,8 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
 
   const startBotEmojiSystem = () => {
     const showRandomEmoji = () => {
-      // 🎭 Emoji spontanea: 50% di probabilità a ogni occasione (ogni 30-50s).
-      if (Math.random() < 0.5 && !gameOver) {
+      // 🎭 Emoji spontanea: 42% di probabilità a ogni occasione (ogni 30-50s).
+      if (Math.random() < 0.42 && !gameOver) {
         const availableEmojis = EMOJIS.filter((e) => e !== lastOpponentEmoji);
         const randomEmoji = availableEmojis[Math.floor(Math.random() * availableEmojis.length)];
         setOpponentEmoji(randomEmoji);
