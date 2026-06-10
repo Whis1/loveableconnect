@@ -6,7 +6,8 @@ import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, Users, Sparkles, Search, MessageCircle, Trophy, ThumbsUp } from "lucide-react";
+import { Heart, Users, Search, MessageCircle, Trophy, ThumbsUp } from "lucide-react";
+import supportIcon from "@/assets/support-icon.png";
 import { UserProfileCard } from "@/components/UserProfileCard";
 import { useTranslation } from "react-i18next";
 import { CreditsDisplay } from "@/components/CreditsDisplay";
@@ -729,7 +730,7 @@ const Dashboard = () => {
                   </div>
                   <Button className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold shadow-lg group-hover:shadow-xl transition-all duration-300" onClick={() => navigate("/likes")}>
                     {t("dashboard.seeWhoLikes")}
-                    <Sparkles className="h-4 w-4 ml-2" />
+                    <ThumbsUp className="h-4 w-4 ml-2" />
                   </Button>
                 </CardContent>
               </Card>
@@ -777,7 +778,7 @@ const Dashboard = () => {
                 <CardHeader className="relative">
                   <CardTitle className="flex items-center gap-3 text-white">
                     <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
-                      <MessageCircle className="h-5 w-5" />
+                      <img src={supportIcon} alt="" draggable={false} className="h-5 w-5 object-contain" />
                     </div>
                     <span className="font-bold">{t("dashboard.support")}</span>
                   </CardTitle>
