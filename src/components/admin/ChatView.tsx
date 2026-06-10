@@ -4,6 +4,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MessageBubble } from "@/components/chat/MessageBubble";
+import { parseGiftMessage } from "@/lib/chatGifts";
+import { GIFT_IMAGES } from "@/lib/giftImages";
 import { ProfileNotebook } from "./ProfileNotebook";
 import { ProfileDialog } from "@/components/ProfileDialog";
 import { Send, ImagePlus, Loader2, MessageSquare, Info } from "lucide-react";
@@ -439,28 +441,58 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
         {/* Messaggi */}
         <ScrollArea className="flex-1 p-4 bg-gradient-to-br from-fuchsia-50 via-white to-purple-50 dark:from-[#1e1430] dark:via-[#171022] dark:to-[#241430]">
           <div className="space-y-4">
-            {messages.map((msg) => (
-              <MessageBubble
-                key={msg.id}
-                content={msg.content}
-                messageType={msg.message_type}
-                mediaUrl={msg.media_url}
-                isOwn={msg.sender_id === conversation.adminProfileId}
-                senderAvatarUrl={
-                  msg.sender_id === conversation.adminProfileId
-                    ? adminAvatar
-                    : getAvatarUrl(conversation.userAvatar) ?? null
-                }
-                timestamp={msg.created_at}
-                senderNickname={
-                  msg.sender_id === conversation.adminProfileId
-                    ? (msg.admin_sender_nickname || undefined)
-                    : undefined
-                }
-                showAdminLabel={true}
-                sideLayout
-              />
-            ))}
+            {messages.map((msg) => {
+              const isOwn = msg.sender_id === conversation.adminProfileId;
+
+              // 🎁 Messaggio-regalo: bolla speciale con l'immagine (come in chat
+              //    utente), al posto del testo grezzo "[gift:...]".
+              const gift = parseGiftMessage(msg.content);
+              if (gift) {
+                return (
+                  <div key={msg.id} className={`flex ${isOwn ? "justify-end" : "justify-start"} my-2`}>
+                    <div className="flex flex-col items-center gap-1 rounded-2xl border border-pink-400/50 bg-gradient-to-br from-pink-500/15 via-fuchsia-500/10 to-amber-500/10 px-6 py-3 shadow-[0_4px_24px_-6px_rgba(244,114,182,0.5)]">
+                      {GIFT_IMAGES[gift.id] ? (
+                        <img
+                          src={GIFT_IMAGES[gift.id]}
+                          alt={gift.name}
+                          draggable={false}
+                          className="h-14 w-14 object-contain drop-shadow-[0_3px_10px_rgba(244,114,182,0.55)]"
+                        />
+                      ) : (
+                        <span className="text-4xl leading-none">{gift.emoji}</span>
+                      )}
+                      <span className="text-sm font-bold bg-gradient-to-r from-pink-300 via-fuchsia-300 to-amber-300 bg-clip-text text-transparent">
+                        {isOwn ? `Hai regalato: ${gift.name}` : `Regalo ricevuto: ${gift.name}`}
+                      </span>
+                      <span className="text-[11px] font-semibold text-amber-300">{gift.cost} crediti</span>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <MessageBubble
+                  key={msg.id}
+                  content={msg.content}
+                  messageType={msg.message_type}
+                  mediaUrl={msg.media_url}
+                  isOwn={isOwn}
+                  senderAvatarUrl={
+                    isOwn
+                      ? adminAvatar
+                      : getAvatarUrl(conversation.userAvatar) ?? null
+                  }
+                  timestamp={msg.created_at}
+                  senderNickname={
+                    isOwn
+                      ? (msg.admin_sender_nickname || undefined)
+                      : undefined
+                  }
+                  showAdminLabel={true}
+                  sideLayout
+                />
+              );
+            })}
             <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
