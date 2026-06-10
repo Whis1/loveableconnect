@@ -80,7 +80,7 @@ export const InstallAppButton = () => {
   return (
     <Button
       onClick={handleInstall}
-      className="h-9 md:h-10 px-2.5 md:px-4 gap-1.5 bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 shadow-md"
+      className="h-8 md:h-9 px-2.5 md:px-3 gap-1.5 text-sm bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 shadow-md"
     >
       <span aria-hidden className="text-base leading-none">📱</span>
       <span className="font-semibold whitespace-nowrap">Installa l'app</span>
