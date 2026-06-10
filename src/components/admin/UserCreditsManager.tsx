@@ -16,7 +16,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Coins, Crown, Plus, XCircle, History, Send, Clock } from "lucide-react";
+import { Coins, Crown, Plus, XCircle, History, Send, Clock, Gift } from "lucide-react";
 
 // 🗂️ Cronologia azioni admin (crediti/like/abbonamenti) salvata sul dispositivo.
 //    Si auto-pulisce: vengono mostrate/salvate solo le voci delle ultime 24 ore.
@@ -53,11 +53,12 @@ const saveHistory = (entries: HistoryEntry[]) => {
   }
 };
 
-type ActionKey = "credits" | "likes" | "premium" | "platinum" | "weekly" | "remove";
+type ActionKey = "credits" | "likes" | "giftcredits" | "premium" | "platinum" | "weekly" | "remove";
 
 const ACTION_TITLES: Record<ActionKey, string> = {
   credits: "Aggiungi Crediti",
   likes: "Aggiungi Like",
+  giftcredits: "Crediti Regalo",
   premium: "Premium (30 giorni)",
   platinum: "Platino (30 giorni)",
   weekly: "Premium (7 giorni)",
@@ -70,6 +71,8 @@ export const UserCreditsManager = () => {
   const [userId, setUserId] = useState("");
   const [creditsAmount, setCreditsAmount] = useState("");
   const [likesAmount, setLikesAmount] = useState("");
+  const [giftCreditsAmount, setGiftCreditsAmount] = useState("");
+  const [loadingGiftCredits, setLoadingGiftCredits] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingPremium, setLoadingPremium] = useState(false);
   const [loadingWeeklyPremium, setLoadingWeeklyPremium] = useState(false);
@@ -166,6 +169,10 @@ export const UserCreditsManager = () => {
       toast({ title: "Errore", description: "Inserisci la quantità di like", variant: "destructive" });
       return;
     }
+    if (key === "giftcredits" && !giftCreditsAmount) {
+      toast({ title: "Errore", description: "Inserisci la quantità di crediti regalo", variant: "destructive" });
+      return;
+    }
     setReason("");
     setPendingAction(key);
   };
@@ -187,6 +194,9 @@ export const UserCreditsManager = () => {
           break;
         case "likes":
           ok = await doAddLikes(reason.trim());
+          break;
+        case "giftcredits":
+          ok = await doAddGiftCredits(reason.trim());
           break;
         case "premium":
           ok = await doAssignPremium(reason.trim());
@@ -255,6 +265,40 @@ export const UserCreditsManager = () => {
       return false;
     } finally {
       setLoadingLikes(false);
+    }
+  };
+
+  // 🎁 Aggiunge CREDITI REGALO (saldo separato per i regali in chat): utile
+  //    per testare il sistema regali senza passare dal pagamento Stripe.
+  const doAddGiftCredits = async (reasonText: string): Promise<boolean> => {
+    const targetUser = userId.trim();
+    const amt = parseInt(giftCreditsAmount);
+    setLoadingGiftCredits(true);
+    try {
+      const { data: row, error: readErr } = await (supabase as any)
+        .from("user_credits")
+        .select("gift_credits")
+        .eq("user_id", targetUser)
+        .maybeSingle();
+      if (readErr) throw readErr;
+      if (!row) throw new Error("Utente senza riga crediti (User ID corretto?)");
+      const newTotal = ((row as any).gift_credits || 0) + amt;
+      const { error: updErr } = await (supabase as any)
+        .from("user_credits")
+        .update({ gift_credits: newTotal })
+        .eq("user_id", targetUser);
+      if (updErr) throw updErr;
+      toast({ title: "Crediti regalo aggiunti", description: `${amt} crediti regalo aggiunti (nuovo saldo regalo: ${newTotal})` });
+      await recordHistory(`Aggiunti ${amt} crediti regalo`, targetUser, reasonText);
+      setUserId("");
+      setGiftCreditsAmount("");
+      return true;
+    } catch (error: any) {
+      console.error("Error adding gift credits:", error);
+      toast({ title: "Errore", description: error.message || "Impossibile aggiungere crediti regalo", variant: "destructive" });
+      return false;
+    } finally {
+      setLoadingGiftCredits(false);
     }
   };
 
@@ -455,7 +499,7 @@ export const UserCreditsManager = () => {
             placeholder="UUID dell'utente"
           />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="credits">Crediti da Aggiungere</Label>
             <Input
@@ -476,6 +520,16 @@ export const UserCreditsManager = () => {
               placeholder="Es: 10"
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="giftcredits">Crediti Regalo da Aggiungere</Label>
+            <Input
+              id="giftcredits"
+              type="number"
+              value={giftCreditsAmount}
+              onChange={(e) => setGiftCreditsAmount(e.target.value)}
+              placeholder="Es: 50"
+            />
+          </div>
         </div>
         {/* Tutti i pulsanti stessa larghezza (adattata al testo piu' lungo),
             in colonna centrata e ordinata. */}
@@ -484,7 +538,7 @@ export const UserCreditsManager = () => {
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">
             Crediti & Like
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Button onClick={() => requestAction("credits")} disabled={loading} className="h-11 w-full justify-center">
               <Coins className="h-4 w-4 mr-2" />
               {loading ? "Aggiungendo..." : "Aggiungi Crediti"}
@@ -492,6 +546,14 @@ export const UserCreditsManager = () => {
             <Button onClick={() => requestAction("likes")} disabled={loadingLikes} variant="secondary" className="h-11 w-full justify-center">
               <Plus className="h-4 w-4 mr-2" />
               {loadingLikes ? "Aggiungendo..." : "Aggiungi Like"}
+            </Button>
+            <Button
+              onClick={() => requestAction("giftcredits")}
+              disabled={loadingGiftCredits}
+              className="h-11 w-full justify-center bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0"
+            >
+              <Gift className="h-4 w-4 mr-2" />
+              {loadingGiftCredits ? "Aggiungendo..." : "Crediti Regalo"}
             </Button>
           </div>
         </div>
