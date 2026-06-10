@@ -126,7 +126,7 @@ export const ChatGiftPanel = ({
             </span>
           </DialogTitle>
           <DialogDescription className="text-xs">
-            Il regalo appare in chat e {receiverNickname} riceve i crediti del suo valore.
+            Il regalo appare in chat e {receiverNickname} riceve i crediti nel suo saldo in base al valore del regalo.
           </DialogDescription>
         </DialogHeader>
 
