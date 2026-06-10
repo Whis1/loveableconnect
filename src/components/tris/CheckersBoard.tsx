@@ -1478,17 +1478,15 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
           </div>
         </div>
 
-        {/* Emoji Button — nascosto in modalità torneo (richiesta utente) */}
-        {!tournamentMode && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowEmoji(!showEmoji)}
-            className="shrink-0"
-          >
-            😊
-          </Button>
-        )}
+        {/* Emoji Button: visibile anche nei tornei (stesso sistema del 1v1) */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowEmoji(!showEmoji)}
+          className="shrink-0"
+        >
+          😊
+        </Button>
 
         {/* Opponent */}
         <div className="flex items-center gap-2 min-w-0 flex-1 justify-end relative">

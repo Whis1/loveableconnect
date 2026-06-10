@@ -722,17 +722,15 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
           >
             {timeLeft}s
           </div>
-          {/* 😊 Emoji button nascosto in modalità torneo (richiesta utente) */}
-          {!tournamentMode && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowEmoji(!showEmoji)}
-              className="shrink-0"
-            >
-              😊
-            </Button>
-          )}
+          {/* 😊 Emoji button: visibile anche nei tornei (stesso sistema del 1v1) */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowEmoji(!showEmoji)}
+            className="shrink-0"
+          >
+            😊
+          </Button>
         </div>
 
         {/* Opponent (dx) */}
