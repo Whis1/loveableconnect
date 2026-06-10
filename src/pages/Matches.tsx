@@ -14,6 +14,7 @@ import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import OnlineIndicator from "@/components/OnlineIndicator";
 import { PageLoader } from "@/components/PageLoader";
 import matchHeartIcon from "@/assets/match-heart.webp";
+import chatIcon from "@/assets/chat-icon.png";
 import { withFallback } from "@/lib/async";
 import { getStoredUserId } from "@/lib/storedSession";
 import { useMatchNotification } from "@/contexts/MatchNotificationContext";
@@ -520,7 +521,7 @@ const Matches = () => {
                               size="sm"
                               className="shrink-0"
                             >
-                              <MessageCircle className="h-4 w-4 md:mr-1" />
+                              <img src={chatIcon} alt="" draggable={false} className="h-4 w-4 md:mr-1 object-contain" />
                               <span className="hidden md:inline">{t("matches.chat")}</span>
                             </Button>
                             {getUnreadForMatch(match.id) > 0 && (
