@@ -12,6 +12,7 @@ import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ProfileNotebook } from "@/components/admin/ProfileNotebook";
 import { ReportUserDialog } from "@/components/chat/ReportUserDialog";
 import { VoiceRecorder } from "@/components/chat/VoiceRecorder";
+import { ImagePreview } from "@/components/chat/ImagePreview";
 import { ProfileDialog } from "@/components/ProfileDialog";
 import { AdminChatGiftPanel } from "@/components/admin/AdminChatGiftPanel";
 import { parseGiftMessage } from "@/lib/chatGifts";
@@ -62,6 +63,24 @@ export const AdminChatDialog = ({
   const [showGiftPanel, setShowGiftPanel] = useState(false);
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
+  // 🖼️ Immagine in anteprima (da file o incollata con Ctrl+V) prima dell'invio.
+  const [pendingImage, setPendingImage] = useState<{ file: File; url: string } | null>(null);
+  // 👤 Nome dell'OPERATORE admin loggato: finisce in admin_sender_nickname dei
+  //    messaggi (visibile solo lato admin, l'utente vede sempre il profilo).
+  const [operatorName, setOperatorName] = useState<string>("");
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data }) => {
+      const u = data.user;
+      if (!u) return;
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("nickname")
+        .eq("id", u.id)
+        .maybeSingle();
+      setOperatorName((prof as any)?.nickname || u.email?.split("@")[0] || "Admin");
+    });
+  }, []);
 
   // Stato di blocco (il profilo admin ha bloccato l'utente?) a ogni apertura.
   useEffect(() => {
@@ -215,6 +234,7 @@ export const AdminChatDialog = ({
       media_url: mediaUrl,
       created_at: new Date().toISOString(),
       read: false,
+      admin_sender_nickname: operatorName || null,
     };
 
     setMessages((prev) => [...prev, tempMessage]);
@@ -231,6 +251,9 @@ export const AdminChatDialog = ({
           content: messageContent,
           message_type: messageType,
           media_url: mediaUrl,
+          // Nome dell'operatore admin: l'edge function lo salva in
+          // admin_sender_nickname (etichetta visibile solo lato admin).
+          admin_secondary_nickname: operatorName,
         }
       });
 
@@ -305,14 +328,52 @@ export const AdminChatDialog = ({
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Mostra l'anteprima di un'immagine prima dell'invio (file o Ctrl+V).
+  const queueImage = (file: File) => {
+    setPendingImage((prev) => {
+      if (prev) URL.revokeObjectURL(prev.url);
+      return { file, url: URL.createObjectURL(file) };
+    });
+  };
 
+  const cancelPendingImage = () => {
+    if (pendingImage) {
+      URL.revokeObjectURL(pendingImage.url);
+      setPendingImage(null);
+    }
+  };
+
+  // Incolla un'immagine dagli appunti (Ctrl+V): anteprima, non invia subito.
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          e.preventDefault();
+          queueImage(file);
+          break;
+        }
+      }
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) queueImage(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  // Carica e invia l'immagine in anteprima.
+  const sendPendingImage = async () => {
+    if (!pendingImage) return;
+    const { file } = pendingImage;
     setUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${adminProfileId}/${Date.now()}.${fileExt}`;
+      const ext = file.type && file.type.includes("/") ? file.type.split("/")[1] : "png";
+      const safeName = file.name && file.name.trim() ? file.name : `pasted_${Date.now()}.${ext}`;
+      const fileName = `${adminProfileId}/${Date.now()}_${safeName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('chat-images')
@@ -325,11 +386,7 @@ export const AdminChatDialog = ({
         .getPublicUrl(fileName);
 
       await handleSendMessage(undefined, 'image', data.publicUrl, 'Foto');
-
-      toast({
-        title: "Successo",
-        description: "Immagine inviata",
-      });
+      cancelPendingImage();
     } catch (error: any) {
       toast({
         title: "Errore",
@@ -496,6 +553,18 @@ export const AdminChatDialog = ({
                   </Button>
                 </div>
               )}
+
+              {/* 🖼️ Anteprima immagine (da file o incollata): invia o elimina */}
+              {pendingImage && (
+                <div className="mb-3">
+                  <ImagePreview
+                    imageUrl={pendingImage.url}
+                    onSend={sendPendingImage}
+                    onDelete={cancelPendingImage}
+                    sending={uploading}
+                  />
+                </div>
+              )}
               <form onSubmit={(e) => handleSendMessage(e)}>
                 <div className="flex gap-2 items-center">
                   <input
@@ -520,18 +589,19 @@ export const AdminChatDialog = ({
                   <VoiceRecorder
                     onRecordingComplete={handleVoiceRecording}
                     isPremiumMonthly={true}
-                    disabled={uploading || !!voicePreview}
+                    disabled={uploading || !!voicePreview || !!pendingImage}
                   />
                   <Input
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
+                    onPaste={handlePaste}
                     placeholder="Scrivi un messaggio..."
                     className="flex-1"
-                    disabled={!!voicePreview}
+                    disabled={!!voicePreview || !!pendingImage}
                   />
                   <Button
                     type="submit"
-                    disabled={!newMessage.trim() || uploading || !!voicePreview}
+                    disabled={!newMessage.trim() || uploading || !!voicePreview || !!pendingImage}
                     className="shrink-0"
                   >
                     <Send className="h-4 w-4" />
