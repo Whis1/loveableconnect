@@ -221,8 +221,19 @@ export const AdminChatDialog = ({
     initChat();
   }, [open, adminProfileId, userId]);
 
+  // 📌 All'apertura della chat: posizionamento ISTANTANEO sull'ultimo
+  //    messaggio (niente animazione che scorre tutta la conversazione).
+  //    Lo scroll animato resta solo per i messaggi che arrivano dopo.
+  const firstScrollDoneRef = useRef(false);
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (!open) firstScrollDoneRef.current = false;
+  }, [open]);
+  useEffect(() => {
+    if (messages.length === 0) return;
+    messagesEndRef.current?.scrollIntoView({
+      behavior: firstScrollDoneRef.current ? "smooth" : "auto",
+    });
+    firstScrollDoneRef.current = true;
   }, [messages]);
 
   const handleSendMessage = async (
