@@ -333,14 +333,9 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
   };
 
   const startBotEmojiSystem = () => {
-    // 🎭 Personalità admin: 50% usa emoji, 50% no (silenzioso). Hash
-    // deterministico dell'id: lo stesso admin ha sempre lo stesso stile.
-    const usesEmojis = parseInt((opponent.id || "0").replace(/[^0-9a-f]/gi, "").slice(0, 6) || "0", 16) % 2 === 0;
-    if (!usesEmojis) return;
-
     const showRandomEmoji = () => {
-      // 40% chance ogni 30-50 secondi (meno spam, più naturale)
-      if (Math.random() < 0.4 && !gameOver) {
+      // 🎭 Emoji spontanea: 50% di probabilità a ogni occasione (ogni 30-50s).
+      if (Math.random() < 0.5 && !gameOver) {
         const availableEmojis = EMOJIS.filter((e) => e !== lastOpponentEmoji);
         const randomEmoji = availableEmojis[Math.floor(Math.random() * availableEmojis.length)];
         setOpponentEmoji(randomEmoji);
@@ -603,6 +598,17 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
     setUserEmoji(emoji);
     setShowEmoji(false);
     setTimeout(() => setUserEmoji(null), 4000);
+    // 🎭 Reazione del bot all'emoji dell'utente: 50% di probabilità,
+    //    risposta dopo 4-6 secondi (come una persona che la vede e replica).
+    if (Math.random() < 0.5) {
+      setTimeout(() => {
+        const available = EMOJIS.filter((e) => e !== lastOpponentEmoji);
+        const pick = available[Math.floor(Math.random() * available.length)];
+        setOpponentEmoji(pick);
+        setLastOpponentEmoji(pick);
+        setTimeout(() => setOpponentEmoji(null), 4000);
+      }, 4000 + Math.random() * 2000);
+    }
   };
 
   const { black, white } = countPieces(board);

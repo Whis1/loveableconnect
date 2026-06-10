@@ -298,6 +298,18 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
           title: "❤️ Mi piace inviato",
           description: `Hai messo mi piace a ${profile.nickname}`,
         });
+        // 🎭 Like-back del profilo admin: 50% di probabilità che dopo
+        //    qualche secondo ricambi il mi piace (appare nei Like Ricevuti).
+        if (profile.is_admin_profile && Math.random() < 0.5) {
+          const adminId = profile.id;
+          setTimeout(() => {
+            (supabase as any)
+              .rpc("admin_game_like_back", { p_admin_id: adminId })
+              .then(({ error }: { error: unknown }) => {
+                if (error) console.warn("admin_game_like_back non disponibile:", error);
+              });
+          }, 5000 + Math.random() * 5000);
+        }
       }
       // Aggiorna balance se ha usato i crediti
       if (result.credits_used) setUserBalance(result.new_balance);
