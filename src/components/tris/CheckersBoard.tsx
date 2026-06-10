@@ -1516,9 +1516,9 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
       setUserEmoji(null);
     }, 4000);
 
-    // 🎭 Reazione del bot all'emoji dell'utente: 50% di probabilità,
+    // 🎭 Reazione del bot all'emoji dell'utente: 25% di probabilità,
     //    risposta dopo 4-6 secondi (come una persona che la vede e replica).
-    if (Math.random() < 0.5) {
+    if (Math.random() < 0.25) {
       setTimeout(() => {
         const available = EMOJIS.filter((e) => e !== lastOpponentEmoji);
         const pick = available[Math.floor(Math.random() * available.length)];
