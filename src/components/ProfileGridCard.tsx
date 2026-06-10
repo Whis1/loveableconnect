@@ -641,27 +641,18 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
               </span>
             </div>
 
-            {/* Relationship Status & Looking For: pillole eleganti con icona
-                (niente piu' testo nudo) in linea col resto della card. */}
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="shrink-0 text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground/60 w-9">
-                  {t("explore.statusLabel").replace(/:\s*$/, "")}
-                </span>
-                <span className="inline-flex min-w-0 items-center gap-1 rounded-full border border-pink-400/25 bg-pink-500/10 px-2 py-0.5 text-[11px] font-medium text-pink-600 dark:text-pink-200">
-                  <HeartHandshake className="h-3 w-3 shrink-0 text-pink-400" />
-                  <span className="truncate">{getRelationshipStatusLabel(profile.relationship_status)}</span>
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="shrink-0 text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground/60 w-9">
-                  {t("explore.lookingForLabel").replace(/:\s*$/, "")}
-                </span>
-                <span className="inline-flex min-w-0 items-center gap-1 rounded-full border border-purple-400/25 bg-purple-500/10 px-2 py-0.5 text-[11px] font-medium text-purple-600 dark:text-purple-200">
-                  <Sparkles className="h-3 w-3 shrink-0 text-purple-400" />
-                  <span className="truncate">{getLookingForLabel(profile)}</span>
-                </span>
-              </div>
+            {/* Relationship Status & Looking For: due pillole con icona, senza
+                etichette (l'icona parla da sola: cuore = stato, scintille =
+                cosa cerca), in linea con la riga genere/orientamento sopra. */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="inline-flex min-w-0 items-center gap-1 rounded-full border border-pink-400/25 bg-pink-500/10 px-2 py-0.5 text-[11px] font-medium text-pink-600 dark:text-pink-200">
+                <HeartHandshake className="h-3 w-3 shrink-0 text-pink-400" />
+                <span className="truncate">{getRelationshipStatusLabel(profile.relationship_status)}</span>
+              </span>
+              <span className="inline-flex min-w-0 items-center gap-1 rounded-full border border-purple-400/25 bg-purple-500/10 px-2 py-0.5 text-[11px] font-medium text-purple-600 dark:text-purple-200">
+                <Sparkles className="h-3 w-3 shrink-0 text-purple-400" />
+                <span className="truncate">{getLookingForLabel(profile)}</span>
+              </span>
             </div>
 
             {/* Action Buttons */}
