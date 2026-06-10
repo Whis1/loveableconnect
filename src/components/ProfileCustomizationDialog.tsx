@@ -266,7 +266,7 @@ export const ProfileCustomizationDialog = ({
                     orientamento + Bio + Stato relazionale + Cerca.
                     NB: nessun luogo (nella scheda del proprio profilo e'
                     nascosto, niente "vicino alle tue parti"). */}
-                <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 space-y-3">
+                <div className="lc-scroll-hidden flex-1 min-h-0 overflow-y-auto px-4 pb-4 space-y-3">
                   <div className="text-center space-y-2">
                     {theme.badge && (
                       <div className="flex justify-center">

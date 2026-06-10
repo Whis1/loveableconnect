@@ -152,6 +152,16 @@ All colors MUST be HSL.
   .lc-scroll::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(180deg, #f472b6, #c084fc);
   }
+
+  /* Scroll invisibile: si scorre normalmente ma senza barra (es. anteprima
+     della card interna nel pannello Personalizzazione). */
+  .lc-scroll-hidden {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+  }
+  .lc-scroll-hidden::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @layer utilities {
