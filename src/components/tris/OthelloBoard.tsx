@@ -120,6 +120,110 @@ function evaluateMove(board: Board, idx: number, flips: number[]): number {
   return flips.length + POSITIONAL_WEIGHTS[idx];
 }
 
+// ── 🧠 IA FORTE (avversari con ELO >= 1100): minimax con potatura alfa-beta ──
+// Valutazione: pesi posizionali classici (angoli oro, X-square veleno) +
+// mobilità; nel finale contano i pezzi. Profondità 5 (e risoluzione esatta
+// con <=10 caselle libere): quasi imbattibile per un giocatore casuale.
+const STRONG_W: number[] = [
+  120, -25, 20, 10, 10, 20, -25, 120,
+  -25, -45, -5, -3, -3, -5, -45, -25,
+   20,  -5, 12,  6,  6, 12,  -5,  20,
+   10,  -3,  6,  4,  4,  6,  -3,  10,
+   10,  -3,  6,  4,  4,  6,  -3,  10,
+   20,  -5, 12,  6,  6, 12,  -5,  20,
+  -25, -45, -5, -3, -3, -5, -45, -25,
+  120, -25, 20, 10, 10, 20, -25, 120,
+];
+
+function otApply(b: Board, idx: number, color: "black" | "white", flips: number[]): Board {
+  const nb = [...b];
+  nb[idx] = color;
+  for (const f of flips) nb[f] = color;
+  return nb;
+}
+
+function otEvaluate(b: Board, me: "black" | "white"): number {
+  const opp = me === "black" ? "white" : "black";
+  let pos = 0;
+  let my = 0;
+  let op = 0;
+  for (let i = 0; i < 64; i++) {
+    if (b[i] === me) {
+      pos += STRONG_W[i];
+      my++;
+    } else if (b[i] === opp) {
+      pos -= STRONG_W[i];
+      op++;
+    }
+  }
+  const myMob = getAllValidMoves(b, me).length;
+  const opMob = getAllValidMoves(b, opp).length;
+  let score = pos + 9 * (myMob - opMob);
+  if (64 - my - op <= 12) score += (my - op) * 12;
+  return score;
+}
+
+function otAlphaBeta(
+  b: Board,
+  depth: number,
+  alpha: number,
+  beta: number,
+  turn: "black" | "white",
+  me: "black" | "white"
+): number {
+  const opp = turn === "black" ? "white" : "black";
+  const moves = getAllValidMoves(b, turn);
+  if (moves.length === 0) {
+    if (getAllValidMoves(b, opp).length === 0) {
+      // Partita finita: vittoria/sconfitta pesano piu' di qualsiasi posizione.
+      let my = 0;
+      let op = 0;
+      for (const c of b) {
+        if (c === me) my++;
+        else if (c !== null) op++;
+      }
+      return my > op ? 100000 + (my - op) : my < op ? -100000 - (op - my) : 0;
+    }
+    return otAlphaBeta(b, depth, alpha, beta, opp, me); // passo obbligato
+  }
+  if (depth === 0) return otEvaluate(b, me);
+  moves.sort((a, b2) => b2.flips.length - a.flips.length);
+  const maxing = turn === me;
+  let best = maxing ? -Infinity : Infinity;
+  for (const m of moves) {
+    const v = otAlphaBeta(otApply(b, m.idx, turn, m.flips), depth - 1, alpha, beta, opp, me);
+    if (maxing) {
+      if (v > best) best = v;
+      if (best > alpha) alpha = best;
+    } else {
+      if (v < best) best = v;
+      if (best < beta) beta = best;
+    }
+    if (alpha >= beta) break;
+  }
+  return best;
+}
+
+function otBestMove(b: Board, me: "black" | "white"): { idx: number; flips: number[] } | null {
+  const moves = getAllValidMoves(b, me);
+  if (moves.length === 0) return null;
+  const empties = b.filter((c) => c === null).length;
+  const depth = empties <= 10 ? empties : 5;
+  const opp = me === "black" ? "white" : "black";
+  let best = moves[0];
+  let bestV = -Infinity;
+  let alpha = -Infinity;
+  for (const m of moves) {
+    const v = otAlphaBeta(otApply(b, m.idx, me, m.flips), depth - 1, alpha, Infinity, opp, me);
+    if (v > bestV) {
+      bestV = v;
+      best = m;
+    }
+    if (v > alpha) alpha = v;
+  }
+  return best;
+}
+
 export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: OthelloBoardProps) => {
   const [board, setBoard] = useState<Board>(Array(64).fill(null));
   // 🎲 50/50 su chi inizia: a volte parte l'utente, a volte il profilo avversario.
@@ -530,7 +634,10 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
     scored.sort((a, b) => b.score - a.score);
 
     let chosen;
-    if (Math.random() < skill) {
+    if (opponentElo >= 1100) {
+      // 🧠 IA FORTE: minimax alfa-beta, quasi imbattibile.
+      chosen = otBestMove(board, BOT) ?? scored[0];
+    } else if (Math.random() < skill) {
       // Top mossa
       chosen = scored[0];
     } else {

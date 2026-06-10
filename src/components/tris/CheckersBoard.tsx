@@ -34,6 +34,167 @@ interface CheckersBoardProps {
 type PieceType = "red" | "black" | "red-king" | "black-king" | null;
 type Board = PieceType[];
 
+// ── 🧠 IA FORTE Dama (avversari con ELO >= 1100): minimax alfa-beta ─────────
+// Regole identiche al gioco: pedine a 1 passo (nero scende, rosso sale), re
+// in entrambe le direzioni, cattura obbligatoria con catene multiple,
+// promozione che chiude la mossa. Una "mossa" del minimax e' la sequenza
+// completa di catture. Quasi imbattibile per un giocatore casuale.
+
+function ckMovesFor(b: Board, pos: number): { regular: number[]; jumps: number[] } {
+  const piece = b[pos];
+  if (!piece) return { regular: [], jumps: [] };
+  const isBlack = piece.includes("black");
+  const isKing = piece.includes("king");
+  const dirs = isKing ? [-1, 1] : [isBlack ? 1 : -1];
+  const row = Math.floor(pos / 8);
+  const col = pos % 8;
+  const regular: number[] = [];
+  const jumps: number[] = [];
+  for (const dr of dirs) {
+    for (const dc of [-1, 1]) {
+      const r1 = row + dr;
+      const c1 = col + dc;
+      if (r1 < 0 || r1 > 7 || c1 < 0 || c1 > 7) continue;
+      const p1 = r1 * 8 + c1;
+      if (b[p1] === null) {
+        regular.push(p1);
+      } else if (isBlack ? b[p1]!.includes("red") : b[p1]!.includes("black")) {
+        const r2 = row + dr * 2;
+        const c2 = col + dc * 2;
+        if (r2 >= 0 && r2 <= 7 && c2 >= 0 && c2 <= 7 && b[r2 * 8 + c2] === null) {
+          jumps.push(r2 * 8 + c2);
+        }
+      }
+    }
+  }
+  return { regular, jumps };
+}
+
+function ckApplyStep(b: Board, from: number, to: number): Board {
+  const nb = [...b];
+  const piece = nb[from]!;
+  nb[to] = piece;
+  nb[from] = null;
+  const fr = Math.floor(from / 8);
+  const tr = Math.floor(to / 8);
+  if (Math.abs(tr - fr) === 2) {
+    const mid = ((fr + tr) / 2) * 8 + ((from % 8) + (to % 8)) / 2;
+    nb[mid] = null;
+  }
+  if (piece === "black" && tr === 7) nb[to] = "black-king";
+  if (piece === "red" && tr === 0) nb[to] = "red-king";
+  return nb;
+}
+
+// Genera tutte le board risultanti dalle mosse complete del colore (con
+// cattura obbligatoria e catene multiple fino in fondo).
+function ckGenerateMoves(b: Board, black: boolean): Board[] {
+  const own: number[] = [];
+  for (let i = 0; i < 64; i++) {
+    const p = b[i];
+    if (p && (black ? p.includes("black") : p.includes("red"))) own.push(i);
+  }
+  let anyJump = false;
+  for (const pos of own) {
+    if (ckMovesFor(b, pos).jumps.length > 0) {
+      anyJump = true;
+      break;
+    }
+  }
+  const results: Board[] = [];
+  if (anyJump) {
+    const expand = (cur: Board, pos: number, wasKing: boolean) => {
+      const { jumps } = ckMovesFor(cur, pos);
+      if (jumps.length === 0) {
+        results.push(cur);
+        return;
+      }
+      for (const to of jumps) {
+        const nb = ckApplyStep(cur, pos, to);
+        const promoted = !wasKing && nb[to]!.includes("king");
+        if (!promoted && ckMovesFor(nb, to).jumps.length > 0) expand(nb, to, wasKing);
+        else results.push(nb);
+      }
+    };
+    for (const pos of own) {
+      if (ckMovesFor(b, pos).jumps.length > 0) expand(b, pos, b[pos]!.includes("king"));
+    }
+  } else {
+    for (const pos of own) {
+      for (const to of ckMovesFor(b, pos).regular) results.push(ckApplyStep(b, pos, to));
+    }
+  }
+  return results;
+}
+
+// Valutazione dal punto di vista del NERO (il bot): materiale, avanzamento
+// delle pedine, leggero bonus centro e guardia dell'ultima fila.
+function ckEvaluate(b: Board): number {
+  let score = 0;
+  for (let i = 0; i < 64; i++) {
+    const p = b[i];
+    if (!p) continue;
+    const row = Math.floor(i / 8);
+    const col = i % 8;
+    const king = p.includes("king");
+    const base = king ? 165 : 100;
+    const center = col >= 2 && col <= 5 ? 4 : 0;
+    if (p.includes("black")) {
+      score += base + center + (king ? 0 : row * 4) + (!king && row === 0 ? 6 : 0);
+    } else {
+      score -= base + center + (king ? 0 : (7 - row) * 4) + (!king && row === 7 ? 6 : 0);
+    }
+  }
+  return score;
+}
+
+function ckAlphaBeta(b: Board, depth: number, alpha: number, beta: number, blackTurn: boolean): number {
+  const moves = ckGenerateMoves(b, blackTurn);
+  // Chi non puo' muovere ha perso (preferisci vincere prima possibile).
+  if (moves.length === 0) return blackTurn ? -100000 - depth : 100000 + depth;
+  if (depth === 0) return ckEvaluate(b);
+  if (blackTurn) {
+    let best = -Infinity;
+    for (const nb of moves) {
+      const v = ckAlphaBeta(nb, depth - 1, alpha, beta, false);
+      if (v > best) best = v;
+      if (best > alpha) alpha = best;
+      if (alpha >= beta) break;
+    }
+    return best;
+  }
+  let best = Infinity;
+  for (const nb of moves) {
+    const v = ckAlphaBeta(nb, depth - 1, alpha, beta, true);
+    if (v < best) best = v;
+    if (best < beta) beta = best;
+    if (alpha >= beta) break;
+  }
+  return best;
+}
+
+// Migliore mossa completa del bot (nero): ritorna la board risultante,
+// o null se il bot non ha mosse (sconfitta).
+function ckBestBoard(b: Board): Board | null {
+  const moves = ckGenerateMoves(b, true);
+  if (moves.length === 0) return null;
+  let pieces = 0;
+  for (const c of b) if (c) pieces++;
+  const depth = pieces > 14 ? 6 : pieces > 8 ? 7 : 9;
+  let best: Board | null = null;
+  let bestV = -Infinity;
+  let alpha = -Infinity;
+  for (const nb of moves) {
+    const v = ckAlphaBeta(nb, depth - 1, alpha, Infinity, false);
+    if (v > bestV) {
+      bestV = v;
+      best = nb;
+    }
+    if (v > alpha) alpha = v;
+  }
+  return best;
+}
+
 const EMOJIS = [
   // Felici e positive
   "😀", "😃", "😄", "😁", "😆", "😅", "🤣", "😂", "🙂", "🙃", "😉", "😊", "😇", "🥰", "😍", "🤩", "😘", "😗", "😚", "😙",
@@ -1107,8 +1268,11 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
       return newBoard;
     };
 
-    const newBoard = makeOneBotMove(board);
-    
+    // 🧠 Dagli 1100 ELO in su gioca l'IA forte (minimax alfa-beta); sotto,
+    //    resta il bot "umano" di sempre. Se l'IA non ha mosse ritorna la
+    //    board invariata e scatta la vittoria del giocatore.
+    const newBoard = opponentElo >= 1100 ? (ckBestBoard(board) ?? board) : makeOneBotMove(board);
+
     const boardChanged = JSON.stringify(newBoard) !== JSON.stringify(board);
     
     if (!boardChanged) {
