@@ -521,7 +521,7 @@ const Matches = () => {
                               size="sm"
                               className="shrink-0"
                             >
-                              <img src={chatIcon} alt="" draggable={false} className="h-4 w-4 md:mr-1 object-contain" />
+                              <img src={chatIcon} alt="" draggable={false} className="h-5 w-5 md:mr-1 object-contain" />
                               <span className="hidden md:inline">{t("matches.chat")}</span>
                             </Button>
                             {getUnreadForMatch(match.id) > 0 && (
