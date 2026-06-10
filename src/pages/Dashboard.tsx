@@ -792,7 +792,7 @@ const Dashboard = () => {
                   </p>
                   <Button className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold shadow-lg group-hover:shadow-xl transition-all duration-300">
                     {t("dashboard.sendMessage")}
-                    <MessageCircle className="h-4 w-4 ml-2" />
+                    <img src={supportIcon} alt="" draggable={false} className="h-4 w-4 ml-2 object-contain" />
                   </Button>
                 </CardContent>
               </Card>

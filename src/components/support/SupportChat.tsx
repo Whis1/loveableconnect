@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, MessageCircle, Image as ImageIcon, X, Bot, Headphones, MapPin, Calendar, Paperclip, FileText } from "lucide-react";
+import { Send, Image as ImageIcon, X, Bot, Headphones, MapPin, Calendar, Paperclip, FileText } from "lucide-react";
+import supportIconPink from "@/assets/support-icon-pink.png";
 import { AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -602,7 +603,7 @@ export const SupportChat = ({ userEmail, isLocationChangeRequest, newLocationDat
       <CardHeader className="border-b bg-primary/5 pb-4">
         <CardTitle className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <MessageCircle className="h-5 w-5 text-primary" />
+            <img src={supportIconPink} alt="" draggable={false} className="h-5 w-5 object-contain" />
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-lg font-semibold">{t("support.chatTitle")}</h3>
@@ -623,7 +624,7 @@ export const SupportChat = ({ userEmail, isLocationChangeRequest, newLocationDat
             {messages.length === 0 ? (
               <div className="text-center py-12">
                 <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <MessageCircle className="h-8 w-8 text-primary" />
+                  <img src={supportIconPink} alt="" draggable={false} className="h-8 w-8 object-contain" />
                 </div>
                 <p className="text-muted-foreground">
                   {t("support.startConversation")}
