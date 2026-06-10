@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useToast } from "@/hooks/use-toast";
 import { Coins, Gift, Loader2 } from "lucide-react";
 import { CHAT_GIFTS, GIFT_PACKS, type ChatGift } from "@/lib/chatGifts";
+import { GIFT_IMAGES } from "@/lib/giftImages";
 
 interface ChatGiftPanelProps {
   open: boolean;
@@ -156,8 +157,19 @@ export const ChatGiftPanel = ({
                   onClick={() => handleSend(gift)}
                   className="group flex flex-col items-center gap-1 rounded-xl border border-purple-500/25 bg-gradient-to-br from-purple-500/[0.08] to-fuchsia-500/[0.05] p-3 text-center transition-all hover:border-pink-400/60 hover:bg-pink-500/10 active:scale-[0.97] disabled:opacity-60"
                 >
-                  <span className="text-3xl leading-none transition-transform group-hover:scale-125">
-                    {sendingId === gift.id ? <Loader2 className="h-7 w-7 animate-spin text-pink-400" /> : gift.emoji}
+                  <span className="flex h-12 w-12 items-center justify-center transition-transform group-hover:scale-110">
+                    {sendingId === gift.id ? (
+                      <Loader2 className="h-7 w-7 animate-spin text-pink-400" />
+                    ) : GIFT_IMAGES[gift.id] ? (
+                      <img
+                        src={GIFT_IMAGES[gift.id]}
+                        alt={gift.name}
+                        draggable={false}
+                        className="h-12 w-12 object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)]"
+                      />
+                    ) : (
+                      <span className="text-3xl leading-none">{gift.emoji}</span>
+                    )}
                   </span>
                   <span className="text-sm font-bold">{gift.name}</span>
                   <span className="text-[10px] text-muted-foreground leading-tight">{gift.description}</span>

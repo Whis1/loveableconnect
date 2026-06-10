@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, Send, Paperclip, Gift, UserRound } from "lucide-react";
 import { ChatGiftPanel } from "@/components/chat/ChatGiftPanel";
 import { parseGiftMessage } from "@/lib/chatGifts";
+import { GIFT_IMAGES } from "@/lib/giftImages";
 import { useToast } from "@/hooks/use-toast";
 import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { GifPicker } from "@/components/chat/GifPicker";
@@ -1040,7 +1041,16 @@ const Chat = () => {
                     return (
                       <div key={message.id} className={`flex ${isOwn ? "justify-end" : "justify-start"} my-2`}>
                         <div className="animate-bounce-in flex flex-col items-center gap-1 rounded-2xl border border-pink-400/50 bg-gradient-to-br from-pink-500/15 via-fuchsia-500/10 to-amber-500/10 px-6 py-3 shadow-[0_4px_24px_-6px_rgba(244,114,182,0.5)]">
-                          <span className="text-5xl leading-none drop-shadow-[0_2px_8px_rgba(244,114,182,0.6)]">{gift.emoji}</span>
+                          {GIFT_IMAGES[gift.id] ? (
+                            <img
+                              src={GIFT_IMAGES[gift.id]}
+                              alt={gift.name}
+                              draggable={false}
+                              className="h-16 w-16 object-contain drop-shadow-[0_3px_10px_rgba(244,114,182,0.55)]"
+                            />
+                          ) : (
+                            <span className="text-5xl leading-none drop-shadow-[0_2px_8px_rgba(244,114,182,0.6)]">{gift.emoji}</span>
+                          )}
                           <span className="text-sm font-bold bg-gradient-to-r from-pink-300 via-fuchsia-300 to-amber-300 bg-clip-text text-transparent">
                             {isOwn ? `Hai regalato: ${gift.name}` : `Ti ha regalato: ${gift.name}!`}
                           </span>
