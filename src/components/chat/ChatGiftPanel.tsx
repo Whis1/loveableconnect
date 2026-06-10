@@ -79,8 +79,10 @@ export const ChatGiftPanel = ({
         if (row?.error === "INSUFFICIENT") {
           setBalance(row?.new_gift_balance ?? 0);
           setInsufficientGiftId(gift.id);
+        } else if (row?.error === "NO_MATCH") {
+          toast({ title: "Errore", description: "Potete scambiarvi regali solo se siete in match.", variant: "destructive" });
         } else {
-          toast({ title: "Errore", description: "Invio del regalo non riuscito. Riprova.", variant: "destructive" });
+          toast({ title: "Errore", description: `Invio del regalo non riuscito (${row?.error || "sconosciuto"}). Riprova.`, variant: "destructive" });
         }
         return;
       }
@@ -90,9 +92,13 @@ export const ChatGiftPanel = ({
         description: `Hai regalato ${gift.name} a ${receiverNickname} (+${gift.cost} crediti per lei/lui).`,
       });
       onOpenChange(false);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Errore invio regalo:", e);
-      toast({ title: "Errore", description: "Invio del regalo non riuscito. Riprova.", variant: "destructive" });
+      toast({
+        title: "Errore",
+        description: `Invio del regalo non riuscito${e?.message ? ` (${e.message})` : ""}. Riprova.`,
+        variant: "destructive",
+      });
     } finally {
       setSendingId(null);
     }

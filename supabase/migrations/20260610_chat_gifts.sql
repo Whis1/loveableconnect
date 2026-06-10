@@ -72,13 +72,20 @@ begin
   end if;
 
   -- Accredita crediti NORMALI al ricevente (gia' pagati in euro dal mittente).
-  update user_credits
-     set balance = balance + v_cost, updated_at = now()
-   where user_id = p_receiver;
-  if not found then
-    insert into user_credits (user_id, balance, daily_likes_remaining)
-    values (p_receiver, 10 + v_cost, 5);
-  end if;
+  -- Blocco protetto: se il ricevente non puo' ricevere l'accredito (es.
+  -- profili ADMIN senza riga crediti/account auth), il regalo viene comunque
+  -- consegnato in chat senza far fallire l'invio.
+  begin
+    update user_credits
+       set balance = balance + v_cost, updated_at = now()
+     where user_id = p_receiver;
+    if not found then
+      insert into user_credits (user_id, balance, daily_likes_remaining)
+      values (p_receiver, 10 + v_cost, 5);
+    end if;
+  exception when others then
+    null;
+  end;
 
   -- Il regalo appare in chat come messaggio (realtime gia' attivo).
   insert into messages (match_id, sender_id, receiver_id, content, message_type)
