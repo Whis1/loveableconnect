@@ -3,14 +3,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Paperclip } from "lucide-react";
+import { Send, Paperclip, Gift, UserRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { GifPicker } from "@/components/chat/GifPicker";
 import { MessageBubble } from "@/components/chat/MessageBubble";
-import { ChatUserProfile } from "@/components/chat/ChatUserProfile";
 import { ProfileNotebook } from "@/components/admin/ProfileNotebook";
+import { ReportUserDialog } from "@/components/chat/ReportUserDialog";
+import { ProfileDialog } from "@/components/ProfileDialog";
+import { AdminChatGiftPanel } from "@/components/admin/AdminChatGiftPanel";
+import { parseGiftMessage } from "@/lib/chatGifts";
+import { GIFT_IMAGES } from "@/lib/giftImages";
 
 
 interface AdminChatDialogProps {
@@ -53,6 +57,39 @@ export const AdminChatDialog = ({
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // 🎁 Regali admin illimitati + apri profilo + blocco come profilo admin.
+  const [showGiftPanel, setShowGiftPanel] = useState(false);
+  const [showUserProfile, setShowUserProfile] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+
+  // Stato di blocco (il profilo admin ha bloccato l'utente?) a ogni apertura.
+  useEffect(() => {
+    if (!open) return;
+    (supabase as any)
+      .rpc("admin_profile_block", { p_admin_id: adminProfileId, p_user_id: userId, p_action: "get" })
+      .then(({ data }: { data: boolean | null }) => setIsBlocked(Boolean(data)))
+      .catch(() => setIsBlocked(false));
+  }, [open, adminProfileId, userId]);
+
+  const handleToggleBlock = async () => {
+    try {
+      const { data, error } = await (supabase as any).rpc("admin_profile_block", {
+        p_admin_id: adminProfileId,
+        p_user_id: userId,
+        p_action: isBlocked ? "unblock" : "block",
+      });
+      if (error) throw error;
+      setIsBlocked(Boolean(data));
+      toast({
+        title: Boolean(data) ? "Utente bloccato" : "Utente sbloccato",
+        description: Boolean(data)
+          ? `${adminNickname} ha bloccato ${userNickname}.`
+          : `${adminNickname} ha sbloccato ${userNickname}.`,
+      });
+    } catch (e: any) {
+      toast({ title: "Errore", description: e?.message || "Operazione non riuscita", variant: "destructive" });
+    }
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -286,16 +323,64 @@ export const AdminChatDialog = ({
 
           {/* Chat Centrale - Flex layout per garantire che l'input rimanga visibile */}
           <div className="flex-1 flex flex-col border rounded-lg overflow-hidden bg-background min-w-0">
-            <DialogHeader className="px-6 pt-6 pb-4 shrink-0 border-b">
-              <DialogTitle>
-                Chat: {adminNickname} ↔️ {userNickname}
-              </DialogTitle>
+            <DialogHeader className="px-4 md:px-6 pt-5 pb-3 shrink-0 border-b">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <DialogTitle className="min-w-0 truncate">
+                  Chat: {adminNickname} ↔️ {userNickname}
+                </DialogTitle>
+                {/* Azioni come nella chat utente: regalo, blocca, segnala, apri profilo */}
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowGiftPanel(true)}
+                    className="text-primary hover:text-primary hover:bg-primary/10"
+                    title="Fai un regalo (illimitato)"
+                  >
+                    <Gift className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleToggleBlock}
+                    className={isBlocked ? "text-green-600 hover:text-green-600 hover:bg-green-100 dark:hover:bg-green-900" : "text-destructive hover:text-destructive hover:bg-destructive/10"}
+                    title={isBlocked ? "Sblocca utente" : "Blocca utente"}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                      {isBlocked ? (
+                        <>
+                          <rect x="5" y="11" width="14" height="10" rx="2" ry="2"/>
+                          <path d="M12 16v1"/>
+                          <path d="M12 13v1"/>
+                          <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+                        </>
+                      ) : (
+                        <>
+                          <rect x="5" y="11" width="14" height="10" rx="2" ry="2"/>
+                          <path d="M12 16v1"/>
+                          <path d="M12 13v1"/>
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </>
+                      )}
+                    </svg>
+                  </Button>
+                  <ReportUserDialog
+                    reportedUserId={userId}
+                    reportedUserName={userNickname}
+                    matchId={matchId || ""}
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowUserProfile(true)}
+                    className="gap-1.5 shrink-0 rounded-full border-primary/40 bg-primary/5 text-primary hover:bg-primary/15 hover:text-primary transition-colors"
+                  >
+                    <UserRound className="h-4 w-4" />
+                    <span className="hidden sm:inline">Apri profilo</span>
+                  </Button>
+                </div>
+              </div>
             </DialogHeader>
-
-            {/* User Profile - Collapsible */}
-            <div className="px-6 pb-4 shrink-0 border-b max-h-[30vh] overflow-auto">
-              <ChatUserProfile userId={userId} currentUserId={adminProfileId} showRealLocation={true} />
-            </div>
 
             {/* Messages - Flex-1 con min-h-0 per permettere lo scroll */}
             <div className="flex-1 px-3 md:px-6 py-4 min-h-0 overflow-hidden">
@@ -307,7 +392,32 @@ export const AdminChatDialog = ({
                     {messages.map((message) => {
                       const isOwn = message.sender_id === adminProfileId;
                       const senderAvatar = isOwn ? adminAvatar : userAvatar;
-                      
+
+                      // 🎁 Messaggio-regalo: bolla speciale con l'immagine.
+                      const gift = parseGiftMessage(message.content);
+                      if (gift) {
+                        return (
+                          <div key={message.id} className={`flex ${isOwn ? "justify-end" : "justify-start"} my-2`}>
+                            <div className="flex flex-col items-center gap-1 rounded-2xl border border-pink-400/50 bg-gradient-to-br from-pink-500/15 via-fuchsia-500/10 to-amber-500/10 px-6 py-3 shadow-[0_4px_24px_-6px_rgba(244,114,182,0.5)]">
+                              {GIFT_IMAGES[gift.id] ? (
+                                <img
+                                  src={GIFT_IMAGES[gift.id]}
+                                  alt={gift.name}
+                                  draggable={false}
+                                  className="h-14 w-14 object-contain drop-shadow-[0_3px_10px_rgba(244,114,182,0.55)]"
+                                />
+                              ) : (
+                                <span className="text-4xl leading-none">{gift.emoji}</span>
+                              )}
+                              <span className="text-sm font-bold bg-gradient-to-r from-pink-300 via-fuchsia-300 to-amber-300 bg-clip-text text-transparent">
+                                {isOwn ? `Hai regalato: ${gift.name}` : `Regalo ricevuto: ${gift.name}`}
+                              </span>
+                              <span className="text-[11px] font-semibold text-amber-300">{gift.cost} crediti</span>
+                            </div>
+                          </div>
+                        );
+                      }
+
                       return (
                         <MessageBubble
                           key={message.id}
@@ -389,6 +499,26 @@ export const AdminChatDialog = ({
           </div>
         </div>
       </DialogContent>
+
+      {/* 🎁 Pannello regali admin (invio illimitato) */}
+      {matchId && (
+        <AdminChatGiftPanel
+          open={showGiftPanel}
+          onOpenChange={setShowGiftPanel}
+          matchId={matchId}
+          adminProfileId={adminProfileId}
+          receiverId={userId}
+          receiverNickname={userNickname}
+        />
+      )}
+
+      {/* Card profilo utente (la stessa della bacheca) */}
+      <ProfileDialog
+        profileId={userId}
+        currentUserId={adminProfileId}
+        open={showUserProfile}
+        onOpenChange={setShowUserProfile}
+      />
     </Dialog>
   );
 };
