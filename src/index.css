@@ -132,6 +132,26 @@ All colors MUST be HSL.
   .top-safe-3 {
     top: calc(env(safe-area-inset-top) + 0.75rem);
   }
+
+  /* 💅 Scrollbar a tema LoveableConnect per i pannelli scorrevoli: sottile,
+     traccia invisibile, pollice con gradiente rosa/viola arrotondato. */
+  .lc-scroll {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: rgba(217, 70, 160, 0.55) transparent;
+  }
+  .lc-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  .lc-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .lc-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #ec4899, #a855f7);
+    border-radius: 9999px;
+  }
+  .lc-scroll::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #f472b6, #c084fc);
+  }
 }
 
 @layer utilities {
