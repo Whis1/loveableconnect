@@ -11,6 +11,7 @@ import { GifPicker } from "@/components/chat/GifPicker";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ProfileNotebook } from "@/components/admin/ProfileNotebook";
 import { ReportUserDialog } from "@/components/chat/ReportUserDialog";
+import { VoiceRecorder } from "@/components/chat/VoiceRecorder";
 import { ProfileDialog } from "@/components/ProfileDialog";
 import { AdminChatGiftPanel } from "@/components/admin/AdminChatGiftPanel";
 import { parseGiftMessage } from "@/lib/chatGifts";
@@ -32,7 +33,7 @@ interface Message {
   sender_id: string;
   receiver_id: string;
   content: string;
-  message_type: 'text' | 'image' | 'emoji' | 'gif';
+  message_type: 'text' | 'image' | 'emoji' | 'gif' | 'voice';
   media_url: string | null;
   created_at: string;
   read: boolean;
@@ -195,7 +196,7 @@ export const AdminChatDialog = ({
 
   const handleSendMessage = async (
     e?: React.FormEvent,
-    messageType: 'text' | 'emoji' | 'gif' | 'image' = 'text',
+    messageType: 'text' | 'emoji' | 'gif' | 'image' | 'voice' = 'text',
     mediaUrl: string | null = null,
     content?: string
   ) => {
@@ -267,6 +268,41 @@ export const AdminChatDialog = ({
 
   const handleGifSelect = (gifUrl: string) => {
     handleSendMessage(undefined, 'gif', gifUrl, 'GIF');
+  };
+
+  // 🎙️ Vocali: registra → anteprima → carica su storage → invia come 'voice'.
+  const [voicePreview, setVoicePreview] = useState<Blob | null>(null);
+  const [voicePreviewUrl, setVoicePreviewUrl] = useState<string | null>(null);
+
+  const handleVoiceRecording = (audioBlob: Blob) => {
+    setVoicePreview(audioBlob);
+    setVoicePreviewUrl(URL.createObjectURL(audioBlob));
+  };
+
+  const handleCancelVoice = () => {
+    if (voicePreviewUrl) URL.revokeObjectURL(voicePreviewUrl);
+    setVoicePreview(null);
+    setVoicePreviewUrl(null);
+  };
+
+  const handleConfirmVoice = async () => {
+    if (!voicePreview) return;
+    try {
+      setUploading(true);
+      const fileName = `voice_${Date.now()}.webm`;
+      const { error: uploadError } = await supabase.storage
+        .from("chat-images")
+        .upload(fileName, voicePreview, { contentType: "audio/webm" });
+      if (uploadError) throw uploadError;
+      const { data } = supabase.storage.from("chat-images").getPublicUrl(fileName);
+      await handleSendMessage(undefined, "voice", data.publicUrl, "Vocale");
+      handleCancelVoice();
+    } catch (err) {
+      console.error("Error uploading voice:", err);
+      toast({ title: "Errore", description: "Caricamento del vocale non riuscito", variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -448,6 +484,18 @@ export const AdminChatDialog = ({
 
             {/* Input - Sempre visibile in basso */}
             <div className="border-t p-4 bg-background shrink-0">
+              {/* 🎙️ Anteprima vocale: ascolta, poi invia o annulla */}
+              {voicePreview && voicePreviewUrl && (
+                <div className="mb-3 p-3 bg-primary/10 rounded-lg flex items-center gap-3">
+                  <audio src={voicePreviewUrl} controls className="flex-1 h-9" />
+                  <Button size="sm" onClick={handleConfirmVoice} disabled={uploading}>
+                    <Send className="h-4 w-4 mr-1" /> Invia
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={handleCancelVoice} disabled={uploading}>
+                    Annulla
+                  </Button>
+                </div>
+              )}
               <form onSubmit={(e) => handleSendMessage(e)}>
                 <div className="flex gap-2 items-center">
                   <input
@@ -469,15 +517,21 @@ export const AdminChatDialog = ({
                   </Button>
                   <EmojiPicker onEmojiSelect={handleEmojiSelect} />
                   <GifPicker onGifSelect={handleGifSelect} />
+                  <VoiceRecorder
+                    onRecordingComplete={handleVoiceRecording}
+                    isPremiumMonthly={true}
+                    disabled={uploading || !!voicePreview}
+                  />
                   <Input
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     placeholder="Scrivi un messaggio..."
                     className="flex-1"
+                    disabled={!!voicePreview}
                   />
                   <Button
                     type="submit"
-                    disabled={!newMessage.trim() || uploading}
+                    disabled={!newMessage.trim() || uploading || !!voicePreview}
                     className="shrink-0"
                   >
                     <Send className="h-4 w-4" />
