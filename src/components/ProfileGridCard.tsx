@@ -641,18 +641,28 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
               </span>
             </div>
 
-            {/* Relationship Status & Looking For: due pillole con icona, senza
-                etichette (l'icona parla da sola: cuore = stato, scintille =
-                cosa cerca), in linea con la riga genere/orientamento sopra. */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="inline-flex min-w-0 items-center gap-1 rounded-full border border-pink-400/25 bg-pink-500/10 px-2 py-0.5 text-[11px] font-medium text-pink-600 dark:text-pink-200">
-                <HeartHandshake className="h-3 w-3 shrink-0 text-pink-400" />
-                <span className="truncate">{getRelationshipStatusLabel(profile.relationship_status)}</span>
-              </span>
-              <span className="inline-flex min-w-0 items-center gap-1 rounded-full border border-purple-400/25 bg-purple-500/10 px-2 py-0.5 text-[11px] font-medium text-purple-600 dark:text-purple-200">
-                <Sparkles className="h-3 w-3 shrink-0 text-purple-400" />
-                <span className="truncate">{getLookingForLabel(profile)}</span>
-              </span>
+            {/* Relationship Status & Looking For: composizione classica a due
+                righe, ma con tipografia curata: etichetta in gradiente
+                colorato + piccola icona, valore piu' nitido. */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-1 text-xs min-w-0">
+                <HeartHandshake className="h-3 w-3 shrink-0 text-pink-400/90" />
+                <span className="font-bold bg-gradient-to-r from-pink-400 to-fuchsia-400 bg-clip-text text-transparent">
+                  {t("explore.statusLabel")}
+                </span>{" "}
+                <span className="font-medium text-foreground/85 truncate">
+                  {getRelationshipStatusLabel(profile.relationship_status)}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 text-xs min-w-0">
+                <Sparkles className="h-3 w-3 shrink-0 text-purple-400/90" />
+                <span className="font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
+                  {t("explore.lookingForLabel")}
+                </span>{" "}
+                <span className="font-medium text-foreground/85 truncate">
+                  {getLookingForLabel(profile)}
+                </span>
+              </div>
             </div>
 
             {/* Action Buttons */}
