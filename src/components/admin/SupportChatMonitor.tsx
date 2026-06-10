@@ -386,11 +386,18 @@ export const SupportChatMonitor = () => {
     setLoadingRatings(true);
     try {
       const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
-      // pulizia 48h (best-effort)
-      await (supabase.from("support_ratings") as any).delete().lt("created_at", cutoff);
+      // Pulizia con margine (60h invece di 48h): la DELETE si basa
+      // sull'orologio del PC dell'admin, il margine evita che un orologio
+      // avanti cancelli valutazioni fresche. Le righe tra 48h e 60h non
+      // vengono comunque piu' mostrate (filtro qui sotto).
+      const deleteCutoff = new Date(Date.now() - 60 * 60 * 60 * 1000).toISOString();
+      await (supabase.from("support_ratings") as any).delete().lt("created_at", deleteCutoff);
+      // Criterio: submitted_at valorizzato = valutazione realmente inviata.
+      // Piu' robusto del solo status='submitted', che in passato poteva venire
+      // sovrascritto in 'dismissed' da una seconda scheda rimasta aperta.
       const { data } = await (supabase.from("support_ratings") as any)
         .select("id, user_id, user_email, admins, assisted_at, rating, comment, submitted_at, created_at")
-        .eq("status", "submitted")
+        .not("submitted_at", "is", null)
         .gte("created_at", cutoff)
         .order("submitted_at", { ascending: false });
       setRatings(data || []);

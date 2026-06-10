@@ -107,7 +107,12 @@ export const SupportRatingGate = () => {
     const id = pendingId;
     setPendingId(null);
     if (id) {
-      await (supabase.from("support_ratings") as any).update({ status: "dismissed" }).eq("id", id);
+      // Solo se ANCORA "pending": se nel frattempo la valutazione e' stata
+      // inviata da un'altra scheda o dispositivo, non va sovrascritta.
+      await (supabase.from("support_ratings") as any)
+        .update({ status: "dismissed" })
+        .eq("id", id)
+        .eq("status", "pending");
     }
   };
 
@@ -115,7 +120,10 @@ export const SupportRatingGate = () => {
     if (!pendingId || rating === 0) return;
     setSubmitting(true);
     try {
-      await (supabase.from("support_ratings") as any)
+      // L'update di supabase-js NON lancia eccezioni: l'errore va controllato
+      // esplicitamente, altrimenti mostreremmo "Grazie!" anche a salvataggio
+      // fallito e la valutazione non arriverebbe mai nel pannello admin.
+      const { error } = await (supabase.from("support_ratings") as any)
         .update({
           rating,
           comment: comment.trim() || null,
@@ -123,6 +131,7 @@ export const SupportRatingGate = () => {
           submitted_at: new Date().toISOString(),
         })
         .eq("id", pendingId);
+      if (error) throw error;
       toast({ title: "Grazie!", description: "La tua valutazione è stata inviata." });
       setPendingId(null);
     } catch (e: any) {
