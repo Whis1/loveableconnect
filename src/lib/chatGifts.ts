@@ -18,7 +18,7 @@ export const CHAT_GIFTS: ChatGift[] = [
   { id: "cuore", emoji: "❤️", name: "Cuore", description: "Quando le parole non bastano", cost: 6 },
   { id: "frusta", emoji: "⛓️", name: "Frusta", description: "Per chi ha capito il gioco", cost: 8 },
   { id: "champagne", emoji: "🍾", name: "Champagne", description: "C'è qualcosa da festeggiare", cost: 10 },
-  { id: "cane", emoji: "🐶", name: "Cane", description: "Per chi sogna una padrona che comanda", cost: 12 },
+  { id: "cane", emoji: "🐶", name: "Cane", description: "Per chi ama essere coccolato", cost: 12 },
   { id: "schiavo", emoji: "🥷", name: "Schiavo", description: "Obbedienza totale, nessuna domanda", cost: 15 },
   { id: "diamante", emoji: "💎", name: "Diamante", description: "Un gesto che brilla davvero", cost: 20 },
   { id: "anello", emoji: "💍", name: "Anello", description: "La proposta che non si rifiuta", cost: 50 },
