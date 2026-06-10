@@ -283,6 +283,32 @@ function reconstructCapture(prev: Board, next: Board): CaptureHop[] | null {
   return hops.length > 0 ? hops : null;
 }
 
+// 👑 Corona della Dama disegnata su misura (niente emoji): oro sfumato,
+// punte con perle e gemma rossa al centro, leggera ombra per staccare.
+const KingCrown = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6 drop-shadow-[0_1.5px_2px_rgba(0,0,0,0.65)]" aria-hidden>
+    <defs>
+      <linearGradient id="ckCrownGold" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#ffe9a0" />
+        <stop offset="0.55" stopColor="#f5c542" />
+        <stop offset="1" stopColor="#c98a12" />
+      </linearGradient>
+    </defs>
+    <path
+      d="M3.2 8.2 L7.4 11.4 L12 5.8 L16.6 11.4 L20.8 8.2 L19 16.6 Q12 18.8 5 16.6 Z"
+      fill="url(#ckCrownGold)"
+      stroke="#8f6307"
+      strokeWidth="0.9"
+      strokeLinejoin="round"
+    />
+    <circle cx="3.2" cy="7.4" r="1.4" fill="#ffe9a0" stroke="#8f6307" strokeWidth="0.7" />
+    <circle cx="12" cy="4.9" r="1.4" fill="#ffe9a0" stroke="#8f6307" strokeWidth="0.7" />
+    <circle cx="20.8" cy="7.4" r="1.4" fill="#ffe9a0" stroke="#8f6307" strokeWidth="0.7" />
+    <circle cx="12" cy="13.7" r="1.7" fill="#e02d4f" stroke="#7e1027" strokeWidth="0.7" />
+    <circle cx="11.4" cy="13.1" r="0.5" fill="#ff9eb0" />
+  </svg>
+);
+
 // Disegno di una singola pedina (riusato dalle caselle e dall'animazione).
 function renderPiece(piece: PieceType) {
   if (piece === "red")
@@ -291,14 +317,14 @@ function renderPiece(piece: PieceType) {
     return <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-800 to-black border-2 border-gray-950" />;
   if (piece === "red-king")
     return (
-      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-700 border-2 border-red-900 flex items-center justify-center text-yellow-300 text-xl">
-        👑
+      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-700 border-2 border-red-900 flex items-center justify-center">
+        <KingCrown />
       </div>
     );
   if (piece === "black-king")
     return (
-      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-800 to-black border-2 border-gray-950 flex items-center justify-center text-yellow-300 text-xl">
-        👑
+      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-800 to-black border-2 border-gray-950 flex items-center justify-center">
+        <KingCrown />
       </div>
     );
   return null;
@@ -1724,13 +1750,38 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
 
       {/* Checkers Board */}
       <div className="relative grid grid-cols-8 gap-0 mb-6 max-w-md mx-auto border-4 border-purple-800/50 rounded-lg overflow-hidden">
-        {displayBoard.map((piece, index) => {
+        {(() => {
+          // 🎯 Pedine avversarie CATTURABILI quando la mangiata è obbligatoria:
+          //    lampeggiano lentamente così si trovano a colpo d'occhio. In
+          //    multi-cattura contano solo le prede del pezzo che continua.
+          const prey = new Set<number>();
+          if (isPlayerTurn && !gameOver) {
+            const sources: number[] = [];
+            if (isMultiCapture && capturingPiece !== null) {
+              sources.push(capturingPiece);
+            } else {
+              board.forEach((p, idx) => {
+                if (p && p.includes("red")) sources.push(idx);
+              });
+            }
+            for (const from of sources) {
+              const { jumps } = getValidMoves(from);
+              for (const to of jumps) {
+                prey.add(
+                  ((Math.floor(from / 8) + Math.floor(to / 8)) / 2) * 8 +
+                    ((from % 8) + (to % 8)) / 2
+                );
+              }
+            }
+          }
+
+          return displayBoard.map((piece, index) => {
           const row = Math.floor(index / 8);
           const col = index % 8;
           const isDark = (row + col) % 2 === 1;
           const isSelected = selectedSquare === index;
           const isValidMove = validMoves.includes(index);
-          
+
           return (
             <button
               key={index}
@@ -1741,6 +1792,7 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
                 isDark ? "bg-purple-800/40" : "bg-purple-200/20",
                 isSelected && "ring-4 ring-yellow-400",
                 isValidMove && "ring-4 ring-green-400 animate-pulse",
+                prey.has(index) && "ck-prey",
                 !isPlayerTurn && "cursor-not-allowed opacity-50"
               )}
             >
@@ -1756,7 +1808,8 @@ export const CheckersBoard = ({ opponent, onGameEnd, tournamentMode = false }: C
               )}
             </button>
           );
-        })}
+          });
+        })()}
 
         {animOverlay && (
           <div

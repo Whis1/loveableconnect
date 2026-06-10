@@ -162,6 +162,24 @@ All colors MUST be HSL.
   .lc-scroll-hidden::-webkit-scrollbar {
     display: none;
   }
+
+  /* 🎯 Dama: casella della pedina avversaria che DEVE essere mangiata
+     (cattura obbligatoria). Lampeggio lento dorato, ben visibile anche
+     quando le pedine sono ammassate. */
+  .ck-prey {
+    animation: ckPrey 1.6s ease-in-out infinite;
+  }
+  @keyframes ckPrey {
+    0%,
+    100% {
+      box-shadow: inset 0 0 0 0 rgba(250, 204, 21, 0);
+    }
+    50% {
+      box-shadow:
+        inset 0 0 0 4px rgba(250, 204, 21, 0.9),
+        inset 0 0 18px rgba(250, 204, 21, 0.35);
+    }
+  }
 }
 
 @layer utilities {
