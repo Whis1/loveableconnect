@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Heart, Users, Search, MessageCircle, Trophy, ThumbsUp } from "lucide-react";
 import supportIcon from "@/assets/support-icon.png";
+import chatIcon from "@/assets/chat-icon.png";
 import { UserProfileCard } from "@/components/UserProfileCard";
 import { useTranslation } from "react-i18next";
 import { CreditsDisplay } from "@/components/CreditsDisplay";
@@ -792,7 +793,7 @@ const Dashboard = () => {
                   </p>
                   <Button className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0 text-white font-semibold shadow-lg group-hover:shadow-xl transition-all duration-300">
                     {t("dashboard.sendMessage")}
-                    <img src={supportIcon} alt="" draggable={false} className="h-4 w-4 ml-2 object-contain" />
+                    <img src={chatIcon} alt="" draggable={false} className="h-5 w-5 ml-2 object-contain" />
                   </Button>
                 </CardContent>
               </Card>
