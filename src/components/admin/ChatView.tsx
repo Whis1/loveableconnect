@@ -558,7 +558,9 @@ export const ChatView = ({ conversation, currentAdminId, onRefresh, chattorsNick
                 <ImagePlus className="h-4 w-4" />
               )}
             </Button>
-            <EmojiPicker onEmojiSelect={(emoji) => handleSendMessage(emoji, "emoji")} />
+            {/* L'emoji si AGGIUNGE al campo di testo (come nella chat utente):
+                si invia da sola o insieme al messaggio, niente invio diretto. */}
+            <EmojiPicker onEmojiSelect={(emoji) => setNewMessage((prev) => prev + emoji)} />
             <GifPicker onGifSelect={(url) => handleSendMessage("", "gif", url)} />
             <VoiceRecorder
               onRecordingComplete={handleVoiceRecording}
