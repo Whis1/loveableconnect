@@ -73,6 +73,18 @@ export const AdminChatDialog = ({
     supabase.auth.getUser().then(async ({ data }) => {
       const u = data.user;
       if (!u) return;
+      // Ordine: display_name dell'admin (user_roles, es. "Clark") →
+      // nickname del profilo → prefisso email come ultima spiaggia.
+      const { data: roleRow } = await (supabase as any)
+        .from("user_roles")
+        .select("display_name")
+        .eq("user_id", u.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      if ((roleRow as any)?.display_name) {
+        setOperatorName((roleRow as any).display_name);
+        return;
+      }
       const { data: prof } = await supabase
         .from("profiles")
         .select("nickname")
