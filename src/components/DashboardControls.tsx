@@ -18,11 +18,12 @@ export const DashboardControls = () => {
   };
 
   return (
-    // Fissi in alto a sinistra come in origine. Il contenuto della pagina si
+    // Inchiodati all'angolo in alto a sinistra DELLA PAGINA (absolute, non
+    // fixed): zoomando si muovono insieme a tutto il resto del contenuto,
+    // quindi non cambiano mai posizione rispetto al logo. Il contenuto si
     // tiene sotto (pt-16 in Dashboard) finche' la finestra non e' larga
-    // almeno 1880px: solo li' i margini laterali bastano a non far scivolare
-    // il logo sotto i pulsanti, a qualsiasi livello di zoom.
-    <div className="fixed top-safe-3 left-3 z-50 flex items-center gap-1.5 md:gap-2">
+    // almeno 1880px, larghezza da cui i margini laterali bastano.
+    <div className="absolute top-safe-3 left-3 z-50 flex items-center gap-1.5 md:gap-2">
       <LanguageSwitcher />
       {/* 🌓 Pulsante tema chiaro/scuro NASCOSTO su richiesta: il sito resta nel
           tema scuro di default. Per riattivarlo, ripristinare il <Button> con
