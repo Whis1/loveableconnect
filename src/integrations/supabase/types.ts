@@ -1643,6 +1643,27 @@ export type Database = {
         }
         Relationships: []
       }
+      vault_forward_config: {
+        Row: {
+          api_key: string | null
+          id: number
+          ingest_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          api_key?: string | null
+          id?: number
+          ingest_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          api_key?: string | null
+          id?: number
+          ingest_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1676,6 +1697,7 @@ export type Database = {
       }
       admin_drift1: { Args: { b: number; id: string }; Returns: number }
       admin_elo: { Args: { id: string; now_ms: number }; Returns: number }
+      admin_game_like_back: { Args: { p_admin_id: string }; Returns: boolean }
       admin_games: { Args: { b: number; id: string }; Returns: number }
       admin_list_tiered: {
         Args: never
@@ -1686,6 +1708,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_profile_block: {
+        Args: { p_action: string; p_admin_id: string; p_user_id: string }
+        Returns: boolean
+      }
       admin_promote_to_tier: {
         Args: { p_delete_profile?: boolean; p_email: string; p_tier: number }
         Returns: {
@@ -1693,6 +1719,15 @@ export type Database = {
           success: boolean
           user_id: string
         }[]
+      }
+      admin_send_chat_gift: {
+        Args: {
+          p_admin_id: string
+          p_gift_id: string
+          p_match_id: string
+          p_receiver: string
+        }
+        Returns: boolean
       }
       advance_tournament: {
         Args: { _tournament_id: string }
@@ -1820,6 +1855,10 @@ export type Database = {
       delete_inbox_batch: { Args: { p_batch_id: string }; Returns: number }
       enforce_premium_expiry: { Args: never; Returns: boolean }
       fnv1a: { Args: { s: string }; Returns: number }
+      forward_to_vault: {
+        Args: { p_category: string; p_payload: Json }
+        Returns: undefined
+      }
       get_admin_credit_actions: {
         Args: never
         Returns: {
