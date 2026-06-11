@@ -75,10 +75,32 @@ AFTER INSERT ON public.admin_credit_actions
 FOR EACH ROW EXECUTE FUNCTION public.trg_forward_credit_action();
 
 -- 2) Cronologia Azioni (ban, eliminazioni, messaggi inbox): idem.
+--    Per i messaggi inbox la voce viene arricchita con i premi allegati
+--    (reward_credits / reward_likes) e il numero di destinatari, letti
+--    dalle righe inbox_messages dello stesso batch: la cronologia da sola
+--    registra solo il testo del messaggio.
 CREATE OR REPLACE FUNCTION public.trg_forward_user_action()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  extra jsonb := '{}'::jsonb;
+  v_credits int;
+  v_likes int;
+  v_destinatari int;
 BEGIN
-  PERFORM public.forward_to_vault('cronologia_azioni', to_jsonb(NEW));
+  IF NEW.batch_id IS NOT NULL THEN
+    SELECT MAX(reward_credits), MAX(reward_likes), COUNT(*)
+      INTO v_credits, v_likes, v_destinatari
+      FROM public.inbox_messages
+     WHERE batch_id::text = NEW.batch_id::text;
+    IF COALESCE(v_destinatari, 0) > 0 THEN
+      extra := jsonb_build_object(
+        'reward_credits', COALESCE(v_credits, 0),
+        'reward_likes',   COALESCE(v_likes, 0),
+        'destinatari',    v_destinatari
+      );
+    END IF;
+  END IF;
+  PERFORM public.forward_to_vault('cronologia_azioni', to_jsonb(NEW) || extra);
   RETURN NEW;
 END; $$;
 
