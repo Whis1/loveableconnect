@@ -25,11 +25,12 @@ Deno.serve(async (req) => {
 
     // ⭐ Prima di eliminare, raccogliamo i metadati per la richiesta di
     //    valutazione: email utente, admin che hanno scritto (nickname+email),
-    //    data/orario dell'assistenza (ultimo messaggio).
+    //    data/orario dell'assistenza (ultimo messaggio). Prendiamo TUTTE le
+    //    colonne perche' la chat completa viene archiviata nel Data Vault.
     try {
       const { data: msgs } = await supabase
         .from('support_messages')
-        .select('user_email, is_admin_response, admin_id, created_at')
+        .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: true });
 
@@ -65,13 +66,48 @@ Deno.serve(async (req) => {
           admins.push({ nickname: nameMap[aid] || 'Admin', email });
         }
 
-        await supabase.from('support_ratings').insert({
-          user_id: userId,
-          user_email: userEmail,
-          admins,
-          assisted_at: assistedAt,
-          status: 'pending',
-        });
+        const { data: ratingRow } = await supabase
+          .from('support_ratings')
+          .insert({
+            user_id: userId,
+            user_email: userEmail,
+            admins,
+            assisted_at: assistedAt,
+            status: 'pending',
+          })
+          .select('id')
+          .single();
+
+        // 🗄️ Archivio permanente: inoltra l'INTERA chat al Data Vault (se
+        //    configurato in vault_forward_config). rating_request_id collega
+        //    la chat alla valutazione che l'utente inviera' dopo.
+        try {
+          const { data: cfg } = await supabase
+            .from('vault_forward_config')
+            .select('ingest_url, api_key')
+            .eq('id', 1)
+            .maybeSingle();
+          if (cfg?.ingest_url && cfg?.api_key) {
+            await fetch(cfg.ingest_url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'x-api-key': cfg.api_key },
+              body: JSON.stringify({
+                source: 'loveableconnect',
+                category: 'chat_assistenza',
+                payload: {
+                  rating_request_id: ratingRow?.id ?? null,
+                  user_id: userId,
+                  user_email: userEmail,
+                  admins,
+                  assisted_at: assistedAt,
+                  messages: msgs,
+                },
+              }),
+            });
+          }
+        } catch (vaultErr) {
+          console.warn('Vault forward failed (non blocking):', vaultErr);
+        }
       }
     } catch (ratingErr) {
       console.warn('Could not create support rating request:', ratingErr);
