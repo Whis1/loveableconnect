@@ -633,13 +633,17 @@ const Dashboard = () => {
       backgroundRepeat: 'no-repeat'
     }} />
       
-      <div className="container mx-auto p-3 md:p-4 max-w-7xl relative z-10">
+      <DashboardControls />
+
+      {/* pt-16 fino a 1880px di viewport: i pulsanti fissi in alto a sinistra
+          (Esci/lingua/Installa) hanno bisogno di ~300px di margine laterale
+          per non finire sopra il logo; sotto quella larghezza (zoom incluso)
+          il contenuto parte piu' in basso, cosi' non si sovrappongono mai. */}
+      <div className="container mx-auto p-3 md:p-4 max-w-7xl relative z-10 pt-16 md:pt-16 min-[1880px]:pt-4">
         {/* Header. Su mobile: titolo + icone (trofeo, posta) su una riga
             ordinata, e il saldo (like/crediti) va a capo allineato a destra,
             cosi' non si accavallano piu'. Su desktop sta tutto su una riga. */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-3 mb-6 md:mb-8">
-          {/* Esci / lingua / Installa: nel flusso dell'header, niente overlay */}
-          <DashboardControls />
           <div className="flex items-center gap-2 min-w-0 mr-auto">
             <img src={loveIcon} alt="Love Icon" className="h-10 w-10 md:h-14 md:w-14 shrink-0" />
             <h1 className="text-xl md:text-3xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent truncate">

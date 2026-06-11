@@ -18,9 +18,11 @@ export const DashboardControls = () => {
   };
 
   return (
-    // Nel flusso della pagina (niente piu' "fixed"): i pulsanti restano al
-    // loro posto nell'header anche cambiando zoom o dimensione finestra.
-    <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
+    // Fissi in alto a sinistra come in origine. Il contenuto della pagina si
+    // tiene sotto (pt-16 in Dashboard) finche' la finestra non e' larga
+    // almeno 1880px: solo li' i margini laterali bastano a non far scivolare
+    // il logo sotto i pulsanti, a qualsiasi livello di zoom.
+    <div className="fixed top-safe-3 left-3 z-50 flex items-center gap-1.5 md:gap-2">
       <LanguageSwitcher />
       {/* 🌓 Pulsante tema chiaro/scuro NASCOSTO su richiesta: il sito resta nel
           tema scuro di default. Per riattivarlo, ripristinare il <Button> con
