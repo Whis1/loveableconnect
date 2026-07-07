@@ -65,7 +65,13 @@ export function UserBanManager() {
     try {
       const { data, error } = await (supabase as any).rpc("get_user_actions");
       if (error) throw error;
-      setActions((data || []) as any[]);
+      // Sicurezza lato client: mostra solo le ultime 24 ore, cosi' la lista e'
+      // corretta all'istante anche se la funzione DB restituisse voci vecchie.
+      const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+      const recent = ((data || []) as any[]).filter(
+        (a) => new Date(a.created_at).getTime() >= cutoff
+      );
+      setActions(recent);
     } catch (e) {
       console.warn("get_user_actions non disponibile:", e);
       setActions([]);
@@ -1549,6 +1555,7 @@ export function UserBanManager() {
             </DialogTitle>
             <DialogDescription>
               Ban, eliminazioni e messaggi inbox (singoli e a tutti) eseguiti dagli admin.
+              Le voci si cancellano automaticamente dopo 24 ore.
             </DialogDescription>
           </DialogHeader>
           {actionsLoading ? (
