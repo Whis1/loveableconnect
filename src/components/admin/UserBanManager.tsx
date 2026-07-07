@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Ban, ShieldCheck, RefreshCw, Send, AlertTriangle, EyeOff, Eye, Loader2, X, Receipt, Wallet, Calendar, CheckCircle2, Clock, XCircle, Crown, Coins, History, Trash2, LogIn, LogOut } from "lucide-react";
+import { Search, Ban, ShieldCheck, RefreshCw, Send, AlertTriangle, EyeOff, Eye, Loader2, X, Receipt, Wallet, Calendar, CheckCircle2, Clock, XCircle, Crown, Coins, Gift, History, Trash2, LogIn, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -1427,6 +1427,7 @@ export function UserBanManager() {
                     </h4>
                     <div className="space-y-2">
                       {purchases.map((p: any) => {
+                        const isGift = p.product_type === "gift_credits";
                         const isCredits = p.product_type === "credits";
                         const isPremium = p.product_type === "premium";
                         const statusInfo =
@@ -1449,6 +1450,8 @@ export function UserBanManager() {
                                   className={`shrink-0 p-2 rounded-lg ${
                                     isPremium
                                       ? "bg-gradient-to-br from-amber-500/20 to-yellow-500/20 text-amber-400"
+                                      : isGift
+                                      ? "bg-gradient-to-br from-pink-500/20 to-purple-500/20 text-pink-400"
                                       : isCredits
                                       ? "bg-gradient-to-br from-blue-500/20 to-cyan-500/20 text-blue-400"
                                       : "bg-muted text-muted-foreground"
@@ -1456,6 +1459,8 @@ export function UserBanManager() {
                                 >
                                   {isPremium ? (
                                     <Crown className="h-5 w-5" />
+                                  ) : isGift ? (
+                                    <Gift className="h-5 w-5" />
                                   ) : isCredits ? (
                                     <Coins className="h-5 w-5" />
                                   ) : (
@@ -1464,11 +1469,11 @@ export function UserBanManager() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="font-semibold text-sm truncate">
-                                    {isPremium ? "Abbonamento Premium" : isCredits ? "Crediti" : p.product_type}
+                                    {isPremium ? "Abbonamento Premium" : isGift ? "Crediti regalo (chat)" : isCredits ? "Crediti" : p.product_type}
                                   </p>
                                   {p.credits_amount && (
                                     <p className="text-xs text-muted-foreground">
-                                      {p.credits_amount} crediti
+                                      {p.credits_amount} crediti{isGift ? " regalo" : ""}
                                     </p>
                                   )}
                                   <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-1">

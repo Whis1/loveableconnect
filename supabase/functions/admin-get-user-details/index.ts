@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
 
     if (creditsError && creditsError.code !== 'PGRST116') throw creditsError;
 
-    // Get purchase history
+    // Get purchase history (crediti normali + abbonamenti)
     const { data: purchases, error: purchasesError } = await supabase
       .from('purchases')
       .select('*')
@@ -50,6 +50,37 @@ Deno.serve(async (req) => {
       .order('created_at', { ascending: false });
 
     if (purchasesError) throw purchasesError;
+
+    // Acquisti di crediti-regalo della chat (portafoglio in euro separato).
+    // La tabella salva solo i crediti (non l'importo): l'euro si ricava dai
+    // pacchetti noti (25cr = 4,99€, 100cr = 19,99€). Le righe qui presenti
+    // sono sempre pagamenti andati a buon fine.
+    const { data: giftPurchases, error: giftError } = await supabase
+      .from('gift_credit_purchases')
+      .select('*')
+      .eq('user_id', user_id)
+      .order('created_at', { ascending: false });
+
+    if (giftError) throw giftError;
+
+    const giftCentsFromCredits = (c: number) =>
+      c === 25 ? 499 : c === 100 ? 1999 : 0;
+
+    const giftRows = (giftPurchases || []).map((g: any) => ({
+      id: `gift_${g.session_id}`,
+      product_type: 'gift_credits',
+      credits_amount: g.credits,
+      amount_cents: giftCentsFromCredits(g.credits),
+      currency: 'eur',
+      status: 'completed',
+      created_at: g.created_at,
+      completed_at: g.created_at,
+    }));
+
+    // Unione crediti/abbonamenti + regali, ordinata dal piu' recente.
+    const allPurchases = [...(purchases || []), ...giftRows].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
 
     // Get auth user data for registration date
     const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(user_id);
@@ -60,7 +91,7 @@ Deno.serve(async (req) => {
         success: true,
         profile,
         credits: credits || null,
-        purchases: purchases || [],
+        purchases: allPurchases,
         auth_created_at: authUser.user.created_at,
         auth_last_sign_in_at: authUser.user.last_sign_in_at || null,
         auth_provider: authUser.user.app_metadata.provider || 'email',
