@@ -1177,11 +1177,18 @@ export function UserBanManager() {
                     >
                       <Receipt className="h-4 w-4 mr-2 text-blue-500" />
                       Cronologia pagamenti
-                      {userDetails?.purchases?.length > 0 && (
-                        <span className="ml-2 px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-xs font-semibold">
-                          {userDetails.purchases.length}
-                        </span>
-                      )}
+                      {(() => {
+                        // Solo acquisti completati: i tentativi "In attesa" non
+                        // sono pagamenti e non vanno mostrati ne' contati.
+                        const n = (userDetails?.purchases ?? []).filter(
+                          (p: any) => p.status === "completed"
+                        ).length;
+                        return n > 0 ? (
+                          <span className="ml-2 px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-xs font-semibold">
+                            {n}
+                          </span>
+                        ) : null;
+                      })()}
                     </Button>
 
                     <div className="space-y-2 border-t pt-3">
@@ -1383,7 +1390,7 @@ export function UserBanManager() {
                 (p) => p.product_type === "premium"
               ).length;
 
-              if (purchases.length === 0) {
+              if (completedPurchases.length === 0) {
                 return (
                   <div className="text-center py-12 text-muted-foreground">
                     <Wallet className="h-12 w-12 mx-auto mb-3 opacity-30" />
@@ -1423,10 +1430,10 @@ export function UserBanManager() {
                   {/* Lista acquisti */}
                   <div className="space-y-2">
                     <h4 className="text-sm font-semibold text-foreground/80">
-                      Dettaglio ({purchases.length} {purchases.length === 1 ? "acquisto" : "acquisti"})
+                      Dettaglio ({completedPurchases.length} {completedPurchases.length === 1 ? "acquisto" : "acquisti"})
                     </h4>
                     <div className="space-y-2">
-                      {purchases.map((p: any) => {
+                      {completedPurchases.map((p: any) => {
                         const isGift = p.product_type === "gift_credits";
                         const isCredits = p.product_type === "credits";
                         const isPremium = p.product_type === "premium";
