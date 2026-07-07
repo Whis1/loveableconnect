@@ -1,19 +1,20 @@
 -- =============================================================================
--- Cronologia Azioni admin: pulizia a 24 ore (prima erano 48h e, soprattutto,
--- la funzione realmente attiva in produzione non filtrava per tempo, quindi
--- restavano visibili voci di settimane prima).
+-- Cronologia Azioni admin: pulizia a 24 ore.
 --
--- Qui si fa in modo che:
---   1) get_user_actions elimini FISICAMENTE le voci piu' vecchie di 24h ad
---       OGNI apertura della cronologia (non solo quando si compie un'azione),
---      e ritorni solo le ultime 24h.
---   2) log_user_action pulisca a 24h invece che 48h.
--- send_inbox_to_all NON viene toccata (ha la firma con premi p_credits/p_likes):
--- la sua eventuale pulizia interna diventa ininfluente perche' ci pensa
--- get_user_actions ad ogni lettura.
+-- IMPORTANTE: get_user_actions RESTITUISCE una tabella, quindi viene eseguita
+-- in sola lettura: NON puo' contenere una DELETE (un primo tentativo con la
+-- DELETE al suo interno faceva fallire la RPC -> "Cronologia non disponibile").
+-- La cancellazione fisica e' quindi affidata a:
+--   1) un job pg_cron ORARIO, che elimina tutto cio' che supera le 24h anche
+--       se nessun admin compie azioni e nessuno apre il pannello;
+--   2) log_user_action, che pulisce ad ogni nuova azione (funzione void, la
+--       DELETE al suo interno e' consentita).
+-- get_user_actions filtra comunque alle ultime 24h in lettura, quindi le voci
+-- vecchie non compaiono mai anche nel breve intervallo prima del job.
+-- send_inbox_to_all NON viene toccata (mantiene la firma con premi).
 -- =============================================================================
 
--- READ + PULIZIA: elimina >24h e ritorna le ultime 24h (solo admin).
+-- READ (sola lettura): ritorna solo le ultime 24h. Nessuna DELETE qui dentro.
 CREATE OR REPLACE FUNCTION public.get_user_actions()
 RETURNS TABLE (
   id uuid, admin_email text, action_type text, target_nickname text,
@@ -25,9 +26,6 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin') THEN
     RAISE EXCEPTION 'Non autorizzato';
   END IF;
-
-  -- Pulizia ad ogni apertura: via tutto cio' che ha piu' di 24 ore.
-  DELETE FROM admin_user_actions WHERE created_at < now() - interval '24 hours';
 
   RETURN QUERY
     SELECT a.id, a.admin_email, a.action_type, a.target_nickname, a.message,
@@ -63,6 +61,19 @@ BEGIN
 END;
 $$;
 GRANT EXECUTE ON FUNCTION public.log_user_action(text, uuid, text, text, uuid) TO authenticated;
+
+-- Job orario che elimina le voci oltre le 24h, indipendente da azioni/aperture.
+DO $$
+BEGIN
+  PERFORM cron.unschedule('purge-admin-user-actions-24h');
+EXCEPTION WHEN OTHERS THEN
+  NULL;
+END $$;
+SELECT cron.schedule(
+  'purge-admin-user-actions-24h',
+  '0 * * * *',
+  $$DELETE FROM public.admin_user_actions WHERE created_at < now() - interval '24 hours'$$
+);
 
 -- Purga immediata delle voci vecchie gia' presenti (es. quelle di giugno).
 DELETE FROM public.admin_user_actions WHERE created_at < now() - interval '24 hours';
