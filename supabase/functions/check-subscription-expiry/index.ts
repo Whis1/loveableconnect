@@ -1,33 +1,166 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { getDisplayName, replaceTemplateVars, userTemplateVars } from "../_shared/email-template.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+type UserCreditRow = {
+  user_id: string;
+  premium_expires_at: string;
+  subscription_type?: string | null;
+  premium_tier?: string | null;
+};
+
+type EmailTemplate = {
+  subject: string;
+  html_content: string;
+};
+
+const siteUrl = "https://loveableconnect.it";
+
+const formatDate = (value: string | Date) =>
+  new Date(value).toLocaleDateString("it-IT", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+const getPlanName = (subscriptionType?: string | null, premiumTier?: string | null) => {
+  if (subscriptionType === "weekly") return "Premium Settimanale";
+  if (subscriptionType === "monthly" && premiumTier === "standard") return "Platino";
+  if (subscriptionType === "monthly") return "Premium Mensile";
+  return "Premium";
+};
+
+const getTierName = (subscriptionType?: string | null, premiumTier?: string | null) => {
+  if (subscriptionType === "weekly") return "Settimanale";
+  if (premiumTier === "standard") return "Platino";
+  return "Premium";
+};
+
+const loadTemplate = async (supabase: ReturnType<typeof createClient>, templateKey: string) => {
+  const { data, error } = await supabase
+    .from("email_templates")
+    .select("subject, html_content")
+    .eq("template_key", templateKey)
+    .maybeSingle();
+
+  if (error) {
+    console.error(`Template ${templateKey} non caricato:`, error);
+    return null;
+  }
+
+  return data as EmailTemplate | null;
+};
+
+const buildVariables = (
+  recipientName: string,
+  userCredit: UserCreditRow,
+  extra: Record<string, string | number> = {},
+) => {
+  const planName = getPlanName(userCredit.subscription_type, userCredit.premium_tier);
+  const tier = getTierName(userCredit.subscription_type, userCredit.premium_tier);
+  const expiresAt = formatDate(userCredit.premium_expires_at);
+
+  return {
+    ...userTemplateVars(recipientName, ["recipient", "receiver", "user"]),
+    subscriptionType: planName,
+    planName,
+    tier,
+    expiresAt,
+    expiryDate: expiresAt,
+    renewalUrl: `${siteUrl}/credits`,
+    reactivateUrl: `${siteUrl}/credits`,
+    freeCredits: 10,
+    freeLikes: 5,
+    benefits:
+      "<li>Crediti e like secondo il piano acquistato</li><li>Accesso ai vantaggi Premium/Platino finche' l'abbonamento e' attivo</li>",
+    ...extra,
+  };
+};
+
+const fallbackExpiringHtml = (variables: Record<string, string | number | boolean | null | undefined>) => `
+  <!DOCTYPE html>
+  <html lang="it">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin:0; padding:0; background:#fff7ed; font-family:'Segoe UI',Roboto,Arial,sans-serif;">
+      <div style="max-width:600px; margin:32px auto; background:#ffffff; border-radius:18px; overflow:hidden;">
+        <div style="background:#f59e0b; color:#ffffff; padding:32px 24px; text-align:center;">
+          <div style="font-size:48px;">⏰</div>
+          <h1 style="margin:8px 0 0;">Abbonamento in Scadenza</h1>
+          <p style="margin:8px 0 0;">Il tuo abbonamento sta per scadere</p>
+        </div>
+        <div style="padding:28px 24px; color:#374151;">
+          <p>Ciao ${variables.userName}, il tuo abbonamento <strong>${variables.subscriptionType}</strong> scadra' tra <strong>${variables.daysRemaining} ${variables.daysRemaining === 1 ? "giorno" : "giorni"}</strong>.</p>
+          <p>Data di scadenza: <strong>${variables.expiresAt}</strong></p>
+          <p>Dopo la scadenza tornerai al piano gratuito con <strong>10 crediti</strong> e <strong>5 like giornalieri</strong>.</p>
+          <p style="text-align:center; margin-top:28px;">
+            <a href="${siteUrl}/credits" style="display:inline-block; background:#ec4899; color:white; padding:14px 28px; border-radius:12px; text-decoration:none; font-weight:700;">Rinnova Ora</a>
+          </p>
+        </div>
+      </div>
+    </body>
+  </html>
+`;
+
+const fallbackExpiredHtml = (variables: Record<string, string | number | boolean | null | undefined>) => `
+  <!DOCTYPE html>
+  <html lang="it">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin:0; padding:0; background:#fef2f2; font-family:'Segoe UI',Roboto,Arial,sans-serif;">
+      <div style="max-width:600px; margin:32px auto; background:#ffffff; border-radius:18px; overflow:hidden;">
+        <div style="background:#dc2626; color:#ffffff; padding:32px 24px; text-align:center;">
+          <div style="font-size:48px;">💔</div>
+          <h1 style="margin:8px 0 0;">Abbonamento Scaduto</h1>
+          <p style="margin:8px 0 0;">Il tuo abbonamento e' scaduto</p>
+        </div>
+        <div style="padding:28px 24px; color:#374151;">
+          <p>Ciao ${variables.userName}, il tuo abbonamento <strong>${variables.subscriptionType}</strong> e' scaduto il <strong>${variables.expiresAt}</strong>.</p>
+          <p>Sei tornato al piano gratuito con <strong>10 crediti</strong> e <strong>5 like giornalieri</strong>.</p>
+          <p style="text-align:center; margin-top:28px;">
+            <a href="${siteUrl}/credits" style="display:inline-block; background:#ec4899; color:white; padding:14px 28px; border-radius:12px; text-decoration:none; font-weight:700;">Riattiva Premium</a>
+          </p>
+        </div>
+      </div>
+    </body>
+  </html>
+`;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
+  const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
   );
 
   try {
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
     const now = new Date();
-    
-    // Find subscriptions expiring in 3 days
+
+    const [expiringTemplate, expiredTemplate] = await Promise.all([
+      loadTemplate(supabase, "subscription_expiring"),
+      loadTemplate(supabase, "subscription_expired"),
+    ]);
+
     const threeDaysFromNow = new Date(now);
     threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
-    
-    const { data: expiringUsers, error: expiringError } = await supabaseClient
+
+    const { data: expiringUsers, error: expiringError } = await supabase
       .from("user_credits")
-      .select("user_id, premium_expires_at")
+      .select("user_id, premium_expires_at, subscription_type, premium_tier")
       .eq("is_premium", true)
       .gte("premium_expires_at", now.toISOString())
       .lte("premium_expires_at", threeDaysFromNow.toISOString());
@@ -36,107 +169,43 @@ serve(async (req) => {
       console.error("Error fetching expiring subscriptions:", expiringError);
     }
 
-    // Send warning emails
     if (expiringUsers && expiringUsers.length > 0) {
       console.log(`Found ${expiringUsers.length} subscriptions expiring soon`);
-      
-      for (const userCredit of expiringUsers) {
-        const { data: profile } = await supabaseClient
+
+      for (const userCredit of expiringUsers as UserCreditRow[]) {
+        const { data: profile } = await supabase
           .from("profiles")
-          .select("id")
+          .select("id, nickname, full_name")
           .eq("id", userCredit.user_id)
-          .single();
+          .maybeSingle();
 
         if (!profile) continue;
 
-        const { data: { user } } = await supabaseClient.auth.admin.getUserById(userCredit.user_id);
-        
+        const { data: { user } } = await supabase.auth.admin.getUserById(userCredit.user_id);
         if (!user?.email) continue;
 
         const expiryDate = new Date(userCredit.premium_expires_at);
-        const daysLeft = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        const daysLeft = Math.max(1, Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+        const recipientName = getDisplayName(profile, user);
+        const variables = buildVariables(recipientName, userCredit, {
+          daysRemaining: daysLeft,
+          daysLeft,
+          daysText: `${daysLeft} ${daysLeft === 1 ? "giorno" : "giorni"}`,
+        });
+
+        const subject = expiringTemplate
+          ? replaceTemplateVars(expiringTemplate.subject, variables)
+          : `Il tuo abbonamento scade tra ${daysLeft} ${daysLeft === 1 ? "giorno" : "giorni"} ⏰`;
+        const html = expiringTemplate
+          ? replaceTemplateVars(expiringTemplate.html_content, variables)
+          : fallbackExpiringHtml(variables);
 
         try {
           await resend.emails.send({
-            from: "LoveableConnect <noreply@loveableconnect.com>",
+            from: "LoveableConnect 💕 <noreply@loveableconnect.com>",
             to: [user.email],
-            subject: "⚠️ Il tuo Premium sta per scadere - LoveableConnect",
-            html: `
-              <!DOCTYPE html>
-              <html>
-              <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              </head>
-              <body style="margin: 0; padding: 0; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">
-                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(245, 158, 11, 0.2);">
-                  
-                  <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 40px 20px; text-align: center;">
-                    <div style="font-size: 64px; margin-bottom: 10px;">⏰</div>
-                    <h1 style="color: white; font-size: 26px; margin: 0; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">Abbonamento in Scadenza</h1>
-                    <p style="color: rgba(255,255,255,0.95); margin: 10px 0 0 0; font-size: 16px;">Attenzione! Il tuo Premium sta per scadere</p>
-                  </div>
-
-                  <div style="padding: 40px 30px;">
-                    <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0 0 25px 0;">
-                      ⚠️ Ciao! Ti informiamo che il tuo abbonamento Premium scadrà tra <strong style="color: #f59e0b;">${daysLeft} ${daysLeft === 1 ? 'giorno' : 'giorni'}</strong>.
-                    </p>
-
-                    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 4px solid #f59e0b;">
-                      <h3 style="color: #92400e; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">📋 Dettagli Abbonamento</h3>
-                      <div style="color: #78350f; font-size: 15px; line-height: 1.8;">
-                        <p style="margin: 8px 0;"><strong>Data di Scadenza:</strong> ${expiryDate.toLocaleDateString('it-IT')}</p>
-                        <p style="margin: 8px 0;"><strong>Tempo Rimanente:</strong> <span style="font-size: 20px; color: #f59e0b; font-weight: 700;">${daysLeft}</span> ${daysLeft === 1 ? 'giorno' : 'giorni'}</p>
-                      </div>
-                    </div>
-
-                    <div style="background: #fee2e2; padding: 20px; border-radius: 12px; margin: 25px 0;">
-                      <p style="margin: 0 0 10px 0; color: #991b1b; font-size: 15px; font-weight: 600;">
-                        ⚡ Dopo la scadenza:
-                      </p>
-                      <ul style="color: #7f1d1d; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
-                        <li>Tornerai al piano gratuito</li>
-                        <li>26 crediti gratuiti ogni 24 ore</li>
-                        <li>Accesso limitato ai likes ricevuti</li>
-                        <li>Nessuna priorità nella visualizzazione</li>
-                      </ul>
-                    </div>
-
-                    <div style="text-align: center; margin: 30px 0;">
-                      <a href="${Deno.env.get("SUPABASE_URL")?.replace('https://', 'https://').replace('.supabase.co', '.lovable.app')}/credits" 
-                         style="background: linear-gradient(135deg, #ec4899 0%, #9333ea 100%); 
-                                color: white; 
-                                padding: 16px 40px; 
-                                text-decoration: none; 
-                                border-radius: 12px; 
-                                display: inline-block;
-                                font-weight: 700;
-                                font-size: 16px;
-                                box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);">
-                        👑 Rinnova Ora
-                      </a>
-                    </div>
-
-                    <div style="background: #dbeafe; padding: 20px; border-radius: 12px; margin: 25px 0; text-align: center;">
-                      <p style="margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;">
-                        💡 Il rinnovo è veloce e i tuoi vantaggi Premium continuano senza interruzioni!
-                      </p>
-                    </div>
-
-                    <p style="color: #6b7280; font-size: 13px; line-height: 1.6; margin: 25px 0 0 0; text-align: center; font-style: italic;">
-                      Se hai già rinnovato, ignora questa email.
-                    </p>
-                  </div>
-
-                  <div style="background: #f9fafb; padding: 25px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
-                    <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-                      💕 <strong style="color: #ec4899;">LoveableConnect</strong> - Connessioni autentiche, storie vere
-                    </p>
-                  </div>
-                </div>
-              </body>
-              </html>
-            `,
+            subject,
+            html,
           });
           console.log(`Expiry warning sent to ${user.email}`);
         } catch (emailError) {
@@ -145,13 +214,12 @@ serve(async (req) => {
       }
     }
 
-    // Find expired subscriptions (expired in last 24 hours)
     const oneDayAgo = new Date(now);
     oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
-    const { data: expiredUsers, error: expiredError } = await supabaseClient
+    const { data: expiredUsers, error: expiredError } = await supabase
       .from("user_credits")
-      .select("user_id, premium_expires_at, is_premium")
+      .select("user_id, premium_expires_at, subscription_type, premium_tier")
       .eq("is_premium", true)
       .lt("premium_expires_at", now.toISOString())
       .gte("premium_expires_at", oneDayAgo.toISOString());
@@ -160,138 +228,49 @@ serve(async (req) => {
       console.error("Error fetching expired subscriptions:", expiredError);
     }
 
-    // Send expired notification and update status
     if (expiredUsers && expiredUsers.length > 0) {
       console.log(`Found ${expiredUsers.length} expired subscriptions`);
-      
-      for (const userCredit of expiredUsers) {
-        const { data: profile } = await supabaseClient
+
+      for (const userCredit of expiredUsers as UserCreditRow[]) {
+        const { data: profile } = await supabase
           .from("profiles")
-          .select("id")
+          .select("id, nickname, full_name")
           .eq("id", userCredit.user_id)
-          .single();
+          .maybeSingle();
 
         if (!profile) continue;
 
-        const { data: { user } } = await supabaseClient.auth.admin.getUserById(userCredit.user_id);
-        
+        const { data: { user } } = await supabase.auth.admin.getUserById(userCredit.user_id);
         if (!user?.email) continue;
 
-        const expiryDate = new Date(userCredit.premium_expires_at);
+        const recipientName = getDisplayName(profile, user);
+        const variables = buildVariables(recipientName, userCredit);
+
+        const subject = expiredTemplate
+          ? replaceTemplateVars(expiredTemplate.subject, variables)
+          : "Il tuo abbonamento e' scaduto 💔";
+        const html = expiredTemplate
+          ? replaceTemplateVars(expiredTemplate.html_content, variables)
+          : fallbackExpiredHtml(variables);
 
         try {
           await resend.emails.send({
-            from: "LoveableConnect <noreply@loveableconnect.com>",
+            from: "LoveableConnect 💕 <noreply@loveableconnect.com>",
             to: [user.email],
-            subject: "💔 Il tuo Premium è scaduto - LoveableConnect",
-            html: `
-              <!DOCTYPE html>
-              <html>
-              <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              </head>
-              <body style="margin: 0; padding: 0; background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);">
-                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(220, 38, 38, 0.15);">
-                  
-                  <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 40px 20px; text-align: center;">
-                    <div style="font-size: 64px; margin-bottom: 10px;">💔</div>
-                    <h1 style="color: white; font-size: 26px; margin: 0; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">Abbonamento Scaduto</h1>
-                    <p style="color: rgba(255,255,255,0.95); margin: 10px 0 0 0; font-size: 16px;">Ci mancherai come Premium!</p>
-                  </div>
-
-                  <div style="padding: 40px 30px;">
-                    <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0 0 25px 0;">
-                      Ciao! Il tuo abbonamento Premium è scaduto il <strong style="color: #dc2626;">${expiryDate.toLocaleDateString('it-IT')}</strong>.
-                    </p>
-
-                    <div style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 4px solid #dc2626;">
-                      <h3 style="color: #991b1b; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">🔄 Cosa è cambiato</h3>
-                      <ul style="color: #7f1d1d; font-size: 15px; line-height: 1.8; margin: 0; padding-left: 20px;">
-                        <li style="margin-bottom: 8px;">Sei tornato al piano gratuito</li>
-                        <li style="margin-bottom: 8px;">26 crediti gratuiti ogni 24 ore</li>
-                        <li style="margin-bottom: 8px;">Accesso limitato ai likes ricevuti</li>
-                        <li style="margin-bottom: 8px;">Nessuna priorità nella visualizzazione</li>
-                        <li>Badge Premium rimosso dal profilo</li>
-                      </ul>
-                    </div>
-
-                    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 25px; border-radius: 12px; margin: 25px 0; text-align: center;">
-                      <div style="font-size: 48px; margin-bottom: 10px;">✨</div>
-                      <p style="margin: 0; color: #92400e; font-size: 16px; font-weight: 600; line-height: 1.6;">
-                        Ma non preoccuparti!
-                      </p>
-                      <p style="margin: 10px 0 0 0; color: #78350f; font-size: 14px; line-height: 1.6;">
-                        Puoi comunque continuare a usare LoveableConnect con il piano gratuito. Ogni giorno riceverai 26 crediti che si ricaricano automaticamente!
-                      </p>
-                    </div>
-
-                    <div style="text-align: center; margin: 30px 0;">
-                      <a href="${Deno.env.get("SUPABASE_URL")?.replace('https://', 'https://').replace('.supabase.co', '.lovable.app')}/credits" 
-                         style="background: linear-gradient(135deg, #ec4899 0%, #9333ea 100%); 
-                                color: white; 
-                                padding: 16px 40px; 
-                                text-decoration: none; 
-                                border-radius: 12px; 
-                                display: inline-block;
-                                font-weight: 700;
-                                font-size: 16px;
-                                box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);">
-                        👑 Riattiva Premium
-                      </a>
-                    </div>
-
-                    <div style="background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%); padding: 25px; border-radius: 12px; margin: 25px 0;">
-                      <h3 style="color: #6b21a8; margin: 0 0 15px 0; font-size: 17px; font-weight: 600; text-align: center;">
-                        💜 Cosa ti sei perso come Premium
-                      </h3>
-                      <div style="color: #6b21a8; font-size: 14px; line-height: 1.8;">
-                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                          <span style="font-size: 20px; margin-right: 10px;">💬</span>
-                          <span>Crediti illimitati per messaggi</span>
-                        </div>
-                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                          <span style="font-size: 20px; margin-right: 10px;">❤️</span>
-                          <span>Accesso completo ai likes ricevuti</span>
-                        </div>
-                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                          <span style="font-size: 20px; margin-right: 10px;">⭐</span>
-                          <span>Priorità nella visualizzazione</span>
-                        </div>
-                        <div style="display: flex; align-items: center;">
-                          <span style="font-size: 20px; margin-right: 10px;">👑</span>
-                          <span>Badge Premium esclusivo</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 25px 0 0 0; text-align: center;">
-                      Grazie per essere stato parte della famiglia Premium! 💖
-                    </p>
-                  </div>
-
-                  <div style="background: #f9fafb; padding: 25px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
-                    <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-                      💕 <strong style="color: #ec4899;">LoveableConnect</strong> - Connessioni autentiche, storie vere
-                    </p>
-                  </div>
-                </div>
-              </body>
-              </html>
-            `,
+            subject,
+            html,
           });
           console.log(`Expiry notification sent to ${user.email}`);
         } catch (emailError) {
           console.error(`Error sending expiry notification to ${user.email}:`, emailError);
         }
 
-        // Update user to non-premium and reset to free tier values (10 / 5)
-        await supabaseClient
+        await supabase
           .from("user_credits")
           .update({
             is_premium: false,
-            subscription_type: 'none',
-            premium_tier: 'none',
+            subscription_type: "none",
+            premium_tier: "none",
             premium_expires_at: null,
             balance: 10,
             daily_likes_remaining: 5,
@@ -303,24 +282,27 @@ serve(async (req) => {
           })
           .eq("user_id", userCredit.user_id);
 
-        // Rimuove il tema "Estetica Premium" alla scadenza dell'abbonamento.
-        await supabaseClient
+        await supabase
           .from("profiles")
-          .update({ profile_theme: 'none' })
+          .update({ profile_theme: "none" })
           .eq("id", userCredit.user_id);
       }
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         expiring_notified: expiringUsers?.length || 0,
-        expired_notified: expiredUsers?.length || 0 
+        expired_notified: expiredUsers?.length || 0,
+        templates_used: {
+          subscription_expiring: Boolean(expiringTemplate),
+          subscription_expired: Boolean(expiredTemplate),
+        },
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
-      }
+      },
     );
   } catch (error) {
     console.error("Error in check-subscription-expiry:", error);

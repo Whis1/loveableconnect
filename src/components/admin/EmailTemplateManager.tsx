@@ -23,6 +23,9 @@ interface EmailTemplate {
   updated_at: string;
 }
 
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
+
 export function EmailTemplateManager() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,15 +44,15 @@ export function EmailTemplateManager() {
 
   const loadTemplates = async () => {
     try {
-      const { data, error } = await (supabase
-        .from('email_templates' as any)
+      const { data, error } = await supabase
+        .from('email_templates')
         .select('*')
-        .order('template_name') as any);
+        .order('template_name');
 
       if (error) throw error;
       setTemplates((data as EmailTemplate[]) || []);
-    } catch (error: any) {
-      toast.error("Errore nel caricamento dei template: " + error.message);
+    } catch (error: unknown) {
+      toast.error("Errore nel caricamento dei template: " + getErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -66,12 +69,12 @@ export function EmailTemplateManager() {
 
     setSaving(true);
     try {
-      const { error } = await (supabase
-        .from('email_templates' as any) as any)
+      const { error } = await supabase
+        .from('email_templates')
         .update({
           subject: editedSubject,
           html_content: editedContent,
-        } as any)
+        })
         .eq("id", selectedTemplate.id);
 
       if (error) throw error;
@@ -85,8 +88,8 @@ export function EmailTemplateManager() {
         subject: editedSubject,
         html_content: editedContent,
       });
-    } catch (error: any) {
-      toast.error("Errore nel salvataggio: " + error.message);
+    } catch (error: unknown) {
+      toast.error("Errore nel salvataggio: " + getErrorMessage(error));
     } finally {
       setSaving(false);
     }
@@ -101,12 +104,12 @@ export function EmailTemplateManager() {
 
     setSaving(true);
     try {
-      const { error } = await (supabase
-        .from('email_templates' as any) as any)
+      const { error } = await supabase
+        .from('email_templates')
         .update({
           subject: selectedTemplate.subject,
           html_content: selectedTemplate.default_html_content,
-        } as any)
+        })
         .eq("id", selectedTemplate.id);
 
       if (error) throw error;
@@ -114,8 +117,8 @@ export function EmailTemplateManager() {
       toast.success("Template ripristinato!");
       setEditedContent(selectedTemplate.default_html_content);
       loadTemplates();
-    } catch (error: any) {
-      toast.error("Errore nel ripristino: " + error.message);
+    } catch (error: unknown) {
+      toast.error("Errore nel ripristino: " + getErrorMessage(error));
     } finally {
       setSaving(false);
     }
@@ -147,8 +150,8 @@ export function EmailTemplateManager() {
       setEmailDialogOpen(false);
       setRecipientEmail("");
       setSelectedEmailTemplate(null);
-    } catch (error: any) {
-      toast.error("Errore nell'invio dell'email: " + error.message);
+    } catch (error: unknown) {
+      toast.error("Errore nell'invio dell'email: " + getErrorMessage(error));
     } finally {
       setSendingEmail(false);
     }
@@ -282,9 +285,19 @@ export function EmailTemplateManager() {
                                   template.template_key === 'subscription_expiring') && (
                                   <>
                                     <li>{'{{subscriptionType}}'} - Tipo abbonamento</li>
+                                    <li>{'{{planName}}'} - Nome piano mostrato all'utente</li>
                                     <li>{'{{tier}}'} - Tier dell'abbonamento</li>
                                     <li>{'{{expiresAt}}'} - Data scadenza</li>
+                                    <li>{'{{renewalUrl}}'} - Link alla pagina rinnovo</li>
+                                    <li>{'{{freeCredits}}'} - Crediti del piano gratuito</li>
+                                    <li>{'{{freeLikes}}'} - Like giornalieri del piano gratuito</li>
                                     <li>{'{{benefits}}'} - Lista vantaggi</li>
+                                  </>
+                                )}
+                                {template.template_key === 'subscription_expiring' && (
+                                  <>
+                                    <li>{'{{daysRemaining}}'} - Giorni mancanti alla scadenza</li>
+                                    <li>{'{{daysText}}'} - Testo giorni già formattato</li>
                                   </>
                                 )}
                                 {template.template_key === 'gift_subscription' && (
