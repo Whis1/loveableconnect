@@ -116,7 +116,8 @@ function filterByProximity(
     if (p.is_admin_profile === true) return true;
     if (p.latitude == null || p.longitude == null) return false;
     const d = haversineKm(viewer.lat as number, viewer.lng as number, p.latitude, p.longitude);
-    p.distance = Math.round(d);
+    // NON impostiamo p.distance: niente badge "X km". Tutti i profili (admin e
+    // utenti reali vicini) mostrano la stessa scritta "Vicino alle tue parti".
     return d <= PROXIMITY_RADIUS_KM;
   });
 }
