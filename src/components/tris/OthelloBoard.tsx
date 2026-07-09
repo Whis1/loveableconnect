@@ -927,7 +927,7 @@ export const OthelloBoard = ({ opponent, onGameEnd, tournamentMode = false }: Ot
           </p>
         ) : (
           <p className="text-sm font-semibold">
-            {isPlayerTurn ? "🎯 Tocca a te" : "⏳ Sta giocando l'avversario..."}
+            {isPlayerTurn ? "🎯 Tocca a te" : "⏳ Turno dell'avversario..."}
           </p>
         )}
       </div>
