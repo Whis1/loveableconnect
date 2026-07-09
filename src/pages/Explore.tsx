@@ -82,6 +82,45 @@ function getRotationBucket(): number {
 // il dataset realistico del sito.
 const FETCH_CAP = 1000;
 
+// 📍 Raggio (km) entro cui mostrare gli utenti REALI rispetto alla posizione
+// del profilo di chi guarda. I profili admin sono SEMPRE mostrati, ovunque si
+// trovino. Modifica solo questo valore per allargare o stringere la zona.
+const PROXIMITY_RADIUS_KM = 100;
+
+/** Distanza in km tra due coordinate (formula dell'haversine). */
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+/**
+ * Filtro di prossimità della Bacheca:
+ *  - i profili admin restano SEMPRE (indipendentemente dalla loro posizione);
+ *  - gli utenti reali restano solo se entro PROXIMITY_RADIUS_KM da chi guarda;
+ *  - gli utenti reali senza coordinate vengono esclusi (distanza non calcolabile).
+ * Se chi guarda non ha una posizione impostata, NON si filtra nulla: si mostrano
+ * tutti come prima, così nessuno resta con la Bacheca vuota per colpa nostra.
+ */
+function filterByProximity(
+  list: Profile[],
+  viewer: { lat: number | null; lng: number | null }
+): Profile[] {
+  if (viewer.lat == null || viewer.lng == null) return list;
+  return list.filter((p) => {
+    if (p.is_admin_profile === true) return true;
+    if (p.latitude == null || p.longitude == null) return false;
+    const d = haversineKm(viewer.lat as number, viewer.lng as number, p.latitude, p.longitude);
+    p.distance = Math.round(d);
+    return d <= PROXIMITY_RADIUS_KM;
+  });
+}
+
 /**
  * Ordina i profili per PRIORITÀ globale:
  *  - abbonati mensili (premium mensile / platino) in cima (rank 0),
@@ -151,6 +190,9 @@ const Explore = () => {
   // 🔝 Elenco COMPLETO ordinato globalmente (priorità premium). La paginazione
   // Avanti/Indietro affetta semplicemente questo array lato client.
   const allSortedRef = useRef<Profile[]>([]);
+  // 📍 Posizione (dal profilo) di chi sta guardando: riferimento per il filtro
+  // di prossimità. null = nessuna posizione impostata → non si filtra.
+  const viewerLocRef = useRef<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
   // 📄 PAGINAZIONE: rimossi prefetch + observer refs (legacy infinite scroll)
 
   // Pre-caricare matches e hidden matches per performance
@@ -282,10 +324,15 @@ const Explore = () => {
       try {
         const { data: prof } = await supabase
           .from("profiles")
-          .select("onboarding_completed")
+          .select("onboarding_completed, latitude, longitude")
           .eq("id", session.user.id)
           .maybeSingle();
         needsOnboarding = !!(prof && (prof as any).onboarding_completed === false);
+        // 📍 Salva la posizione di chi guarda per il filtro di prossimità.
+        viewerLocRef.current = {
+          lat: (prof as any)?.latitude ?? null,
+          lng: (prof as any)?.longitude ?? null,
+        };
       } catch { /* colonna assente o errore: ignora */ }
 
       // 💾 Filtri salvati dall'utente: se presenti, ripristina la ricerca
@@ -317,7 +364,8 @@ const Explore = () => {
       }
 
       if (!cancelled && cachedProfiles.length > 0) {
-        setProfiles((cachedProfiles as Profile[]).filter((profile) => !matches.has(profile.id)));
+        const cachedVisible = (cachedProfiles as Profile[]).filter((profile) => !matches.has(profile.id));
+        setProfiles(filterByProximity(cachedVisible, viewerLocRef.current));
         setLoading(false);
       }
 
@@ -546,6 +594,9 @@ const Explore = () => {
       let allProfiles: Profile[] = (profilesData || [])
         .filter(profile => !matchedUserIds.has(profile.id)) as Profile[];
 
+      // 📍 Filtro di prossimità: admin sempre, utenti reali solo se vicini.
+      allProfiles = filterByProximity(allProfiles, viewerLocRef.current);
+
       // Tipi di abbonamento (per la priorità) via RPC (bypassa RLS).
       const profileIds = allProfiles.map(p => p.id);
       const { data: subsData } = await withFallback(
@@ -685,6 +736,9 @@ const Explore = () => {
 
     let filteredProfiles: Profile[] = (profilesData || [])
       .filter(profile => !matchedUserIds.has(profile.id)) as Profile[];
+
+    // 📍 Filtro di prossimità anche nella ricerca filtrata (admin sempre).
+    filteredProfiles = filterByProximity(filteredProfiles, viewerLocRef.current);
 
     const profileIds = filteredProfiles.map(p => p.id);
     const { data: subsData } = await withFallback(
