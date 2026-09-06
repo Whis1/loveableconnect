@@ -233,8 +233,11 @@ const Explore = () => {
       if (!cancelled) setLoading(false);
     }, 3500);
 
+    let sessionUserId: string | null = null;
+
     const initializeExplore = async () => {
       const { data: { session } } = await withTimeout(supabase.auth.getSession(), 3000);
+      sessionUserId = session?.user.id ?? null;
       
       if (!session) {
         navigate("/auth");
@@ -377,7 +380,8 @@ const Explore = () => {
         },
         async (payload) => {
           // When a match is deleted, the profiles should reappear
-          await loadAllProfiles(session.user.id);
+          if (!sessionUserId) return;
+          await loadAllProfiles(sessionUserId);
         }
       )
       .subscribe();
@@ -397,8 +401,8 @@ const Explore = () => {
           const newMatch = payload.new as any;
           
           // Check if this match involves the current user
-          if (newMatch.user1_id === session.user.id || newMatch.user2_id === session.user.id) {
-            const otherUserId = newMatch.user1_id === session.user.id ? newMatch.user2_id : newMatch.user1_id;
+          if (sessionUserId && (newMatch.user1_id === sessionUserId || newMatch.user2_id === sessionUserId)) {
+            const otherUserId = newMatch.user1_id === sessionUserId ? newMatch.user2_id : newMatch.user1_id;
             
             if (ignoreNextRealtimeRef.current) {
               console.log('⚠️ Ignoring realtime match banner due to immediate onMatch');

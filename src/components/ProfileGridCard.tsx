@@ -397,12 +397,12 @@ const ProfileGridCardComponent = ({ profile, currentUserId, likedProfileIds, has
     // function in cold start), invece di lasciare il bottone in
     // "Caricamento..." all'infinito alziamo un errore chiaro all'utente.
     const withTimeout = <T,>(
-      p: Promise<T>,
+      p: PromiseLike<T>,
       ms: number,
       label: string
     ): Promise<T> =>
       Promise.race<T>([
-        p,
+        Promise.resolve(p),
         new Promise<T>((_, reject) =>
           setTimeout(
             () => reject(new Error(`TIMEOUT_${label}`)),

@@ -24,11 +24,11 @@ export const withTimeout = async <T>(
   }
 };
 
-export const withFallback = async <T>(
+export const withFallback = async <T, F = T>(
   promise: PromiseLike<T>,
-  fallback: T,
+  fallback: F,
   timeoutMs = 6000
-): Promise<T> => {
+): Promise<T | F> => {
   try {
     return await withTimeout(promise, timeoutMs);
   } catch {

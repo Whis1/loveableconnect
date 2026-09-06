@@ -29,6 +29,8 @@ interface Profile {
   interests: string[] | null;
   avatar_url: string | null;
   photos: string[] | null;
+  birthdate?: string | null;
+  tutorial_completed?: boolean | null;
 }
 interface UserRole {
   role: string;
