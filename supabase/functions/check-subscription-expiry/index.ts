@@ -257,14 +257,16 @@ serve(async (req) => {
       }
     }
 
+    const failed = expiringFailed + expiredFailed;
+
     return jsonResponse({
-      success: true,
+      success: failed === 0,
       revision: REVISION,
       expiring_sent: expiringSent,
       expiring_failed: expiringFailed,
       expired_sent: expiredSent,
       expired_failed: expiredFailed,
-    });
+    }, failed > 0 ? 500 : 200);
   } catch (error) {
     console.error("Errore in check-subscription-expiry:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
