@@ -1,18 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
 import Dashboard from "./Dashboard";
-import { useProfiles } from "@/hooks/useProfiles";
-import { useLikes } from "@/hooks/useLikes";
-import { useCredits } from "@/hooks/useCredits";
-import { useDailyLikes } from "@/hooks/useDailyLikes";
 import { getStoredUserId } from "@/lib/storedSession";
 import { PageLoader } from "@/components/PageLoader";
 
 const Index = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const [userId, setUserId] = useState(getStoredUserId);
   // Controlla subito (in modo sincrono) se c'è una sessione salvata: così la
   // home appare all'istante, senza aspettare getSession() che può bloccarsi.
   const [hasStoredSession] = useState(() => getStoredUserId() !== null);
@@ -53,6 +48,7 @@ const Index = () => {
 
     // 1) Listen to auth state changes FIRST to avoid race conditions
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id ?? null);
       if (session) {
         setIsAuthenticated(true);
         // Defer side-effects to avoid blocking the callback
@@ -74,6 +70,7 @@ const Index = () => {
 
     // 2) Then check for an existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id ?? null);
       if (session) {
         setIsAuthenticated(true);
         setTimeout(() => {
@@ -122,18 +119,7 @@ const Index = () => {
     return null;
   }
 
-  return <AuthenticatedApp />;
-};
-
-// Componente che carica i dati solo dopo l'autenticazione
-const AuthenticatedApp = () => {
-  // Pre-carica tutti i dati necessari solo dopo l'autenticazione
-  useProfiles();
-  useLikes();
-  useCredits();
-  useDailyLikes();
-
-  return <Dashboard />;
+  return <Dashboard key={userId} />;
 };
 
 export default Index;

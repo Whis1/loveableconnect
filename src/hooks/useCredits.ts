@@ -1,9 +1,9 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
+import { useCurrentUserId } from "@/hooks/useCurrentUserId";
 import { getStoredUserId } from "@/lib/storedSession";
-import { withTimeout } from "@/lib/async";
+import { TimeoutError, withTimeout } from "@/lib/async";
 import { reportSupabaseTimeout } from "@/hooks/useConnectionWatchdog";
 
 interface UserCredits {
@@ -18,33 +18,11 @@ interface UserCredits {
   premium_tier?: string;
 }
 
-const fetchCredits = async (): Promise<UserCredits | null> => {
-  // 🚨 BUG NOTO Supabase v2: auth.getSession() può piantarsi per minuti,
-  // lasciando "Caricamento..." infinito sul pannello crediti.
-  // FIX: leggi userId in modo SINCRONO da localStorage (stesso approccio
-  // usato in deductCredits). Se non c'è, fallback a getSession con timeout.
-  let userId = getStoredUserId();
+export const fetchCredits = async (userId: string): Promise<UserCredits> => {
+  // Inactive cached queries must not load or reset a previous account's data.
+  if (!userId || userId !== getStoredUserId()) throw new Error("Sessione cambiata");
 
-  if (!userId) {
-    try {
-      const sessionResult = (await Promise.race([
-        supabase.auth.getSession(),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("TIMEOUT_GET_SESSION")), 4000)
-        ),
-      ])) as any;
-      userId = sessionResult?.data?.session?.user?.id ?? null;
-    } catch {
-      // Timeout o errore: non possiamo recuperare l'utente
-      return null;
-    }
-  }
-
-  if (!userId) return null;
-
-  // 🛡️ TIMEOUT su SELECT user_credits: se il token JWT è scaduto/corrotto
-  // la query Supabase rest può restare in "pending" per minuti senza errore.
-  // Il timeout 6s sblocca il loading anche in quel caso.
+  // Bound the request so a stalled read can be retried by React Query.
   let existingCredits: any = null;
   try {
     const selectResult = await withTimeout(
@@ -56,32 +34,27 @@ const fetchCredits = async (): Promise<UserCredits | null> => {
       12000, // 12s: backend Lovable Cloud Supabase sotto carico
       "TIMEOUT_SELECT_USER_CREDITS"
     );
-    existingCredits = (selectResult as any).data;
+    if (selectResult.error) throw selectResult.error;
+    existingCredits = selectResult.data;
   } catch (e) {
-    console.warn("⚠️ fetchCredits timeout su SELECT user_credits:", e);
-    // 🛡️ Segnala al Connection Watchdog: se accumula 3 timeout in 15s
-    //    scatena auto-recovery (kill channels + refresh JWT + re-fetch).
-    reportSupabaseTimeout("fetchCredits");
-    // Ritorniamo null così loading=false e l'UI non resta appesa.
-    // Al prossimo refetch (5s dopo) ritenta automaticamente.
-    return null;
+    console.warn("fetchCredits: lettura saldo fallita", e);
+    if (e instanceof TimeoutError) reportSupabaseTimeout("fetchCredits");
+    // Reject: React Query retries and preserves the last successful balance.
+    throw e;
   }
 
   if (!existingCredits) {
-    await supabase.from("user_credits").insert({
+    const { error } = await withTimeout(supabase.from("user_credits").insert({
       user_id: userId,
       balance: 10,
-    });
-    return {
-      balance: 10,
-      is_premium: false,
-      last_daily_reset: new Date().toISOString(),
-      premium_expires_at: null,
-      credits_depleted_at: null,
-      daily_likes_remaining: 5,
-      daily_likes_reset_at: null,
-      subscription_type: 'none',
-    };
+    }), 12000);
+    // A concurrent initialization may already have created the row.
+    if (error && error.code !== "23505") throw error;
+    const result = await withTimeout(supabase.from("user_credits")
+      .select("*").eq("user_id", userId).single(), 12000);
+    if (result.error) throw result.error;
+    if (!result.data) throw new Error("Saldo non disponibile");
+    existingCredits = result.data;
   }
 
   // 🛡️ SCADENZA PREMIUM (rete di sicurezza in tempo reale).
@@ -96,7 +69,10 @@ const fetchCredits = async (): Promise<UserCredits | null> => {
     new Date(existingCredits.premium_expires_at).getTime() < Date.now()
   ) {
     try {
-      const { data: didReset } = await (supabase as any).rpc("enforce_premium_expiry");
+      const { data: didReset, error } = await withTimeout(
+        supabase.rpc("enforce_premium_expiry" as never), 12000
+      );
+      if (error) throw error;
       if (didReset) {
         return {
           balance: 10,
@@ -120,12 +96,10 @@ const fetchCredits = async (): Promise<UserCredits | null> => {
   // anche se il reset giornaliero non parte (verrà fatto al prossimo fetch).
   let resetData: any[] | null = null;
   try {
-    const rpcResult = (await Promise.race([
+    const rpcResult = await withTimeout(
       supabase.rpc("check_and_reset_user_credits", { _user_id: userId }),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("TIMEOUT_RESET_CREDITS")), 5000)
-      ),
-    ])) as any;
+      5000, "TIMEOUT_RESET_CREDITS"
+    );
     resetData = rpcResult?.data ?? null;
   } catch {
     resetData = null;
@@ -152,20 +126,19 @@ const fetchCredits = async (): Promise<UserCredits | null> => {
 export const useCredits = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const userId = useCurrentUserId();
 
-  const { data: credits, isLoading: loading } = useQuery({
-    queryKey: ["user-credits"],
-    queryFn: fetchCredits,
-    // 🛡️ Throttling aggressivo per evitare di saturare il backend:
-    //    prima refetchInterval=5s + staleTime=0 → 12 query al minuto, se
-    //    una query era lenta (es. 6s) si accumulava un backlog → timeout
-    //    a cascata. Ora 30s/30s = 2 query/min, niente spam.
+  const { data: credits, isLoading: loading, error, isFetching } = useQuery({
+    queryKey: ["user-credits", userId],
+    queryFn: () => fetchCredits(userId!),
+    enabled: !!userId,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
+    refetchOnMount: "always",
+    // Retry missing data promptly; poll successful balances less frequently.
     staleTime: 30 * 1000,
-    refetchInterval: 30 * 1000,
+    refetchInterval: (query) => query.state.data ? 30000 : 5000,
     refetchOnWindowFocus: true,
-    // 🔄 Mantieni i dati precedenti se la nuova query fallisce: niente
-    //    skeleton vuoto se l'utente ha già visto un balance.
-    placeholderData: (previousData) => previousData,
   });
 
   // 🚫 Realtime channel RIMOSSO per ridurre i channel attivi a runtime.
@@ -225,6 +198,8 @@ export const useCredits = () => {
   return {
     credits,
     loading,
+    error,
+    isFetching,
     refetch,
     deductCredits,
   };

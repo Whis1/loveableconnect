@@ -21,6 +21,7 @@ import { Tutorial } from "@/components/Tutorial";
 import { getStoredUserId } from "@/lib/storedSession";
 import { useMatchNotification } from "@/contexts/MatchNotificationContext";
 import loveIcon from "@/assets/love-icon.webp";
+import { withTimeout, withFallback } from "@/lib/async";
 interface Profile {
   id: string;
   full_name: string;
@@ -312,208 +313,181 @@ const Dashboard = () => {
     let likesChannel: ReturnType<typeof supabase.channel> | null = null;
     let profileChannel: ReturnType<typeof supabase.channel> | null = null;
     let hiddenMatchesChannel: ReturnType<typeof supabase.channel> | null = null;
+    let cancelled = false;
+    let inFlight = false;
+    let failures = 0;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
     const fetchUserData = async () => {
-      // Leggiamo l'id utente in modo SINCRONO dal localStorage: evita
-      // l'hang di supabase.auth.getSession() che lasciava la dashboard
-      // in caricamento per minuti.
-      const userId = getStoredUserId();
-      if (!userId) {
-        navigate("/auth");
-        return;
-      }
-      const session = { user: { id: userId } } as { user: { id: string } };
-      setUser(session.user as unknown as User);
+      if (cancelled || inFlight) return;
+      inFlight = true;
+      clearTimeout(retryTimer);
+      try {
+        // Leggiamo l'id utente in modo SINCRONO dal localStorage: evita
+        // l'hang di supabase.auth.getSession() che lasciava la dashboard
+        // in caricamento per minuti.
+        const userId = getStoredUserId();
+        if (!userId) {
+          navigate("/auth");
+          return;
+        }
+        const session = { user: { id: userId } } as { user: { id: string } };
+        setUser(session.user as unknown as User);
 
-      // Fetch profile (con timeout: se la query si pianta dopo 6s, non
-      // blocchiamo tutto. Senza questo, tornare velocemente alla home
-      // poteva lasciare profile e likes vuoti per minuti.)
-      const profileResult = (await Promise.race([
-        supabase.from("profiles").select("*").eq("id", session.user.id).maybeSingle(),
-        new Promise((resolve) =>
-          setTimeout(() => resolve({ data: null, error: { message: "profile_timeout" } }), 6000)
-        ),
-      ])) as { data: Profile | null; error: any };
-      const profileData = profileResult.data;
-      const error = profileResult.error;
+        // Bound a stalled profile read so the recovery loop can retry it.
+        const profileResult = await withTimeout(
+          supabase.from("profiles").select("*").eq("id", session.user.id).maybeSingle(),
+          12000, "profile_timeout"
+        );
+        if (cancelled) return;
+        const profileData = profileResult.data;
+        const error = profileResult.error;
 
-      // Se c'e' un timeout, NON redirigere ad /auth.
-      if (error?.message === "profile_timeout") {
-        console.warn("Profile fetch timeout: trigger auto-recovery");
-        // 🛡️ Segnala al Connection Watchdog (lazy import per evitare cycle)
-        import("@/hooks/useConnectionWatchdog").then(({ reportSupabaseTimeout }) => {
-          reportSupabaseTimeout("dashboardProfile");
-        }).catch(() => {});
-        // 🔁 Auto-retry dopo 3 secondi (con refresh sessione nel mezzo).
-        // Se anche il retry fallisce, il watchdog farà recovery globale.
-        setTimeout(async () => {
-          try { await supabase.auth.refreshSession(); } catch {}
-          try { fetchUserData(); } catch {}
-        }, 3000);
-        return;
-      }
+        // A failed/late profile request is not evidence that the login is invalid.
+        if (error) throw error;
+        if (!profileData) throw new Error("Profilo non ancora disponibile");
 
-      // If profile doesn't exist, redirect to auth
-      if (error || !profileData) {
-        console.error("Profile not found, redirecting to auth");
-        navigate("/auth", {
-          replace: true
-        });
-        return;
-      }
+        // Check if profile is incomplete (missing birthdate or location)
+        if (!profileData.birthdate || !profileData.city) {
+          navigate("/profile/edit", {
+            state: {
+              requiresCompletion: true
+            },
+            replace: true
+          });
+          return;
+        }
+        setProfile(profileData);
+        writeCache("profile", profileData);
 
-      // Check if profile is incomplete (missing birthdate or location)
-      if (!profileData.birthdate || !profileData.city) {
-        navigate("/profile/edit", {
-          state: {
-            requiresCompletion: true
-          },
-          replace: true
-        });
-        return;
-      }
-      setProfile(profileData);
-      writeCache("profile", profileData);
+        // Check if tutorial should be shown
+        if (!profileData.tutorial_completed) {
+          setShowTutorial(true);
+        }
 
-      // Check if tutorial should be shown
-      if (!profileData.tutorial_completed) {
-        setShowTutorial(true);
-      }
+        // La pagina è già utilizzabile: mostra subito l'interfaccia.
+        // I dati restanti (match, like, ecc.) si caricano senza bloccare la UI.
+        setLoading(false);
 
-      // La pagina è già utilizzabile: mostra subito l'interfaccia.
-      // I dati restanti (match, like, ecc.) si caricano senza bloccare la UI.
-      setLoading(false);
+        // Failed requests are unavailable, not successful empty lists. Preserve
+        // cached values and retry instead of replacing the counters with zero.
+        const withTimeoutFallback = <T,>(
+          p: PromiseLike<T>,
+          ms: number,
+          fallback: { data: null; error: Error }
+        ): Promise<T> =>
+          withFallback(p, fallback as T, ms);
 
-      // Helper: una promessa di Supabase con timeout. Se la query non
-      // risponde entro N secondi, la consideriamo "vuota" invece di lasciare
-      // la pagina bloccata. Ogni query e' indipendente: il fallimento di
-      // una NON impedisce alle altre di completare.
-      const withTimeoutFallback = <T,>(
-        p: PromiseLike<T>,
-        ms: number,
-        fallback: T
-      ): Promise<T> =>
-        Promise.race<T>([
-          Promise.resolve(p),
-          new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+        // Lanciamo tutte e 4 le query in PARALLELO. Se una sola si pianta o e'
+        // lenta, le altre arrivano comunque, e il counter "Like Ricevuti" e
+        // "I Tuoi Match" sulla home non restano piu' a 0 dopo una navigazione
+        // rapida.
+        const [roleRes, matchesRes, hiddenRes, likesRes] = await Promise.all([
+          withTimeoutFallback(
+            supabase.from("user_roles").select("role").eq("user_id", session.user.id).maybeSingle(),
+            5000,
+            { data: null, error: new Error("role_timeout") }
+          ),
+          withTimeoutFallback(
+            supabase.from("matches").select("*").or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`),
+            5000,
+            { data: null, error: new Error("matches_timeout") }
+          ),
+          withTimeoutFallback(
+            supabase.from("hidden_matches").select("match_id").eq("user_id", session.user.id).in("hidden_from", ["matches", "both"]),
+            5000,
+            { data: null, error: new Error("hidden_matches_timeout") }
+          ),
+          withTimeoutFallback(
+            supabase.from("likes").select("*").eq("to_user_id", session.user.id),
+            5000,
+            { data: null, error: new Error("likes_timeout") }
+          ),
         ]);
 
-      // Lanciamo tutte e 4 le query in PARALLELO. Se una sola si pianta o e'
-      // lenta, le altre arrivano comunque, e il counter "Like Ricevuti" e
-      // "I Tuoi Match" sulla home non restano piu' a 0 dopo una navigazione
-      // rapida.
-      const [roleRes, matchesRes, hiddenRes, likesRes] = await Promise.all([
-        withTimeoutFallback(
-          supabase.from("user_roles").select("role").eq("user_id", session.user.id).maybeSingle(),
-          5000,
-          { data: null } as { data: { role: string } | null }
-        ),
-        withTimeoutFallback(
-          supabase.from("matches").select("*").or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`),
-          5000,
-          { data: [] } as { data: any[] }
-        ),
-        withTimeoutFallback(
-          supabase.from("hidden_matches").select("match_id").eq("user_id", session.user.id).in("hidden_from", ["matches", "both"]),
-          5000,
-          { data: [] } as { data: { match_id: string }[] }
-        ),
-        withTimeoutFallback(
-          supabase.from("likes").select("*").eq("to_user_id", session.user.id),
-          5000,
-          { data: [] } as { data: any[] }
-        ),
-      ]);
+        if (cancelled) return;
+        if (!roleRes.error) setUserRole(roleRes.data?.role || null);
 
-      setUserRole(roleRes.data?.role || null);
-
-      const hiddenMatchIds = new Set((hiddenRes.data || []).map((h: any) => h.match_id));
-      const visibleMatches = (matchesRes.data || []).filter((match: any) => !hiddenMatchIds.has(match.id));
-      setMatches(visibleMatches);
-      writeCache("matches", visibleMatches);
-
-      const likesData = (likesRes.data || []).filter(
-        (l: any) => !dismissedLikesRef.current.has(l.from_user_id)
-      );
-      setLikesReceived(likesData);
-      writeCache("likes", likesData);
-
-      // Set up realtime subscription for profile updates
-      profileChannel = supabase.channel('dashboard-profile').on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'profiles',
-        filter: `id=eq.${session.user.id}`
-      }, payload => {
-        console.log('Profile updated in dashboard:', payload.new);
-        setProfile(payload.new as Profile);
-      }).subscribe();
-
-      // Set up realtime subscription for new matches
-      matchesChannel = supabase.channel('dashboard-matches').on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'matches'
-      }, payload => {
-        const newMatch = payload.new as any;
-        if (newMatch.user1_id === session.user.id || newMatch.user2_id === session.user.id) {
-          setMatches(prev => [newMatch, ...prev]);
-          toast({
-            title: t("dashboard.newMatch"),
-            description: t("dashboard.newMatchDescription")
-          });
-        }
-      }).subscribe();
-
-      // Set up realtime subscription for new likes
-      likesChannel = supabase.channel('dashboard-likes').on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'likes'
-      }, payload => {
-        const newLike = payload.new as any;
-        if (newLike.to_user_id === session.user.id && !dismissedLikesRef.current.has(newLike.from_user_id)) {
-          setLikesReceived(prev => [newLike, ...prev]);
-        }
-      }).on('postgres_changes', {
-        event: 'DELETE',
-        schema: 'public',
-        table: 'likes'
-      }, async payload => {
-        const deletedLike = payload.old as any;
-        // When a like is deleted, it might mean a match was created
-        // Refresh matches to show the new match
-        if (deletedLike.to_user_id === session.user.id || deletedLike.from_user_id === session.user.id) {
-          const {
-            data: matchesData
-          } = await supabase.from("matches").select("*").or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`);
-          const {
-            data: hiddenMatches
-          } = await supabase.from("hidden_matches").select("match_id").eq("user_id", session.user.id).in("hidden_from", ["matches", "both"]);
-          const hiddenMatchIds = new Set(hiddenMatches?.map(h => h.match_id) || []);
-          const visibleMatches = (matchesData || []).filter(match => !hiddenMatchIds.has(match.id));
+        if (!matchesRes.error && !hiddenRes.error) {
+          const hiddenMatchIds = new Set((hiddenRes.data || []).map((h: any) => h.match_id));
+          const visibleMatches = (matchesRes.data || []).filter((match: any) => !hiddenMatchIds.has(match.id));
           setMatches(visibleMatches);
+          writeCache("matches", visibleMatches);
+        }
 
-          // Also update likes list
-          const {
-            data: likesData
-          } = await supabase.from("likes").select("*").eq("to_user_id", session.user.id);
-          setLikesReceived((likesData || []).filter(
+        if (!likesRes.error) {
+          const likesData = (likesRes.data || []).filter(
             (l: any) => !dismissedLikesRef.current.has(l.from_user_id)
-          ));
+          );
+          setLikesReceived(likesData);
+          writeCache("likes", likesData);
         }
-      }).subscribe();
 
-      // Set up realtime subscription for hidden matches
-      hiddenMatchesChannel = supabase.channel('dashboard-hidden-matches').on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'hidden_matches'
-      }, payload => {
-        const hiddenMatch = payload.new as any;
-        if (hiddenMatch.user_id === session.user.id) {
-          setMatches(prev => prev.filter(m => m.id !== hiddenMatch.match_id));
+        if (roleRes.error || matchesRes.error || hiddenRes.error || likesRes.error) {
+          throw new Error("Caricamento dashboard incompleto");
         }
-      }).subscribe();
+        failures = 0;
+
+        // Set up realtime subscription for profile updates
+        // Subscriptions belong to this mount, not to each focus/retry request.
+        if (!profileChannel) {
+          profileChannel = supabase.channel('dashboard-profile').on('postgres_changes', {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'profiles',
+            filter: `id=eq.${session.user.id}`
+          }, payload => {
+            console.log('Profile updated in dashboard:', payload.new);
+            setProfile(payload.new as Profile);
+          }).subscribe();
+
+          // Set up realtime subscription for new matches
+          matchesChannel = supabase.channel('dashboard-matches').on('postgres_changes', {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'matches'
+          }, payload => {
+            const newMatch = payload.new as any;
+            if (newMatch.user1_id === session.user.id || newMatch.user2_id === session.user.id) {
+              setMatches(prev => prev.some(m => m.id === newMatch.id) ? prev : [newMatch, ...prev]);
+              toast({
+                title: t("dashboard.newMatch"),
+                description: t("dashboard.newMatchDescription")
+              });
+            }
+          }).subscribe();
+
+          // Set up realtime subscription for new likes
+          likesChannel = supabase.channel('dashboard-likes').on('postgres_changes', {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'likes'
+          }, payload => {
+            const newLike = payload.new as any;
+            if (newLike.to_user_id === session.user.id && !dismissedLikesRef.current.has(newLike.from_user_id)) {
+              setLikesReceived(prev => prev.some(l => l.id === newLike.id) ? prev : [newLike, ...prev]);
+            }
+          }).subscribe();
+
+          // Set up realtime subscription for hidden matches
+          hiddenMatchesChannel = supabase.channel('dashboard-hidden-matches').on('postgres_changes', {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'hidden_matches'
+          }, payload => {
+            const hiddenMatch = payload.new as any;
+            if (hiddenMatch.user_id === session.user.id) {
+              setMatches(prev => prev.filter(m => m.id !== hiddenMatch.match_id));
+            }
+          }).subscribe();
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.warn("Dashboard: nuovo tentativo di caricamento", error);
+          retryTimer = setTimeout(() => void fetchUserData(), Math.min(1500 * 2 ** failures++, 30000));
+        }
+      } finally {
+        inFlight = false;
+      }
     };
     fetchUserData();
 
@@ -525,6 +499,7 @@ const Dashboard = () => {
       fetchUserData();
     };
     window.addEventListener('focus', handleFocus);
+    window.addEventListener('online', handleFocus);
 
     // Realtime listener for deleted likes (when matches are created)
     const likesDeleteChannel = supabase.channel('likes-delete-channel').on('postgres_changes', {
@@ -545,8 +520,11 @@ const Dashboard = () => {
       }
     });
     return () => {
+      cancelled = true;
+      clearTimeout(retryTimer);
       clearTimeout(loadingSafety);
       window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('online', handleFocus);
       subscription.unsubscribe();
       if (profileChannel) {
         supabase.removeChannel(profileChannel);

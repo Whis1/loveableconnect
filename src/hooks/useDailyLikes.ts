@@ -1,7 +1,9 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
+import { useCurrentUserId } from "@/hooks/useCurrentUserId";
+import { getStoredUserId } from "@/lib/storedSession";
+import { withTimeout } from "@/lib/async";
 
 interface DailyLikesData {
   likesRemaining: number;
@@ -11,13 +13,12 @@ interface DailyLikesData {
   premiumTier?: string;
 }
 
-const fetchDailyLikes = async (): Promise<DailyLikesData | null> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+export const fetchDailyLikes = async (userId: string): Promise<DailyLikesData> => {
+  if (!userId || userId !== getStoredUserId()) throw new Error("Sessione cambiata");
 
-  const { data, error } = await supabase.rpc("check_and_reset_daily_likes", {
-    _user_id: user.id,
-  });
+  const { data, error } = await withTimeout(supabase.rpc("check_and_reset_daily_likes", {
+    _user_id: userId,
+  }), 12000, "TIMEOUT_DAILY_LIKES");
 
   if (error) throw error;
 
@@ -31,18 +32,24 @@ const fetchDailyLikes = async (): Promise<DailyLikesData | null> => {
     };
   }
 
-  return null;
+  throw new Error("Like giornalieri non disponibili");
 };
 
 export const useDailyLikes = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const userId = useCurrentUserId();
 
-  const { data: dailyLikesData, isLoading: loading } = useQuery({
-    queryKey: ["daily-likes"],
-    queryFn: fetchDailyLikes,
+  const { data: dailyLikesData, isLoading: loading, error, isFetching } = useQuery({
+    queryKey: ["daily-likes", userId],
+    queryFn: () => fetchDailyLikes(userId!),
+    enabled: !!userId,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     staleTime: 30 * 1000, // 30 secondi
-    refetchInterval: 60 * 1000, // Ricontrolla ogni minuto
+    refetchInterval: (query) => query.state.data ? 60000 : 5000,
   });
 
   // 🚫 Realtime channel RIMOSSO (era ridondante con useCredits, entrambi
@@ -93,7 +100,10 @@ export const useDailyLikes = () => {
   };
 
   return {
-    likesRemaining: dailyLikesData?.likesRemaining ?? 8,
+    likesRemaining: dailyLikesData?.likesRemaining ?? 0,
+    hasData: !!dailyLikesData,
+    error,
+    isFetching,
     resetAt: dailyLikesData?.resetAt ?? null,
     isPremium: dailyLikesData?.isPremium ?? false,
     subscriptionType: dailyLikesData?.subscriptionType,

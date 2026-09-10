@@ -103,7 +103,7 @@ export const useSendLike = (currentUserId: string | null) => {
         //    pre-check client-side in ProfileGridCard vede SUBITO il balance
         //    aggiornato senza dover aspettare il refetch.
         if (useCredits) {
-          queryClient.setQueryData<any>(["user-credits"], (prev: any) => {
+          queryClient.setQueryData<any>(["user-credits", currentUserId], (prev: any) => {
             if (!prev) return prev;
             return { ...prev, balance: Math.max(0, (prev.balance ?? 0) - 2) };
           });
@@ -132,7 +132,7 @@ export const useSendLike = (currentUserId: string | null) => {
             updateLikedCache(toUserId, false);
             removePendingLike(toUserId);
             if (useCredits) {
-              queryClient.setQueryData<any>(["user-credits"], (prev: any) => {
+              queryClient.setQueryData<any>(["user-credits", currentUserId], (prev: any) => {
                 if (!prev) return prev;
                 return { ...prev, balance: (prev.balance ?? 0) + 2 };
               });
@@ -142,7 +142,7 @@ export const useSendLike = (currentUserId: string | null) => {
 
           // Success: aggiorna balance al valore reale ritornato dalla RPC
           if (useCredits && typeof result.new_balance === "number") {
-            queryClient.setQueryData<any>(["user-credits"], (prev: any) => {
+            queryClient.setQueryData<any>(["user-credits", currentUserId], (prev: any) => {
               if (!prev) return prev;
               return { ...prev, balance: result.new_balance };
             });
@@ -157,7 +157,7 @@ export const useSendLike = (currentUserId: string | null) => {
           // ma il refetch successivo (invalidateCaches) ricalibra il balance.
           updateLikedCache(toUserId, false);
           if (useCredits) {
-            queryClient.setQueryData<any>(["user-credits"], (prev: any) => {
+            queryClient.setQueryData<any>(["user-credits", currentUserId], (prev: any) => {
               if (!prev) return prev;
               return { ...prev, balance: (prev.balance ?? 0) + 2 };
             });

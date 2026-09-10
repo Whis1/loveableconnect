@@ -18,12 +18,12 @@ interface UserCredits {
 }
 
 export const CreditsDisplay = () => {
-  const { credits, loading } = useCredits();
+  const { credits, loading, error, refetch, isFetching } = useCredits();
   const dailyLikes = useDailyLikes();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  if (loading) {
+  if (!credits && (loading || !error)) {
     return (
       <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50">
         <Coins className="h-4 w-4 text-muted-foreground animate-pulse" />
@@ -32,7 +32,12 @@ export const CreditsDisplay = () => {
     );
   }
 
-  if (!credits) return null;
+  if (!credits) return (
+    <Button variant="outline" onClick={refetch} disabled={isFetching}>
+      <Coins className="h-4 w-4 mr-2" />
+      {isFetching ? "Recupero saldo…" : "Saldo non disponibile · Riprova"}
+    </Button>
+  );
 
   // Check if premium is still valid
   const isPremiumValid = credits.is_premium && 
@@ -68,14 +73,18 @@ export const CreditsDisplay = () => {
   return (
     <div className="flex flex-row items-start gap-2">
       {/* Daily Likes Display */}
-      <DailyLikesDisplay
+      {!dailyLikes.hasData && dailyLikes.error ? (
+        <Button variant="outline" onClick={dailyLikes.refetch} disabled={dailyLikes.isFetching}>
+          {dailyLikes.isFetching ? "Recupero like…" : "Like non disponibili · Riprova"}
+        </Button>
+      ) : <DailyLikesDisplay
         likesRemaining={dailyLikes.likesRemaining}
         isPremium={dailyLikes.isPremium}
         resetAt={dailyLikes.resetAt}
-        loading={dailyLikes.loading}
+        loading={!dailyLikes.hasData}
         subscriptionType={credits.subscription_type}
         premiumTier={credits.premium_tier}
-      />
+      />}
       
       {/* Credits Display */}
       {/* items-start: il bottone "X Crediti" prende solo la larghezza che gli
