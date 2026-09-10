@@ -423,6 +423,7 @@ export const ProfileStatsDialog = ({ profile, onClose, topIndex = null, showRank
                     <ChampionBadgesRow
                       badges={stats.badges}
                       tournamentsWon={stats.tournamentsWon}
+                      capTournamentCount
                       wins={stats.totalWins}
                       elo={stats.elo}
                       apexUnlocked={stats.apexUnlocked}

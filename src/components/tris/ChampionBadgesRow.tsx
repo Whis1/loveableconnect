@@ -23,6 +23,7 @@ interface ChampionBadgesRowProps {
   badges: ChampionBadges;
   /** Se passato, mostra anche l'icona "Tournament Champion" (xN). */
   tournamentsWon?: number;
+  capTournamentCount?: boolean;
   /** Vittorie totali del profilo: sblocca Rising/Shining/Superstar/Legend. */
   wins?: number;
   /** ELO del profilo: sblocca ELO Expert (2500) / ELO Virtuoso (3000). */
@@ -40,6 +41,7 @@ interface ChampionBadgesRowProps {
 export const ChampionBadgesRow = ({
   badges,
   tournamentsWon,
+  capTournamentCount = false,
   wins,
   elo,
   apexUnlocked = false,
@@ -84,7 +86,7 @@ export const ChampionBadgesRow = ({
           {/* Il numero appare SOLO da 2 in su: con 1 solo titolo si vede l'icona pulita. */}
           {typeof count === "number" && count > 1 && (
             <span className="absolute -bottom-1 -right-1 px-1 min-w-[14px] h-[14px] flex items-center justify-center rounded-full bg-pink-600 text-white text-[9px] font-black leading-none border border-pink-300/60">
-              {count}
+              {capTournamentCount && count > 100 ? "100+" : count}
             </span>
           )}
         </button>
