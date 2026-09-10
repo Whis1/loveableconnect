@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { getDisplayName, replaceTemplateVars, userTemplateVars } from "../_shared/email-template.ts";
 
@@ -8,157 +8,121 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-type UserCreditRow = {
-  user_id: string;
-  premium_expires_at: string;
-  subscription_type?: string | null;
-  premium_tier?: string | null;
+const REVISION = "2026-09-05-admin-templates-v1";
+const RENEW_URL = "https://loveableconnect.it/credits";
+
+const sha256Hex = async (text: string) => {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 };
 
-type EmailTemplate = {
-  subject: string;
-  html_content: string;
+const planInfo = (subscriptionType?: string | null, premiumTier?: string | null) => {
+  const type = (subscriptionType ?? "").toLowerCase();
+  const tier = (premiumTier ?? "").toLowerCase();
+  if (type === "weekly") return { planName: "Premium Settimanale", tier: "Settimanale" };
+  if (type === "monthly" && tier === "standard") return { planName: "Platino", tier: "Platino" };
+  if (type === "monthly") return { planName: "Premium Mensile", tier: "Premium" };
+  return { planName: "Premium Mensile", tier: "Premium" };
 };
 
-const siteUrl = "https://loveableconnect.it";
-
-const formatDate = (value: string | Date) =>
-  new Date(value).toLocaleDateString("it-IT", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
+const jsonResponse = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    status,
   });
-
-const getPlanName = (subscriptionType?: string | null, premiumTier?: string | null) => {
-  if (subscriptionType === "weekly") return "Premium Settimanale";
-  if (subscriptionType === "monthly" && premiumTier === "standard") return "Platino";
-  if (subscriptionType === "monthly") return "Premium Mensile";
-  return "Premium";
-};
-
-const getTierName = (subscriptionType?: string | null, premiumTier?: string | null) => {
-  if (subscriptionType === "weekly") return "Settimanale";
-  if (premiumTier === "standard") return "Platino";
-  return "Premium";
-};
-
-const loadTemplate = async (supabase: ReturnType<typeof createClient>, templateKey: string) => {
-  const { data, error } = await supabase
-    .from("email_templates")
-    .select("subject, html_content")
-    .eq("template_key", templateKey)
-    .maybeSingle();
-
-  if (error) {
-    console.error(`Template ${templateKey} non caricato:`, error);
-    return null;
-  }
-
-  return data as EmailTemplate | null;
-};
-
-const buildVariables = (
-  recipientName: string,
-  userCredit: UserCreditRow,
-  extra: Record<string, string | number> = {},
-) => {
-  const planName = getPlanName(userCredit.subscription_type, userCredit.premium_tier);
-  const tier = getTierName(userCredit.subscription_type, userCredit.premium_tier);
-  const expiresAt = formatDate(userCredit.premium_expires_at);
-
-  return {
-    ...userTemplateVars(recipientName, ["recipient", "receiver", "user"]),
-    subscriptionType: planName,
-    planName,
-    tier,
-    expiresAt,
-    expiryDate: expiresAt,
-    renewalUrl: `${siteUrl}/credits`,
-    reactivateUrl: `${siteUrl}/credits`,
-    freeCredits: 10,
-    freeLikes: 5,
-    benefits:
-      "<li>Crediti e like secondo il piano acquistato</li><li>Accesso ai vantaggi Premium/Platino finche' l'abbonamento e' attivo</li>",
-    ...extra,
-  };
-};
-
-const fallbackExpiringHtml = (variables: Record<string, string | number | boolean | null | undefined>) => `
-  <!DOCTYPE html>
-  <html lang="it">
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="margin:0; padding:0; background:#fff7ed; font-family:'Segoe UI',Roboto,Arial,sans-serif;">
-      <div style="max-width:600px; margin:32px auto; background:#ffffff; border-radius:18px; overflow:hidden;">
-        <div style="background:#f59e0b; color:#ffffff; padding:32px 24px; text-align:center;">
-          <div style="font-size:48px;">⏰</div>
-          <h1 style="margin:8px 0 0;">Abbonamento in Scadenza</h1>
-          <p style="margin:8px 0 0;">Il tuo abbonamento sta per scadere</p>
-        </div>
-        <div style="padding:28px 24px; color:#374151;">
-          <p>Ciao ${variables.userName}, il tuo abbonamento <strong>${variables.subscriptionType}</strong> scadra' tra <strong>${variables.daysRemaining} ${variables.daysRemaining === 1 ? "giorno" : "giorni"}</strong>.</p>
-          <p>Data di scadenza: <strong>${variables.expiresAt}</strong></p>
-          <p>Dopo la scadenza tornerai al piano gratuito con <strong>10 crediti</strong> e <strong>5 like giornalieri</strong>.</p>
-          <p style="text-align:center; margin-top:28px;">
-            <a href="${siteUrl}/credits" style="display:inline-block; background:#ec4899; color:white; padding:14px 28px; border-radius:12px; text-decoration:none; font-weight:700;">Rinnova Ora</a>
-          </p>
-        </div>
-      </div>
-    </body>
-  </html>
-`;
-
-const fallbackExpiredHtml = (variables: Record<string, string | number | boolean | null | undefined>) => `
-  <!DOCTYPE html>
-  <html lang="it">
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="margin:0; padding:0; background:#fef2f2; font-family:'Segoe UI',Roboto,Arial,sans-serif;">
-      <div style="max-width:600px; margin:32px auto; background:#ffffff; border-radius:18px; overflow:hidden;">
-        <div style="background:#dc2626; color:#ffffff; padding:32px 24px; text-align:center;">
-          <div style="font-size:48px;">💔</div>
-          <h1 style="margin:8px 0 0;">Abbonamento Scaduto</h1>
-          <p style="margin:8px 0 0;">Il tuo abbonamento e' scaduto</p>
-        </div>
-        <div style="padding:28px 24px; color:#374151;">
-          <p>Ciao ${variables.userName}, il tuo abbonamento <strong>${variables.subscriptionType}</strong> e' scaduto il <strong>${variables.expiresAt}</strong>.</p>
-          <p>Sei tornato al piano gratuito con <strong>10 crediti</strong> e <strong>5 like giornalieri</strong>.</p>
-          <p style="text-align:center; margin-top:28px;">
-            <a href="${siteUrl}/credits" style="display:inline-block; background:#ec4899; color:white; padding:14px 28px; border-radius:12px; text-decoration:none; font-weight:700;">Riattiva Premium</a>
-          </p>
-        </div>
-      </div>
-    </body>
-  </html>
-`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabase = createClient(
+  const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
   );
 
   try {
+    // 1) Load both templates from the admin panel — no hardcoded fallbacks.
+    const { data: templateRows, error: templatesError } = await supabaseClient
+      .from("email_templates")
+      .select("template_key, subject, html_content, updated_at")
+      .in("template_key", ["subscription_expiring", "subscription_expired"]);
+
+    if (templatesError) {
+      console.error("Errore caricamento template:", templatesError);
+      return jsonResponse({ error: "Impossibile caricare i template email", details: templatesError.message }, 500);
+    }
+
+    const byKey = new Map((templateRows ?? []).map((t) => [t.template_key, t]));
+    const expiringTemplate = byKey.get("subscription_expiring");
+    const expiredTemplate = byKey.get("subscription_expired");
+
+    for (const [key, tmpl] of [
+      ["subscription_expiring", expiringTemplate],
+      ["subscription_expired", expiredTemplate],
+    ] as const) {
+      if (!tmpl || !tmpl.subject?.trim() || !tmpl.html_content?.trim()) {
+        console.error(`Template mancante o incompleto: ${key}`);
+        return jsonResponse({ error: `Template mancante o incompleto: ${key}` }, 500);
+      }
+    }
+
+    // 5) Read-only dry run: no user data, no emails, no updates.
+    if (new URL(req.url).searchParams.get("dry_run") === "true") {
+      const templates = [];
+      for (const tmpl of [expiringTemplate!, expiredTemplate!]) {
+        templates.push({
+          template_key: tmpl.template_key,
+          updated_at: tmpl.updated_at,
+          html_sha256: await sha256Hex(tmpl.html_content),
+        });
+      }
+      return jsonResponse({
+        success: true,
+        dry_run: true,
+        revision: REVISION,
+        source: "email_templates",
+        templates,
+      });
+    }
+
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
     const now = new Date();
 
-    const [expiringTemplate, expiredTemplate] = await Promise.all([
-      loadTemplate(supabase, "subscription_expiring"),
-      loadTemplate(supabase, "subscription_expired"),
-    ]);
+    let expiringSent = 0;
+    let expiringFailed = 0;
+    let expiredSent = 0;
+    let expiredFailed = 0;
 
+    const buildVariables = (
+      recipientName: string,
+      plan: { planName: string; tier: string },
+      expiryDate: Date,
+      daysLeft: number,
+    ) => ({
+      ...userTemplateVars(recipientName, ["recipient"]),
+      subscriptionType: plan.planName,
+      planName: plan.planName,
+      tier: plan.tier,
+      expiresAt: expiryDate.toLocaleDateString("it-IT"),
+      expiryDate: expiryDate.toLocaleDateString("it-IT"),
+      daysRemaining: daysLeft,
+      daysLeft: daysLeft,
+      daysText: `${daysLeft} ${daysLeft === 1 ? "giorno" : "giorni"}`,
+      renewUrl: RENEW_URL,
+      renewalUrl: RENEW_URL,
+      reactivateUrl: RENEW_URL,
+      freeCredits: 10,
+      freeLikes: 5,
+    });
+
+    // ---- Subscriptions expiring within 3 days ----
     const threeDaysFromNow = new Date(now);
     threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
 
-    const { data: expiringUsers, error: expiringError } = await supabase
+    const { data: expiringUsers, error: expiringError } = await supabaseClient
       .from("user_credits")
       .select("user_id, premium_expires_at, subscription_type, premium_tier")
       .eq("is_premium", true)
@@ -166,58 +130,52 @@ serve(async (req) => {
       .lte("premium_expires_at", threeDaysFromNow.toISOString());
 
     if (expiringError) {
-      console.error("Error fetching expiring subscriptions:", expiringError);
+      console.error("Errore lettura abbonamenti in scadenza:", expiringError);
+      return jsonResponse({ error: "Errore lettura abbonamenti in scadenza", details: expiringError.message }, 500);
     }
 
-    if (expiringUsers && expiringUsers.length > 0) {
-      console.log(`Found ${expiringUsers.length} subscriptions expiring soon`);
+    for (const userCredit of expiringUsers ?? []) {
+      const { data: profile } = await supabaseClient
+        .from("profiles")
+        .select("nickname, full_name")
+        .eq("id", userCredit.user_id)
+        .maybeSingle();
 
-      for (const userCredit of expiringUsers as UserCreditRow[]) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("id, nickname, full_name")
-          .eq("id", userCredit.user_id)
-          .maybeSingle();
+      const { data: { user } } = await supabaseClient.auth.admin.getUserById(userCredit.user_id);
+      if (!user?.email) continue;
 
-        if (!profile) continue;
+      const expiryDate = new Date(userCredit.premium_expires_at);
+      const daysLeft = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      const plan = planInfo(userCredit.subscription_type, userCredit.premium_tier);
+      const variables = buildVariables(getDisplayName(profile, user), plan, expiryDate, daysLeft);
 
-        const { data: { user } } = await supabase.auth.admin.getUserById(userCredit.user_id);
-        if (!user?.email) continue;
-
-        const expiryDate = new Date(userCredit.premium_expires_at);
-        const daysLeft = Math.max(1, Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
-        const recipientName = getDisplayName(profile, user);
-        const variables = buildVariables(recipientName, userCredit, {
-          daysRemaining: daysLeft,
-          daysLeft,
-          daysText: `${daysLeft} ${daysLeft === 1 ? "giorno" : "giorni"}`,
+      try {
+        const { error: sendError } = await resend.emails.send({
+          from: "LoveableConnect <noreply@loveableconnect.com>",
+          to: [user.email],
+          subject: replaceTemplateVars(expiringTemplate!.subject, variables),
+          html: replaceTemplateVars(expiringTemplate!.html_content, variables),
         });
-
-        const subject = expiringTemplate
-          ? replaceTemplateVars(expiringTemplate.subject, variables)
-          : `Il tuo abbonamento scade tra ${daysLeft} ${daysLeft === 1 ? "giorno" : "giorni"} ⏰`;
-        const html = expiringTemplate
-          ? replaceTemplateVars(expiringTemplate.html_content, variables)
-          : fallbackExpiringHtml(variables);
-
-        try {
-          await resend.emails.send({
-            from: "LoveableConnect 💕 <noreply@loveableconnect.com>",
-            to: [user.email],
-            subject,
-            html,
-          });
-          console.log(`Expiry warning sent to ${user.email}`);
-        } catch (emailError) {
-          console.error(`Error sending expiry warning to ${user.email}:`, emailError);
+        if (sendError) {
+          expiringFailed++;
+          console.error("Invio subscription_expiring fallito:", sendError);
+        } else {
+          expiringSent++;
+          console.log(
+            `Inviata subscription_expiring | revision=${REVISION} template_key=subscription_expiring template_updated_at=${expiringTemplate!.updated_at}`,
+          );
         }
+      } catch (emailError) {
+        expiringFailed++;
+        console.error("Errore invio subscription_expiring:", emailError);
       }
     }
 
+    // ---- Subscriptions expired in the last 24 hours ----
     const oneDayAgo = new Date(now);
     oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
-    const { data: expiredUsers, error: expiredError } = await supabase
+    const { data: expiredUsers, error: expiredError } = await supabaseClient
       .from("user_credits")
       .select("user_id, premium_expires_at, subscription_type, premium_tier")
       .eq("is_premium", true)
@@ -225,91 +183,92 @@ serve(async (req) => {
       .gte("premium_expires_at", oneDayAgo.toISOString());
 
     if (expiredError) {
-      console.error("Error fetching expired subscriptions:", expiredError);
+      console.error("Errore lettura abbonamenti scaduti:", expiredError);
+      return jsonResponse({ error: "Errore lettura abbonamenti scaduti", details: expiredError.message }, 500);
     }
 
-    if (expiredUsers && expiredUsers.length > 0) {
-      console.log(`Found ${expiredUsers.length} expired subscriptions`);
+    for (const userCredit of expiredUsers ?? []) {
+      const { data: profile } = await supabaseClient
+        .from("profiles")
+        .select("nickname, full_name")
+        .eq("id", userCredit.user_id)
+        .maybeSingle();
 
-      for (const userCredit of expiredUsers as UserCreditRow[]) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("id, nickname, full_name")
-          .eq("id", userCredit.user_id)
-          .maybeSingle();
+      const { data: { user } } = await supabaseClient.auth.admin.getUserById(userCredit.user_id);
 
-        if (!profile) continue;
-
-        const { data: { user } } = await supabase.auth.admin.getUserById(userCredit.user_id);
-        if (!user?.email) continue;
-
-        const recipientName = getDisplayName(profile, user);
-        const variables = buildVariables(recipientName, userCredit);
-
-        const subject = expiredTemplate
-          ? replaceTemplateVars(expiredTemplate.subject, variables)
-          : "Il tuo abbonamento e' scaduto 💔";
-        const html = expiredTemplate
-          ? replaceTemplateVars(expiredTemplate.html_content, variables)
-          : fallbackExpiredHtml(variables);
+      if (user?.email) {
+        const expiryDate = new Date(userCredit.premium_expires_at);
+        const plan = planInfo(userCredit.subscription_type, userCredit.premium_tier);
+        const variables = buildVariables(getDisplayName(profile, user), plan, expiryDate, 0);
 
         try {
-          await resend.emails.send({
-            from: "LoveableConnect 💕 <noreply@loveableconnect.com>",
+          const { error: sendError } = await resend.emails.send({
+            from: "LoveableConnect <noreply@loveableconnect.com>",
             to: [user.email],
-            subject,
-            html,
+            subject: replaceTemplateVars(expiredTemplate!.subject, variables),
+            html: replaceTemplateVars(expiredTemplate!.html_content, variables),
           });
-          console.log(`Expiry notification sent to ${user.email}`);
+          if (sendError) {
+            expiredFailed++;
+            console.error("Invio subscription_expired fallito:", sendError);
+          } else {
+            expiredSent++;
+            console.log(
+              `Inviata subscription_expired | revision=${REVISION} template_key=subscription_expired template_updated_at=${expiredTemplate!.updated_at}`,
+            );
+          }
         } catch (emailError) {
-          console.error(`Error sending expiry notification to ${user.email}:`, emailError);
+          expiredFailed++;
+          console.error("Errore invio subscription_expired:", emailError);
         }
+      }
 
-        await supabase
-          .from("user_credits")
-          .update({
-            is_premium: false,
-            subscription_type: "none",
-            premium_tier: "none",
-            premium_expires_at: null,
-            balance: 10,
-            daily_likes_remaining: 5,
-            daily_free_chats_remaining: 0,
-            daily_likes_reset_at: null,
-            daily_free_chats_reset_at: null,
-            credits_depleted_at: null,
-            updated_at: now.toISOString(),
-          })
-          .eq("user_id", userCredit.user_id);
+      // Back to free plan: 10 credits / 5 likes
+      const { error: updateError } = await supabaseClient
+        .from("user_credits")
+        .update({
+          is_premium: false,
+          subscription_type: "none",
+          premium_tier: "none",
+          premium_expires_at: null,
+          balance: 10,
+          daily_likes_remaining: 5,
+          daily_free_chats_remaining: 0,
+          daily_likes_reset_at: null,
+          daily_free_chats_reset_at: null,
+          credits_depleted_at: null,
+          updated_at: now.toISOString(),
+        })
+        .eq("user_id", userCredit.user_id);
 
-        await supabase
-          .from("profiles")
-          .update({ profile_theme: "none" })
-          .eq("id", userCredit.user_id);
+      if (updateError) {
+        console.error("Errore aggiornamento user_credits:", updateError);
+        return jsonResponse({ error: "Errore aggiornamento user_credits", details: updateError.message }, 500);
+      }
+
+      const { error: themeError } = await supabaseClient
+        .from("profiles")
+        .update({ profile_theme: "none" })
+        .eq("id", userCredit.user_id);
+
+      if (themeError) {
+        console.error("Errore reset tema profilo:", themeError);
+        return jsonResponse({ error: "Errore reset tema profilo", details: themeError.message }, 500);
       }
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        expiring_notified: expiringUsers?.length || 0,
-        expired_notified: expiredUsers?.length || 0,
-        templates_used: {
-          subscription_expiring: Boolean(expiringTemplate),
-          subscription_expired: Boolean(expiredTemplate),
-        },
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      },
-    );
+    const failed = expiringFailed + expiredFailed;
+    return jsonResponse({
+      success: failed === 0,
+      revision: REVISION,
+      expiring_sent: expiringSent,
+      expiring_failed: expiringFailed,
+      expired_sent: expiredSent,
+      expired_failed: expiredFailed,
+    }, failed > 0 ? 500 : 200);
   } catch (error) {
-    console.error("Error in check-subscription-expiry:", error);
+    console.error("Errore in check-subscription-expiry:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    return jsonResponse({ error: errorMessage }, 500);
   }
 });
