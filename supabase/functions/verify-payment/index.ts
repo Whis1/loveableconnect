@@ -1,3 +1,4 @@
+import { fulfillCheckout, paymentFailure } from "../_shared/stripe-payments.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
@@ -35,109 +36,11 @@ serve(async (req) => {
     // Retrieve checkout session
     const session = await stripe.checkout.sessions.retrieve(session_id);
 
-    // Ownership check: the Checkout Session MUST belong to this user
-    if (session.metadata?.user_id && session.metadata.user_id !== user.id) {
-      return new Response(
-        JSON.stringify({ error: "Session does not belong to this user" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
-      );
-    }
-
-    if (session.payment_status !== "paid") {
-      return new Response(
-        JSON.stringify({ success: false, message: "Payment not completed" }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400,
-        }
-      );
-    }
-
-    // Get purchase record
-    const { data: purchase, error: purchaseError } = await supabaseClient
-      .from("purchases")
-      .select("*")
-      .eq("stripe_session_id", session_id)
-      .eq("user_id", user.id)
-      .single();
-
-    if (purchaseError || !purchase) {
-      throw new Error("Purchase not found");
-    }
-
-    if (purchase.status === "completed") {
-      return new Response(
-        JSON.stringify({ success: true, message: "Already processed" }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        }
-      );
-    }
-
-    // Update purchase status
-    const { error: updPurchaseErr } = await supabaseClient
-      .from("purchases")
-      .update({
-        status: "completed",
-        completed_at: new Date().toISOString(),
-        stripe_payment_intent_id: session.payment_intent as string,
-      })
-      .eq("id", purchase.id);
-    if (updPurchaseErr) {
-      console.error("Error updating purchase:", updPurchaseErr);
-      throw new Error(`Failed to mark purchase completed: ${updPurchaseErr.message}`);
-    }
-
-    // Add credits to user balance
-    const { data: userCredits, error: readCreditsErr } = await supabaseClient
-      .from("user_credits")
-      .select("*")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    if (readCreditsErr) {
-      console.error("Error reading user_credits:", readCreditsErr);
-      throw new Error(`Failed to read credits: ${readCreditsErr.message}`);
-    }
-
-    let newBalance: number;
-    if (userCredits) {
-      newBalance = (userCredits.balance ?? 0) + purchase.credits_amount;
-      const { error: updCreditsErr } = await supabaseClient
-        .from("user_credits")
-        .update({
-          balance: newBalance,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("user_id", user.id);
-      if (updCreditsErr) {
-        console.error("Error updating user_credits:", updCreditsErr);
-        throw new Error(`Failed to update credits: ${updCreditsErr.message}`);
-      }
-    } else {
-      newBalance = 10 + purchase.credits_amount;
-      const { error: insCreditsErr } = await supabaseClient.from("user_credits").insert({
-        user_id: user.id,
-        balance: newBalance,
-      });
-      if (insCreditsErr) {
-        console.error("Error inserting user_credits:", insCreditsErr);
-        throw new Error(`Failed to create credits row: ${insCreditsErr.message}`);
-      }
-    }
-
-    // Log transaction
-    const { error: txErr } = await supabaseClient.from("credit_transactions").insert({
-      user_id: user.id,
-      amount: purchase.credits_amount,
-      transaction_type: "purchase",
-      reason: `Purchased ${purchase.credits_amount} credits`,
-      order_id: purchase.id,
-    });
-    if (txErr) {
-      console.error("Error inserting credit_transactions:", txErr);
-      // do not throw: credits already applied
-    }
+    const result = await fulfillCheckout(stripe, supabaseClient, session, Deno.env.get("STRIPE_SECRET_KEY") || "", user.id, "credits");
+    if (result.already_processed) return new Response(JSON.stringify({success:true, message:"Already processed"}),
+      {headers:{...corsHeaders,"Content-Type":"application/json"}});
+    const newBalance = result.balance;
+    const purchase = { credits_amount: result.credits, amount_cents: session.amount_total! };
 
     // Send confirmation email
     try {
@@ -233,12 +136,5 @@ serve(async (req) => {
         status: 200,
       }
     );
-  } catch (error) {
-    console.error("Error in verify-payment:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
-  }
+  } catch (error) { return paymentFailure(error, corsHeaders); }
 });

@@ -1,3 +1,4 @@
+import { fulfillCheckout, paymentFailure } from "../_shared/stripe-payments.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
@@ -34,118 +35,15 @@ serve(async (req) => {
     // Retrieve checkout session
     const session = await stripe.checkout.sessions.retrieve(session_id);
 
-    // Ownership check
-    if (session.metadata?.user_id && session.metadata.user_id !== user.id) {
-      return new Response(
-        JSON.stringify({ error: "Session does not belong to this user" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
-      );
-    }
-
-    // Idempotency: already processed?
-    const { data: existingPurchase } = await supabaseClient
-      .from("purchases")
-      .select("id, status")
-      .eq("stripe_session_id", session_id)
-      .maybeSingle();
-    if (existingPurchase && existingPurchase.status === "completed") {
-      return new Response(
-        JSON.stringify({ success: true, premium_active: true, message: "Already processed" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-      );
-    }
-
-    if (session.payment_status !== "paid") {
-      return new Response(
-        JSON.stringify({ success: false, message: "Payment not completed" }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400,
-        }
-      );
-    }
-
-    const subscriptionId = session.subscription as string;
-    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-
-    // Determine subscription type and tier from metadata
-    const subscriptionType = session.metadata?.subscription_type || "monthly";
-    const tier = session.metadata?.tier || "premium";
-    const isWeekly = subscriptionType === "weekly";
-
-    // Determine initial credits and likes based on subscription type
-    let initialCredits = 0;
-    let initialLikes = 0;
-    let initialFreeChats = 0;
-
-    if (isWeekly) {
-      initialCredits = 26;
-      initialLikes = 10;
-      initialFreeChats = 5;
-    } else if (subscriptionType === "monthly" && tier === "standard") {
-      initialCredits = 40;
-      initialLikes = 20;
-      initialFreeChats = 0;
-    } else {
-      // monthly premium → unlimited
-      initialCredits = 999999;
-      initialLikes = 999999;
-      initialFreeChats = 999999;
-    }
-
-    // Update user credits with premium status
-    const updateData: any = {
-      user_id: user.id,
-      is_premium: true,
-      premium_expires_at: new Date(subscription.current_period_end * 1000).toISOString(),
-      stripe_subscription_id: subscriptionId,
-      subscription_type: subscriptionType,
-      premium_tier: subscriptionType === "monthly" ? tier : "none",
-      balance: initialCredits,
-      daily_likes_remaining: initialLikes,
-      daily_free_chats_remaining: initialFreeChats,
-      credits_depleted_at: null,
-      updated_at: new Date().toISOString(),
-    };
-    if (isWeekly) {
-      updateData.has_used_weekly_trial = true;
-    }
-
-    const { error: upsertCreditsErr } = await supabaseClient
-      .from("user_credits")
-      .upsert(updateData, { onConflict: "user_id" });
-    if (upsertCreditsErr) {
-      console.error("Error upserting user_credits:", upsertCreditsErr);
-      throw new Error(`Failed to activate subscription: ${upsertCreditsErr.message}`);
-    }
-
-    // Create purchase record with actual amount from session
-    let productType = "premium_monthly";
-    if (isWeekly) {
-      productType = "premium_weekly";
-    } else if (subscriptionType === "monthly" && tier === "standard") {
-      productType = "standard_monthly";
-    }
-    
-    const { error: purchaseInsErr } = await supabaseClient.from("purchases").insert({
-      user_id: user.id,
-      product_type: productType,
-      amount_cents: session.amount_total || (isWeekly ? 699 : (tier === "standard" ? 6999 : 39999)),
-      currency: session.currency || "eur",
-      stripe_payment_intent_id: session.payment_intent as string,
-      stripe_session_id: session_id,
-      status: "completed",
-      completed_at: new Date().toISOString(),
-    });
-    if (purchaseInsErr && !String(purchaseInsErr.message || "").includes("duplicate")) {
-      console.error("Error inserting purchase:", purchaseInsErr);
-      throw new Error(`Failed to record purchase: ${purchaseInsErr.message}`);
-    }
+    const result = await fulfillCheckout(stripe, supabaseClient, session, Deno.env.get("STRIPE_SECRET_KEY") || "", user.id, "subscription");
+    if (result.already_processed) return new Response(JSON.stringify({success:true,premium_active:true,message:"Already processed"}),
+      {headers:{...corsHeaders,"Content-Type":"application/json"}});
+    const isWeekly = result.subscription_type === "weekly";
 
     // Send confirmation email
     try {
       const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-      const expiryDate = new Date(subscription.current_period_end * 1000);
+      const expiryDate = new Date(result.expires_at);
       
       await resend.emails.send({
         from: "LoveableConnect <noreply@loveableconnect.com>",
@@ -192,14 +90,14 @@ serve(async (req) => {
                       <div style="display: flex; align-items: start; margin-bottom: 12px;">
                         <span style="font-size: 24px; margin-right: 12px;">💬</span>
                         <div>
-                          <strong style="color: #9333ea;">40 Crediti Giornalieri</strong><br>
+                          <strong style="color: #9333ea;">26 Crediti Giornalieri</strong><br>
                           <span style="font-size: 14px;">Reset automatico ogni 24 ore</span>
                         </div>
                       </div>
                       <div style="display: flex; align-items: start; margin-bottom: 12px;">
                         <span style="font-size: 24px; margin-right: 12px;">❤️</span>
                         <div>
-                          <strong style="color: #ec4899;">30 Like Giornalieri</strong><br>
+                          <strong style="color: #ec4899;">10 Like Giornalieri</strong><br>
                           <span style="font-size: 14px;">Più opportunità di match ogni giorno</span>
                         </div>
                       </div>
@@ -282,12 +180,5 @@ serve(async (req) => {
         status: 200,
       }
     );
-  } catch (error) {
-    console.error("Error in verify-subscription:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
-  }
+  } catch (error) { return paymentFailure(error, corsHeaders); }
 });
