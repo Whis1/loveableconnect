@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Dashboard from "./Dashboard";
 import { getStoredUserId } from "@/lib/storedSession";
 import { PageLoader } from "@/components/PageLoader";
-import PublicHome from "./PublicHome";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [userId, setUserId] = useState(getStoredUserId);
   // Controlla subito (in modo sincrono) se c'è una sessione salvata: così la
   // home appare all'istante, senza aspettare getSession() che può bloccarsi.
@@ -61,6 +62,7 @@ const Index = () => {
           setLoading(true);
         } else {
           setIsAuthenticated(false);
+          navigate('/auth');
           setLoading(false);
         }
       }
@@ -81,6 +83,7 @@ const Index = () => {
           setLoading(true);
         } else {
           setIsAuthenticated(false);
+          navigate('/auth');
           setLoading(false);
         }
       }
@@ -106,14 +109,14 @@ const Index = () => {
       window.removeEventListener('keydown', handleActivity);
       window.removeEventListener('click', handleActivity);
     };
-  }, []);
+  }, [navigate]);
 
   if (loading) {
     return <PageLoader />;
   }
 
   if (!isAuthenticated) {
-    return <PublicHome />;
+    return null;
   }
 
   return <Dashboard key={userId} />;

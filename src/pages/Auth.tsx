@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -757,10 +757,6 @@ const Auth = () => {
             </TabsContent>
           </Tabs>
           <div className="text-center text-sm text-muted-foreground mt-4">
-            <div className="mb-2 flex flex-wrap justify-center gap-4">
-              <Link to="/come-funziona" className="hover:underline">Come funziona</Link>
-              <Link to="/credits" className="hover:underline">Crediti e abbonamenti</Link>
-            </div>
             <button
               onClick={() => navigate("/terms")}
               className="hover:underline"
