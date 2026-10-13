@@ -1,3 +1,4 @@
+import { fulfillCheckout, paymentFailure, PaymentError } from "../_shared/stripe-payments.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
@@ -44,110 +45,12 @@ serve(async (req) => {
     const session = await stripe.checkout.sessions.retrieve(session_id);
     logStep("Session retrieved", { sessionId: session.id, status: session.payment_status });
 
-    if (session.payment_status !== "paid") {
-      return new Response(
-        JSON.stringify({ success: false, message: "Payment not completed" }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400,
-        }
-      );
-    }
-
-    // Verifica che sia un regalo
-    const isGift = session.metadata?.is_gift === "true";
-    if (!isGift) {
-      throw new Error("This session is not a gift");
-    }
-
-    const recipientId = session.metadata?.gift_recipient_id;
-    const senderId = session.metadata?.gift_sender_id;
-    if (!recipientId) throw new Error("Recipient ID not found in metadata");
-
-    // Ownership check: only the gift sender can verify
-    if (senderId && senderId !== user.id) {
-      return new Response(
-        JSON.stringify({ error: "Session does not belong to this user" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
-      );
-    }
-
-    // Idempotency
-    const { data: existingGiftPurchase } = await supabaseClient
-      .from("purchases")
-      .select("id, status")
-      .eq("stripe_session_id", session_id)
-      .maybeSingle();
-    if (existingGiftPurchase && existingGiftPurchase.status === "completed") {
-      return new Response(
-        JSON.stringify({ success: true, premium_active: true, is_gift: true, message: "Already processed" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-      );
-    }
-
-    logStep("Gift metadata found", { recipientId, senderId });
-
-    const subscriptionId = session.subscription as string;
-    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-    logStep("Subscription retrieved", { subscriptionId });
-
-    // Aggiorna il destinatario con Premium mensile illimitato
-    const updateData: any = {
-      user_id: recipientId,
-      is_premium: true,
-      premium_expires_at: new Date(subscription.current_period_end * 1000).toISOString(),
-      stripe_subscription_id: subscriptionId,
-      subscription_type: "monthly",
-      premium_tier: "premium",
-      balance: 999999,
-      daily_likes_remaining: 999999,
-      daily_free_chats_remaining: 999999,
-      credits_depleted_at: null,
-      updated_at: new Date().toISOString(),
-    };
-
-    const { error: updateError } = await supabaseClient
-      .from("user_credits")
-      .upsert(updateData, { onConflict: "user_id" });
-
-    if (updateError) {
-      logStep("ERROR updating recipient credits", { error: updateError });
-      throw updateError;
-    }
-
-    logStep("Recipient premium status updated");
-
-    // Aggiorna il record del regalo
-    const { error: giftUpdateError } = await supabaseClient
-      .from("subscription_gifts")
-      .update({
-        stripe_subscription_id: subscriptionId,
-        status: "completed",
-        completed_at: new Date().toISOString(),
-      })
-      .eq("stripe_session_id", session_id);
-
-    if (giftUpdateError) {
-      logStep("ERROR updating gift record", { error: giftUpdateError });
-    }
-
-    // Crea record purchase
-    const { error: giftPurchaseErr } = await supabaseClient.from("purchases").insert({
-      user_id: senderId || user.id,
-      product_type: "gift_premium_monthly",
-      amount_cents: session.amount_total || 29999,
-      currency: session.currency || "eur",
-      stripe_payment_intent_id: session.payment_intent as string,
-      stripe_session_id: session_id,
-      status: "completed",
-      completed_at: new Date().toISOString(),
-    });
-    if (giftPurchaseErr && !String(giftPurchaseErr.message || "").includes("duplicate")) {
-      logStep("ERROR inserting gift purchase", { error: giftPurchaseErr });
-      throw giftPurchaseErr;
-    }
-
-    logStep("Purchase record created");
+    if (session.metadata?.is_gift !== "true") throw new PaymentError("This session is not a gift");
+    const result = await fulfillCheckout(stripe, supabaseClient, session, Deno.env.get("STRIPE_SECRET_KEY") || "", user.id, "subscription");
+    if (result.already_processed) return new Response(JSON.stringify({success:true,premium_active:true,is_gift:true,message:"Already processed"}),
+      {headers:{...corsHeaders,"Content-Type":"application/json"}});
+    const recipientId = result.recipient_id;
+    const senderId = result.sender_id;
 
     // Invia email al destinatario usando template dal database
     try {
@@ -167,7 +70,7 @@ serve(async (req) => {
       const senderName = senderProfile?.nickname || senderProfile?.full_name || "Un utente";
 
       if (recipientEmail) {
-        const expiryDate = new Date(subscription.current_period_end * 1000);
+        const expiryDate = new Date(result.expires_at);
         const formattedDate = expiryDate.toLocaleDateString('it-IT');
         
         // Carica template dal database
@@ -283,12 +186,5 @@ serve(async (req) => {
         status: 200,
       }
     );
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in verify-gift-subscription", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
-  }
+  } catch (error) { return paymentFailure(error, corsHeaders); }
 });

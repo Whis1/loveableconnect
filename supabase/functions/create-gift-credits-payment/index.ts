@@ -1,3 +1,4 @@
+import { requirePaymentAccount, configuredPrice, paymentFailure } from "../_shared/stripe-payments.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
@@ -10,8 +11,8 @@ const corsHeaders = {
 // 🎁 Pacchetti di CREDITI REGALO (saldo separato, usabile solo per i regali in chat).
 //    Sostituire i price ID con quelli creati su Stripe.
 const GIFT_PACKS: Record<string, { priceId: string; credits: number }> = {
-  small: { priceId: "price_1TgYdcK6IHDbrxmEss7xbq7P", credits: 25 },  // 4,99 €
-  big: { priceId: "price_1TgYeHK6IHDbrxmECCYJlpXM", credits: 100 },  // 19,99 €
+  small: { priceId: "STRIPE_PRICE_GIFT_CREDITS_25", credits: 25 },  // 4,99 €
+  big: { priceId: "STRIPE_PRICE_GIFT_CREDITS_100", credits: 100 },  // 19,99 €
 };
 
 serve(async (req) => {
@@ -38,6 +39,7 @@ serve(async (req) => {
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
+    await requirePaymentAccount(stripe);
 
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     const customerId = customers.data.length > 0 ? customers.data[0].id : undefined;
@@ -47,11 +49,12 @@ serve(async (req) => {
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
-      line_items: [{ price: chosen.priceId, quantity: 1 }],
+      line_items: [{ price: await configuredPrice(stripe, Deno.env.get, chosen.priceId, pack === "small" ? 499 : 1999), quantity: 1 }],
       mode: "payment",
       success_url: `${origin}/?gift_credits_session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/?gift_credits_purchase=cancel`,
       metadata: {
+        app: "loveableconnect",
         user_id: user.id,
         gift_pack: pack,
         gift_credits: String(chosen.credits),
@@ -62,12 +65,5 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
-  } catch (error) {
-    console.error("Error creating gift credits payment:", error);
-    const errorMessage = error instanceof Error ? error.message : "An error occurred";
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
-  }
+  } catch (error) { return paymentFailure(error, corsHeaders); }
 });
