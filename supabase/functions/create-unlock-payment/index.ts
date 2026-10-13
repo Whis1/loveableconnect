@@ -1,3 +1,4 @@
+import { requirePaymentAccount, configuredPrice, paymentFailure } from "../_shared/stripe-payments.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
@@ -27,6 +28,7 @@ serve(async (req) => {
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
+    await requirePaymentAccount(stripe);
 
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId;
@@ -40,7 +42,7 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price: "price_1SHjPfK6IHDbrxmE3MnempF2",
+          price: await configuredPrice(stripe, Deno.env.get, "STRIPE_PRICE_UNLOCK_LIKES", 299),
           quantity: 1,
         },
       ],
@@ -48,6 +50,7 @@ serve(async (req) => {
       success_url: `${req.headers.get("origin")}/likes?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get("origin")}/likes?unlock=cancel`,
       metadata: {
+        app: "loveableconnect",
         user_id: user.id,
         feature: "unlock_likes"
       }
@@ -57,12 +60,5 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
-  } catch (error) {
-    console.error("Error creating unlock payment:", error);
-    const errorMessage = error instanceof Error ? error.message : "An error occurred";
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
-  }
+  } catch (error) { return paymentFailure(error, corsHeaders); }
 });

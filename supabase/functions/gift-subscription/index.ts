@@ -1,3 +1,4 @@
+import { requirePaymentAccount, configuredPrice, paymentFailure } from "../_shared/stripe-payments.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
@@ -66,6 +67,7 @@ serve(async (req) => {
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
+    await requirePaymentAccount(stripe);
     logStep("Stripe initialized");
 
     // Verifica se esiste già un customer per il gifter
@@ -79,7 +81,7 @@ serve(async (req) => {
     }
 
     // Price ID per Regalo Premium Mensile (399.99 EUR) - include messaggi vocali
-    const priceId = "price_1SSdgNK6IHDbrxmESA6GPN1Q";
+    const priceId = "STRIPE_PRICE_GIFT_SUBSCRIPTION";
 
     // Crea sessione checkout con metadata per tracciare il regalo
     const origin = req.headers.get("origin") || "http://localhost:5173";
@@ -90,7 +92,7 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price: priceId,
+          price: await configuredPrice(stripe, Deno.env.get, priceId, 39999, "month"),
           quantity: 1,
         },
       ],
@@ -100,6 +102,7 @@ serve(async (req) => {
       subscription_data: {
         description: `Regalo Abbonamento Premium Mensile a ${recipientProfile.nickname}`,
         metadata: {
+        app: "loveableconnect",
           gift_recipient_id: recipient_id,
           gift_recipient_name: recipientProfile.nickname,
           gift_sender_id: user.id,
@@ -107,6 +110,7 @@ serve(async (req) => {
         }
       },
       metadata: {
+        app: "loveableconnect",
         gift_recipient_id: recipient_id,
         gift_recipient_name: recipientProfile.nickname,
         gift_sender_id: user.id,
@@ -140,12 +144,5 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in gift-subscription", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
-  }
+  } catch (error) { return paymentFailure(error, corsHeaders); }
 });

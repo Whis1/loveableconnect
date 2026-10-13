@@ -1,3 +1,4 @@
+import { requirePaymentAccount, configuredPrice, paymentFailure, PaymentError } from "../_shared/stripe-payments.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
@@ -7,10 +8,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const PREMIUM_MONTHLY_PRICE_ID = "price_1SPYDwK6IHDbrxmEMvlzFCAZ";
-const STANDARD_MONTHLY_PRICE_ID = "price_1SPYGEK6IHDbrxmEzOUcxEW9";
-const PREMIUM_WEEKLY_PRICE_ID = "price_1SNixgK6IHDbrxmEytmu8UU8";
-const WEEKLY_TRIAL_COUPON_ID = "OCFRCIQT";
+const PREMIUM_MONTHLY_PRICE_ID = "STRIPE_PRICE_PREMIUM_MONTHLY";
+const STANDARD_MONTHLY_PRICE_ID = "STRIPE_PRICE_PLATINUM_MONTHLY";
+const PREMIUM_WEEKLY_PRICE_ID = "STRIPE_PRICE_WEEKLY";
+const WEEKLY_TRIAL_COUPON_ID = "STRIPE_COUPON_WEEKLY_TRIAL";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -43,6 +44,7 @@ serve(async (req) => {
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
+    await requirePaymentAccount(stripe);
 
     // Check for existing customer
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
@@ -89,19 +91,21 @@ serve(async (req) => {
     const sessionConfig: any = {
       customer: customerId,
       line_items: [{
-        price: priceId,
+        price: await configuredPrice(stripe, Deno.env.get, priceId, subscription_type === "weekly" ? 1399 : tier === "standard" ? 6999 : 39999, subscription_type === "weekly" ? "week" : "month"),
         quantity: 1,
       }],
       mode: "subscription",
       success_url: `${req.headers.get("origin")}/premium-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get("origin")}/credits`,
       metadata: {
+        app: "loveableconnect",
         user_id: user.id,
         subscription_type: subscription_type,
         tier: subscription_type === "monthly" ? tier : "none",
       },
       subscription_data: {
         metadata: {
+        app: "loveableconnect",
           user_id: user.id,
           subscription_type: subscription_type,
           tier: subscription_type === "monthly" ? tier : "none",
@@ -111,8 +115,14 @@ serve(async (req) => {
 
     // Apply trial coupon for weekly subscription if not used yet
     if (subscription_type === "weekly" && !hasUsedWeeklyTrial) {
+      const couponId = Deno.env.get(WEEKLY_TRIAL_COUPON_ID);
+      if (!couponId) throw new PaymentError("I pagamenti sono temporaneamente non disponibili. Riprova più tardi.", 503);
+      const coupon = await stripe.coupons.retrieve(couponId);
+      if (!coupon.valid || coupon.amount_off !== 700 || coupon.currency !== "eur" || coupon.duration !== "once") {
+        throw new PaymentError("I pagamenti sono temporaneamente non disponibili. Riprova più tardi.", 503);
+      }
       sessionConfig.discounts = [{
-        coupon: WEEKLY_TRIAL_COUPON_ID,
+        coupon: couponId,
       }];
     }
 
@@ -135,12 +145,5 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
-  } catch (error) {
-    console.error("Error in subscribe-premium:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
-  }
+  } catch (error) { return paymentFailure(error, corsHeaders); }
 });

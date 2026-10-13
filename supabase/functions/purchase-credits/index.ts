@@ -1,3 +1,4 @@
+import { requirePaymentAccount, configuredPrice, paymentFailure } from "../_shared/stripe-payments.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
@@ -14,19 +15,19 @@ const corsHeaders = {
 const CREDIT_PACKAGES: Record<string, { price_id: string; credits: number; amount: number }> = {
   // Starter — 50 crediti — €9,99 (prezzo invariato)
   credits_50: {
-    price_id: "price_1SIchHK6IHDbrxmEQkyoofLd",
+    price_id: "STRIPE_PRICE_CREDITS_50",
     credits: 50,
     amount: 999,
   },
   // Popolare — 150 crediti — €19,99 (prezzo invariato)
   credits_130: {
-    price_id: "price_1SMT8gK6IHDbrxmEXnAtItze",
+    price_id: "STRIPE_PRICE_CREDITS_150",
     credits: 150,
     amount: 1999,
   },
   // Mega — 350 crediti — €39,99
   credits_220: {
-    price_id: "price_1Te9s8K6IHDbrxmEdBSgmQfR",
+    price_id: "STRIPE_PRICE_CREDITS_350",
     credits: 350,
     amount: 3999,
   },
@@ -52,13 +53,14 @@ serve(async (req) => {
     const { package_type } = await req.json();
     const packageInfo = CREDIT_PACKAGES[package_type];
     
-    if (!packageInfo) {
+    if (!Object.hasOwn(CREDIT_PACKAGES, package_type)) {
       throw new Error("Invalid package type");
     }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { 
       apiVersion: "2025-08-27.basil" 
     });
+    await requirePaymentAccount(stripe);
 
     // Check for existing customer
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
@@ -73,19 +75,21 @@ serve(async (req) => {
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       line_items: [{
-        price: packageInfo.price_id,
+        price: await configuredPrice(stripe, Deno.env.get, packageInfo.price_id, packageInfo.amount),
         quantity: 1,
       }],
       mode: "payment",
       success_url: `${req.headers.get("origin")}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get("origin")}/credits`,
       metadata: {
+        app: "loveableconnect",
         user_id: user.id,
         package_type,
         credits_amount: packageInfo.credits.toString(),
       },
       payment_intent_data: {
         metadata: {
+        app: "loveableconnect",
           user_id: user.id,
           package_type,
           credits_amount: packageInfo.credits.toString(),
@@ -112,12 +116,5 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
-  } catch (error) {
-    console.error("Error in purchase-credits:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
-  }
+  } catch (error) { return paymentFailure(error, corsHeaders); }
 });
