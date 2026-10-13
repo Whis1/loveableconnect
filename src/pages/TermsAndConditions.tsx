@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,11 @@ const DATA_AGGIORNAMENTO = "3 giugno 2026";
 
 const TermsAndConditions = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const initialTab = requestedTab && ["privacy", "terms", "cookies"].includes(requestedTab)
+    ? requestedTab
+    : "privacy";
   const { t } = useTranslation();
   useLanguageDetection();
 
@@ -47,7 +52,7 @@ const TermsAndConditions = () => {
             </p>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="privacy" className="w-full">
+            <Tabs defaultValue={initialTab} className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="privacy">{t("terms.privacy")}</TabsTrigger>
                 <TabsTrigger value="terms">{t("terms.termsAndConditions")}</TabsTrigger>

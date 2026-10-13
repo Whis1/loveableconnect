@@ -5,10 +5,12 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useCredits } from "@/hooks/useCredits";
 import { supabase } from "@/integrations/supabase/client";
 import bannersData from "@/data/banners.json";
+import { useCurrentUserId } from "@/hooks/useCurrentUserId";
 
 export const AdBanner = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const userId = useCurrentUserId();
   const { credits, loading } = useCredits();
   const [isVisible, setIsVisible] = useState(false);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
@@ -109,6 +111,7 @@ export const AdBanner = () => {
   // modificare le due liste qui sotto.
   const HIDE_AD_EXACT_PATHS = [
     '/auth',
+    '/come-funziona',
     '/terms',
     '/chattors-login',
     '/chattors',
@@ -120,7 +123,7 @@ export const AdBanner = () => {
     HIDE_AD_EXACT_PATHS.includes(location.pathname) ||
     HIDE_AD_PATH_PREFIXES.some((prefix) => location.pathname.startsWith(prefix));
 
-  if (isHiddenPage || !shouldShowAds || !isVisible || banners.length === 0) {
+  if (!userId || isHiddenPage || !shouldShowAds || !isVisible || banners.length === 0) {
     return null;
   }
 

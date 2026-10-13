@@ -4,6 +4,7 @@ import { AnimatePresence } from "framer-motion";
 import { PageTransition } from "./PageTransition";
 import { RouteTransitionOverlay } from "./RouteTransitionOverlay";
 import Index from "@/pages/Index";
+import PublicHome from "@/pages/PublicHome";
 import Auth from "@/pages/Auth";
 import Explore from "@/pages/Explore";
 import Search from "@/pages/Search";
@@ -50,6 +51,7 @@ export const AnimatedRoutes = () => {
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<PageTransition><Index /></PageTransition>} />
           <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
+          <Route path="/come-funziona" element={<PageTransition><PublicHome /></PageTransition>} />
           <Route path="/explore" element={<PageTransition><Explore /></PageTransition>} />
           <Route path="/search" element={<PageTransition><Search /></PageTransition>} />
           <Route path="/profile/edit" element={<PageTransition><ProfileEdit /></PageTransition>} />
