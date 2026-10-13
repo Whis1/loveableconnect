@@ -1022,6 +1022,27 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_fulfillment_receipts: {
+        Row: {
+          beneficiary_id: string
+          created_at: string
+          kind: string
+          receipt_id: string
+        }
+        Insert: {
+          beneficiary_id: string
+          created_at?: string
+          kind: string
+          receipt_id: string
+        }
+        Update: {
+          beneficiary_id?: string
+          created_at?: string
+          kind?: string
+          receipt_id?: string
+        }
+        Relationships: []
+      }
       subscription_gifts: {
         Row: {
           amount_cents: number
@@ -1853,12 +1874,17 @@ export type Database = {
       }
       deduct_message_credits: { Args: { _user_id: string }; Returns: boolean }
       delete_inbox_batch: { Args: { p_batch_id: string }; Returns: number }
+      end_stripe_subscription: {
+        Args: { _subscription_id: string }
+        Returns: undefined
+      }
       enforce_premium_expiry: { Args: never; Returns: boolean }
       fnv1a: { Args: { s: string }; Returns: number }
       forward_to_vault: {
         Args: { p_category: string; p_payload: Json }
         Returns: undefined
       }
+      fulfill_stripe_checkout: { Args: { _payment: Json }; Returns: Json }
       get_admin_credit_actions: {
         Args: never
         Returns: {
@@ -2002,6 +2028,7 @@ export type Database = {
           top1_streak_started_at: string
         }[]
       }
+      renew_stripe_subscription: { Args: { _renewal: Json }; Returns: Json }
       report_user_match_result: {
         Args: { _match_id: string; _user_won: boolean }
         Returns: undefined
